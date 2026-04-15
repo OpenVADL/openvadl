@@ -257,9 +257,9 @@ class AArch64Base_ADDWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDWASR_imm6AsInt8
-    : AArch64Base_ADDWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDWASR_imm6AsInt32
+    : AArch64Base_ADDWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDWASR_imm6AsLabel : AArch64Base_ADDWASR_imm6<OtherVT>;
 
@@ -293,9 +293,9 @@ class AArch64Base_ADDWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDWLSL_imm6AsInt8
-    : AArch64Base_ADDWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDWLSL_imm6AsInt32
+    : AArch64Base_ADDWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDWLSL_imm6AsLabel : AArch64Base_ADDWLSL_imm6<OtherVT>;
 
@@ -305,9 +305,9 @@ class AArch64Base_ADDWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDWLSR_imm6AsInt8
-    : AArch64Base_ADDWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDWLSR_imm6AsInt32
+    : AArch64Base_ADDWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDWLSR_imm6AsLabel : AArch64Base_ADDWLSR_imm6<OtherVT>;
 
@@ -317,9 +317,9 @@ class AArch64Base_ADDWSASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDWSASR_imm6AsInt8
-    : AArch64Base_ADDWSASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDWSASR_imm6AsInt32
+    : AArch64Base_ADDWSASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSASR_imm6AsLabel : AArch64Base_ADDWSASR_imm6<OtherVT>;
 
@@ -353,9 +353,9 @@ class AArch64Base_ADDWSLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDWSLSL_imm6AsInt8
-    : AArch64Base_ADDWSLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDWSLSL_imm6AsInt32
+    : AArch64Base_ADDWSLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSLSL_imm6AsLabel : AArch64Base_ADDWSLSL_imm6<OtherVT>;
 
@@ -365,9 +365,9 @@ class AArch64Base_ADDWSLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDWSLSR_imm6AsInt8
-    : AArch64Base_ADDWSLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDWSLSR_imm6AsInt32
+    : AArch64Base_ADDWSLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSLSR_imm6AsLabel : AArch64Base_ADDWSLSR_imm6<OtherVT>;
 
@@ -377,9 +377,9 @@ class AArch64Base_ADDWSSXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSSXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSSXSB_imm3AsInt8
-    : AArch64Base_ADDWSSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSSXSB_imm3AsInt32
+    : AArch64Base_ADDWSSXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSSXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSSXSB_imm3AsLabel : AArch64Base_ADDWSSXSB_imm3<OtherVT>;
 
@@ -389,9 +389,9 @@ class AArch64Base_ADDWSSXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSSXSH_imm3AsInt8
-    : AArch64Base_ADDWSSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSSXSH_imm3AsInt32
+    : AArch64Base_ADDWSSXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSSXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSSXSH_imm3AsLabel : AArch64Base_ADDWSSXSH_imm3<OtherVT>;
 
@@ -401,9 +401,9 @@ class AArch64Base_ADDWSSXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSSXSW_imm3AsInt8
-    : AArch64Base_ADDWSSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSSXSW_imm3AsInt32
+    : AArch64Base_ADDWSSXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSSXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSSXSW_imm3AsLabel : AArch64Base_ADDWSSXSW_imm3<OtherVT>;
 
@@ -413,9 +413,9 @@ class AArch64Base_ADDWSSXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSSXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSSXSX_imm3AsInt8
-    : AArch64Base_ADDWSSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSSXSX_imm3AsInt32
+    : AArch64Base_ADDWSSXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSSXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSSXSX_imm3AsLabel : AArch64Base_ADDWSSXSX_imm3<OtherVT>;
 
@@ -425,9 +425,9 @@ class AArch64Base_ADDWSUXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSUXSB_imm3AsInt8
-    : AArch64Base_ADDWSUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSUXSB_imm3AsInt32
+    : AArch64Base_ADDWSUXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSUXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSUXSB_imm3AsLabel : AArch64Base_ADDWSUXSB_imm3<OtherVT>;
 
@@ -437,9 +437,9 @@ class AArch64Base_ADDWSUXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSUXSH_imm3AsInt8
-    : AArch64Base_ADDWSUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSUXSH_imm3AsInt32
+    : AArch64Base_ADDWSUXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSUXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSUXSH_imm3AsLabel : AArch64Base_ADDWSUXSH_imm3<OtherVT>;
 
@@ -449,9 +449,9 @@ class AArch64Base_ADDWSUXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSUXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSUXSW_imm3AsInt8
-    : AArch64Base_ADDWSUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSUXSW_imm3AsInt32
+    : AArch64Base_ADDWSUXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSUXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSUXSW_imm3AsLabel : AArch64Base_ADDWSUXSW_imm3<OtherVT>;
 
@@ -461,9 +461,9 @@ class AArch64Base_ADDWSUXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSUXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSUXSX_imm3AsInt8
-    : AArch64Base_ADDWSUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSUXSX_imm3AsInt32
+    : AArch64Base_ADDWSUXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSUXSX_imm3AsLabel : AArch64Base_ADDWSUXSX_imm3<OtherVT>;
 
@@ -473,9 +473,9 @@ class AArch64Base_ADDWSXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSXSB_imm3AsInt8
-    : AArch64Base_ADDWSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSXSB_imm3AsInt32
+    : AArch64Base_ADDWSXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSXSB_imm3AsLabel : AArch64Base_ADDWSXSB_imm3<OtherVT>;
 
@@ -485,9 +485,9 @@ class AArch64Base_ADDWSXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSXSH_imm3AsInt8
-    : AArch64Base_ADDWSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSXSH_imm3AsInt32
+    : AArch64Base_ADDWSXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSXSH_imm3AsLabel : AArch64Base_ADDWSXSH_imm3<OtherVT>;
 
@@ -497,9 +497,9 @@ class AArch64Base_ADDWSXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSXSW_imm3AsInt8
-    : AArch64Base_ADDWSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSXSW_imm3AsInt32
+    : AArch64Base_ADDWSXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSXSW_imm3AsLabel : AArch64Base_ADDWSXSW_imm3<OtherVT>;
 
@@ -509,9 +509,9 @@ class AArch64Base_ADDWSXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWSXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWSXSX_imm3AsInt8
-    : AArch64Base_ADDWSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWSXSX_imm3AsInt32
+    : AArch64Base_ADDWSXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWSXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWSXSX_imm3AsLabel : AArch64Base_ADDWSXSX_imm3<OtherVT>;
 
@@ -521,9 +521,9 @@ class AArch64Base_ADDWUXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWUXSB_imm3AsInt8
-    : AArch64Base_ADDWUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWUXSB_imm3AsInt32
+    : AArch64Base_ADDWUXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWUXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWUXSB_imm3AsLabel : AArch64Base_ADDWUXSB_imm3<OtherVT>;
 
@@ -533,9 +533,9 @@ class AArch64Base_ADDWUXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWUXSH_imm3AsInt8
-    : AArch64Base_ADDWUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWUXSH_imm3AsInt32
+    : AArch64Base_ADDWUXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWUXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWUXSH_imm3AsLabel : AArch64Base_ADDWUXSH_imm3<OtherVT>;
 
@@ -545,9 +545,9 @@ class AArch64Base_ADDWUXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWUXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWUXSW_imm3AsInt8
-    : AArch64Base_ADDWUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWUXSW_imm3AsInt32
+    : AArch64Base_ADDWUXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWUXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWUXSW_imm3AsLabel : AArch64Base_ADDWUXSW_imm3<OtherVT>;
 
@@ -557,9 +557,9 @@ class AArch64Base_ADDWUXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDWUXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDWUXSX_imm3AsInt8
-    : AArch64Base_ADDWUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDWUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDWUXSX_imm3AsInt32
+    : AArch64Base_ADDWUXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDWUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDWUXSX_imm3AsLabel : AArch64Base_ADDWUXSX_imm3<OtherVT>;
 
@@ -569,9 +569,9 @@ class AArch64Base_ADDXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDXASR_imm6AsInt8
-    : AArch64Base_ADDXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDXASR_imm6AsInt32
+    : AArch64Base_ADDXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDXASR_imm6AsLabel : AArch64Base_ADDXASR_imm6<OtherVT>;
 
@@ -605,9 +605,9 @@ class AArch64Base_ADDXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDXLSL_imm6AsInt8
-    : AArch64Base_ADDXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDXLSL_imm6AsInt32
+    : AArch64Base_ADDXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDXLSL_imm6AsLabel : AArch64Base_ADDXLSL_imm6<OtherVT>;
 
@@ -617,9 +617,9 @@ class AArch64Base_ADDXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDXLSR_imm6AsInt8
-    : AArch64Base_ADDXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDXLSR_imm6AsInt32
+    : AArch64Base_ADDXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDXLSR_imm6AsLabel : AArch64Base_ADDXLSR_imm6<OtherVT>;
 
@@ -629,9 +629,9 @@ class AArch64Base_ADDXSASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDXSASR_imm6AsInt8
-    : AArch64Base_ADDXSASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDXSASR_imm6AsInt32
+    : AArch64Base_ADDXSASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSASR_imm6AsLabel : AArch64Base_ADDXSASR_imm6<OtherVT>;
 
@@ -665,9 +665,9 @@ class AArch64Base_ADDXSLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDXSLSL_imm6AsInt8
-    : AArch64Base_ADDXSLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDXSLSL_imm6AsInt32
+    : AArch64Base_ADDXSLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSLSL_imm6AsLabel : AArch64Base_ADDXSLSL_imm6<OtherVT>;
 
@@ -677,9 +677,9 @@ class AArch64Base_ADDXSLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ADDXSLSR_imm6AsInt8
-    : AArch64Base_ADDXSLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ADDXSLSR_imm6AsInt32
+    : AArch64Base_ADDXSLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSLSR_imm6AsLabel : AArch64Base_ADDXSLSR_imm6<OtherVT>;
 
@@ -689,9 +689,9 @@ class AArch64Base_ADDXSSXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSSXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSSXSB_imm3AsInt8
-    : AArch64Base_ADDXSSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSSXSB_imm3AsInt32
+    : AArch64Base_ADDXSSXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSSXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSSXSB_imm3AsLabel : AArch64Base_ADDXSSXSB_imm3<OtherVT>;
 
@@ -701,9 +701,9 @@ class AArch64Base_ADDXSSXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSSXSH_imm3AsInt8
-    : AArch64Base_ADDXSSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSSXSH_imm3AsInt32
+    : AArch64Base_ADDXSSXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSSXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSSXSH_imm3AsLabel : AArch64Base_ADDXSSXSH_imm3<OtherVT>;
 
@@ -713,9 +713,9 @@ class AArch64Base_ADDXSSXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSSXSW_imm3AsInt8
-    : AArch64Base_ADDXSSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSSXSW_imm3AsInt32
+    : AArch64Base_ADDXSSXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSSXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSSXSW_imm3AsLabel : AArch64Base_ADDXSSXSW_imm3<OtherVT>;
 
@@ -725,9 +725,9 @@ class AArch64Base_ADDXSSXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSSXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSSXSX_imm3AsInt8
-    : AArch64Base_ADDXSSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSSXSX_imm3AsInt32
+    : AArch64Base_ADDXSSXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSSXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSSXSX_imm3AsLabel : AArch64Base_ADDXSSXSX_imm3<OtherVT>;
 
@@ -737,9 +737,9 @@ class AArch64Base_ADDXSUXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSUXSB_imm3AsInt8
-    : AArch64Base_ADDXSUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSUXSB_imm3AsInt32
+    : AArch64Base_ADDXSUXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSUXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSUXSB_imm3AsLabel : AArch64Base_ADDXSUXSB_imm3<OtherVT>;
 
@@ -749,9 +749,9 @@ class AArch64Base_ADDXSUXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSUXSH_imm3AsInt8
-    : AArch64Base_ADDXSUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSUXSH_imm3AsInt32
+    : AArch64Base_ADDXSUXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSUXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSUXSH_imm3AsLabel : AArch64Base_ADDXSUXSH_imm3<OtherVT>;
 
@@ -761,9 +761,9 @@ class AArch64Base_ADDXSUXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSUXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSUXSW_imm3AsInt8
-    : AArch64Base_ADDXSUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSUXSW_imm3AsInt32
+    : AArch64Base_ADDXSUXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSUXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSUXSW_imm3AsLabel : AArch64Base_ADDXSUXSW_imm3<OtherVT>;
 
@@ -773,9 +773,9 @@ class AArch64Base_ADDXSUXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSUXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSUXSX_imm3AsInt8
-    : AArch64Base_ADDXSUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSUXSX_imm3AsInt32
+    : AArch64Base_ADDXSUXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSUXSX_imm3AsLabel : AArch64Base_ADDXSUXSX_imm3<OtherVT>;
 
@@ -785,9 +785,9 @@ class AArch64Base_ADDXSXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSXSB_imm3AsInt8
-    : AArch64Base_ADDXSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSXSB_imm3AsInt32
+    : AArch64Base_ADDXSXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSXSB_imm3AsLabel : AArch64Base_ADDXSXSB_imm3<OtherVT>;
 
@@ -797,9 +797,9 @@ class AArch64Base_ADDXSXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSXSH_imm3AsInt8
-    : AArch64Base_ADDXSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSXSH_imm3AsInt32
+    : AArch64Base_ADDXSXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSXSH_imm3AsLabel : AArch64Base_ADDXSXSH_imm3<OtherVT>;
 
@@ -809,9 +809,9 @@ class AArch64Base_ADDXSXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSXSW_imm3AsInt8
-    : AArch64Base_ADDXSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSXSW_imm3AsInt32
+    : AArch64Base_ADDXSXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSXSW_imm3AsLabel : AArch64Base_ADDXSXSW_imm3<OtherVT>;
 
@@ -821,9 +821,9 @@ class AArch64Base_ADDXSXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXSXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXSXSX_imm3AsInt8
-    : AArch64Base_ADDXSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXSXSX_imm3AsInt32
+    : AArch64Base_ADDXSXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXSXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXSXSX_imm3AsLabel : AArch64Base_ADDXSXSX_imm3<OtherVT>;
 
@@ -833,9 +833,9 @@ class AArch64Base_ADDXUXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXUXSB_imm3AsInt8
-    : AArch64Base_ADDXUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXUXSB_imm3AsInt32
+    : AArch64Base_ADDXUXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXUXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXUXSB_imm3AsLabel : AArch64Base_ADDXUXSB_imm3<OtherVT>;
 
@@ -845,9 +845,9 @@ class AArch64Base_ADDXUXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXUXSH_imm3AsInt8
-    : AArch64Base_ADDXUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXUXSH_imm3AsInt32
+    : AArch64Base_ADDXUXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXUXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXUXSH_imm3AsLabel : AArch64Base_ADDXUXSH_imm3<OtherVT>;
 
@@ -857,9 +857,9 @@ class AArch64Base_ADDXUXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXUXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXUXSW_imm3AsInt8
-    : AArch64Base_ADDXUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXUXSW_imm3AsInt32
+    : AArch64Base_ADDXUXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXUXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXUXSW_imm3AsLabel : AArch64Base_ADDXUXSW_imm3<OtherVT>;
 
@@ -869,9 +869,9 @@ class AArch64Base_ADDXUXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ADDXUXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_ADDXUXSX_imm3AsInt8
-    : AArch64Base_ADDXUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ADDXUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_ADDXUXSX_imm3AsInt32
+    : AArch64Base_ADDXUXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ADDXUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_ADDXUXSX_imm3AsLabel : AArch64Base_ADDXUXSX_imm3<OtherVT>;
 
@@ -953,9 +953,9 @@ class AArch64Base_ANDSWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDSWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDSWASR_imm6AsInt8
-    : AArch64Base_ANDSWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDSWASR_imm6AsInt32
+    : AArch64Base_ANDSWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDSWASR_imm6AsLabel : AArch64Base_ANDSWASR_imm6<OtherVT>;
 
@@ -965,9 +965,9 @@ class AArch64Base_ANDSWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDSWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDSWLSL_imm6AsInt8
-    : AArch64Base_ANDSWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDSWLSL_imm6AsInt32
+    : AArch64Base_ANDSWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDSWLSL_imm6AsLabel : AArch64Base_ANDSWLSL_imm6<OtherVT>;
 
@@ -977,9 +977,9 @@ class AArch64Base_ANDSWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDSWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDSWLSR_imm6AsInt8
-    : AArch64Base_ANDSWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDSWLSR_imm6AsInt32
+    : AArch64Base_ANDSWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDSWLSR_imm6AsLabel : AArch64Base_ANDSWLSR_imm6<OtherVT>;
 
@@ -989,9 +989,9 @@ class AArch64Base_ANDSWROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDSWROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDSWROR_imm6AsInt8
-    : AArch64Base_ANDSWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDSWROR_imm6AsInt32
+    : AArch64Base_ANDSWROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSWROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDSWROR_imm6AsLabel : AArch64Base_ANDSWROR_imm6<OtherVT>;
 
@@ -1001,9 +1001,9 @@ class AArch64Base_ANDSXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDSXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDSXASR_imm6AsInt8
-    : AArch64Base_ANDSXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDSXASR_imm6AsInt32
+    : AArch64Base_ANDSXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDSXASR_imm6AsLabel : AArch64Base_ANDSXASR_imm6<OtherVT>;
 
@@ -1013,9 +1013,9 @@ class AArch64Base_ANDSXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDSXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDSXLSL_imm6AsInt8
-    : AArch64Base_ANDSXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDSXLSL_imm6AsInt32
+    : AArch64Base_ANDSXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDSXLSL_imm6AsLabel : AArch64Base_ANDSXLSL_imm6<OtherVT>;
 
@@ -1025,9 +1025,9 @@ class AArch64Base_ANDSXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDSXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDSXLSR_imm6AsInt8
-    : AArch64Base_ANDSXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDSXLSR_imm6AsInt32
+    : AArch64Base_ANDSXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDSXLSR_imm6AsLabel : AArch64Base_ANDSXLSR_imm6<OtherVT>;
 
@@ -1037,9 +1037,9 @@ class AArch64Base_ANDSXROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDSXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDSXROR_imm6AsInt8
-    : AArch64Base_ANDSXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDSXROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDSXROR_imm6AsInt32
+    : AArch64Base_ANDSXROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDSXROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDSXROR_imm6AsLabel : AArch64Base_ANDSXROR_imm6<OtherVT>;
 
@@ -1049,9 +1049,9 @@ class AArch64Base_ANDWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDWASR_imm6AsInt8
-    : AArch64Base_ANDWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDWASR_imm6AsInt32
+    : AArch64Base_ANDWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDWASR_imm6AsLabel : AArch64Base_ANDWASR_imm6<OtherVT>;
 
@@ -1061,9 +1061,9 @@ class AArch64Base_ANDWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDWLSL_imm6AsInt8
-    : AArch64Base_ANDWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDWLSL_imm6AsInt32
+    : AArch64Base_ANDWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDWLSL_imm6AsLabel : AArch64Base_ANDWLSL_imm6<OtherVT>;
 
@@ -1073,9 +1073,9 @@ class AArch64Base_ANDWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDWLSR_imm6AsInt8
-    : AArch64Base_ANDWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDWLSR_imm6AsInt32
+    : AArch64Base_ANDWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDWLSR_imm6AsLabel : AArch64Base_ANDWLSR_imm6<OtherVT>;
 
@@ -1085,9 +1085,9 @@ class AArch64Base_ANDWROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDWROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDWROR_imm6AsInt8
-    : AArch64Base_ANDWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDWROR_imm6AsInt32
+    : AArch64Base_ANDWROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDWROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDWROR_imm6AsLabel : AArch64Base_ANDWROR_imm6<OtherVT>;
 
@@ -1097,9 +1097,9 @@ class AArch64Base_ANDXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDXASR_imm6AsInt8
-    : AArch64Base_ANDXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDXASR_imm6AsInt32
+    : AArch64Base_ANDXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDXASR_imm6AsLabel : AArch64Base_ANDXASR_imm6<OtherVT>;
 
@@ -1109,9 +1109,9 @@ class AArch64Base_ANDXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDXLSL_imm6AsInt8
-    : AArch64Base_ANDXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDXLSL_imm6AsInt32
+    : AArch64Base_ANDXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDXLSL_imm6AsLabel : AArch64Base_ANDXLSL_imm6<OtherVT>;
 
@@ -1121,9 +1121,9 @@ class AArch64Base_ANDXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDXLSR_imm6AsInt8
-    : AArch64Base_ANDXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDXLSR_imm6AsInt32
+    : AArch64Base_ANDXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDXLSR_imm6AsLabel : AArch64Base_ANDXLSR_imm6<OtherVT>;
 
@@ -1133,9 +1133,9 @@ class AArch64Base_ANDXROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ANDXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ANDXROR_imm6AsInt8
-    : AArch64Base_ANDXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ANDXROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ANDXROR_imm6AsInt32
+    : AArch64Base_ANDXROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ANDXROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ANDXROR_imm6AsLabel : AArch64Base_ANDXROR_imm6<OtherVT>;
 
@@ -1157,9 +1157,9 @@ class AArch64Base_BFMW_leftWSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BFMW_leftWSize_decode_wrapper";
 }
 
-def AArch64Base_BFMW_leftWSizeAsInt8
-    : AArch64Base_BFMW_leftWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BFMW_leftWSize_predicate(Imm); }]>;
+def AArch64Base_BFMW_leftWSizeAsInt32
+    : AArch64Base_BFMW_leftWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BFMW_leftWSize_predicate(Imm); }]>;
 
 def AArch64Base_BFMW_leftWSizeAsLabel : AArch64Base_BFMW_leftWSize<OtherVT>;
 
@@ -1169,9 +1169,9 @@ class AArch64Base_BFMW_rightWSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BFMW_rightWSize_decode_wrapper";
 }
 
-def AArch64Base_BFMW_rightWSizeAsInt8
-    : AArch64Base_BFMW_rightWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BFMW_rightWSize_predicate(Imm); }]>;
+def AArch64Base_BFMW_rightWSizeAsInt32
+    : AArch64Base_BFMW_rightWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BFMW_rightWSize_predicate(Imm); }]>;
 
 def AArch64Base_BFMW_rightWSizeAsLabel : AArch64Base_BFMW_rightWSize<OtherVT>;
 
@@ -1181,9 +1181,9 @@ class AArch64Base_BFMX_leftXSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BFMX_leftXSize_decode_wrapper";
 }
 
-def AArch64Base_BFMX_leftXSizeAsInt8
-    : AArch64Base_BFMX_leftXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BFMX_leftXSize_predicate(Imm); }]>;
+def AArch64Base_BFMX_leftXSizeAsInt32
+    : AArch64Base_BFMX_leftXSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BFMX_leftXSize_predicate(Imm); }]>;
 
 def AArch64Base_BFMX_leftXSizeAsLabel : AArch64Base_BFMX_leftXSize<OtherVT>;
 
@@ -1193,9 +1193,9 @@ class AArch64Base_BFMX_rightXSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BFMX_rightXSize_decode_wrapper";
 }
 
-def AArch64Base_BFMX_rightXSizeAsInt8
-    : AArch64Base_BFMX_rightXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BFMX_rightXSize_predicate(Imm); }]>;
+def AArch64Base_BFMX_rightXSizeAsInt32
+    : AArch64Base_BFMX_rightXSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BFMX_rightXSize_predicate(Imm); }]>;
 
 def AArch64Base_BFMX_rightXSizeAsLabel : AArch64Base_BFMX_rightXSize<OtherVT>;
 
@@ -1205,9 +1205,9 @@ class AArch64Base_BICSWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICSWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICSWASR_imm6AsInt8
-    : AArch64Base_BICSWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICSWASR_imm6AsInt32
+    : AArch64Base_BICSWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICSWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICSWASR_imm6AsLabel : AArch64Base_BICSWASR_imm6<OtherVT>;
 
@@ -1217,9 +1217,9 @@ class AArch64Base_BICSWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICSWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICSWLSL_imm6AsInt8
-    : AArch64Base_BICSWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_BICSWLSL_imm6AsInt32
+    : AArch64Base_BICSWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICSWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICSWLSL_imm6AsLabel : AArch64Base_BICSWLSL_imm6<OtherVT>;
 
@@ -1229,9 +1229,9 @@ class AArch64Base_BICSWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICSWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICSWLSR_imm6AsInt8
-    : AArch64Base_BICSWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICSWLSR_imm6AsInt32
+    : AArch64Base_BICSWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICSWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICSWLSR_imm6AsLabel : AArch64Base_BICSWLSR_imm6<OtherVT>;
 
@@ -1241,9 +1241,9 @@ class AArch64Base_BICSWROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICSWROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICSWROR_imm6AsInt8
-    : AArch64Base_BICSWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICSWROR_imm6AsInt32
+    : AArch64Base_BICSWROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICSWROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICSWROR_imm6AsLabel : AArch64Base_BICSWROR_imm6<OtherVT>;
 
@@ -1253,9 +1253,9 @@ class AArch64Base_BICSXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICSXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICSXASR_imm6AsInt8
-    : AArch64Base_BICSXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICSXASR_imm6AsInt32
+    : AArch64Base_BICSXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICSXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICSXASR_imm6AsLabel : AArch64Base_BICSXASR_imm6<OtherVT>;
 
@@ -1265,9 +1265,9 @@ class AArch64Base_BICSXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICSXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICSXLSL_imm6AsInt8
-    : AArch64Base_BICSXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_BICSXLSL_imm6AsInt32
+    : AArch64Base_BICSXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICSXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICSXLSL_imm6AsLabel : AArch64Base_BICSXLSL_imm6<OtherVT>;
 
@@ -1277,9 +1277,9 @@ class AArch64Base_BICSXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICSXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICSXLSR_imm6AsInt8
-    : AArch64Base_BICSXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICSXLSR_imm6AsInt32
+    : AArch64Base_BICSXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICSXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICSXLSR_imm6AsLabel : AArch64Base_BICSXLSR_imm6<OtherVT>;
 
@@ -1289,9 +1289,9 @@ class AArch64Base_BICSXROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICSXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICSXROR_imm6AsInt8
-    : AArch64Base_BICSXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICSXROR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICSXROR_imm6AsInt32
+    : AArch64Base_BICSXROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICSXROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICSXROR_imm6AsLabel : AArch64Base_BICSXROR_imm6<OtherVT>;
 
@@ -1301,9 +1301,9 @@ class AArch64Base_BICWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICWASR_imm6AsInt8
-    : AArch64Base_BICWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICWASR_imm6AsInt32
+    : AArch64Base_BICWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICWASR_imm6AsLabel : AArch64Base_BICWASR_imm6<OtherVT>;
 
@@ -1313,9 +1313,9 @@ class AArch64Base_BICWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICWLSL_imm6AsInt8
-    : AArch64Base_BICWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_BICWLSL_imm6AsInt32
+    : AArch64Base_BICWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICWLSL_imm6AsLabel : AArch64Base_BICWLSL_imm6<OtherVT>;
 
@@ -1325,9 +1325,9 @@ class AArch64Base_BICWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICWLSR_imm6AsInt8
-    : AArch64Base_BICWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICWLSR_imm6AsInt32
+    : AArch64Base_BICWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICWLSR_imm6AsLabel : AArch64Base_BICWLSR_imm6<OtherVT>;
 
@@ -1337,9 +1337,9 @@ class AArch64Base_BICWROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICWROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICWROR_imm6AsInt8
-    : AArch64Base_BICWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICWROR_imm6AsInt32
+    : AArch64Base_BICWROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICWROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICWROR_imm6AsLabel : AArch64Base_BICWROR_imm6<OtherVT>;
 
@@ -1349,9 +1349,9 @@ class AArch64Base_BICXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICXASR_imm6AsInt8
-    : AArch64Base_BICXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICXASR_imm6AsInt32
+    : AArch64Base_BICXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICXASR_imm6AsLabel : AArch64Base_BICXASR_imm6<OtherVT>;
 
@@ -1361,9 +1361,9 @@ class AArch64Base_BICXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICXLSL_imm6AsInt8
-    : AArch64Base_BICXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_BICXLSL_imm6AsInt32
+    : AArch64Base_BICXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICXLSL_imm6AsLabel : AArch64Base_BICXLSL_imm6<OtherVT>;
 
@@ -1373,9 +1373,9 @@ class AArch64Base_BICXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICXLSR_imm6AsInt8
-    : AArch64Base_BICXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICXLSR_imm6AsInt32
+    : AArch64Base_BICXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICXLSR_imm6AsLabel : AArch64Base_BICXLSR_imm6<OtherVT>;
 
@@ -1385,9 +1385,9 @@ class AArch64Base_BICXROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BICXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_BICXROR_imm6AsInt8
-    : AArch64Base_BICXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BICXROR_imm6_predicate(Imm); }]>;
+def AArch64Base_BICXROR_imm6AsInt32
+    : AArch64Base_BICXROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BICXROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_BICXROR_imm6AsLabel : AArch64Base_BICXROR_imm6<OtherVT>;
 
@@ -1409,9 +1409,9 @@ class AArch64Base_BRK_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BRK_imm16_decode_wrapper";
 }
 
-def AArch64Base_BRK_imm16AsInt16
-    : AArch64Base_BRK_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_BRK_imm16_predicate(Imm); }]>;
+def AArch64Base_BRK_imm16AsInt32
+    : AArch64Base_BRK_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BRK_imm16_predicate(Imm); }]>;
 
 def AArch64Base_BRK_imm16AsLabel : AArch64Base_BRK_imm16<OtherVT>;
 
@@ -1421,9 +1421,9 @@ class AArch64Base_BTI_bti<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_BTI_bti_decode_wrapper";
 }
 
-def AArch64Base_BTI_btiAsInt8
-    : AArch64Base_BTI_bti<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_BTI_bti_predicate(Imm); }]>;
+def AArch64Base_BTI_btiAsInt32
+    : AArch64Base_BTI_bti<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_BTI_bti_predicate(Imm); }]>;
 
 def AArch64Base_BTI_btiAsLabel : AArch64Base_BTI_bti<OtherVT>;
 
@@ -1673,9 +1673,9 @@ class AArch64Base_CCMNALW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNALW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNALW_nzcvAsInt8
-    : AArch64Base_CCMNALW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNALW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNALW_nzcvAsInt32
+    : AArch64Base_CCMNALW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNALW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNALW_nzcvAsLabel : AArch64Base_CCMNALW_nzcv<OtherVT>;
 
@@ -1685,9 +1685,9 @@ class AArch64Base_CCMNALX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNALX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNALX_nzcvAsInt8
-    : AArch64Base_CCMNALX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNALX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNALX_nzcvAsInt32
+    : AArch64Base_CCMNALX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNALX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNALX_nzcvAsLabel : AArch64Base_CCMNALX_nzcv<OtherVT>;
 
@@ -1697,9 +1697,9 @@ class AArch64Base_CCMNCCW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNCCW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNCCW_nzcvAsInt8
-    : AArch64Base_CCMNCCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNCCW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNCCW_nzcvAsInt32
+    : AArch64Base_CCMNCCW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNCCW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNCCW_nzcvAsLabel : AArch64Base_CCMNCCW_nzcv<OtherVT>;
 
@@ -1709,9 +1709,9 @@ class AArch64Base_CCMNCCX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNCCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNCCX_nzcvAsInt8
-    : AArch64Base_CCMNCCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNCCX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNCCX_nzcvAsInt32
+    : AArch64Base_CCMNCCX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNCCX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNCCX_nzcvAsLabel : AArch64Base_CCMNCCX_nzcv<OtherVT>;
 
@@ -1721,9 +1721,9 @@ class AArch64Base_CCMNCSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNCSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNCSW_nzcvAsInt8
-    : AArch64Base_CCMNCSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNCSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNCSW_nzcvAsInt32
+    : AArch64Base_CCMNCSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNCSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNCSW_nzcvAsLabel : AArch64Base_CCMNCSW_nzcv<OtherVT>;
 
@@ -1733,9 +1733,9 @@ class AArch64Base_CCMNCSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNCSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNCSX_nzcvAsInt8
-    : AArch64Base_CCMNCSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNCSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNCSX_nzcvAsInt32
+    : AArch64Base_CCMNCSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNCSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNCSX_nzcvAsLabel : AArch64Base_CCMNCSX_nzcv<OtherVT>;
 
@@ -1745,9 +1745,9 @@ class AArch64Base_CCMNEQW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNEQW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNEQW_nzcvAsInt8
-    : AArch64Base_CCMNEQW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNEQW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNEQW_nzcvAsInt32
+    : AArch64Base_CCMNEQW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNEQW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNEQW_nzcvAsLabel : AArch64Base_CCMNEQW_nzcv<OtherVT>;
 
@@ -1757,9 +1757,9 @@ class AArch64Base_CCMNEQX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNEQX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNEQX_nzcvAsInt8
-    : AArch64Base_CCMNEQX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNEQX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNEQX_nzcvAsInt32
+    : AArch64Base_CCMNEQX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNEQX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNEQX_nzcvAsLabel : AArch64Base_CCMNEQX_nzcv<OtherVT>;
 
@@ -1769,9 +1769,9 @@ class AArch64Base_CCMNGEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNGEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNGEW_nzcvAsInt8
-    : AArch64Base_CCMNGEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNGEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNGEW_nzcvAsInt32
+    : AArch64Base_CCMNGEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNGEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNGEW_nzcvAsLabel : AArch64Base_CCMNGEW_nzcv<OtherVT>;
 
@@ -1781,9 +1781,9 @@ class AArch64Base_CCMNGEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNGEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNGEX_nzcvAsInt8
-    : AArch64Base_CCMNGEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNGEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNGEX_nzcvAsInt32
+    : AArch64Base_CCMNGEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNGEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNGEX_nzcvAsLabel : AArch64Base_CCMNGEX_nzcv<OtherVT>;
 
@@ -1793,9 +1793,9 @@ class AArch64Base_CCMNGTW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNGTW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNGTW_nzcvAsInt8
-    : AArch64Base_CCMNGTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNGTW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNGTW_nzcvAsInt32
+    : AArch64Base_CCMNGTW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNGTW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNGTW_nzcvAsLabel : AArch64Base_CCMNGTW_nzcv<OtherVT>;
 
@@ -1805,9 +1805,9 @@ class AArch64Base_CCMNGTX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNGTX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNGTX_nzcvAsInt8
-    : AArch64Base_CCMNGTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNGTX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNGTX_nzcvAsInt32
+    : AArch64Base_CCMNGTX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNGTX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNGTX_nzcvAsLabel : AArch64Base_CCMNGTX_nzcv<OtherVT>;
 
@@ -1817,9 +1817,9 @@ class AArch64Base_CCMNHIW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNHIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNHIW_nzcvAsInt8
-    : AArch64Base_CCMNHIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNHIW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNHIW_nzcvAsInt32
+    : AArch64Base_CCMNHIW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNHIW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNHIW_nzcvAsLabel : AArch64Base_CCMNHIW_nzcv<OtherVT>;
 
@@ -1829,9 +1829,9 @@ class AArch64Base_CCMNHIX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNHIX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNHIX_nzcvAsInt8
-    : AArch64Base_CCMNHIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNHIX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNHIX_nzcvAsInt32
+    : AArch64Base_CCMNHIX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNHIX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNHIX_nzcvAsLabel : AArch64Base_CCMNHIX_nzcv<OtherVT>;
 
@@ -1853,9 +1853,9 @@ class AArch64Base_CCMNIALW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIALW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIALW_nzcvAsInt8
-    : AArch64Base_CCMNIALW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIALW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIALW_nzcvAsInt32
+    : AArch64Base_CCMNIALW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIALW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIALW_nzcvAsLabel : AArch64Base_CCMNIALW_nzcv<OtherVT>;
 
@@ -1877,9 +1877,9 @@ class AArch64Base_CCMNIALX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIALX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIALX_nzcvAsInt8
-    : AArch64Base_CCMNIALX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIALX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIALX_nzcvAsInt32
+    : AArch64Base_CCMNIALX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIALX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIALX_nzcvAsLabel : AArch64Base_CCMNIALX_nzcv<OtherVT>;
 
@@ -1901,9 +1901,9 @@ class AArch64Base_CCMNICCW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNICCW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNICCW_nzcvAsInt8
-    : AArch64Base_CCMNICCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNICCW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNICCW_nzcvAsInt32
+    : AArch64Base_CCMNICCW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNICCW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNICCW_nzcvAsLabel : AArch64Base_CCMNICCW_nzcv<OtherVT>;
 
@@ -1925,9 +1925,9 @@ class AArch64Base_CCMNICCX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNICCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNICCX_nzcvAsInt8
-    : AArch64Base_CCMNICCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNICCX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNICCX_nzcvAsInt32
+    : AArch64Base_CCMNICCX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNICCX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNICCX_nzcvAsLabel : AArch64Base_CCMNICCX_nzcv<OtherVT>;
 
@@ -1949,9 +1949,9 @@ class AArch64Base_CCMNICSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNICSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNICSW_nzcvAsInt8
-    : AArch64Base_CCMNICSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNICSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNICSW_nzcvAsInt32
+    : AArch64Base_CCMNICSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNICSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNICSW_nzcvAsLabel : AArch64Base_CCMNICSW_nzcv<OtherVT>;
 
@@ -1973,9 +1973,9 @@ class AArch64Base_CCMNICSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNICSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNICSX_nzcvAsInt8
-    : AArch64Base_CCMNICSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNICSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNICSX_nzcvAsInt32
+    : AArch64Base_CCMNICSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNICSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNICSX_nzcvAsLabel : AArch64Base_CCMNICSX_nzcv<OtherVT>;
 
@@ -1997,9 +1997,9 @@ class AArch64Base_CCMNIEQW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIEQW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIEQW_nzcvAsInt8
-    : AArch64Base_CCMNIEQW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIEQW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIEQW_nzcvAsInt32
+    : AArch64Base_CCMNIEQW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIEQW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIEQW_nzcvAsLabel : AArch64Base_CCMNIEQW_nzcv<OtherVT>;
 
@@ -2021,9 +2021,9 @@ class AArch64Base_CCMNIEQX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIEQX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIEQX_nzcvAsInt8
-    : AArch64Base_CCMNIEQX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIEQX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIEQX_nzcvAsInt32
+    : AArch64Base_CCMNIEQX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIEQX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIEQX_nzcvAsLabel : AArch64Base_CCMNIEQX_nzcv<OtherVT>;
 
@@ -2045,9 +2045,9 @@ class AArch64Base_CCMNIGEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIGEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIGEW_nzcvAsInt8
-    : AArch64Base_CCMNIGEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIGEW_nzcvAsInt32
+    : AArch64Base_CCMNIGEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIGEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIGEW_nzcvAsLabel : AArch64Base_CCMNIGEW_nzcv<OtherVT>;
 
@@ -2069,9 +2069,9 @@ class AArch64Base_CCMNIGEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIGEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIGEX_nzcvAsInt8
-    : AArch64Base_CCMNIGEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIGEX_nzcvAsInt32
+    : AArch64Base_CCMNIGEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIGEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIGEX_nzcvAsLabel : AArch64Base_CCMNIGEX_nzcv<OtherVT>;
 
@@ -2093,9 +2093,9 @@ class AArch64Base_CCMNIGTW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIGTW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIGTW_nzcvAsInt8
-    : AArch64Base_CCMNIGTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGTW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIGTW_nzcvAsInt32
+    : AArch64Base_CCMNIGTW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIGTW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIGTW_nzcvAsLabel : AArch64Base_CCMNIGTW_nzcv<OtherVT>;
 
@@ -2117,9 +2117,9 @@ class AArch64Base_CCMNIGTX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIGTX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIGTX_nzcvAsInt8
-    : AArch64Base_CCMNIGTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIGTX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIGTX_nzcvAsInt32
+    : AArch64Base_CCMNIGTX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIGTX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIGTX_nzcvAsLabel : AArch64Base_CCMNIGTX_nzcv<OtherVT>;
 
@@ -2141,9 +2141,9 @@ class AArch64Base_CCMNIHIW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIHIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIHIW_nzcvAsInt8
-    : AArch64Base_CCMNIHIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIHIW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIHIW_nzcvAsInt32
+    : AArch64Base_CCMNIHIW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIHIW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIHIW_nzcvAsLabel : AArch64Base_CCMNIHIW_nzcv<OtherVT>;
 
@@ -2165,9 +2165,9 @@ class AArch64Base_CCMNIHIX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIHIX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIHIX_nzcvAsInt8
-    : AArch64Base_CCMNIHIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIHIX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIHIX_nzcvAsInt32
+    : AArch64Base_CCMNIHIX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIHIX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIHIX_nzcvAsLabel : AArch64Base_CCMNIHIX_nzcv<OtherVT>;
 
@@ -2189,9 +2189,9 @@ class AArch64Base_CCMNILEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNILEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNILEW_nzcvAsInt8
-    : AArch64Base_CCMNILEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNILEW_nzcvAsInt32
+    : AArch64Base_CCMNILEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNILEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNILEW_nzcvAsLabel : AArch64Base_CCMNILEW_nzcv<OtherVT>;
 
@@ -2213,9 +2213,9 @@ class AArch64Base_CCMNILEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNILEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNILEX_nzcvAsInt8
-    : AArch64Base_CCMNILEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNILEX_nzcvAsInt32
+    : AArch64Base_CCMNILEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNILEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNILEX_nzcvAsLabel : AArch64Base_CCMNILEX_nzcv<OtherVT>;
 
@@ -2237,9 +2237,9 @@ class AArch64Base_CCMNILSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNILSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNILSW_nzcvAsInt8
-    : AArch64Base_CCMNILSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNILSW_nzcvAsInt32
+    : AArch64Base_CCMNILSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNILSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNILSW_nzcvAsLabel : AArch64Base_CCMNILSW_nzcv<OtherVT>;
 
@@ -2261,9 +2261,9 @@ class AArch64Base_CCMNILSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNILSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNILSX_nzcvAsInt8
-    : AArch64Base_CCMNILSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNILSX_nzcvAsInt32
+    : AArch64Base_CCMNILSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNILSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNILSX_nzcvAsLabel : AArch64Base_CCMNILSX_nzcv<OtherVT>;
 
@@ -2285,9 +2285,9 @@ class AArch64Base_CCMNILTW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNILTW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNILTW_nzcvAsInt8
-    : AArch64Base_CCMNILTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILTW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNILTW_nzcvAsInt32
+    : AArch64Base_CCMNILTW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNILTW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNILTW_nzcvAsLabel : AArch64Base_CCMNILTW_nzcv<OtherVT>;
 
@@ -2309,9 +2309,9 @@ class AArch64Base_CCMNILTX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNILTX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNILTX_nzcvAsInt8
-    : AArch64Base_CCMNILTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNILTX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNILTX_nzcvAsInt32
+    : AArch64Base_CCMNILTX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNILTX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNILTX_nzcvAsLabel : AArch64Base_CCMNILTX_nzcv<OtherVT>;
 
@@ -2333,9 +2333,9 @@ class AArch64Base_CCMNIMIW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIMIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIMIW_nzcvAsInt8
-    : AArch64Base_CCMNIMIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIMIW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIMIW_nzcvAsInt32
+    : AArch64Base_CCMNIMIW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIMIW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIMIW_nzcvAsLabel : AArch64Base_CCMNIMIW_nzcv<OtherVT>;
 
@@ -2357,9 +2357,9 @@ class AArch64Base_CCMNIMIX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIMIX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIMIX_nzcvAsInt8
-    : AArch64Base_CCMNIMIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIMIX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIMIX_nzcvAsInt32
+    : AArch64Base_CCMNIMIX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIMIX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIMIX_nzcvAsLabel : AArch64Base_CCMNIMIX_nzcv<OtherVT>;
 
@@ -2381,9 +2381,9 @@ class AArch64Base_CCMNINEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNINEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNINEW_nzcvAsInt8
-    : AArch64Base_CCMNINEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNINEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNINEW_nzcvAsInt32
+    : AArch64Base_CCMNINEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNINEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNINEW_nzcvAsLabel : AArch64Base_CCMNINEW_nzcv<OtherVT>;
 
@@ -2405,9 +2405,9 @@ class AArch64Base_CCMNINEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNINEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNINEX_nzcvAsInt8
-    : AArch64Base_CCMNINEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNINEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNINEX_nzcvAsInt32
+    : AArch64Base_CCMNINEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNINEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNINEX_nzcvAsLabel : AArch64Base_CCMNINEX_nzcv<OtherVT>;
 
@@ -2429,9 +2429,9 @@ class AArch64Base_CCMNINVW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNINVW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNINVW_nzcvAsInt8
-    : AArch64Base_CCMNINVW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNINVW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNINVW_nzcvAsInt32
+    : AArch64Base_CCMNINVW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNINVW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNINVW_nzcvAsLabel : AArch64Base_CCMNINVW_nzcv<OtherVT>;
 
@@ -2453,9 +2453,9 @@ class AArch64Base_CCMNINVX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNINVX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNINVX_nzcvAsInt8
-    : AArch64Base_CCMNINVX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNINVX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNINVX_nzcvAsInt32
+    : AArch64Base_CCMNINVX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNINVX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNINVX_nzcvAsLabel : AArch64Base_CCMNINVX_nzcv<OtherVT>;
 
@@ -2477,9 +2477,9 @@ class AArch64Base_CCMNIPLW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIPLW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIPLW_nzcvAsInt8
-    : AArch64Base_CCMNIPLW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIPLW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIPLW_nzcvAsInt32
+    : AArch64Base_CCMNIPLW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIPLW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIPLW_nzcvAsLabel : AArch64Base_CCMNIPLW_nzcv<OtherVT>;
 
@@ -2501,9 +2501,9 @@ class AArch64Base_CCMNIPLX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIPLX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIPLX_nzcvAsInt8
-    : AArch64Base_CCMNIPLX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIPLX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIPLX_nzcvAsInt32
+    : AArch64Base_CCMNIPLX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIPLX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIPLX_nzcvAsLabel : AArch64Base_CCMNIPLX_nzcv<OtherVT>;
 
@@ -2525,9 +2525,9 @@ class AArch64Base_CCMNIVCW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIVCW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIVCW_nzcvAsInt8
-    : AArch64Base_CCMNIVCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVCW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIVCW_nzcvAsInt32
+    : AArch64Base_CCMNIVCW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIVCW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIVCW_nzcvAsLabel : AArch64Base_CCMNIVCW_nzcv<OtherVT>;
 
@@ -2549,9 +2549,9 @@ class AArch64Base_CCMNIVCX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIVCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIVCX_nzcvAsInt8
-    : AArch64Base_CCMNIVCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVCX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIVCX_nzcvAsInt32
+    : AArch64Base_CCMNIVCX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIVCX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIVCX_nzcvAsLabel : AArch64Base_CCMNIVCX_nzcv<OtherVT>;
 
@@ -2573,9 +2573,9 @@ class AArch64Base_CCMNIVSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIVSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIVSW_nzcvAsInt8
-    : AArch64Base_CCMNIVSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIVSW_nzcvAsInt32
+    : AArch64Base_CCMNIVSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIVSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIVSW_nzcvAsLabel : AArch64Base_CCMNIVSW_nzcv<OtherVT>;
 
@@ -2597,9 +2597,9 @@ class AArch64Base_CCMNIVSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNIVSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNIVSX_nzcvAsInt8
-    : AArch64Base_CCMNIVSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNIVSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNIVSX_nzcvAsInt32
+    : AArch64Base_CCMNIVSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNIVSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNIVSX_nzcvAsLabel : AArch64Base_CCMNIVSX_nzcv<OtherVT>;
 
@@ -2609,9 +2609,9 @@ class AArch64Base_CCMNLEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNLEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNLEW_nzcvAsInt8
-    : AArch64Base_CCMNLEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNLEW_nzcvAsInt32
+    : AArch64Base_CCMNLEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNLEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNLEW_nzcvAsLabel : AArch64Base_CCMNLEW_nzcv<OtherVT>;
 
@@ -2621,9 +2621,9 @@ class AArch64Base_CCMNLEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNLEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNLEX_nzcvAsInt8
-    : AArch64Base_CCMNLEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNLEX_nzcvAsInt32
+    : AArch64Base_CCMNLEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNLEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNLEX_nzcvAsLabel : AArch64Base_CCMNLEX_nzcv<OtherVT>;
 
@@ -2633,9 +2633,9 @@ class AArch64Base_CCMNLSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNLSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNLSW_nzcvAsInt8
-    : AArch64Base_CCMNLSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNLSW_nzcvAsInt32
+    : AArch64Base_CCMNLSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNLSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNLSW_nzcvAsLabel : AArch64Base_CCMNLSW_nzcv<OtherVT>;
 
@@ -2645,9 +2645,9 @@ class AArch64Base_CCMNLSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNLSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNLSX_nzcvAsInt8
-    : AArch64Base_CCMNLSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNLSX_nzcvAsInt32
+    : AArch64Base_CCMNLSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNLSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNLSX_nzcvAsLabel : AArch64Base_CCMNLSX_nzcv<OtherVT>;
 
@@ -2657,9 +2657,9 @@ class AArch64Base_CCMNLTW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNLTW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNLTW_nzcvAsInt8
-    : AArch64Base_CCMNLTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLTW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNLTW_nzcvAsInt32
+    : AArch64Base_CCMNLTW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNLTW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNLTW_nzcvAsLabel : AArch64Base_CCMNLTW_nzcv<OtherVT>;
 
@@ -2669,9 +2669,9 @@ class AArch64Base_CCMNLTX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNLTX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNLTX_nzcvAsInt8
-    : AArch64Base_CCMNLTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNLTX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNLTX_nzcvAsInt32
+    : AArch64Base_CCMNLTX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNLTX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNLTX_nzcvAsLabel : AArch64Base_CCMNLTX_nzcv<OtherVT>;
 
@@ -2681,9 +2681,9 @@ class AArch64Base_CCMNMIW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNMIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNMIW_nzcvAsInt8
-    : AArch64Base_CCMNMIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNMIW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNMIW_nzcvAsInt32
+    : AArch64Base_CCMNMIW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNMIW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNMIW_nzcvAsLabel : AArch64Base_CCMNMIW_nzcv<OtherVT>;
 
@@ -2693,9 +2693,9 @@ class AArch64Base_CCMNMIX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNMIX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNMIX_nzcvAsInt8
-    : AArch64Base_CCMNMIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNMIX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNMIX_nzcvAsInt32
+    : AArch64Base_CCMNMIX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNMIX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNMIX_nzcvAsLabel : AArch64Base_CCMNMIX_nzcv<OtherVT>;
 
@@ -2705,9 +2705,9 @@ class AArch64Base_CCMNNEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNNEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNNEW_nzcvAsInt8
-    : AArch64Base_CCMNNEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNNEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNNEW_nzcvAsInt32
+    : AArch64Base_CCMNNEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNNEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNNEW_nzcvAsLabel : AArch64Base_CCMNNEW_nzcv<OtherVT>;
 
@@ -2717,9 +2717,9 @@ class AArch64Base_CCMNNEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNNEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNNEX_nzcvAsInt8
-    : AArch64Base_CCMNNEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNNEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNNEX_nzcvAsInt32
+    : AArch64Base_CCMNNEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNNEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNNEX_nzcvAsLabel : AArch64Base_CCMNNEX_nzcv<OtherVT>;
 
@@ -2729,9 +2729,9 @@ class AArch64Base_CCMNNVW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNNVW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNNVW_nzcvAsInt8
-    : AArch64Base_CCMNNVW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNNVW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNNVW_nzcvAsInt32
+    : AArch64Base_CCMNNVW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNNVW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNNVW_nzcvAsLabel : AArch64Base_CCMNNVW_nzcv<OtherVT>;
 
@@ -2741,9 +2741,9 @@ class AArch64Base_CCMNNVX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNNVX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNNVX_nzcvAsInt8
-    : AArch64Base_CCMNNVX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNNVX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNNVX_nzcvAsInt32
+    : AArch64Base_CCMNNVX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNNVX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNNVX_nzcvAsLabel : AArch64Base_CCMNNVX_nzcv<OtherVT>;
 
@@ -2753,9 +2753,9 @@ class AArch64Base_CCMNPLW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNPLW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNPLW_nzcvAsInt8
-    : AArch64Base_CCMNPLW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNPLW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNPLW_nzcvAsInt32
+    : AArch64Base_CCMNPLW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNPLW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNPLW_nzcvAsLabel : AArch64Base_CCMNPLW_nzcv<OtherVT>;
 
@@ -2765,9 +2765,9 @@ class AArch64Base_CCMNPLX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNPLX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNPLX_nzcvAsInt8
-    : AArch64Base_CCMNPLX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNPLX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNPLX_nzcvAsInt32
+    : AArch64Base_CCMNPLX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNPLX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNPLX_nzcvAsLabel : AArch64Base_CCMNPLX_nzcv<OtherVT>;
 
@@ -2777,9 +2777,9 @@ class AArch64Base_CCMNVCW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNVCW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNVCW_nzcvAsInt8
-    : AArch64Base_CCMNVCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNVCW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNVCW_nzcvAsInt32
+    : AArch64Base_CCMNVCW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNVCW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNVCW_nzcvAsLabel : AArch64Base_CCMNVCW_nzcv<OtherVT>;
 
@@ -2789,9 +2789,9 @@ class AArch64Base_CCMNVCX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNVCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNVCX_nzcvAsInt8
-    : AArch64Base_CCMNVCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNVCX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNVCX_nzcvAsInt32
+    : AArch64Base_CCMNVCX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNVCX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNVCX_nzcvAsLabel : AArch64Base_CCMNVCX_nzcv<OtherVT>;
 
@@ -2801,9 +2801,9 @@ class AArch64Base_CCMNVSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNVSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNVSW_nzcvAsInt8
-    : AArch64Base_CCMNVSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNVSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNVSW_nzcvAsInt32
+    : AArch64Base_CCMNVSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNVSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNVSW_nzcvAsLabel : AArch64Base_CCMNVSW_nzcv<OtherVT>;
 
@@ -2813,9 +2813,9 @@ class AArch64Base_CCMNVSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMNVSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMNVSX_nzcvAsInt8
-    : AArch64Base_CCMNVSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMNVSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMNVSX_nzcvAsInt32
+    : AArch64Base_CCMNVSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMNVSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMNVSX_nzcvAsLabel : AArch64Base_CCMNVSX_nzcv<OtherVT>;
 
@@ -2825,9 +2825,9 @@ class AArch64Base_CCMPALW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPALW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPALW_nzcvAsInt8
-    : AArch64Base_CCMPALW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPALW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPALW_nzcvAsInt32
+    : AArch64Base_CCMPALW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPALW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPALW_nzcvAsLabel : AArch64Base_CCMPALW_nzcv<OtherVT>;
 
@@ -2837,9 +2837,9 @@ class AArch64Base_CCMPALX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPALX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPALX_nzcvAsInt8
-    : AArch64Base_CCMPALX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPALX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPALX_nzcvAsInt32
+    : AArch64Base_CCMPALX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPALX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPALX_nzcvAsLabel : AArch64Base_CCMPALX_nzcv<OtherVT>;
 
@@ -2849,9 +2849,9 @@ class AArch64Base_CCMPCCW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPCCW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPCCW_nzcvAsInt8
-    : AArch64Base_CCMPCCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPCCW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPCCW_nzcvAsInt32
+    : AArch64Base_CCMPCCW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPCCW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPCCW_nzcvAsLabel : AArch64Base_CCMPCCW_nzcv<OtherVT>;
 
@@ -2861,9 +2861,9 @@ class AArch64Base_CCMPCCX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPCCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPCCX_nzcvAsInt8
-    : AArch64Base_CCMPCCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPCCX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPCCX_nzcvAsInt32
+    : AArch64Base_CCMPCCX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPCCX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPCCX_nzcvAsLabel : AArch64Base_CCMPCCX_nzcv<OtherVT>;
 
@@ -2873,9 +2873,9 @@ class AArch64Base_CCMPCSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPCSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPCSW_nzcvAsInt8
-    : AArch64Base_CCMPCSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPCSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPCSW_nzcvAsInt32
+    : AArch64Base_CCMPCSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPCSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPCSW_nzcvAsLabel : AArch64Base_CCMPCSW_nzcv<OtherVT>;
 
@@ -2885,9 +2885,9 @@ class AArch64Base_CCMPCSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPCSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPCSX_nzcvAsInt8
-    : AArch64Base_CCMPCSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPCSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPCSX_nzcvAsInt32
+    : AArch64Base_CCMPCSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPCSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPCSX_nzcvAsLabel : AArch64Base_CCMPCSX_nzcv<OtherVT>;
 
@@ -2897,9 +2897,9 @@ class AArch64Base_CCMPEQW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPEQW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPEQW_nzcvAsInt8
-    : AArch64Base_CCMPEQW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPEQW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPEQW_nzcvAsInt32
+    : AArch64Base_CCMPEQW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPEQW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPEQW_nzcvAsLabel : AArch64Base_CCMPEQW_nzcv<OtherVT>;
 
@@ -2909,9 +2909,9 @@ class AArch64Base_CCMPEQX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPEQX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPEQX_nzcvAsInt8
-    : AArch64Base_CCMPEQX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPEQX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPEQX_nzcvAsInt32
+    : AArch64Base_CCMPEQX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPEQX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPEQX_nzcvAsLabel : AArch64Base_CCMPEQX_nzcv<OtherVT>;
 
@@ -2921,9 +2921,9 @@ class AArch64Base_CCMPGEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPGEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPGEW_nzcvAsInt8
-    : AArch64Base_CCMPGEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPGEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPGEW_nzcvAsInt32
+    : AArch64Base_CCMPGEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPGEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPGEW_nzcvAsLabel : AArch64Base_CCMPGEW_nzcv<OtherVT>;
 
@@ -2933,9 +2933,9 @@ class AArch64Base_CCMPGEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPGEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPGEX_nzcvAsInt8
-    : AArch64Base_CCMPGEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPGEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPGEX_nzcvAsInt32
+    : AArch64Base_CCMPGEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPGEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPGEX_nzcvAsLabel : AArch64Base_CCMPGEX_nzcv<OtherVT>;
 
@@ -2945,9 +2945,9 @@ class AArch64Base_CCMPGTW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPGTW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPGTW_nzcvAsInt8
-    : AArch64Base_CCMPGTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPGTW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPGTW_nzcvAsInt32
+    : AArch64Base_CCMPGTW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPGTW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPGTW_nzcvAsLabel : AArch64Base_CCMPGTW_nzcv<OtherVT>;
 
@@ -2957,9 +2957,9 @@ class AArch64Base_CCMPGTX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPGTX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPGTX_nzcvAsInt8
-    : AArch64Base_CCMPGTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPGTX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPGTX_nzcvAsInt32
+    : AArch64Base_CCMPGTX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPGTX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPGTX_nzcvAsLabel : AArch64Base_CCMPGTX_nzcv<OtherVT>;
 
@@ -2969,9 +2969,9 @@ class AArch64Base_CCMPHIW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPHIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPHIW_nzcvAsInt8
-    : AArch64Base_CCMPHIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPHIW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPHIW_nzcvAsInt32
+    : AArch64Base_CCMPHIW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPHIW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPHIW_nzcvAsLabel : AArch64Base_CCMPHIW_nzcv<OtherVT>;
 
@@ -2981,9 +2981,9 @@ class AArch64Base_CCMPHIX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPHIX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPHIX_nzcvAsInt8
-    : AArch64Base_CCMPHIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPHIX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPHIX_nzcvAsInt32
+    : AArch64Base_CCMPHIX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPHIX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPHIX_nzcvAsLabel : AArch64Base_CCMPHIX_nzcv<OtherVT>;
 
@@ -3005,9 +3005,9 @@ class AArch64Base_CCMPIALW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIALW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIALW_nzcvAsInt8
-    : AArch64Base_CCMPIALW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIALW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIALW_nzcvAsInt32
+    : AArch64Base_CCMPIALW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIALW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIALW_nzcvAsLabel : AArch64Base_CCMPIALW_nzcv<OtherVT>;
 
@@ -3029,9 +3029,9 @@ class AArch64Base_CCMPIALX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIALX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIALX_nzcvAsInt8
-    : AArch64Base_CCMPIALX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIALX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIALX_nzcvAsInt32
+    : AArch64Base_CCMPIALX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIALX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIALX_nzcvAsLabel : AArch64Base_CCMPIALX_nzcv<OtherVT>;
 
@@ -3053,9 +3053,9 @@ class AArch64Base_CCMPICCW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPICCW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPICCW_nzcvAsInt8
-    : AArch64Base_CCMPICCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPICCW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPICCW_nzcvAsInt32
+    : AArch64Base_CCMPICCW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPICCW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPICCW_nzcvAsLabel : AArch64Base_CCMPICCW_nzcv<OtherVT>;
 
@@ -3077,9 +3077,9 @@ class AArch64Base_CCMPICCX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPICCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPICCX_nzcvAsInt8
-    : AArch64Base_CCMPICCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPICCX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPICCX_nzcvAsInt32
+    : AArch64Base_CCMPICCX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPICCX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPICCX_nzcvAsLabel : AArch64Base_CCMPICCX_nzcv<OtherVT>;
 
@@ -3101,9 +3101,9 @@ class AArch64Base_CCMPICSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPICSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPICSW_nzcvAsInt8
-    : AArch64Base_CCMPICSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPICSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPICSW_nzcvAsInt32
+    : AArch64Base_CCMPICSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPICSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPICSW_nzcvAsLabel : AArch64Base_CCMPICSW_nzcv<OtherVT>;
 
@@ -3125,9 +3125,9 @@ class AArch64Base_CCMPICSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPICSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPICSX_nzcvAsInt8
-    : AArch64Base_CCMPICSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPICSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPICSX_nzcvAsInt32
+    : AArch64Base_CCMPICSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPICSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPICSX_nzcvAsLabel : AArch64Base_CCMPICSX_nzcv<OtherVT>;
 
@@ -3149,9 +3149,9 @@ class AArch64Base_CCMPIEQW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIEQW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIEQW_nzcvAsInt8
-    : AArch64Base_CCMPIEQW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIEQW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIEQW_nzcvAsInt32
+    : AArch64Base_CCMPIEQW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIEQW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIEQW_nzcvAsLabel : AArch64Base_CCMPIEQW_nzcv<OtherVT>;
 
@@ -3173,9 +3173,9 @@ class AArch64Base_CCMPIEQX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIEQX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIEQX_nzcvAsInt8
-    : AArch64Base_CCMPIEQX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIEQX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIEQX_nzcvAsInt32
+    : AArch64Base_CCMPIEQX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIEQX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIEQX_nzcvAsLabel : AArch64Base_CCMPIEQX_nzcv<OtherVT>;
 
@@ -3197,9 +3197,9 @@ class AArch64Base_CCMPIGEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIGEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIGEW_nzcvAsInt8
-    : AArch64Base_CCMPIGEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIGEW_nzcvAsInt32
+    : AArch64Base_CCMPIGEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIGEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIGEW_nzcvAsLabel : AArch64Base_CCMPIGEW_nzcv<OtherVT>;
 
@@ -3221,9 +3221,9 @@ class AArch64Base_CCMPIGEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIGEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIGEX_nzcvAsInt8
-    : AArch64Base_CCMPIGEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIGEX_nzcvAsInt32
+    : AArch64Base_CCMPIGEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIGEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIGEX_nzcvAsLabel : AArch64Base_CCMPIGEX_nzcv<OtherVT>;
 
@@ -3245,9 +3245,9 @@ class AArch64Base_CCMPIGTW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIGTW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIGTW_nzcvAsInt8
-    : AArch64Base_CCMPIGTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGTW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIGTW_nzcvAsInt32
+    : AArch64Base_CCMPIGTW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIGTW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIGTW_nzcvAsLabel : AArch64Base_CCMPIGTW_nzcv<OtherVT>;
 
@@ -3269,9 +3269,9 @@ class AArch64Base_CCMPIGTX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIGTX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIGTX_nzcvAsInt8
-    : AArch64Base_CCMPIGTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIGTX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIGTX_nzcvAsInt32
+    : AArch64Base_CCMPIGTX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIGTX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIGTX_nzcvAsLabel : AArch64Base_CCMPIGTX_nzcv<OtherVT>;
 
@@ -3293,9 +3293,9 @@ class AArch64Base_CCMPIHIW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIHIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIHIW_nzcvAsInt8
-    : AArch64Base_CCMPIHIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIHIW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIHIW_nzcvAsInt32
+    : AArch64Base_CCMPIHIW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIHIW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIHIW_nzcvAsLabel : AArch64Base_CCMPIHIW_nzcv<OtherVT>;
 
@@ -3317,9 +3317,9 @@ class AArch64Base_CCMPIHIX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIHIX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIHIX_nzcvAsInt8
-    : AArch64Base_CCMPIHIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIHIX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIHIX_nzcvAsInt32
+    : AArch64Base_CCMPIHIX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIHIX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIHIX_nzcvAsLabel : AArch64Base_CCMPIHIX_nzcv<OtherVT>;
 
@@ -3341,9 +3341,9 @@ class AArch64Base_CCMPILEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPILEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPILEW_nzcvAsInt8
-    : AArch64Base_CCMPILEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPILEW_nzcvAsInt32
+    : AArch64Base_CCMPILEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPILEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPILEW_nzcvAsLabel : AArch64Base_CCMPILEW_nzcv<OtherVT>;
 
@@ -3365,9 +3365,9 @@ class AArch64Base_CCMPILEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPILEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPILEX_nzcvAsInt8
-    : AArch64Base_CCMPILEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPILEX_nzcvAsInt32
+    : AArch64Base_CCMPILEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPILEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPILEX_nzcvAsLabel : AArch64Base_CCMPILEX_nzcv<OtherVT>;
 
@@ -3389,9 +3389,9 @@ class AArch64Base_CCMPILSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPILSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPILSW_nzcvAsInt8
-    : AArch64Base_CCMPILSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPILSW_nzcvAsInt32
+    : AArch64Base_CCMPILSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPILSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPILSW_nzcvAsLabel : AArch64Base_CCMPILSW_nzcv<OtherVT>;
 
@@ -3413,9 +3413,9 @@ class AArch64Base_CCMPILSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPILSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPILSX_nzcvAsInt8
-    : AArch64Base_CCMPILSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPILSX_nzcvAsInt32
+    : AArch64Base_CCMPILSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPILSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPILSX_nzcvAsLabel : AArch64Base_CCMPILSX_nzcv<OtherVT>;
 
@@ -3437,9 +3437,9 @@ class AArch64Base_CCMPILTW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPILTW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPILTW_nzcvAsInt8
-    : AArch64Base_CCMPILTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILTW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPILTW_nzcvAsInt32
+    : AArch64Base_CCMPILTW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPILTW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPILTW_nzcvAsLabel : AArch64Base_CCMPILTW_nzcv<OtherVT>;
 
@@ -3461,9 +3461,9 @@ class AArch64Base_CCMPILTX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPILTX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPILTX_nzcvAsInt8
-    : AArch64Base_CCMPILTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPILTX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPILTX_nzcvAsInt32
+    : AArch64Base_CCMPILTX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPILTX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPILTX_nzcvAsLabel : AArch64Base_CCMPILTX_nzcv<OtherVT>;
 
@@ -3485,9 +3485,9 @@ class AArch64Base_CCMPIMIW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIMIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIMIW_nzcvAsInt8
-    : AArch64Base_CCMPIMIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIMIW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIMIW_nzcvAsInt32
+    : AArch64Base_CCMPIMIW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIMIW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIMIW_nzcvAsLabel : AArch64Base_CCMPIMIW_nzcv<OtherVT>;
 
@@ -3509,9 +3509,9 @@ class AArch64Base_CCMPIMIX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIMIX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIMIX_nzcvAsInt8
-    : AArch64Base_CCMPIMIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIMIX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIMIX_nzcvAsInt32
+    : AArch64Base_CCMPIMIX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIMIX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIMIX_nzcvAsLabel : AArch64Base_CCMPIMIX_nzcv<OtherVT>;
 
@@ -3533,9 +3533,9 @@ class AArch64Base_CCMPINEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPINEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPINEW_nzcvAsInt8
-    : AArch64Base_CCMPINEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPINEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPINEW_nzcvAsInt32
+    : AArch64Base_CCMPINEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPINEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPINEW_nzcvAsLabel : AArch64Base_CCMPINEW_nzcv<OtherVT>;
 
@@ -3557,9 +3557,9 @@ class AArch64Base_CCMPINEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPINEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPINEX_nzcvAsInt8
-    : AArch64Base_CCMPINEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPINEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPINEX_nzcvAsInt32
+    : AArch64Base_CCMPINEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPINEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPINEX_nzcvAsLabel : AArch64Base_CCMPINEX_nzcv<OtherVT>;
 
@@ -3581,9 +3581,9 @@ class AArch64Base_CCMPINVW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPINVW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPINVW_nzcvAsInt8
-    : AArch64Base_CCMPINVW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPINVW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPINVW_nzcvAsInt32
+    : AArch64Base_CCMPINVW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPINVW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPINVW_nzcvAsLabel : AArch64Base_CCMPINVW_nzcv<OtherVT>;
 
@@ -3605,9 +3605,9 @@ class AArch64Base_CCMPINVX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPINVX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPINVX_nzcvAsInt8
-    : AArch64Base_CCMPINVX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPINVX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPINVX_nzcvAsInt32
+    : AArch64Base_CCMPINVX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPINVX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPINVX_nzcvAsLabel : AArch64Base_CCMPINVX_nzcv<OtherVT>;
 
@@ -3629,9 +3629,9 @@ class AArch64Base_CCMPIPLW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIPLW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIPLW_nzcvAsInt8
-    : AArch64Base_CCMPIPLW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIPLW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIPLW_nzcvAsInt32
+    : AArch64Base_CCMPIPLW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIPLW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIPLW_nzcvAsLabel : AArch64Base_CCMPIPLW_nzcv<OtherVT>;
 
@@ -3653,9 +3653,9 @@ class AArch64Base_CCMPIPLX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIPLX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIPLX_nzcvAsInt8
-    : AArch64Base_CCMPIPLX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIPLX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIPLX_nzcvAsInt32
+    : AArch64Base_CCMPIPLX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIPLX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIPLX_nzcvAsLabel : AArch64Base_CCMPIPLX_nzcv<OtherVT>;
 
@@ -3677,9 +3677,9 @@ class AArch64Base_CCMPIVCW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIVCW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIVCW_nzcvAsInt8
-    : AArch64Base_CCMPIVCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVCW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIVCW_nzcvAsInt32
+    : AArch64Base_CCMPIVCW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIVCW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIVCW_nzcvAsLabel : AArch64Base_CCMPIVCW_nzcv<OtherVT>;
 
@@ -3701,9 +3701,9 @@ class AArch64Base_CCMPIVCX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIVCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIVCX_nzcvAsInt8
-    : AArch64Base_CCMPIVCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVCX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIVCX_nzcvAsInt32
+    : AArch64Base_CCMPIVCX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIVCX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIVCX_nzcvAsLabel : AArch64Base_CCMPIVCX_nzcv<OtherVT>;
 
@@ -3725,9 +3725,9 @@ class AArch64Base_CCMPIVSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIVSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIVSW_nzcvAsInt8
-    : AArch64Base_CCMPIVSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIVSW_nzcvAsInt32
+    : AArch64Base_CCMPIVSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIVSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIVSW_nzcvAsLabel : AArch64Base_CCMPIVSW_nzcv<OtherVT>;
 
@@ -3749,9 +3749,9 @@ class AArch64Base_CCMPIVSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPIVSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPIVSX_nzcvAsInt8
-    : AArch64Base_CCMPIVSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPIVSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPIVSX_nzcvAsInt32
+    : AArch64Base_CCMPIVSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPIVSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPIVSX_nzcvAsLabel : AArch64Base_CCMPIVSX_nzcv<OtherVT>;
 
@@ -3761,9 +3761,9 @@ class AArch64Base_CCMPLEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPLEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPLEW_nzcvAsInt8
-    : AArch64Base_CCMPLEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPLEW_nzcvAsInt32
+    : AArch64Base_CCMPLEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPLEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPLEW_nzcvAsLabel : AArch64Base_CCMPLEW_nzcv<OtherVT>;
 
@@ -3773,9 +3773,9 @@ class AArch64Base_CCMPLEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPLEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPLEX_nzcvAsInt8
-    : AArch64Base_CCMPLEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPLEX_nzcvAsInt32
+    : AArch64Base_CCMPLEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPLEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPLEX_nzcvAsLabel : AArch64Base_CCMPLEX_nzcv<OtherVT>;
 
@@ -3785,9 +3785,9 @@ class AArch64Base_CCMPLSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPLSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPLSW_nzcvAsInt8
-    : AArch64Base_CCMPLSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPLSW_nzcvAsInt32
+    : AArch64Base_CCMPLSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPLSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPLSW_nzcvAsLabel : AArch64Base_CCMPLSW_nzcv<OtherVT>;
 
@@ -3797,9 +3797,9 @@ class AArch64Base_CCMPLSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPLSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPLSX_nzcvAsInt8
-    : AArch64Base_CCMPLSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPLSX_nzcvAsInt32
+    : AArch64Base_CCMPLSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPLSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPLSX_nzcvAsLabel : AArch64Base_CCMPLSX_nzcv<OtherVT>;
 
@@ -3809,9 +3809,9 @@ class AArch64Base_CCMPLTW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPLTW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPLTW_nzcvAsInt8
-    : AArch64Base_CCMPLTW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLTW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPLTW_nzcvAsInt32
+    : AArch64Base_CCMPLTW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPLTW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPLTW_nzcvAsLabel : AArch64Base_CCMPLTW_nzcv<OtherVT>;
 
@@ -3821,9 +3821,9 @@ class AArch64Base_CCMPLTX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPLTX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPLTX_nzcvAsInt8
-    : AArch64Base_CCMPLTX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPLTX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPLTX_nzcvAsInt32
+    : AArch64Base_CCMPLTX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPLTX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPLTX_nzcvAsLabel : AArch64Base_CCMPLTX_nzcv<OtherVT>;
 
@@ -3833,9 +3833,9 @@ class AArch64Base_CCMPMIW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPMIW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPMIW_nzcvAsInt8
-    : AArch64Base_CCMPMIW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPMIW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPMIW_nzcvAsInt32
+    : AArch64Base_CCMPMIW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPMIW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPMIW_nzcvAsLabel : AArch64Base_CCMPMIW_nzcv<OtherVT>;
 
@@ -3845,9 +3845,9 @@ class AArch64Base_CCMPMIX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPMIX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPMIX_nzcvAsInt8
-    : AArch64Base_CCMPMIX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPMIX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPMIX_nzcvAsInt32
+    : AArch64Base_CCMPMIX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPMIX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPMIX_nzcvAsLabel : AArch64Base_CCMPMIX_nzcv<OtherVT>;
 
@@ -3857,9 +3857,9 @@ class AArch64Base_CCMPNEW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPNEW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPNEW_nzcvAsInt8
-    : AArch64Base_CCMPNEW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPNEW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPNEW_nzcvAsInt32
+    : AArch64Base_CCMPNEW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPNEW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPNEW_nzcvAsLabel : AArch64Base_CCMPNEW_nzcv<OtherVT>;
 
@@ -3869,9 +3869,9 @@ class AArch64Base_CCMPNEX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPNEX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPNEX_nzcvAsInt8
-    : AArch64Base_CCMPNEX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPNEX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPNEX_nzcvAsInt32
+    : AArch64Base_CCMPNEX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPNEX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPNEX_nzcvAsLabel : AArch64Base_CCMPNEX_nzcv<OtherVT>;
 
@@ -3881,9 +3881,9 @@ class AArch64Base_CCMPNVW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPNVW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPNVW_nzcvAsInt8
-    : AArch64Base_CCMPNVW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPNVW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPNVW_nzcvAsInt32
+    : AArch64Base_CCMPNVW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPNVW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPNVW_nzcvAsLabel : AArch64Base_CCMPNVW_nzcv<OtherVT>;
 
@@ -3893,9 +3893,9 @@ class AArch64Base_CCMPNVX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPNVX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPNVX_nzcvAsInt8
-    : AArch64Base_CCMPNVX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPNVX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPNVX_nzcvAsInt32
+    : AArch64Base_CCMPNVX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPNVX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPNVX_nzcvAsLabel : AArch64Base_CCMPNVX_nzcv<OtherVT>;
 
@@ -3905,9 +3905,9 @@ class AArch64Base_CCMPPLW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPPLW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPPLW_nzcvAsInt8
-    : AArch64Base_CCMPPLW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPPLW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPPLW_nzcvAsInt32
+    : AArch64Base_CCMPPLW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPPLW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPPLW_nzcvAsLabel : AArch64Base_CCMPPLW_nzcv<OtherVT>;
 
@@ -3917,9 +3917,9 @@ class AArch64Base_CCMPPLX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPPLX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPPLX_nzcvAsInt8
-    : AArch64Base_CCMPPLX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPPLX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPPLX_nzcvAsInt32
+    : AArch64Base_CCMPPLX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPPLX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPPLX_nzcvAsLabel : AArch64Base_CCMPPLX_nzcv<OtherVT>;
 
@@ -3929,9 +3929,9 @@ class AArch64Base_CCMPVCW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPVCW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPVCW_nzcvAsInt8
-    : AArch64Base_CCMPVCW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPVCW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPVCW_nzcvAsInt32
+    : AArch64Base_CCMPVCW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPVCW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPVCW_nzcvAsLabel : AArch64Base_CCMPVCW_nzcv<OtherVT>;
 
@@ -3941,9 +3941,9 @@ class AArch64Base_CCMPVCX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPVCX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPVCX_nzcvAsInt8
-    : AArch64Base_CCMPVCX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPVCX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPVCX_nzcvAsInt32
+    : AArch64Base_CCMPVCX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPVCX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPVCX_nzcvAsLabel : AArch64Base_CCMPVCX_nzcv<OtherVT>;
 
@@ -3953,9 +3953,9 @@ class AArch64Base_CCMPVSW_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPVSW_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPVSW_nzcvAsInt8
-    : AArch64Base_CCMPVSW_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPVSW_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPVSW_nzcvAsInt32
+    : AArch64Base_CCMPVSW_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPVSW_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPVSW_nzcvAsLabel : AArch64Base_CCMPVSW_nzcv<OtherVT>;
 
@@ -3965,9 +3965,9 @@ class AArch64Base_CCMPVSX_nzcv<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_CCMPVSX_nzcv_decode_wrapper";
 }
 
-def AArch64Base_CCMPVSX_nzcvAsInt8
-    : AArch64Base_CCMPVSX_nzcv<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_CCMPVSX_nzcv_predicate(Imm); }]>;
+def AArch64Base_CCMPVSX_nzcvAsInt32
+    : AArch64Base_CCMPVSX_nzcv<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_CCMPVSX_nzcv_predicate(Imm); }]>;
 
 def AArch64Base_CCMPVSX_nzcvAsLabel : AArch64Base_CCMPVSX_nzcv<OtherVT>;
 
@@ -3977,9 +3977,9 @@ class AArch64Base_EONWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EONWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EONWASR_imm6AsInt8
-    : AArch64Base_EONWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_EONWASR_imm6AsInt32
+    : AArch64Base_EONWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EONWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EONWASR_imm6AsLabel : AArch64Base_EONWASR_imm6<OtherVT>;
 
@@ -3989,9 +3989,9 @@ class AArch64Base_EONWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EONWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_EONWLSL_imm6AsInt8
-    : AArch64Base_EONWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_EONWLSL_imm6AsInt32
+    : AArch64Base_EONWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EONWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EONWLSL_imm6AsLabel : AArch64Base_EONWLSL_imm6<OtherVT>;
 
@@ -4001,9 +4001,9 @@ class AArch64Base_EONWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EONWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EONWLSR_imm6AsInt8
-    : AArch64Base_EONWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_EONWLSR_imm6AsInt32
+    : AArch64Base_EONWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EONWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EONWLSR_imm6AsLabel : AArch64Base_EONWLSR_imm6<OtherVT>;
 
@@ -4013,9 +4013,9 @@ class AArch64Base_EONWROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EONWROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EONWROR_imm6AsInt8
-    : AArch64Base_EONWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_EONWROR_imm6AsInt32
+    : AArch64Base_EONWROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EONWROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EONWROR_imm6AsLabel : AArch64Base_EONWROR_imm6<OtherVT>;
 
@@ -4025,9 +4025,9 @@ class AArch64Base_EONXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EONXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EONXASR_imm6AsInt8
-    : AArch64Base_EONXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_EONXASR_imm6AsInt32
+    : AArch64Base_EONXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EONXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EONXASR_imm6AsLabel : AArch64Base_EONXASR_imm6<OtherVT>;
 
@@ -4037,9 +4037,9 @@ class AArch64Base_EONXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EONXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_EONXLSL_imm6AsInt8
-    : AArch64Base_EONXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_EONXLSL_imm6AsInt32
+    : AArch64Base_EONXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EONXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EONXLSL_imm6AsLabel : AArch64Base_EONXLSL_imm6<OtherVT>;
 
@@ -4049,9 +4049,9 @@ class AArch64Base_EONXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EONXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EONXLSR_imm6AsInt8
-    : AArch64Base_EONXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_EONXLSR_imm6AsInt32
+    : AArch64Base_EONXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EONXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EONXLSR_imm6AsLabel : AArch64Base_EONXLSR_imm6<OtherVT>;
 
@@ -4061,9 +4061,9 @@ class AArch64Base_EONXROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EONXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EONXROR_imm6AsInt8
-    : AArch64Base_EONXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EONXROR_imm6_predicate(Imm); }]>;
+def AArch64Base_EONXROR_imm6AsInt32
+    : AArch64Base_EONXROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EONXROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EONXROR_imm6AsLabel : AArch64Base_EONXROR_imm6<OtherVT>;
 
@@ -4097,9 +4097,9 @@ class AArch64Base_EORWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EORWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EORWASR_imm6AsInt8
-    : AArch64Base_EORWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_EORWASR_imm6AsInt32
+    : AArch64Base_EORWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EORWASR_imm6AsLabel : AArch64Base_EORWASR_imm6<OtherVT>;
 
@@ -4109,9 +4109,9 @@ class AArch64Base_EORWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EORWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_EORWLSL_imm6AsInt8
-    : AArch64Base_EORWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_EORWLSL_imm6AsInt32
+    : AArch64Base_EORWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EORWLSL_imm6AsLabel : AArch64Base_EORWLSL_imm6<OtherVT>;
 
@@ -4121,9 +4121,9 @@ class AArch64Base_EORWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EORWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EORWLSR_imm6AsInt8
-    : AArch64Base_EORWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_EORWLSR_imm6AsInt32
+    : AArch64Base_EORWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EORWLSR_imm6AsLabel : AArch64Base_EORWLSR_imm6<OtherVT>;
 
@@ -4133,9 +4133,9 @@ class AArch64Base_EORWROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EORWROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EORWROR_imm6AsInt8
-    : AArch64Base_EORWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_EORWROR_imm6AsInt32
+    : AArch64Base_EORWROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORWROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EORWROR_imm6AsLabel : AArch64Base_EORWROR_imm6<OtherVT>;
 
@@ -4145,9 +4145,9 @@ class AArch64Base_EORXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EORXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EORXASR_imm6AsInt8
-    : AArch64Base_EORXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_EORXASR_imm6AsInt32
+    : AArch64Base_EORXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EORXASR_imm6AsLabel : AArch64Base_EORXASR_imm6<OtherVT>;
 
@@ -4157,9 +4157,9 @@ class AArch64Base_EORXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EORXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_EORXLSL_imm6AsInt8
-    : AArch64Base_EORXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_EORXLSL_imm6AsInt32
+    : AArch64Base_EORXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EORXLSL_imm6AsLabel : AArch64Base_EORXLSL_imm6<OtherVT>;
 
@@ -4169,9 +4169,9 @@ class AArch64Base_EORXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EORXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EORXLSR_imm6AsInt8
-    : AArch64Base_EORXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_EORXLSR_imm6AsInt32
+    : AArch64Base_EORXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EORXLSR_imm6AsLabel : AArch64Base_EORXLSR_imm6<OtherVT>;
 
@@ -4181,9 +4181,9 @@ class AArch64Base_EORXROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EORXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_EORXROR_imm6AsInt8
-    : AArch64Base_EORXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EORXROR_imm6_predicate(Imm); }]>;
+def AArch64Base_EORXROR_imm6AsInt32
+    : AArch64Base_EORXROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EORXROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_EORXROR_imm6AsLabel : AArch64Base_EORXROR_imm6<OtherVT>;
 
@@ -4193,9 +4193,9 @@ class AArch64Base_EXTRW_shiftWSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EXTRW_shiftWSize_decode_wrapper";
 }
 
-def AArch64Base_EXTRW_shiftWSizeAsInt8
-    : AArch64Base_EXTRW_shiftWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EXTRW_shiftWSize_predicate(Imm); }]>;
+def AArch64Base_EXTRW_shiftWSizeAsInt32
+    : AArch64Base_EXTRW_shiftWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EXTRW_shiftWSize_predicate(Imm); }]>;
 
 def AArch64Base_EXTRW_shiftWSizeAsLabel : AArch64Base_EXTRW_shiftWSize<OtherVT>;
 
@@ -4205,9 +4205,9 @@ class AArch64Base_EXTRX_shiftXSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_EXTRX_shiftXSize_decode_wrapper";
 }
 
-def AArch64Base_EXTRX_shiftXSizeAsInt8
-    : AArch64Base_EXTRX_shiftXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_EXTRX_shiftXSize_predicate(Imm); }]>;
+def AArch64Base_EXTRX_shiftXSizeAsInt32
+    : AArch64Base_EXTRX_shiftXSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_EXTRX_shiftXSize_predicate(Imm); }]>;
 
 def AArch64Base_EXTRX_shiftXSizeAsLabel : AArch64Base_EXTRX_shiftXSize<OtherVT>;
 
@@ -4217,9 +4217,9 @@ class AArch64Base_HLT_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_HLT_imm16_decode_wrapper";
 }
 
-def AArch64Base_HLT_imm16AsInt16
-    : AArch64Base_HLT_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_HLT_imm16_predicate(Imm); }]>;
+def AArch64Base_HLT_imm16AsInt32
+    : AArch64Base_HLT_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_HLT_imm16_predicate(Imm); }]>;
 
 def AArch64Base_HLT_imm16AsLabel : AArch64Base_HLT_imm16<OtherVT>;
 
@@ -4805,9 +4805,9 @@ class AArch64Base_MOVKWPos00_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVKWPos00_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVKWPos00_imm16AsInt16
-    : AArch64Base_MOVKWPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKWPos00_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVKWPos00_imm16AsInt32
+    : AArch64Base_MOVKWPos00_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVKWPos00_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVKWPos00_imm16AsLabel : AArch64Base_MOVKWPos00_imm16<OtherVT>;
 
@@ -4817,9 +4817,9 @@ class AArch64Base_MOVKWPos16_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVKWPos16_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVKWPos16_imm16AsInt16
-    : AArch64Base_MOVKWPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKWPos16_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVKWPos16_imm16AsInt32
+    : AArch64Base_MOVKWPos16_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVKWPos16_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVKWPos16_imm16AsLabel : AArch64Base_MOVKWPos16_imm16<OtherVT>;
 
@@ -4829,9 +4829,9 @@ class AArch64Base_MOVKXPos00_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVKXPos00_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVKXPos00_imm16AsInt16
-    : AArch64Base_MOVKXPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos00_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVKXPos00_imm16AsInt32
+    : AArch64Base_MOVKXPos00_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVKXPos00_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVKXPos00_imm16AsLabel : AArch64Base_MOVKXPos00_imm16<OtherVT>;
 
@@ -4841,9 +4841,9 @@ class AArch64Base_MOVKXPos16_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVKXPos16_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVKXPos16_imm16AsInt16
-    : AArch64Base_MOVKXPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos16_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVKXPos16_imm16AsInt32
+    : AArch64Base_MOVKXPos16_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVKXPos16_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVKXPos16_imm16AsLabel : AArch64Base_MOVKXPos16_imm16<OtherVT>;
 
@@ -4853,9 +4853,9 @@ class AArch64Base_MOVKXPos32_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVKXPos32_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVKXPos32_imm16AsInt16
-    : AArch64Base_MOVKXPos32_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos32_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVKXPos32_imm16AsInt32
+    : AArch64Base_MOVKXPos32_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVKXPos32_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVKXPos32_imm16AsLabel : AArch64Base_MOVKXPos32_imm16<OtherVT>;
 
@@ -4865,9 +4865,9 @@ class AArch64Base_MOVKXPos48_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVKXPos48_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVKXPos48_imm16AsInt16
-    : AArch64Base_MOVKXPos48_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVKXPos48_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVKXPos48_imm16AsInt32
+    : AArch64Base_MOVKXPos48_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVKXPos48_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVKXPos48_imm16AsLabel : AArch64Base_MOVKXPos48_imm16<OtherVT>;
 
@@ -4877,9 +4877,9 @@ class AArch64Base_MOVNWPos00_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVNWPos00_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVNWPos00_imm16AsInt16
-    : AArch64Base_MOVNWPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNWPos00_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVNWPos00_imm16AsInt32
+    : AArch64Base_MOVNWPos00_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVNWPos00_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVNWPos00_imm16AsLabel : AArch64Base_MOVNWPos00_imm16<OtherVT>;
 
@@ -4889,9 +4889,9 @@ class AArch64Base_MOVNWPos16_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVNWPos16_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVNWPos16_imm16AsInt16
-    : AArch64Base_MOVNWPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNWPos16_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVNWPos16_imm16AsInt32
+    : AArch64Base_MOVNWPos16_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVNWPos16_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVNWPos16_imm16AsLabel : AArch64Base_MOVNWPos16_imm16<OtherVT>;
 
@@ -4901,9 +4901,9 @@ class AArch64Base_MOVNXPos00_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVNXPos00_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVNXPos00_imm16AsInt16
-    : AArch64Base_MOVNXPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos00_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVNXPos00_imm16AsInt32
+    : AArch64Base_MOVNXPos00_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVNXPos00_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVNXPos00_imm16AsLabel : AArch64Base_MOVNXPos00_imm16<OtherVT>;
 
@@ -4913,9 +4913,9 @@ class AArch64Base_MOVNXPos16_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVNXPos16_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVNXPos16_imm16AsInt16
-    : AArch64Base_MOVNXPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos16_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVNXPos16_imm16AsInt32
+    : AArch64Base_MOVNXPos16_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVNXPos16_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVNXPos16_imm16AsLabel : AArch64Base_MOVNXPos16_imm16<OtherVT>;
 
@@ -4925,9 +4925,9 @@ class AArch64Base_MOVNXPos32_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVNXPos32_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVNXPos32_imm16AsInt16
-    : AArch64Base_MOVNXPos32_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos32_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVNXPos32_imm16AsInt32
+    : AArch64Base_MOVNXPos32_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVNXPos32_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVNXPos32_imm16AsLabel : AArch64Base_MOVNXPos32_imm16<OtherVT>;
 
@@ -4937,9 +4937,9 @@ class AArch64Base_MOVNXPos48_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVNXPos48_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVNXPos48_imm16AsInt16
-    : AArch64Base_MOVNXPos48_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVNXPos48_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVNXPos48_imm16AsInt32
+    : AArch64Base_MOVNXPos48_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVNXPos48_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVNXPos48_imm16AsLabel : AArch64Base_MOVNXPos48_imm16<OtherVT>;
 
@@ -4949,9 +4949,9 @@ class AArch64Base_MOVZWPos00_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVZWPos00_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVZWPos00_imm16AsInt16
-    : AArch64Base_MOVZWPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZWPos00_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVZWPos00_imm16AsInt32
+    : AArch64Base_MOVZWPos00_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVZWPos00_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVZWPos00_imm16AsLabel : AArch64Base_MOVZWPos00_imm16<OtherVT>;
 
@@ -4961,9 +4961,9 @@ class AArch64Base_MOVZWPos16_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVZWPos16_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVZWPos16_imm16AsInt16
-    : AArch64Base_MOVZWPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZWPos16_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVZWPos16_imm16AsInt32
+    : AArch64Base_MOVZWPos16_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVZWPos16_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVZWPos16_imm16AsLabel : AArch64Base_MOVZWPos16_imm16<OtherVT>;
 
@@ -4973,9 +4973,9 @@ class AArch64Base_MOVZXPos00_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVZXPos00_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVZXPos00_imm16AsInt16
-    : AArch64Base_MOVZXPos00_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos00_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVZXPos00_imm16AsInt32
+    : AArch64Base_MOVZXPos00_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVZXPos00_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVZXPos00_imm16AsLabel : AArch64Base_MOVZXPos00_imm16<OtherVT>;
 
@@ -4985,9 +4985,9 @@ class AArch64Base_MOVZXPos16_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVZXPos16_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVZXPos16_imm16AsInt16
-    : AArch64Base_MOVZXPos16_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos16_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVZXPos16_imm16AsInt32
+    : AArch64Base_MOVZXPos16_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVZXPos16_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVZXPos16_imm16AsLabel : AArch64Base_MOVZXPos16_imm16<OtherVT>;
 
@@ -4997,9 +4997,9 @@ class AArch64Base_MOVZXPos32_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVZXPos32_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVZXPos32_imm16AsInt16
-    : AArch64Base_MOVZXPos32_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos32_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVZXPos32_imm16AsInt32
+    : AArch64Base_MOVZXPos32_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVZXPos32_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVZXPos32_imm16AsLabel : AArch64Base_MOVZXPos32_imm16<OtherVT>;
 
@@ -5009,9 +5009,9 @@ class AArch64Base_MOVZXPos48_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MOVZXPos48_imm16_decode_wrapper";
 }
 
-def AArch64Base_MOVZXPos48_imm16AsInt16
-    : AArch64Base_MOVZXPos48_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MOVZXPos48_imm16_predicate(Imm); }]>;
+def AArch64Base_MOVZXPos48_imm16AsInt32
+    : AArch64Base_MOVZXPos48_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MOVZXPos48_imm16_predicate(Imm); }]>;
 
 def AArch64Base_MOVZXPos48_imm16AsLabel : AArch64Base_MOVZXPos48_imm16<OtherVT>;
 
@@ -5021,9 +5021,9 @@ class AArch64Base_MRS_sysreg<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MRS_sysreg_decode_wrapper";
 }
 
-def AArch64Base_MRS_sysregAsInt16
-    : AArch64Base_MRS_sysreg<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MRS_sysreg_predicate(Imm); }]>;
+def AArch64Base_MRS_sysregAsInt32
+    : AArch64Base_MRS_sysreg<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MRS_sysreg_predicate(Imm); }]>;
 
 def AArch64Base_MRS_sysregAsLabel : AArch64Base_MRS_sysreg<OtherVT>;
 
@@ -5033,9 +5033,9 @@ class AArch64Base_MSR_sysreg<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_MSR_sysreg_decode_wrapper";
 }
 
-def AArch64Base_MSR_sysregAsInt16
-    : AArch64Base_MSR_sysreg<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_MSR_sysreg_predicate(Imm); }]>;
+def AArch64Base_MSR_sysregAsInt32
+    : AArch64Base_MSR_sysreg<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_MSR_sysreg_predicate(Imm); }]>;
 
 def AArch64Base_MSR_sysregAsLabel : AArch64Base_MSR_sysreg<OtherVT>;
 
@@ -5045,9 +5045,9 @@ class AArch64Base_ORNWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORNWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORNWASR_imm6AsInt8
-    : AArch64Base_ORNWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORNWASR_imm6AsInt32
+    : AArch64Base_ORNWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORNWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNWASR_imm6AsLabel : AArch64Base_ORNWASR_imm6<OtherVT>;
 
@@ -5057,9 +5057,9 @@ class AArch64Base_ORNWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORNWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORNWLSL_imm6AsInt8
-    : AArch64Base_ORNWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ORNWLSL_imm6AsInt32
+    : AArch64Base_ORNWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORNWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNWLSL_imm6AsLabel : AArch64Base_ORNWLSL_imm6<OtherVT>;
 
@@ -5069,9 +5069,9 @@ class AArch64Base_ORNWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORNWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORNWLSR_imm6AsInt8
-    : AArch64Base_ORNWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORNWLSR_imm6AsInt32
+    : AArch64Base_ORNWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORNWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNWLSR_imm6AsLabel : AArch64Base_ORNWLSR_imm6<OtherVT>;
 
@@ -5081,9 +5081,9 @@ class AArch64Base_ORNWROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORNWROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORNWROR_imm6AsInt8
-    : AArch64Base_ORNWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORNWROR_imm6AsInt32
+    : AArch64Base_ORNWROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORNWROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNWROR_imm6AsLabel : AArch64Base_ORNWROR_imm6<OtherVT>;
 
@@ -5093,9 +5093,9 @@ class AArch64Base_ORNXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORNXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORNXASR_imm6AsInt8
-    : AArch64Base_ORNXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORNXASR_imm6AsInt32
+    : AArch64Base_ORNXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORNXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNXASR_imm6AsLabel : AArch64Base_ORNXASR_imm6<OtherVT>;
 
@@ -5105,9 +5105,9 @@ class AArch64Base_ORNXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORNXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORNXLSL_imm6AsInt8
-    : AArch64Base_ORNXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ORNXLSL_imm6AsInt32
+    : AArch64Base_ORNXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORNXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNXLSL_imm6AsLabel : AArch64Base_ORNXLSL_imm6<OtherVT>;
 
@@ -5117,9 +5117,9 @@ class AArch64Base_ORNXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORNXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORNXLSR_imm6AsInt8
-    : AArch64Base_ORNXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORNXLSR_imm6AsInt32
+    : AArch64Base_ORNXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORNXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNXLSR_imm6AsLabel : AArch64Base_ORNXLSR_imm6<OtherVT>;
 
@@ -5129,9 +5129,9 @@ class AArch64Base_ORNXROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORNXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORNXROR_imm6AsInt8
-    : AArch64Base_ORNXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORNXROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORNXROR_imm6AsInt32
+    : AArch64Base_ORNXROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORNXROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORNXROR_imm6AsLabel : AArch64Base_ORNXROR_imm6<OtherVT>;
 
@@ -5165,9 +5165,9 @@ class AArch64Base_ORRWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORRWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORRWASR_imm6AsInt8
-    : AArch64Base_ORRWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORRWASR_imm6AsInt32
+    : AArch64Base_ORRWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRWASR_imm6AsLabel : AArch64Base_ORRWASR_imm6<OtherVT>;
 
@@ -5177,9 +5177,9 @@ class AArch64Base_ORRWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORRWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORRWLSL_imm6AsInt8
-    : AArch64Base_ORRWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ORRWLSL_imm6AsInt32
+    : AArch64Base_ORRWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRWLSL_imm6AsLabel : AArch64Base_ORRWLSL_imm6<OtherVT>;
 
@@ -5189,9 +5189,9 @@ class AArch64Base_ORRWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORRWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORRWLSR_imm6AsInt8
-    : AArch64Base_ORRWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORRWLSR_imm6AsInt32
+    : AArch64Base_ORRWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRWLSR_imm6AsLabel : AArch64Base_ORRWLSR_imm6<OtherVT>;
 
@@ -5201,9 +5201,9 @@ class AArch64Base_ORRWROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORRWROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORRWROR_imm6AsInt8
-    : AArch64Base_ORRWROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRWROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORRWROR_imm6AsInt32
+    : AArch64Base_ORRWROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRWROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRWROR_imm6AsLabel : AArch64Base_ORRWROR_imm6<OtherVT>;
 
@@ -5213,9 +5213,9 @@ class AArch64Base_ORRXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORRXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORRXASR_imm6AsInt8
-    : AArch64Base_ORRXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORRXASR_imm6AsInt32
+    : AArch64Base_ORRXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRXASR_imm6AsLabel : AArch64Base_ORRXASR_imm6<OtherVT>;
 
@@ -5225,9 +5225,9 @@ class AArch64Base_ORRXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORRXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORRXLSL_imm6AsInt8
-    : AArch64Base_ORRXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_ORRXLSL_imm6AsInt32
+    : AArch64Base_ORRXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRXLSL_imm6AsLabel : AArch64Base_ORRXLSL_imm6<OtherVT>;
 
@@ -5237,9 +5237,9 @@ class AArch64Base_ORRXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORRXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORRXLSR_imm6AsInt8
-    : AArch64Base_ORRXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORRXLSR_imm6AsInt32
+    : AArch64Base_ORRXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRXLSR_imm6AsLabel : AArch64Base_ORRXLSR_imm6<OtherVT>;
 
@@ -5249,9 +5249,9 @@ class AArch64Base_ORRXROR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_ORRXROR_imm6_decode_wrapper";
 }
 
-def AArch64Base_ORRXROR_imm6AsInt8
-    : AArch64Base_ORRXROR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_ORRXROR_imm6_predicate(Imm); }]>;
+def AArch64Base_ORRXROR_imm6AsInt32
+    : AArch64Base_ORRXROR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_ORRXROR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_ORRXROR_imm6AsLabel : AArch64Base_ORRXROR_imm6<OtherVT>;
 
@@ -5261,9 +5261,9 @@ class AArch64Base_SBFMW_leftWSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SBFMW_leftWSize_decode_wrapper";
 }
 
-def AArch64Base_SBFMW_leftWSizeAsInt8
-    : AArch64Base_SBFMW_leftWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SBFMW_leftWSize_predicate(Imm); }]>;
+def AArch64Base_SBFMW_leftWSizeAsInt32
+    : AArch64Base_SBFMW_leftWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SBFMW_leftWSize_predicate(Imm); }]>;
 
 def AArch64Base_SBFMW_leftWSizeAsLabel : AArch64Base_SBFMW_leftWSize<OtherVT>;
 
@@ -5273,9 +5273,9 @@ class AArch64Base_SBFMW_rightWSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SBFMW_rightWSize_decode_wrapper";
 }
 
-def AArch64Base_SBFMW_rightWSizeAsInt8
-    : AArch64Base_SBFMW_rightWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SBFMW_rightWSize_predicate(Imm); }]>;
+def AArch64Base_SBFMW_rightWSizeAsInt32
+    : AArch64Base_SBFMW_rightWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SBFMW_rightWSize_predicate(Imm); }]>;
 
 def AArch64Base_SBFMW_rightWSizeAsLabel : AArch64Base_SBFMW_rightWSize<OtherVT>;
 
@@ -5285,9 +5285,9 @@ class AArch64Base_SBFMX_leftXSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SBFMX_leftXSize_decode_wrapper";
 }
 
-def AArch64Base_SBFMX_leftXSizeAsInt8
-    : AArch64Base_SBFMX_leftXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SBFMX_leftXSize_predicate(Imm); }]>;
+def AArch64Base_SBFMX_leftXSizeAsInt32
+    : AArch64Base_SBFMX_leftXSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SBFMX_leftXSize_predicate(Imm); }]>;
 
 def AArch64Base_SBFMX_leftXSizeAsLabel : AArch64Base_SBFMX_leftXSize<OtherVT>;
 
@@ -5297,9 +5297,9 @@ class AArch64Base_SBFMX_rightXSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SBFMX_rightXSize_decode_wrapper";
 }
 
-def AArch64Base_SBFMX_rightXSizeAsInt8
-    : AArch64Base_SBFMX_rightXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SBFMX_rightXSize_predicate(Imm); }]>;
+def AArch64Base_SBFMX_rightXSizeAsInt32
+    : AArch64Base_SBFMX_rightXSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SBFMX_rightXSize_predicate(Imm); }]>;
 
 def AArch64Base_SBFMX_rightXSizeAsLabel : AArch64Base_SBFMX_rightXSize<OtherVT>;
 
@@ -5573,9 +5573,9 @@ class AArch64Base_SUBWASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBWASR_imm6AsInt8
-    : AArch64Base_SUBWASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWASR_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBWASR_imm6AsInt32
+    : AArch64Base_SUBWASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBWASR_imm6AsLabel : AArch64Base_SUBWASR_imm6<OtherVT>;
 
@@ -5609,9 +5609,9 @@ class AArch64Base_SUBWLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBWLSL_imm6AsInt8
-    : AArch64Base_SUBWLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBWLSL_imm6AsInt32
+    : AArch64Base_SUBWLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBWLSL_imm6AsLabel : AArch64Base_SUBWLSL_imm6<OtherVT>;
 
@@ -5621,9 +5621,9 @@ class AArch64Base_SUBWLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBWLSR_imm6AsInt8
-    : AArch64Base_SUBWLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBWLSR_imm6AsInt32
+    : AArch64Base_SUBWLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBWLSR_imm6AsLabel : AArch64Base_SUBWLSR_imm6<OtherVT>;
 
@@ -5633,9 +5633,9 @@ class AArch64Base_SUBWSASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBWSASR_imm6AsInt8
-    : AArch64Base_SUBWSASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSASR_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBWSASR_imm6AsInt32
+    : AArch64Base_SUBWSASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSASR_imm6AsLabel : AArch64Base_SUBWSASR_imm6<OtherVT>;
 
@@ -5669,9 +5669,9 @@ class AArch64Base_SUBWSLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBWSLSL_imm6AsInt8
-    : AArch64Base_SUBWSLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBWSLSL_imm6AsInt32
+    : AArch64Base_SUBWSLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSLSL_imm6AsLabel : AArch64Base_SUBWSLSL_imm6<OtherVT>;
 
@@ -5681,9 +5681,9 @@ class AArch64Base_SUBWSLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBWSLSR_imm6AsInt8
-    : AArch64Base_SUBWSLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBWSLSR_imm6AsInt32
+    : AArch64Base_SUBWSLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSLSR_imm6AsLabel : AArch64Base_SUBWSLSR_imm6<OtherVT>;
 
@@ -5693,9 +5693,9 @@ class AArch64Base_SUBWSSXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSSXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSSXSB_imm3AsInt8
-    : AArch64Base_SUBWSSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSSXSB_imm3AsInt32
+    : AArch64Base_SUBWSSXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSSXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSSXSB_imm3AsLabel : AArch64Base_SUBWSSXSB_imm3<OtherVT>;
 
@@ -5705,9 +5705,9 @@ class AArch64Base_SUBWSSXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSSXSH_imm3AsInt8
-    : AArch64Base_SUBWSSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSSXSH_imm3AsInt32
+    : AArch64Base_SUBWSSXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSSXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSSXSH_imm3AsLabel : AArch64Base_SUBWSSXSH_imm3<OtherVT>;
 
@@ -5717,9 +5717,9 @@ class AArch64Base_SUBWSSXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSSXSW_imm3AsInt8
-    : AArch64Base_SUBWSSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSSXSW_imm3AsInt32
+    : AArch64Base_SUBWSSXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSSXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSSXSW_imm3AsLabel : AArch64Base_SUBWSSXSW_imm3<OtherVT>;
 
@@ -5729,9 +5729,9 @@ class AArch64Base_SUBWSSXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSSXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSSXSX_imm3AsInt8
-    : AArch64Base_SUBWSSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSSXSX_imm3AsInt32
+    : AArch64Base_SUBWSSXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSSXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSSXSX_imm3AsLabel : AArch64Base_SUBWSSXSX_imm3<OtherVT>;
 
@@ -5741,9 +5741,9 @@ class AArch64Base_SUBWSUXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSUXSB_imm3AsInt8
-    : AArch64Base_SUBWSUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSUXSB_imm3AsInt32
+    : AArch64Base_SUBWSUXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSUXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSUXSB_imm3AsLabel : AArch64Base_SUBWSUXSB_imm3<OtherVT>;
 
@@ -5753,9 +5753,9 @@ class AArch64Base_SUBWSUXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSUXSH_imm3AsInt8
-    : AArch64Base_SUBWSUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSUXSH_imm3AsInt32
+    : AArch64Base_SUBWSUXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSUXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSUXSH_imm3AsLabel : AArch64Base_SUBWSUXSH_imm3<OtherVT>;
 
@@ -5765,9 +5765,9 @@ class AArch64Base_SUBWSUXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSUXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSUXSW_imm3AsInt8
-    : AArch64Base_SUBWSUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSUXSW_imm3AsInt32
+    : AArch64Base_SUBWSUXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSUXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSUXSW_imm3AsLabel : AArch64Base_SUBWSUXSW_imm3<OtherVT>;
 
@@ -5777,9 +5777,9 @@ class AArch64Base_SUBWSUXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSUXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSUXSX_imm3AsInt8
-    : AArch64Base_SUBWSUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSUXSX_imm3AsInt32
+    : AArch64Base_SUBWSUXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSUXSX_imm3AsLabel : AArch64Base_SUBWSUXSX_imm3<OtherVT>;
 
@@ -5789,9 +5789,9 @@ class AArch64Base_SUBWSXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSXSB_imm3AsInt8
-    : AArch64Base_SUBWSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSXSB_imm3AsInt32
+    : AArch64Base_SUBWSXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSXSB_imm3AsLabel : AArch64Base_SUBWSXSB_imm3<OtherVT>;
 
@@ -5801,9 +5801,9 @@ class AArch64Base_SUBWSXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSXSH_imm3AsInt8
-    : AArch64Base_SUBWSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSXSH_imm3AsInt32
+    : AArch64Base_SUBWSXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSXSH_imm3AsLabel : AArch64Base_SUBWSXSH_imm3<OtherVT>;
 
@@ -5813,9 +5813,9 @@ class AArch64Base_SUBWSXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSXSW_imm3AsInt8
-    : AArch64Base_SUBWSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSXSW_imm3AsInt32
+    : AArch64Base_SUBWSXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSXSW_imm3AsLabel : AArch64Base_SUBWSXSW_imm3<OtherVT>;
 
@@ -5825,9 +5825,9 @@ class AArch64Base_SUBWSXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWSXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWSXSX_imm3AsInt8
-    : AArch64Base_SUBWSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWSXSX_imm3AsInt32
+    : AArch64Base_SUBWSXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWSXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWSXSX_imm3AsLabel : AArch64Base_SUBWSXSX_imm3<OtherVT>;
 
@@ -5837,9 +5837,9 @@ class AArch64Base_SUBWUXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWUXSB_imm3AsInt8
-    : AArch64Base_SUBWUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWUXSB_imm3AsInt32
+    : AArch64Base_SUBWUXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWUXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWUXSB_imm3AsLabel : AArch64Base_SUBWUXSB_imm3<OtherVT>;
 
@@ -5849,9 +5849,9 @@ class AArch64Base_SUBWUXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWUXSH_imm3AsInt8
-    : AArch64Base_SUBWUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWUXSH_imm3AsInt32
+    : AArch64Base_SUBWUXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWUXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWUXSH_imm3AsLabel : AArch64Base_SUBWUXSH_imm3<OtherVT>;
 
@@ -5861,9 +5861,9 @@ class AArch64Base_SUBWUXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWUXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWUXSW_imm3AsInt8
-    : AArch64Base_SUBWUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWUXSW_imm3AsInt32
+    : AArch64Base_SUBWUXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWUXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWUXSW_imm3AsLabel : AArch64Base_SUBWUXSW_imm3<OtherVT>;
 
@@ -5873,9 +5873,9 @@ class AArch64Base_SUBWUXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBWUXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBWUXSX_imm3AsInt8
-    : AArch64Base_SUBWUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBWUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBWUXSX_imm3AsInt32
+    : AArch64Base_SUBWUXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBWUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBWUXSX_imm3AsLabel : AArch64Base_SUBWUXSX_imm3<OtherVT>;
 
@@ -5885,9 +5885,9 @@ class AArch64Base_SUBXASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBXASR_imm6AsInt8
-    : AArch64Base_SUBXASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXASR_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBXASR_imm6AsInt32
+    : AArch64Base_SUBXASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBXASR_imm6AsLabel : AArch64Base_SUBXASR_imm6<OtherVT>;
 
@@ -5921,9 +5921,9 @@ class AArch64Base_SUBXLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBXLSL_imm6AsInt8
-    : AArch64Base_SUBXLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBXLSL_imm6AsInt32
+    : AArch64Base_SUBXLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBXLSL_imm6AsLabel : AArch64Base_SUBXLSL_imm6<OtherVT>;
 
@@ -5933,9 +5933,9 @@ class AArch64Base_SUBXLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBXLSR_imm6AsInt8
-    : AArch64Base_SUBXLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBXLSR_imm6AsInt32
+    : AArch64Base_SUBXLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBXLSR_imm6AsLabel : AArch64Base_SUBXLSR_imm6<OtherVT>;
 
@@ -5945,9 +5945,9 @@ class AArch64Base_SUBXSASR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSASR_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBXSASR_imm6AsInt8
-    : AArch64Base_SUBXSASR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSASR_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBXSASR_imm6AsInt32
+    : AArch64Base_SUBXSASR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSASR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSASR_imm6AsLabel : AArch64Base_SUBXSASR_imm6<OtherVT>;
 
@@ -5981,9 +5981,9 @@ class AArch64Base_SUBXSLSL_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSLSL_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBXSLSL_imm6AsInt8
-    : AArch64Base_SUBXSLSL_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSLSL_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBXSLSL_imm6AsInt32
+    : AArch64Base_SUBXSLSL_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSLSL_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSLSL_imm6AsLabel : AArch64Base_SUBXSLSL_imm6<OtherVT>;
 
@@ -5993,9 +5993,9 @@ class AArch64Base_SUBXSLSR_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSLSR_imm6_decode_wrapper";
 }
 
-def AArch64Base_SUBXSLSR_imm6AsInt8
-    : AArch64Base_SUBXSLSR_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSLSR_imm6_predicate(Imm); }]>;
+def AArch64Base_SUBXSLSR_imm6AsInt32
+    : AArch64Base_SUBXSLSR_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSLSR_imm6_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSLSR_imm6AsLabel : AArch64Base_SUBXSLSR_imm6<OtherVT>;
 
@@ -6005,9 +6005,9 @@ class AArch64Base_SUBXSSXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSSXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSSXSB_imm3AsInt8
-    : AArch64Base_SUBXSSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSSXSB_imm3AsInt32
+    : AArch64Base_SUBXSSXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSSXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSSXSB_imm3AsLabel : AArch64Base_SUBXSSXSB_imm3<OtherVT>;
 
@@ -6017,9 +6017,9 @@ class AArch64Base_SUBXSSXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSSXSH_imm3AsInt8
-    : AArch64Base_SUBXSSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSSXSH_imm3AsInt32
+    : AArch64Base_SUBXSSXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSSXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSSXSH_imm3AsLabel : AArch64Base_SUBXSSXSH_imm3<OtherVT>;
 
@@ -6029,9 +6029,9 @@ class AArch64Base_SUBXSSXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSSXSW_imm3AsInt8
-    : AArch64Base_SUBXSSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSSXSW_imm3AsInt32
+    : AArch64Base_SUBXSSXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSSXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSSXSW_imm3AsLabel : AArch64Base_SUBXSSXSW_imm3<OtherVT>;
 
@@ -6041,9 +6041,9 @@ class AArch64Base_SUBXSSXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSSXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSSXSX_imm3AsInt8
-    : AArch64Base_SUBXSSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSSXSX_imm3AsInt32
+    : AArch64Base_SUBXSSXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSSXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSSXSX_imm3AsLabel : AArch64Base_SUBXSSXSX_imm3<OtherVT>;
 
@@ -6053,9 +6053,9 @@ class AArch64Base_SUBXSUXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSUXSB_imm3AsInt8
-    : AArch64Base_SUBXSUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSUXSB_imm3AsInt32
+    : AArch64Base_SUBXSUXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSUXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSUXSB_imm3AsLabel : AArch64Base_SUBXSUXSB_imm3<OtherVT>;
 
@@ -6065,9 +6065,9 @@ class AArch64Base_SUBXSUXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSUXSH_imm3AsInt8
-    : AArch64Base_SUBXSUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSUXSH_imm3AsInt32
+    : AArch64Base_SUBXSUXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSUXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSUXSH_imm3AsLabel : AArch64Base_SUBXSUXSH_imm3<OtherVT>;
 
@@ -6077,9 +6077,9 @@ class AArch64Base_SUBXSUXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSUXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSUXSW_imm3AsInt8
-    : AArch64Base_SUBXSUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSUXSW_imm3AsInt32
+    : AArch64Base_SUBXSUXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSUXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSUXSW_imm3AsLabel : AArch64Base_SUBXSUXSW_imm3<OtherVT>;
 
@@ -6089,9 +6089,9 @@ class AArch64Base_SUBXSUXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSUXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSUXSX_imm3AsInt8
-    : AArch64Base_SUBXSUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSUXSX_imm3AsInt32
+    : AArch64Base_SUBXSUXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSUXSX_imm3AsLabel : AArch64Base_SUBXSUXSX_imm3<OtherVT>;
 
@@ -6101,9 +6101,9 @@ class AArch64Base_SUBXSXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSXSB_imm3AsInt8
-    : AArch64Base_SUBXSXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSXSB_imm3AsInt32
+    : AArch64Base_SUBXSXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSXSB_imm3AsLabel : AArch64Base_SUBXSXSB_imm3<OtherVT>;
 
@@ -6113,9 +6113,9 @@ class AArch64Base_SUBXSXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSXSH_imm3AsInt8
-    : AArch64Base_SUBXSXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSXSH_imm3AsInt32
+    : AArch64Base_SUBXSXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSXSH_imm3AsLabel : AArch64Base_SUBXSXSH_imm3<OtherVT>;
 
@@ -6125,9 +6125,9 @@ class AArch64Base_SUBXSXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSXSW_imm3AsInt8
-    : AArch64Base_SUBXSXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSXSW_imm3AsInt32
+    : AArch64Base_SUBXSXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSXSW_imm3AsLabel : AArch64Base_SUBXSXSW_imm3<OtherVT>;
 
@@ -6137,9 +6137,9 @@ class AArch64Base_SUBXSXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXSXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXSXSX_imm3AsInt8
-    : AArch64Base_SUBXSXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXSXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXSXSX_imm3AsInt32
+    : AArch64Base_SUBXSXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXSXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXSXSX_imm3AsLabel : AArch64Base_SUBXSXSX_imm3<OtherVT>;
 
@@ -6149,9 +6149,9 @@ class AArch64Base_SUBXUXSB_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXUXSB_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXUXSB_imm3AsInt8
-    : AArch64Base_SUBXUXSB_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSB_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXUXSB_imm3AsInt32
+    : AArch64Base_SUBXUXSB_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXUXSB_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXUXSB_imm3AsLabel : AArch64Base_SUBXUXSB_imm3<OtherVT>;
 
@@ -6161,9 +6161,9 @@ class AArch64Base_SUBXUXSH_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXUXSH_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXUXSH_imm3AsInt8
-    : AArch64Base_SUBXUXSH_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSH_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXUXSH_imm3AsInt32
+    : AArch64Base_SUBXUXSH_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXUXSH_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXUXSH_imm3AsLabel : AArch64Base_SUBXUXSH_imm3<OtherVT>;
 
@@ -6173,9 +6173,9 @@ class AArch64Base_SUBXUXSW_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXUXSW_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXUXSW_imm3AsInt8
-    : AArch64Base_SUBXUXSW_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSW_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXUXSW_imm3AsInt32
+    : AArch64Base_SUBXUXSW_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXUXSW_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXUXSW_imm3AsLabel : AArch64Base_SUBXUXSW_imm3<OtherVT>;
 
@@ -6185,9 +6185,9 @@ class AArch64Base_SUBXUXSX_imm3<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SUBXUXSX_imm3_decode_wrapper";
 }
 
-def AArch64Base_SUBXUXSX_imm3AsInt8
-    : AArch64Base_SUBXUXSX_imm3<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_SUBXUXSX_imm3_predicate(Imm); }]>;
+def AArch64Base_SUBXUXSX_imm3AsInt32
+    : AArch64Base_SUBXUXSX_imm3<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SUBXUXSX_imm3_predicate(Imm); }]>;
 
 def AArch64Base_SUBXUXSX_imm3AsLabel : AArch64Base_SUBXUXSX_imm3<OtherVT>;
 
@@ -6197,9 +6197,9 @@ class AArch64Base_SVC_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_SVC_imm16_decode_wrapper";
 }
 
-def AArch64Base_SVC_imm16AsInt16
-    : AArch64Base_SVC_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_SVC_imm16_predicate(Imm); }]>;
+def AArch64Base_SVC_imm16AsInt32
+    : AArch64Base_SVC_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_SVC_imm16_predicate(Imm); }]>;
 
 def AArch64Base_SVC_imm16AsLabel : AArch64Base_SVC_imm16<OtherVT>;
 
@@ -6221,9 +6221,9 @@ class AArch64Base_TBNZ_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_TBNZ_imm6_decode_wrapper";
 }
 
-def AArch64Base_TBNZ_imm6AsInt8
-    : AArch64Base_TBNZ_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_TBNZ_imm6_predicate(Imm); }]>;
+def AArch64Base_TBNZ_imm6AsInt32
+    : AArch64Base_TBNZ_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_TBNZ_imm6_predicate(Imm); }]>;
 
 def AArch64Base_TBNZ_imm6AsLabel : AArch64Base_TBNZ_imm6<OtherVT>;
 
@@ -6245,9 +6245,9 @@ class AArch64Base_TBZ_imm6<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_TBZ_imm6_decode_wrapper";
 }
 
-def AArch64Base_TBZ_imm6AsInt8
-    : AArch64Base_TBZ_imm6<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_TBZ_imm6_predicate(Imm); }]>;
+def AArch64Base_TBZ_imm6AsInt32
+    : AArch64Base_TBZ_imm6<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_TBZ_imm6_predicate(Imm); }]>;
 
 def AArch64Base_TBZ_imm6AsLabel : AArch64Base_TBZ_imm6<OtherVT>;
 
@@ -6257,9 +6257,9 @@ class AArch64Base_UBFMW_leftWSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_UBFMW_leftWSize_decode_wrapper";
 }
 
-def AArch64Base_UBFMW_leftWSizeAsInt8
-    : AArch64Base_UBFMW_leftWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_UBFMW_leftWSize_predicate(Imm); }]>;
+def AArch64Base_UBFMW_leftWSizeAsInt32
+    : AArch64Base_UBFMW_leftWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_UBFMW_leftWSize_predicate(Imm); }]>;
 
 def AArch64Base_UBFMW_leftWSizeAsLabel : AArch64Base_UBFMW_leftWSize<OtherVT>;
 
@@ -6269,9 +6269,9 @@ class AArch64Base_UBFMW_rightWSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_UBFMW_rightWSize_decode_wrapper";
 }
 
-def AArch64Base_UBFMW_rightWSizeAsInt8
-    : AArch64Base_UBFMW_rightWSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_UBFMW_rightWSize_predicate(Imm); }]>;
+def AArch64Base_UBFMW_rightWSizeAsInt32
+    : AArch64Base_UBFMW_rightWSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_UBFMW_rightWSize_predicate(Imm); }]>;
 
 def AArch64Base_UBFMW_rightWSizeAsLabel : AArch64Base_UBFMW_rightWSize<OtherVT>;
 
@@ -6281,9 +6281,9 @@ class AArch64Base_UBFMX_leftXSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_UBFMX_leftXSize_decode_wrapper";
 }
 
-def AArch64Base_UBFMX_leftXSizeAsInt8
-    : AArch64Base_UBFMX_leftXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_UBFMX_leftXSize_predicate(Imm); }]>;
+def AArch64Base_UBFMX_leftXSizeAsInt32
+    : AArch64Base_UBFMX_leftXSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_UBFMX_leftXSize_predicate(Imm); }]>;
 
 def AArch64Base_UBFMX_leftXSizeAsLabel : AArch64Base_UBFMX_leftXSize<OtherVT>;
 
@@ -6293,9 +6293,9 @@ class AArch64Base_UBFMX_rightXSize<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_UBFMX_rightXSize_decode_wrapper";
 }
 
-def AArch64Base_UBFMX_rightXSizeAsInt8
-    : AArch64Base_UBFMX_rightXSize<i8>
-    , ImmLeaf<i8, [{ return AArch64Base_UBFMX_rightXSize_predicate(Imm); }]>;
+def AArch64Base_UBFMX_rightXSizeAsInt32
+    : AArch64Base_UBFMX_rightXSize<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_UBFMX_rightXSize_predicate(Imm); }]>;
 
 def AArch64Base_UBFMX_rightXSizeAsLabel : AArch64Base_UBFMX_rightXSize<OtherVT>;
 
@@ -6305,9 +6305,9 @@ class AArch64Base_UDF_imm16<ValueType ty> : Operand<ty>
   let DecoderMethod = "AArch64Base_UDF_imm16_decode_wrapper";
 }
 
-def AArch64Base_UDF_imm16AsInt16
-    : AArch64Base_UDF_imm16<i16>
-    , ImmLeaf<i16, [{ return AArch64Base_UDF_imm16_predicate(Imm); }]>;
+def AArch64Base_UDF_imm16AsInt32
+    : AArch64Base_UDF_imm16<i32>
+    , ImmLeaf<i32, [{ return AArch64Base_UDF_imm16_predicate(Imm); }]>;
 
 def AArch64Base_UDF_imm16AsLabel : AArch64Base_UDF_imm16<OtherVT>;
 
@@ -6618,7 +6618,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -6792,7 +6792,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -6852,7 +6852,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -6972,7 +6972,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -7146,7 +7146,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -7206,7 +7206,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -7266,7 +7266,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -7325,7 +7325,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -7384,7 +7384,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -7443,7 +7443,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -7738,7 +7738,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -7797,7 +7797,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -7856,7 +7856,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -7915,7 +7915,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -8210,7 +8210,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -8269,7 +8269,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -8328,7 +8328,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -8387,7 +8387,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -8682,7 +8682,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -8741,7 +8741,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -8800,7 +8800,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -8859,7 +8859,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -9214,7 +9214,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -9388,7 +9388,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -9448,7 +9448,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -9568,7 +9568,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -9742,7 +9742,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -9802,7 +9802,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -9862,7 +9862,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -9921,7 +9921,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -9980,7 +9980,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10039,7 +10039,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10334,7 +10334,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10393,7 +10393,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10452,7 +10452,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10511,7 +10511,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10806,7 +10806,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10865,7 +10865,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10924,7 +10924,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -10983,7 +10983,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -11278,7 +11278,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXUXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXUXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -11337,7 +11337,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXUXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXUXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -11396,7 +11396,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXUXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXUXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -11455,7 +11455,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -12115,7 +12115,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12172,7 +12172,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12229,7 +12229,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12286,7 +12286,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDSWROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12400,7 +12400,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12457,7 +12457,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12514,7 +12514,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12571,7 +12571,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDSXROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12685,7 +12685,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12742,7 +12742,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12799,7 +12799,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12856,7 +12856,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ANDWROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -12970,7 +12970,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13027,7 +13027,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13084,7 +13084,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13141,7 +13141,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ANDXROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13354,7 +13354,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize );
+let InOperandList = ( ins W:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt32:$rightWSize );
 
 field bits<32> Inst;
 
@@ -13410,7 +13410,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rd_7, X:$rn, AArch64Base_BFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt8:$rightXSize );
+let InOperandList = ( ins X:$rd_7, X:$rn, AArch64Base_BFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt32:$rightXSize );
 
 field bits<32> Inst;
 
@@ -13523,7 +13523,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13580,7 +13580,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13637,7 +13637,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13694,7 +13694,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICSWROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13808,7 +13808,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13865,7 +13865,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13922,7 +13922,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -13979,7 +13979,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICSXROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14093,7 +14093,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14150,7 +14150,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14207,7 +14207,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14264,7 +14264,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_BICWROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14378,7 +14378,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14435,7 +14435,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14492,7 +14492,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14549,7 +14549,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_BICXROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -14746,7 +14746,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_BRK_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_BRK_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -14793,7 +14793,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_BTI_btiAsInt8:$bti );
+let InOperandList = ( ins AArch64Base_BTI_btiAsInt32:$bti );
 
 field bits<32> Inst;
 
@@ -15826,7 +15826,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNALW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNALW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -15882,7 +15882,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNALX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNALX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -15938,7 +15938,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNCCW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNCCW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -15994,7 +15994,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNCCX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNCCX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16050,7 +16050,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNCSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNCSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16106,7 +16106,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNCSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNCSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16162,7 +16162,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNEQW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNEQW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16218,7 +16218,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNEQX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNEQX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16274,7 +16274,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNGEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNGEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16330,7 +16330,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNGEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNGEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16386,7 +16386,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNGTW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNGTW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16442,7 +16442,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNGTX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNGTX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16498,7 +16498,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNHIW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNHIW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16554,7 +16554,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNHIX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNHIX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16610,7 +16610,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIALW_immXAsInt64:$immX, AArch64Base_CCMNIALW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIALW_immXAsInt64:$immX, AArch64Base_CCMNIALW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16666,7 +16666,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIALX_immXAsInt64:$immX, AArch64Base_CCMNIALX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIALX_immXAsInt64:$immX, AArch64Base_CCMNIALX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16722,7 +16722,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNICCW_immXAsInt64:$immX, AArch64Base_CCMNICCW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNICCW_immXAsInt64:$immX, AArch64Base_CCMNICCW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16778,7 +16778,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNICCX_immXAsInt64:$immX, AArch64Base_CCMNICCX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNICCX_immXAsInt64:$immX, AArch64Base_CCMNICCX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16834,7 +16834,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNICSW_immXAsInt64:$immX, AArch64Base_CCMNICSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNICSW_immXAsInt64:$immX, AArch64Base_CCMNICSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16890,7 +16890,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNICSX_immXAsInt64:$immX, AArch64Base_CCMNICSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNICSX_immXAsInt64:$immX, AArch64Base_CCMNICSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -16946,7 +16946,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIEQW_immXAsInt64:$immX, AArch64Base_CCMNIEQW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIEQW_immXAsInt64:$immX, AArch64Base_CCMNIEQW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17002,7 +17002,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIEQX_immXAsInt64:$immX, AArch64Base_CCMNIEQX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIEQX_immXAsInt64:$immX, AArch64Base_CCMNIEQX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17058,7 +17058,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIGEW_immXAsInt64:$immX, AArch64Base_CCMNIGEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIGEW_immXAsInt64:$immX, AArch64Base_CCMNIGEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17114,7 +17114,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIGEX_immXAsInt64:$immX, AArch64Base_CCMNIGEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIGEX_immXAsInt64:$immX, AArch64Base_CCMNIGEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17170,7 +17170,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIGTW_immXAsInt64:$immX, AArch64Base_CCMNIGTW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIGTW_immXAsInt64:$immX, AArch64Base_CCMNIGTW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17226,7 +17226,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIGTX_immXAsInt64:$immX, AArch64Base_CCMNIGTX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIGTX_immXAsInt64:$immX, AArch64Base_CCMNIGTX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17282,7 +17282,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIHIW_immXAsInt64:$immX, AArch64Base_CCMNIHIW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIHIW_immXAsInt64:$immX, AArch64Base_CCMNIHIW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17338,7 +17338,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIHIX_immXAsInt64:$immX, AArch64Base_CCMNIHIX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIHIX_immXAsInt64:$immX, AArch64Base_CCMNIHIX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17394,7 +17394,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNILEW_immXAsInt64:$immX, AArch64Base_CCMNILEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNILEW_immXAsInt64:$immX, AArch64Base_CCMNILEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17450,7 +17450,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNILEX_immXAsInt64:$immX, AArch64Base_CCMNILEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNILEX_immXAsInt64:$immX, AArch64Base_CCMNILEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17506,7 +17506,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNILSW_immXAsInt64:$immX, AArch64Base_CCMNILSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNILSW_immXAsInt64:$immX, AArch64Base_CCMNILSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17562,7 +17562,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNILSX_immXAsInt64:$immX, AArch64Base_CCMNILSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNILSX_immXAsInt64:$immX, AArch64Base_CCMNILSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17618,7 +17618,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNILTW_immXAsInt64:$immX, AArch64Base_CCMNILTW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNILTW_immXAsInt64:$immX, AArch64Base_CCMNILTW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17674,7 +17674,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNILTX_immXAsInt64:$immX, AArch64Base_CCMNILTX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNILTX_immXAsInt64:$immX, AArch64Base_CCMNILTX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17730,7 +17730,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIMIW_immXAsInt64:$immX, AArch64Base_CCMNIMIW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIMIW_immXAsInt64:$immX, AArch64Base_CCMNIMIW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17786,7 +17786,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIMIX_immXAsInt64:$immX, AArch64Base_CCMNIMIX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIMIX_immXAsInt64:$immX, AArch64Base_CCMNIMIX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17842,7 +17842,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNINEW_immXAsInt64:$immX, AArch64Base_CCMNINEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNINEW_immXAsInt64:$immX, AArch64Base_CCMNINEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17898,7 +17898,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNINEX_immXAsInt64:$immX, AArch64Base_CCMNINEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNINEX_immXAsInt64:$immX, AArch64Base_CCMNINEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -17954,7 +17954,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNINVW_immXAsInt64:$immX, AArch64Base_CCMNINVW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNINVW_immXAsInt64:$immX, AArch64Base_CCMNINVW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18010,7 +18010,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNINVX_immXAsInt64:$immX, AArch64Base_CCMNINVX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNINVX_immXAsInt64:$immX, AArch64Base_CCMNINVX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18066,7 +18066,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIPLW_immXAsInt64:$immX, AArch64Base_CCMNIPLW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIPLW_immXAsInt64:$immX, AArch64Base_CCMNIPLW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18122,7 +18122,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIPLX_immXAsInt64:$immX, AArch64Base_CCMNIPLX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIPLX_immXAsInt64:$immX, AArch64Base_CCMNIPLX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18178,7 +18178,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIVCW_immXAsInt64:$immX, AArch64Base_CCMNIVCW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIVCW_immXAsInt64:$immX, AArch64Base_CCMNIVCW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18234,7 +18234,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIVCX_immXAsInt64:$immX, AArch64Base_CCMNIVCX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIVCX_immXAsInt64:$immX, AArch64Base_CCMNIVCX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18290,7 +18290,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMNIVSW_immXAsInt64:$immX, AArch64Base_CCMNIVSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMNIVSW_immXAsInt64:$immX, AArch64Base_CCMNIVSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18346,7 +18346,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMNIVSX_immXAsInt64:$immX, AArch64Base_CCMNIVSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMNIVSX_immXAsInt64:$immX, AArch64Base_CCMNIVSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18402,7 +18402,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNLEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNLEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18458,7 +18458,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNLEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNLEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18514,7 +18514,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNLSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNLSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18570,7 +18570,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNLSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNLSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18626,7 +18626,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNLTW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNLTW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18682,7 +18682,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNLTX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNLTX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18738,7 +18738,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNMIW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNMIW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18794,7 +18794,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNMIX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNMIX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18850,7 +18850,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNNEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNNEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18906,7 +18906,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNNEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNNEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -18962,7 +18962,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNNVW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNNVW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19018,7 +19018,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNNVX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNNVX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19074,7 +19074,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNPLW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNPLW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19130,7 +19130,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNPLX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNPLX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19186,7 +19186,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNVCW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNVCW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19242,7 +19242,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNVCX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNVCX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19298,7 +19298,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNVSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMNVSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19354,7 +19354,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNVSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMNVSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19410,7 +19410,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPALW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPALW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19466,7 +19466,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPALX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPALX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19522,7 +19522,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPCCW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPCCW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19578,7 +19578,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPCCX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPCCX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19634,7 +19634,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPCSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPCSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19690,7 +19690,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPCSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPCSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19746,7 +19746,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPEQW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPEQW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19802,7 +19802,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPEQX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPEQX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19858,7 +19858,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPGEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPGEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19914,7 +19914,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPGEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPGEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -19970,7 +19970,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPGTW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPGTW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20026,7 +20026,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPGTX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPGTX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20082,7 +20082,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPHIW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPHIW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20138,7 +20138,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPHIX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPHIX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20194,7 +20194,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIALW_immXAsInt64:$immX, AArch64Base_CCMPIALW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIALW_immXAsInt64:$immX, AArch64Base_CCMPIALW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20250,7 +20250,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIALX_immXAsInt64:$immX, AArch64Base_CCMPIALX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIALX_immXAsInt64:$immX, AArch64Base_CCMPIALX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20306,7 +20306,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPICCW_immXAsInt64:$immX, AArch64Base_CCMPICCW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPICCW_immXAsInt64:$immX, AArch64Base_CCMPICCW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20362,7 +20362,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPICCX_immXAsInt64:$immX, AArch64Base_CCMPICCX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPICCX_immXAsInt64:$immX, AArch64Base_CCMPICCX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20418,7 +20418,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPICSW_immXAsInt64:$immX, AArch64Base_CCMPICSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPICSW_immXAsInt64:$immX, AArch64Base_CCMPICSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20474,7 +20474,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPICSX_immXAsInt64:$immX, AArch64Base_CCMPICSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPICSX_immXAsInt64:$immX, AArch64Base_CCMPICSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20530,7 +20530,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIEQW_immXAsInt64:$immX, AArch64Base_CCMPIEQW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIEQW_immXAsInt64:$immX, AArch64Base_CCMPIEQW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20586,7 +20586,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIEQX_immXAsInt64:$immX, AArch64Base_CCMPIEQX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIEQX_immXAsInt64:$immX, AArch64Base_CCMPIEQX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20642,7 +20642,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIGEW_immXAsInt64:$immX, AArch64Base_CCMPIGEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIGEW_immXAsInt64:$immX, AArch64Base_CCMPIGEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20698,7 +20698,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIGEX_immXAsInt64:$immX, AArch64Base_CCMPIGEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIGEX_immXAsInt64:$immX, AArch64Base_CCMPIGEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20754,7 +20754,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIGTW_immXAsInt64:$immX, AArch64Base_CCMPIGTW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIGTW_immXAsInt64:$immX, AArch64Base_CCMPIGTW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20810,7 +20810,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIGTX_immXAsInt64:$immX, AArch64Base_CCMPIGTX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIGTX_immXAsInt64:$immX, AArch64Base_CCMPIGTX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20866,7 +20866,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIHIW_immXAsInt64:$immX, AArch64Base_CCMPIHIW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIHIW_immXAsInt64:$immX, AArch64Base_CCMPIHIW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20922,7 +20922,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIHIX_immXAsInt64:$immX, AArch64Base_CCMPIHIX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIHIX_immXAsInt64:$immX, AArch64Base_CCMPIHIX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -20978,7 +20978,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPILEW_immXAsInt64:$immX, AArch64Base_CCMPILEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPILEW_immXAsInt64:$immX, AArch64Base_CCMPILEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21034,7 +21034,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPILEX_immXAsInt64:$immX, AArch64Base_CCMPILEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPILEX_immXAsInt64:$immX, AArch64Base_CCMPILEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21090,7 +21090,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPILSW_immXAsInt64:$immX, AArch64Base_CCMPILSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPILSW_immXAsInt64:$immX, AArch64Base_CCMPILSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21146,7 +21146,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPILSX_immXAsInt64:$immX, AArch64Base_CCMPILSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPILSX_immXAsInt64:$immX, AArch64Base_CCMPILSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21202,7 +21202,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPILTW_immXAsInt64:$immX, AArch64Base_CCMPILTW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPILTW_immXAsInt64:$immX, AArch64Base_CCMPILTW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21258,7 +21258,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPILTX_immXAsInt64:$immX, AArch64Base_CCMPILTX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPILTX_immXAsInt64:$immX, AArch64Base_CCMPILTX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21314,7 +21314,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIMIW_immXAsInt64:$immX, AArch64Base_CCMPIMIW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIMIW_immXAsInt64:$immX, AArch64Base_CCMPIMIW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21370,7 +21370,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIMIX_immXAsInt64:$immX, AArch64Base_CCMPIMIX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIMIX_immXAsInt64:$immX, AArch64Base_CCMPIMIX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21426,7 +21426,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPINEW_immXAsInt64:$immX, AArch64Base_CCMPINEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPINEW_immXAsInt64:$immX, AArch64Base_CCMPINEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21482,7 +21482,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPINEX_immXAsInt64:$immX, AArch64Base_CCMPINEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPINEX_immXAsInt64:$immX, AArch64Base_CCMPINEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21538,7 +21538,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPINVW_immXAsInt64:$immX, AArch64Base_CCMPINVW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPINVW_immXAsInt64:$immX, AArch64Base_CCMPINVW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21594,7 +21594,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPINVX_immXAsInt64:$immX, AArch64Base_CCMPINVX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPINVX_immXAsInt64:$immX, AArch64Base_CCMPINVX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21650,7 +21650,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIPLW_immXAsInt64:$immX, AArch64Base_CCMPIPLW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIPLW_immXAsInt64:$immX, AArch64Base_CCMPIPLW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21706,7 +21706,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIPLX_immXAsInt64:$immX, AArch64Base_CCMPIPLX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIPLX_immXAsInt64:$immX, AArch64Base_CCMPIPLX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21762,7 +21762,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIVCW_immXAsInt64:$immX, AArch64Base_CCMPIVCW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIVCW_immXAsInt64:$immX, AArch64Base_CCMPIVCW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21818,7 +21818,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIVCX_immXAsInt64:$immX, AArch64Base_CCMPIVCX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIVCX_immXAsInt64:$immX, AArch64Base_CCMPIVCX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21874,7 +21874,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, AArch64Base_CCMPIVSW_immXAsInt64:$immX, AArch64Base_CCMPIVSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, AArch64Base_CCMPIVSW_immXAsInt64:$immX, AArch64Base_CCMPIVSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21930,7 +21930,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, AArch64Base_CCMPIVSX_immXAsInt64:$immX, AArch64Base_CCMPIVSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, AArch64Base_CCMPIVSX_immXAsInt64:$immX, AArch64Base_CCMPIVSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -21986,7 +21986,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPLEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPLEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22042,7 +22042,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPLEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPLEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22098,7 +22098,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPLSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPLSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22154,7 +22154,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPLSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPLSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22210,7 +22210,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPLTW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPLTW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22266,7 +22266,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPLTX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPLTX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22322,7 +22322,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPMIW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPMIW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22378,7 +22378,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPMIX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPMIX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22434,7 +22434,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPNEW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPNEW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22490,7 +22490,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPNEX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPNEX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22546,7 +22546,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPNVW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPNVW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22602,7 +22602,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPNVX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPNVX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22658,7 +22658,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPPLW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPPLW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22714,7 +22714,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPPLX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPPLX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22770,7 +22770,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPVCW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPVCW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22826,7 +22826,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPVCX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPVCX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22882,7 +22882,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPVSW_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_CCMPVSW_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -22938,7 +22938,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPVSX_nzcvAsInt8:$nzcv );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_CCMPVSX_nzcvAsInt32:$nzcv );
 
 field bits<32> Inst;
 
@@ -30291,7 +30291,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -30348,7 +30348,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -30405,7 +30405,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -30462,7 +30462,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EONWROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -30576,7 +30576,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -30633,7 +30633,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -30690,7 +30690,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -30747,7 +30747,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EONXROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -30965,7 +30965,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -31022,7 +31022,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -31079,7 +31079,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -31136,7 +31136,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EORWROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -31250,7 +31250,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -31307,7 +31307,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -31364,7 +31364,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -31421,7 +31421,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EORXROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -31524,7 +31524,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EXTRW_shiftWSizeAsInt8:$shiftWSize );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_EXTRW_shiftWSizeAsInt32:$shiftWSize );
 
 field bits<32> Inst;
 
@@ -31581,7 +31581,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EXTRX_shiftXSizeAsInt8:$shiftXSize );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_EXTRX_shiftXSizeAsInt32:$shiftXSize );
 
 field bits<32> Inst;
 
@@ -31638,7 +31638,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_HLT_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_HLT_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -38996,7 +38996,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins X:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39048,7 +39048,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins X:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39100,7 +39100,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rd_2, AArch64Base_MOVKXPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins X:$rd_2, AArch64Base_MOVKXPos00_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39152,7 +39152,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rd_3, AArch64Base_MOVKXPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins X:$rd_3, AArch64Base_MOVKXPos16_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39204,7 +39204,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rd_4, AArch64Base_MOVKXPos32_imm16AsInt16:$imm16 );
+let InOperandList = ( ins X:$rd_4, AArch64Base_MOVKXPos32_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39256,7 +39256,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rd_5, AArch64Base_MOVKXPos48_imm16AsInt16:$imm16 );
+let InOperandList = ( ins X:$rd_5, AArch64Base_MOVKXPos48_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39308,7 +39308,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVNWPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNWPos00_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39360,7 +39360,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVNWPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNWPos16_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39412,7 +39412,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVNXPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNXPos00_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39464,7 +39464,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVNXPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNXPos16_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39516,7 +39516,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVNXPos32_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNXPos32_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39568,7 +39568,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVNXPos48_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVNXPos48_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39620,7 +39620,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVZWPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZWPos00_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39672,7 +39672,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVZWPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZWPos16_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39724,7 +39724,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVZXPos00_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZXPos00_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39776,7 +39776,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVZXPos16_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZXPos16_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39828,7 +39828,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVZXPos32_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZXPos32_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39880,7 +39880,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins AArch64Base_MOVZXPos48_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_MOVZXPos48_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -39932,7 +39932,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rt );
-let InOperandList = ( ins AArch64Base_MRS_sysregAsInt16:$sysreg );
+let InOperandList = ( ins AArch64Base_MRS_sysregAsInt32:$sysreg );
 
 field bits<32> Inst;
 
@@ -40028,7 +40028,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rt, AArch64Base_MSR_sysregAsInt16:$sysreg );
+let InOperandList = ( ins X:$rt, AArch64Base_MSR_sysregAsInt32:$sysreg );
 
 field bits<32> Inst;
 
@@ -40289,7 +40289,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -40346,7 +40346,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -40403,7 +40403,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -40460,7 +40460,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORNWROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -40574,7 +40574,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -40631,7 +40631,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -40688,7 +40688,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -40745,7 +40745,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORNXROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -40963,7 +40963,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -41020,7 +41020,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -41077,7 +41077,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -41134,7 +41134,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_ORRWROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -41248,7 +41248,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -41305,7 +41305,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -41362,7 +41362,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -41419,7 +41419,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -42195,7 +42195,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize );
+let InOperandList = ( ins W:$rn, AArch64Base_SBFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt32:$rightWSize );
 
 field bits<32> Inst;
 
@@ -42251,7 +42251,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize );
+let InOperandList = ( ins X:$rn, AArch64Base_SBFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt32:$rightXSize );
 
 field bits<32> Inst;
 
@@ -45786,7 +45786,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -45960,7 +45960,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -46020,7 +46020,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -46140,7 +46140,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -46314,7 +46314,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -46374,7 +46374,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -46434,7 +46434,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -46493,7 +46493,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -46552,7 +46552,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -46611,7 +46611,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -46906,7 +46906,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -46965,7 +46965,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47024,7 +47024,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47083,7 +47083,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47378,7 +47378,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47437,7 +47437,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47496,7 +47496,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47555,7 +47555,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47850,7 +47850,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47909,7 +47909,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -47968,7 +47968,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -48027,7 +48027,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs R:$rd );
-let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -48382,7 +48382,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -48556,7 +48556,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -48616,7 +48616,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -48736,7 +48736,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -48910,7 +48910,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -48970,7 +48970,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6 );
+let InOperandList = ( ins X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt32:$imm6 );
 
 field bits<32> Inst;
 
@@ -49030,7 +49030,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -49089,7 +49089,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -49148,7 +49148,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -49207,7 +49207,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -49502,7 +49502,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -49561,7 +49561,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -49620,7 +49620,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -49679,7 +49679,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -49974,7 +49974,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -50033,7 +50033,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -50092,7 +50092,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -50151,7 +50151,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -50446,7 +50446,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXUXSB_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXUXSB_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -50505,7 +50505,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXUXSH_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXUXSH_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -50564,7 +50564,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXUXSW_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXUXSW_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -50623,7 +50623,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
-let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3 );
+let InOperandList = ( ins S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt32:$imm3 );
 
 field bits<32> Inst;
 
@@ -50918,7 +50918,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_SVC_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_SVC_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -51067,7 +51067,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize );
+let InOperandList = ( ins W:$rn, AArch64Base_UBFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt32:$rightWSize );
 
 field bits<32> Inst;
 
@@ -51123,7 +51123,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize );
+let InOperandList = ( ins X:$rn, AArch64Base_UBFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt32:$rightXSize );
 
 field bits<32> Inst;
 
@@ -51179,7 +51179,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins AArch64Base_UDF_imm16AsInt16:$imm16 );
+let InOperandList = ( ins AArch64Base_UDF_imm16AsInt32:$imm16 );
 
 field bits<32> Inst;
 
@@ -52073,40 +52073,40 @@ def : Pat<(add W:$rn, W:$rm),
         (ADDW W:$rn, W:$rm)>;
 
 
-def : Pat<(add W:$rn, (sra W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)),
-        (ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)>;
+def : Pat<(add W:$rn, (sra W:$rm, AArch64Base_ADDWASR_imm6AsInt32:$imm6)),
+        (ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(add W:$rn, (shl W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)),
-        (ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(add W:$rn, (shl W:$rm, AArch64Base_ADDWLSL_imm6AsInt32:$imm6)),
+        (ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(add W:$rn, (srl W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)),
-        (ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(add W:$rn, (srl W:$rm, AArch64Base_ADDWLSR_imm6AsInt32:$imm6)),
+        (ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(add W:$rn, W:$rm),
         (ADDWS W:$rn, W:$rm)>;
 
 
-def : Pat<(add W:$rn, (sra W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)),
-        (ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)>;
+def : Pat<(add W:$rn, (sra W:$rm, AArch64Base_ADDWSASR_imm6AsInt32:$imm6)),
+        (ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(add W:$rn, (shl W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)),
-        (ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)>;
+def : Pat<(add W:$rn, (shl W:$rm, AArch64Base_ADDWSLSL_imm6AsInt32:$imm6)),
+        (ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(add W:$rn, (srl W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)),
-        (ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)>;
+def : Pat<(add W:$rn, (srl W:$rm, AArch64Base_ADDWSLSR_imm6AsInt32:$imm6)),
+        (ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(add X:$rn, X:$rm),
         (ADDX X:$rn, X:$rm)>;
 
 
-def : Pat<(add X:$rn, (sra X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6)),
-        (ADDXASR X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6)>;
+def : Pat<(add X:$rn, (sra X:$rm, AArch64Base_ADDXASR_imm6AsInt32:$imm6)),
+        (ADDXASR X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(add S:$rn, AArch64Base_ADDXI_imm12XAsInt64:$imm12X),
@@ -52120,20 +52120,20 @@ def : Pat<(add S:$rn, AArch64Base_ADDXI12_imm12SAsInt64:$imm12S),
         (ADDXI12 S:$rn, AArch64Base_ADDXI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(add X:$rn, (shl X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6)),
-        (ADDXLSL X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(add X:$rn, (shl X:$rm, AArch64Base_ADDXLSL_imm6AsInt32:$imm6)),
+        (ADDXLSL X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(add X:$rn, (srl X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6)),
-        (ADDXLSR X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(add X:$rn, (srl X:$rm, AArch64Base_ADDXLSR_imm6AsInt32:$imm6)),
+        (ADDXLSR X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(add X:$rn, X:$rm),
         (ADDXS X:$rn, X:$rm)>;
 
 
-def : Pat<(add X:$rn, (sra X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6)),
-        (ADDXSASR X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6)>;
+def : Pat<(add X:$rn, (sra X:$rm, AArch64Base_ADDXSASR_imm6AsInt32:$imm6)),
+        (ADDXSASR X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(add S:$rn, AArch64Base_ADDXSI_imm12XAsInt64:$imm12X),
@@ -52144,40 +52144,40 @@ def : Pat<(add S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S),
         (ADDXSI12 S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(add X:$rn, (shl X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6)),
-        (ADDXSLSL X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6)>;
+def : Pat<(add X:$rn, (shl X:$rm, AArch64Base_ADDXSLSL_imm6AsInt32:$imm6)),
+        (ADDXSLSL X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(add X:$rn, (srl X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6)),
-        (ADDXSLSR X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6)>;
+def : Pat<(add X:$rn, (srl X:$rm, AArch64Base_ADDXSLSR_imm6AsInt32:$imm6)),
+        (ADDXSLSR X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3)),
-        (ADDXSSXSX S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt32:$imm3)),
+        (ADDXSSXSX S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt32:$imm3)>;
 
 
 def : Pat<(add S:$rn, X:$rm),
         (ADDXSSXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3)),
-        (ADDXSUXSX S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt32:$imm3)),
+        (ADDXSUXSX S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt32:$imm3)>;
 
 
 def : Pat<(add S:$rn, X:$rm),
         (ADDXSUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3)),
-        (ADDXSXSX S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXSXSX_imm3AsInt32:$imm3)),
+        (ADDXSXSX S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt32:$imm3)>;
 
 
 def : Pat<(add S:$rn, X:$rm),
         (ADDXSXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3)),
-        (ADDXUXSX S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(add S:$rn, (shl X:$rm, AArch64Base_ADDXUXSX_imm3AsInt32:$imm3)),
+        (ADDXUXSX S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt32:$imm3)>;
 
 
 def : Pat<(add S:$rn, X:$rm),
@@ -52204,64 +52204,64 @@ def : Pat<(and W:$rn, W:$rm),
         (ANDSW W:$rn, W:$rm)>;
 
 
-def : Pat<(and W:$rn, (sra W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)),
-        (ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)>;
+def : Pat<(and W:$rn, (sra W:$rm, AArch64Base_ANDSWASR_imm6AsInt32:$imm6)),
+        (ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(and W:$rn, (shl W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)),
-        (ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(and W:$rn, (shl W:$rm, AArch64Base_ANDSWLSL_imm6AsInt32:$imm6)),
+        (ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(and W:$rn, (srl W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)),
-        (ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(and W:$rn, (srl W:$rm, AArch64Base_ANDSWLSR_imm6AsInt32:$imm6)),
+        (ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(and X:$rn, X:$rm),
         (ANDSX X:$rn, X:$rm)>;
 
 
-def : Pat<(and X:$rn, (sra X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6)),
-        (ANDSXASR X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6)>;
+def : Pat<(and X:$rn, (sra X:$rm, AArch64Base_ANDSXASR_imm6AsInt32:$imm6)),
+        (ANDSXASR X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(and X:$rn, (shl X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6)),
-        (ANDSXLSL X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(and X:$rn, (shl X:$rm, AArch64Base_ANDSXLSL_imm6AsInt32:$imm6)),
+        (ANDSXLSL X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)),
-        (ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDSXLSR_imm6AsInt32:$imm6)),
+        (ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(and W:$rn, W:$rm),
         (ANDW W:$rn, W:$rm)>;
 
 
-def : Pat<(and W:$rn, (sra W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)),
-        (ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)>;
+def : Pat<(and W:$rn, (sra W:$rm, AArch64Base_ANDWASR_imm6AsInt32:$imm6)),
+        (ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(and W:$rn, (shl W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)),
-        (ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(and W:$rn, (shl W:$rm, AArch64Base_ANDWLSL_imm6AsInt32:$imm6)),
+        (ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(and W:$rn, (srl W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)),
-        (ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(and W:$rn, (srl W:$rm, AArch64Base_ANDWLSR_imm6AsInt32:$imm6)),
+        (ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(and X:$rn, X:$rm),
         (ANDX X:$rn, X:$rm)>;
 
 
-def : Pat<(and X:$rn, (sra X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6)),
-        (ANDXASR X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6)>;
+def : Pat<(and X:$rn, (sra X:$rm, AArch64Base_ANDXASR_imm6AsInt32:$imm6)),
+        (ANDXASR X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(and X:$rn, (shl X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6)),
-        (ANDXLSL X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(and X:$rn, (shl X:$rm, AArch64Base_ANDXLSL_imm6AsInt32:$imm6)),
+        (ANDXLSL X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)),
-        (ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(and X:$rn, (srl X:$rm, AArch64Base_ANDXLSR_imm6AsInt32:$imm6)),
+        (ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(sra W:$rn, W:$rm),
@@ -52296,32 +52296,32 @@ def : Pat<(xor W:$rn, W:$rm),
         (EORW W:$rn, W:$rm)>;
 
 
-def : Pat<(xor W:$rn, (sra W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)),
-        (EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)>;
+def : Pat<(xor W:$rn, (sra W:$rm, AArch64Base_EORWASR_imm6AsInt32:$imm6)),
+        (EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(xor W:$rn, (shl W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)),
-        (EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(xor W:$rn, (shl W:$rm, AArch64Base_EORWLSL_imm6AsInt32:$imm6)),
+        (EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(xor W:$rn, (srl W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)),
-        (EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(xor W:$rn, (srl W:$rm, AArch64Base_EORWLSR_imm6AsInt32:$imm6)),
+        (EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(xor X:$rn, X:$rm),
         (EORX X:$rn, X:$rm)>;
 
 
-def : Pat<(xor X:$rn, (sra X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6)),
-        (EORXASR X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6)>;
+def : Pat<(xor X:$rn, (sra X:$rm, AArch64Base_EORXASR_imm6AsInt32:$imm6)),
+        (EORXASR X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(xor X:$rn, (shl X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6)),
-        (EORXLSL X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(xor X:$rn, (shl X:$rm, AArch64Base_EORXLSL_imm6AsInt32:$imm6)),
+        (EORXLSL X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(xor X:$rn, (srl X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6)),
-        (EORXLSR X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(xor X:$rn, (srl X:$rm, AArch64Base_EORXLSR_imm6AsInt32:$imm6)),
+        (EORXLSR X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(zextloadi8 (add S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset)),
@@ -52588,28 +52588,28 @@ def : Pat<(add X:$ra, (mul X:$rn, X:$rm)),
         (MADDX X:$ra, X:$rn, X:$rm)>;
 
 
-def : Pat<(zext AArch64Base_MOVZWPos00_imm16AsInt16:$imm16),
-        (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)>;
+def : Pat<(zext AArch64Base_MOVZWPos00_imm16AsInt32:$imm16),
+        (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt32:$imm16)>;
 
 
-def : Pat<(shl (zext AArch64Base_MOVZWPos16_imm16AsInt16:$imm16), (i64 16)),
-        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16)>;
+def : Pat<(shl (zext AArch64Base_MOVZWPos16_imm16AsInt32:$imm16), (i64 16)),
+        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt32:$imm16)>;
 
 
-def : Pat<(zext AArch64Base_MOVZXPos00_imm16AsInt16:$imm16),
-        (MOVZXPos00 AArch64Base_MOVZXPos00_imm16AsInt16:$imm16)>;
+def : Pat<(zext AArch64Base_MOVZXPos00_imm16AsInt32:$imm16),
+        (MOVZXPos00 AArch64Base_MOVZXPos00_imm16AsInt32:$imm16)>;
 
 
-def : Pat<(shl (zext AArch64Base_MOVZXPos16_imm16AsInt16:$imm16), (i64 16)),
-        (MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt16:$imm16)>;
+def : Pat<(shl (zext AArch64Base_MOVZXPos16_imm16AsInt32:$imm16), (i64 16)),
+        (MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt32:$imm16)>;
 
 
-def : Pat<(shl (zext AArch64Base_MOVZXPos32_imm16AsInt16:$imm16), (i64 32)),
-        (MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt16:$imm16)>;
+def : Pat<(shl (zext AArch64Base_MOVZXPos32_imm16AsInt32:$imm16), (i64 32)),
+        (MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt32:$imm16)>;
 
 
-def : Pat<(shl (zext AArch64Base_MOVZXPos48_imm16AsInt16:$imm16), (i64 48)),
-        (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt16:$imm16)>;
+def : Pat<(shl (zext AArch64Base_MOVZXPos48_imm16AsInt32:$imm16), (i64 48)),
+        (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt32:$imm16)>;
 
 
 def : Pat<(sub W:$ra, (mul W:$rn, W:$rm)),
@@ -52632,40 +52632,40 @@ def : Pat<(or W:$rn, W:$rm),
         (ORRW W:$rn, W:$rm)>;
 
 
-def : Pat<(or W:$rn, (sra W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)),
-        (ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)>;
+def : Pat<(or W:$rn, (sra W:$rm, AArch64Base_ORRWASR_imm6AsInt32:$imm6)),
+        (ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(or W:$rn, (shl W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)),
-        (ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(or W:$rn, (shl W:$rm, AArch64Base_ORRWLSL_imm6AsInt32:$imm6)),
+        (ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(or W:$rn, (srl W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)),
-        (ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(or W:$rn, (srl W:$rm, AArch64Base_ORRWLSR_imm6AsInt32:$imm6)),
+        (ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(or X:$rn, X:$rm),
         (ORRX X:$rn, X:$rm)>;
 
 
-def : Pat<(or X:$rn, (sra X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6)),
-        (ORRXASR X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6)>;
+def : Pat<(or X:$rn, (sra X:$rm, AArch64Base_ORRXASR_imm6AsInt32:$imm6)),
+        (ORRXASR X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(or X:$rn, (shl X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6)),
-        (ORRXLSL X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(or X:$rn, (shl X:$rm, AArch64Base_ORRXLSL_imm6AsInt32:$imm6)),
+        (ORRXLSL X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(or X:$rn, (srl X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)),
-        (ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(or X:$rn, (srl X:$rm, AArch64Base_ORRXLSR_imm6AsInt32:$imm6)),
+        (ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(sra (shl W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize),
-        (SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)>;
+def : Pat<(sra (shl W:$rn, AArch64Base_SBFMW_leftWSizeAsInt32:$leftWSize), AArch64Base_SBFMW_rightWSizeAsInt32:$rightWSize),
+        (SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt32:$rightWSize)>;
 
 
-def : Pat<(sra (shl X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize),
-        (SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize)>;
+def : Pat<(sra (shl X:$rn, AArch64Base_SBFMX_leftXSizeAsInt32:$leftXSize), AArch64Base_SBFMX_rightXSizeAsInt32:$rightXSize),
+        (SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt32:$rightXSize)>;
 
 
 def : Pat<(sdiv W:$rn, W:$rm),
@@ -52848,40 +52848,40 @@ def : Pat<(sub W:$rn, W:$rm),
         (SUBW W:$rn, W:$rm)>;
 
 
-def : Pat<(sub W:$rn, (sra W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)),
-        (SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)>;
+def : Pat<(sub W:$rn, (sra W:$rm, AArch64Base_SUBWASR_imm6AsInt32:$imm6)),
+        (SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(sub W:$rn, (shl W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)),
-        (SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(sub W:$rn, (shl W:$rm, AArch64Base_SUBWLSL_imm6AsInt32:$imm6)),
+        (SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(sub W:$rn, (srl W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)),
-        (SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(sub W:$rn, (srl W:$rm, AArch64Base_SUBWLSR_imm6AsInt32:$imm6)),
+        (SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(sub W:$rn, W:$rm),
         (SUBWS W:$rn, W:$rm)>;
 
 
-def : Pat<(sub W:$rn, (sra W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)),
-        (SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)>;
+def : Pat<(sub W:$rn, (sra W:$rm, AArch64Base_SUBWSASR_imm6AsInt32:$imm6)),
+        (SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(sub W:$rn, (shl W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)),
-        (SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)>;
+def : Pat<(sub W:$rn, (shl W:$rm, AArch64Base_SUBWSLSL_imm6AsInt32:$imm6)),
+        (SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(sub W:$rn, (srl W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)),
-        (SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)>;
+def : Pat<(sub W:$rn, (srl W:$rm, AArch64Base_SUBWSLSR_imm6AsInt32:$imm6)),
+        (SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(sub X:$rn, X:$rm),
         (SUBX X:$rn, X:$rm)>;
 
 
-def : Pat<(sub X:$rn, (sra X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6)),
-        (SUBXASR X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6)>;
+def : Pat<(sub X:$rn, (sra X:$rm, AArch64Base_SUBXASR_imm6AsInt32:$imm6)),
+        (SUBXASR X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(sub S:$rn, AArch64Base_SUBXI_imm12XAsInt64:$imm12X),
@@ -52892,20 +52892,20 @@ def : Pat<(sub S:$rn, AArch64Base_SUBXI12_imm12SAsInt64:$imm12S),
         (SUBXI12 S:$rn, AArch64Base_SUBXI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(sub X:$rn, (shl X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6)),
-        (SUBXLSL X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(sub X:$rn, (shl X:$rm, AArch64Base_SUBXLSL_imm6AsInt32:$imm6)),
+        (SUBXLSL X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(sub X:$rn, (srl X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6)),
-        (SUBXLSR X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(sub X:$rn, (srl X:$rm, AArch64Base_SUBXLSR_imm6AsInt32:$imm6)),
+        (SUBXLSR X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(sub X:$rn, X:$rm),
         (SUBXS X:$rn, X:$rm)>;
 
 
-def : Pat<(sub X:$rn, (sra X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6)),
-        (SUBXSASR X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6)>;
+def : Pat<(sub X:$rn, (sra X:$rm, AArch64Base_SUBXSASR_imm6AsInt32:$imm6)),
+        (SUBXSASR X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt32:$imm6)>;
 
 
 def : Pat<(sub S:$rn, AArch64Base_SUBXSI_imm12XAsInt64:$imm12X),
@@ -52916,52 +52916,52 @@ def : Pat<(sub S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S),
         (SUBXSI12 S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S)>;
 
 
-def : Pat<(sub X:$rn, (shl X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6)),
-        (SUBXSLSL X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6)>;
+def : Pat<(sub X:$rn, (shl X:$rm, AArch64Base_SUBXSLSL_imm6AsInt32:$imm6)),
+        (SUBXSLSL X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(sub X:$rn, (srl X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6)),
-        (SUBXSLSR X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6)>;
+def : Pat<(sub X:$rn, (srl X:$rm, AArch64Base_SUBXSLSR_imm6AsInt32:$imm6)),
+        (SUBXSLSR X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt32:$imm6)>;
 
 
-def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3)),
-        (SUBXSSXSX S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt32:$imm3)),
+        (SUBXSSXSX S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt32:$imm3)>;
 
 
 def : Pat<(sub S:$rn, X:$rm),
         (SUBXSSXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3)),
-        (SUBXSUXSX S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt32:$imm3)),
+        (SUBXSUXSX S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt32:$imm3)>;
 
 
 def : Pat<(sub S:$rn, X:$rm),
         (SUBXSUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3)),
-        (SUBXSXSX S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXSXSX_imm3AsInt32:$imm3)),
+        (SUBXSXSX S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt32:$imm3)>;
 
 
 def : Pat<(sub S:$rn, X:$rm),
         (SUBXSXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3)),
-        (SUBXUXSX S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(sub S:$rn, (shl X:$rm, AArch64Base_SUBXUXSX_imm3AsInt32:$imm3)),
+        (SUBXUXSX S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt32:$imm3)>;
 
 
 def : Pat<(sub S:$rn, X:$rm),
         (SUBXUXTX S:$rn, X:$rm)>;
 
 
-def : Pat<(srl (shl W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize),
-        (UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)>;
+def : Pat<(srl (shl W:$rn, AArch64Base_UBFMW_leftWSizeAsInt32:$leftWSize), AArch64Base_UBFMW_rightWSizeAsInt32:$rightWSize),
+        (UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt32:$rightWSize)>;
 
 
-def : Pat<(srl (shl X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize), AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize),
-        (UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize)>;
+def : Pat<(srl (shl X:$rn, AArch64Base_UBFMX_leftXSizeAsInt32:$leftXSize), AArch64Base_UBFMX_rightXSizeAsInt32:$rightXSize),
+        (UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt32:$rightXSize)>;
 
 
 def : Pat<(udiv W:$rn, W:$rm),
@@ -53002,8 +53002,8 @@ def : Pat<(int_processorNameValue_ADCX X:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ADDW W:$rn, W:$rm),
         (ADDW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6),
-        (ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt32:$imm6),
+        (ADDWASR W:$rn, W:$rm, AArch64Base_ADDWASR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ADDWI R:$rn, AArch64Base_ADDWI_imm12XAsInt64:$imm12X),
         (ADDWI R:$rn, AArch64Base_ADDWI_imm12XAsInt64:$imm12X)>;
@@ -53011,17 +53011,17 @@ def : Pat<(int_processorNameValue_ADDWI R:$rn, AArch64Base_ADDWI_imm12XAsInt64:$
 def : Pat<(int_processorNameValue_ADDWI12 R:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S),
         (ADDWI12 R:$rn, AArch64Base_ADDWI12_imm12SAsInt64:$imm12S)>;
 
-def : Pat<(int_processorNameValue_ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6),
-        (ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt32:$imm6),
+        (ADDWLSL W:$rn, W:$rm, AArch64Base_ADDWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6),
-        (ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt32:$imm6),
+        (ADDWLSR W:$rn, W:$rm, AArch64Base_ADDWLSR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ADDWS W:$rn, W:$rm),
         (ADDWS W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6),
-        (ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt32:$imm6),
+        (ADDWSASR W:$rn, W:$rm, AArch64Base_ADDWSASR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ADDWSI R:$rn, AArch64Base_ADDWSI_imm12XAsInt64:$imm12X),
         (ADDWSI R:$rn, AArch64Base_ADDWSI_imm12XAsInt64:$imm12X)>;
@@ -53029,23 +53029,23 @@ def : Pat<(int_processorNameValue_ADDWSI R:$rn, AArch64Base_ADDWSI_imm12XAsInt64
 def : Pat<(int_processorNameValue_ADDWSI12 R:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S),
         (ADDWSI12 R:$rn, AArch64Base_ADDWSI12_imm12SAsInt64:$imm12S)>;
 
-def : Pat<(int_processorNameValue_ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6),
-        (ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt32:$imm6),
+        (ADDWSLSL W:$rn, W:$rm, AArch64Base_ADDWSLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6),
-        (ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt32:$imm6),
+        (ADDWSLSR W:$rn, W:$rm, AArch64Base_ADDWSLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ADDWSSXSB R:$rn, X:$rm, AArch64Base_ADDWSSXSB_imm3AsInt8:$imm3),
-        (ADDWSSXSB R:$rn, X:$rm, AArch64Base_ADDWSSXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSSXSB R:$rn, X:$rm, AArch64Base_ADDWSSXSB_imm3AsInt32:$imm3),
+        (ADDWSSXSB R:$rn, X:$rm, AArch64Base_ADDWSSXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSSXSH R:$rn, X:$rm, AArch64Base_ADDWSSXSH_imm3AsInt8:$imm3),
-        (ADDWSSXSH R:$rn, X:$rm, AArch64Base_ADDWSSXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSSXSH R:$rn, X:$rm, AArch64Base_ADDWSSXSH_imm3AsInt32:$imm3),
+        (ADDWSSXSH R:$rn, X:$rm, AArch64Base_ADDWSSXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSSXSW R:$rn, X:$rm, AArch64Base_ADDWSSXSW_imm3AsInt8:$imm3),
-        (ADDWSSXSW R:$rn, X:$rm, AArch64Base_ADDWSSXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSSXSW R:$rn, X:$rm, AArch64Base_ADDWSSXSW_imm3AsInt32:$imm3),
+        (ADDWSSXSW R:$rn, X:$rm, AArch64Base_ADDWSSXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSSXSX R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3),
-        (ADDWSSXSX R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSSXSX R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt32:$imm3),
+        (ADDWSSXSX R:$rn, X:$rm, AArch64Base_ADDWSSXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_ADDWSSXTB R:$rn, X:$rm),
         (ADDWSSXTB R:$rn, X:$rm)>;
@@ -53059,17 +53059,17 @@ def : Pat<(int_processorNameValue_ADDWSSXTW R:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ADDWSSXTX R:$rn, X:$rm),
         (ADDWSSXTX R:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDWSUXSB R:$rn, X:$rm, AArch64Base_ADDWSUXSB_imm3AsInt8:$imm3),
-        (ADDWSUXSB R:$rn, X:$rm, AArch64Base_ADDWSUXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSUXSB R:$rn, X:$rm, AArch64Base_ADDWSUXSB_imm3AsInt32:$imm3),
+        (ADDWSUXSB R:$rn, X:$rm, AArch64Base_ADDWSUXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSUXSH R:$rn, X:$rm, AArch64Base_ADDWSUXSH_imm3AsInt8:$imm3),
-        (ADDWSUXSH R:$rn, X:$rm, AArch64Base_ADDWSUXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSUXSH R:$rn, X:$rm, AArch64Base_ADDWSUXSH_imm3AsInt32:$imm3),
+        (ADDWSUXSH R:$rn, X:$rm, AArch64Base_ADDWSUXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSUXSW R:$rn, X:$rm, AArch64Base_ADDWSUXSW_imm3AsInt8:$imm3),
-        (ADDWSUXSW R:$rn, X:$rm, AArch64Base_ADDWSUXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSUXSW R:$rn, X:$rm, AArch64Base_ADDWSUXSW_imm3AsInt32:$imm3),
+        (ADDWSUXSW R:$rn, X:$rm, AArch64Base_ADDWSUXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSUXSX R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3),
-        (ADDWSUXSX R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSUXSX R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt32:$imm3),
+        (ADDWSUXSX R:$rn, X:$rm, AArch64Base_ADDWSUXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_ADDWSUXTB R:$rn, X:$rm),
         (ADDWSUXTB R:$rn, X:$rm)>;
@@ -53083,17 +53083,17 @@ def : Pat<(int_processorNameValue_ADDWSUXTW R:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ADDWSUXTX R:$rn, X:$rm),
         (ADDWSUXTX R:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDWSXSB R:$rn, X:$rm, AArch64Base_ADDWSXSB_imm3AsInt8:$imm3),
-        (ADDWSXSB R:$rn, X:$rm, AArch64Base_ADDWSXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSXSB R:$rn, X:$rm, AArch64Base_ADDWSXSB_imm3AsInt32:$imm3),
+        (ADDWSXSB R:$rn, X:$rm, AArch64Base_ADDWSXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSXSH R:$rn, X:$rm, AArch64Base_ADDWSXSH_imm3AsInt8:$imm3),
-        (ADDWSXSH R:$rn, X:$rm, AArch64Base_ADDWSXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSXSH R:$rn, X:$rm, AArch64Base_ADDWSXSH_imm3AsInt32:$imm3),
+        (ADDWSXSH R:$rn, X:$rm, AArch64Base_ADDWSXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSXSW R:$rn, X:$rm, AArch64Base_ADDWSXSW_imm3AsInt8:$imm3),
-        (ADDWSXSW R:$rn, X:$rm, AArch64Base_ADDWSXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSXSW R:$rn, X:$rm, AArch64Base_ADDWSXSW_imm3AsInt32:$imm3),
+        (ADDWSXSW R:$rn, X:$rm, AArch64Base_ADDWSXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWSXSX R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3),
-        (ADDWSXSX R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWSXSX R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt32:$imm3),
+        (ADDWSXSX R:$rn, X:$rm, AArch64Base_ADDWSXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_ADDWSXTB R:$rn, X:$rm),
         (ADDWSXTB R:$rn, X:$rm)>;
@@ -53107,17 +53107,17 @@ def : Pat<(int_processorNameValue_ADDWSXTW R:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ADDWSXTX R:$rn, X:$rm),
         (ADDWSXTX R:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDWUXSB R:$rn, X:$rm, AArch64Base_ADDWUXSB_imm3AsInt8:$imm3),
-        (ADDWUXSB R:$rn, X:$rm, AArch64Base_ADDWUXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWUXSB R:$rn, X:$rm, AArch64Base_ADDWUXSB_imm3AsInt32:$imm3),
+        (ADDWUXSB R:$rn, X:$rm, AArch64Base_ADDWUXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWUXSH R:$rn, X:$rm, AArch64Base_ADDWUXSH_imm3AsInt8:$imm3),
-        (ADDWUXSH R:$rn, X:$rm, AArch64Base_ADDWUXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWUXSH R:$rn, X:$rm, AArch64Base_ADDWUXSH_imm3AsInt32:$imm3),
+        (ADDWUXSH R:$rn, X:$rm, AArch64Base_ADDWUXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWUXSW R:$rn, X:$rm, AArch64Base_ADDWUXSW_imm3AsInt8:$imm3),
-        (ADDWUXSW R:$rn, X:$rm, AArch64Base_ADDWUXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWUXSW R:$rn, X:$rm, AArch64Base_ADDWUXSW_imm3AsInt32:$imm3),
+        (ADDWUXSW R:$rn, X:$rm, AArch64Base_ADDWUXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDWUXSX R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3),
-        (ADDWUXSX R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDWUXSX R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt32:$imm3),
+        (ADDWUXSX R:$rn, X:$rm, AArch64Base_ADDWUXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_ADDWUXTB R:$rn, X:$rm),
         (ADDWUXTB R:$rn, X:$rm)>;
@@ -53134,8 +53134,8 @@ def : Pat<(int_processorNameValue_ADDWUXTX R:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ADDX X:$rn, X:$rm),
         (ADDX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDXASR X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6),
-        (ADDXASR X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDXASR X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt32:$imm6),
+        (ADDXASR X:$rn, X:$rm, AArch64Base_ADDXASR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ADDXI S:$rn, AArch64Base_ADDXI_imm12XAsInt64:$imm12X),
         (ADDXI S:$rn, AArch64Base_ADDXI_imm12XAsInt64:$imm12X)>;
@@ -53143,17 +53143,17 @@ def : Pat<(int_processorNameValue_ADDXI S:$rn, AArch64Base_ADDXI_imm12XAsInt64:$
 def : Pat<(int_processorNameValue_ADDXI12 S:$rn, AArch64Base_ADDXI12_imm12SAsInt64:$imm12S),
         (ADDXI12 S:$rn, AArch64Base_ADDXI12_imm12SAsInt64:$imm12S)>;
 
-def : Pat<(int_processorNameValue_ADDXLSL X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6),
-        (ADDXLSL X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDXLSL X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt32:$imm6),
+        (ADDXLSL X:$rn, X:$rm, AArch64Base_ADDXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ADDXLSR X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6),
-        (ADDXLSR X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDXLSR X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt32:$imm6),
+        (ADDXLSR X:$rn, X:$rm, AArch64Base_ADDXLSR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ADDXS X:$rn, X:$rm),
         (ADDXS X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDXSASR X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6),
-        (ADDXSASR X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDXSASR X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt32:$imm6),
+        (ADDXSASR X:$rn, X:$rm, AArch64Base_ADDXSASR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ADDXSI S:$rn, AArch64Base_ADDXSI_imm12XAsInt64:$imm12X),
         (ADDXSI S:$rn, AArch64Base_ADDXSI_imm12XAsInt64:$imm12X)>;
@@ -53161,23 +53161,23 @@ def : Pat<(int_processorNameValue_ADDXSI S:$rn, AArch64Base_ADDXSI_imm12XAsInt64
 def : Pat<(int_processorNameValue_ADDXSI12 S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S),
         (ADDXSI12 S:$rn, AArch64Base_ADDXSI12_imm12SAsInt64:$imm12S)>;
 
-def : Pat<(int_processorNameValue_ADDXSLSL X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6),
-        (ADDXSLSL X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDXSLSL X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt32:$imm6),
+        (ADDXSLSL X:$rn, X:$rm, AArch64Base_ADDXSLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ADDXSLSR X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6),
-        (ADDXSLSR X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ADDXSLSR X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt32:$imm6),
+        (ADDXSLSR X:$rn, X:$rm, AArch64Base_ADDXSLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ADDXSSXSB S:$rn, X:$rm, AArch64Base_ADDXSSXSB_imm3AsInt8:$imm3),
-        (ADDXSSXSB S:$rn, X:$rm, AArch64Base_ADDXSSXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSSXSB S:$rn, X:$rm, AArch64Base_ADDXSSXSB_imm3AsInt32:$imm3),
+        (ADDXSSXSB S:$rn, X:$rm, AArch64Base_ADDXSSXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSSXSH S:$rn, X:$rm, AArch64Base_ADDXSSXSH_imm3AsInt8:$imm3),
-        (ADDXSSXSH S:$rn, X:$rm, AArch64Base_ADDXSSXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSSXSH S:$rn, X:$rm, AArch64Base_ADDXSSXSH_imm3AsInt32:$imm3),
+        (ADDXSSXSH S:$rn, X:$rm, AArch64Base_ADDXSSXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSSXSW S:$rn, X:$rm, AArch64Base_ADDXSSXSW_imm3AsInt8:$imm3),
-        (ADDXSSXSW S:$rn, X:$rm, AArch64Base_ADDXSSXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSSXSW S:$rn, X:$rm, AArch64Base_ADDXSSXSW_imm3AsInt32:$imm3),
+        (ADDXSSXSW S:$rn, X:$rm, AArch64Base_ADDXSSXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSSXSX S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3),
-        (ADDXSSXSX S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSSXSX S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt32:$imm3),
+        (ADDXSSXSX S:$rn, X:$rm, AArch64Base_ADDXSSXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_ADDXSSXTB S:$rn, X:$rm),
         (ADDXSSXTB S:$rn, X:$rm)>;
@@ -53191,17 +53191,17 @@ def : Pat<(int_processorNameValue_ADDXSSXTW S:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ADDXSSXTX S:$rn, X:$rm),
         (ADDXSSXTX S:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDXSUXSB S:$rn, X:$rm, AArch64Base_ADDXSUXSB_imm3AsInt8:$imm3),
-        (ADDXSUXSB S:$rn, X:$rm, AArch64Base_ADDXSUXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSUXSB S:$rn, X:$rm, AArch64Base_ADDXSUXSB_imm3AsInt32:$imm3),
+        (ADDXSUXSB S:$rn, X:$rm, AArch64Base_ADDXSUXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSUXSH S:$rn, X:$rm, AArch64Base_ADDXSUXSH_imm3AsInt8:$imm3),
-        (ADDXSUXSH S:$rn, X:$rm, AArch64Base_ADDXSUXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSUXSH S:$rn, X:$rm, AArch64Base_ADDXSUXSH_imm3AsInt32:$imm3),
+        (ADDXSUXSH S:$rn, X:$rm, AArch64Base_ADDXSUXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSUXSW S:$rn, X:$rm, AArch64Base_ADDXSUXSW_imm3AsInt8:$imm3),
-        (ADDXSUXSW S:$rn, X:$rm, AArch64Base_ADDXSUXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSUXSW S:$rn, X:$rm, AArch64Base_ADDXSUXSW_imm3AsInt32:$imm3),
+        (ADDXSUXSW S:$rn, X:$rm, AArch64Base_ADDXSUXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSUXSX S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3),
-        (ADDXSUXSX S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSUXSX S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt32:$imm3),
+        (ADDXSUXSX S:$rn, X:$rm, AArch64Base_ADDXSUXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_ADDXSUXTB S:$rn, X:$rm),
         (ADDXSUXTB S:$rn, X:$rm)>;
@@ -53215,17 +53215,17 @@ def : Pat<(int_processorNameValue_ADDXSUXTW S:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ADDXSUXTX S:$rn, X:$rm),
         (ADDXSUXTX S:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDXSXSB S:$rn, X:$rm, AArch64Base_ADDXSXSB_imm3AsInt8:$imm3),
-        (ADDXSXSB S:$rn, X:$rm, AArch64Base_ADDXSXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSXSB S:$rn, X:$rm, AArch64Base_ADDXSXSB_imm3AsInt32:$imm3),
+        (ADDXSXSB S:$rn, X:$rm, AArch64Base_ADDXSXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSXSH S:$rn, X:$rm, AArch64Base_ADDXSXSH_imm3AsInt8:$imm3),
-        (ADDXSXSH S:$rn, X:$rm, AArch64Base_ADDXSXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSXSH S:$rn, X:$rm, AArch64Base_ADDXSXSH_imm3AsInt32:$imm3),
+        (ADDXSXSH S:$rn, X:$rm, AArch64Base_ADDXSXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSXSW S:$rn, X:$rm, AArch64Base_ADDXSXSW_imm3AsInt8:$imm3),
-        (ADDXSXSW S:$rn, X:$rm, AArch64Base_ADDXSXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSXSW S:$rn, X:$rm, AArch64Base_ADDXSXSW_imm3AsInt32:$imm3),
+        (ADDXSXSW S:$rn, X:$rm, AArch64Base_ADDXSXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXSXSX S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3),
-        (ADDXSXSX S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXSXSX S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt32:$imm3),
+        (ADDXSXSX S:$rn, X:$rm, AArch64Base_ADDXSXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_ADDXSXTB S:$rn, X:$rm),
         (ADDXSXTB S:$rn, X:$rm)>;
@@ -53239,17 +53239,17 @@ def : Pat<(int_processorNameValue_ADDXSXTW S:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ADDXSXTX S:$rn, X:$rm),
         (ADDXSXTX S:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ADDXUXSB S:$rn, X:$rm, AArch64Base_ADDXUXSB_imm3AsInt8:$imm3),
-        (ADDXUXSB S:$rn, X:$rm, AArch64Base_ADDXUXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXUXSB S:$rn, X:$rm, AArch64Base_ADDXUXSB_imm3AsInt32:$imm3),
+        (ADDXUXSB S:$rn, X:$rm, AArch64Base_ADDXUXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXUXSH S:$rn, X:$rm, AArch64Base_ADDXUXSH_imm3AsInt8:$imm3),
-        (ADDXUXSH S:$rn, X:$rm, AArch64Base_ADDXUXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXUXSH S:$rn, X:$rm, AArch64Base_ADDXUXSH_imm3AsInt32:$imm3),
+        (ADDXUXSH S:$rn, X:$rm, AArch64Base_ADDXUXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXUXSW S:$rn, X:$rm, AArch64Base_ADDXUXSW_imm3AsInt8:$imm3),
-        (ADDXUXSW S:$rn, X:$rm, AArch64Base_ADDXUXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXUXSW S:$rn, X:$rm, AArch64Base_ADDXUXSW_imm3AsInt32:$imm3),
+        (ADDXUXSW S:$rn, X:$rm, AArch64Base_ADDXUXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_ADDXUXSX S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3),
-        (ADDXUXSX S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_ADDXUXSX S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt32:$imm3),
+        (ADDXUXSX S:$rn, X:$rm, AArch64Base_ADDXUXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_ADDXUXTB S:$rn, X:$rm),
         (ADDXUXTB S:$rn, X:$rm)>;
@@ -53278,62 +53278,62 @@ def : Pat<(int_processorNameValue_ANDSIX X:$rn, AArch64Base_ANDSIX_immXSizeAsInt
 def : Pat<(int_processorNameValue_ANDSW W:$rn, W:$rm),
         (ANDSW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6),
-        (ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt32:$imm6),
+        (ANDSWASR W:$rn, W:$rm, AArch64Base_ANDSWASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6),
-        (ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt32:$imm6),
+        (ANDSWLSL W:$rn, W:$rm, AArch64Base_ANDSWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6),
-        (ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt32:$imm6),
+        (ANDSWLSR W:$rn, W:$rm, AArch64Base_ANDSWLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDSWROR W:$rn, W:$rm, AArch64Base_ANDSWROR_imm6AsInt8:$imm6),
-        (ANDSWROR W:$rn, W:$rm, AArch64Base_ANDSWROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDSWROR W:$rn, W:$rm, AArch64Base_ANDSWROR_imm6AsInt32:$imm6),
+        (ANDSWROR W:$rn, W:$rm, AArch64Base_ANDSWROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ANDSX X:$rn, X:$rm),
         (ANDSX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ANDSXASR X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6),
-        (ANDSXASR X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDSXASR X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt32:$imm6),
+        (ANDSXASR X:$rn, X:$rm, AArch64Base_ANDSXASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDSXLSL X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6),
-        (ANDSXLSL X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDSXLSL X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt32:$imm6),
+        (ANDSXLSL X:$rn, X:$rm, AArch64Base_ANDSXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6),
-        (ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt32:$imm6),
+        (ANDSXLSR X:$rn, X:$rm, AArch64Base_ANDSXLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDSXROR X:$rn, X:$rm, AArch64Base_ANDSXROR_imm6AsInt8:$imm6),
-        (ANDSXROR X:$rn, X:$rm, AArch64Base_ANDSXROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDSXROR X:$rn, X:$rm, AArch64Base_ANDSXROR_imm6AsInt32:$imm6),
+        (ANDSXROR X:$rn, X:$rm, AArch64Base_ANDSXROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ANDW W:$rn, W:$rm),
         (ANDW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6),
-        (ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt32:$imm6),
+        (ANDWASR W:$rn, W:$rm, AArch64Base_ANDWASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6),
-        (ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt32:$imm6),
+        (ANDWLSL W:$rn, W:$rm, AArch64Base_ANDWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6),
-        (ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt32:$imm6),
+        (ANDWLSR W:$rn, W:$rm, AArch64Base_ANDWLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDWROR W:$rn, W:$rm, AArch64Base_ANDWROR_imm6AsInt8:$imm6),
-        (ANDWROR W:$rn, W:$rm, AArch64Base_ANDWROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDWROR W:$rn, W:$rm, AArch64Base_ANDWROR_imm6AsInt32:$imm6),
+        (ANDWROR W:$rn, W:$rm, AArch64Base_ANDWROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ANDX X:$rn, X:$rm),
         (ANDX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ANDXASR X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6),
-        (ANDXASR X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDXASR X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt32:$imm6),
+        (ANDXASR X:$rn, X:$rm, AArch64Base_ANDXASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDXLSL X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6),
-        (ANDXLSL X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDXLSL X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt32:$imm6),
+        (ANDXLSL X:$rn, X:$rm, AArch64Base_ANDXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6),
-        (ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt32:$imm6),
+        (ANDXLSR X:$rn, X:$rm, AArch64Base_ANDXLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ANDXROR X:$rn, X:$rm, AArch64Base_ANDXROR_imm6AsInt8:$imm6),
-        (ANDXROR X:$rn, X:$rm, AArch64Base_ANDXROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ANDXROR X:$rn, X:$rm, AArch64Base_ANDXROR_imm6AsInt32:$imm6),
+        (ANDXROR X:$rn, X:$rm, AArch64Base_ANDXROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ASRW W:$rn, W:$rm),
         (ASRW W:$rn, W:$rm)>;
@@ -53341,461 +53341,461 @@ def : Pat<(int_processorNameValue_ASRW W:$rn, W:$rm),
 def : Pat<(int_processorNameValue_ASRX X:$rn, X:$rm),
         (ASRX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_BFMW W:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize),
-        (BFMW W:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt8:$rightWSize)>;
+def : Pat<(int_processorNameValue_BFMW W:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt32:$rightWSize),
+        (BFMW W:$rd_6, W:$rn, AArch64Base_BFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_BFMW_rightWSizeAsInt32:$rightWSize)>;
 
-def : Pat<(int_processorNameValue_BFMX X:$rd_7, X:$rn, AArch64Base_BFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt8:$rightXSize),
-        (BFMX X:$rd_7, X:$rn, AArch64Base_BFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt8:$rightXSize)>;
+def : Pat<(int_processorNameValue_BFMX X:$rd_7, X:$rn, AArch64Base_BFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt32:$rightXSize),
+        (BFMX X:$rd_7, X:$rn, AArch64Base_BFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_BFMX_rightXSizeAsInt32:$rightXSize)>;
 
 def : Pat<(int_processorNameValue_BICSW W:$rn, W:$rm),
         (BICSW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_BICSWASR W:$rn, W:$rm, AArch64Base_BICSWASR_imm6AsInt8:$imm6),
-        (BICSWASR W:$rn, W:$rm, AArch64Base_BICSWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICSWASR W:$rn, W:$rm, AArch64Base_BICSWASR_imm6AsInt32:$imm6),
+        (BICSWASR W:$rn, W:$rm, AArch64Base_BICSWASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICSWLSL W:$rn, W:$rm, AArch64Base_BICSWLSL_imm6AsInt8:$imm6),
-        (BICSWLSL W:$rn, W:$rm, AArch64Base_BICSWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICSWLSL W:$rn, W:$rm, AArch64Base_BICSWLSL_imm6AsInt32:$imm6),
+        (BICSWLSL W:$rn, W:$rm, AArch64Base_BICSWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICSWLSR W:$rn, W:$rm, AArch64Base_BICSWLSR_imm6AsInt8:$imm6),
-        (BICSWLSR W:$rn, W:$rm, AArch64Base_BICSWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICSWLSR W:$rn, W:$rm, AArch64Base_BICSWLSR_imm6AsInt32:$imm6),
+        (BICSWLSR W:$rn, W:$rm, AArch64Base_BICSWLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICSWROR W:$rn, W:$rm, AArch64Base_BICSWROR_imm6AsInt8:$imm6),
-        (BICSWROR W:$rn, W:$rm, AArch64Base_BICSWROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICSWROR W:$rn, W:$rm, AArch64Base_BICSWROR_imm6AsInt32:$imm6),
+        (BICSWROR W:$rn, W:$rm, AArch64Base_BICSWROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_BICSX X:$rn, X:$rm),
         (BICSX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_BICSXASR X:$rn, X:$rm, AArch64Base_BICSXASR_imm6AsInt8:$imm6),
-        (BICSXASR X:$rn, X:$rm, AArch64Base_BICSXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICSXASR X:$rn, X:$rm, AArch64Base_BICSXASR_imm6AsInt32:$imm6),
+        (BICSXASR X:$rn, X:$rm, AArch64Base_BICSXASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICSXLSL X:$rn, X:$rm, AArch64Base_BICSXLSL_imm6AsInt8:$imm6),
-        (BICSXLSL X:$rn, X:$rm, AArch64Base_BICSXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICSXLSL X:$rn, X:$rm, AArch64Base_BICSXLSL_imm6AsInt32:$imm6),
+        (BICSXLSL X:$rn, X:$rm, AArch64Base_BICSXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICSXLSR X:$rn, X:$rm, AArch64Base_BICSXLSR_imm6AsInt8:$imm6),
-        (BICSXLSR X:$rn, X:$rm, AArch64Base_BICSXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICSXLSR X:$rn, X:$rm, AArch64Base_BICSXLSR_imm6AsInt32:$imm6),
+        (BICSXLSR X:$rn, X:$rm, AArch64Base_BICSXLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICSXROR X:$rn, X:$rm, AArch64Base_BICSXROR_imm6AsInt8:$imm6),
-        (BICSXROR X:$rn, X:$rm, AArch64Base_BICSXROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICSXROR X:$rn, X:$rm, AArch64Base_BICSXROR_imm6AsInt32:$imm6),
+        (BICSXROR X:$rn, X:$rm, AArch64Base_BICSXROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_BICW W:$rn, W:$rm),
         (BICW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_BICWASR W:$rn, W:$rm, AArch64Base_BICWASR_imm6AsInt8:$imm6),
-        (BICWASR W:$rn, W:$rm, AArch64Base_BICWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICWASR W:$rn, W:$rm, AArch64Base_BICWASR_imm6AsInt32:$imm6),
+        (BICWASR W:$rn, W:$rm, AArch64Base_BICWASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICWLSL W:$rn, W:$rm, AArch64Base_BICWLSL_imm6AsInt8:$imm6),
-        (BICWLSL W:$rn, W:$rm, AArch64Base_BICWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICWLSL W:$rn, W:$rm, AArch64Base_BICWLSL_imm6AsInt32:$imm6),
+        (BICWLSL W:$rn, W:$rm, AArch64Base_BICWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICWLSR W:$rn, W:$rm, AArch64Base_BICWLSR_imm6AsInt8:$imm6),
-        (BICWLSR W:$rn, W:$rm, AArch64Base_BICWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICWLSR W:$rn, W:$rm, AArch64Base_BICWLSR_imm6AsInt32:$imm6),
+        (BICWLSR W:$rn, W:$rm, AArch64Base_BICWLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICWROR W:$rn, W:$rm, AArch64Base_BICWROR_imm6AsInt8:$imm6),
-        (BICWROR W:$rn, W:$rm, AArch64Base_BICWROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICWROR W:$rn, W:$rm, AArch64Base_BICWROR_imm6AsInt32:$imm6),
+        (BICWROR W:$rn, W:$rm, AArch64Base_BICWROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_BICX X:$rn, X:$rm),
         (BICX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_BICXASR X:$rn, X:$rm, AArch64Base_BICXASR_imm6AsInt8:$imm6),
-        (BICXASR X:$rn, X:$rm, AArch64Base_BICXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICXASR X:$rn, X:$rm, AArch64Base_BICXASR_imm6AsInt32:$imm6),
+        (BICXASR X:$rn, X:$rm, AArch64Base_BICXASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICXLSL X:$rn, X:$rm, AArch64Base_BICXLSL_imm6AsInt8:$imm6),
-        (BICXLSL X:$rn, X:$rm, AArch64Base_BICXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICXLSL X:$rn, X:$rm, AArch64Base_BICXLSL_imm6AsInt32:$imm6),
+        (BICXLSL X:$rn, X:$rm, AArch64Base_BICXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICXLSR X:$rn, X:$rm, AArch64Base_BICXLSR_imm6AsInt8:$imm6),
-        (BICXLSR X:$rn, X:$rm, AArch64Base_BICXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICXLSR X:$rn, X:$rm, AArch64Base_BICXLSR_imm6AsInt32:$imm6),
+        (BICXLSR X:$rn, X:$rm, AArch64Base_BICXLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_BICXROR X:$rn, X:$rm, AArch64Base_BICXROR_imm6AsInt8:$imm6),
-        (BICXROR X:$rn, X:$rm, AArch64Base_BICXROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_BICXROR X:$rn, X:$rm, AArch64Base_BICXROR_imm6AsInt32:$imm6),
+        (BICXROR X:$rn, X:$rm, AArch64Base_BICXROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_BR X:$rn),
         (BR X:$rn)>;
 
-def : Pat<(int_processorNameValue_BTI AArch64Base_BTI_btiAsInt8:$bti),
-        (BTI AArch64Base_BTI_btiAsInt8:$bti)>;
+def : Pat<(int_processorNameValue_BTI AArch64Base_BTI_btiAsInt32:$bti),
+        (BTI AArch64Base_BTI_btiAsInt32:$bti)>;
 
-def : Pat<(int_processorNameValue_CCMNALW W:$rn, W:$rm, AArch64Base_CCMNALW_nzcvAsInt8:$nzcv),
-        (CCMNALW W:$rn, W:$rm, AArch64Base_CCMNALW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNALW W:$rn, W:$rm, AArch64Base_CCMNALW_nzcvAsInt32:$nzcv),
+        (CCMNALW W:$rn, W:$rm, AArch64Base_CCMNALW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNALX X:$rn, X:$rm, AArch64Base_CCMNALX_nzcvAsInt8:$nzcv),
-        (CCMNALX X:$rn, X:$rm, AArch64Base_CCMNALX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNALX X:$rn, X:$rm, AArch64Base_CCMNALX_nzcvAsInt32:$nzcv),
+        (CCMNALX X:$rn, X:$rm, AArch64Base_CCMNALX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNCCW W:$rn, W:$rm, AArch64Base_CCMNCCW_nzcvAsInt8:$nzcv),
-        (CCMNCCW W:$rn, W:$rm, AArch64Base_CCMNCCW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNCCW W:$rn, W:$rm, AArch64Base_CCMNCCW_nzcvAsInt32:$nzcv),
+        (CCMNCCW W:$rn, W:$rm, AArch64Base_CCMNCCW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNCCX X:$rn, X:$rm, AArch64Base_CCMNCCX_nzcvAsInt8:$nzcv),
-        (CCMNCCX X:$rn, X:$rm, AArch64Base_CCMNCCX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNCCX X:$rn, X:$rm, AArch64Base_CCMNCCX_nzcvAsInt32:$nzcv),
+        (CCMNCCX X:$rn, X:$rm, AArch64Base_CCMNCCX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNCSW W:$rn, W:$rm, AArch64Base_CCMNCSW_nzcvAsInt8:$nzcv),
-        (CCMNCSW W:$rn, W:$rm, AArch64Base_CCMNCSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNCSW W:$rn, W:$rm, AArch64Base_CCMNCSW_nzcvAsInt32:$nzcv),
+        (CCMNCSW W:$rn, W:$rm, AArch64Base_CCMNCSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNCSX X:$rn, X:$rm, AArch64Base_CCMNCSX_nzcvAsInt8:$nzcv),
-        (CCMNCSX X:$rn, X:$rm, AArch64Base_CCMNCSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNCSX X:$rn, X:$rm, AArch64Base_CCMNCSX_nzcvAsInt32:$nzcv),
+        (CCMNCSX X:$rn, X:$rm, AArch64Base_CCMNCSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNEQW W:$rn, W:$rm, AArch64Base_CCMNEQW_nzcvAsInt8:$nzcv),
-        (CCMNEQW W:$rn, W:$rm, AArch64Base_CCMNEQW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNEQW W:$rn, W:$rm, AArch64Base_CCMNEQW_nzcvAsInt32:$nzcv),
+        (CCMNEQW W:$rn, W:$rm, AArch64Base_CCMNEQW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNEQX X:$rn, X:$rm, AArch64Base_CCMNEQX_nzcvAsInt8:$nzcv),
-        (CCMNEQX X:$rn, X:$rm, AArch64Base_CCMNEQX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNEQX X:$rn, X:$rm, AArch64Base_CCMNEQX_nzcvAsInt32:$nzcv),
+        (CCMNEQX X:$rn, X:$rm, AArch64Base_CCMNEQX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNGEW W:$rn, W:$rm, AArch64Base_CCMNGEW_nzcvAsInt8:$nzcv),
-        (CCMNGEW W:$rn, W:$rm, AArch64Base_CCMNGEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNGEW W:$rn, W:$rm, AArch64Base_CCMNGEW_nzcvAsInt32:$nzcv),
+        (CCMNGEW W:$rn, W:$rm, AArch64Base_CCMNGEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNGEX X:$rn, X:$rm, AArch64Base_CCMNGEX_nzcvAsInt8:$nzcv),
-        (CCMNGEX X:$rn, X:$rm, AArch64Base_CCMNGEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNGEX X:$rn, X:$rm, AArch64Base_CCMNGEX_nzcvAsInt32:$nzcv),
+        (CCMNGEX X:$rn, X:$rm, AArch64Base_CCMNGEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNGTW W:$rn, W:$rm, AArch64Base_CCMNGTW_nzcvAsInt8:$nzcv),
-        (CCMNGTW W:$rn, W:$rm, AArch64Base_CCMNGTW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNGTW W:$rn, W:$rm, AArch64Base_CCMNGTW_nzcvAsInt32:$nzcv),
+        (CCMNGTW W:$rn, W:$rm, AArch64Base_CCMNGTW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNGTX X:$rn, X:$rm, AArch64Base_CCMNGTX_nzcvAsInt8:$nzcv),
-        (CCMNGTX X:$rn, X:$rm, AArch64Base_CCMNGTX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNGTX X:$rn, X:$rm, AArch64Base_CCMNGTX_nzcvAsInt32:$nzcv),
+        (CCMNGTX X:$rn, X:$rm, AArch64Base_CCMNGTX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNHIW W:$rn, W:$rm, AArch64Base_CCMNHIW_nzcvAsInt8:$nzcv),
-        (CCMNHIW W:$rn, W:$rm, AArch64Base_CCMNHIW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNHIW W:$rn, W:$rm, AArch64Base_CCMNHIW_nzcvAsInt32:$nzcv),
+        (CCMNHIW W:$rn, W:$rm, AArch64Base_CCMNHIW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNHIX X:$rn, X:$rm, AArch64Base_CCMNHIX_nzcvAsInt8:$nzcv),
-        (CCMNHIX X:$rn, X:$rm, AArch64Base_CCMNHIX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNHIX X:$rn, X:$rm, AArch64Base_CCMNHIX_nzcvAsInt32:$nzcv),
+        (CCMNHIX X:$rn, X:$rm, AArch64Base_CCMNHIX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIALW W:$rn, AArch64Base_CCMNIALW_immXAsInt64:$immX, AArch64Base_CCMNIALW_nzcvAsInt8:$nzcv),
-        (CCMNIALW W:$rn, AArch64Base_CCMNIALW_immXAsInt64:$immX, AArch64Base_CCMNIALW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIALW W:$rn, AArch64Base_CCMNIALW_immXAsInt64:$immX, AArch64Base_CCMNIALW_nzcvAsInt32:$nzcv),
+        (CCMNIALW W:$rn, AArch64Base_CCMNIALW_immXAsInt64:$immX, AArch64Base_CCMNIALW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIALX X:$rn, AArch64Base_CCMNIALX_immXAsInt64:$immX, AArch64Base_CCMNIALX_nzcvAsInt8:$nzcv),
-        (CCMNIALX X:$rn, AArch64Base_CCMNIALX_immXAsInt64:$immX, AArch64Base_CCMNIALX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIALX X:$rn, AArch64Base_CCMNIALX_immXAsInt64:$immX, AArch64Base_CCMNIALX_nzcvAsInt32:$nzcv),
+        (CCMNIALX X:$rn, AArch64Base_CCMNIALX_immXAsInt64:$immX, AArch64Base_CCMNIALX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNICCW W:$rn, AArch64Base_CCMNICCW_immXAsInt64:$immX, AArch64Base_CCMNICCW_nzcvAsInt8:$nzcv),
-        (CCMNICCW W:$rn, AArch64Base_CCMNICCW_immXAsInt64:$immX, AArch64Base_CCMNICCW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNICCW W:$rn, AArch64Base_CCMNICCW_immXAsInt64:$immX, AArch64Base_CCMNICCW_nzcvAsInt32:$nzcv),
+        (CCMNICCW W:$rn, AArch64Base_CCMNICCW_immXAsInt64:$immX, AArch64Base_CCMNICCW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNICCX X:$rn, AArch64Base_CCMNICCX_immXAsInt64:$immX, AArch64Base_CCMNICCX_nzcvAsInt8:$nzcv),
-        (CCMNICCX X:$rn, AArch64Base_CCMNICCX_immXAsInt64:$immX, AArch64Base_CCMNICCX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNICCX X:$rn, AArch64Base_CCMNICCX_immXAsInt64:$immX, AArch64Base_CCMNICCX_nzcvAsInt32:$nzcv),
+        (CCMNICCX X:$rn, AArch64Base_CCMNICCX_immXAsInt64:$immX, AArch64Base_CCMNICCX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNICSW W:$rn, AArch64Base_CCMNICSW_immXAsInt64:$immX, AArch64Base_CCMNICSW_nzcvAsInt8:$nzcv),
-        (CCMNICSW W:$rn, AArch64Base_CCMNICSW_immXAsInt64:$immX, AArch64Base_CCMNICSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNICSW W:$rn, AArch64Base_CCMNICSW_immXAsInt64:$immX, AArch64Base_CCMNICSW_nzcvAsInt32:$nzcv),
+        (CCMNICSW W:$rn, AArch64Base_CCMNICSW_immXAsInt64:$immX, AArch64Base_CCMNICSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNICSX X:$rn, AArch64Base_CCMNICSX_immXAsInt64:$immX, AArch64Base_CCMNICSX_nzcvAsInt8:$nzcv),
-        (CCMNICSX X:$rn, AArch64Base_CCMNICSX_immXAsInt64:$immX, AArch64Base_CCMNICSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNICSX X:$rn, AArch64Base_CCMNICSX_immXAsInt64:$immX, AArch64Base_CCMNICSX_nzcvAsInt32:$nzcv),
+        (CCMNICSX X:$rn, AArch64Base_CCMNICSX_immXAsInt64:$immX, AArch64Base_CCMNICSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIEQW W:$rn, AArch64Base_CCMNIEQW_immXAsInt64:$immX, AArch64Base_CCMNIEQW_nzcvAsInt8:$nzcv),
-        (CCMNIEQW W:$rn, AArch64Base_CCMNIEQW_immXAsInt64:$immX, AArch64Base_CCMNIEQW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIEQW W:$rn, AArch64Base_CCMNIEQW_immXAsInt64:$immX, AArch64Base_CCMNIEQW_nzcvAsInt32:$nzcv),
+        (CCMNIEQW W:$rn, AArch64Base_CCMNIEQW_immXAsInt64:$immX, AArch64Base_CCMNIEQW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIEQX X:$rn, AArch64Base_CCMNIEQX_immXAsInt64:$immX, AArch64Base_CCMNIEQX_nzcvAsInt8:$nzcv),
-        (CCMNIEQX X:$rn, AArch64Base_CCMNIEQX_immXAsInt64:$immX, AArch64Base_CCMNIEQX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIEQX X:$rn, AArch64Base_CCMNIEQX_immXAsInt64:$immX, AArch64Base_CCMNIEQX_nzcvAsInt32:$nzcv),
+        (CCMNIEQX X:$rn, AArch64Base_CCMNIEQX_immXAsInt64:$immX, AArch64Base_CCMNIEQX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIGEW W:$rn, AArch64Base_CCMNIGEW_immXAsInt64:$immX, AArch64Base_CCMNIGEW_nzcvAsInt8:$nzcv),
-        (CCMNIGEW W:$rn, AArch64Base_CCMNIGEW_immXAsInt64:$immX, AArch64Base_CCMNIGEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIGEW W:$rn, AArch64Base_CCMNIGEW_immXAsInt64:$immX, AArch64Base_CCMNIGEW_nzcvAsInt32:$nzcv),
+        (CCMNIGEW W:$rn, AArch64Base_CCMNIGEW_immXAsInt64:$immX, AArch64Base_CCMNIGEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIGEX X:$rn, AArch64Base_CCMNIGEX_immXAsInt64:$immX, AArch64Base_CCMNIGEX_nzcvAsInt8:$nzcv),
-        (CCMNIGEX X:$rn, AArch64Base_CCMNIGEX_immXAsInt64:$immX, AArch64Base_CCMNIGEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIGEX X:$rn, AArch64Base_CCMNIGEX_immXAsInt64:$immX, AArch64Base_CCMNIGEX_nzcvAsInt32:$nzcv),
+        (CCMNIGEX X:$rn, AArch64Base_CCMNIGEX_immXAsInt64:$immX, AArch64Base_CCMNIGEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIGTW W:$rn, AArch64Base_CCMNIGTW_immXAsInt64:$immX, AArch64Base_CCMNIGTW_nzcvAsInt8:$nzcv),
-        (CCMNIGTW W:$rn, AArch64Base_CCMNIGTW_immXAsInt64:$immX, AArch64Base_CCMNIGTW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIGTW W:$rn, AArch64Base_CCMNIGTW_immXAsInt64:$immX, AArch64Base_CCMNIGTW_nzcvAsInt32:$nzcv),
+        (CCMNIGTW W:$rn, AArch64Base_CCMNIGTW_immXAsInt64:$immX, AArch64Base_CCMNIGTW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIGTX X:$rn, AArch64Base_CCMNIGTX_immXAsInt64:$immX, AArch64Base_CCMNIGTX_nzcvAsInt8:$nzcv),
-        (CCMNIGTX X:$rn, AArch64Base_CCMNIGTX_immXAsInt64:$immX, AArch64Base_CCMNIGTX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIGTX X:$rn, AArch64Base_CCMNIGTX_immXAsInt64:$immX, AArch64Base_CCMNIGTX_nzcvAsInt32:$nzcv),
+        (CCMNIGTX X:$rn, AArch64Base_CCMNIGTX_immXAsInt64:$immX, AArch64Base_CCMNIGTX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIHIW W:$rn, AArch64Base_CCMNIHIW_immXAsInt64:$immX, AArch64Base_CCMNIHIW_nzcvAsInt8:$nzcv),
-        (CCMNIHIW W:$rn, AArch64Base_CCMNIHIW_immXAsInt64:$immX, AArch64Base_CCMNIHIW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIHIW W:$rn, AArch64Base_CCMNIHIW_immXAsInt64:$immX, AArch64Base_CCMNIHIW_nzcvAsInt32:$nzcv),
+        (CCMNIHIW W:$rn, AArch64Base_CCMNIHIW_immXAsInt64:$immX, AArch64Base_CCMNIHIW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIHIX X:$rn, AArch64Base_CCMNIHIX_immXAsInt64:$immX, AArch64Base_CCMNIHIX_nzcvAsInt8:$nzcv),
-        (CCMNIHIX X:$rn, AArch64Base_CCMNIHIX_immXAsInt64:$immX, AArch64Base_CCMNIHIX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIHIX X:$rn, AArch64Base_CCMNIHIX_immXAsInt64:$immX, AArch64Base_CCMNIHIX_nzcvAsInt32:$nzcv),
+        (CCMNIHIX X:$rn, AArch64Base_CCMNIHIX_immXAsInt64:$immX, AArch64Base_CCMNIHIX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNILEW W:$rn, AArch64Base_CCMNILEW_immXAsInt64:$immX, AArch64Base_CCMNILEW_nzcvAsInt8:$nzcv),
-        (CCMNILEW W:$rn, AArch64Base_CCMNILEW_immXAsInt64:$immX, AArch64Base_CCMNILEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNILEW W:$rn, AArch64Base_CCMNILEW_immXAsInt64:$immX, AArch64Base_CCMNILEW_nzcvAsInt32:$nzcv),
+        (CCMNILEW W:$rn, AArch64Base_CCMNILEW_immXAsInt64:$immX, AArch64Base_CCMNILEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNILEX X:$rn, AArch64Base_CCMNILEX_immXAsInt64:$immX, AArch64Base_CCMNILEX_nzcvAsInt8:$nzcv),
-        (CCMNILEX X:$rn, AArch64Base_CCMNILEX_immXAsInt64:$immX, AArch64Base_CCMNILEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNILEX X:$rn, AArch64Base_CCMNILEX_immXAsInt64:$immX, AArch64Base_CCMNILEX_nzcvAsInt32:$nzcv),
+        (CCMNILEX X:$rn, AArch64Base_CCMNILEX_immXAsInt64:$immX, AArch64Base_CCMNILEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNILSW W:$rn, AArch64Base_CCMNILSW_immXAsInt64:$immX, AArch64Base_CCMNILSW_nzcvAsInt8:$nzcv),
-        (CCMNILSW W:$rn, AArch64Base_CCMNILSW_immXAsInt64:$immX, AArch64Base_CCMNILSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNILSW W:$rn, AArch64Base_CCMNILSW_immXAsInt64:$immX, AArch64Base_CCMNILSW_nzcvAsInt32:$nzcv),
+        (CCMNILSW W:$rn, AArch64Base_CCMNILSW_immXAsInt64:$immX, AArch64Base_CCMNILSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNILSX X:$rn, AArch64Base_CCMNILSX_immXAsInt64:$immX, AArch64Base_CCMNILSX_nzcvAsInt8:$nzcv),
-        (CCMNILSX X:$rn, AArch64Base_CCMNILSX_immXAsInt64:$immX, AArch64Base_CCMNILSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNILSX X:$rn, AArch64Base_CCMNILSX_immXAsInt64:$immX, AArch64Base_CCMNILSX_nzcvAsInt32:$nzcv),
+        (CCMNILSX X:$rn, AArch64Base_CCMNILSX_immXAsInt64:$immX, AArch64Base_CCMNILSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNILTW W:$rn, AArch64Base_CCMNILTW_immXAsInt64:$immX, AArch64Base_CCMNILTW_nzcvAsInt8:$nzcv),
-        (CCMNILTW W:$rn, AArch64Base_CCMNILTW_immXAsInt64:$immX, AArch64Base_CCMNILTW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNILTW W:$rn, AArch64Base_CCMNILTW_immXAsInt64:$immX, AArch64Base_CCMNILTW_nzcvAsInt32:$nzcv),
+        (CCMNILTW W:$rn, AArch64Base_CCMNILTW_immXAsInt64:$immX, AArch64Base_CCMNILTW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNILTX X:$rn, AArch64Base_CCMNILTX_immXAsInt64:$immX, AArch64Base_CCMNILTX_nzcvAsInt8:$nzcv),
-        (CCMNILTX X:$rn, AArch64Base_CCMNILTX_immXAsInt64:$immX, AArch64Base_CCMNILTX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNILTX X:$rn, AArch64Base_CCMNILTX_immXAsInt64:$immX, AArch64Base_CCMNILTX_nzcvAsInt32:$nzcv),
+        (CCMNILTX X:$rn, AArch64Base_CCMNILTX_immXAsInt64:$immX, AArch64Base_CCMNILTX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIMIW W:$rn, AArch64Base_CCMNIMIW_immXAsInt64:$immX, AArch64Base_CCMNIMIW_nzcvAsInt8:$nzcv),
-        (CCMNIMIW W:$rn, AArch64Base_CCMNIMIW_immXAsInt64:$immX, AArch64Base_CCMNIMIW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIMIW W:$rn, AArch64Base_CCMNIMIW_immXAsInt64:$immX, AArch64Base_CCMNIMIW_nzcvAsInt32:$nzcv),
+        (CCMNIMIW W:$rn, AArch64Base_CCMNIMIW_immXAsInt64:$immX, AArch64Base_CCMNIMIW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIMIX X:$rn, AArch64Base_CCMNIMIX_immXAsInt64:$immX, AArch64Base_CCMNIMIX_nzcvAsInt8:$nzcv),
-        (CCMNIMIX X:$rn, AArch64Base_CCMNIMIX_immXAsInt64:$immX, AArch64Base_CCMNIMIX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIMIX X:$rn, AArch64Base_CCMNIMIX_immXAsInt64:$immX, AArch64Base_CCMNIMIX_nzcvAsInt32:$nzcv),
+        (CCMNIMIX X:$rn, AArch64Base_CCMNIMIX_immXAsInt64:$immX, AArch64Base_CCMNIMIX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNINEW W:$rn, AArch64Base_CCMNINEW_immXAsInt64:$immX, AArch64Base_CCMNINEW_nzcvAsInt8:$nzcv),
-        (CCMNINEW W:$rn, AArch64Base_CCMNINEW_immXAsInt64:$immX, AArch64Base_CCMNINEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNINEW W:$rn, AArch64Base_CCMNINEW_immXAsInt64:$immX, AArch64Base_CCMNINEW_nzcvAsInt32:$nzcv),
+        (CCMNINEW W:$rn, AArch64Base_CCMNINEW_immXAsInt64:$immX, AArch64Base_CCMNINEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNINEX X:$rn, AArch64Base_CCMNINEX_immXAsInt64:$immX, AArch64Base_CCMNINEX_nzcvAsInt8:$nzcv),
-        (CCMNINEX X:$rn, AArch64Base_CCMNINEX_immXAsInt64:$immX, AArch64Base_CCMNINEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNINEX X:$rn, AArch64Base_CCMNINEX_immXAsInt64:$immX, AArch64Base_CCMNINEX_nzcvAsInt32:$nzcv),
+        (CCMNINEX X:$rn, AArch64Base_CCMNINEX_immXAsInt64:$immX, AArch64Base_CCMNINEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNINVW W:$rn, AArch64Base_CCMNINVW_immXAsInt64:$immX, AArch64Base_CCMNINVW_nzcvAsInt8:$nzcv),
-        (CCMNINVW W:$rn, AArch64Base_CCMNINVW_immXAsInt64:$immX, AArch64Base_CCMNINVW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNINVW W:$rn, AArch64Base_CCMNINVW_immXAsInt64:$immX, AArch64Base_CCMNINVW_nzcvAsInt32:$nzcv),
+        (CCMNINVW W:$rn, AArch64Base_CCMNINVW_immXAsInt64:$immX, AArch64Base_CCMNINVW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNINVX X:$rn, AArch64Base_CCMNINVX_immXAsInt64:$immX, AArch64Base_CCMNINVX_nzcvAsInt8:$nzcv),
-        (CCMNINVX X:$rn, AArch64Base_CCMNINVX_immXAsInt64:$immX, AArch64Base_CCMNINVX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNINVX X:$rn, AArch64Base_CCMNINVX_immXAsInt64:$immX, AArch64Base_CCMNINVX_nzcvAsInt32:$nzcv),
+        (CCMNINVX X:$rn, AArch64Base_CCMNINVX_immXAsInt64:$immX, AArch64Base_CCMNINVX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIPLW W:$rn, AArch64Base_CCMNIPLW_immXAsInt64:$immX, AArch64Base_CCMNIPLW_nzcvAsInt8:$nzcv),
-        (CCMNIPLW W:$rn, AArch64Base_CCMNIPLW_immXAsInt64:$immX, AArch64Base_CCMNIPLW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIPLW W:$rn, AArch64Base_CCMNIPLW_immXAsInt64:$immX, AArch64Base_CCMNIPLW_nzcvAsInt32:$nzcv),
+        (CCMNIPLW W:$rn, AArch64Base_CCMNIPLW_immXAsInt64:$immX, AArch64Base_CCMNIPLW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIPLX X:$rn, AArch64Base_CCMNIPLX_immXAsInt64:$immX, AArch64Base_CCMNIPLX_nzcvAsInt8:$nzcv),
-        (CCMNIPLX X:$rn, AArch64Base_CCMNIPLX_immXAsInt64:$immX, AArch64Base_CCMNIPLX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIPLX X:$rn, AArch64Base_CCMNIPLX_immXAsInt64:$immX, AArch64Base_CCMNIPLX_nzcvAsInt32:$nzcv),
+        (CCMNIPLX X:$rn, AArch64Base_CCMNIPLX_immXAsInt64:$immX, AArch64Base_CCMNIPLX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIVCW W:$rn, AArch64Base_CCMNIVCW_immXAsInt64:$immX, AArch64Base_CCMNIVCW_nzcvAsInt8:$nzcv),
-        (CCMNIVCW W:$rn, AArch64Base_CCMNIVCW_immXAsInt64:$immX, AArch64Base_CCMNIVCW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIVCW W:$rn, AArch64Base_CCMNIVCW_immXAsInt64:$immX, AArch64Base_CCMNIVCW_nzcvAsInt32:$nzcv),
+        (CCMNIVCW W:$rn, AArch64Base_CCMNIVCW_immXAsInt64:$immX, AArch64Base_CCMNIVCW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIVCX X:$rn, AArch64Base_CCMNIVCX_immXAsInt64:$immX, AArch64Base_CCMNIVCX_nzcvAsInt8:$nzcv),
-        (CCMNIVCX X:$rn, AArch64Base_CCMNIVCX_immXAsInt64:$immX, AArch64Base_CCMNIVCX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIVCX X:$rn, AArch64Base_CCMNIVCX_immXAsInt64:$immX, AArch64Base_CCMNIVCX_nzcvAsInt32:$nzcv),
+        (CCMNIVCX X:$rn, AArch64Base_CCMNIVCX_immXAsInt64:$immX, AArch64Base_CCMNIVCX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIVSW W:$rn, AArch64Base_CCMNIVSW_immXAsInt64:$immX, AArch64Base_CCMNIVSW_nzcvAsInt8:$nzcv),
-        (CCMNIVSW W:$rn, AArch64Base_CCMNIVSW_immXAsInt64:$immX, AArch64Base_CCMNIVSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIVSW W:$rn, AArch64Base_CCMNIVSW_immXAsInt64:$immX, AArch64Base_CCMNIVSW_nzcvAsInt32:$nzcv),
+        (CCMNIVSW W:$rn, AArch64Base_CCMNIVSW_immXAsInt64:$immX, AArch64Base_CCMNIVSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNIVSX X:$rn, AArch64Base_CCMNIVSX_immXAsInt64:$immX, AArch64Base_CCMNIVSX_nzcvAsInt8:$nzcv),
-        (CCMNIVSX X:$rn, AArch64Base_CCMNIVSX_immXAsInt64:$immX, AArch64Base_CCMNIVSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNIVSX X:$rn, AArch64Base_CCMNIVSX_immXAsInt64:$immX, AArch64Base_CCMNIVSX_nzcvAsInt32:$nzcv),
+        (CCMNIVSX X:$rn, AArch64Base_CCMNIVSX_immXAsInt64:$immX, AArch64Base_CCMNIVSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNLEW W:$rn, W:$rm, AArch64Base_CCMNLEW_nzcvAsInt8:$nzcv),
-        (CCMNLEW W:$rn, W:$rm, AArch64Base_CCMNLEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNLEW W:$rn, W:$rm, AArch64Base_CCMNLEW_nzcvAsInt32:$nzcv),
+        (CCMNLEW W:$rn, W:$rm, AArch64Base_CCMNLEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNLEX X:$rn, X:$rm, AArch64Base_CCMNLEX_nzcvAsInt8:$nzcv),
-        (CCMNLEX X:$rn, X:$rm, AArch64Base_CCMNLEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNLEX X:$rn, X:$rm, AArch64Base_CCMNLEX_nzcvAsInt32:$nzcv),
+        (CCMNLEX X:$rn, X:$rm, AArch64Base_CCMNLEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNLSW W:$rn, W:$rm, AArch64Base_CCMNLSW_nzcvAsInt8:$nzcv),
-        (CCMNLSW W:$rn, W:$rm, AArch64Base_CCMNLSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNLSW W:$rn, W:$rm, AArch64Base_CCMNLSW_nzcvAsInt32:$nzcv),
+        (CCMNLSW W:$rn, W:$rm, AArch64Base_CCMNLSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNLSX X:$rn, X:$rm, AArch64Base_CCMNLSX_nzcvAsInt8:$nzcv),
-        (CCMNLSX X:$rn, X:$rm, AArch64Base_CCMNLSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNLSX X:$rn, X:$rm, AArch64Base_CCMNLSX_nzcvAsInt32:$nzcv),
+        (CCMNLSX X:$rn, X:$rm, AArch64Base_CCMNLSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNLTW W:$rn, W:$rm, AArch64Base_CCMNLTW_nzcvAsInt8:$nzcv),
-        (CCMNLTW W:$rn, W:$rm, AArch64Base_CCMNLTW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNLTW W:$rn, W:$rm, AArch64Base_CCMNLTW_nzcvAsInt32:$nzcv),
+        (CCMNLTW W:$rn, W:$rm, AArch64Base_CCMNLTW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNLTX X:$rn, X:$rm, AArch64Base_CCMNLTX_nzcvAsInt8:$nzcv),
-        (CCMNLTX X:$rn, X:$rm, AArch64Base_CCMNLTX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNLTX X:$rn, X:$rm, AArch64Base_CCMNLTX_nzcvAsInt32:$nzcv),
+        (CCMNLTX X:$rn, X:$rm, AArch64Base_CCMNLTX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNMIW W:$rn, W:$rm, AArch64Base_CCMNMIW_nzcvAsInt8:$nzcv),
-        (CCMNMIW W:$rn, W:$rm, AArch64Base_CCMNMIW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNMIW W:$rn, W:$rm, AArch64Base_CCMNMIW_nzcvAsInt32:$nzcv),
+        (CCMNMIW W:$rn, W:$rm, AArch64Base_CCMNMIW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNMIX X:$rn, X:$rm, AArch64Base_CCMNMIX_nzcvAsInt8:$nzcv),
-        (CCMNMIX X:$rn, X:$rm, AArch64Base_CCMNMIX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNMIX X:$rn, X:$rm, AArch64Base_CCMNMIX_nzcvAsInt32:$nzcv),
+        (CCMNMIX X:$rn, X:$rm, AArch64Base_CCMNMIX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNNEW W:$rn, W:$rm, AArch64Base_CCMNNEW_nzcvAsInt8:$nzcv),
-        (CCMNNEW W:$rn, W:$rm, AArch64Base_CCMNNEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNNEW W:$rn, W:$rm, AArch64Base_CCMNNEW_nzcvAsInt32:$nzcv),
+        (CCMNNEW W:$rn, W:$rm, AArch64Base_CCMNNEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNNEX X:$rn, X:$rm, AArch64Base_CCMNNEX_nzcvAsInt8:$nzcv),
-        (CCMNNEX X:$rn, X:$rm, AArch64Base_CCMNNEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNNEX X:$rn, X:$rm, AArch64Base_CCMNNEX_nzcvAsInt32:$nzcv),
+        (CCMNNEX X:$rn, X:$rm, AArch64Base_CCMNNEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNNVW W:$rn, W:$rm, AArch64Base_CCMNNVW_nzcvAsInt8:$nzcv),
-        (CCMNNVW W:$rn, W:$rm, AArch64Base_CCMNNVW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNNVW W:$rn, W:$rm, AArch64Base_CCMNNVW_nzcvAsInt32:$nzcv),
+        (CCMNNVW W:$rn, W:$rm, AArch64Base_CCMNNVW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNNVX X:$rn, X:$rm, AArch64Base_CCMNNVX_nzcvAsInt8:$nzcv),
-        (CCMNNVX X:$rn, X:$rm, AArch64Base_CCMNNVX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNNVX X:$rn, X:$rm, AArch64Base_CCMNNVX_nzcvAsInt32:$nzcv),
+        (CCMNNVX X:$rn, X:$rm, AArch64Base_CCMNNVX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNPLW W:$rn, W:$rm, AArch64Base_CCMNPLW_nzcvAsInt8:$nzcv),
-        (CCMNPLW W:$rn, W:$rm, AArch64Base_CCMNPLW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNPLW W:$rn, W:$rm, AArch64Base_CCMNPLW_nzcvAsInt32:$nzcv),
+        (CCMNPLW W:$rn, W:$rm, AArch64Base_CCMNPLW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNPLX X:$rn, X:$rm, AArch64Base_CCMNPLX_nzcvAsInt8:$nzcv),
-        (CCMNPLX X:$rn, X:$rm, AArch64Base_CCMNPLX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNPLX X:$rn, X:$rm, AArch64Base_CCMNPLX_nzcvAsInt32:$nzcv),
+        (CCMNPLX X:$rn, X:$rm, AArch64Base_CCMNPLX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNVCW W:$rn, W:$rm, AArch64Base_CCMNVCW_nzcvAsInt8:$nzcv),
-        (CCMNVCW W:$rn, W:$rm, AArch64Base_CCMNVCW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNVCW W:$rn, W:$rm, AArch64Base_CCMNVCW_nzcvAsInt32:$nzcv),
+        (CCMNVCW W:$rn, W:$rm, AArch64Base_CCMNVCW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNVCX X:$rn, X:$rm, AArch64Base_CCMNVCX_nzcvAsInt8:$nzcv),
-        (CCMNVCX X:$rn, X:$rm, AArch64Base_CCMNVCX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNVCX X:$rn, X:$rm, AArch64Base_CCMNVCX_nzcvAsInt32:$nzcv),
+        (CCMNVCX X:$rn, X:$rm, AArch64Base_CCMNVCX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNVSW W:$rn, W:$rm, AArch64Base_CCMNVSW_nzcvAsInt8:$nzcv),
-        (CCMNVSW W:$rn, W:$rm, AArch64Base_CCMNVSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNVSW W:$rn, W:$rm, AArch64Base_CCMNVSW_nzcvAsInt32:$nzcv),
+        (CCMNVSW W:$rn, W:$rm, AArch64Base_CCMNVSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMNVSX X:$rn, X:$rm, AArch64Base_CCMNVSX_nzcvAsInt8:$nzcv),
-        (CCMNVSX X:$rn, X:$rm, AArch64Base_CCMNVSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMNVSX X:$rn, X:$rm, AArch64Base_CCMNVSX_nzcvAsInt32:$nzcv),
+        (CCMNVSX X:$rn, X:$rm, AArch64Base_CCMNVSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPALW W:$rn, W:$rm, AArch64Base_CCMPALW_nzcvAsInt8:$nzcv),
-        (CCMPALW W:$rn, W:$rm, AArch64Base_CCMPALW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPALW W:$rn, W:$rm, AArch64Base_CCMPALW_nzcvAsInt32:$nzcv),
+        (CCMPALW W:$rn, W:$rm, AArch64Base_CCMPALW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPALX X:$rn, X:$rm, AArch64Base_CCMPALX_nzcvAsInt8:$nzcv),
-        (CCMPALX X:$rn, X:$rm, AArch64Base_CCMPALX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPALX X:$rn, X:$rm, AArch64Base_CCMPALX_nzcvAsInt32:$nzcv),
+        (CCMPALX X:$rn, X:$rm, AArch64Base_CCMPALX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPCCW W:$rn, W:$rm, AArch64Base_CCMPCCW_nzcvAsInt8:$nzcv),
-        (CCMPCCW W:$rn, W:$rm, AArch64Base_CCMPCCW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPCCW W:$rn, W:$rm, AArch64Base_CCMPCCW_nzcvAsInt32:$nzcv),
+        (CCMPCCW W:$rn, W:$rm, AArch64Base_CCMPCCW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPCCX X:$rn, X:$rm, AArch64Base_CCMPCCX_nzcvAsInt8:$nzcv),
-        (CCMPCCX X:$rn, X:$rm, AArch64Base_CCMPCCX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPCCX X:$rn, X:$rm, AArch64Base_CCMPCCX_nzcvAsInt32:$nzcv),
+        (CCMPCCX X:$rn, X:$rm, AArch64Base_CCMPCCX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPCSW W:$rn, W:$rm, AArch64Base_CCMPCSW_nzcvAsInt8:$nzcv),
-        (CCMPCSW W:$rn, W:$rm, AArch64Base_CCMPCSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPCSW W:$rn, W:$rm, AArch64Base_CCMPCSW_nzcvAsInt32:$nzcv),
+        (CCMPCSW W:$rn, W:$rm, AArch64Base_CCMPCSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPCSX X:$rn, X:$rm, AArch64Base_CCMPCSX_nzcvAsInt8:$nzcv),
-        (CCMPCSX X:$rn, X:$rm, AArch64Base_CCMPCSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPCSX X:$rn, X:$rm, AArch64Base_CCMPCSX_nzcvAsInt32:$nzcv),
+        (CCMPCSX X:$rn, X:$rm, AArch64Base_CCMPCSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPEQW W:$rn, W:$rm, AArch64Base_CCMPEQW_nzcvAsInt8:$nzcv),
-        (CCMPEQW W:$rn, W:$rm, AArch64Base_CCMPEQW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPEQW W:$rn, W:$rm, AArch64Base_CCMPEQW_nzcvAsInt32:$nzcv),
+        (CCMPEQW W:$rn, W:$rm, AArch64Base_CCMPEQW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPEQX X:$rn, X:$rm, AArch64Base_CCMPEQX_nzcvAsInt8:$nzcv),
-        (CCMPEQX X:$rn, X:$rm, AArch64Base_CCMPEQX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPEQX X:$rn, X:$rm, AArch64Base_CCMPEQX_nzcvAsInt32:$nzcv),
+        (CCMPEQX X:$rn, X:$rm, AArch64Base_CCMPEQX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPGEW W:$rn, W:$rm, AArch64Base_CCMPGEW_nzcvAsInt8:$nzcv),
-        (CCMPGEW W:$rn, W:$rm, AArch64Base_CCMPGEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPGEW W:$rn, W:$rm, AArch64Base_CCMPGEW_nzcvAsInt32:$nzcv),
+        (CCMPGEW W:$rn, W:$rm, AArch64Base_CCMPGEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPGEX X:$rn, X:$rm, AArch64Base_CCMPGEX_nzcvAsInt8:$nzcv),
-        (CCMPGEX X:$rn, X:$rm, AArch64Base_CCMPGEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPGEX X:$rn, X:$rm, AArch64Base_CCMPGEX_nzcvAsInt32:$nzcv),
+        (CCMPGEX X:$rn, X:$rm, AArch64Base_CCMPGEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPGTW W:$rn, W:$rm, AArch64Base_CCMPGTW_nzcvAsInt8:$nzcv),
-        (CCMPGTW W:$rn, W:$rm, AArch64Base_CCMPGTW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPGTW W:$rn, W:$rm, AArch64Base_CCMPGTW_nzcvAsInt32:$nzcv),
+        (CCMPGTW W:$rn, W:$rm, AArch64Base_CCMPGTW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPGTX X:$rn, X:$rm, AArch64Base_CCMPGTX_nzcvAsInt8:$nzcv),
-        (CCMPGTX X:$rn, X:$rm, AArch64Base_CCMPGTX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPGTX X:$rn, X:$rm, AArch64Base_CCMPGTX_nzcvAsInt32:$nzcv),
+        (CCMPGTX X:$rn, X:$rm, AArch64Base_CCMPGTX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPHIW W:$rn, W:$rm, AArch64Base_CCMPHIW_nzcvAsInt8:$nzcv),
-        (CCMPHIW W:$rn, W:$rm, AArch64Base_CCMPHIW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPHIW W:$rn, W:$rm, AArch64Base_CCMPHIW_nzcvAsInt32:$nzcv),
+        (CCMPHIW W:$rn, W:$rm, AArch64Base_CCMPHIW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPHIX X:$rn, X:$rm, AArch64Base_CCMPHIX_nzcvAsInt8:$nzcv),
-        (CCMPHIX X:$rn, X:$rm, AArch64Base_CCMPHIX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPHIX X:$rn, X:$rm, AArch64Base_CCMPHIX_nzcvAsInt32:$nzcv),
+        (CCMPHIX X:$rn, X:$rm, AArch64Base_CCMPHIX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIALW W:$rn, AArch64Base_CCMPIALW_immXAsInt64:$immX, AArch64Base_CCMPIALW_nzcvAsInt8:$nzcv),
-        (CCMPIALW W:$rn, AArch64Base_CCMPIALW_immXAsInt64:$immX, AArch64Base_CCMPIALW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIALW W:$rn, AArch64Base_CCMPIALW_immXAsInt64:$immX, AArch64Base_CCMPIALW_nzcvAsInt32:$nzcv),
+        (CCMPIALW W:$rn, AArch64Base_CCMPIALW_immXAsInt64:$immX, AArch64Base_CCMPIALW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIALX X:$rn, AArch64Base_CCMPIALX_immXAsInt64:$immX, AArch64Base_CCMPIALX_nzcvAsInt8:$nzcv),
-        (CCMPIALX X:$rn, AArch64Base_CCMPIALX_immXAsInt64:$immX, AArch64Base_CCMPIALX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIALX X:$rn, AArch64Base_CCMPIALX_immXAsInt64:$immX, AArch64Base_CCMPIALX_nzcvAsInt32:$nzcv),
+        (CCMPIALX X:$rn, AArch64Base_CCMPIALX_immXAsInt64:$immX, AArch64Base_CCMPIALX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPICCW W:$rn, AArch64Base_CCMPICCW_immXAsInt64:$immX, AArch64Base_CCMPICCW_nzcvAsInt8:$nzcv),
-        (CCMPICCW W:$rn, AArch64Base_CCMPICCW_immXAsInt64:$immX, AArch64Base_CCMPICCW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPICCW W:$rn, AArch64Base_CCMPICCW_immXAsInt64:$immX, AArch64Base_CCMPICCW_nzcvAsInt32:$nzcv),
+        (CCMPICCW W:$rn, AArch64Base_CCMPICCW_immXAsInt64:$immX, AArch64Base_CCMPICCW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPICCX X:$rn, AArch64Base_CCMPICCX_immXAsInt64:$immX, AArch64Base_CCMPICCX_nzcvAsInt8:$nzcv),
-        (CCMPICCX X:$rn, AArch64Base_CCMPICCX_immXAsInt64:$immX, AArch64Base_CCMPICCX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPICCX X:$rn, AArch64Base_CCMPICCX_immXAsInt64:$immX, AArch64Base_CCMPICCX_nzcvAsInt32:$nzcv),
+        (CCMPICCX X:$rn, AArch64Base_CCMPICCX_immXAsInt64:$immX, AArch64Base_CCMPICCX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPICSW W:$rn, AArch64Base_CCMPICSW_immXAsInt64:$immX, AArch64Base_CCMPICSW_nzcvAsInt8:$nzcv),
-        (CCMPICSW W:$rn, AArch64Base_CCMPICSW_immXAsInt64:$immX, AArch64Base_CCMPICSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPICSW W:$rn, AArch64Base_CCMPICSW_immXAsInt64:$immX, AArch64Base_CCMPICSW_nzcvAsInt32:$nzcv),
+        (CCMPICSW W:$rn, AArch64Base_CCMPICSW_immXAsInt64:$immX, AArch64Base_CCMPICSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPICSX X:$rn, AArch64Base_CCMPICSX_immXAsInt64:$immX, AArch64Base_CCMPICSX_nzcvAsInt8:$nzcv),
-        (CCMPICSX X:$rn, AArch64Base_CCMPICSX_immXAsInt64:$immX, AArch64Base_CCMPICSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPICSX X:$rn, AArch64Base_CCMPICSX_immXAsInt64:$immX, AArch64Base_CCMPICSX_nzcvAsInt32:$nzcv),
+        (CCMPICSX X:$rn, AArch64Base_CCMPICSX_immXAsInt64:$immX, AArch64Base_CCMPICSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIEQW W:$rn, AArch64Base_CCMPIEQW_immXAsInt64:$immX, AArch64Base_CCMPIEQW_nzcvAsInt8:$nzcv),
-        (CCMPIEQW W:$rn, AArch64Base_CCMPIEQW_immXAsInt64:$immX, AArch64Base_CCMPIEQW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIEQW W:$rn, AArch64Base_CCMPIEQW_immXAsInt64:$immX, AArch64Base_CCMPIEQW_nzcvAsInt32:$nzcv),
+        (CCMPIEQW W:$rn, AArch64Base_CCMPIEQW_immXAsInt64:$immX, AArch64Base_CCMPIEQW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIEQX X:$rn, AArch64Base_CCMPIEQX_immXAsInt64:$immX, AArch64Base_CCMPIEQX_nzcvAsInt8:$nzcv),
-        (CCMPIEQX X:$rn, AArch64Base_CCMPIEQX_immXAsInt64:$immX, AArch64Base_CCMPIEQX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIEQX X:$rn, AArch64Base_CCMPIEQX_immXAsInt64:$immX, AArch64Base_CCMPIEQX_nzcvAsInt32:$nzcv),
+        (CCMPIEQX X:$rn, AArch64Base_CCMPIEQX_immXAsInt64:$immX, AArch64Base_CCMPIEQX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIGEW W:$rn, AArch64Base_CCMPIGEW_immXAsInt64:$immX, AArch64Base_CCMPIGEW_nzcvAsInt8:$nzcv),
-        (CCMPIGEW W:$rn, AArch64Base_CCMPIGEW_immXAsInt64:$immX, AArch64Base_CCMPIGEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIGEW W:$rn, AArch64Base_CCMPIGEW_immXAsInt64:$immX, AArch64Base_CCMPIGEW_nzcvAsInt32:$nzcv),
+        (CCMPIGEW W:$rn, AArch64Base_CCMPIGEW_immXAsInt64:$immX, AArch64Base_CCMPIGEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIGEX X:$rn, AArch64Base_CCMPIGEX_immXAsInt64:$immX, AArch64Base_CCMPIGEX_nzcvAsInt8:$nzcv),
-        (CCMPIGEX X:$rn, AArch64Base_CCMPIGEX_immXAsInt64:$immX, AArch64Base_CCMPIGEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIGEX X:$rn, AArch64Base_CCMPIGEX_immXAsInt64:$immX, AArch64Base_CCMPIGEX_nzcvAsInt32:$nzcv),
+        (CCMPIGEX X:$rn, AArch64Base_CCMPIGEX_immXAsInt64:$immX, AArch64Base_CCMPIGEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIGTW W:$rn, AArch64Base_CCMPIGTW_immXAsInt64:$immX, AArch64Base_CCMPIGTW_nzcvAsInt8:$nzcv),
-        (CCMPIGTW W:$rn, AArch64Base_CCMPIGTW_immXAsInt64:$immX, AArch64Base_CCMPIGTW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIGTW W:$rn, AArch64Base_CCMPIGTW_immXAsInt64:$immX, AArch64Base_CCMPIGTW_nzcvAsInt32:$nzcv),
+        (CCMPIGTW W:$rn, AArch64Base_CCMPIGTW_immXAsInt64:$immX, AArch64Base_CCMPIGTW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIGTX X:$rn, AArch64Base_CCMPIGTX_immXAsInt64:$immX, AArch64Base_CCMPIGTX_nzcvAsInt8:$nzcv),
-        (CCMPIGTX X:$rn, AArch64Base_CCMPIGTX_immXAsInt64:$immX, AArch64Base_CCMPIGTX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIGTX X:$rn, AArch64Base_CCMPIGTX_immXAsInt64:$immX, AArch64Base_CCMPIGTX_nzcvAsInt32:$nzcv),
+        (CCMPIGTX X:$rn, AArch64Base_CCMPIGTX_immXAsInt64:$immX, AArch64Base_CCMPIGTX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIHIW W:$rn, AArch64Base_CCMPIHIW_immXAsInt64:$immX, AArch64Base_CCMPIHIW_nzcvAsInt8:$nzcv),
-        (CCMPIHIW W:$rn, AArch64Base_CCMPIHIW_immXAsInt64:$immX, AArch64Base_CCMPIHIW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIHIW W:$rn, AArch64Base_CCMPIHIW_immXAsInt64:$immX, AArch64Base_CCMPIHIW_nzcvAsInt32:$nzcv),
+        (CCMPIHIW W:$rn, AArch64Base_CCMPIHIW_immXAsInt64:$immX, AArch64Base_CCMPIHIW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIHIX X:$rn, AArch64Base_CCMPIHIX_immXAsInt64:$immX, AArch64Base_CCMPIHIX_nzcvAsInt8:$nzcv),
-        (CCMPIHIX X:$rn, AArch64Base_CCMPIHIX_immXAsInt64:$immX, AArch64Base_CCMPIHIX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIHIX X:$rn, AArch64Base_CCMPIHIX_immXAsInt64:$immX, AArch64Base_CCMPIHIX_nzcvAsInt32:$nzcv),
+        (CCMPIHIX X:$rn, AArch64Base_CCMPIHIX_immXAsInt64:$immX, AArch64Base_CCMPIHIX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPILEW W:$rn, AArch64Base_CCMPILEW_immXAsInt64:$immX, AArch64Base_CCMPILEW_nzcvAsInt8:$nzcv),
-        (CCMPILEW W:$rn, AArch64Base_CCMPILEW_immXAsInt64:$immX, AArch64Base_CCMPILEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPILEW W:$rn, AArch64Base_CCMPILEW_immXAsInt64:$immX, AArch64Base_CCMPILEW_nzcvAsInt32:$nzcv),
+        (CCMPILEW W:$rn, AArch64Base_CCMPILEW_immXAsInt64:$immX, AArch64Base_CCMPILEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPILEX X:$rn, AArch64Base_CCMPILEX_immXAsInt64:$immX, AArch64Base_CCMPILEX_nzcvAsInt8:$nzcv),
-        (CCMPILEX X:$rn, AArch64Base_CCMPILEX_immXAsInt64:$immX, AArch64Base_CCMPILEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPILEX X:$rn, AArch64Base_CCMPILEX_immXAsInt64:$immX, AArch64Base_CCMPILEX_nzcvAsInt32:$nzcv),
+        (CCMPILEX X:$rn, AArch64Base_CCMPILEX_immXAsInt64:$immX, AArch64Base_CCMPILEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPILSW W:$rn, AArch64Base_CCMPILSW_immXAsInt64:$immX, AArch64Base_CCMPILSW_nzcvAsInt8:$nzcv),
-        (CCMPILSW W:$rn, AArch64Base_CCMPILSW_immXAsInt64:$immX, AArch64Base_CCMPILSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPILSW W:$rn, AArch64Base_CCMPILSW_immXAsInt64:$immX, AArch64Base_CCMPILSW_nzcvAsInt32:$nzcv),
+        (CCMPILSW W:$rn, AArch64Base_CCMPILSW_immXAsInt64:$immX, AArch64Base_CCMPILSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPILSX X:$rn, AArch64Base_CCMPILSX_immXAsInt64:$immX, AArch64Base_CCMPILSX_nzcvAsInt8:$nzcv),
-        (CCMPILSX X:$rn, AArch64Base_CCMPILSX_immXAsInt64:$immX, AArch64Base_CCMPILSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPILSX X:$rn, AArch64Base_CCMPILSX_immXAsInt64:$immX, AArch64Base_CCMPILSX_nzcvAsInt32:$nzcv),
+        (CCMPILSX X:$rn, AArch64Base_CCMPILSX_immXAsInt64:$immX, AArch64Base_CCMPILSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPILTW W:$rn, AArch64Base_CCMPILTW_immXAsInt64:$immX, AArch64Base_CCMPILTW_nzcvAsInt8:$nzcv),
-        (CCMPILTW W:$rn, AArch64Base_CCMPILTW_immXAsInt64:$immX, AArch64Base_CCMPILTW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPILTW W:$rn, AArch64Base_CCMPILTW_immXAsInt64:$immX, AArch64Base_CCMPILTW_nzcvAsInt32:$nzcv),
+        (CCMPILTW W:$rn, AArch64Base_CCMPILTW_immXAsInt64:$immX, AArch64Base_CCMPILTW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPILTX X:$rn, AArch64Base_CCMPILTX_immXAsInt64:$immX, AArch64Base_CCMPILTX_nzcvAsInt8:$nzcv),
-        (CCMPILTX X:$rn, AArch64Base_CCMPILTX_immXAsInt64:$immX, AArch64Base_CCMPILTX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPILTX X:$rn, AArch64Base_CCMPILTX_immXAsInt64:$immX, AArch64Base_CCMPILTX_nzcvAsInt32:$nzcv),
+        (CCMPILTX X:$rn, AArch64Base_CCMPILTX_immXAsInt64:$immX, AArch64Base_CCMPILTX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIMIW W:$rn, AArch64Base_CCMPIMIW_immXAsInt64:$immX, AArch64Base_CCMPIMIW_nzcvAsInt8:$nzcv),
-        (CCMPIMIW W:$rn, AArch64Base_CCMPIMIW_immXAsInt64:$immX, AArch64Base_CCMPIMIW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIMIW W:$rn, AArch64Base_CCMPIMIW_immXAsInt64:$immX, AArch64Base_CCMPIMIW_nzcvAsInt32:$nzcv),
+        (CCMPIMIW W:$rn, AArch64Base_CCMPIMIW_immXAsInt64:$immX, AArch64Base_CCMPIMIW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIMIX X:$rn, AArch64Base_CCMPIMIX_immXAsInt64:$immX, AArch64Base_CCMPIMIX_nzcvAsInt8:$nzcv),
-        (CCMPIMIX X:$rn, AArch64Base_CCMPIMIX_immXAsInt64:$immX, AArch64Base_CCMPIMIX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIMIX X:$rn, AArch64Base_CCMPIMIX_immXAsInt64:$immX, AArch64Base_CCMPIMIX_nzcvAsInt32:$nzcv),
+        (CCMPIMIX X:$rn, AArch64Base_CCMPIMIX_immXAsInt64:$immX, AArch64Base_CCMPIMIX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPINEW W:$rn, AArch64Base_CCMPINEW_immXAsInt64:$immX, AArch64Base_CCMPINEW_nzcvAsInt8:$nzcv),
-        (CCMPINEW W:$rn, AArch64Base_CCMPINEW_immXAsInt64:$immX, AArch64Base_CCMPINEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPINEW W:$rn, AArch64Base_CCMPINEW_immXAsInt64:$immX, AArch64Base_CCMPINEW_nzcvAsInt32:$nzcv),
+        (CCMPINEW W:$rn, AArch64Base_CCMPINEW_immXAsInt64:$immX, AArch64Base_CCMPINEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPINEX X:$rn, AArch64Base_CCMPINEX_immXAsInt64:$immX, AArch64Base_CCMPINEX_nzcvAsInt8:$nzcv),
-        (CCMPINEX X:$rn, AArch64Base_CCMPINEX_immXAsInt64:$immX, AArch64Base_CCMPINEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPINEX X:$rn, AArch64Base_CCMPINEX_immXAsInt64:$immX, AArch64Base_CCMPINEX_nzcvAsInt32:$nzcv),
+        (CCMPINEX X:$rn, AArch64Base_CCMPINEX_immXAsInt64:$immX, AArch64Base_CCMPINEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPINVW W:$rn, AArch64Base_CCMPINVW_immXAsInt64:$immX, AArch64Base_CCMPINVW_nzcvAsInt8:$nzcv),
-        (CCMPINVW W:$rn, AArch64Base_CCMPINVW_immXAsInt64:$immX, AArch64Base_CCMPINVW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPINVW W:$rn, AArch64Base_CCMPINVW_immXAsInt64:$immX, AArch64Base_CCMPINVW_nzcvAsInt32:$nzcv),
+        (CCMPINVW W:$rn, AArch64Base_CCMPINVW_immXAsInt64:$immX, AArch64Base_CCMPINVW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPINVX X:$rn, AArch64Base_CCMPINVX_immXAsInt64:$immX, AArch64Base_CCMPINVX_nzcvAsInt8:$nzcv),
-        (CCMPINVX X:$rn, AArch64Base_CCMPINVX_immXAsInt64:$immX, AArch64Base_CCMPINVX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPINVX X:$rn, AArch64Base_CCMPINVX_immXAsInt64:$immX, AArch64Base_CCMPINVX_nzcvAsInt32:$nzcv),
+        (CCMPINVX X:$rn, AArch64Base_CCMPINVX_immXAsInt64:$immX, AArch64Base_CCMPINVX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIPLW W:$rn, AArch64Base_CCMPIPLW_immXAsInt64:$immX, AArch64Base_CCMPIPLW_nzcvAsInt8:$nzcv),
-        (CCMPIPLW W:$rn, AArch64Base_CCMPIPLW_immXAsInt64:$immX, AArch64Base_CCMPIPLW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIPLW W:$rn, AArch64Base_CCMPIPLW_immXAsInt64:$immX, AArch64Base_CCMPIPLW_nzcvAsInt32:$nzcv),
+        (CCMPIPLW W:$rn, AArch64Base_CCMPIPLW_immXAsInt64:$immX, AArch64Base_CCMPIPLW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIPLX X:$rn, AArch64Base_CCMPIPLX_immXAsInt64:$immX, AArch64Base_CCMPIPLX_nzcvAsInt8:$nzcv),
-        (CCMPIPLX X:$rn, AArch64Base_CCMPIPLX_immXAsInt64:$immX, AArch64Base_CCMPIPLX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIPLX X:$rn, AArch64Base_CCMPIPLX_immXAsInt64:$immX, AArch64Base_CCMPIPLX_nzcvAsInt32:$nzcv),
+        (CCMPIPLX X:$rn, AArch64Base_CCMPIPLX_immXAsInt64:$immX, AArch64Base_CCMPIPLX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIVCW W:$rn, AArch64Base_CCMPIVCW_immXAsInt64:$immX, AArch64Base_CCMPIVCW_nzcvAsInt8:$nzcv),
-        (CCMPIVCW W:$rn, AArch64Base_CCMPIVCW_immXAsInt64:$immX, AArch64Base_CCMPIVCW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIVCW W:$rn, AArch64Base_CCMPIVCW_immXAsInt64:$immX, AArch64Base_CCMPIVCW_nzcvAsInt32:$nzcv),
+        (CCMPIVCW W:$rn, AArch64Base_CCMPIVCW_immXAsInt64:$immX, AArch64Base_CCMPIVCW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIVCX X:$rn, AArch64Base_CCMPIVCX_immXAsInt64:$immX, AArch64Base_CCMPIVCX_nzcvAsInt8:$nzcv),
-        (CCMPIVCX X:$rn, AArch64Base_CCMPIVCX_immXAsInt64:$immX, AArch64Base_CCMPIVCX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIVCX X:$rn, AArch64Base_CCMPIVCX_immXAsInt64:$immX, AArch64Base_CCMPIVCX_nzcvAsInt32:$nzcv),
+        (CCMPIVCX X:$rn, AArch64Base_CCMPIVCX_immXAsInt64:$immX, AArch64Base_CCMPIVCX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIVSW W:$rn, AArch64Base_CCMPIVSW_immXAsInt64:$immX, AArch64Base_CCMPIVSW_nzcvAsInt8:$nzcv),
-        (CCMPIVSW W:$rn, AArch64Base_CCMPIVSW_immXAsInt64:$immX, AArch64Base_CCMPIVSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIVSW W:$rn, AArch64Base_CCMPIVSW_immXAsInt64:$immX, AArch64Base_CCMPIVSW_nzcvAsInt32:$nzcv),
+        (CCMPIVSW W:$rn, AArch64Base_CCMPIVSW_immXAsInt64:$immX, AArch64Base_CCMPIVSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPIVSX X:$rn, AArch64Base_CCMPIVSX_immXAsInt64:$immX, AArch64Base_CCMPIVSX_nzcvAsInt8:$nzcv),
-        (CCMPIVSX X:$rn, AArch64Base_CCMPIVSX_immXAsInt64:$immX, AArch64Base_CCMPIVSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPIVSX X:$rn, AArch64Base_CCMPIVSX_immXAsInt64:$immX, AArch64Base_CCMPIVSX_nzcvAsInt32:$nzcv),
+        (CCMPIVSX X:$rn, AArch64Base_CCMPIVSX_immXAsInt64:$immX, AArch64Base_CCMPIVSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPLEW W:$rn, W:$rm, AArch64Base_CCMPLEW_nzcvAsInt8:$nzcv),
-        (CCMPLEW W:$rn, W:$rm, AArch64Base_CCMPLEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPLEW W:$rn, W:$rm, AArch64Base_CCMPLEW_nzcvAsInt32:$nzcv),
+        (CCMPLEW W:$rn, W:$rm, AArch64Base_CCMPLEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPLEX X:$rn, X:$rm, AArch64Base_CCMPLEX_nzcvAsInt8:$nzcv),
-        (CCMPLEX X:$rn, X:$rm, AArch64Base_CCMPLEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPLEX X:$rn, X:$rm, AArch64Base_CCMPLEX_nzcvAsInt32:$nzcv),
+        (CCMPLEX X:$rn, X:$rm, AArch64Base_CCMPLEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPLSW W:$rn, W:$rm, AArch64Base_CCMPLSW_nzcvAsInt8:$nzcv),
-        (CCMPLSW W:$rn, W:$rm, AArch64Base_CCMPLSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPLSW W:$rn, W:$rm, AArch64Base_CCMPLSW_nzcvAsInt32:$nzcv),
+        (CCMPLSW W:$rn, W:$rm, AArch64Base_CCMPLSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPLSX X:$rn, X:$rm, AArch64Base_CCMPLSX_nzcvAsInt8:$nzcv),
-        (CCMPLSX X:$rn, X:$rm, AArch64Base_CCMPLSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPLSX X:$rn, X:$rm, AArch64Base_CCMPLSX_nzcvAsInt32:$nzcv),
+        (CCMPLSX X:$rn, X:$rm, AArch64Base_CCMPLSX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPLTW W:$rn, W:$rm, AArch64Base_CCMPLTW_nzcvAsInt8:$nzcv),
-        (CCMPLTW W:$rn, W:$rm, AArch64Base_CCMPLTW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPLTW W:$rn, W:$rm, AArch64Base_CCMPLTW_nzcvAsInt32:$nzcv),
+        (CCMPLTW W:$rn, W:$rm, AArch64Base_CCMPLTW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPLTX X:$rn, X:$rm, AArch64Base_CCMPLTX_nzcvAsInt8:$nzcv),
-        (CCMPLTX X:$rn, X:$rm, AArch64Base_CCMPLTX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPLTX X:$rn, X:$rm, AArch64Base_CCMPLTX_nzcvAsInt32:$nzcv),
+        (CCMPLTX X:$rn, X:$rm, AArch64Base_CCMPLTX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPMIW W:$rn, W:$rm, AArch64Base_CCMPMIW_nzcvAsInt8:$nzcv),
-        (CCMPMIW W:$rn, W:$rm, AArch64Base_CCMPMIW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPMIW W:$rn, W:$rm, AArch64Base_CCMPMIW_nzcvAsInt32:$nzcv),
+        (CCMPMIW W:$rn, W:$rm, AArch64Base_CCMPMIW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPMIX X:$rn, X:$rm, AArch64Base_CCMPMIX_nzcvAsInt8:$nzcv),
-        (CCMPMIX X:$rn, X:$rm, AArch64Base_CCMPMIX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPMIX X:$rn, X:$rm, AArch64Base_CCMPMIX_nzcvAsInt32:$nzcv),
+        (CCMPMIX X:$rn, X:$rm, AArch64Base_CCMPMIX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPNEW W:$rn, W:$rm, AArch64Base_CCMPNEW_nzcvAsInt8:$nzcv),
-        (CCMPNEW W:$rn, W:$rm, AArch64Base_CCMPNEW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPNEW W:$rn, W:$rm, AArch64Base_CCMPNEW_nzcvAsInt32:$nzcv),
+        (CCMPNEW W:$rn, W:$rm, AArch64Base_CCMPNEW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPNEX X:$rn, X:$rm, AArch64Base_CCMPNEX_nzcvAsInt8:$nzcv),
-        (CCMPNEX X:$rn, X:$rm, AArch64Base_CCMPNEX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPNEX X:$rn, X:$rm, AArch64Base_CCMPNEX_nzcvAsInt32:$nzcv),
+        (CCMPNEX X:$rn, X:$rm, AArch64Base_CCMPNEX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPNVW W:$rn, W:$rm, AArch64Base_CCMPNVW_nzcvAsInt8:$nzcv),
-        (CCMPNVW W:$rn, W:$rm, AArch64Base_CCMPNVW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPNVW W:$rn, W:$rm, AArch64Base_CCMPNVW_nzcvAsInt32:$nzcv),
+        (CCMPNVW W:$rn, W:$rm, AArch64Base_CCMPNVW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPNVX X:$rn, X:$rm, AArch64Base_CCMPNVX_nzcvAsInt8:$nzcv),
-        (CCMPNVX X:$rn, X:$rm, AArch64Base_CCMPNVX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPNVX X:$rn, X:$rm, AArch64Base_CCMPNVX_nzcvAsInt32:$nzcv),
+        (CCMPNVX X:$rn, X:$rm, AArch64Base_CCMPNVX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPPLW W:$rn, W:$rm, AArch64Base_CCMPPLW_nzcvAsInt8:$nzcv),
-        (CCMPPLW W:$rn, W:$rm, AArch64Base_CCMPPLW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPPLW W:$rn, W:$rm, AArch64Base_CCMPPLW_nzcvAsInt32:$nzcv),
+        (CCMPPLW W:$rn, W:$rm, AArch64Base_CCMPPLW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPPLX X:$rn, X:$rm, AArch64Base_CCMPPLX_nzcvAsInt8:$nzcv),
-        (CCMPPLX X:$rn, X:$rm, AArch64Base_CCMPPLX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPPLX X:$rn, X:$rm, AArch64Base_CCMPPLX_nzcvAsInt32:$nzcv),
+        (CCMPPLX X:$rn, X:$rm, AArch64Base_CCMPPLX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPVCW W:$rn, W:$rm, AArch64Base_CCMPVCW_nzcvAsInt8:$nzcv),
-        (CCMPVCW W:$rn, W:$rm, AArch64Base_CCMPVCW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPVCW W:$rn, W:$rm, AArch64Base_CCMPVCW_nzcvAsInt32:$nzcv),
+        (CCMPVCW W:$rn, W:$rm, AArch64Base_CCMPVCW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPVCX X:$rn, X:$rm, AArch64Base_CCMPVCX_nzcvAsInt8:$nzcv),
-        (CCMPVCX X:$rn, X:$rm, AArch64Base_CCMPVCX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPVCX X:$rn, X:$rm, AArch64Base_CCMPVCX_nzcvAsInt32:$nzcv),
+        (CCMPVCX X:$rn, X:$rm, AArch64Base_CCMPVCX_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPVSW W:$rn, W:$rm, AArch64Base_CCMPVSW_nzcvAsInt8:$nzcv),
-        (CCMPVSW W:$rn, W:$rm, AArch64Base_CCMPVSW_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPVSW W:$rn, W:$rm, AArch64Base_CCMPVSW_nzcvAsInt32:$nzcv),
+        (CCMPVSW W:$rn, W:$rm, AArch64Base_CCMPVSW_nzcvAsInt32:$nzcv)>;
 
-def : Pat<(int_processorNameValue_CCMPVSX X:$rn, X:$rm, AArch64Base_CCMPVSX_nzcvAsInt8:$nzcv),
-        (CCMPVSX X:$rn, X:$rm, AArch64Base_CCMPVSX_nzcvAsInt8:$nzcv)>;
+def : Pat<(int_processorNameValue_CCMPVSX X:$rn, X:$rm, AArch64Base_CCMPVSX_nzcvAsInt32:$nzcv),
+        (CCMPVSX X:$rn, X:$rm, AArch64Base_CCMPVSX_nzcvAsInt32:$nzcv)>;
 
 def : Pat<(int_processorNameValue_CLSW W:$rn),
         (CLSW W:$rn)>;
@@ -54196,32 +54196,32 @@ def : Pat<(int_processorNameValue_CSNEGVSX X:$rn, X:$rm),
 def : Pat<(int_processorNameValue_EONW W:$rn, W:$rm),
         (EONW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_EONWASR W:$rn, W:$rm, AArch64Base_EONWASR_imm6AsInt8:$imm6),
-        (EONWASR W:$rn, W:$rm, AArch64Base_EONWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EONWASR W:$rn, W:$rm, AArch64Base_EONWASR_imm6AsInt32:$imm6),
+        (EONWASR W:$rn, W:$rm, AArch64Base_EONWASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EONWLSL W:$rn, W:$rm, AArch64Base_EONWLSL_imm6AsInt8:$imm6),
-        (EONWLSL W:$rn, W:$rm, AArch64Base_EONWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EONWLSL W:$rn, W:$rm, AArch64Base_EONWLSL_imm6AsInt32:$imm6),
+        (EONWLSL W:$rn, W:$rm, AArch64Base_EONWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EONWLSR W:$rn, W:$rm, AArch64Base_EONWLSR_imm6AsInt8:$imm6),
-        (EONWLSR W:$rn, W:$rm, AArch64Base_EONWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EONWLSR W:$rn, W:$rm, AArch64Base_EONWLSR_imm6AsInt32:$imm6),
+        (EONWLSR W:$rn, W:$rm, AArch64Base_EONWLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EONWROR W:$rn, W:$rm, AArch64Base_EONWROR_imm6AsInt8:$imm6),
-        (EONWROR W:$rn, W:$rm, AArch64Base_EONWROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EONWROR W:$rn, W:$rm, AArch64Base_EONWROR_imm6AsInt32:$imm6),
+        (EONWROR W:$rn, W:$rm, AArch64Base_EONWROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_EONX X:$rn, X:$rm),
         (EONX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_EONXASR X:$rn, X:$rm, AArch64Base_EONXASR_imm6AsInt8:$imm6),
-        (EONXASR X:$rn, X:$rm, AArch64Base_EONXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EONXASR X:$rn, X:$rm, AArch64Base_EONXASR_imm6AsInt32:$imm6),
+        (EONXASR X:$rn, X:$rm, AArch64Base_EONXASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EONXLSL X:$rn, X:$rm, AArch64Base_EONXLSL_imm6AsInt8:$imm6),
-        (EONXLSL X:$rn, X:$rm, AArch64Base_EONXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EONXLSL X:$rn, X:$rm, AArch64Base_EONXLSL_imm6AsInt32:$imm6),
+        (EONXLSL X:$rn, X:$rm, AArch64Base_EONXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EONXLSR X:$rn, X:$rm, AArch64Base_EONXLSR_imm6AsInt8:$imm6),
-        (EONXLSR X:$rn, X:$rm, AArch64Base_EONXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EONXLSR X:$rn, X:$rm, AArch64Base_EONXLSR_imm6AsInt32:$imm6),
+        (EONXLSR X:$rn, X:$rm, AArch64Base_EONXLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EONXROR X:$rn, X:$rm, AArch64Base_EONXROR_imm6AsInt8:$imm6),
-        (EONXROR X:$rn, X:$rm, AArch64Base_EONXROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EONXROR X:$rn, X:$rm, AArch64Base_EONXROR_imm6AsInt32:$imm6),
+        (EONXROR X:$rn, X:$rm, AArch64Base_EONXROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_EORIW W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize),
         (EORIW W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)>;
@@ -54232,41 +54232,41 @@ def : Pat<(int_processorNameValue_EORIX X:$rn, AArch64Base_EORIX_immXSizeAsInt64
 def : Pat<(int_processorNameValue_EORW W:$rn, W:$rm),
         (EORW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6),
-        (EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt32:$imm6),
+        (EORWASR W:$rn, W:$rm, AArch64Base_EORWASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6),
-        (EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt32:$imm6),
+        (EORWLSL W:$rn, W:$rm, AArch64Base_EORWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6),
-        (EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt32:$imm6),
+        (EORWLSR W:$rn, W:$rm, AArch64Base_EORWLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EORWROR W:$rn, W:$rm, AArch64Base_EORWROR_imm6AsInt8:$imm6),
-        (EORWROR W:$rn, W:$rm, AArch64Base_EORWROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EORWROR W:$rn, W:$rm, AArch64Base_EORWROR_imm6AsInt32:$imm6),
+        (EORWROR W:$rn, W:$rm, AArch64Base_EORWROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_EORX X:$rn, X:$rm),
         (EORX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_EORXASR X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6),
-        (EORXASR X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EORXASR X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt32:$imm6),
+        (EORXASR X:$rn, X:$rm, AArch64Base_EORXASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EORXLSL X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6),
-        (EORXLSL X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EORXLSL X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt32:$imm6),
+        (EORXLSL X:$rn, X:$rm, AArch64Base_EORXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EORXLSR X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6),
-        (EORXLSR X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EORXLSR X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt32:$imm6),
+        (EORXLSR X:$rn, X:$rm, AArch64Base_EORXLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EORXROR X:$rn, X:$rm, AArch64Base_EORXROR_imm6AsInt8:$imm6),
-        (EORXROR X:$rn, X:$rm, AArch64Base_EORXROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_EORXROR X:$rn, X:$rm, AArch64Base_EORXROR_imm6AsInt32:$imm6),
+        (EORXROR X:$rn, X:$rm, AArch64Base_EORXROR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_EXTRW W:$rn, W:$rm, AArch64Base_EXTRW_shiftWSizeAsInt8:$shiftWSize),
-        (EXTRW W:$rn, W:$rm, AArch64Base_EXTRW_shiftWSizeAsInt8:$shiftWSize)>;
+def : Pat<(int_processorNameValue_EXTRW W:$rn, W:$rm, AArch64Base_EXTRW_shiftWSizeAsInt32:$shiftWSize),
+        (EXTRW W:$rn, W:$rm, AArch64Base_EXTRW_shiftWSizeAsInt32:$shiftWSize)>;
 
-def : Pat<(int_processorNameValue_EXTRX X:$rn, X:$rm, AArch64Base_EXTRX_shiftXSizeAsInt8:$shiftXSize),
-        (EXTRX X:$rn, X:$rm, AArch64Base_EXTRX_shiftXSizeAsInt8:$shiftXSize)>;
+def : Pat<(int_processorNameValue_EXTRX X:$rn, X:$rm, AArch64Base_EXTRX_shiftXSizeAsInt32:$shiftXSize),
+        (EXTRX X:$rn, X:$rm, AArch64Base_EXTRX_shiftXSizeAsInt32:$shiftXSize)>;
 
-def : Pat<(int_processorNameValue_HLT AArch64Base_HLT_imm16AsInt16:$imm16),
-        (HLT AArch64Base_HLT_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_HLT AArch64Base_HLT_imm16AsInt32:$imm16),
+        (HLT AArch64Base_HLT_imm16AsInt32:$imm16)>;
 
 def : Pat<(int_processorNameValue_LDRB S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset),
         (LDRB S:$rn, AArch64Base_LDRB_offsetAsInt64:$offset)>;
@@ -54556,59 +54556,59 @@ def : Pat<(int_processorNameValue_MADDW W:$ra, W:$rn, W:$rm),
 def : Pat<(int_processorNameValue_MADDX X:$ra, X:$rn, X:$rm),
         (MADDX X:$ra, X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_MOVKWPos00 X:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16),
-        (MOVKWPos00 X:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVKWPos00 X:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt32:$imm16),
+        (MOVKWPos00 X:$rd_0, AArch64Base_MOVKWPos00_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVKWPos16 X:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16),
-        (MOVKWPos16 X:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVKWPos16 X:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt32:$imm16),
+        (MOVKWPos16 X:$rd_1, AArch64Base_MOVKWPos16_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVKXPos00 X:$rd_2, AArch64Base_MOVKXPos00_imm16AsInt16:$imm16),
-        (MOVKXPos00 X:$rd_2, AArch64Base_MOVKXPos00_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVKXPos00 X:$rd_2, AArch64Base_MOVKXPos00_imm16AsInt32:$imm16),
+        (MOVKXPos00 X:$rd_2, AArch64Base_MOVKXPos00_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVKXPos16 X:$rd_3, AArch64Base_MOVKXPos16_imm16AsInt16:$imm16),
-        (MOVKXPos16 X:$rd_3, AArch64Base_MOVKXPos16_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVKXPos16 X:$rd_3, AArch64Base_MOVKXPos16_imm16AsInt32:$imm16),
+        (MOVKXPos16 X:$rd_3, AArch64Base_MOVKXPos16_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVKXPos32 X:$rd_4, AArch64Base_MOVKXPos32_imm16AsInt16:$imm16),
-        (MOVKXPos32 X:$rd_4, AArch64Base_MOVKXPos32_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVKXPos32 X:$rd_4, AArch64Base_MOVKXPos32_imm16AsInt32:$imm16),
+        (MOVKXPos32 X:$rd_4, AArch64Base_MOVKXPos32_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVKXPos48 X:$rd_5, AArch64Base_MOVKXPos48_imm16AsInt16:$imm16),
-        (MOVKXPos48 X:$rd_5, AArch64Base_MOVKXPos48_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVKXPos48 X:$rd_5, AArch64Base_MOVKXPos48_imm16AsInt32:$imm16),
+        (MOVKXPos48 X:$rd_5, AArch64Base_MOVKXPos48_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVNWPos00 AArch64Base_MOVNWPos00_imm16AsInt16:$imm16),
-        (MOVNWPos00 AArch64Base_MOVNWPos00_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVNWPos00 AArch64Base_MOVNWPos00_imm16AsInt32:$imm16),
+        (MOVNWPos00 AArch64Base_MOVNWPos00_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVNWPos16 AArch64Base_MOVNWPos16_imm16AsInt16:$imm16),
-        (MOVNWPos16 AArch64Base_MOVNWPos16_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVNWPos16 AArch64Base_MOVNWPos16_imm16AsInt32:$imm16),
+        (MOVNWPos16 AArch64Base_MOVNWPos16_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVNXPos00 AArch64Base_MOVNXPos00_imm16AsInt16:$imm16),
-        (MOVNXPos00 AArch64Base_MOVNXPos00_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVNXPos00 AArch64Base_MOVNXPos00_imm16AsInt32:$imm16),
+        (MOVNXPos00 AArch64Base_MOVNXPos00_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVNXPos16 AArch64Base_MOVNXPos16_imm16AsInt16:$imm16),
-        (MOVNXPos16 AArch64Base_MOVNXPos16_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVNXPos16 AArch64Base_MOVNXPos16_imm16AsInt32:$imm16),
+        (MOVNXPos16 AArch64Base_MOVNXPos16_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVNXPos32 AArch64Base_MOVNXPos32_imm16AsInt16:$imm16),
-        (MOVNXPos32 AArch64Base_MOVNXPos32_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVNXPos32 AArch64Base_MOVNXPos32_imm16AsInt32:$imm16),
+        (MOVNXPos32 AArch64Base_MOVNXPos32_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVNXPos48 AArch64Base_MOVNXPos48_imm16AsInt16:$imm16),
-        (MOVNXPos48 AArch64Base_MOVNXPos48_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVNXPos48 AArch64Base_MOVNXPos48_imm16AsInt32:$imm16),
+        (MOVNXPos48 AArch64Base_MOVNXPos48_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt16:$imm16),
-        (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt32:$imm16),
+        (MOVZWPos00 AArch64Base_MOVZWPos00_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16),
-        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt32:$imm16),
+        (MOVZWPos16 AArch64Base_MOVZWPos16_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVZXPos00 AArch64Base_MOVZXPos00_imm16AsInt16:$imm16),
-        (MOVZXPos00 AArch64Base_MOVZXPos00_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVZXPos00 AArch64Base_MOVZXPos00_imm16AsInt32:$imm16),
+        (MOVZXPos00 AArch64Base_MOVZXPos00_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt16:$imm16),
-        (MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt32:$imm16),
+        (MOVZXPos16 AArch64Base_MOVZXPos16_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt16:$imm16),
-        (MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt32:$imm16),
+        (MOVZXPos32 AArch64Base_MOVZXPos32_imm16AsInt32:$imm16)>;
 
-def : Pat<(int_processorNameValue_MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt16:$imm16),
-        (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt16:$imm16)>;
+def : Pat<(int_processorNameValue_MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt32:$imm16),
+        (MOVZXPos48 AArch64Base_MOVZXPos48_imm16AsInt32:$imm16)>;
 
 def : Pat<(int_processorNameValue_MRSNZCV ),
         (MRSNZCV )>;
@@ -54622,32 +54622,32 @@ def : Pat<(int_processorNameValue_MSUBX X:$ra, X:$rn, X:$rm),
 def : Pat<(int_processorNameValue_ORNW W:$rn, W:$rm),
         (ORNW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_ORNWASR W:$rn, W:$rm, AArch64Base_ORNWASR_imm6AsInt8:$imm6),
-        (ORNWASR W:$rn, W:$rm, AArch64Base_ORNWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORNWASR W:$rn, W:$rm, AArch64Base_ORNWASR_imm6AsInt32:$imm6),
+        (ORNWASR W:$rn, W:$rm, AArch64Base_ORNWASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORNWLSL W:$rn, W:$rm, AArch64Base_ORNWLSL_imm6AsInt8:$imm6),
-        (ORNWLSL W:$rn, W:$rm, AArch64Base_ORNWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORNWLSL W:$rn, W:$rm, AArch64Base_ORNWLSL_imm6AsInt32:$imm6),
+        (ORNWLSL W:$rn, W:$rm, AArch64Base_ORNWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORNWLSR W:$rn, W:$rm, AArch64Base_ORNWLSR_imm6AsInt8:$imm6),
-        (ORNWLSR W:$rn, W:$rm, AArch64Base_ORNWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORNWLSR W:$rn, W:$rm, AArch64Base_ORNWLSR_imm6AsInt32:$imm6),
+        (ORNWLSR W:$rn, W:$rm, AArch64Base_ORNWLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORNWROR W:$rn, W:$rm, AArch64Base_ORNWROR_imm6AsInt8:$imm6),
-        (ORNWROR W:$rn, W:$rm, AArch64Base_ORNWROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORNWROR W:$rn, W:$rm, AArch64Base_ORNWROR_imm6AsInt32:$imm6),
+        (ORNWROR W:$rn, W:$rm, AArch64Base_ORNWROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ORNX X:$rn, X:$rm),
         (ORNX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ORNXASR X:$rn, X:$rm, AArch64Base_ORNXASR_imm6AsInt8:$imm6),
-        (ORNXASR X:$rn, X:$rm, AArch64Base_ORNXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORNXASR X:$rn, X:$rm, AArch64Base_ORNXASR_imm6AsInt32:$imm6),
+        (ORNXASR X:$rn, X:$rm, AArch64Base_ORNXASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORNXLSL X:$rn, X:$rm, AArch64Base_ORNXLSL_imm6AsInt8:$imm6),
-        (ORNXLSL X:$rn, X:$rm, AArch64Base_ORNXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORNXLSL X:$rn, X:$rm, AArch64Base_ORNXLSL_imm6AsInt32:$imm6),
+        (ORNXLSL X:$rn, X:$rm, AArch64Base_ORNXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORNXLSR X:$rn, X:$rm, AArch64Base_ORNXLSR_imm6AsInt8:$imm6),
-        (ORNXLSR X:$rn, X:$rm, AArch64Base_ORNXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORNXLSR X:$rn, X:$rm, AArch64Base_ORNXLSR_imm6AsInt32:$imm6),
+        (ORNXLSR X:$rn, X:$rm, AArch64Base_ORNXLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORNXROR X:$rn, X:$rm, AArch64Base_ORNXROR_imm6AsInt8:$imm6),
-        (ORNXROR X:$rn, X:$rm, AArch64Base_ORNXROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORNXROR X:$rn, X:$rm, AArch64Base_ORNXROR_imm6AsInt32:$imm6),
+        (ORNXROR X:$rn, X:$rm, AArch64Base_ORNXROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ORRIW W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize),
         (ORRIW W:$rn, AArch64Base_ORRIW_immWSizeAsInt32:$immWSize)>;
@@ -54658,32 +54658,32 @@ def : Pat<(int_processorNameValue_ORRIX X:$rn, AArch64Base_ORRIX_immXSizeAsInt64
 def : Pat<(int_processorNameValue_ORRW W:$rn, W:$rm),
         (ORRW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6),
-        (ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt32:$imm6),
+        (ORRWASR W:$rn, W:$rm, AArch64Base_ORRWASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6),
-        (ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt32:$imm6),
+        (ORRWLSL W:$rn, W:$rm, AArch64Base_ORRWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6),
-        (ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt32:$imm6),
+        (ORRWLSR W:$rn, W:$rm, AArch64Base_ORRWLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORRWROR W:$rn, W:$rm, AArch64Base_ORRWROR_imm6AsInt8:$imm6),
-        (ORRWROR W:$rn, W:$rm, AArch64Base_ORRWROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORRWROR W:$rn, W:$rm, AArch64Base_ORRWROR_imm6AsInt32:$imm6),
+        (ORRWROR W:$rn, W:$rm, AArch64Base_ORRWROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_ORRX X:$rn, X:$rm),
         (ORRX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_ORRXASR X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6),
-        (ORRXASR X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORRXASR X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt32:$imm6),
+        (ORRXASR X:$rn, X:$rm, AArch64Base_ORRXASR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORRXLSL X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6),
-        (ORRXLSL X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORRXLSL X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt32:$imm6),
+        (ORRXLSL X:$rn, X:$rm, AArch64Base_ORRXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6),
-        (ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt32:$imm6),
+        (ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_ORRXROR X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt8:$imm6),
-        (ORRXROR X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_ORRXROR X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt32:$imm6),
+        (ORRXROR X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_RET X:$rn),
         (RET X:$rn)>;
@@ -54721,11 +54721,11 @@ def : Pat<(int_processorNameValue_SBCW W:$rn, W:$rm),
 def : Pat<(int_processorNameValue_SBCX X:$rn, X:$rm),
         (SBCX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize),
-        (SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt8:$rightWSize)>;
+def : Pat<(int_processorNameValue_SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt32:$rightWSize),
+        (SBFMW W:$rn, AArch64Base_SBFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_SBFMW_rightWSizeAsInt32:$rightWSize)>;
 
-def : Pat<(int_processorNameValue_SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize),
-        (SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt8:$rightXSize)>;
+def : Pat<(int_processorNameValue_SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt32:$rightXSize),
+        (SBFMX X:$rn, AArch64Base_SBFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_SBFMX_rightXSizeAsInt32:$rightXSize)>;
 
 def : Pat<(int_processorNameValue_SDIVW W:$rm, W:$rn),
         (SDIVW W:$rm, W:$rn)>;
@@ -54907,8 +54907,8 @@ def : Pat<(int_processorNameValue_STURX S:$rn, X:$rt, AArch64Base_STURX_offsetAs
 def : Pat<(int_processorNameValue_SUBW W:$rn, W:$rm),
         (SUBW W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6),
-        (SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt32:$imm6),
+        (SUBWASR W:$rn, W:$rm, AArch64Base_SUBWASR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_SUBWI R:$rn, AArch64Base_SUBWI_imm12XAsInt64:$imm12X),
         (SUBWI R:$rn, AArch64Base_SUBWI_imm12XAsInt64:$imm12X)>;
@@ -54916,17 +54916,17 @@ def : Pat<(int_processorNameValue_SUBWI R:$rn, AArch64Base_SUBWI_imm12XAsInt64:$
 def : Pat<(int_processorNameValue_SUBWI12 R:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S),
         (SUBWI12 R:$rn, AArch64Base_SUBWI12_imm12SAsInt64:$imm12S)>;
 
-def : Pat<(int_processorNameValue_SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6),
-        (SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt32:$imm6),
+        (SUBWLSL W:$rn, W:$rm, AArch64Base_SUBWLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6),
-        (SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt32:$imm6),
+        (SUBWLSR W:$rn, W:$rm, AArch64Base_SUBWLSR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_SUBWS W:$rn, W:$rm),
         (SUBWS W:$rn, W:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6),
-        (SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt32:$imm6),
+        (SUBWSASR W:$rn, W:$rm, AArch64Base_SUBWSASR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_SUBWSI R:$rn, AArch64Base_SUBWSI_imm12XAsInt64:$imm12X),
         (SUBWSI R:$rn, AArch64Base_SUBWSI_imm12XAsInt64:$imm12X)>;
@@ -54934,23 +54934,23 @@ def : Pat<(int_processorNameValue_SUBWSI R:$rn, AArch64Base_SUBWSI_imm12XAsInt64
 def : Pat<(int_processorNameValue_SUBWSI12 R:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S),
         (SUBWSI12 R:$rn, AArch64Base_SUBWSI12_imm12SAsInt64:$imm12S)>;
 
-def : Pat<(int_processorNameValue_SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6),
-        (SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt32:$imm6),
+        (SUBWSLSL W:$rn, W:$rm, AArch64Base_SUBWSLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6),
-        (SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt32:$imm6),
+        (SUBWSLSR W:$rn, W:$rm, AArch64Base_SUBWSLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_SUBWSSXSB R:$rn, X:$rm, AArch64Base_SUBWSSXSB_imm3AsInt8:$imm3),
-        (SUBWSSXSB R:$rn, X:$rm, AArch64Base_SUBWSSXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSSXSB R:$rn, X:$rm, AArch64Base_SUBWSSXSB_imm3AsInt32:$imm3),
+        (SUBWSSXSB R:$rn, X:$rm, AArch64Base_SUBWSSXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSSXSH R:$rn, X:$rm, AArch64Base_SUBWSSXSH_imm3AsInt8:$imm3),
-        (SUBWSSXSH R:$rn, X:$rm, AArch64Base_SUBWSSXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSSXSH R:$rn, X:$rm, AArch64Base_SUBWSSXSH_imm3AsInt32:$imm3),
+        (SUBWSSXSH R:$rn, X:$rm, AArch64Base_SUBWSSXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSSXSW R:$rn, X:$rm, AArch64Base_SUBWSSXSW_imm3AsInt8:$imm3),
-        (SUBWSSXSW R:$rn, X:$rm, AArch64Base_SUBWSSXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSSXSW R:$rn, X:$rm, AArch64Base_SUBWSSXSW_imm3AsInt32:$imm3),
+        (SUBWSSXSW R:$rn, X:$rm, AArch64Base_SUBWSSXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSSXSX R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3),
-        (SUBWSSXSX R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSSXSX R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt32:$imm3),
+        (SUBWSSXSX R:$rn, X:$rm, AArch64Base_SUBWSSXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_SUBWSSXTB R:$rn, X:$rm),
         (SUBWSSXTB R:$rn, X:$rm)>;
@@ -54964,17 +54964,17 @@ def : Pat<(int_processorNameValue_SUBWSSXTW R:$rn, X:$rm),
 def : Pat<(int_processorNameValue_SUBWSSXTX R:$rn, X:$rm),
         (SUBWSSXTX R:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBWSUXSB R:$rn, X:$rm, AArch64Base_SUBWSUXSB_imm3AsInt8:$imm3),
-        (SUBWSUXSB R:$rn, X:$rm, AArch64Base_SUBWSUXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSUXSB R:$rn, X:$rm, AArch64Base_SUBWSUXSB_imm3AsInt32:$imm3),
+        (SUBWSUXSB R:$rn, X:$rm, AArch64Base_SUBWSUXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSUXSH R:$rn, X:$rm, AArch64Base_SUBWSUXSH_imm3AsInt8:$imm3),
-        (SUBWSUXSH R:$rn, X:$rm, AArch64Base_SUBWSUXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSUXSH R:$rn, X:$rm, AArch64Base_SUBWSUXSH_imm3AsInt32:$imm3),
+        (SUBWSUXSH R:$rn, X:$rm, AArch64Base_SUBWSUXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSUXSW R:$rn, X:$rm, AArch64Base_SUBWSUXSW_imm3AsInt8:$imm3),
-        (SUBWSUXSW R:$rn, X:$rm, AArch64Base_SUBWSUXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSUXSW R:$rn, X:$rm, AArch64Base_SUBWSUXSW_imm3AsInt32:$imm3),
+        (SUBWSUXSW R:$rn, X:$rm, AArch64Base_SUBWSUXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSUXSX R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3),
-        (SUBWSUXSX R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSUXSX R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt32:$imm3),
+        (SUBWSUXSX R:$rn, X:$rm, AArch64Base_SUBWSUXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_SUBWSUXTB R:$rn, X:$rm),
         (SUBWSUXTB R:$rn, X:$rm)>;
@@ -54988,17 +54988,17 @@ def : Pat<(int_processorNameValue_SUBWSUXTW R:$rn, X:$rm),
 def : Pat<(int_processorNameValue_SUBWSUXTX R:$rn, X:$rm),
         (SUBWSUXTX R:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBWSXSB R:$rn, X:$rm, AArch64Base_SUBWSXSB_imm3AsInt8:$imm3),
-        (SUBWSXSB R:$rn, X:$rm, AArch64Base_SUBWSXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSXSB R:$rn, X:$rm, AArch64Base_SUBWSXSB_imm3AsInt32:$imm3),
+        (SUBWSXSB R:$rn, X:$rm, AArch64Base_SUBWSXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSXSH R:$rn, X:$rm, AArch64Base_SUBWSXSH_imm3AsInt8:$imm3),
-        (SUBWSXSH R:$rn, X:$rm, AArch64Base_SUBWSXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSXSH R:$rn, X:$rm, AArch64Base_SUBWSXSH_imm3AsInt32:$imm3),
+        (SUBWSXSH R:$rn, X:$rm, AArch64Base_SUBWSXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSXSW R:$rn, X:$rm, AArch64Base_SUBWSXSW_imm3AsInt8:$imm3),
-        (SUBWSXSW R:$rn, X:$rm, AArch64Base_SUBWSXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSXSW R:$rn, X:$rm, AArch64Base_SUBWSXSW_imm3AsInt32:$imm3),
+        (SUBWSXSW R:$rn, X:$rm, AArch64Base_SUBWSXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWSXSX R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3),
-        (SUBWSXSX R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWSXSX R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt32:$imm3),
+        (SUBWSXSX R:$rn, X:$rm, AArch64Base_SUBWSXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_SUBWSXTB R:$rn, X:$rm),
         (SUBWSXTB R:$rn, X:$rm)>;
@@ -55012,17 +55012,17 @@ def : Pat<(int_processorNameValue_SUBWSXTW R:$rn, X:$rm),
 def : Pat<(int_processorNameValue_SUBWSXTX R:$rn, X:$rm),
         (SUBWSXTX R:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBWUXSB R:$rn, X:$rm, AArch64Base_SUBWUXSB_imm3AsInt8:$imm3),
-        (SUBWUXSB R:$rn, X:$rm, AArch64Base_SUBWUXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWUXSB R:$rn, X:$rm, AArch64Base_SUBWUXSB_imm3AsInt32:$imm3),
+        (SUBWUXSB R:$rn, X:$rm, AArch64Base_SUBWUXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWUXSH R:$rn, X:$rm, AArch64Base_SUBWUXSH_imm3AsInt8:$imm3),
-        (SUBWUXSH R:$rn, X:$rm, AArch64Base_SUBWUXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWUXSH R:$rn, X:$rm, AArch64Base_SUBWUXSH_imm3AsInt32:$imm3),
+        (SUBWUXSH R:$rn, X:$rm, AArch64Base_SUBWUXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWUXSW R:$rn, X:$rm, AArch64Base_SUBWUXSW_imm3AsInt8:$imm3),
-        (SUBWUXSW R:$rn, X:$rm, AArch64Base_SUBWUXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWUXSW R:$rn, X:$rm, AArch64Base_SUBWUXSW_imm3AsInt32:$imm3),
+        (SUBWUXSW R:$rn, X:$rm, AArch64Base_SUBWUXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBWUXSX R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3),
-        (SUBWUXSX R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBWUXSX R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt32:$imm3),
+        (SUBWUXSX R:$rn, X:$rm, AArch64Base_SUBWUXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_SUBWUXTB R:$rn, X:$rm),
         (SUBWUXTB R:$rn, X:$rm)>;
@@ -55039,8 +55039,8 @@ def : Pat<(int_processorNameValue_SUBWUXTX R:$rn, X:$rm),
 def : Pat<(int_processorNameValue_SUBX X:$rn, X:$rm),
         (SUBX X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBXASR X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6),
-        (SUBXASR X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBXASR X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt32:$imm6),
+        (SUBXASR X:$rn, X:$rm, AArch64Base_SUBXASR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_SUBXI S:$rn, AArch64Base_SUBXI_imm12XAsInt64:$imm12X),
         (SUBXI S:$rn, AArch64Base_SUBXI_imm12XAsInt64:$imm12X)>;
@@ -55048,17 +55048,17 @@ def : Pat<(int_processorNameValue_SUBXI S:$rn, AArch64Base_SUBXI_imm12XAsInt64:$
 def : Pat<(int_processorNameValue_SUBXI12 S:$rn, AArch64Base_SUBXI12_imm12SAsInt64:$imm12S),
         (SUBXI12 S:$rn, AArch64Base_SUBXI12_imm12SAsInt64:$imm12S)>;
 
-def : Pat<(int_processorNameValue_SUBXLSL X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6),
-        (SUBXLSL X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBXLSL X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt32:$imm6),
+        (SUBXLSL X:$rn, X:$rm, AArch64Base_SUBXLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_SUBXLSR X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6),
-        (SUBXLSR X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBXLSR X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt32:$imm6),
+        (SUBXLSR X:$rn, X:$rm, AArch64Base_SUBXLSR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_SUBXS X:$rn, X:$rm),
         (SUBXS X:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBXSASR X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6),
-        (SUBXSASR X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBXSASR X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt32:$imm6),
+        (SUBXSASR X:$rn, X:$rm, AArch64Base_SUBXSASR_imm6AsInt32:$imm6)>;
 
 def : Pat<(int_processorNameValue_SUBXSI S:$rn, AArch64Base_SUBXSI_imm12XAsInt64:$imm12X),
         (SUBXSI S:$rn, AArch64Base_SUBXSI_imm12XAsInt64:$imm12X)>;
@@ -55066,23 +55066,23 @@ def : Pat<(int_processorNameValue_SUBXSI S:$rn, AArch64Base_SUBXSI_imm12XAsInt64
 def : Pat<(int_processorNameValue_SUBXSI12 S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S),
         (SUBXSI12 S:$rn, AArch64Base_SUBXSI12_imm12SAsInt64:$imm12S)>;
 
-def : Pat<(int_processorNameValue_SUBXSLSL X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6),
-        (SUBXSLSL X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBXSLSL X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt32:$imm6),
+        (SUBXSLSL X:$rn, X:$rm, AArch64Base_SUBXSLSL_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_SUBXSLSR X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6),
-        (SUBXSLSR X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt8:$imm6)>;
+def : Pat<(int_processorNameValue_SUBXSLSR X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt32:$imm6),
+        (SUBXSLSR X:$rn, X:$rm, AArch64Base_SUBXSLSR_imm6AsInt32:$imm6)>;
 
-def : Pat<(int_processorNameValue_SUBXSSXSB S:$rn, X:$rm, AArch64Base_SUBXSSXSB_imm3AsInt8:$imm3),
-        (SUBXSSXSB S:$rn, X:$rm, AArch64Base_SUBXSSXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSSXSB S:$rn, X:$rm, AArch64Base_SUBXSSXSB_imm3AsInt32:$imm3),
+        (SUBXSSXSB S:$rn, X:$rm, AArch64Base_SUBXSSXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSSXSH S:$rn, X:$rm, AArch64Base_SUBXSSXSH_imm3AsInt8:$imm3),
-        (SUBXSSXSH S:$rn, X:$rm, AArch64Base_SUBXSSXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSSXSH S:$rn, X:$rm, AArch64Base_SUBXSSXSH_imm3AsInt32:$imm3),
+        (SUBXSSXSH S:$rn, X:$rm, AArch64Base_SUBXSSXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSSXSW S:$rn, X:$rm, AArch64Base_SUBXSSXSW_imm3AsInt8:$imm3),
-        (SUBXSSXSW S:$rn, X:$rm, AArch64Base_SUBXSSXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSSXSW S:$rn, X:$rm, AArch64Base_SUBXSSXSW_imm3AsInt32:$imm3),
+        (SUBXSSXSW S:$rn, X:$rm, AArch64Base_SUBXSSXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSSXSX S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3),
-        (SUBXSSXSX S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSSXSX S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt32:$imm3),
+        (SUBXSSXSX S:$rn, X:$rm, AArch64Base_SUBXSSXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_SUBXSSXTB S:$rn, X:$rm),
         (SUBXSSXTB S:$rn, X:$rm)>;
@@ -55096,17 +55096,17 @@ def : Pat<(int_processorNameValue_SUBXSSXTW S:$rn, X:$rm),
 def : Pat<(int_processorNameValue_SUBXSSXTX S:$rn, X:$rm),
         (SUBXSSXTX S:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBXSUXSB S:$rn, X:$rm, AArch64Base_SUBXSUXSB_imm3AsInt8:$imm3),
-        (SUBXSUXSB S:$rn, X:$rm, AArch64Base_SUBXSUXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSUXSB S:$rn, X:$rm, AArch64Base_SUBXSUXSB_imm3AsInt32:$imm3),
+        (SUBXSUXSB S:$rn, X:$rm, AArch64Base_SUBXSUXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSUXSH S:$rn, X:$rm, AArch64Base_SUBXSUXSH_imm3AsInt8:$imm3),
-        (SUBXSUXSH S:$rn, X:$rm, AArch64Base_SUBXSUXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSUXSH S:$rn, X:$rm, AArch64Base_SUBXSUXSH_imm3AsInt32:$imm3),
+        (SUBXSUXSH S:$rn, X:$rm, AArch64Base_SUBXSUXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSUXSW S:$rn, X:$rm, AArch64Base_SUBXSUXSW_imm3AsInt8:$imm3),
-        (SUBXSUXSW S:$rn, X:$rm, AArch64Base_SUBXSUXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSUXSW S:$rn, X:$rm, AArch64Base_SUBXSUXSW_imm3AsInt32:$imm3),
+        (SUBXSUXSW S:$rn, X:$rm, AArch64Base_SUBXSUXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSUXSX S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3),
-        (SUBXSUXSX S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSUXSX S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt32:$imm3),
+        (SUBXSUXSX S:$rn, X:$rm, AArch64Base_SUBXSUXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_SUBXSUXTB S:$rn, X:$rm),
         (SUBXSUXTB S:$rn, X:$rm)>;
@@ -55120,17 +55120,17 @@ def : Pat<(int_processorNameValue_SUBXSUXTW S:$rn, X:$rm),
 def : Pat<(int_processorNameValue_SUBXSUXTX S:$rn, X:$rm),
         (SUBXSUXTX S:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBXSXSB S:$rn, X:$rm, AArch64Base_SUBXSXSB_imm3AsInt8:$imm3),
-        (SUBXSXSB S:$rn, X:$rm, AArch64Base_SUBXSXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSXSB S:$rn, X:$rm, AArch64Base_SUBXSXSB_imm3AsInt32:$imm3),
+        (SUBXSXSB S:$rn, X:$rm, AArch64Base_SUBXSXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSXSH S:$rn, X:$rm, AArch64Base_SUBXSXSH_imm3AsInt8:$imm3),
-        (SUBXSXSH S:$rn, X:$rm, AArch64Base_SUBXSXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSXSH S:$rn, X:$rm, AArch64Base_SUBXSXSH_imm3AsInt32:$imm3),
+        (SUBXSXSH S:$rn, X:$rm, AArch64Base_SUBXSXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSXSW S:$rn, X:$rm, AArch64Base_SUBXSXSW_imm3AsInt8:$imm3),
-        (SUBXSXSW S:$rn, X:$rm, AArch64Base_SUBXSXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSXSW S:$rn, X:$rm, AArch64Base_SUBXSXSW_imm3AsInt32:$imm3),
+        (SUBXSXSW S:$rn, X:$rm, AArch64Base_SUBXSXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXSXSX S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3),
-        (SUBXSXSX S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXSXSX S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt32:$imm3),
+        (SUBXSXSX S:$rn, X:$rm, AArch64Base_SUBXSXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_SUBXSXTB S:$rn, X:$rm),
         (SUBXSXTB S:$rn, X:$rm)>;
@@ -55144,17 +55144,17 @@ def : Pat<(int_processorNameValue_SUBXSXTW S:$rn, X:$rm),
 def : Pat<(int_processorNameValue_SUBXSXTX S:$rn, X:$rm),
         (SUBXSXTX S:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_SUBXUXSB S:$rn, X:$rm, AArch64Base_SUBXUXSB_imm3AsInt8:$imm3),
-        (SUBXUXSB S:$rn, X:$rm, AArch64Base_SUBXUXSB_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXUXSB S:$rn, X:$rm, AArch64Base_SUBXUXSB_imm3AsInt32:$imm3),
+        (SUBXUXSB S:$rn, X:$rm, AArch64Base_SUBXUXSB_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXUXSH S:$rn, X:$rm, AArch64Base_SUBXUXSH_imm3AsInt8:$imm3),
-        (SUBXUXSH S:$rn, X:$rm, AArch64Base_SUBXUXSH_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXUXSH S:$rn, X:$rm, AArch64Base_SUBXUXSH_imm3AsInt32:$imm3),
+        (SUBXUXSH S:$rn, X:$rm, AArch64Base_SUBXUXSH_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXUXSW S:$rn, X:$rm, AArch64Base_SUBXUXSW_imm3AsInt8:$imm3),
-        (SUBXUXSW S:$rn, X:$rm, AArch64Base_SUBXUXSW_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXUXSW S:$rn, X:$rm, AArch64Base_SUBXUXSW_imm3AsInt32:$imm3),
+        (SUBXUXSW S:$rn, X:$rm, AArch64Base_SUBXUXSW_imm3AsInt32:$imm3)>;
 
-def : Pat<(int_processorNameValue_SUBXUXSX S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3),
-        (SUBXUXSX S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt8:$imm3)>;
+def : Pat<(int_processorNameValue_SUBXUXSX S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt32:$imm3),
+        (SUBXUXSX S:$rn, X:$rm, AArch64Base_SUBXUXSX_imm3AsInt32:$imm3)>;
 
 def : Pat<(int_processorNameValue_SUBXUXTB S:$rn, X:$rm),
         (SUBXUXTB S:$rn, X:$rm)>;
@@ -55168,11 +55168,11 @@ def : Pat<(int_processorNameValue_SUBXUXTW S:$rn, X:$rm),
 def : Pat<(int_processorNameValue_SUBXUXTX S:$rn, X:$rm),
         (SUBXUXTX S:$rn, X:$rm)>;
 
-def : Pat<(int_processorNameValue_UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize),
-        (UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt8:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt8:$rightWSize)>;
+def : Pat<(int_processorNameValue_UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt32:$rightWSize),
+        (UBFMW W:$rn, AArch64Base_UBFMW_leftWSizeAsInt32:$leftWSize, AArch64Base_UBFMW_rightWSizeAsInt32:$rightWSize)>;
 
-def : Pat<(int_processorNameValue_UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize),
-        (UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt8:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt8:$rightXSize)>;
+def : Pat<(int_processorNameValue_UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt32:$rightXSize),
+        (UBFMX X:$rn, AArch64Base_UBFMX_leftXSizeAsInt32:$leftXSize, AArch64Base_UBFMX_rightXSizeAsInt32:$rightXSize)>;
 
 def : Pat<(int_processorNameValue_UDIVW W:$rm, W:$rn),
         (UDIVW W:$rm, W:$rn)>;
@@ -55188,3 +55188,4 @@ def : Pat<(int_processorNameValue_UMSUBL X:$ra, W:$rn, W:$rm),
 
 def : Pat<(int_processorNameValue_UMULH X:$rn, X:$rm),
         (UMULH X:$rn, X:$rm)>;
+
