@@ -20,6 +20,7 @@ import java.util.Objects;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
+import vadl.types.DataType;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -31,8 +32,9 @@ public class LcbNodeReplacementHandlerForMemoryInstructionsReplacement
     extends LcbNodeReplacementHandler {
   public LcbNodeReplacementHandlerForMemoryInstructionsReplacement(
       PrintableInstruction printableInstruction,
-      ValueType architectureType) {
-    super(printableInstruction, architectureType);
+      ValueType architectureType,
+      ValueType smallestRegisterClassType) {
+    super(printableInstruction, architectureType, smallestRegisterClassType);
   }
 
   @Override

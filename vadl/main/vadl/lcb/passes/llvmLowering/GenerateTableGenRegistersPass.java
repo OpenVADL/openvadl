@@ -17,13 +17,16 @@
 package vadl.lcb.passes.llvmLowering;
 
 import static vadl.error.Diagnostic.ensure;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
@@ -72,7 +75,8 @@ public class GenerateTableGenRegistersPass extends Pass {
                        List<TableGenAliasRegisterClass> aliasRegisterClasses,
                        List<TableGenRegister> registers,
                        List<TableGenRegisterAlias> aliasRegisters,
-                       List<LlvmConstraint> constraints) {
+                       List<LlvmConstraint> constraints,
+                       ValueType smallestRegisterClassType) {
     /* `registers` do not belong to any register class. */
   }
 
@@ -179,9 +183,33 @@ public class GenerateTableGenRegistersPass extends Pass {
     var orderedRegisters = sortRegisters(registers);
 
     nameSubRegisterIndices(orderedRegisters);
+    
+    var smallestRegisterClassType = getSmallestRegisterClassType(viam, registerClasses, 
+        aliasRegisterClasses);
 
     return new Output(registerClasses, aliasRegisterClasses, orderedRegisters, aliasRegisters,
-        constraints);
+        constraints, smallestRegisterClassType);
+  }
+
+  private static ValueType getSmallestRegisterClassType(
+      Specification viam,
+      List<TableGenRegisterClass> registerClasses, 
+      List<TableGenAliasRegisterClass> aliasRegisterClasses) {
+    var allClasses = Stream.concat(
+          registerClasses.stream(),
+          aliasRegisterClasses.stream());
+
+    var type = allClasses
+        .flatMap(r -> r.regTypes().stream())
+        .min(new Comparator<>() {
+          @Override
+          public int compare(ValueType o1, ValueType o2) {
+            return o1.getBitwidth() - o2.getBitwidth();
+          }
+        });
+
+    return ensurePresent(type, 
+        () -> Diagnostic.error("At least on register-class must be defined.", viam.location()));
   }
 
   /**

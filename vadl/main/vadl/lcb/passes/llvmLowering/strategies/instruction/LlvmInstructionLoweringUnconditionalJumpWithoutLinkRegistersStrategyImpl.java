@@ -38,6 +38,7 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHa
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
@@ -52,8 +53,8 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 public class LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrategyImpl(
-      ValueType architectureType) {
-    super(architectureType);
+      ValueType architectureType, ValueType smallestRegisterClassType) {
+    super(architectureType, smallestRegisterClassType);
   }
 
   @Override
@@ -108,7 +109,8 @@ public class LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrateg
 
   @Override
   protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
-    return new LcbNodeReplacementHandlerWithBasicBlockReplacement(instruction, architectureType);
+    return new LcbNodeReplacementHandlerWithBasicBlockReplacement(instruction, architectureType, 
+        this.smallestRegisterClassType);
   }
 
   @Override

@@ -37,8 +37,8 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 public abstract class LlvmInstructionLoweringFrameIndexHelper
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringFrameIndexHelper(
-      ValueType architectureType) {
-    super(architectureType);
+      ValueType architectureType, ValueType smallestRegisterClassType) {
+    super(architectureType, smallestRegisterClassType);
   }
 
   @Override
