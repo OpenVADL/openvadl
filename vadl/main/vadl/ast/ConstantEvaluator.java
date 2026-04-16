@@ -363,7 +363,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(WildcardLiteral expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
   }
 
@@ -397,13 +397,13 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(RangeExpr expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
   }
 
   @Override
   public ConstantValue visit(TypeLiteral expr) {
-    throw new EvaluationError("Cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+    throw new EvaluationError("Cannot evaluate %s.".formatted(expr.nodeName()),
         expr);
   }
 
@@ -504,7 +504,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(SymbolExpr expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
 
   }
@@ -546,7 +546,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(ExistsInExpr expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
 
   }
@@ -554,7 +554,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(ExistsInThenExpr expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
 
   }
@@ -563,7 +563,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(ForallExpr expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
 
   }
@@ -571,7 +571,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(SequenceCallExpr expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
 
   }
@@ -579,14 +579,14 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(ExpandedSequenceCallExpr expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
   }
 
   @Override
   public ConstantValue visit(ExpandedAliasDefSequenceCallExpr expr) {
     throw new EvaluationError(
-        "The constant evaluator cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
         expr);
   }
 

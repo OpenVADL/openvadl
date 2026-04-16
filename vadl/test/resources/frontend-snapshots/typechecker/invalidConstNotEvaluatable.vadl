@@ -16,7 +16,7 @@ constant b = forall i: Bits<2> in 0..3 fold + with (4 as Bits<32>)
 //       ╭── test/resources/frontend-snapshots/typechecker/invalidConstNotEvaluatable.vadl:2:14
 //       │
 //     2 │ constant b = forall i: Bits<2> in 0..3 fold + with (4 as Bits<32>)
-//       │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ The constant evaluator cannot evaluate ForallExpr.
+//       │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ The constant evaluator cannot evaluate a forall expression.
 //       │
 //       All constants must be able to be evaluated
 //

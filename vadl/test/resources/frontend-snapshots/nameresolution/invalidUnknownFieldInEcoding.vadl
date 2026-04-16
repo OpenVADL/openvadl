@@ -15,7 +15,7 @@ instruction set architecture ISA = {
 //       ╭── test/resources/frontend-snapshots/nameresolution/invalidUnknownFieldInEcoding.vadl:8:20
 //       │
 //     8 │   encoding BEQ = { bit = 8 }
-//       │                    ^^^ No field with this name exists.
+//       │                    ^^^ No Field with this name exists.
 //       │
 //       help: Did you maybe mean: bits
 //

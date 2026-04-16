@@ -1154,7 +1154,7 @@ class StringAnnotation extends Annotation {
     if (!(firstValue instanceof StringLiteral)) {
       throw error("Invalid Annotation Argument", firstValue)
           .locationDescription(firstValue, "Expected a string but got %s",
-              firstValue.getClass().getSimpleName())
+              firstValue.nodeName())
           .build();
     }
   }
@@ -1198,7 +1198,7 @@ class EnumAnnotation extends Annotation {
       if (!(value instanceof Identifier)) {
         throw error("Invalid Annotation Argument", value)
             .locationDescription(value, "Expected an identifier but got %s",
-                value.getClass().getSimpleName())
+                value.nodeName())
             .build();
       }
     }
@@ -1292,7 +1292,7 @@ class IdentifersAnnotation extends Annotation {
       if (!(value instanceof Identifier identifier)) {
         throw error("Invalid Annotation Argument", value)
             .locationDescription(value, "Expected an identifier but got %s",
-                value.getClass().getSimpleName())
+                value.nodeName())
             .build();
       }
       identifiers.add(identifier);
