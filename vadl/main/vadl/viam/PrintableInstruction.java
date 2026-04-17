@@ -38,4 +38,11 @@ public interface PrintableInstruction extends WithLocation {
    * Get the {@link Assembly} of an instruction.
    */
   Assembly assembly();
+
+  /**
+   * Total bitwidth of the instruction.
+   * Format bitwidth of {@link Instruction} or sum of bitwidth expanded instructions
+   * in the case of {@link PseudoInstruction}.
+   */
+  int bitWidth();
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@ package vadl.viam;
 
 import java.util.stream.Stream;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 
@@ -58,6 +59,12 @@ public class PseudoInstruction extends CompilerInstruction implements PrintableI
   @Override
   public Assembly assembly() {
     return assembly;
+  }
+
+  @Override
+  public int bitWidth() {
+    return this.behavior().getNodes(InstrCallNode.class).map(n -> n.target().bitWidth())
+        .reduce(0, Integer::sum);
   }
 
   @Override

@@ -88,6 +88,11 @@ public class Instruction extends Definition implements DefProp.WithBehavior, Pri
     return assembly;
   }
 
+  @Override
+  public int bitWidth() {
+    return this.encoding.format().type().bitWidth();
+  }
+
   public Encoding encoding() {
     return encoding;
   }
