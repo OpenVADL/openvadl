@@ -17,7 +17,7 @@ assembly description AD for ABI = {
 //  Reported Diagnostics:
 //
 //  error: No RETURN_ADDRESS registers were declared but one was expected
-//       ╭──[test/resources/frontend-snapshots/typechecker/assemblyBuiltinWithoutCast.vadl:7:1]
+//       ╭── test/resources/frontend-snapshots/typechecker/assemblyBuiltinWithoutCast.vadl:7:1
 //       │
 //     7 │ application binary interface ABI for ISA = {}
 //       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

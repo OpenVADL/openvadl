@@ -13,7 +13,7 @@ instruction set architecture ISA = {
 //  Reported Diagnostics:
 //
 //  error: Missing Assembly
-//       ╭──[test/resources/frontend-snapshots/nameresolution/formatFieldsAvailableInInstruction.vadl:7:15]
+//       ╭── test/resources/frontend-snapshots/nameresolution/formatFieldsAvailableInInstruction.vadl:7:15
 //       │
 //     7 │   instruction BEQ : Btype = {
 //       │               ^^^

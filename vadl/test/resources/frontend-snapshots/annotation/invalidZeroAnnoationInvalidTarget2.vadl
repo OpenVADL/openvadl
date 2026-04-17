@@ -10,7 +10,7 @@ instruction set architecture TEST =
 //  Reported Diagnostics:
 //
 //  error: Invalid zero annotation
-//       ╭──[test/resources/frontend-snapshots/annotation/invalidZeroAnnoationInvalidTarget2.vadl:5:12]
+//       ╭── test/resources/frontend-snapshots/annotation/invalidZeroAnnoationInvalidTarget2.vadl:5:12
 //       │
 //     5 │   [ zero : Y(1)]
 //       │            ^ Zero annotation target must be the annotated register.

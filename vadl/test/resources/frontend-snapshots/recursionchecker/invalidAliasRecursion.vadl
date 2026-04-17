@@ -7,7 +7,7 @@ instruction set architecture ISA = {
 //  Reported Diagnostics:
 //
 //  error: Infinite Recursion
-//       ╭──[test/resources/frontend-snapshots/recursionchecker/invalidAliasRecursion.vadl:2:3]
+//       ╭── test/resources/frontend-snapshots/recursionchecker/invalidAliasRecursion.vadl:2:3
 //       │
 //     2 │   alias register a = b
 //       │   ^^^^^^^^^^^^^^^^^^^^

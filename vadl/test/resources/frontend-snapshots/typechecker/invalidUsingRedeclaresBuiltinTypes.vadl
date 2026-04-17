@@ -13,28 +13,28 @@ instruction set architecture TEST = {
 //  Reported Diagnostics:
 //
 //  error: Symbol name already used: Instruction
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:2:7]
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:2:7
 //       │
 //     2 │ using Instruction = Bits<8>
 //       │       ^^^^^^^^^^^ This name is already claimed by a built-in type.
 //       │
 //
 //  error: Symbol name already used: SInt
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:3:7]
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:3:7
 //       │
 //     3 │ using SInt = Bits<8>
 //       │       ^^^^ This name is already claimed by a built-in type.
 //       │
 //
 //  error: Symbol name already used: Bool
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:4:7]
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:4:7
 //       │
 //     4 │ using Bool = Bits<1>
 //       │       ^^^^ This name is already claimed by a built-in type.
 //       │
 //
 //  error: Symbol name already used: FetchResult
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:7:10]
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidUsingRedeclaresBuiltinTypes.vadl:7:10
 //       │
 //     7 │   format FetchResult: Bits<32> =
 //       │          ^^^^^^^^^^^ This name is already claimed by a built-in type.

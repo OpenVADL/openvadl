@@ -8,7 +8,7 @@ model magicNumber(): Ex = {
 //  Reported Diagnostics:
 //
 //  error: Macro name already used: magicNumber
-//       ╭──[test/resources/frontend-snapshots/imports/invalidImportAndRedeclareModel.vadl:3:7]
+//       ╭── test/resources/frontend-snapshots/imports/invalidImportAndRedeclareModel.vadl:3:7
 //       │
 //     3 │ model magicNumber(): Ex = {
 //       │       ^^^^^^^^^^^ Second definition here.

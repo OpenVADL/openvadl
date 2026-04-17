@@ -9,7 +9,7 @@ function x(n: SInt<8>) -> Bits<64> = (match n with
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidMatchExprBranchesDifferentTypeInFunction.vadl:3:8]
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidMatchExprBranchesDifferentTypeInFunction.vadl:3:8
 //       │
 //     3 │ , 2 => 4 as Bits<32>
 //       │        ^^^^^^^^^ note: All previous branches were of type `Bits<16>`, but this is `Bits<32>`

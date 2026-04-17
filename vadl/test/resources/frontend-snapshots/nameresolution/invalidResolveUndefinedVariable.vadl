@@ -4,7 +4,7 @@ constant a = b
 //  Reported Diagnostics:
 //
 //  error: Unknown Symbol: "b"
-//       ╭──[test/resources/frontend-snapshots/nameresolution/invalidResolveUndefinedVariable.vadl:1:14]
+//       ╭── test/resources/frontend-snapshots/nameresolution/invalidResolveUndefinedVariable.vadl:1:14
 //       │
 //     1 │ constant a = b
 //       │              ^ No symbol with this name exists.

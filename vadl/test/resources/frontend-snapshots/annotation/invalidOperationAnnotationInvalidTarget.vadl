@@ -22,7 +22,7 @@ instruction set architecture ISA = {
 //  Reported Diagnostics:
 //
 //  error: Unknown OperationDefinition: "BranchOp"
-//       ╭──[test/resources/frontend-snapshots/annotation/invalidOperationAnnotationInvalidTarget.vadl:11:15]
+//       ╭── test/resources/frontend-snapshots/annotation/invalidOperationAnnotationInvalidTarget.vadl:11:15
 //       │
 //    11 │   [operation: BranchOp]
 //       │               ^^^^^^^^ No operationdefinition with this name exists.
