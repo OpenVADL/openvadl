@@ -30,6 +30,11 @@ public record AsmRuleInvocation(@Nullable AsmAssignTo assignToElement,
                                 AsmType asmType)
     implements AsmGrammarElement, HasAssignTo {
   @Override
+  public AsmGrammarElement copyWithoutAssignTo() {
+    return new AsmRuleInvocation(null, rule, parameters, asmType);
+  }
+
+  @Override
   public AsmType getAsmType() {
     return asmType;
   }

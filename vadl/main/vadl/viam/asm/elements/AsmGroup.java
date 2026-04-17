@@ -31,6 +31,11 @@ public record AsmGroup(@Nullable AsmAssignTo assignToElement,
                        boolean isEnclosingAlternativeOfAsmGroupType,
                        AsmType asmType) implements AsmGrammarElement, HasAssignTo {
   @Override
+  public AsmGrammarElement copyWithoutAssignTo() {
+    return new AsmGroup(null, alternatives, isEnclosingAlternativeOfAsmGroupType, asmType);
+  }
+
+  @Override
   public AsmType getAsmType() {
     return asmType;
   }
