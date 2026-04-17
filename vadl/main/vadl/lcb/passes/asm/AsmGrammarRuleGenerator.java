@@ -127,29 +127,33 @@ public class AsmGrammarRuleGenerator {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str && !isWhitespace(str.value())) {
-      var trimmedValue = str.value().trim();
-      var inferredRule = AsmToken.inferTerminalRule(trimmedValue);
+      addStringElement(ctx, str.value());
+    }
+  }
 
-      if (inferredRule != null) {
-        var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
-        ctx.addElementWithTokens(elem, Set.of(inferredRule));
-      } else {
-        // If no terminal rule can be inferred for a string it is likely because
-        // it consists of a combination of characters that are separate tokens.
-        // For example the string ":=" needs to be broken down to its parts ":" and "=",
-        // to be able to infer the terminal rules COLON and EQUAL.
-        for (int i = 0; i < trimmedValue.length(); i++) {
-          var partString = String.valueOf(trimmedValue.charAt(i));
-          inferredRule = AsmToken.inferTerminalRule(partString);
-          if (inferredRule == null) {
-            throw Diagnostic.error(
-                    "Assembly parser terminal rule cannot be inferred for symbol '%s'".formatted(
-                        partString), instruction.assembly())
-                .build();
-          }
-          var elem = new AsmStringLiteralUse(null, partString, StringAsmType.instance());
-          ctx.addElementWithTokens(elem, Set.of(inferredRule));
+  private void addStringElement(AsmRuleContext ctx, String str) {
+    var trimmedValue = str.trim();
+    var inferredRule = AsmToken.inferTerminalRule(trimmedValue);
+
+    if (inferredRule != null) {
+      var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
+      ctx.addElementWithTokens(elem, Set.of(inferredRule));
+    } else {
+      // If no terminal rule can be inferred for a string it is likely because
+      // it consists of a combination of characters that are separate tokens.
+      // For example the string ":=" needs to be broken down to its parts ":" and "=",
+      // to be able to infer the terminal rules COLON and EQUAL.
+      for (int i = 0; i < trimmedValue.length(); i++) {
+        var partString = String.valueOf(trimmedValue.charAt(i));
+        inferredRule = AsmToken.inferTerminalRule(partString);
+        if (inferredRule == null) {
+          throw Diagnostic.error(
+                  "Assembly parser terminal rule cannot be inferred for symbol '%s'".formatted(
+                      partString), instruction.assembly())
+              .build();
         }
+        var elem = new AsmStringLiteralUse(null, partString, StringAsmType.instance());
+        ctx.addElementWithTokens(elem, Set.of(inferredRule));
       }
     }
   }
@@ -172,14 +176,7 @@ public class AsmGrammarRuleGenerator {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, BuiltInCall node) {
 
-    if (node.builtIn() == BuiltInTable.MNEMONIC) {
-      var instructionName = instruction.identifier().simpleName();
-      var elem = new AsmStringLiteralUse(
-          new AsmAssignToAttribute("mnemonic", false),
-          instructionName, OperandAsmType.instance());
-      ctx.addElementWithTokens(elem, Set.of(new AsmToken("IDENTIFIER", instructionName)));
-      return;
-    }
+    // MNEMONIC handled by addMnemonic method
 
     // Transform "register(rd)" to "rd = Register @operand"
     if (node.builtIn() == BuiltInTable.REGISTER) {
@@ -288,7 +285,7 @@ public class AsmGrammarRuleGenerator {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ReturnNode node) {
 
-    addMnemonicIfNotInPrintingFunction(ctx);
+    addMnemonic(ctx);
 
     AsmGrammarRuleGeneratorDispatcher.dispatch(this, ctx, node.value());
 
@@ -324,27 +321,34 @@ public class AsmGrammarRuleGenerator {
     );
   }
 
-  private void addMnemonicIfNotInPrintingFunction(AsmRuleContext ctx) {
+  private void addMnemonic(AsmRuleContext ctx) {
     if (instruction.assembly().function().behavior().getNodes()
         .noneMatch(behaviorNode -> behaviorNode instanceof BuiltInCall builtInCall
             && builtInCall.builtIn() == BuiltInTable.MNEMONIC)) {
-      var functionName = instruction.identifier().simpleName() + "_mnemonic";
-      var expressionNode =
-          new ConstantNode(new Constant.Str(instruction.identifier().simpleName()));
-      var returnNode = new ReturnNode(expressionNode);
-      var graph = new Graph(functionName);
-      graph.addWithInputs(returnNode);
-
-      var instructionNameConstantFunction = new Function(
-          new Identifier(functionName, SourceLocation.INVALID_SOURCE_LOCATION),
-          new Parameter[] {}, Type.string(), graph);
-      ctx.generatedFunctions.add(instructionNameConstantFunction);
-
-      var elem = new AsmFunctionInvocation(
-          new AsmAssignToAttribute("mnemonic", false),
-          instructionNameConstantFunction, List.of(), OperandAsmType.instance());
-      ctx.addElementWithTokens(elem, Set.of());
+      addMnemonicConstantFunction(ctx);
+    } else {
+      addStringElement(ctx, instruction.identifier().simpleName());
+      addMnemonicConstantFunction(ctx);
     }
+  }
+
+  private void addMnemonicConstantFunction(AsmRuleContext ctx) {
+    var functionName = instruction.identifier().simpleName() + "_mnemonic";
+    var expressionNode =
+        new ConstantNode(new Constant.Str(instruction.identifier().simpleName()));
+    var returnNode = new ReturnNode(expressionNode);
+    var graph = new Graph(functionName);
+    graph.addWithInputs(returnNode);
+
+    var instructionNameConstantFunction = new Function(
+        new Identifier(functionName, SourceLocation.INVALID_SOURCE_LOCATION),
+        new Parameter[] {}, Type.string(), graph);
+    ctx.generatedFunctions.add(instructionNameConstantFunction);
+
+    var elem = new AsmFunctionInvocation(
+        new AsmAssignToAttribute("mnemonic", false),
+        instructionNameConstantFunction, List.of(), OperandAsmType.instance());
+    ctx.addElementWithTokens(elem, Set.of());
   }
 
   @Handler
