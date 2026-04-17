@@ -31,8 +31,9 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 public class LcbNodeReplacementHandlerWithBasicBlockReplacement extends LcbNodeReplacementHandler {
   public LcbNodeReplacementHandlerWithBasicBlockReplacement(
       PrintableInstruction printableInstruction,
-      ValueType architectureType) {
-    super(printableInstruction, architectureType);
+      ValueType architectureType,
+      ValueType smallestRegisterClassType) {
+    super(printableInstruction, architectureType, smallestRegisterClassType);
   }
 
   @Override

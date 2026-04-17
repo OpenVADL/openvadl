@@ -22,6 +22,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -284,31 +285,46 @@ public class LlvmLoweringPass extends Pass {
         (DetermineRegisterUsesAndDefsPass.Output) passResults.lastResultOf(
             DetermineRegisterUsesAndDefsPass.class);
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
+    var generateTableGenRegistersPassOutput =
+        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+            GenerateTableGenRegistersPass.class));
+    var smallestRegisterClassType = generateTableGenRegistersPassOutput.smallestRegisterClassType();
 
     var architectureType =
         ensurePresent(ValueType.from(abi.stackPointer().registerFile().resultType()),
             "Architecture type is required.");
+
     var machineStrategies =
-        List.of(new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
-            new LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl(architectureType),
-            new LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl(architectureType),
+        List.of(new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType, 
+                smallestRegisterClassType),
+            new LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl(architectureType, 
+                smallestRegisterClassType),
+            new LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl(architectureType, 
+                smallestRegisterClassType),
             new LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl(
-                architectureType),
+                architectureType, smallestRegisterClassType),
             new LlvmInstructionLoweringUnconditionalJumpWithoutLinkRegistersStrategyImpl(
-                architectureType),
+                architectureType, smallestRegisterClassType),
             new LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl(
-                architectureType),
+                architectureType, smallestRegisterClassType),
             new LlvmInstructionLoweringUnconditionalIndirectJumpWithoutLinkRegistersStrategyImpl(
-                architectureType),
-            new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType),
+                architectureType, smallestRegisterClassType),
+            new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType, 
+                smallestRegisterClassType),
             new LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl(
-                architectureType),
-            new LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(architectureType),
-            new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType),
-            new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType),
-            new LlvmInstructionLoweringXoriAndOriStrategyImpl(architectureType),
-            new LlvmInstructionLoweringLoadUpperImmediateStrategyImpl(architectureType),
-            new LlvmInstructionLoweringDefaultStrategyImpl(architectureType));
+                architectureType, smallestRegisterClassType),
+            new LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(architectureType, 
+                smallestRegisterClassType),
+            new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType, 
+                smallestRegisterClassType),
+            new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType, 
+                smallestRegisterClassType),
+            new LlvmInstructionLoweringXoriAndOriStrategyImpl(architectureType, 
+                smallestRegisterClassType),
+            new LlvmInstructionLoweringLoadUpperImmediateStrategyImpl(architectureType, 
+                smallestRegisterClassType),
+            new LlvmInstructionLoweringDefaultStrategyImpl(architectureType, 
+                smallestRegisterClassType));
     var pseudoStrategies =
         List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
             new LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl(machineStrategies,

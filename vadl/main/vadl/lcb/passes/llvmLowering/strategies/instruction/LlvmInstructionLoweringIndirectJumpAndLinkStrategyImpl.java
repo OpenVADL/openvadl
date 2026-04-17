@@ -49,6 +49,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
@@ -69,8 +70,8 @@ import vadl.viam.graph.dependency.SideEffectNode;
 public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(
-      ValueType architectureType) {
-    super(architectureType);
+      ValueType architectureType, ValueType smallestRegisterClassType) {
+    super(architectureType, smallestRegisterClassType);
   }
 
   @Override
