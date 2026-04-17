@@ -10,7 +10,7 @@ instruction set architecture TEST =
 //  Reported Diagnostics:
 //
 //  error: Invalid zero annotation
-//       ╭──[test/resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidArgument.vadl:5:14]
+//       ╭── test/resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidArgument.vadl:5:14
 //       │
 //     5 │   [ zero : X(Y) ]
 //       │              ^ Index must be a constant expression.

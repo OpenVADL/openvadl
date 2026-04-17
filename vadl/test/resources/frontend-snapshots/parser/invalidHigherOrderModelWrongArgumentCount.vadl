@@ -161,28 +161,30 @@ model-type SVEWhileStatModel = (WhileRec, Id) -> Stat
 //  Reported Diagnostics:
 //
 //  error: The macro `SVEWhileCondInstr` expects 4 arguments but 1 were provided.
-//       ╭──[test/resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:5]
+//       ╭── test/resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:5
 //       │
 //   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
 //       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //       │
 //
 //  error: SyntaxType Mismatch
-//       ╭──[test/resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:142:148]
+//       ╭── test/resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:142:148
 //       │
 //   142 │     $SVEWhileBaseInstr (WhileStatLSLE ; $ExtInstrIdStr($i ; LS ; "ls"); (LS ; $UMax($regSize) ; $PtrueBHSD($elSize) ; ugth ; $elements ; $elSize ; $elStr) ; $regSize)
 //       │                                                                                                                                                    ^^^^^^
 //       │
 //       Mismatched node type: Required `STR`, but got `INVALID`
+//
 //  error: SyntaxType Mismatch
-//       ╭──[test/resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:25]
+//       ╭── test/resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:25
 //       │
 //   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
 //       │                         ^^^^^^^^^^^^
 //       │
 //       Mismatched node type: Required `InstrWithFunct (ID,STR,EX,ID)`, but got `INVALID`
+//
 //  error: Parsing Error
-//       ╭──[test/resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:38]
+//       ╭── test/resources/frontend-snapshots/parser/invalidHigherOrderModelWrongArgumentCount.vadl:147:38
 //       │
 //   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
 //       │                                      ^ The parser expected `)` here.

@@ -16,7 +16,7 @@ constant second = false + $apfelstrudel()
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/parser/invalidModelInvocationUsesRightLocation.vadl:13:19]
+//       ╭── test/resources/frontend-snapshots/parser/invalidModelInvocationUsesRightLocation.vadl:13:19
 //       │
 //    13 │ constant second = false + $apfelstrudel()
 //       │                   ^^^^^^^^^^^^^^^^^^^^^^^ note: The left type is Bits<1> while right is Bits<6>

@@ -7,7 +7,7 @@ instruction set architecture FLO = {
 //  Reported Diagnostics:
 //
 //  error: Symbol name already used: X
-//       ╭──[test/resources/frontend-snapshots/nameresolution/invalidResolveTwoOverlappingRegisterDefinitions.vadl:3:12]
+//       ╭── test/resources/frontend-snapshots/nameresolution/invalidResolveTwoOverlappingRegisterDefinitions.vadl:3:12
 //       │
 //     2 │   register X : Bits<5>
 //       │            - First defined here.

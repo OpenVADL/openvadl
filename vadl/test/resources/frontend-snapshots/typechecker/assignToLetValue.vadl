@@ -27,7 +27,7 @@ instruction set architecture TEST = {
 //  Reported Diagnostics:
 //
 //  error: Cannot Write To Static Target
-//       ╭──[test/resources/frontend-snapshots/typechecker/assignToLetValue.vadl:19:7]
+//       ╭── test/resources/frontend-snapshots/typechecker/assignToLetValue.vadl:19:7
 //       │
 //    19 │       r(i) := 0
 //       │       ^^^^ This is not writable (originates from a LetStatement), but a static value.

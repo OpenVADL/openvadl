@@ -9,7 +9,7 @@ instruction set architecture TEST =
 //  Reported Diagnostics:
 //
 //  error: Invalid zero annotation
-//       ╭──[test/resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidArgumentNumber.vadl:4:12]
+//       ╭── test/resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidArgumentNumber.vadl:4:12
 //       │
 //     4 │   [ zero : X(1)(2) ]
 //       │            ^^^^^^^ Exactly one register index was expected, but 2 were provided.

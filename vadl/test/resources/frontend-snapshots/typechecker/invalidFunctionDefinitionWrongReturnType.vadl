@@ -4,7 +4,7 @@ function addOne(n: SInt<8>) -> SInt<8> = false
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidFunctionDefinitionWrongReturnType.vadl:1:42]
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidFunctionDefinitionWrongReturnType.vadl:1:42
 //       │
 //     1 │ function addOne(n: SInt<8>) -> SInt<8> = false
 //       │                                ------- Return type defined here as `SInt<8>`

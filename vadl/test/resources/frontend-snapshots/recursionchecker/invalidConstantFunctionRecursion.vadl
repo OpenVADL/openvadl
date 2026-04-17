@@ -5,7 +5,7 @@ function b (x : SInt<32>) -> SInt<32> = a
 //  Reported Diagnostics:
 //
 //  error: Infinite Recursion
-//       ╭──[test/resources/frontend-snapshots/recursionchecker/invalidConstantFunctionRecursion.vadl:2:41]
+//       ╭── test/resources/frontend-snapshots/recursionchecker/invalidConstantFunctionRecursion.vadl:2:41
 //       │
 //     2 │ function b (x : SInt<32>) -> SInt<32> = a
 //       │                                         ^

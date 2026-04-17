@@ -87,7 +87,10 @@ public class DiagnosticPrinter {
   private void toString(Diagnostic diagnostic, StringBuilder builder) {
     printHeader(diagnostic, builder);
     printMultiSourcePreview(diagnostic, builder);
-    builder.append(indentBy(messageBlock(diagnostic.messages), "     "));
+    if (!diagnostic.messages.isEmpty()) {
+      builder.append(indentBy(messageBlock(diagnostic.messages), "     "));
+      builder.append("\n");
+    }
     builder.append("\n");
   }
 
@@ -121,7 +124,7 @@ public class DiagnosticPrinter {
    */
   private void printMultiSourcePreview(Diagnostic diagnostic, StringBuilder builder) {
     // Print preview header
-    builder.append("     %s╭──[%s]\n".formatted(colors.cyan(),
+    builder.append("     %s╭── %s\n".formatted(colors.cyan(),
         diagnostic.multiLocation.primaryLocation().location().toIDEString(
             fileSystem,
             forceRelativePaths
@@ -289,7 +292,7 @@ public class DiagnosticPrinter {
     if (numLines < 8) {
       for (int i = location.location().begin().line(); i <= location.location().end().line(); i++) {
         // Print the line number, guard and actual line
-        builder.append("%s%4d".formatted(colors.reset(), i));
+        builder.append("%s%4d".formatted(colors.lightgrey(), i));
         builder.append(
             " %s│%s>%s ".formatted(colors.cyan(), isPrimary ? colors.red() : colors.lightblue(),
                 colors.reset()));
@@ -300,18 +303,18 @@ public class DiagnosticPrinter {
       for (int i = location.location().begin().line(); i <= location.location().begin().line() + 2;
            i++) {
         // Print the line number, guard and actual line
-        builder.append("%s%4d".formatted(colors.reset(), i));
+        builder.append("%s%4d".formatted(colors.lightgrey(), i));
         builder.append(" %s│%s>%s ".formatted(colors.cyan(), colors.red(), colors.reset()));
         builder.append(lines.get(i - 1));
         builder.append("\n");
       }
       builder.append(
-          "    %s⋮%s  %d lines omitted here...\n".formatted(colors.cyan(), colors.reset(),
-              numLines - 6));
+          "     %s⋮%s  %d lines omitted here...%s\n".formatted(colors.cyan(), colors.lightgrey(),
+              numLines - 6, colors.reset()));
       for (int i = location.location().end().line() - 2; i <= location.location().end().line();
            i++) {
         // Print the line number, guard and actual line
-        builder.append("%s%4d".formatted(colors.reset(), i));
+        builder.append("%s%4d".formatted(colors.lightgrey(), i));
         builder.append(" %s│%s>%s ".formatted(colors.cyan(), colors.red(), colors.reset()));
         builder.append(lines.get(i - 1));
         builder.append("\n");
@@ -335,7 +338,7 @@ public class DiagnosticPrinter {
                                       String markerColor) {
 
     // Print the line number, guard and actual line
-    builder.append("%s%4d".formatted(colors.reset(), location.location().begin().line()));
+    builder.append("%s%4d".formatted(colors.lightgrey(), location.location().begin().line()));
     builder.append(" %s│%s ".formatted(colors.cyan(), colors.reset()));
     builder.append(lines.get(location.location().begin().line() - 1));
     builder.append("\n");
@@ -377,7 +380,8 @@ public class DiagnosticPrinter {
       case HELP -> "help: ";
     };
 
-    return "%s%s%s%s".formatted(colors.bold(), label, colors.reset(), message.content());
+    return "%s%s%s%s".formatted(colors.bold(), label, colors.reset(),
+        renderMarkup(message.content()));
   }
 
   /**
@@ -401,6 +405,21 @@ public class DiagnosticPrinter {
    */
   private String indentBy(String text, String prefix) {
     return prefix + text.replaceAll("\n", "\n" + prefix);
+  }
+
+  /**
+   * Render markup in a string, such as code blocks.
+   *
+   * @param text to render markup in.
+   * @return the rendered string (text block).
+   */
+  private String renderMarkup(String text) {
+    // leave the backticks in if we aren't allowed to use colors.
+    if (colors instanceof NoColors) {
+      return text;
+    }
+    return text.replaceAll("`(.+?)`",
+        "%s%s$1%s".formatted(colors.purple(), colors.underline(), colors.reset()));
   }
 
   /**

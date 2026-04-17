@@ -8,7 +8,7 @@ enumeration ENUM: Bits<2> =
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidEnumWithTypes.vadl:3:7]
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidEnumWithTypes.vadl:3:7
 //       │
 //     3 │ , B = 0b0111111
 //       │       ^^^^^^^^^ Expected `Bits<2>` but got `Bits<6>`.

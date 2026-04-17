@@ -7,7 +7,7 @@ constant apfelstrudel = 1 as String<99>
 //  Reported Diagnostics:
 //
 //  error: Invalid Type Notation
-//       ╭──[test/resources/frontend-snapshots/parser/invalidCastOfSizedType.vadl:4:30]
+//       ╭── test/resources/frontend-snapshots/parser/invalidCastOfSizedType.vadl:4:30
 //       │
 //     4 │ constant apfelstrudel = 1 as String<99>
 //       │                              ^^^^^^^^^^

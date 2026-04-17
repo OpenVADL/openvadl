@@ -10,7 +10,7 @@ function flo(x: Bits<8>) -> Bits<8> = x + 1
 //  Reported Diagnostics:
 //
 //  error: Invalid Function Call
-//       ╭──[test/resources/frontend-snapshots/typechecker/invalidFunctionCallTooFewArgsInTypeLiteral.vadl:5:26]
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidFunctionCallTooFewArgsInTypeLiteral.vadl:5:26
 //       │
 //     5 │ constant abc = 7 as Bits<flo>
 //       │                          ^^^

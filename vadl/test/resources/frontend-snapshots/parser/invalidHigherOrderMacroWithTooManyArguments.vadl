@@ -15,7 +15,7 @@ model InstrBHSD (modelid: InstrWithFunctElemSize, i: InstrWithFunct): IsaDefs = 
 //  Reported Diagnostics:
 //
 //  error: Invalid Model Invocation
-//       ╭──[test/resources/frontend-snapshots/parser/invalidHigherOrderMacroWithTooManyArguments.vadl:11:35]
+//       ╭── test/resources/frontend-snapshots/parser/invalidHigherOrderMacroWithTooManyArguments.vadl:11:35
 //       │
 //    11 │   $modelid ($i; ElementsB; SizeB; ".B")
 //       │                                   ^^^^ The model only expected 3 arguments but, you provided at least 4.
