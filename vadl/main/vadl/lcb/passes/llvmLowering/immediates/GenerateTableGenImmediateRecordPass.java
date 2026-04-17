@@ -28,6 +28,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.gcb.valuetypes.ValueType;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -63,6 +64,10 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
     var snapshots =
         (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
     var immediates = new ArrayList<TableGenImmediateRecord>();
+    var generateTableGenRegistersPassOutput =
+        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+            GenerateTableGenRegistersPass.class));
+    var smallestRegisterClassType = generateTableGenRegistersPassOutput.smallestRegisterClassType();
 
     // We do it first for machine instructions.
     snapshots.entrySet().stream().sorted(
@@ -92,10 +97,12 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                 var type = (BitsType) fieldAccessRefNode.type().asDataType();
                 var upcastedType = CppTypeMap.upcast(type.makeSigned());
                 var upcastedValueType =
-                    ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
+                    ensurePresent(
+                        ValueType.from(upcastedType), 
+                        () -> Diagnostic.error(
                         "Compiler generator was not able to change the type to the architecture's "
-                            + "bit width: " + upcastedType.toString(),
-                        fieldAccess.location()));
+                          + "bit width: " + upcastedType.toString(),
+                          fieldAccess.location()));
                 var upcastAnnotation = instruction.annotation(FieldAccessAnnotation.class);
                 if (upcastAnnotation != null) {
                   var upcastedCppType = CppTypeMap.upcast(upcastAnnotation.resultBitWidth());
@@ -104,7 +111,14 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                           "Unable to cast access to requested bit width: "
                               + upcastAnnotation.resultBitWidth(),
                           upcastAnnotation.location()).build());
+                } else {
+                  var upcastedValueTypeBitwidth = upcastedValueType.getBitwidth();
+                  var smallestRegisterClassBitwidth = smallestRegisterClassType.getBitwidth();
+                  upcastedValueType = upcastedValueTypeBitwidth < smallestRegisterClassBitwidth
+                      ? smallestRegisterClassType
+                      : upcastedValueType;
                 }
+
                 immediates.add(new TableGenImmediateRecord(instruction,
                     fieldAccess,
                     upcastedValueType));

@@ -46,8 +46,8 @@ import vadl.viam.graph.dependency.SideEffectNode;
 public class LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl(
-      ValueType architectureType) {
-    super(architectureType);
+      ValueType architectureType, ValueType smallestRegisterClassType) {
+    super(architectureType, smallestRegisterClassType);
   }
 
   @Override
@@ -57,7 +57,8 @@ public class LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrate
 
   @Override
   protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
-    return new LcbNodeReplacementHandlerWithBasicBlockReplacement(instruction, architectureType);
+    return new LcbNodeReplacementHandlerWithBasicBlockReplacement(instruction, architectureType, 
+        this.smallestRegisterClassType);
   }
 
   @Override
