@@ -30,7 +30,7 @@ instruction set architecture TEST = {
 //       ╭── test/resources/frontend-snapshots/typechecker/assignToLetValue.vadl:19:7
 //       │
 //    19 │       r(i) := 0
-//       │       ^^^^ This is not writable (originates from a LetStatement), but a static value.
+//       │       ^^^^ This is not writable (originates from a let statement), but a static value.
 //       │            note: Only registers, counters, alias and memory are writable.
 //       │
 //

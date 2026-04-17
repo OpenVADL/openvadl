@@ -9,7 +9,7 @@ instruction set architecture ISA = {
 //       ╭── test/resources/frontend-snapshots/nameresolution/invalidTypeNameInUsing.vadl:2:28
 //       │
 //     2 │   using Word        = SInt<XSize>
-//       │                            ^^^^^ No symbol with this name exists.
+//       │                            ^^^^^ No Symbol with this name exists.
 //       │
 //       help: Did you maybe mean: write
 //

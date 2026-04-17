@@ -333,7 +333,7 @@ public class TypeChecker
   private void throwUnimplemented(Node node) {
     throw new RuntimeException(
         "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
-            node.getClass().getSimpleName(), node.location().toConciseString()));
+            node.nodeName(), node.location().toConciseString()));
   }
 
   /**
@@ -364,7 +364,7 @@ public class TypeChecker
   private IllegalStateException buildIllegalStateException(Node node, String message) {
     return new IllegalStateException(
         "The typechecker encountered an invalid state in `%s` at %s: %s".formatted(
-            node.getClass().getSimpleName(), node.location().toConciseString(), message));
+            node.nodeName(), node.location().toConciseString(), message));
   }
 
   private void throwInvalidAsmCast(AsmType from, AsmType to, WithLocation location) {
@@ -989,7 +989,7 @@ public class TypeChecker
         }
 
         default -> throw new IllegalArgumentException(
-            "Unknown format field type: " + field.getClass().getSimpleName());
+            "Unknown format field type: " + field.nodeName());
       }
 
     });
@@ -1733,19 +1733,19 @@ public class TypeChecker
   @Override
   public Void visit(PlaceholderDefinition definition) {
     throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(definition.getClass().getSimpleName()));
+        "No %s should ever reach the Typechecker".formatted(definition.nodeName()));
   }
 
   @Override
   public Void visit(MacroInstanceDefinition definition) {
     throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(definition.getClass().getSimpleName()));
+        "No %s should ever reach the Typechecker".formatted(definition.nodeName()));
   }
 
   @Override
   public Void visit(MacroMatchDefinition definition) {
     throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(definition.getClass().getSimpleName()));
+        "No %s should ever reach the Typechecker".formatted(definition.nodeName()));
   }
 
   @Override
@@ -1757,7 +1757,7 @@ public class TypeChecker
   @Override
   public Void visit(ModelDefinition definition) {
     throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(definition.getClass().getSimpleName()));
+        "No %s should ever reach the Typechecker".formatted(definition.nodeName()));
   }
 
   @Override
@@ -1798,8 +1798,8 @@ public class TypeChecker
         // We don't need to stop checking we can continue after an error.
         default -> errors.add(
             error("Invalid Operation Member", resource)
-                .locationNote(resource, "Operation members must be instructions but this was '%s'",
-                    requireNonNull(resource.target()).getClass().getSimpleName())
+                .locationNote(resource, "Operation members must be instructions but this was a %s",
+                    requireNonNull(resource.target()).nodeName())
                 .build());
       }
     });
@@ -2612,7 +2612,7 @@ public class TypeChecker
     if (!(definition.isa.target() instanceof InstructionSetDefinition)) {
       throw error("ISA required", definition.isa)
           .locationDescription(definition.isa, "A MIA implements an ISA but this points to a %s",
-              requireNonNull(definition.isa.target()).getClass().getSimpleName()).build();
+              requireNonNull(definition.isa.target()).nodeName()).build();
     }
     definition.definitions.forEach(this::check);
     return null;
@@ -2841,7 +2841,7 @@ public class TypeChecker
       throw addErrorAndStopChecking(error("Invalid Expression", expr)
           .locationDescription(expr,
               "The name '%s' points to a `%s` which cannot be used as an expression.", fullName,
-              origin.getClass().getSimpleName())
+              origin.nodeName())
           .build());
     }
 
@@ -3016,13 +3016,13 @@ public class TypeChecker
   @Override
   public Void visit(PlaceholderExpr expr) {
     throw new IllegalStateException(
-        "The typechecker should never see a %s".formatted(expr.getClass().getSimpleName()));
+        "The typechecker should never see a %s".formatted(expr.nodeName()));
   }
 
   @Override
   public Void visit(MacroInstanceExpr expr) {
     throw new IllegalStateException(
-        "The typechecker should never see a %s".formatted(expr.getClass().getSimpleName()));
+        "The typechecker should never see a %s".formatted(expr.nodeName()));
   }
 
   @Override
@@ -3957,7 +3957,7 @@ public class TypeChecker
   @Override
   public Void visit(MacroMatchExpr expr) {
     throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
+        "No %s should ever reach the Typechecker".formatted(expr.nodeName()));
   }
 
   @Override
@@ -4036,13 +4036,13 @@ public class TypeChecker
   @Override
   public Void visit(AsIdExpr expr) {
     throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
+        "No %s should ever reach the Typechecker".formatted(expr.nodeName()));
   }
 
   @Override
   public Void visit(AsStrExpr expr) {
     throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
+        "No %s should ever reach the Typechecker".formatted(expr.nodeName()));
   }
 
   @Override
@@ -4251,7 +4251,7 @@ public class TypeChecker
         .anyMatch(klass -> klass.isInstance(targetSource))) {
       var message = "This is not writable";
       if (targetSource != null) {
-        message += " (originates from a %s)".formatted(targetSource.getClass().getSimpleName());
+        message += " (originates from a %s)".formatted(targetSource.nodeName());
       }
       message += ", but a static value.";
       var diagnostic = error("Cannot Write To Static Target", statement.target)

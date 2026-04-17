@@ -33,7 +33,7 @@ instruction set architecture ISA = {
 //       ╭── test/resources/frontend-snapshots/lowering/invalidPseudoReturnInstructionMissing.vadl:12:36
 //       │
 //    12 │       special return instruction = DOESNOTEXIST
-//       │                                    ^^^^^^^^^^^^ No symbol with this name exists.
+//       │                                    ^^^^^^^^^^^^ No Symbol with this name exists.
 //       │
 //
 //

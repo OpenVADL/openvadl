@@ -18,9 +18,12 @@ package vadl.ast;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
@@ -114,6 +117,37 @@ abstract class Node implements WithLocation {
               .formatted(toString(), location().toConciseString()));
     }
     return symbolTable;
+  }
+
+  static String nodeNameFor(Class<? extends Node> nodeClass) {
+    var hardCodedNames = Map.of(
+        AsIdExpr.class, "AsId expr",
+        AsStrExpr.class, "AsStr expr",
+        BinOp.class, "binary operator",
+        UnOp.class, "unary operator"
+    );
+    if (hardCodedNames.containsKey(nodeClass)) {
+      return hardCodedNames.get(nodeClass);
+    }
+
+    var words =  nodeClass.getSimpleName()
+        .replaceAll("([a-z])([A-Z])", "$1 $2")
+        .toLowerCase()
+        .split(" ");
+
+    var replacements = Map.of(
+        "asm", "assembly",
+        "expr", "expression",
+        "stmt", "statement"
+    );
+
+    return Arrays.stream(words)
+        .map(word -> replacements.getOrDefault(word, word))
+        .collect(Collectors.joining(" "));
+  }
+
+  String nodeName() {
+    return nodeNameFor(getClass());
   }
 
   static String prettyIndentString(int indent) {

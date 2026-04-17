@@ -7,7 +7,7 @@ constant a = b
 //       ╭── test/resources/frontend-snapshots/nameresolution/invalidResolveUndefinedVariable.vadl:1:14
 //       │
 //     1 │ constant a = b
-//       │              ^ No symbol with this name exists.
+//       │              ^ No Symbol with this name exists.
 //       │
 //       help: Did you maybe mean: a
 //
