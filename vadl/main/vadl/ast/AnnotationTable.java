@@ -37,10 +37,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticBuilder;
 import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
 import vadl.gcb.annotations.RelocationSyntaxAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
+import vadl.types.BitsType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.Pair;
@@ -143,39 +145,18 @@ public class AnnotationTable {
         // this handled in the VIAM lowering when constructing the ArtificialResource
         .build();
 
-    annotationOn(RegisterDefinition.class, "execution state", EnableAnnotation::new)
-        // TODO: check that the annotation is only applied to single registers
-        //  (not register files)
+    annotationOn(RegisterDefinition.class, "execution state", FormatFieldAnnotation::new)
+        .check((def, annotation, lowering) -> annotation.typeCheckTarget(def))
+        .applyAst((def, annotation) -> annotation.calcBitSlice(def))
         .applyViam((def, annotation, lowering) -> {
           var viamDef = (RegisterTensor) def;
           if (viamDef.hasAnnotation(TbStateRegisterAnnotation.class)) {
-            viamDef.expectAnnotation(TbStateRegisterAnnotation.class).addSlice(null);
+            viamDef.expectAnnotation(TbStateRegisterAnnotation.class).addSlice(annotation.slice);
           } else {
-            viamDef.addAnnotation(new TbStateRegisterAnnotation(viamDef.totalWidth(), null));
+            viamDef.addAnnotation(
+                new TbStateRegisterAnnotation(viamDef.totalWidth(), annotation.slice));
           }
         })
-        .build();
-
-    annotationOn(AliasDefinition.class, "execution state", EnableAnnotation::new)
-        .check((def, annotation, lowering) -> {
-          ensure(def.computedTarget instanceof RegisterDefinition,
-              () -> error("Invalid annotation target", annotation)
-                  .locationDescription(annotation,
-                      "Execution state annotation can only be applied on register aliases"));
-        })
-        .applyViam((def, annotation, lowering) -> {
-          var viamDef = (ArtificialResource) def;
-          var res = (RegisterTensor) viamDef.innerResourceRef();
-          var semantics = viamDef.semantics();
-          if (res.hasAnnotation(TbStateRegisterAnnotation.class)) {
-            res.expectAnnotation(TbStateRegisterAnnotation.class)
-                .addSlice(semantics.aliasSlice());
-          } else {
-            res.addAnnotation(new TbStateRegisterAnnotation(
-                res.totalWidth(), semantics.aliasSlice()));
-          }
-        })
-        // this handled in the VIAM lowering when constructing the ArtificialResource
         .build();
 
     groupOn(RelocationDefinition.class)
@@ -1099,6 +1080,143 @@ class EnableAnnotation extends Annotation {
   @Override
   public String usageString() {
     return "[ " + name + " ]";
+  }
+}
+
+/**
+ * An annotation that can be applied to anything that has a type which is a {@link BitsType}.
+ * If the target's type is a {@link FormatType}, then this annotation can be used to reference
+ * its format fields.
+ *
+ * <p>Examples for such annotations:
+ * <pre>
+ * [ whole ]
+ * register reg : Bits<8>
+ *
+ * [ formatFields : f0, f1 ]
+ * register reg : Format
+ * format Format : Bits<8> { f0 [7], f1 [6], ... }
+ * </pre>
+ */
+class FormatFieldAnnotation extends Annotation {
+
+  @LazyInit
+  List<Identifier> fields;
+
+  @LazyInit
+  Constant.BitSlice slice;
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) { }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    definition.values.forEach(def -> {
+      Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
+          .description("An identifier was expected.")
+      );
+    });
+
+    fields = definition.values.stream().map(def -> (Identifier) def).toList();
+  }
+
+  void typeCheckTarget(TypedNode target) {
+    if (fields.isEmpty()) {
+      Diagnostic.ensure(target.type() instanceof BitsType,
+          () -> error("Annotation target has invalid type", this).description("""
+              Execution state annotation can only be applied to simple \
+              register definitions (no register files or tensors)"""));
+      return;
+    }
+    Diagnostic.ensure(target.type() instanceof FormatType,
+        () -> error("Annotation target has invalid type", this).description("""
+            Execution state annotation with format fields can only \
+            be applied to register definitions with a format type"""));
+
+    var format = ((FormatType) target.type()).format;
+    fields.forEach(field -> {
+      Function<String, DiagnosticBuilder> errBuilder = (String err) ->
+          error(err, field).description("Must be one of: %s",
+              format.fields.stream()
+                  .filter(f -> !(f instanceof DerivedFormatField))
+                  .map(f -> f.identifier.name)
+                  .collect(Collectors.joining(", "))
+          );
+      Diagnostic.ensure(format.hasField(field.name),
+          () -> errBuilder.apply("Unknown field name"));
+      Diagnostic.ensure(!(format.getField(field.name) instanceof DerivedFormatField),
+          () -> errBuilder.apply("Cannot annotate derived field"));
+    });
+  }
+
+  void calcBitSlice(TypedNode target) {
+    if (fields.isEmpty()) {
+      var width = ((BitsType) target.type()).bitWidth();
+      slice = Constant.BitSlice.of(width - 1, 0);
+    }
+    var format = requireNonNull((FormatType) target.type()).format;
+    slice = new Constant.BitSlice(
+        fields.stream()
+            .map(field -> requireNonNull(format.getFieldRange(field.name)))
+            .map(range -> new Constant.BitSlice.Part(range.from(), range.to()))
+            .toArray(Constant.BitSlice.Part[]::new)
+    );
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <ident>, ... ]";
+  }
+}
+
+/**
+ * Provides the annotation {@code [ upcast access to : <ident>, <ex> ]} on an instruction that
+ * treats the field access of {@code <ident>} as being of type {@code <ex>}. {@code <ex>} has to
+ * evaluate to a positive integer.
+ * This is useful when there is a type mismatch between the field access and an LLVM type.
+ */
+class UpcastAnnotation extends Annotation {
+
+  @LazyInit
+  ConstantValue bitSize;
+
+  @LazyInit
+  Definition targetDef;
+
+  public UpcastAnnotation() {
+    super();
+  }
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    verifyValuesCnt(definition, 2);
+    for (var val : definition.values) {
+      val.accept(resolver);
+    }
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+
+    var def = definition.values.getFirst();
+    Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
+        .description("A single identifier was expected.")
+    );
+    var target = ((Identifier) def).target();
+    Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
+        .description("The identifier must reference a definition."));
+    targetDef = ((Definition) target);
+
+    var valueExpr = definition.values.get(1);
+    typeChecker.check(valueExpr);
+    bitSize = typeChecker.constantEvaluator.eval(valueExpr);
+    Diagnostic.ensure(bitSize.value().signum() > 0,
+        () -> error("Bit size of type has to be bigger than zero", valueExpr));
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <ident>, <int> ]";
   }
 }
 

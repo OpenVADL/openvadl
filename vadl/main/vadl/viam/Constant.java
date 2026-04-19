@@ -1167,6 +1167,18 @@ public abstract class Constant {
       return new Constant.BitSlice(newParts);
     }
 
+    /**
+     * Checks whether all bit indices contained in the given slice are also
+     * contained in this slice. E.g. [3..4] is covered by [5..1], but [1..2]
+     * is not covered by [0..1].
+     *
+     * @param other The given slice to check
+     * @return Whether the given slice is contained in this slice
+     */
+    public boolean covers(BitSlice other) {
+      return other.stream().allMatch(i -> parts().anyMatch(p -> p.msb() >= i && p.lsb() <= i));
+    }
+
     private static List<Part> normalized(Part[] parts) {
       // flat map all parts to a single array of integers
       var flattened = Arrays.stream(parts)

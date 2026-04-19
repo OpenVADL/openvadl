@@ -287,19 +287,21 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var unconditionalJump = instrEnd.sideEffects().stream()
         .anyMatch(s -> s.usages().anyMatch(u -> u instanceof InstrExitNode));
 
-    // check if there is an unconditional write to a register that is part of the
-    // tb state.
-    var unconditionalWrite = hasTbStateWrites(instrEnd);
-
-    if (!unconditionalJump && !unconditionalWrite) {
-      // if there is no unconditional jump or write, we must chain the instruction
-      // with the next one by setting the jmp type to chain.
+    if (unconditionalJump || containsWrites) {
+      // if the jump is unconditional we must exit the tb loop
+      //   goto_tb or tb lookup is inserted after PcChange
+      // if any writes to the tb state exist, we cannot chain, because they may write
+      //   data that is not statically known at TCG gen time (eg writes from registers)
+      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
+    } else {
+      // if there is no unconditional jump or non-static write, we must chain
+      // the instruction with the next one by setting the jmp type to chain.
       // the tcg_stop_tb method will take care about the instruction chaining.
       instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.CHAIN));
-    } else {
-      // if the jump or write is unconditional we must exit the tb loop anyway
-      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
     }
+
+    // TODO: the behaviour above is currently very conservative. If a write writes data
+    //  known at tcg gen time, then we can use CHAIN instead of NORETURN.
 
     // TODO: what if a write/jump is conditional, but the condition is statically evaluated
     //  ie at TCG generation time? -> in that case the jmp/chain behaviour does not have
@@ -383,15 +385,6 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   private boolean isTcg(DependencyNode node) {
     return TcgPassUtils.isTcg(node);
-  }
-
-  /**
-   * Returns whether any writes to registers that are part of the TB state are side
-   * effects of the branch.
-   */
-  private boolean hasTbStateWrites(AbstractEndNode node) {
-    return node.sideEffects().stream()
-        .anyMatch(s -> s instanceof WriteRegTensorNode w && w.writeAffectsTbState());
   }
 
   /**

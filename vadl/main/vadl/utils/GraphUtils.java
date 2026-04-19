@@ -55,6 +55,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
+import vadl.viam.passes.CfgTraverser;
 
 /**
  * A collection of useful utility methods on graphs.
@@ -578,17 +579,7 @@ public class GraphUtils {
    * @return     the branch end node
    */
   public static AbstractEndNode branchEnd(DirectionalNode node) {
-    Node curr = node;
-    while (true) {
-      if (curr instanceof AbstractEndNode e) {
-        return e;
-      }
-      if (curr instanceof DirectionalNode d) {
-        curr = d.next();
-      } else {
-        throw new IllegalStateException("Control flow has no end node");
-      }
-    }
+    return new CfgTraverser() {}.traverseBranch(node);
   }
 
 

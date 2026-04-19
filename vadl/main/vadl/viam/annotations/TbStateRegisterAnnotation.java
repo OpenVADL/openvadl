@@ -84,11 +84,7 @@ public class TbStateRegisterAnnotation extends Annotation<RegisterTensor> {
    * translation block state.
    */
   public boolean covers(Constant.BitSlice slice) {
-    if (wholeRegister()) {
-      return true;
-    }
-    return slice.stream().allMatch(
-        i -> this.slice == null || this.slice.parts().anyMatch(p -> p.msb() >= i && p.lsb() <= i));
+    return this.slice == null || this.slice.covers(slice);
   }
 
   @Nullable
@@ -111,11 +107,15 @@ public class TbStateRegisterAnnotation extends Annotation<RegisterTensor> {
       // set to null if the whole register is covered
       slice = null;
     }
-    if (slice != null && slice.hasOverlappingParts()) {
+    if (slice != null) {
       // merge all overlapping parts and ensure that every bit is only covered once
+
+      // Note: calling slice.hasOverlappingParts() does NOT work here, because it does not
+      // check overlapping parts that are equal
       slice = new Constant.BitSlice(
-          slice.stream().boxed().map(i -> new Constant.BitSlice.Part(i, i)).toArray(
-              Constant.BitSlice.Part[]::new)
+          slice.stream().distinct()
+              .mapToObj(i -> new Constant.BitSlice.Part(i, i))
+              .toArray(Constant.BitSlice.Part[]::new)
       );
     }
   }
