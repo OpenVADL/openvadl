@@ -24,6 +24,11 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
 {
     [(${access.body})] }
 [/]
+[# th:each="access : ${base_clear_cpu_accessors}"]
+[(${access.signature})]
+{
+    [(${access.body})] }
+[/]
 
 /* Alias accessors map unified ISS alias metadata to CPU-side helper access. */
 [# th:each="access : ${alias_cpu_read_accessors}"]
@@ -89,16 +94,13 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
     [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_GET_CLASS(obj);
     CPU[(${gen_arch_upper})]State *env = &cpu->env;
-    int i;
 
     if (vcc->parent_phases.hold) {
         vcc->parent_phases.hold(obj, type);
     }
 
-    [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.index_dims.size} == 0"]
-    env->[(${reg.name_lower})] = 0; [/][/]
-    [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.index_dims.size} > 0"]
-    memset(env->[(${reg.name_lower})], 0, sizeof(env->[(${reg.name_lower})])); [/][/]
+    [# th:each="access : ${base_clear_cpu_accessors}"]
+    [(${access.name})](env); [/]
 
 [(${reset})]
 }
@@ -300,8 +302,6 @@ static const TypeInfo [(${gen_arch_lower})]_cpu_arch_types[] = {
 
 static void [(${gen_arch_lower})]_cpu_register_types(void)
 {
-    int i;
-
     type_register_static_array([(${gen_arch_lower})]_cpu_arch_types, 1);
 }
 
