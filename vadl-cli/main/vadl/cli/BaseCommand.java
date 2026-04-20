@@ -42,6 +42,7 @@ import picocli.CommandLine.Parameters;
 import vadl.ast.Ast;
 import vadl.ast.AstDumper;
 import vadl.ast.ModelRemover;
+import vadl.ast.SpecStatAnalyser;
 import vadl.ast.TypeChecker;
 import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
@@ -60,6 +61,7 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.EditorUtils;
 import vadl.utils.SourceLocation;
+import vadl.utils.VirtualFileSystem;
 import vadl.viam.Specification;
 
 /**
@@ -105,6 +107,12 @@ public abstract class BaseCommand implements Callable<Integer> {
       hidden = true,
       description = "Write pass timings to <output>/timings.csv")
   boolean writeTimingsCsv;
+
+  @Option(names = "--spec-stats",
+      scope = INHERIT,
+      hidden = true,
+      description = "Print the statistics of the specification")
+  boolean showSpecStats;
 
   @Option(names = "--expand-macros",
       scope = INHERIT,
@@ -262,6 +270,7 @@ public abstract class BaseCommand implements Callable<Integer> {
    */
   private Specification parseToVIAM() {
     var ast = parseToAst();
+    printSpecStats(ast, new DiskVirtualFileSystem());
     ast.timingRecorder.passTimings.forEach(
         t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
     ast.timingRecorder.passTimings.clear();
@@ -295,6 +304,23 @@ public abstract class BaseCommand implements Callable<Integer> {
         System.out.printf("\t- %s\n", path);
       }
     }
+  }
+
+  protected void printSpecStats(Ast ast, VirtualFileSystem fileSystem) {
+    if (!showSpecStats) {
+      return;
+    }
+
+    System.out.println("\nSpecification Statistics:");
+    var stats = SpecStatAnalyser.run(ast, fileSystem);
+    System.out.printf("\t- %-30s %6d\n", "Files:", stats.files);
+    System.out.printf("\t- %-30s %6d\n", "Lines of Code:", stats.linesOfCode);
+    System.out.printf("\t- %-30s %6d\n", "Function Definitions:", stats.functionDefinitions);
+    System.out.printf("\t- %-30s %6d\n", "Format Definitions:", stats.formatDefinitions);
+    System.out.printf("\t- %-30s %6d\n", "Instruction Definitions:", stats.instructionDefinition);
+    System.out.printf("\t- %-30s %6d\n", "Total Definitions:", stats.totalDefinitions);
+    System.out.printf("\t- %-30s %6d\n", "Total Statements:", stats.totalStatements);
+    System.out.printf("\t- %-30s %6d\n", "Total Expressions:", stats.totalExpressions);
   }
 
   protected void printTimings() {
