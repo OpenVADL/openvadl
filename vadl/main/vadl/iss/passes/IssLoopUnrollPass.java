@@ -19,10 +19,15 @@ package vadl.iss.passes;
 import java.io.IOException;
 import javax.annotation.CheckForNull;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.safeResourceRead.IssSafeResourceReadAnalysis;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Counter;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.ForallNode;
 import vadl.viam.passes.loopUnrolling.LoopUnroller;
+import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 
 /**
  * Pass to unroll forall statements in the ISS.
@@ -41,9 +46,23 @@ public class IssLoopUnrollPass extends AbstractIssPass {
   @CheckForNull
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    // TODO: Run this only on instructions that can't be handled otherwise
-    allInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());
+    tcgInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());
+
+    var pc = viam.isa().get().pc();
+    helperInstrs(viam)
+        .filter(i -> i.behavior().getNodes(ForallNode.class).findAny().isPresent())
+        .filter(i -> helperLoopMustBeUnrolled(i, pc))
+        .forEach(i -> new LoopUnroller(i.behavior()).run());
 
     return null;
+  }
+
+  private boolean helperLoopMustBeUnrolled(Instruction instruction, @CheckForNull Counter pc) {
+    var unrolled = instruction.copy();
+    new LoopUnroller(unrolled.behavior()).run();
+
+    var scheduledProbe = unrolled.copy();
+    SideEffectSchedulingPass.schedule(scheduledProbe.behavior(), pc);
+    return IssSafeResourceReadAnalysis.requiresReadSave(scheduledProbe);
   }
 }
