@@ -649,7 +649,8 @@ instruction set architecture QDSP6 =
     assembly $name = ($asmprefix, "jumpr", $asmpostfix, " ", AsmR(s5))
   }
 
-  $JumpRegBase( JumpReg         ; op = 0b0010100; ""; ""; true )
+  // Hexagon V60/V61 Programmer's Reference Manual p. 236
+  $JumpRegBase( JumpReg         ; op = 0b0010100; ""; ""; true ) // jumpr Rs
   $JumpRegBase( JumpRegPredPosNT; op = 0b0011010, hintnew = 0b00; AsmPred(u2, false, false); ":nt ";  testpred(u2) )
   $JumpRegBase( JumpRegPredPosT ; op = 0b0011010, hintnew = 0b10; AsmPred(u2, false, false); ":t " ;  testpred(u2) )
   $JumpRegBase( JumpRegPredNegNT; op = 0b0011011, hintnew = 0b00; AsmPred(u2, true , false); ":nt "; !testpred(u2) )
@@ -723,9 +724,10 @@ instruction set architecture QDSP6 =
     assembly $name = ($asm, "call #", decimal(imm))
   }
 
-  $CallImmBase( CallImm       ; CallImmFormat    ; op = 0b1010; ""; true )
-  $CallImmBase( CallImmPredPos; CallImmPredFormat; op = 0b101, neg = 0b0; AsmPred(pred, false, false) ; testpred(pred) )
-  $CallImmBase( CallImmPredNeg; CallImmPredFormat; op = 0b101, neg = 0b1; AsmPred(pred, true , false); !testpred(pred) )
+  // Hexagon V60/V61 Programmer's Reference Manual p. 238
+  $CallImmBase( CallImm       ; CallImmFormat    ; op = 0b1010; ""; true ) // call #r22:2
+  $CallImmBase( CallImmPredPos; CallImmPredFormat; op = 0b11010, neg = 0b0; AsmPred(pred, false, false) ; testpred(pred) ) // if (Pu) call #r15:2
+  $CallImmBase( CallImmPredNeg; CallImmPredFormat; op = 0b11010, neg = 0b1; AsmPred(pred, true , false); !testpred(pred) ) // if (!Pu) call #r15:2
 
   format CmpJumpFormat : Word =
     { iclass [31..28]
