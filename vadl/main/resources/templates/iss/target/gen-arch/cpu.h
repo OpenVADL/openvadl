@@ -90,6 +90,9 @@ int [(${gen_arch_lower})]_cpu_gdb_write_register(CPUState *cpu, uint8_t *buf, in
 [# th:each="access : ${base_accessors}"]
 [(${access.signature})];
 [/]
+[# th:each="access : ${base_clear_cpu_accessors}"]
+[(${access.signature})];
+[/]
 
 // Alias register accessors consumed by unified ISS helper/procedure/exception paths.
 [# th:each="access : ${alias_cpu_read_accessors}"]

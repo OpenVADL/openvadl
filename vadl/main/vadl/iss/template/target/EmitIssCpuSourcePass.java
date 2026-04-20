@@ -21,6 +21,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssResetGen;
 import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.utils.codegen.CCodeBuilder;
@@ -51,6 +52,8 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     vars.put("reg_dump_code", dumpRegsCode(specification));
     vars.put("reset", getResetCode(specification, accessorRegistry));
     vars.put("base_accessors", accessorRegistry.baseAccessors());
+    vars.put("base_clear_cpu_accessors",
+        BaseClearCpuAccessors.renderClearAccessors(specification, configuration()));
     vars.put("alias_cpu_read_accessors",
         AliasCpuAccessors.renderReadAccessors(accessorRegistry, configuration()));
     vars.put("alias_cpu_write_accessors",
@@ -85,8 +88,11 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     var names = target + "_cpu_" + regLower + "_names";
 
     var dims = reg.indexDimensions();
+    var regInfo = reg.expectExtension(RegInfo.class);
 
-    if (dims.isEmpty()) {
+    if (regInfo.execClass() == RegInfo.ExecClass.HELPER_ONLY) {
+      dumpHelperOnlyRegCode(sb, reg, regLower, names, dims.size());
+    } else if (dims.isEmpty()) {
       sb.callStmt("qemu_fprintf", "f",
           "\" " + reg.simpleName() + ":    \" TARGET_FMT_lx \"\\n\"",
           "env->" + regLower);
@@ -97,33 +103,72 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
       if (isWideElement) {
         var bytesPerReg = reg.resultType().bitWidth() / 8;
         sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
-        sb.forLoop("i", flatSize, (_) -> {
+        sb.forLoop("i", flatSize, (indexLoop) -> {
           sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
-          sb.forLoop("int j = " + (bytesPerReg - 1), "j >= 0", "j--", (_) -> {
+          sb.forLoop("int j = " + (bytesPerReg - 1), "j >= 0", "j--", (byteLoop) -> {
             sb.callStmt("qemu_fprintf", "f", "\"%02x\"",
                 "*(p + i * " + bytesPerReg + " + j)");
           });
           sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
         });
       } else {
-        sb.forLoop("i", flatSize, (_) -> {
+        sb.forLoop("i", flatSize, (indexLoop) -> {
           sb.callStmt("qemu_fprintf", "f", "\" %-8s \" TARGET_FMT_lx", names + "[i]",
               "env->" + regLower + "[i]");
-          sb.ifStmt("(i & 3) == 3", (_) ->
+          sb.ifStmt("(i & 3) == 3", (thenBranch) ->
               sb.callStmt("qemu_fprintf", "f", "\"\\n\"")
           );
         });
       }
     } else {
-      sb.forLoop("i", dims.getFirst().size(), (_) -> {
+      sb.forLoop("i", dims.getFirst().size(), (indexLoop) -> {
         sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
         sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
         var innerSizeBytes = reg.resultType(1).bitWidth() / 8;
-        sb.forLoop("int j = " + (innerSizeBytes - 1), "j >= 0", "j--", (_) -> {
+        sb.forLoop("int j = " + (innerSizeBytes - 1), "j >= 0", "j--", (byteLoop) -> {
           sb.callStmt("qemu_fprintf", "f", "\"%02x\"", "*(p + i * " + innerSizeBytes + " + j)");
         });
         sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
       });
     }
+  }
+
+  private void dumpHelperOnlyRegCode(CCodeBuilder sb, RegisterTensor reg, String regLower,
+                                     String names, int indexDimCount) {
+    var bytesPerReg = reg.resultType(indexDimCount).bitWidth() / 8;
+    if (indexDimCount == 0) {
+      sb.callStmt("qemu_fprintf", "f", "\" " + reg.simpleName() + ":    \"");
+      sb.forLoop("int j = " + (bytesPerReg - 1), "j >= 0", "j--", (byteLoop) -> {
+        sb.callStmt("qemu_fprintf", "f", "\"%02x\"",
+            "(uint8_t) cpu_get_" + regLower + "_chunk(env, ((uint64_t) j) * 8, 8)");
+      });
+      sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
+      return;
+    }
+
+    if (indexDimCount == 1) {
+      sb.forLoop("i", reg.indexDimensions().getFirst().size(), (indexLoop) -> {
+        sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
+        sb.forLoop("int j = " + (bytesPerReg - 1), "j >= 0", "j--", (byteLoop) -> {
+          sb.callStmt("qemu_fprintf", "f", "\"%02x\"",
+              "(uint8_t) cpu_get_" + regLower + "_chunk(env, i, ((uint64_t) j) * 8, 8)");
+        });
+        sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
+      });
+      return;
+    }
+
+    sb.appendLn("{").indent();
+    sb.varDecl("uint8_t *", "p", "(uint8_t *) env->" + regLower);
+    var bytesPerFirstIndex = reg.resultType(1).bitWidth() / 8;
+    sb.forLoop("i", reg.indexDimensions().getFirst().size(), (indexLoop) -> {
+      sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
+      sb.forLoop("int j = " + (bytesPerFirstIndex - 1), "j >= 0", "j--", (byteLoop) -> {
+        sb.callStmt("qemu_fprintf", "f", "\"%02x\"",
+            "*(p + i * " + bytesPerFirstIndex + " + j)");
+      });
+      sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
+    });
+    sb.unindent().appendLn("}");
   }
 }

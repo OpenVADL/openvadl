@@ -45,6 +45,8 @@ public class EmitIssCpuHeaderPass extends IssTemplateRenderingPass {
     var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
         IssAccessorRegistry.class);
     vars.put("base_accessors", accessorRegistry.baseAccessors());
+    vars.put("base_clear_cpu_accessors",
+        BaseClearCpuAccessors.renderClearAccessors(specification, configuration()));
     vars.put("alias_cpu_read_accessors",
         AliasCpuAccessors.renderReadAccessors(accessorRegistry, configuration()));
     vars.put("alias_cpu_write_accessors",

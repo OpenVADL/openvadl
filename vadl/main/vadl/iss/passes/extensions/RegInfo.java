@@ -188,6 +188,13 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   /**
+   * Returns whether this register is stored as an array in the CPU state.
+   */
+  public boolean hasCpuStateArrayStorage() {
+    return isGVec() || reg().maxNumberOfAccessIndices() > 0;
+  }
+
+  /**
    * Returns the C type width for register values.
    *
    * @return the bit width of the C type
