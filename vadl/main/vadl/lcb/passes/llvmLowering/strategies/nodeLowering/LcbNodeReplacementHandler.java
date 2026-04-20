@@ -63,9 +63,7 @@ import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
-import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
-import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
@@ -437,19 +435,9 @@ public class LcbNodeReplacementHandler {
     var llvmType = ValueType.from(CppTypeMap.upcast(originalType)).orElseThrow(() ->
         Diagnostic.error("Cannot construct LLVM type", fieldAccessRefNode.location()).build());
 
-    if (printableInstruction instanceof Instruction instruction && instruction.hasAnnotation(
-        FieldAccessAnnotation.class)) {
-      var annotation = instruction.annotation(FieldAccessAnnotation.class);
-      ensureNonNull(annotation,
-          () -> Diagnostic.error("Expected to have FieldAccessAnnotation", instruction.location()));
-
-      llvmType = ValueType.from(CppTypeMap.upcast(annotation.resultBitWidth())).orElseThrow(() ->
-          Diagnostic.error("Cannot construct LLVM type", fieldAccessRefNode.location()).build());
-    } else {
-      llvmType = llvmType.getBitwidth() < this.smallestRegisterClassType.getBitwidth() 
+    llvmType = llvmType.getBitwidth() < this.smallestRegisterClassType.getBitwidth()
         ? this.smallestRegisterClassType
         : llvmType;
-    }
 
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(

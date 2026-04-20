@@ -44,7 +44,6 @@ import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.BitsType;
 import vadl.types.Type;
-import vadl.types.UIntType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
@@ -68,7 +67,6 @@ import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
-import vadl.viam.annotations.FieldAccessAnnotation;
 import vadl.viam.annotations.InstructionUndefinedAnno;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
 
@@ -334,16 +332,6 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) -> {
           var lit = (StringLiteral) annotation.definition.values.getFirst();
           def.addAnnotation(new RelocationSyntaxAnnotation(lit.value));
-        }).build();
-
-    annotationOn(InstructionDefinition.class, "upcast access to", UpcastAnnotation::new)
-        .applyViam((def, annotation, lowering) -> {
-          var field =
-              (Format.FieldAccess) ensurePresent(lowering.fetch((FormatField) annotation.targetDef),
-                  () -> Diagnostic.error("Cannot find field", annotation.targetDef.location()));
-
-          def.addAnnotation(new FieldAccessAnnotation(field,
-              UIntType.unsignedInt(annotation.bitSize.value().intValue())));
         }).build();
   }
 
@@ -1551,56 +1539,5 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
     // Extend annotation's symbol table by the symbol table of the encoding's format.
     definition.symbolTable().extendBy(format.symbolTable());
     super.resolveName(definition, resolver);
-  }
-}
-
-/**
- * Provides the annotation {@code [ upcast access to : <ident>, <ex> ]} on an instruction that
- * treats the field access of {@code <ident>} as being of type {@code <ex>}. {@code <ex>} has to
- * evaluate to a positive integer.
- * This is useful when there is a type mismatch between the field access and an LLVM type.
- */
-class UpcastAnnotation extends Annotation {
-
-  @LazyInit
-  ConstantValue bitSize;
-
-  @LazyInit
-  Definition targetDef;
-
-  public UpcastAnnotation() {
-    super();
-  }
-
-  @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-    verifyValuesCnt(definition, 2);
-    for (var val : definition.values) {
-      val.accept(resolver);
-    }
-  }
-
-  @Override
-  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-
-    var def = definition.values.getFirst();
-    Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
-        .description("A single identifier was expected.")
-    );
-    var target = ((Identifier) def).target();
-    Diagnostic.ensure(target instanceof Definition, () -> error("Invalid annotation value", def)
-        .description("The identifier must reference a definition."));
-    targetDef = ((Definition) target);
-
-    var valueExpr = definition.values.get(1);
-    typeChecker.check(valueExpr);
-    bitSize = typeChecker.constantEvaluator.eval(valueExpr);
-    Diagnostic.ensure(bitSize.value().signum() > 0,
-        () -> error("Bit size of type has to be bigger than zero", valueExpr));
-  }
-
-  @Override
-  public String usageString() {
-    return "[ " + name + " : <ident>, <int> ]";
   }
 }
