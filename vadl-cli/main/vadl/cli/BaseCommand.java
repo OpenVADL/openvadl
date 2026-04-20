@@ -100,6 +100,12 @@ public abstract class BaseCommand implements Callable<Integer> {
       description = "Print timings of the phases of the compiler")
   boolean showTimings;
 
+  @Option(names = "--timings-csv",
+      scope = INHERIT,
+      hidden = true,
+      description = "Write pass timings to <output>/timings.csv")
+  boolean writeTimingsCsv;
+
   @Option(names = "--expand-macros",
       scope = INHERIT,
       description = "Expand all macros and write them to disk.")
@@ -302,6 +308,21 @@ public abstract class BaseCommand implements Callable<Integer> {
     });
   }
 
+  private void writeTimingsCsv() {
+    if (!writeTimingsCsv) {
+      return;
+    }
+    var sb = new StringBuilder("pass,duration_ms\n");
+    timings.forEach(t -> sb.append(t.name()).append(',').append(t.durationMs()).append('\n'));
+    var csvPath = output.resolve("timings.csv");
+    try {
+      Files.writeString(csvPath, sb, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      System.err.printf("Warning: could not write timings CSV to %s: %s%n",
+          csvPath, e.getMessage());
+    }
+  }
+
   // lazy evaluated config, do NOT use this directly.
   // use getConfig() instead.
   @Nullable
@@ -414,6 +435,7 @@ public abstract class BaseCommand implements Callable<Integer> {
     );
 
     printTimings();
+    writeTimingsCsv();
 
     return returnVal;
   }
