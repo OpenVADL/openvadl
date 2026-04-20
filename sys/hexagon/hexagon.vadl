@@ -81,7 +81,9 @@ instruction set architecture QDSP6 =
   alias register UTIMERHI        = C(31)   // Qtimer register (high)
 
   [next]
-  group counter PC : Address
+  // TODO: Reenable group counter
+  // group counter PC : Address
+  program counter PC : Address
 
   // Valid 64-byte pairs:
   // R1:0, R3:2, ... R29:28, R31:30
@@ -126,14 +128,17 @@ instruction set architecture QDSP6 =
       , 2 => P.P2(0) = 1
       , _ => P.P3(0) = 1
       }
-  process Pset ( reg: PredicateIndex, val: Byte ) = {
-    match (reg) with
-      { 0 => P.P0 := val
-      , 1 => P.P1 := val
-      , 2 => P.P2 := val
-      , 3 => P.P3 := val
-      }
-  }
+
+  // TODO: Reenable proces
+  // process Pset ( reg: PredicateIndex, val: Byte ) = {
+  // match (reg) with
+  //     { 0 => P.P0 := val
+  //     , 1 => P.P1 := val
+  //     , 2 => P.P2 := val
+  //     , 3 => P.P3 := val
+  //     }
+  // }
+  function Pset(reg: PredicateIndex, val: Byte) -> Word = 0
   function Pget ( reg: PredicateIndex ) -> Byte =
     match (reg) with
       { 0 => P.P0
@@ -146,12 +151,12 @@ instruction set architecture QDSP6 =
   // The encoded `imm` is actually smaller than Word, usually between 6 and 16 bits
   function extendU(imm: UWord) -> UWord = imm
   function extendS(imm: SWord) -> SWord = imm
-  function extendUExtender(imm: UWord, extender: Bits<26>) -> UWord = (extender, imm as Bits<6>)
-  function extendSExtender(imm: SWord, extender: Bits<26>) -> SWord = (extender, imm as Bits<6>)
+  function extendUExtender(imm: UWord, extender: Bits<26>) -> UWord = (extender, imm as Bits<6>) as UWord
+  function extendSExtender(imm: SWord, extender: Bits<26>) -> SWord = (extender, imm as Bits<6>) as SWord
   // e.g. for `call #r22:2`
   function extendR2(imm: SWord) -> SWord = scaledImmR2(imm)
   // "When constant extenders are used, scaled immediates are not scaled by the processor"
-  function extendR2Extender(imm: SWord, extender: Bits<26>) -> SWord = align32((extender, imm as Bits<6>))
+  function extendR2Extender(imm: SWord, extender: Bits<26>) -> SWord = align32((extender, imm as Bits<6>) as SWord)
 
   function toPValue(v: Bool) -> Byte = if v then 0xff else 0x00
 
@@ -179,6 +184,7 @@ instruction set architecture QDSP6 =
     , c      [13]
     , t5     [12..8]
     , d5     [4..0]
+    , unused [7..5]
     }
 
   // ----------------------------------  operation ALU32/ALU ---------------------------------
@@ -203,6 +209,7 @@ instruction set architecture QDSP6 =
     , parse  [15..14]
     , imm    [23..22, 20..16, 13..5]
     , d5     [4..0]
+    , unused [21]
     , immS   = imm as UInt<16>
     }
 
@@ -217,7 +224,10 @@ instruction set architecture QDSP6 =
     , parse   [47..46]
     , imm     [55..54, 52..48, 45..37]
     , d5      [36..32]
-    , immS    = extendSExtender(imm, immX)
+    // TODO: Reenable and delete the second line
+    // , immS    = extendSExtender(imm as SWord, immX)
+    , immS    = imm as SWord
+    , unused  [53]
     }
 
   model TransferBase ( name: Id, iformat: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, dst: Ex, val: Ex, asm: Ex ) : IsaDefs = {
@@ -233,7 +243,7 @@ instruction set architecture QDSP6 =
   $TransferBase( TransferImmLow ; TransferImmHalfFormat; rs=0b0, majop=0b001, minop=0b1  ; ""              ; ".L"; x5; (R(x5) & 0xFFFF0000) | (immU as UInt<32>);            ("#", decimal(immU)))
   $TransferBase( TransferImmHigh; TransferImmHalfFormat; rs=0b0, majop=0b010, minop=0b1  ; ""              ; ".H"; x5; (R(x5) & 0x0000FFFF) | ((immU as UInt<32>) << 16);    ("#", decimal(immU)))
   $TransferBase( TransferImm    ; TransferImmFormat    ; rs=0b1, majop=0b000             ; ""              ; ""  ; d5; immS;                                                 ("#", decimal(immS)))
-  $TransferBase( TransferImmX   ; TransferImmXFormat   ; rs=0b1, majop=0b000, iclassX=0  ; AsmImmextU(immX); ""  ; d5; immS;                                                 ("#", decimal(immS)))
+  $TransferBase( TransferImmX   ; TransferImmXFormat   ; rs=0b1, majop=0b000, iclassX=0  ; AsmImmextU(immX as Word); ""  ; d5; immS;                                                 ("#", decimal(immS)))
   $TransferBase( TransferReg    ; StandardFormat       ; c=0b0, majop=0b0000, minop=0b011; ""              ; ""  ; d5; R(s5);                                                AsmR(s5))
 
   format AddImmFormat : Word =
@@ -261,6 +271,7 @@ instruction set architecture QDSP6 =
     , s5     [20..16]
     , t5     [12..8]
     , d5     [4..0]
+    , unused [13, 7..5]
     }
 
   model ALUBase ( name: Id, iformat: Id, encs: Encs, op: Id, lhs: Ex, rhs: Ex, asm: Ex ) : IsaDefs = {
@@ -273,11 +284,11 @@ instruction set architecture QDSP6 =
     assembly $name = (AsmR(d5), " = ", AsStr(op), "(", $asm, ")")
   }
 
-  $ALUBase ( AddImm    ; AddImmFormat ; iclass=0b1011                               ; add   ; R(s5); extendS(imm) ; (AsmR(s5),",#",decimal(imm)) )
+  $ALUBase ( AddImm    ; AddImmFormat ; iclass=0b1011                               ; add   ; R(s5); extendS(imm as SWord) ; (AsmR(s5),",#",decimal(imm)) )
   $ALUBase ( AddReg    ; ALURegFormat ; iclass=0b1111, p=0, majop=0b011, minop=0b000; add   ; R(s5); R(t5)        ; (AsmR(s5),"," ,AsmR(t5))     )
   // TODO @nmischkulnig missing builtin VADL::satadd
   // $AddBase ( AddRegSat ; ALURegFormat ; iclass=0b1111, p=0, majop=0b110, minop=0b010; satadd; R(s5)         ; R(t5); (AsmR(s5),",#",AsmR(t5))     )
-  $ALUBase ( SubImm    ; ALUImmFormat ; iclass=0b0111,      majop=0b0110, minop=0b01; sub   ; extendS(imm)  ; R(s5); (decimal(imm),",#",AsmR(s5)))
+  $ALUBase ( SubImm    ; ALUImmFormat ; iclass=0b0111,      majop=0b0110, minop=0b01; sub   ; extendS(imm as SWord)  ; R(s5); (decimal(imm),",#",AsmR(s5)))
   $ALUBase ( SubReg    ; ALURegFormat ; iclass=0b1111, p=0, majop=0b011, minop=0b001; sub   ; R(t5)         ; R(s5); (AsmR(t5),"," ,AsmR(s5))    )
   // TODO @nmischkulnig missing builtin VADL::satsub
   // $ALUBase ( SubRegSat ; ALURegFormat ; iclass=0b1111, p=0, majop=0b110, minop=0b110; satsub; R(t5)         ; R(s5); (AsmR(t5),"#", AsmR(s5))    )
@@ -287,8 +298,8 @@ instruction set architecture QDSP6 =
   $ALUBase( XorReg ; StandardFormat; iclass = 0b1111, majop = 0b0001, minop = 0b011 ; xor ;           R(s5)  ; R(t5)       ; (AsmR(s5),"," ,AsmR(t5)) )
   $ALUBase( AndNReg; StandardFormat; iclass = 0b1111, majop = 0b0001, minop = 0b100 ; and ; VADL::not(R(s5)) ; R(t5)       ; (AsmR(t5),",~",AsmR(s5)) )
   $ALUBase( OrNReg ; StandardFormat; iclass = 0b1111, majop = 0b0001, minop = 0b101 ; or  ; VADL::not(R(s5)) ; R(t5)       ; (AsmR(t5),",~",AsmR(s5)) )
-  $ALUBase( AndImm ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b00  ; and ;           R(s5)  ; extendS(imm); (AsmR(s5),",#",decimal(imm)) )
-  $ALUBase( OrImm  ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b10  ; or  ;           R(s5)  ; extendS(imm); (AsmR(s5),",#",decimal(imm)) )
+  $ALUBase( AndImm ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b00  ; and ;           R(s5)  ; extendS(imm as SWord); (AsmR(s5),",#",decimal(imm)) )
+  $ALUBase( OrImm  ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b10  ; or  ;           R(s5)  ; extendS(imm as SWord); (AsmR(s5),",#",decimal(imm)) )
 
   // TODO: Reenable this annotation
 
@@ -336,6 +347,7 @@ instruction set architecture QDSP6 =
     , s5     [20..16]
     , t5     [12..8]
     , d2     [1..0]
+    , unused [23, 13, 7..5]
     }
 
   model CmpBase ( name: Id, iformat: Id, encs: Encs, cond: Ex, asm: Ex ) : IsaDefs = {
@@ -343,7 +355,8 @@ instruction set architecture QDSP6 =
     // [ operation ALU32_PRED_WRITING ]
     instruction $name : $iformat = {
       let val = toPValue($cond) in {
-        Pset(d2, val)
+        // TODO: Renable this call
+        // Pset(d2, val)
       }
     }
     encoding $name = { op=0b00, $encs }
@@ -353,7 +366,8 @@ instruction set architecture QDSP6 =
   $CmpBase( CmpImmEq  ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b00, neg = 0b0;  (R(s5) = extendS(immS)); ( "cmp.eq(" ,AsmR(s5),",#",decimal(immS),")") )
   $CmpBase( CmpImmNeq ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b00, neg = 0b1; !(R(s5) = extendS(immS)); ("!cmp.eq(" ,AsmR(s5),",#",decimal(immS),")") )
   $CmpBase( CmpImmGt  ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b01, neg = 0b0;  (R(s5) as SInt) > extendS(immS); ( "cmp.gt(" ,AsmR(s5),",#",decimal(immS),")") )
-  $CmpBase( CmpImmLte ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b01, neg = 0b1; !(R(s5) as SInt) > extendS(immS); ("!cmp.gt(" ,AsmR(s5),",#",decimal(immS),")") )
+  // TODO: Reenable this macro call
+  //$CmpBase( CmpImmLte ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b01, neg = 0b1; !(R(s5) as SInt) > extendS(immS); ("!cmp.gt(" ,AsmR(s5),",#",decimal(immS),")") )
   $CmpBase( CmpImmGtu ; CmpImmUFormat; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b100, neg = 0b0; (R(s5) as UInt) > extendU(immU); ( "cmp.gtu(",AsmR(s5),",#",decimal(immU),")") )
   $CmpBase( CmpImmLteu; CmpImmUFormat; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b100, neg = 0b1; (R(s5) as UInt) > extendU(immU); ("!cmp.gtu(",AsmR(s5),",#",decimal(immU),")") )
 
@@ -375,6 +389,7 @@ instruction set architecture QDSP6 =
     , op     [13]
     , imm    [12..5]
     , d5     [4..0]
+    , unused [23]
     , immS   = imm as SWord
     }
   format CombineImmFormat : Word =
@@ -399,6 +414,7 @@ instruction set architecture QDSP6 =
     , s5     [20..16]
     , t5     [12..8]
     , d5     [4..0]
+    , unused [13, 7..5]
     }
 
   model CombineWordBase ( name: Id, iformat: Id, encs: Encs, vhigh: Ex, vlow: Ex, asm: Ex ) : IsaDefs = {
@@ -421,8 +437,8 @@ instruction set architecture QDSP6 =
     assembly $name = (AsmRR(d5), "=combine(", $asm, ")")
   }
 
-  $CombineDoubleBase( CombineDoubleRegImm; CombineRegImmFormat; iclass=0b0111, rs=0, majop=0b011, minop=0b00, op=1; R(rs); extendS(immS); (AsmR(rs),",#",decimal(immS)))
-  $CombineDoubleBase( CombineDoubleImmReg; CombineRegImmFormat; iclass=0b0111, rs=0, majop=0b011, minop=0b01, op=1; extendS(immS); R(rs); ("#",decimal(immS),",",AsmR(rs)))
+  $CombineDoubleBase( CombineDoubleRegImm; CombineRegImmFormat; iclass=0b0111, rs=0, majop=0b011, minop=0b00, op=1; R(rs); extendS(immS); (AsmR(rs as Index),",#",decimal(immS)))
+  $CombineDoubleBase( CombineDoubleImmReg; CombineRegImmFormat; iclass=0b0111, rs=0, majop=0b011, minop=0b01, op=1; extendS(immS); R(rs); ("#",decimal(immS),",",AsmR(rs as Index)))
   $CombineDoubleBase( CombineDoubleImmSS ; CombineImmFormat   ; iclass=0b0111, rs=1, majop=0b100, minop=0b0 ; extendS(immhighS); immlowS; ("#",decimal(immhighS),",#",decimal(immlowS)))
   $CombineDoubleBase( CombineDoubleImmSU ; CombineImmFormat   ; iclass=0b0111, rs=1, majop=0b100, minop=0b1 ; extendS(immhighS); immlowU; ("#",decimal(immhighS),",#",decimal(immlowU)))
 
@@ -459,6 +475,7 @@ instruction set architecture QDSP6 =
     , ps     [7]
     , u2     [6..5]
     , d5     [4..0]
+    , unused [22]
     }
 
   model ALUPredBase ( name: Id, iformat: Id, encs: Encs, op: Id, lhs: Ex, rhs: Ex, asmprefix: Ex, asm: Ex, pred: Ex ) : IsaDefs = {
@@ -471,10 +488,10 @@ instruction set architecture QDSP6 =
     assembly $name = ($asmprefix, AsmR(d5), " = ", AsStr($op), "(", $asm, ")")
   }
 
-  $ALUPredBase( AddImmPredPos; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=0, dn=0; add; R(s5); extendS(immS); AsmPred(u2, false, false); (AsmR(s5),",#",decimal(immS));  testpred(u2))
-  // $ALUPredBase( AddImmPred; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=0, dn=1; add; R(s5); extendS(immS); AsmPred(u2, false, true ); (AsmR(s5),",#",decimal(immS));  testpred(u2))
-  $ALUPredBase( AddImmPredNeg; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=1, dn=0; add; R(s5); extendS(immS); AsmPred(u2, true , false); (AsmR(s5),",#",decimal(immS)); !testpred(u2))
-  // $ALUPredBase( AddImmPred; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=1, dn=1; add; R(s5); extendS(immS); AsmPred(u2, true , true ); (AsmR(s5),",#",decimal(immS)); !testpred(u2))
+  $ALUPredBase( AddImmPredPos; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=0, dn=0; add; R(s5); extendS(immS as SWord); AsmPred(u2, false, false); (AsmR(s5),",#",decimal(immS));  testpred(u2))
+  // $ALUPredBase( AddImmPred; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=0, dn=1; add; R(s5); extendS(immS as SWord); AsmPred(u2, false, true ); (AsmR(s5),",#",decimal(immS));  testpred(u2))
+  $ALUPredBase( AddImmPredNeg; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=1, dn=0; add; R(s5); extendS(immS as SWord); AsmPred(u2, true , false); (AsmR(s5),",#",decimal(immS)); !testpred(u2))
+  // $ALUPredBase( AddImmPred; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=1, dn=1; add; R(s5); extendS(immS as SWord); AsmPred(u2, true , true ); (AsmR(s5),",#",decimal(immS)); !testpred(u2))
 
   $ALUPredBase( AddRegPredPos; ALUPredRegFormat; iclass=0b1111, p=1, majop=0b011, minop=0b00, dn=0, ps=0; add; R(s5); R(t5); AsmPred(u2, false, false); (AsmR(s5),",",AsmR(t5));  testpred(u2))
   $ALUPredBase( AddRegPredNeg; ALUPredRegFormat; iclass=0b1111, p=1, majop=0b011, minop=0b00, dn=0, ps=1; add; R(s5); R(t5); AsmPred(u2, true , false); (AsmR(s5),",",AsmR(t5)); !testpred(u2))
@@ -532,7 +549,8 @@ instruction set architecture QDSP6 =
     , op     [27..16]
     , imm    [12..7]
     , d5     [4..0]
-    , immU   = extendU(imm)
+    , unused [13, 6..5]
+    , immU   = extendU(imm as UWord)
     }
   format AddRegPCXFormat : Double =
     { iclassX [31..28]
@@ -544,19 +562,23 @@ instruction set architecture QDSP6 =
     , op     [59..48]
     , imm    [44..39]
     , d5     [36..32]
-    , immU   = extendUExtender(imm, immX)
+    , unused [45, 38..37]
+    // TODO: Renable this statement and delete the bottom line
+    // , immU   = extendUExtender(imm as UWord, immX)
+    , immU   = imm as UWord
     }
   model AddRegPCBase ( name: Id, iformat: Id, encs: Encs, asmPrefix: Ex, asmimm: Id ) : IsaDefs = {
     // TODO: Reenable this annotation
     // [ operation CR ]
     instruction $name : $iformat = {
-      R(d5) := PC.current + immU
+      // TODO: Reenable this subcall
+      //R(d5) := PC.current + immU
     }
     encoding $name = { iclass = 0b0110, op = 0b101001001001, $encs }
     assembly $name = ($asmPrefix, AsmR(d5), "=add(pc,", $asmimm(immU),")")
   }
   $AddRegPCBase( AddRegPC ; AddRegPCFormat ; /* unneeded */ iclass=0b0110; ""              ; AsmImmU )
-  $AddRegPCBase( AddRegPCX; AddRegPCXFormat; iclassX=0    ; AsmImmextU(immX); AsmImmUX )
+  $AddRegPCBase( AddRegPCX; AddRegPCXFormat; iclassX=0    ; AsmImmextU(immX as Word); AsmImmUX )
 
   format LogicalPredFormat : Word =
     { iclass [31..28]
@@ -567,13 +589,15 @@ instruction set architecture QDSP6 =
     , t2     [9..8]
     , u2     [7..6]
     , d2     [1..0]
+    , unused [19..18, 12..10, 5..2]
     }
   // This instruction may execute on either slot2 or slot3, even though it is a CR-type
   model LogicalPredBase ( name: Id, encs: Encs, val: Ex, asm: Ex ) : IsaDefs = {
     // TODO: Reenable this annotation
     // [ operation CR23 ]
     instruction $name : LogicalPredFormat = {
-      Pset(d2, $val)
+      // TODO: Reeable this call
+      //Pset(d2, $val)
     }
     encoding $name = { iclass = 0b0110, opc = 0b10110, $encs }
     assembly $name = (AsmP(d2), "=", $asm)
@@ -605,6 +629,7 @@ instruction set architecture QDSP6 =
     , u2     [9,8]
     , s5     [20..16]
     , hintnew[12..11]
+    , unused [13, 10, 7..0]
     }
 
   model CallRegBase ( name: Id, encs: Encs, asm: Ex, pred: Ex ) : IsaDefs = {
@@ -650,7 +675,8 @@ instruction set architecture QDSP6 =
     , parse  [15..14]
     , op     [27..25]
     , imm    [24..16,13..1]
-    , immS = scaledImmR2(imm)
+    , unused [0]
+    , immS = scaledImmR2(imm as SWord)
     }
   format JumpImmPredFormat : Word =
     { iclass [31..28]
@@ -659,7 +685,8 @@ instruction set architecture QDSP6 =
     , hintnew[12..11]
     , imm    [23..22,20..16,13,7..1]
     , u2     [9..8]
-    , immS = scaledImmR2(imm)
+    , unused [10, 0]
+    , immS = scaledImmR2(imm as SWord)
     }
 
   model JumpImmBase ( name: Id, iformat: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
@@ -667,7 +694,8 @@ instruction set architecture QDSP6 =
     // [ operation J ]
     instruction $name : $iformat = {
       if $pred then {
-        PC := PC.current + extendR2(imm)
+        // TODO: Reebable once this subcall is implemented
+        // PC := PC.current + extendR2(imm)
       }
     }
     encoding $name = { $encs }
@@ -693,6 +721,7 @@ instruction set architecture QDSP6 =
     , pred   [9,8]
     , neg    [21]
     , imm    [23,22,20..16,13,7..1]
+    , unused [12, 10, 0]
     }
 
   model CallImmBase ( name: Id, iformat: Id, encs: Encs, asm: Ex, pred: Ex ) : IsaDefs = {
@@ -701,7 +730,8 @@ instruction set architecture QDSP6 =
     instruction $name : $iformat = {
       if $pred then {
         LR := PC.next
-        PC := PC.current + extendR2(imm)
+        // TODO: Reenable once this subcall is implemented
+        //PC := PC.current + extendR2(imm)
       }
     }
     encoding $name = { iclass = 0b0101, $encs }
@@ -721,7 +751,8 @@ instruction set architecture QDSP6 =
     , hint   [13]
     , s4     [19..16]
     , disp   [21..20,7..1]
-    , dispS  = scaledImmR2(disp)
+    , unused [12..10, 0]
+    , dispS  = scaledImmR2(disp as SWord)
     // Available registers are R0-R7 and R16-R23
     , s5     = if s4 <= 7 then (s4 as Index) else ((s4 as Index) + 8)
     , d2     = d1 as PredicateIndex // for the constraints
@@ -736,8 +767,9 @@ instruction set architecture QDSP6 =
     , s4     [19..16]
     , imm    [12..8]
     , disp   [21..20,7..1]
+    , unused [0]
     , immU   = imm as UWord
-    , dispS  = scaledImmR2(disp)
+    , dispS  = scaledImmR2(disp as SWord)
     // Available registers are R0-R7 and R16-R23
     , s5     = if s4 <= 7 then (s4 as Index) else ((s4 as Index) + 8)
     , d2     = d1 as PredicateIndex // for the constraints
@@ -752,7 +784,8 @@ instruction set architecture QDSP6 =
     , s4     [19..16]
     , t4     [11..8]
     , disp   [21..20,7..1]
-    , dispS  = scaledImmR2(disp)
+    , unused [0]
+    , dispS  = scaledImmR2(disp as SWord)
     // Available registers are R0-R7 and R16-R23
     , s5     = if s4 <= 7 then (s4 as Index) else ((s4 as Index) + 8)
     , t5     = if t4 <= 7 then (t4 as Index) else ((t4 as Index) + 8)
@@ -765,9 +798,11 @@ instruction set architecture QDSP6 =
     instruction $name : $iformat = {
       let pred   = $predEx in
       let pvalue = toPValue($predEx) in {
-        Pset($p, pvalue)
+        // TODO: Reenable this call
+        // Pset($p, pvalue)
         if pred then {
-          PC := PC.current + extendR2(disp)
+          // TODO: Reenable subcall
+          // PC := PC.current + extendR2(disp)
         }
       }
     }
@@ -786,7 +821,7 @@ instruction set architecture QDSP6 =
   }
 
   $CmpJump( CmpJumpEqMinus1; CmpJumpFormat   ; op=0b001100;  R(s5)          =  -1            ; ("cmp.eq(",AsmR(s5),"#-1)") )
-  $CmpJump( CmpJumpGtMinus1; CmpJumpFormat   ; op=0b001101; (R(s5) as SInt) > (-1 as SInt)   ; ("cmp.gt(",AsmR(s5),"#-1)") )
+  $CmpJump( CmpJumpGtMinus1; CmpJumpFormat   ; op=0b001101; (R(s5) as SInt) > (-1 as SWord)  ; ("cmp.gt(",AsmR(s5),"#-1)") )
   $CmpJump( CmpJumpTstBit0 ; CmpJumpFormat   ; op=0b001111; (R(s5) & 0b1)   = 1              ; ("tstbit(",AsmR(s5),"#0)") )
   $CmpJump( CmpJumpEqImm   ; CmpJumpImmFormat; op=0b0000  ;  R(s5)          = immU           ; ("cmp.eq(",AsmR(s5),"#",decimal(immU),")") )
   $CmpJump( CmpJumpGtImm   ; CmpJumpImmFormat; op=0b0001  ; (R(s5)(15..0) as UWord) > immU   ; ("cmp.gt(",AsmR(s5),"#",decimal(immU),")") )
@@ -832,7 +867,7 @@ instruction set architecture QDSP6 =
     // [ operation LD ]
     instruction $name : $iformat = {
       if $pred then {
-        R(d5) := MEM<$size>($addr) as $type
+        R(d5) := MEM<$size>($addr) as $type as Word
       }
     }
     encoding $name = { $encs }
@@ -854,14 +889,14 @@ instruction set architecture QDSP6 =
   }
 
   model LoadBase ( base: LoadBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
-    $base( AsId( $name, AsStr($type), "GPRel" )        ; LoadFormat          ; iclass=0b0100, gp=1, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; GP + scaledImmU(immGPRel, $scale)    ; AsId(S, AsStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
-    $base( AsId( $name, AsStr($type), "RegRel" )       ; LoadFormat          ; iclass=0b1001, gp=0, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); AsId(S, AsStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
-    $base( AsId( $name, AsStr($type), "PredPosRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=0, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); AsId(S, AsStr($type)); AsmPred(t2, false, false); ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ;  testpred(t2) )
-    $base( AsId( $name, AsStr($type), "PredNegRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=1, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); AsId(S, AsStr($type)); AsmPred(t2, true , false); ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; !testpred(t2) )
+    $base( AsId( $name, AsStr($type), "GPRel" )        ; LoadFormat          ; iclass=0b0100, gp=1, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; GP + scaledImmU(immGPRel as SWord, $scale)    ; AsId(S, AsStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
+    $base( AsId( $name, AsStr($type), "RegRel" )       ; LoadFormat          ; iclass=0b1001, gp=0, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel as SWord, $scale); AsId(S, AsStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel as SInt<11>)) ; true )
+    $base( AsId( $name, AsStr($type), "PredPosRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=0, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel as SWord, $scale); AsId(S, AsStr($type)); AsmPred(t2, false, false); ($asmfunc, AsmAddrRegRel(s5, immRegRel as SInt<11>)) ;  testpred(t2) )
+    $base( AsId( $name, AsStr($type), "PredNegRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=1, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel as SWord, $scale); AsId(S, AsStr($type)); AsmPred(t2, true , false); ($asmfunc, AsmAddrRegRel(s5, immRegRel as SInt<11>)) ; !testpred(t2) )
   }
   model LoadBaseU (base: LoadBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
-    $base( AsId( $name, "U", AsStr($type), "GPRel" ) ; LoadFormat; iclass=0b0100, gp=1, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; GP + scaledImmU(immGPRel, $scale)    ; AsId(U, AsStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
-    $base( AsId( $name, "U", AsStr($type), "RegRel" ); LoadFormat; iclass=0b1001, gp=0, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; R(s5) + scaledImmS(immRegRel, $scale); AsId(U, AsStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
+    $base( AsId( $name, "U", AsStr($type), "GPRel" ) ; LoadFormat; iclass=0b0100, gp=1, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; GP + scaledImmU(immGPRel as SWord, $scale)    ; AsId(U, AsStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
+    $base( AsId( $name, "U", AsStr($type), "RegRel" ); LoadFormat; iclass=0b1001, gp=0, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; R(s5) + scaledImmS(immRegRel as SWord, $scale); AsId(U, AsStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
   }
 
   $LoadBase ( LoadSizeBase;   Load ; Byte   ; 1 ; 0; "memb"  )
@@ -883,6 +918,7 @@ instruction set architecture QDSP6 =
     , hintnew  [12..11]
     , op1      [10]
     , pred     [9..8]
+    , unused   [7..5]
     }
 
   // TODO: Reenable this annotation
@@ -964,12 +1000,12 @@ instruction set architecture QDSP6 =
   }
 
   model StoreBase   ( base: StoreBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
-    $base( AsId( $name, AsStr($type), "GPRel" )      ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 0; $size; GP + scaledImmU(immGPRel, $scale)    ; $type; 0        ; ($asmfunc, AsmAddrGPRel(immGPRel))       ; "")
-    $base( AsId( $name, AsStr($type), "RegRel" )     ; iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 0; $size; R(s5) + scaledImmS(immRegRel, $scale); $type; 0        ; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; "")
+    $base( AsId( $name, AsStr($type), "GPRel" )      ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 0; $size; GP + scaledImmU(immGPRel as SWord, $scale)    ; $type; 0        ; ($asmfunc, AsmAddrGPRel(immGPRel))       ; "")
+    $base( AsId( $name, AsStr($type), "RegRel" )     ; iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 0; $size; R(s5) + scaledImmS(immRegRel as SWord, $scale); $type; 0        ; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; "")
   }
   model StoreBaseHigh( base: StoreBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
-    $base( AsId( $name, "H", AsStr($type), "GPRel" ) ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 1; $size; GP + scaledImmU(immGPRel, $scale)    ; $type; $size * 8; ($asmfunc, AsmAddrGPRel(immGPRel))       ; ".H")
-    $base( AsId( $name, "H", AsStr($type), "RegRel" ); iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 1; $size; R(s5) + scaledImmS(immRegRel, $scale); $type; $size * 8; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; ".H")
+    $base( AsId( $name, "H", AsStr($type), "GPRel" ) ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 1; $size; GP + scaledImmU(immGPRel as SWord, $scale)    ; $type; $size * 8; ($asmfunc, AsmAddrGPRel(immGPRel))       ; ".H")
+    $base( AsId( $name, "H", AsStr($type), "RegRel" ); iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 1; $size; R(s5) + scaledImmS(immRegRel as SWord, $scale); $type; $size * 8; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; ".H")
   }
 
   $StoreBase    ( StoreSizeBase ;  Store ; Byte ;   1 ; 0; "memb"  )
@@ -986,8 +1022,9 @@ instruction set architecture QDSP6 =
     , s5        [20..16]
     , immOffset [12..7]
     , imm       [13,6..0]
+    , unused    [24..23]
     , immOffsetU= immOffset as UInt
-    , immS      = extendS(imm)
+    , immS      = extendS(imm as SWord)
     // , d2       = imm(6..5) as PredicateIndex
     // , immSPred = (imm(6),imm(4..0)) as PredicateIndex
     }
@@ -1003,8 +1040,12 @@ instruction set architecture QDSP6 =
     , s5        [52..48]
     , immOffset [44..39]
     , imm       [45,38..32]
+    , unused    [56..55]
     , immOffsetU= immOffset as UInt
-    , immS      = extendSExtender(imm, immX)
+    // TODO: Reenable this line and delete the bottom one
+    //, immS      = extendSExtender(imm as SWord, immX)
+    , immS      = imm as SWord
+
     // , d2       = imm(6..5) as PredicateIndex
     // , immSPred = (imm(6),imm(4..0)) as PredicateIndex
     }
@@ -1013,18 +1054,18 @@ instruction set architecture QDSP6 =
     // TODO: Reenable this annotation
     // [ operation ST ]
     instruction $name : $iformat = {
-      if $pred then MEM<$size>( R(s5) + scaledImmU(immOffsetU, $scale) ) := $imm
+      if $pred then MEM<$size>( R(s5) + scaledImmU(immOffsetU as SWord, $scale) ) := $imm
     }
     encoding $name = { iclass = 0b0011, type=MemoryAccessType::$type, $encs }
-    assembly $name = ($asmprefix,"(",AsmR(s5),"+#",decimal(scaledImmU(immOffsetU, $scale)),")", "=#", decimal($imm))
+    assembly $name = ($asmprefix,"(",AsmR(s5),"+#",decimal(scaledImmU(immOffsetU as SWord, $scale)),")", "=#", decimal($imm))
   }
 
   $StoreImmSizeBase( StoreImmByte ; StoreImmFormat ; Byte;            amode = 0b110 ; 1 ; 0; immS as SByte; "memb" ; true )
   $StoreImmSizeBase( StoreImmHalf ; StoreImmFormat ; Half;            amode = 0b110 ; 2 ; 1; immS as SHalf; "memh" ; true )
   $StoreImmSizeBase( StoreImmWord ; StoreImmFormat ; Word;            amode = 0b110 ; 4 ; 2; immS as SWord; "memw" ; true )
-  $StoreImmSizeBase( StoreImmByteX; StoreImmXFormat; Byte; iclassX=0, amode = 0b110 ; 1 ; 0; immS as SByte; (AsmImmextU(immX), "memb") ; true )
-  $StoreImmSizeBase( StoreImmHalfX; StoreImmXFormat; Half; iclassX=0, amode = 0b110 ; 2 ; 1; immS as SHalf; (AsmImmextU(immX), "memh") ; true )
-  $StoreImmSizeBase( StoreImmWordX; StoreImmXFormat; Word; iclassX=0, amode = 0b110 ; 4 ; 2; immS as SWord; (AsmImmextU(immX), "memw") ; true )
+  $StoreImmSizeBase( StoreImmByteX; StoreImmXFormat; Byte; iclassX=0, amode = 0b110 ; 1 ; 0; immS as SByte; (AsmImmextU(immX as Word), "memb") ; true )
+  $StoreImmSizeBase( StoreImmHalfX; StoreImmXFormat; Half; iclassX=0, amode = 0b110 ; 2 ; 1; immS as SHalf; (AsmImmextU(immX as Word), "memh") ; true )
+  $StoreImmSizeBase( StoreImmWordX; StoreImmXFormat; Word; iclassX=0, amode = 0b110 ; 4 ; 2; immS as SWord; (AsmImmextU(immX as Word), "memw") ; true )
 
 
   format AllocFrameFormat : Word =
@@ -1035,7 +1076,7 @@ instruction set architecture QDSP6 =
     , unsigned [21]
     , opc      [20..16,13..11]
     , imm      [10..0]
-    , immU = (imm as UInt<11>) * (8 as UInt<4>)
+    , immU = (imm as UInt<11>) * (8 as UInt<11>)
     }
 
   // TODO: Reenable this annotation
@@ -1060,6 +1101,7 @@ instruction set architecture QDSP6 =
     { iclass [31..28]
     , opc    [27..21,7..5]
     , parse  [15..14]
+    , unused [20..16, 13..8, 4..0]
     }
   // TODO: Reenable this annotation
   // [ operation SYSTEMSolo ]
@@ -1079,6 +1121,7 @@ instruction set architecture QDSP6 =
     , x5     [20..16]
     , shift  [12..8]
     , majop  [4,2..1]
+    , unused [0]
     , immU   = imm as UWord
     , shiftU = shift as UInt
     }
@@ -1119,6 +1162,7 @@ instruction set architecture QDSP6 =
     , s5     [20..16]
     , t5     [12..8]
     , d5     [4..0]
+    , unused [5, 13, 21]
     }
 
   model BitOp( name: Id, iformat: Id, encs: Encs, val: Ex, asmfunc: Ex, asmRhs: Ex ) : IsaDefs = {
@@ -1149,6 +1193,7 @@ instruction set architecture QDSP6 =
     , majop  [23..21]
     , s5     [20..16]
     , d2     [1..0]
+    , unused [13..2]
     }
   format TransferRPFormat : Word =
     { iclass [31..28]
@@ -1157,13 +1202,15 @@ instruction set architecture QDSP6 =
     , majop  [22]
     , s2     [17..16]
     , d5     [4..0]
+    , unused [23, 21..18, 13..5]
     }
 
   // TODO: Reenable this annotation
 
   // [ operation XTYPE ]
   instruction TransferPR : TransferPRFormat = {
-    Pset(d2, R(s5) as Byte)
+    // TODO: Reenable
+    // Pset(d2, R(s5) as Byte)
   }
   encoding TransferPR = { iclass=0b1000, regtype=0b0101, majop=0b010 }
   assembly TransferPR = (AsmP(d2), " = ", AsmR(s5))
@@ -1172,7 +1219,7 @@ instruction set architecture QDSP6 =
 
   // [ operation XTYPE ]
   instruction TransferRP : TransferRPFormat = {
-    R(d5) := Pget(s2)
+    R(d5) := Pget(s2) as Word
   }
   encoding TransferRP = { iclass=0b1000, regtype=0b1001, majop=0b1 }
   assembly TransferRP = (AsmR(d5), " = ", AsmP(s2))
@@ -1186,6 +1233,7 @@ instruction set architecture QDSP6 =
     , op     [21]
     , s5     [20..16]
     , t5     [12..8]
+    , unused [7, 13]
     , x2     [6..5]
     , d5     [4..0]
     , d2     = x2  // for the constraints
@@ -1201,10 +1249,11 @@ instruction set architecture QDSP6 =
       let c = (P(x2) as Bits<1>) as Word in
       // This just really just VADL::adds(a, b, c)
       let temp, tempstatus = VADL::adds(a, if $sub then VADL::not(b) else b) in
-      let result, status = VADL::adds(temp, c) in {
+      let result, status = VADL::adds(temp, c as Double) in {
         R(d5  ) := result(31..0)
         R(d5+1) := result(63..32)
-        Pset(x2, tempstatus.carry | status.carry)
+        // TODO: Reenable this statement
+        //Pset(x2, (tempstatus.carry | status.carry) as Byte)
       }
     }
     encoding $name = { iclass=0b1100, regtype=0b0010, majop=0b11, op = match : Lit ($sub = true => 1; _ => 0 ) }
@@ -1407,24 +1456,27 @@ instruction set architecture QDSP6 =
   //   0. In memory, instructions in a packet must appear in strictly decreasing slot order.
   //   Additionally, if an instruction can go in a higher-numbered slot, and that slot is empty,
   //   then it must be moved into the higher-numbered slot.
-  // TODO: Reenable this annotation
+  // TODO: Reenable this annotation and group definition
   // [ assert :  VLIW.length <= 4 ]
-  group VLIW = (
-    (
-      ( XTYPE<0..1> | ALU32<0..1> | J<0..1> | CR<0..1> ).
-      ( XTYPE<0..1> | ALU32<0..1> | J<0..1> | JR<0..1> | CR23<0..1> ).
-      ( LD<0..1> | ST<0..1> | ALU32<0..1> ).
-      ( LD<0..1> | ST<0..1> | ALU32<0..1> /* | MEMOP<0..1> | NV<0..1> | SYSTEM<0..1> */)
-    )
-    | SYSTEMSolo
-  )
+  // group VLIW = (
+  //   (
+  //     ( XTYPE<0..1> | ALU32<0..1> | J<0..1> | CR<0..1> ).
+  //     ( XTYPE<0..1> | ALU32<0..1> | J<0..1> | JR<0..1> | CR23<0..1> ).
+  //     ( LD<0..1> | ST<0..1> | ALU32<0..1> ).
+  //     ( LD<0..1> | ST<0..1> | ALU32<0..1> /* | MEMOP<0..1> | NV<0..1> | SYSTEM<0..1> */)
+  //   )
+  //   | SYSTEMSolo
+  // )
 }
 
 
-application binary interface ABI for QDSP6 =
-{
-}
+// TODO: Reenable this definition
+// application binary interface ABI for QDSP6 =
+// {
+// }
 
+// TODO: Reenable this definition
+/*
 processor CPU implements QDSP6 with ABI =
 {
 
@@ -1508,3 +1560,4 @@ processor CPU implements QDSP6 with ABI =
 
   }
 }
+*/
