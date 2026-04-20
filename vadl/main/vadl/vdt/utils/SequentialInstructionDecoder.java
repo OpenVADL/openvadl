@@ -50,7 +50,17 @@ public class SequentialInstructionDecoder {
 
     for (DecodeEntry entry : insns) {
 
-      if (!entry.pattern().test(insn)) {
+      BitPattern p = entry.pattern();
+
+      if (p.width() < insn.width()) {
+        p = p.rightPad(insn.width() - p.width());
+      } else if (p.width() > insn.width()) {
+        p = p.rightTrunc(insn.width());
+      }
+
+      assert p.width() == insn.width();
+
+      if (!p.test(insn)) {
         continue;
       }
 

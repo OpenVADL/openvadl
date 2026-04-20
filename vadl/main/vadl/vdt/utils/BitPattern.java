@@ -165,6 +165,40 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
   }
 
   /**
+   * Truncates the pattern by removing higher order bits.
+   *
+   * @param width the width to truncate to
+   * @return A bit pattern of the specified width
+   */
+  public BitPattern leftTrunc(int width) {
+    return BitPattern.fromBitVector(
+        BitVector.fromValue(toMaskVector().toValue(), width),
+        BitVector.fromValue(toBitVector().toValue(), width)
+    );
+  }
+
+  /**
+   * Truncates the pattern by removing lower order bits.
+   *
+   * @param width the width to truncate to
+   * @return A bit pattern of the specified width
+   */
+  public BitPattern rightTrunc(int width) {
+    if (width() < width) {
+      throw new IllegalArgumentException("Target width must be leq than the actual width");
+    }
+
+    final var mask = toMaskVector();
+    final var value = toBitVector();
+
+    final var truncateWidth = width() - width;
+    return BitPattern.fromBitVector(
+        BitVector.fromValue(mask.toValue().shiftRight(truncateWidth), width),
+        BitVector.fromValue(value.toValue().shiftRight(truncateWidth), width)
+    );
+  }
+
+  /**
    * Convert a bit pattern to a bit vector. This is a helper method to convert the bit pattern with
    * potentially ignored (don't care) bits to a bit vector. The ignored bits in the pattern are
    * set to 0 in the resulting bit vector.
