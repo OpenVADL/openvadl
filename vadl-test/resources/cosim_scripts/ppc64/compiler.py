@@ -23,10 +23,10 @@ def compile(id: str, asm: str, debug: bool = True) -> dict:
     }
 
     if debug:
-        objdump = _tmp_file(id, f"elf-{id}.dump")
-        objdump(OBJDUMP, elf, objdump)
+        objdump_file = _tmp_file(id, f"elf-{id}.dump")
+        objdump(OBJDUMP, elf, objdump_file)
         result.update({
-            "objdump": objdump
+            "objdump": objdump_file
         })
 
     return result

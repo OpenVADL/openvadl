@@ -27,6 +27,7 @@ static TCGv cpu_[(${reg.name_lower})][(${reg.c_array_def})];
    the next instruction PC.
  */
 #define DISAS_CHAIN  DISAS_TARGET_0
+#define DISAS_EXIT   DISAS_TARGET_1
 
 typedef struct DisasContext {
   DisasContextBase base;
@@ -35,10 +36,16 @@ typedef struct DisasContext {
 
   target_ulong pc_curr;
 
-  [# th:each="reg, iterState : ${register_tensors}"] // constraint value constants
-  [# th:each="constraint, iterState : ${reg.constraints}"]
+  // constraint value constants
+  [# th:each="reg, iterState : ${register_tensors}"][# th:each="constraint, iterState : ${reg.constraints}"]
   TCGv [(${constraint.tcg_name})];
   [/][/]
+
+  struct {
+    [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.is_tb_state}"]
+    uint[(${reg.cpu_state_type_width})]_t [(${reg.name_lower})];
+    [/][/]
+  } tb_state;
 
 } DisasContext;
 
@@ -145,9 +152,9 @@ static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
 }
 
 static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
-	uint32_t leftRight = TARGET_LONG_BITS - bitWidth;
-	tcg_gen_shli_tl(dest, arg, leftRight);
-	tcg_gen_sari_tl(dest, dest, leftRight);
+    uint32_t leftRight = TARGET_LONG_BITS - bitWidth;
+    tcg_gen_shli_tl(dest, arg, leftRight);
+    tcg_gen_sari_tl(dest, dest, leftRight);
 }
 
 /*
@@ -180,9 +187,9 @@ static void translate(DisasContext *ctx)
     uint8_t len = decode_insn(ctx, insn);
 
     if (len) {
-      // Increment program counter
-      ctx->base.pc_next += len;
-      return;
+        // Increment program counter
+        ctx->base.pc_next += len;
+        return;
     }
 
     error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
@@ -203,10 +210,18 @@ static void [(${gen_arch_lower})]_tr_init_disas_context(DisasContextBase *db, CP
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
 
     ctx->env = env;
-    [# th:each="reg, iterState : ${register_tensors}"]
-    [# th:each="constraint, iterState : ${reg.constraints}"]
+    [# th:each="reg, iterState : ${register_tensors}"][# th:each="constraint, iterState : ${reg.constraints}"]
     ctx->[(${constraint.tcg_name})] = tcg_constant_i[(${reg.value_width})]([(${constraint.value})]);
     [/][/]
+
+    uint32_t flags = ctx->base.tb->flags;
+    uint64_t off = 0;
+    [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.is_tb_state}"]
+    ctx->tb_state.[(${reg.name_lower})] = 0;
+    [# th:each="part : ${reg.tb_state_parts}"]
+    ctx->tb_state.[(${reg.name_lower})] |= ((flags >> off) & [(${part.mask})]) << [(${part.lsb})];
+    off += [(${part.width})];
+    [/][/][/]
 }
 
 static void [(${gen_arch_lower})]_tr_tb_start(DisasContextBase *db, CPUState *cpu)
@@ -237,17 +252,22 @@ static void [(${gen_arch_lower})]_tr_tb_stop(DisasContextBase *db, CPUState *cpu
     DisasContext *ctx = container_of(db, DisasContext, base);
 
     switch (db->is_jmp) {
-    		case DISAS_TOO_MANY:
-    		case DISAS_CHAIN:
-    			// jump to subsequent instruction
-    			gen_goto_tb(ctx, 0, db->pc_next);
-    			break;
-    		case DISAS_NORETURN:
-    			// default behavior
-    			break;
-    		default:
-    			g_assert_not_reached();
-    	}
+        case DISAS_TOO_MANY:
+        case DISAS_CHAIN:
+            // jump to subsequent instruction
+            gen_goto_tb(ctx, 0, db->pc_next);
+            break;
+        case DISAS_EXIT:
+            // force tb exit
+            gen_update_pc(ctx, db->pc_next);
+            tcg_gen_exit_tb(NULL, 0);
+            break;
+        case DISAS_NORETURN:
+            // default behavior
+            break;
+        default:
+            g_assert_not_reached();
+    }
 }
 
 static const TranslatorOps [(${gen_arch_lower})]_tr_ops = {

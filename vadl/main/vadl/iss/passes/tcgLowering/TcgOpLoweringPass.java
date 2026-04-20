@@ -40,6 +40,7 @@ import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
@@ -85,6 +86,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
+import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Specification;
@@ -92,6 +94,7 @@ import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -112,6 +115,7 @@ import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -256,16 +260,24 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Set {@code ctx->is_jmp} to {@code DISAS_CHAIN} if there are InstrExits in the instruction
+   * Set {@code ctx->is_jmp} to {@code DISAS_CHAIN} if there are InstrExits or
+   * WriteRegTensorNodes (to regs that are part of the TB-state) in the instruction
    * that are not in the default branch.
    * This allows chaining of instructions.
+   * Set {@code ctx->is_jmp} to {@code DISAS_NORETURN} if any exits or writes
+   * are on the default branch.
    */
   private void setJmp(Graph graph) {
     var instrEnd = getSingleNode(graph, InstrEndNode.class);
 
     var containsJmps = graph.getNodes(InstrExitNode.class).findAny().isPresent();
-    if (!containsJmps) {
+
+    var containsWrites = graph.getNodes(WriteRegTensorNode.class).anyMatch(
+        WriteRegTensorNode::writeAffectsTbState);
+
+    if (!containsJmps && !containsWrites) {
       // if there are no jumps, we don't have to chain any instructions
+      // if there are no writes to the tb state, we don't have to end the tb
       return;
     }
 
@@ -275,15 +287,31 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var unconditionalJump = instrEnd.sideEffects().stream()
         .anyMatch(s -> s.usages().anyMatch(u -> u instanceof InstrExitNode));
 
-    if (!unconditionalJump) {
-      // if there is no unconditional jump, we must chain the instruction with the next one
-      // by setting the jmp type to chain.
+    if (unconditionalJump) {
+      // if the jump is unconditional we must exit the tb loop
+      // goto_tb or tb lookup is inserted after PcChange
+      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
+    } else if (containsWrites) {
+      // if any writes to the tb state exist, we cannot chain, because they may write
+      // data that is not statically known at TCG gen time (eg writes from registers)
+
+      // if there is no jump beforehand, we must exit the tb
+      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.EXIT));
+    } else {
+      // if there is no unconditional jump or non-static write, we must chain
+      // the instruction with the next one by setting the jmp type to chain.
       // the tcg_stop_tb method will take care about the instruction chaining.
       instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.CHAIN));
-    } else {
-      // if the jump is unconditional we must exit the tb loop anyway
-      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
     }
+
+    // TODO: the behaviour above is currently very conservative. If a write writes data
+    //  known at tcg gen time, then we can use CHAIN instead of NORETURN.
+
+    // TODO: what if a write/jump is conditional, but the condition is statically evaluated
+    //  ie at TCG generation time? -> in that case the jmp/chain behaviour does not have
+    //  to be set at the end for all paths, but can be set per branch. Eg if a raise is only
+    //  executed if a tb-state reg bit is set (eg a privilege mode bit), then the decision
+    //  whether or not to raise is made at gen time (if raise, then end TB; if not, DISAS_NEXT)
   }
 
   /**
@@ -364,6 +392,18 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
+   * Returns whether any writes to registers that are part of the TB state are side
+   * effects of the branch and write non-statically known data (e.g. data that was
+   * previously read from a register).
+   */
+  private boolean hasNonStaticTBStateRegWrites(AbstractEndNode node) {
+    return node.sideEffects().stream()
+        .anyMatch(s -> s instanceof WriteRegTensorNode w
+            && w.writeAffectsTbState()
+            && GraphUtils.hasDependencies(w, n -> n instanceof ReadResourceNode));
+  }
+
+  /**
    * Replaces the current scheduled node with the given TCG nodes.
    * If multiple replacements are provided, all but the last are added before the current node,
    * and the last replaces the current node.
@@ -400,8 +440,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @param node The instruction exit node to handle.
    */
   void handle(InstrExitNode.PcChange node) {
-    if (isTcg(node.cause())) {
-      // if the pc is not statically defined, we must jump to the current PC
+    if (isTcg(node.cause()) || hasNonStaticTBStateRegWrites(GraphUtils.branchEnd(node))) {
+      // if the pc or any preceding writes to TB state regs are not statically defined,
+      // we must do a TCG lookup and jump to the current PC
       node.replaceAndLink(
           new TcgLookupAndGotoPtr()
       );
@@ -691,6 +732,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(IssStaticPcRegNode node) {
+    // nothing to do
+  }
+
+  @Handler
+  void handle(IssStaticReadRegNode node) {
     // nothing to do
   }
 

@@ -40,6 +40,7 @@ import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -150,6 +151,36 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   /**
+   * Returns whether the register is saved in the translation block state.
+   */
+  public boolean isTbState() {
+    return reg().hasAnnotation(TbStateRegisterAnnotation.class);
+  }
+
+  /**
+   * Returns the bit ranges of the register that are saved in the translation block state.
+   */
+  public List<Map<String, String>> tbStateParts() {
+    if (!isTbState()) {
+      return List.of();
+    }
+    var slice = reg().expectAnnotation(TbStateRegisterAnnotation.class).slice();
+    if (slice == null) {
+      return List.of(slicePart(0, reg().totalWidth() - 1));
+    }
+    return slice.parts().map(part -> slicePart(part.lsb(), part.msb())).toList();
+  }
+
+  private Map<String, String> slicePart(int lsb, int msb) {
+    int width = msb - lsb + 1;
+    return Map.of(
+        "lsb", Integer.toString(lsb),
+        "width", Integer.toString(width),
+        "mask", "0x" + Long.toHexString(~0L >>> (64 - width)) + "ULL"
+    );
+  }
+
+  /**
    * Returns the execution class used for backend selection.
    */
   public ExecClass execClass() {
@@ -222,6 +253,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("names", names());
       renderObj.put("is_tcg", isTcgScalar());
       renderObj.put("is_gvec", isGVec());
+      renderObj.put("is_tb_state", isTbState());
+      renderObj.put("tb_state_parts", tbStateParts());
       renderObj.put("exec_class", execClass().name());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);

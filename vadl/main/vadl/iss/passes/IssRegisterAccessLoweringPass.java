@@ -28,6 +28,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.IssAliasAccessorDescriptors;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -43,6 +44,7 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -93,10 +95,62 @@ public class IssRegisterAccessLoweringPass extends AbstractIssPass {
 
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
+    tcgInstrs(viam).forEach(i ->
+        new IssStaticRegisterAccessConverter(i.behavior()).run());
     ViamUtils.findAllBehaviors(viam).forEach(behavior ->
         new IssRegisterAccessLowering(behavior).run());
     return null;
   }
+}
+
+class IssStaticRegisterAccessConverter {
+
+  Graph behaviour;
+
+  public IssStaticRegisterAccessConverter(Graph behaviour) {
+    this.behaviour = behaviour;
+  }
+
+  void run() {
+
+    // replace read reg nodes of TB state regs to be just a
+    // CpuReg access of the ISS (No tcg op required)
+    behaviour.getNodes(ReadRegTensorNode.class)
+        .forEach(this::lowerStaticRead);
+
+    // writes need to remain tcg operations. chaining, jumping and exiting the
+    // tb translation loop is handled in TcgOpLoweringPass
+  }
+
+  private void lowerStaticRead(ReadRegTensorNode read) {
+    var annotation = read.regTensor().annotation(TbStateRegisterAnnotation.class);
+    if (annotation == null) {
+      return;
+    }
+
+    IssStaticReadRegNode staticRead = null;
+
+    // usages of read are modified during the loop
+    for (var usage : read.usages().toList()) {
+      boolean isStatic = usage instanceof SliceNode sliceNode
+          ? annotation.covers(sliceNode.bitSlice())
+          : annotation.wholeRegister();
+
+      if (isStatic) {
+        if (staticRead == null) {
+          staticRead = behaviour.add(new IssStaticReadRegNode(read.regTensor()));
+        }
+        usage.replaceInput(read, staticRead);
+      }
+    }
+
+    if (read.usageCount() == 0) {
+      read.safeDelete();
+    }
+
+    // if the read node is not deleted, it will be converted to an IssReadRegNode later
+  }
+
 }
 
 class IssRegisterAccessLowering {

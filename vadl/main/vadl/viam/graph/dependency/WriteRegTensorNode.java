@@ -23,6 +23,7 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Counter;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -89,6 +90,13 @@ public class WriteRegTensorNode extends WriteResourceNode implements WritesRegis
    */
   public boolean isPcAccess() {
     return staticCounterAccess != null;
+  }
+
+  /**
+   * Determines if the register is saved in the tiny code block state.
+   */
+  public boolean writeAffectsTbState() {
+    return registerTensor().hasAnnotation(TbStateRegisterAnnotation.class);
   }
 
   @Nullable

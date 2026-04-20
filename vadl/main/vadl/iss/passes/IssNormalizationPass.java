@@ -37,6 +37,7 @@ import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssSelectNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
@@ -251,6 +252,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(IssStaticPcRegNode toHandle) {
+    // do nothing
+  }
+
+  @Handler
+  void handle(IssStaticReadRegNode toHandle) {
     // do nothing
   }
 

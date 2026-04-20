@@ -36,6 +36,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
@@ -54,6 +55,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
+import vadl.viam.passes.CfgTraverser;
 
 /**
  * A collection of useful utility methods on graphs.
@@ -568,6 +570,16 @@ public class GraphUtils {
     var mergeNode = graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd), next));
     mergeNode.setSourceLocationIfNotSet(location);
     return ifNode;
+  }
+
+  /**
+   * Finds the end node of the branch the given node is on.
+   *
+   * @param node the node from which to search from
+   * @return     the branch end node
+   */
+  public static AbstractEndNode branchEnd(DirectionalNode node) {
+    return new CfgTraverser() {}.traverseBranch(node);
   }
 
 
