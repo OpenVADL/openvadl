@@ -231,8 +231,7 @@ instruction set architecture QDSP6 =
     }
 
   model TransferBase ( name: Id, iformat: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, dst: Ex, val: Ex, asm: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ALU32 ]
+    [ operation: ALU32 ]
     instruction $name : $iformat = {
       R($dst) := $val
     }
@@ -275,8 +274,7 @@ instruction set architecture QDSP6 =
     }
 
   model ALUBase ( name: Id, iformat: Id, encs: Encs, op: Id, lhs: Ex, rhs: Ex, asm: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ALU32 ]
+    [ operation: ALU32 ]
     instruction $name : $iformat = {
       R(d5) := VADL::$op($lhs, $rhs)
     }
@@ -301,9 +299,7 @@ instruction set architecture QDSP6 =
   $ALUBase( AndImm ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b00  ; and ;           R(s5)  ; extendS(imm as SWord); (AsmR(s5),",#",decimal(imm)) )
   $ALUBase( OrImm  ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b10  ; or  ;           R(s5)  ; extendS(imm as SWord); (AsmR(s5),",#",decimal(imm)) )
 
-  // TODO: Reenable this annotation
-
-  // [ operation ALU32 ]
+  [ operation: ALU32 ]
   instruction Nop : StandardFormat = {}
   encoding Nop = { iclass = 0b0111, majop = 0b1111 }
   assembly Nop = ("nop")
@@ -351,8 +347,7 @@ instruction set architecture QDSP6 =
     }
 
   model CmpBase ( name: Id, iformat: Id, encs: Encs, cond: Ex, asm: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ALU32_PRED_WRITING ]
+    [ operation: ALU32_PRED_WRITING ]
     instruction $name : $iformat = {
       let val = toPValue($cond) in {
         // TODO: Renable this call
@@ -418,8 +413,7 @@ instruction set architecture QDSP6 =
     }
 
   model CombineWordBase ( name: Id, iformat: Id, encs: Encs, vhigh: Ex, vlow: Ex, asm: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ALU32 ]
+    [ operation: ALU32 ]
     instruction $name : $iformat = {
       R( d5 ) := ($vhigh as Half, $vlow as Half)
     }
@@ -427,8 +421,7 @@ instruction set architecture QDSP6 =
     assembly $name = (AsmR(d5), "=", $asm)
   }
   model CombineDoubleBase ( name: Id, iformat: Id, encs: Encs, vhigh: Ex, vlow: Ex, asm: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ALU32 ]
+    [ operation: ALU32 ]
     instruction $name : $iformat = {
       R( d5   ) := $vlow
       R( d5+1 ) := $vhigh
@@ -479,8 +472,7 @@ instruction set architecture QDSP6 =
     }
 
   model ALUPredBase ( name: Id, iformat: Id, encs: Encs, op: Id, lhs: Ex, rhs: Ex, asmprefix: Ex, asm: Ex, pred: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ALU32 ]
+    [ operation: ALU32 ]
     instruction $name : $iformat = {
       R(d5) := VADL::$op($lhs, $rhs)
     }
@@ -510,8 +502,7 @@ instruction set architecture QDSP6 =
     }
 
   model TransferControlBase ( name: Id, encs: Encs, asmDst: Id, asmSrc: Id, stats: Stats ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation CR ]
+    [ operation: CR ]
     instruction $name : StandardFormat = {
       $stats
     }
@@ -568,8 +559,7 @@ instruction set architecture QDSP6 =
     , immU   = imm as UWord
     }
   model AddRegPCBase ( name: Id, iformat: Id, encs: Encs, asmPrefix: Ex, asmimm: Id ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation CR ]
+    [ operation: CR ]
     instruction $name : $iformat = {
       // TODO: Reenable this subcall
       //R(d5) := PC.current + immU
@@ -593,8 +583,7 @@ instruction set architecture QDSP6 =
     }
   // This instruction may execute on either slot2 or slot3, even though it is a CR-type
   model LogicalPredBase ( name: Id, encs: Encs, val: Ex, asm: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation CR23 ]
+    [ operation: CR23 ]
     instruction $name : LogicalPredFormat = {
       // TODO: Reeable this call
       //Pset(d2, $val)
@@ -633,8 +622,7 @@ instruction set architecture QDSP6 =
     }
 
   model CallRegBase ( name: Id, encs: Encs, asm: Ex, pred: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation JR ]
+    [ operation: JR ]
     instruction $name : BranchRegFormat = {
       if $pred then {
         LR := PC.next
@@ -651,8 +639,7 @@ instruction set architecture QDSP6 =
 
 
   model JumpRegBase ( name: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation JR ]
+    [ operation: JR ]
     instruction $name : BranchRegFormat = {
       if $pred then {
         PC := R(s5)
@@ -690,8 +677,7 @@ instruction set architecture QDSP6 =
     }
 
   model JumpImmBase ( name: Id, iformat: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation J ]
+    [ operation: J ]
     instruction $name : $iformat = {
       if $pred then {
         // TODO: Reebable once this subcall is implemented
@@ -725,8 +711,7 @@ instruction set architecture QDSP6 =
     }
 
   model CallImmBase ( name: Id, iformat: Id, encs: Encs, asm: Ex, pred: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation J ]
+    [ operation: J ]
     instruction $name : $iformat = {
       if $pred then {
         LR := PC.next
@@ -793,8 +778,7 @@ instruction set architecture QDSP6 =
     }
 
   model CmpJumpBase ( name: Id, iformat: Id, encs: Encs, neg: Val, p: Val, predEx: Ex, asmPred: Ex, asmHint: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation J_PRED_WRITING ]
+    [ operation: J_PRED_WRITING ]
     instruction $name : $iformat = {
       let pred   = $predEx in
       let pvalue = toPValue($predEx) in {
@@ -863,8 +847,7 @@ instruction set architecture QDSP6 =
 
   model-type LoadBaseT = ( Id, Id, Encs, Lit, Ex, Id, Ex, Ex, Ex ) -> IsaDefs
   model LoadSizeBase ( name: Id, iformat: Id, encs: Encs, size: Lit, addr: Ex, type: Id, asmprefix: Ex, asm: Ex, pred: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation LD ]
+    [ operation: LD ]
     instruction $name : $iformat = {
       if $pred then {
         R(d5) := MEM<$size>($addr) as $type as Word
@@ -874,8 +857,7 @@ instruction set architecture QDSP6 =
     assembly $name = ($asmprefix, AsmR(d5), "=", $asm)
   }
   model LoadDoubleBase ( name: Id, iformat: Id, encs: Encs, size: Lit, addr: Ex, type: Id, asmprefix: Ex, asm: Ex, pred: Ex ): IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation LD ]
+    [ operation: LD ]
     instruction $name : $iformat = {
       if $pred then {
         let result = MEM<8>($addr) as $type in {
@@ -921,9 +903,7 @@ instruction set architecture QDSP6 =
     , unused   [7..5]
     }
 
-  // TODO: Reenable this annotation
-
-  // [ operation LD ]
+  [ operation: LD ]
   instruction DeallocFrame : DeallocFrameFormat = {
     let restored = MEM<8>(FP) as Double in
     let LRnew = frameUnscramble(restored(63..32)) in {
@@ -937,8 +917,7 @@ instruction set architecture QDSP6 =
 
 
   model DecallocReturnBase ( name: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation LD ]
+  [ operation: LD ]
     instruction $name : DeallocFrameFormat = {
       if $pred then {
         let restored = MEM<8>(FP) as Double in
@@ -981,8 +960,7 @@ instruction set architecture QDSP6 =
 
   model-type StoreBaseT = ( Id, Encs, Lit, Ex, Id, Ex, Ex, Ex ) -> IsaDefs
   model StoreSizeBase ( name: Id, encs: Encs, size: Lit, addr: Ex, type: Id, shift: Ex, asmprefix: Ex, asmpostfix: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ST ]
+[ operation: ST ]
     instruction $name : StoreFormat = {
       MEM<$size>($addr) := (R(t5) >> ($shift as UInt<6>)) as $type
     }
@@ -990,8 +968,7 @@ instruction set architecture QDSP6 =
     assembly $name = ($asmprefix, "=", AsmR(t5), $asmpostfix)
   }
   model StoreDoubleBase ( name: Id, encs: Encs, size: Lit, addr: Ex, type: Id, shift: Ex, asmprefix: Ex, asmpostfix: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ST ]
+[ operation: ST ]
     instruction $name : StoreFormat = {
       MEM<$size>($addr) := ((R(t5+1), R(t5))) as $type
     }
@@ -1051,8 +1028,7 @@ instruction set architecture QDSP6 =
     }
 
   model StoreImmSizeBase ( name: Id, iformat: Id, type: Id, encs: Encs, size: Val, scale: Val, imm: Ex, asmprefix: Ex, pred: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation ST ]
+    [ operation: ST ]
     instruction $name : $iformat = {
       if $pred then MEM<$size>( R(s5) + scaledImmU(immOffsetU as SWord, $scale) ) := $imm
     }
@@ -1079,9 +1055,7 @@ instruction set architecture QDSP6 =
     , immU = (imm as UInt<11>) * (8 as UInt<11>)
     }
 
-  // TODO: Reenable this annotation
-
-  // [ operation ST ]
+  [ operation: ST ]
   instruction AllocFrame : AllocFrameFormat = {
     let SPnew = SP - 8 in {
       MEM<8>(SPnew) := (frameScramble( LR ), FP)
@@ -1103,8 +1077,7 @@ instruction set architecture QDSP6 =
     , parse  [15..14]
     , unused [20..16, 13..8, 4..0]
     }
-  // TODO: Reenable this annotation
-  // [ operation SYSTEMSolo ]
+  [ operation: SYSTEMSolo ]
   instruction Brkpt : BrkptFormat = {
     PC := 0xeeeeeeee
   }
@@ -1127,8 +1100,7 @@ instruction set architecture QDSP6 =
     }
 
   model ALUImmShifted ( name: Id, encs: Encs, op: Id, shiftop: Id ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation XTYPE ]
+[ operation: XTYPE ]
     instruction $name : AddImmShiftedFormat = {
       R(x5) := VADL::$op(immU, VADL::$shiftop(R(x5), shiftU) as UInt)
     }
@@ -1166,8 +1138,7 @@ instruction set architecture QDSP6 =
     }
 
   model BitOp( name: Id, iformat: Id, encs: Encs, val: Ex, asmfunc: Ex, asmRhs: Ex ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation XTYPE ]
+[ operation: XTYPE ]
     instruction $name : $iformat = {
       R(d5) := $val
     }
@@ -1205,9 +1176,7 @@ instruction set architecture QDSP6 =
     , unused [23, 21..18, 13..5]
     }
 
-  // TODO: Reenable this annotation
-
-  // [ operation XTYPE ]
+  [ operation: XTYPE ]
   instruction TransferPR : TransferPRFormat = {
     // TODO: Reenable
     // Pset(d2, R(s5) as Byte)
@@ -1215,9 +1184,7 @@ instruction set architecture QDSP6 =
   encoding TransferPR = { iclass=0b1000, regtype=0b0101, majop=0b010 }
   assembly TransferPR = (AsmP(d2), " = ", AsmR(s5))
 
-  // TODO: Reenable this annotation
-
-  // [ operation XTYPE ]
+  [ operation: XTYPE ]
   instruction TransferRP : TransferRPFormat = {
     R(d5) := Pget(s2) as Word
   }
@@ -1241,8 +1208,7 @@ instruction set architecture QDSP6 =
     }
 
   model ALUDoubleCarryBase( name: Id, sub: Bool ) : IsaDefs = {
-    // TODO: Reenable this annotation
-    // [ operation XTYPE_PRED_WRITING ]
+[ operation: XTYPE_PRED_WRITING ]
     instruction $name : ALUDoubleCarryFormat = {
       let a = (R(s5+1),R(s5)) in
       let b = (R(t5+1),R(t5)) in
