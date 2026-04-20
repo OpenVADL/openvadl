@@ -3511,7 +3511,7 @@ public class TypeChecker
           addErrorAndStopChecking(error("Invalid counter sub-call", expr)
               .locationDescription(expr, "Cannot do sub call and slice on counter.").build());
         }
-        var validSubCalls = List.of("next");
+        var validSubCalls = List.of("current", "next", "nextnext");
         if (expr.subCalls.size() != 1) {
           addErrorAndStopChecking(error("Invalid counter sub-call", expr)
               .locationDescription(expr, "Only a single sub-call expected.").build());

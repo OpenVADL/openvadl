@@ -1327,8 +1327,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           int offset = 0;
           for (var subcall : expr.subCalls) {
             var subcallName = subcall.identifier().name;
-            if (subcallName.equals("next")) {
+            if (subcallName.equals("current")) {
+              offset = 0;
+            } else if (subcallName.equals("next")) {
               offset += instrWidthInByte;
+            } else if (subcallName.equals("nextnext")) {
+              offset += instrWidthInByte * 2;
             } else {
               throw new IllegalStateException("unknown subcall: " + subcallName);
             }
