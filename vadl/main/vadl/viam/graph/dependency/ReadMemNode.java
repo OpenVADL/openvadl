@@ -39,6 +39,9 @@ public class ReadMemNode extends ReadResourceNode {
   @DataValue
   protected int words;
 
+  @DataValue
+  protected boolean reverseBytes;
+
   /**
    * Constructs a ReadMemNode object with the specified memory, address, and data type.
    *
@@ -48,9 +51,27 @@ public class ReadMemNode extends ReadResourceNode {
    * @param type    the data type of the value being read
    */
   public ReadMemNode(Memory memory, int words, ExpressionNode address, DataType type) {
+    this(memory, words, false, address, type);
+  }
+
+  /**
+   * Constructs a ReadMemNode object with the specified memory, address, and data type.
+   *
+   * @param memory       the memory definition from which to read the value
+   * @param words        the number of words that are read from address ({@code MEM<words>(addr)})
+   * @param reverseBytes whether the bytes should be read in reverse
+   * @param address      the address expression node representing the address in memory to read from
+   * @param type         the data type of the value being read
+   */
+  public ReadMemNode(Memory memory,
+                     int words,
+                     boolean reverseBytes,
+                     ExpressionNode address,
+                     DataType type) {
     super(address, type);
     this.memory = memory;
     this.words = words;
+    this.reverseBytes = reverseBytes;
   }
 
   @Override
@@ -69,6 +90,9 @@ public class ReadMemNode extends ReadResourceNode {
     return memory.wordSize() * words;
   }
 
+  public boolean reverseBytes() {
+    return reverseBytes;
+  }
 
   @Override
   public ExpressionNode address() {
@@ -85,16 +109,27 @@ public class ReadMemNode extends ReadResourceNode {
     super.collectData(collection);
     collection.add(memory);
     collection.add(words);
+    collection.add(reverseBytes);
   }
 
   @Override
   public ExpressionNode copy() {
-    return new ReadMemNode(memory, words, (ExpressionNode) address().copy(), type());
+    return new ReadMemNode(memory, words, reverseBytes, address().copy(), type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ReadMemNode(memory, words, address(), type());
+    return new ReadMemNode(memory, words, reverseBytes, address(), type());
+  }
+
+  /**
+   * Copies the node with {@code reverseBytes} set to the given value.
+   *
+   * @param reverseBytes whether to reverse the byte order of the read
+   * @return a copy of this node with the new value
+   */
+  public ReadMemNode withByteReversal(boolean reverseBytes) {
+    return new ReadMemNode(memory, words, reverseBytes, address().copy(), type());
   }
 
   @Override

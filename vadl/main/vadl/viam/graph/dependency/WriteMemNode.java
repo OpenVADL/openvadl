@@ -44,6 +44,9 @@ public class WriteMemNode extends WriteResourceNode {
   @DataValue
   protected int words;
 
+  @DataValue
+  protected boolean reverseBytes;
+
   /**
    * Constructs a new WriteMemNode object.
    *
@@ -55,9 +58,7 @@ public class WriteMemNode extends WriteResourceNode {
   public WriteMemNode(Memory memory, int words,
                       ExpressionNode address,
                       ExpressionNode value) {
-    super(address, value);
-    this.memory = memory;
-    this.words = words;
+    this(memory, words, address, value, null);
   }
 
   /**
@@ -70,9 +71,26 @@ public class WriteMemNode extends WriteResourceNode {
    */
   public WriteMemNode(Memory memory, int words, ExpressionNode address, ExpressionNode value,
                       @Nullable ExpressionNode condition) {
+    this(memory, words, false, address, value, condition);
+  }
+
+  /**
+   * Constructs a new WriteMemNode object.
+   *
+   * @param memory       the memory definition to write to
+   * @param words        the number of words that are written to memory
+   * @param reverseBytes whether the bytes should be written in reverse
+   * @param address      the expression representing the memory address
+   * @param value        the expression representing the value to write
+   */
+  public WriteMemNode(Memory memory, int words,
+                      boolean reverseBytes,
+                      ExpressionNode address, ExpressionNode value,
+                      @Nullable ExpressionNode condition) {
     super(address, value);
     this.memory = memory;
     this.words = words;
+    this.reverseBytes = reverseBytes;
     this.condition = condition;
   }
 
@@ -82,6 +100,10 @@ public class WriteMemNode extends WriteResourceNode {
 
   public int words() {
     return words;
+  }
+
+  public boolean reverseBytes() {
+    return reverseBytes;
   }
 
   @Nonnull
@@ -105,11 +127,13 @@ public class WriteMemNode extends WriteResourceNode {
     super.collectData(collection);
     collection.add(memory);
     collection.add(words);
+    collection.add(reverseBytes);
   }
 
   @Override
   public Node copy() {
     var node = new WriteMemNode(memory, words,
+        reverseBytes,
         address().copy(),
         value.copy(),
         (condition != null ? condition.copy() : null));
@@ -119,7 +143,23 @@ public class WriteMemNode extends WriteResourceNode {
 
   @Override
   public Node shallowCopy() {
-    var node = new WriteMemNode(memory, words, address(), value, condition);
+    var node = new WriteMemNode(memory, words, reverseBytes, address(), value, condition);
+    node.setSourceLocation(location());
+    return node;
+  }
+
+  /**
+   * Copies the node with {@code reverseBytes} set to the given value.
+   *
+   * @param reverseBytes whether to reverse the byte order of the write
+   * @return a copy of this node with the new value
+   */
+  public WriteMemNode withByteReversal(boolean reverseBytes) {
+    var node = new WriteMemNode(memory, words,
+        reverseBytes,
+        address().copy(),
+        value.copy(),
+        (condition != null ? condition.copy() : null));
     node.setSourceLocation(location());
     return node;
   }

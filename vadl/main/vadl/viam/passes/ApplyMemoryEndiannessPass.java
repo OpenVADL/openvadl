@@ -1,0 +1,206 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.viam.passes;
+
+import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.error;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import vadl.configuration.GeneralConfiguration;
+import vadl.pass.Pass;
+import vadl.pass.PassName;
+import vadl.pass.PassResults;
+import vadl.utils.GraphUtils;
+import vadl.utils.ViamUtils;
+import vadl.viam.Memory;
+import vadl.viam.Procedure;
+import vadl.viam.Processor;
+import vadl.viam.RegisterTensor;
+import vadl.viam.Specification;
+import vadl.viam.annotations.BiEndianAnnotation;
+import vadl.viam.annotations.BigEndianAnnotation;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.ProcEndNode;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
+
+/**
+ * Changes memory read and write operations of all behaviors to operate with the
+ * correct byte order (as specified on the memory definition they use).
+ * By default, memory operations are little-endian. If the memory is big-endian the reads
+ * and writes are changed to byte-reversed operations. If it is bi-endian, then the
+ * condition determining the endianness is inserted into the behaviors. If memory operations
+ * used in memory region init procedures are bi-endian, then the condition must be statically
+ * evaluated since register reads are not possible at that point. Therefore, register values
+ * are taken from the default branch of the cpu reset procedure and must be constant.
+ */
+public class ApplyMemoryEndiannessPass extends Pass {
+  public ApplyMemoryEndiannessPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
+  @Override
+  public PassName getName() {
+    return new PassName("InsertMemoryEndiannessConditionPass");
+  }
+
+  @Nullable
+  @Override
+  public Object execute(PassResults passResults, Specification viam) throws IOException {
+    ViamUtils.findAllBehaviors(viam).forEach(behaviour ->
+        new ApplyMemoryEndianness(behaviour).run());
+    viam.processor().ifPresent(processor ->
+        new ApplyMemoryEndiannessInProcessorReset(processor).run());
+    return null;
+  }
+}
+
+class ApplyMemoryEndiannessInProcessorReset {
+
+  private final Processor processor;
+
+  ApplyMemoryEndiannessInProcessorReset(Processor processor) {
+    this.processor = processor;
+  }
+
+  void run() {
+    var reset = processor.reset();
+    var end = reset.behavior().getNodes(ProcEndNode.class).findFirst().orElseThrow();
+    var resetVector = end.sideEffects().stream()
+        .filter(se -> se instanceof WriteRegTensorNode)
+        .map(se -> (WriteRegTensorNode) se)
+        .filter(write -> write.regTensor().isSingleRegister())
+        .filter(write -> write.value().isConstant())
+        .collect(Collectors.toMap(
+            WriteRegTensorNode::regTensor,
+            WriteRegTensorNode::value
+        ));
+
+    processor.memoryRegions().forEach(mr ->
+        mr.behavior().getNodes(ReadRegTensorNode.class).forEach(read ->
+          handleRead(read, resetVector, reset, mr.memoryRef())
+      )
+    );
+  }
+
+  private void handleRead(ReadRegTensorNode read,
+                          Map<RegisterTensor, ExpressionNode> resetVector,
+                          Procedure reset,
+                          Memory memory) {
+    var reg = read.regTensor();
+    var resetValue = resetVector.get(reg);
+    if (resetValue == null) {
+      throw error(String.format("""
+          Value of register %s is unknown
+          """, reg.simpleName()),
+          read
+      ).description("""
+          The memory written here is be-endian. What endianness is used depends on the \
+          value of register %s, which is not known at this point. Only registers initialized \
+          to a constant value in the default branch of the cpu reset procedure can be \
+          statically inferred.
+          """, reg.simpleName()
+      ).locationHelp(
+          reset,
+          "Cpu reset procedure"
+      ).locationHelp(
+          memory.expectAnnotation(BiEndianAnnotation.class).condition().sourceLocation(),
+          "Bi-endian condition"
+      ).build();
+    }
+    read.replace(resetValue.copy());
+    read.safeDelete();
+  }
+}
+
+class ApplyMemoryEndianness {
+
+  private final Graph behaviour;
+
+  ApplyMemoryEndianness(Graph behaviour) {
+    this.behaviour = behaviour;
+  }
+
+  void run() {
+    behaviour.getNodes(ReadMemNode.class).forEach(this::handleRead);
+    behaviour.getNodes(WriteMemNode.class).forEach(this::handeWrite);
+  }
+
+  private void handleRead(ReadMemNode read) {
+    if (isBigEndian(read.memory())) {
+      read.replace(read.withByteReversal(true));
+      read.safeDelete();
+      return;
+    }
+    var condition = getCondition(read.memory());
+    if (condition == null) {
+      // leave read as is since the memory is not bi-endian
+      return;
+    }
+    read.replace(new SelectNode(
+        condition,
+        read, // byte reversal is false by default
+        read.withByteReversal(true)
+    ));
+  }
+
+  private void handeWrite(WriteMemNode write) {
+    if (isBigEndian(write.memory())) {
+      write.replace(write.withByteReversal(true));
+      write.safeDelete();
+      return;
+    }
+    var condition = getCondition(write.memory());
+    if (condition == null) {
+      // leave write as is since the memory is not bi-endian
+      return;
+    }
+    var next = GraphUtils.getSingleUsage(write, AbstractEndNode.class);
+    next.removeSideEffect(write);
+    var prev = requireNonNull(next.predecessor());
+    prev.setNext(null);
+    prev.setNext(GraphUtils.ifElseSideEffect(
+        behaviour, condition,
+        List.of(write), // byte reversal is false by default
+        List.of(write.withByteReversal(true)),
+        next,
+        write.location()
+    ));
+  }
+
+  private boolean isBigEndian(Memory mem) {
+    return mem.hasAnnotation(BigEndianAnnotation.class);
+  }
+
+  @Nullable
+  private ExpressionNode getCondition(Memory mem) {
+    var ann = mem.annotation(BiEndianAnnotation.class);
+    return ann == null
+        ? null
+        : ann.condition().getNodes(ReturnNode.class).findFirst().get().value().copy();
+  }
+}

@@ -22,6 +22,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssStoreNode;
+import vadl.iss.passes.tcgLowering.TcgEndianness;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.pass.PassName;
@@ -85,8 +86,9 @@ class MemoryTransformer {
     var loadSize = Tcg_8_16_32_64.fromWidth(
         read.words() * read.memory().wordSize()
     );
+    var endianness = TcgEndianness.fromBoolean(read.reverseBytes());
     // assign the default
-    var issLoadNode = new IssLoadNode(read, TcgExtend.ZERO, loadSize, read.type());
+    var issLoadNode = new IssLoadNode(read, TcgExtend.ZERO, loadSize, endianness, read.type());
 
     // optimize subsequent extracts if applicable
     if (read.usageCount() == 1) {
@@ -96,7 +98,13 @@ class MemoryTransformer {
         // if the only user of this node is a constant extract node with a
         // from extract that matches the load size, we can
         // include the extraction directly in the TCG load
-        issLoadNode = new IssLoadNode(read, extract.extendMode(), loadSize, extract.type());
+        issLoadNode = new IssLoadNode(
+            read,
+            extract.extendMode(),
+            loadSize,
+            endianness,
+            extract.type()
+        );
         // delete the extract node
         extract.replaceByNothingAndDelete();
       }
@@ -109,6 +117,7 @@ class MemoryTransformer {
     var storeSize = Tcg_8_16_32_64.fromWidth(
         write.words() * write.memory().wordSize()
     );
+    var endianness = TcgEndianness.fromBoolean(write.reverseBytes());
 
     if (write.value() instanceof IssConstExtractNode extract
         && extract.toWidth() >= storeSize.width
@@ -119,7 +128,7 @@ class MemoryTransformer {
       write.replaceInput(extract, extract.value());
     }
 
-    var issStoreNode = new IssStoreNode(write, storeSize);
+    var issStoreNode = new IssStoreNode(write, storeSize, endianness);
     write.replaceAndDelete(issStoreNode);
   }
 

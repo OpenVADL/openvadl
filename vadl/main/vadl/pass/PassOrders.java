@@ -160,6 +160,7 @@ import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.vdt.passes.VdtVerificationPass;
 import vadl.viam.Specification;
+import vadl.viam.passes.ApplyMemoryEndiannessPass;
 import vadl.viam.passes.ControlFlowOptimizationPass;
 import vadl.viam.passes.DetectRegisterIndicesPass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
@@ -225,6 +226,7 @@ public class PassOrders {
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
     order.add(new RenamingConflictingRegistersPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
+    order.add(new ApplyMemoryEndiannessPass(configuration));
 
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
     order.add(new StatusBuiltInInlinePass(configuration));

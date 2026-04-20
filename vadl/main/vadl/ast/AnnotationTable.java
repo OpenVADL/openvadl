@@ -64,6 +64,7 @@ import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.BiEndianAnnotation;
 import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
@@ -218,12 +219,25 @@ public class AnnotationTable {
         })
         .build();
 
-    annotationOn(MemoryDefinition.class, "bigEndian", EnableAnnotation::new)
-        .applyViam((def, annotation, lowering) -> {
-          var viamDef = (Memory) def;
-          viamDef.addAnnotation(new BigEndianAnnotation());
+    groupOn(MemoryDefinition.class)
+        .add("bigEndian", EnableAnnotation::new)
+        .add("littleEndian", ExprAnnotation::new)
+        .check(ctx -> {
+          ctx.verifyOnlyOneOfGroup();
+          ctx.get("littleEndian", ExprAnnotation.class).ifPresent(ann -> {
+            ann.verifyExprType(Type.bool());
+          });
         })
-        .build();
+        .applyViam(ctx -> {
+          var memDef = ctx.viamDef(Memory.class);
+          ctx.get("bigEndian").ifPresent(ann -> memDef.addAnnotation(new BigEndianAnnotation()));
+          ctx.get("littleEndian", ExprAnnotation.class).ifPresent(ann -> {
+            var graph = new BehaviorLowering(ctx.lowering).getFunctionGraph(ann.expr,
+                memDef.simpleName() + " Little Endian Condition");
+            graph.setParentDefinition(memDef);
+            memDef.addAnnotation(new BiEndianAnnotation(graph));
+          });
+        }).build();
 
     /// PROCESSOR RELATED ///
 
@@ -1141,6 +1155,7 @@ class FormatFieldAnnotation extends Annotation {
     if (fields.isEmpty()) {
       var width = ((BitsType) target.type()).bitWidth();
       slice = Constant.BitSlice.of(width - 1, 0);
+      return;
     }
     var format = requireNonNull((FormatType) target.type()).format;
     slice = new Constant.BitSlice(
