@@ -88,18 +88,31 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
     this.variableName = variableName;
   }
 
+  public LlvmBasicBlockSD(PrintableInstruction instruction,
+                          Format.FieldAccess fieldAccess,
+                          String variableName,
+                          Type originalType,
+                          ValueType llvmType,
+                          TableGenImmediateRecord immediateOperand) {
+    super(fieldAccess, originalType);
+    this.instruction = instruction;
+    this.immediateOperand = immediateOperand;
+    this.llvmType = llvmType;
+    this.variableName = variableName;
+  }
+
   public TableGenImmediateRecord immediateOperand() {
     return immediateOperand;
   }
 
   @Override
   public ExpressionNode copy() {
-    return new LlvmBasicBlockSD(instruction, fieldAccess, type(), llvmType);
+    return new LlvmBasicBlockSD(instruction, fieldAccess, variableName, type(), llvmType, immediateOperand);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmBasicBlockSD(instruction, fieldAccess, type(), llvmType);
+    return new LlvmBasicBlockSD(instruction, fieldAccess, variableName, type(), llvmType, immediateOperand);
   }
 
   @Override
@@ -114,6 +127,10 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
 
   public String variableName() {
     return variableName;
+  }
+
+  public ValueType llvmType() {
+    return this.llvmType;
   }
 
   @Override
