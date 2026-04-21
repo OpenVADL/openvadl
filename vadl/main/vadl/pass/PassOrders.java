@@ -69,6 +69,7 @@ import vadl.iss.passes.IssRegisterAccessLoweringPass;
 import vadl.iss.passes.IssSelectLoweringPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
+import vadl.iss.passes.IssTensorAssignmentToForallPass;
 import vadl.iss.passes.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.IssTcgContextPass;
@@ -522,6 +523,7 @@ public class PassOrders {
         .add(new IssRegisterAccessLoweringPass(config))
         .add(new IssExecStrategyPass(config))
         .add(new IssBitfieldWriteLoweringPass(config))
+        .add(new IssTensorAssignmentToForallPass(config))
         // run canonicalization, as register access lowering may create constant nodes
         .add(new CanonicalizationPass(config))
         .add(new IssOpDecompositionPass(config))

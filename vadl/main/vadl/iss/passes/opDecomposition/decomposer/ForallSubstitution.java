@@ -16,14 +16,13 @@
 
 package vadl.iss.passes.opDecomposition.decomposer;
 
-import java.util.IdentityHashMap;
+import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
-import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 
 /**
- * Utility for instantiating forall bodies by replacing the forall-index node with a constant.
+ * Utility for instantiating forall bodies by replacing the forall-index node.
  */
 public final class ForallSubstitution {
 
@@ -34,40 +33,14 @@ public final class ForallSubstitution {
                                                          ForIdxNode idx,
                                                          int idxValue) {
     var idxConst = Constant.Value.of(idxValue, idx.type()).toNode();
-    return copyWithNodeSubstitution(root, idx, idxConst, new IdentityHashMap<>());
+    return copyWithIndexSubstitution(root, idx, idxConst);
   }
 
-  private static ExpressionNode copyWithNodeSubstitution(ExpressionNode node,
-                                                         ForIdxNode toReplace,
-                                                         ExpressionNode replacement,
-                                                         IdentityHashMap<ExpressionNode,
-                                                             ExpressionNode> cache) {
-    if (matchesForallIdx(node, toReplace)) {
-      return replacement;
-    }
-
-    var cached = cache.get(node);
-    if (cached != null) {
-      return cached;
-    }
-
-    var copy = (ExpressionNode) node.shallowCopy();
-    cache.put(node, copy);
-    copy.applyOnInputs((self, input) -> {
-      if (input instanceof ExpressionNode inputExpr) {
-        return copyWithNodeSubstitution(inputExpr, toReplace, replacement, cache);
-      }
-      return input;
-    });
-
-    if (copy instanceof Canonicalizable canonicalizable) {
-      var canonical = canonicalizable.canonical();
-      if (canonical instanceof ExpressionNode exprCanonical) {
-        copy = exprCanonical;
-      }
-    }
-    cache.put(node, copy);
-    return copy;
+  public static ExpressionNode copyWithIndexSubstitution(ExpressionNode root,
+                                                         ForIdxNode idx,
+                                                         ExpressionNode replacement) {
+    return GraphUtils.copyWithNodeSubstitution(root,
+        node -> matchesForallIdx(node, idx) ? replacement : null);
   }
 
   private static boolean matchesForallIdx(ExpressionNode node, ForIdxNode idx) {

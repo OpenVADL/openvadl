@@ -19,6 +19,7 @@ package vadl.utils;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -32,6 +33,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
+import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -134,6 +136,63 @@ public class GraphUtils {
         .filter(n -> n.usages()
             .noneMatch(u -> u instanceof DependencyNode)
         );
+  }
+
+  /**
+   * Copies an expression tree while substituting selected expression nodes.
+   *
+   * <p>The {@code substitution} function is called before a node is copied. Returning a non-null
+   * expression replaces the current node and stops traversal for that branch. Returning
+   * {@code null} keeps the node and recursively copies its expression inputs. Shared input nodes
+   * stay shared in the copied result through identity-based memoization.</p>
+   *
+   * <p>Copied nodes are canonicalized when they implement {@link Canonicalizable}. The substituted
+   * replacement itself is returned as provided and is not copied.</p>
+   *
+   * @param root the expression root to copy
+   * @param substitution function returning a replacement expression, or {@code null} to keep
+   *                     copying
+   * @return the copied expression root with substitutions applied
+   */
+  public static ExpressionNode copyWithNodeSubstitution(
+      ExpressionNode root,
+      Function<ExpressionNode, ExpressionNode> substitution
+  ) {
+    return copyWithNodeSubstitution(root, substitution, new IdentityHashMap<>());
+  }
+
+  private static ExpressionNode copyWithNodeSubstitution(
+      ExpressionNode node,
+      Function<ExpressionNode, ExpressionNode> substitution,
+      IdentityHashMap<ExpressionNode, ExpressionNode> cache
+  ) {
+    var replacement = substitution.apply(node);
+    if (replacement != null) {
+      return replacement;
+    }
+
+    var cached = cache.get(node);
+    if (cached != null) {
+      return cached;
+    }
+
+    var copy = (ExpressionNode) node.shallowCopy();
+    cache.put(node, copy);
+    copy.applyOnInputs((self, input) -> {
+      if (input instanceof ExpressionNode inputExpr) {
+        return copyWithNodeSubstitution(inputExpr, substitution, cache);
+      }
+      return input;
+    });
+
+    if (copy instanceof Canonicalizable canonicalizable) {
+      var canonical = canonicalizable.canonical();
+      if (canonical instanceof ExpressionNode exprCanonical) {
+        copy = exprCanonical;
+      }
+    }
+    cache.put(node, copy);
+    return copy;
   }
 
   /**

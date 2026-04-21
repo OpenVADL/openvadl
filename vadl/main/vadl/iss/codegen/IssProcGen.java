@@ -113,13 +113,9 @@ abstract class IssProcGen implements CDefaultMixins.All,
         "Helper read preload expects <=64-bit reads, got %d-bit on %s", width, read);
     var valueType = CppTypeMap.nextFittingUInt(read.type().asDataType());
     var name = readRegVariable(read);
-    var accessName = RegisterAccessEmitters.readAccessorName(read, accessorRegistry);
-    ctx.wr(valueType + " " + name + " = ")
-        .wr(accessName + "(env");
-    for (var i : RegisterAccessEmitters.readAccessorArgs(read)) {
-      ctx.wr(", ").gen(i);
-    }
-    ctx.ln(");");
+    ctx.wr(valueType + " " + name + " = ");
+    RegisterAccessEmitters.emitRead(ctx, read, accessorRegistry);
+    ctx.ln(";");
     preloadedReadRegs.add(read);
   }
 
