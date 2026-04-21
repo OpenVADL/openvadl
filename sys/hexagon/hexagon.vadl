@@ -561,8 +561,7 @@ instruction set architecture QDSP6 =
   model AddRegPCBase ( name: Id, iformat: Id, encs: Encs, asmPrefix: Ex, asmimm: Id ) : IsaDefs = {
     [ operation: CR ]
     instruction $name : $iformat = {
-      // TODO: Reenable this subcall
-      //R(d5) := PC.current + immU
+      R(d5) := PC.current + immU
     }
     encoding $name = { iclass = 0b0110, op = 0b101001001001, $encs }
     assembly $name = ($asmPrefix, AsmR(d5), "=add(pc,", $asmimm(immU),")")
@@ -681,8 +680,7 @@ instruction set architecture QDSP6 =
     [ operation: J ]
     instruction $name : $iformat = {
       if $pred then {
-        // TODO: Reebable once this subcall is implemented
-        // PC := PC.current + extendR2(imm)
+        PC := PC.current + extendR2(imm as SWord)
       }
     }
     encoding $name = { $encs }
@@ -716,8 +714,7 @@ instruction set architecture QDSP6 =
     instruction $name : $iformat = {
       if $pred then {
         LR := PC.next
-        // TODO: Reenable once this subcall is implemented
-        //PC := PC.current + extendR2(imm)
+        PC := PC.current + extendR2(imm as SWord)
       }
     }
     encoding $name = { iclass = 0b0101, $encs }
@@ -787,8 +784,7 @@ instruction set architecture QDSP6 =
         // TODO: Reenable this call
         // Pset($p, pvalue)
         if pred then {
-          // TODO: Reenable subcall
-          // PC := PC.current + extendR2(disp)
+          PC := PC.current + extendR2(disp as SWord)
         }
       }
     }
