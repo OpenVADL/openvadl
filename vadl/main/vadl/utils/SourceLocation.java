@@ -19,7 +19,6 @@ package vadl.utils;
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.EditorUtils.isIntelliJIDE;
 
-import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,8 +29,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * References a location span in source.
@@ -49,8 +46,6 @@ public record SourceLocation(
     Position end,
     @Nullable SourceLocation expandedFrom
 ) implements WithLocation, Comparable<SourceLocation> {
-
-  private static final Logger logger = LoggerFactory.getLogger(SourceLocation.class);
 
 
   public static final SourceLocation INVALID_SOURCE_LOCATION =
@@ -313,9 +308,6 @@ public record SourceLocation(
           })
           .collect(Collectors.joining("\n"));
 
-    } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-      return "Failed to load source location " + this.toConciseString() + ": " + e.getMessage();
     }
   }
 
