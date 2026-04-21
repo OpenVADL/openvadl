@@ -19,7 +19,7 @@ constant second = false + $apfelstrudel()
 //       ╭── test/resources/frontend-snapshots/parser/invalidModelInvocationUsesRightLocation.vadl:13:19
 //       │
 //    13 │ constant second = false + $apfelstrudel()
-//       │                   ^^^^^^^^^^^^^^^^^^^^^^^ note: The left type is Bits<1> while right is Bits<6>
+//       │                   ^^^^^^^^^^^^^^^^^^^^^^^ note: The left type is `Bits<1>` while right is `Bits<6>`
 //       │
 //       Both types on the left and right side of an binary operation should be equal.
 //

@@ -200,7 +200,7 @@ public class AsmLL1CheckerTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(prog), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
+    Assertions.assertEquals(2, diags.items.size());
   }
 
   @Test
@@ -242,7 +242,7 @@ public class AsmLL1CheckerTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(prog), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
-    Assertions.assertEquals(1, diags.items.size());
+    Assertions.assertEquals(2, diags.items.size());
   }
 
   @Test

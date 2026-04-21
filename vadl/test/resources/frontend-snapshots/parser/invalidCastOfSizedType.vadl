@@ -12,7 +12,7 @@ constant apfelstrudel = 1 as String<99>
 //     4 │ constant apfelstrudel = 1 as String<99>
 //       │                              ^^^^^^^^^^
 //       │
-//       The String type doesn't use the size notation.
+//       The `String` type doesn't use the size notation.
 //       help: Try removing the size parameter here.
 //
 //

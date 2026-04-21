@@ -10,7 +10,7 @@ instruction set architecture ISA = {
 //       ╭── test/resources/frontend-snapshots/typechecker/invalidOperationTargetIsNoInstruction.vadl:3:27
 //       │
 //     3 │   operation BranchOp   = {PC}                   // empty branch set, elements added by annotation
-//       │                           ^^ note: Operation members must be instructions but this was a counter definition
+//       │                           ^^ note: Operation members must be instructions but this was a `counter definition`
 //       │
 //
 //
