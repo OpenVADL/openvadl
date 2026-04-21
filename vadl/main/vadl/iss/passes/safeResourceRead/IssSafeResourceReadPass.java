@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -39,6 +41,7 @@ import vadl.viam.Instruction;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.BranchEndNode;
@@ -48,6 +51,7 @@ import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -148,9 +152,11 @@ class IssResourceReadSecurer {
    */
   void run() {
     readResources().forEach(resource -> {
-      var saveLocation = saveLocation(resource);
-      if (saveLocation != null) {
-        applySave(resource, saveLocation);
+      for (var group : saveGroupsFor(resource)) {
+        for (var read : group.reads()) {
+          result.readTempSpillLocations().put(read, group.location());
+          saveResourceRead(read, group.location());
+        }
       }
     });
   }
@@ -162,7 +168,7 @@ class IssResourceReadSecurer {
    * question without mutating the graph.</p>
    */
   boolean requiresReadSave() {
-    return readResources().anyMatch(resource -> saveLocation(resource) != null);
+    return readResources().anyMatch(resource -> !saveGroupsFor(resource).isEmpty());
   }
 
   private Stream<Resource> readResources() {
@@ -175,39 +181,127 @@ class IssResourceReadSecurer {
   }
 
   /**
-   * Determines the save location for a specific resource, if a save is needed.
+   * Returns the save groups needed to secure reads of {@code resource}. Each group binds a
+   * set of reads to a single control node at which they must be spilled. An empty list means
+   * no save is needed for this resource.
    *
-   * @param resource The resource to secure reads for.
+   * <p>When every access on {@code resource} is an {@link IssReadRegNode} /
+   * {@link IssWriteRegNode} with a constant CHUNK window and all windows are pairwise
+   * non-overlapping, accesses are partitioned per window and the conflict analysis is run
+   * independently per partition. This is precise enough to recognize unrolled per-element
+   * tensor writes where iteration {@code i} only reads and writes its own chunk offset —
+   * a pattern the conservative whole-resource analysis would falsely flag as requiring saves.
    */
-  private @Nullable ControlNode saveLocation(Resource resource) {
-    var writeSchedules = instruction.behavior().getNodes(WriteResourceNode.class)
+  private List<SaveGroup> saveGroupsFor(Resource resource) {
+    var allReads = instruction.behavior().getNodes(ReadResourceNode.class)
         .filter(wn -> wn.resourceDefinition() == resource)
+        .toList();
+    var allWrites = instruction.behavior().getNodes(WriteResourceNode.class)
+        .filter(wn -> wn.resourceDefinition() == resource)
+        .toList();
+
+    var partition = tryPartitionByChunkWindow(allReads, allWrites);
+    if (partition != null) {
+      var groups = new ArrayList<SaveGroup>();
+      for (var bucket : partition.values()) {
+        var loc = determineIfReadSaveIsRequired(bucket.reads, writeSchedulesOf(bucket.writes));
+        if (loc != null) {
+          groups.add(new SaveGroup(bucket.reads, loc));
+        }
+      }
+      return groups;
+    }
+
+    var loc = determineIfReadSaveIsRequired(allReads, writeSchedulesOf(allWrites));
+    if (loc == null) {
+      return List.of();
+    }
+    return List.of(new SaveGroup(allReads, loc));
+  }
+
+  private static List<ControlNode> writeSchedulesOf(List<? extends WriteResourceNode> writes) {
+    return writes.stream()
         .map(wn -> wn.usages()
             // if the write is scheduled or used by an instr exit
             .filter(u -> u instanceof ScheduledNode || u instanceof InstrExitNode)
             .map(ControlNode.class::cast)
             .findAny().get())
         .toList();
-
-    var reads = instruction.behavior().getNodes(ReadResourceNode.class)
-        .filter(wn -> wn.resourceDefinition() == resource)
-        .toList();
-
-    return determineIfReadSaveIsRequired(reads, writeSchedules);
   }
 
   /**
-   * Applies saved reads for a resource at the provided control location.
+   * Partitions reads and writes by their constant CHUNK window. Returns {@code null} if any
+   * access is not a constant CHUNK, or if any two distinct windows overlap partially. When
+   * non-null, every returned bucket describes a bit range that is disjoint from every other
+   * bucket's range, so the conflict analysis can treat them as independent sub-resources.
    */
-  private void applySave(Resource resource, ControlNode saveLocation) {
-    var reads = instruction.behavior().getNodes(ReadResourceNode.class)
-        .filter(wn -> wn.resourceDefinition() == resource)
-        .toList();
-    for (var read : reads) {
-      // Set spill location for conflicting read resources
-      result.readTempSpillLocations().put(read, saveLocation);
-      saveResourceRead(read, saveLocation);
+  private static @Nullable Map<ChunkWindow, ChunkBucket> tryPartitionByChunkWindow(
+      List<ReadResourceNode> reads, List<WriteResourceNode> writes) {
+    var buckets = new HashMap<ChunkWindow, ChunkBucket>();
+    for (var r : reads) {
+      var w = chunkWindowOf(r);
+      if (w == null) {
+        return null;
+      }
+      buckets.computeIfAbsent(w, k -> new ChunkBucket()).reads.add(r);
     }
+    for (var wr : writes) {
+      var w = chunkWindowOf(wr);
+      if (w == null) {
+        return null;
+      }
+      buckets.computeIfAbsent(w, k -> new ChunkBucket()).writes.add(wr);
+    }
+    // Require pairwise non-overlap (equal windows share a bucket and are fine).
+    var keys = new ArrayList<>(buckets.keySet());
+    for (int i = 0; i < keys.size(); i++) {
+      for (int j = i + 1; j < keys.size(); j++) {
+        if (partiallyOverlaps(keys.get(i), keys.get(j))) {
+          return null;
+        }
+      }
+    }
+    return buckets;
+  }
+
+  @SuppressWarnings("LocalVariableName")
+  private static boolean partiallyOverlaps(ChunkWindow a, ChunkWindow b) {
+    long aLo = a.offset();
+    long aHi = aLo + a.width();
+    long bLo = b.offset();
+    long bHi = bLo + b.width();
+    return aHi > bLo && bHi > aLo;
+  }
+
+  private static @Nullable ChunkWindow chunkWindowOf(Node n) {
+    if (n instanceof IssReadRegNode r && r.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
+      return windowFromNodes(r.bitOffset(), r.bitWidth());
+    }
+    if (n instanceof IssWriteRegNode w && w.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
+      return windowFromNodes(w.bitOffset(), w.bitWidth());
+    }
+    return null;
+  }
+
+  private static @Nullable ChunkWindow windowFromNodes(ExpressionNode offset,
+                                                       ExpressionNode width) {
+    if (offset instanceof ConstantNode co && width instanceof ConstantNode cw) {
+      return new ChunkWindow(
+          co.constant().asVal().intValue(),
+          cw.constant().asVal().intValue());
+    }
+    return null;
+  }
+
+  private record ChunkWindow(int offset, int width) {
+  }
+
+  private static final class ChunkBucket {
+    final List<ReadResourceNode> reads = new ArrayList<>();
+    final List<WriteResourceNode> writes = new ArrayList<>();
+  }
+
+  private record SaveGroup(List<ReadResourceNode> reads, ControlNode location) {
   }
 
   /**
