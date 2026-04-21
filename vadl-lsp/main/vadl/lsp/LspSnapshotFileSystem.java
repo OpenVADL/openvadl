@@ -20,7 +20,6 @@ import static vadl.lsp.LspUtils.toPath;
 import static vadl.lsp.LspUtils.toUri;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -90,7 +89,7 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
   }
 
   @Override
-  public Stream<String> readLines(Path path) throws IOException {
+  public Stream<String> readLines(Path path) {
     String uri = toUri(path);
     readFiles.add(uri);
 
@@ -126,11 +125,7 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
     }
 
     List<String> textLines;
-    try {
-      textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
-    } catch (IOException e) {
-      return null;
-    }
+    textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
     return new Document(uri, -1, textLines);
   }
 
