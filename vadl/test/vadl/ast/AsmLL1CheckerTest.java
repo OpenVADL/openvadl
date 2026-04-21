@@ -171,6 +171,9 @@ public class AsmLL1CheckerTest {
     var prog = """
           instruction set architecture ISA = {
             register X : Bits<5> -> Bits<32>
+            pseudo instruction NOP( symbol: Bits<5>) = {
+            }
+            assembly NOP = (mnemonic)
           }
           application binary interface ABI for ISA = {
             alias register zero = X(0)
@@ -184,6 +187,10 @@ public class AsmLL1CheckerTest {
         
             caller saved = zero
             callee saved = zero
+        
+            special return instruction = NOP
+            special call instruction = NOP
+            special absolute address load instruction = NOP
           }
         
           assembly description AD for ABI = {
@@ -200,7 +207,7 @@ public class AsmLL1CheckerTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(prog), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
-    Assertions.assertEquals(2, diags.items.size());
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
@@ -209,6 +216,9 @@ public class AsmLL1CheckerTest {
     var prog = """
           instruction set architecture ISA = {
             register X : Bits<5> -> Bits<32>
+            pseudo instruction NOP( symbol: Bits<5>) = {
+            }
+            assembly NOP = (mnemonic)
           }
           application binary interface ABI for ISA = {
             alias register zero = X(0)
@@ -222,6 +232,10 @@ public class AsmLL1CheckerTest {
         
             caller saved = zero
             callee saved = zero
+        
+            special return instruction = NOP
+            special call instruction = NOP
+            special absolute address load instruction = NOP
           }
         
           assembly description AD for ABI = {
@@ -242,7 +256,7 @@ public class AsmLL1CheckerTest {
     var ast = Assertions.assertDoesNotThrow(
         () -> VadlParser.parse(prog), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
-    Assertions.assertEquals(2, diags.items.size());
+    Assertions.assertEquals(1, diags.items.size());
   }
 
   @Test
