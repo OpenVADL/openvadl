@@ -31,6 +31,7 @@ public class FrontendIntegrationTest {
       "../sys/aarch64/sve.vadl",
       "../sys/aarch64/virt.vadl",
       "../sys/aarch64/vprocessor.vadl",
+      "../sys/hexagon/hexagon.vadl",
       "../sys/ppc64/ppc64.vadl",
       "../sys/risc-v/rv32i.vadl",
       "../sys/risc-v/rv32im.vadl",
