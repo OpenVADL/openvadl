@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -32,5 +32,14 @@ public class DiagnosticList extends RuntimeException {
 
   private static String buildErrorMessage(List<Diagnostic> errors) {
     return errors.stream().map(Diagnostic::getMessage).collect(Collectors.joining("\n"));
+  }
+
+  /**
+   * Deflates similar diagnostics into one.
+   *
+   * @return the deflated diagnostic list.
+   */
+  public DiagnosticList deflateSimilar() {
+    return new DiagnosticList(Diagnostic.collapseSimilar(items));
   }
 }

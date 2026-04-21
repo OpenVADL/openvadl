@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,12 @@
 
 package vadl.error;
 
+import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import org.jetbrains.annotations.Contract;
+import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
@@ -45,6 +47,12 @@ import vadl.utils.WithLocation;
  *   3 │ constant flo = 18                      // A secondary location of the multilocation
  *     │          --- First definition          // Which also has a message
  *     │
+ *     ├─ From these 2 model invocation (outermost call first): // This code was generated from a
+ *     │    1) file.vadl:11:2                   // The first incocation started here
+ *     │       file.vadl:9:4                    // Then called the actual model here
+ *     │    2) file.vadl:14:2                   // A second invocation started here
+ *     │
+ *     │
  *     Each variable can only be declared once. // Messages can also belong to the whole diagnostic
  *     help: Find another awesome name.
  * </pre>
@@ -60,6 +68,61 @@ public class Diagnostic extends RuntimeException {
   public final List<Message> messages;
 
   /**
+   * The same diagnostic can be created from multiple macro invocations. They might get collapsed
+   * into one diagnostic, in which case this field is used to store them all.
+   *
+   * <p>Let's start first with the inner List which is a backtrace like you get in Java for
+   * stacktraces, except this tracs macro invocation chains and not funciton calls. Also, unlike
+   * Java, the innermost call is last.
+   *
+   * <p>The outer list is now of such backtraces. In VADL it is quite common that macro's get
+   * invoked multiple times, somtimes even hundrets of times. Since the parser already expands the
+   * calls the rest of the compiler pipeline will emit virtually the same diagnostic for each
+   * invocation, with only the {@code expandedFrom} of the source location being different.
+   * The method {@link #collapseSimilar(List)} then can be used to collapse all similar diagnostics,
+   * that only differ in the macro trace. This way we can only emit a sinlge diagnostic for our
+   * users even and print all the traces where it got invoked from at once.
+   *
+   * <b>Example</b>
+   * <pre>
+   * model badboi(name: Id): Defs = {
+   *   constant $name: Bits<32> = "Not a bits"
+   * }
+   *
+   * model middle(name: Id): Defs = {
+   *   $badboi($name)
+   * }
+   *
+   * model outer(name: Id): Defs = {
+   *   $middle($name)
+   * }
+   *
+   * $outer(apfel)
+   * $middle(strudel)
+   * $badboi(minister)
+   * </pre>
+   *
+   * <p>Which after collapsing the diagnostics will show as:
+   * <pre>
+   * error: Type Mismatch
+   *   ╭── example.vadl:2:30
+   *   │
+   * 2 │   constant $name: Bits<32> = "Not a bits"
+   *   │                              ^^^^^^^^^^^^ Expected Bits<32> but got String.
+   *   │
+   *   ├─ From these 3 model invocations (outermost call first):
+   *   │    1) example.vadl:13:1
+   *   │       example.vadl:10:3
+   *   │       example.vadl:6:3
+   *   │    2) example.vadl:14:1
+   *   │       example.vadl:6:3
+   *   │    3) example.vadl:15:1
+   *   │
+   * </pre>
+   */
+  public final List<List<SourceLocation>> macroTraces;
+
+  /**
    * It's generally recommended to not instantiate Diagnostics on their own but to make use of the
    * {@link Diagnostic#error(String, WithLocation)} and
    * {@link Diagnostic#warning(String, WithLocation)}
@@ -71,6 +134,13 @@ public class Diagnostic extends RuntimeException {
     this.reason = reason;
     this.multiLocation = multiLocation;
     this.messages = messages;
+    this.macroTraces = new ArrayList<>();
+
+    var initialTrace = multiLocation.primaryLocation.location.expandedFromStack().reversed();
+    initialTrace.removeLast();
+    if (!initialTrace.isEmpty()) {
+      this.macroTraces.add(initialTrace);
+    }
   }
 
   /**
@@ -122,6 +192,30 @@ public class Diagnostic extends RuntimeException {
     }
   }
 
+  /**
+   * Diagnostics that only differ in the macro trace will get collapsed into one.
+   *
+   * <p>A detailed explaination of how and why can be found in the documentation of
+   * {@link #macroTraces}.
+   *
+   * @param diagnostics to collapse.
+   * @return the deflated diagnostics.
+   */
+  public static List<Diagnostic> collapseSimilar(List<Diagnostic> diagnostics) {
+    var deflated = new ArrayList<Diagnostic>();
+    for (var diagnostic : diagnostics) {
+      var similar = deflated.stream()
+          .filter(d -> d.equalsIgnoringMacroTraces(diagnostic))
+          .findFirst();
+
+      similar.ifPresentOrElse(
+          d -> d.macroTraces.addAll(diagnostic.macroTraces),
+          () -> deflated.add(diagnostic)
+      );
+    }
+    return deflated;
+  }
+
   @Override
   public String getMessage() {
     var sb = new StringBuilder();
@@ -154,6 +248,19 @@ public class Diagnostic extends RuntimeException {
       });
     });
     return sb.toString();
+  }
+
+  /**
+   * Checks if two diagnostics are equal ignoring the macro traces.
+   *
+   * @param other diagnostic to compare to.
+   * @return true if the diagnostics are equal, false otherwise.
+   */
+  public boolean equalsIgnoringMacroTraces(Diagnostic other) {
+    return this.level == other.level
+        && this.reason.equals(other.reason)
+        && this.multiLocation.equalsIgnoringExpandedFrom(other.multiLocation)
+        && this.messages.equals(other.messages);
   }
 
   @Override
@@ -216,6 +323,23 @@ public class Diagnostic extends RuntimeException {
       secondaryLocations.add(labeledLocation);
       return labeledLocation;
     }
+
+    /**
+     * Checks if two multilocations are equal ignoring the expandedFrom stack.
+     *
+     * @param other to compare to.
+     * @return true if the multilocations are equal, false otherwise.
+     */
+    public boolean equalsIgnoringExpandedFrom(MultiLocation other) {
+      if (this.secondaryLocations.size() != other.secondaryLocations.size()) {
+        return false;
+      }
+
+      return this.primaryLocation.equalsIgnoringExpandedFrom(other.primaryLocation)
+          && Streams.zip(this.secondaryLocations.stream(), other.secondaryLocations.stream(),
+              (a, b) -> Pair.of(a, b))
+          .allMatch(pair -> pair.left().equalsIgnoringExpandedFrom(pair.right()));
+    }
   }
 
   /**
@@ -225,6 +349,17 @@ public class Diagnostic extends RuntimeException {
    * @param labels   to annotate
    */
   public record LabeledLocation(SourceLocation location, List<Message> labels) {
+
+    /**
+     * Checks if two locations are equal ignoring the expandedFrom stack.
+     *
+     * @param other to compare to.
+     * @return true if the locations are equal, false otherwise.
+     */
+    public boolean equalsIgnoringExpandedFrom(LabeledLocation other) {
+      return this.location.equalsIgnoringExpandedFrom(other.location)
+          && this.labels.equals(other.labels);
+    }
   }
 
   /**

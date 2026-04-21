@@ -96,7 +96,7 @@ public class FrontendSnapshotTests {
       ViamLocationExistenceChecker.verify(spec);
 
     } catch (DiagnosticList d) {
-      diagnostics = d.items;
+      diagnostics = d.deflateSimilar().items;
     } catch (Diagnostic d) {
       diagnostics = List.of(d);
     } finally {

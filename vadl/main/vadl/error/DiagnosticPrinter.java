@@ -146,9 +146,11 @@ public class DiagnosticPrinter {
         builder.append(sourceDelimiter(previous.location(), snippet.location()));
       }
 
-      printExpandedSourcePreview(snippet,
+      printSourcePreview(snippet,
           snippet.equals(diagnostic.multiLocation.primaryLocation()), diagnostic.level, builder);
     }
+
+    printMacroBackTrace(diagnostic, builder);
     builder.append("\n     %s│%s\n".formatted(colors.cyan(), colors.reset()));
   }
 
@@ -181,31 +183,47 @@ public class DiagnosticPrinter {
   /**
    * Print a location and the chain of expansions from which it originated.
    *
-   * @param location  to print.
-   * @param isPrimary whether it's the main reason of the diagnostic.
-   * @param builder   into which the preview will be printed.
+   * @param diagnostic for which the macro backtrace will be printed.
+   * @param builder    into which the preview will be printed.
    */
-  private void printExpandedSourcePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
-                                          Diagnostic.Level level,
-                                          StringBuilder builder) {
-    // Print the original preview
-    printSourcePreview(location, isPrimary, level, builder);
-
-    // Print also the chain/stack of the location from which this error was expanded form
-    var last = location.location();
-    var next = location.location().expandedFrom();
-    while (next != null) {
-      builder.append("\n");
-      builder.append(sourceDelimiter(last, next));
-      printSourcePreview(
-          new Diagnostic.LabeledLocation(
-              next,
-              List.of(
-                  new Diagnostic.Message(Diagnostic.MsgType.PLAIN, "from this model invocation"))),
-          false, level, builder);
-      last = next;
-      next = next.expandedFrom();
+  private void printMacroBackTrace(Diagnostic diagnostic, StringBuilder builder) {
+    if (diagnostic.macroTraces.isEmpty()) {
+      return;
     }
+
+    var tracesCount = diagnostic.macroTraces.size();
+    var title = switch (tracesCount) {
+      case 1 -> "From this model invocation (outermost call first):";
+      default -> "From these %d model invocations (outermost call first):".formatted(
+          diagnostic.macroTraces.size());
+    };
+    builder.append("\n     %s│\n     ├─%s %s\n".formatted(colors.cyan(), colors.reset(), title));
+
+    var blockBuilder = new StringJoiner("\n");
+    for (int i = 0; i < diagnostic.macroTraces.size(); i++) {
+      var trace = diagnostic.macroTraces.get(i);
+      var firstLocation = trace.getFirst();
+      var firstIDEString = firstLocation.toIDEString(fileSystem,
+          forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
+              SourceLocation.IDEDetectionMode.AUTO, forceUnixPaths);
+
+      if (tracesCount == 1) {
+        blockBuilder.add("   %s".formatted(firstIDEString));
+      } else {
+        blockBuilder.add("%d) %s".formatted(i + 1, firstIDEString));
+      }
+
+      for (int j = 1; j < trace.size(); j++) {
+        var location = trace.get(j);
+        blockBuilder.add("   %s".formatted(location.toIDEString(fileSystem,
+            forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
+                SourceLocation.IDEDetectionMode.AUTO, forceUnixPaths)));
+      }
+    }
+
+    builder.append(
+        indentBy(blockBuilder.toString(),
+            "     %s│%s    ".formatted(colors.cyan(), colors.reset())));
   }
 
   /**

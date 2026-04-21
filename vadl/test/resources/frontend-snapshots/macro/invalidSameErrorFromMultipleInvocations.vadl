@@ -1,0 +1,42 @@
+// Previously, this would print an error for each invocation.
+// https://github.com/OpenVADL/openvadl/issues/890
+
+model badboi(name: Id): Defs = {
+  constant $name: Bits<32> = "Not a bits"
+}
+
+model middle(name: Id): Defs = {
+  $badboi($name)
+}
+
+model outer(name: Id): Defs = {
+  $middle($name)
+}
+
+$outer(apfel)
+$outer(flo)
+$outer(freitag)
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:5:30
+//       │
+//     5 │   constant $name: Bits<32> = "Not a bits"
+//       │                              ^^^^^^^^^^^^ Expected `Bits<32>` but got `String`.
+//       │
+//       ├─ From these 3 model invocations (outermost call first):
+//       │    1) test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:16:1
+//       │       test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:13:3
+//       │       test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:9:3
+//       │    2) test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:17:1
+//       │       test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:13:3
+//       │       test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:9:3
+//       │    3) test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:18:1
+//       │       test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:13:3
+//       │       test/resources/frontend-snapshots/macro/invalidSameErrorFromMultipleInvocations.vadl:9:3
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

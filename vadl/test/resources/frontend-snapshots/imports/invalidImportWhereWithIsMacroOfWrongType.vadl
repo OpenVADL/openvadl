@@ -25,9 +25,9 @@ constant flo = $numPlusOne()
 //       │
 //     4 │   42
 //       │   ^^
-//       ⋮
-//     8 │ import base::numPlusOne with ($WithTarget())
-//       │                               ------------- from this model invocation
+//       │
+//       ├─ From this model invocation (outermost call first):
+//       │       test/resources/frontend-snapshots/imports/invalidImportWhereWithIsMacroOfWrongType.vadl:8:31
 //       │
 //       Expected node of type Str, received Ex - GroupedExpr
 //
