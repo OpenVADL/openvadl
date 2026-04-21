@@ -35,6 +35,7 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -47,6 +48,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.types.SIntType;
 import vadl.viam.Abi;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
@@ -116,6 +118,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
             .lastResultOf(FunctionInlinerPass.class)).behaviors();
     var tableGenMachineInstructions = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
+    var immediateRecordResults = (GenerateTableGenImmediateRecordPass.Output) passResults
+        .lastResultOf(GenerateTableGenImmediateRecordPass.class);
     var constraints = getConstraints(specification);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
@@ -128,7 +132,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         "globalPointer", abi.globalPointer().map(Abi.RegisterRef::render).orElse(""),
         "frameIndexEliminations",
         getEliminateFrameIndexEntries(instructionLabels, uninlined,
-            tableGenMachineInstructions).stream()
+            tableGenMachineInstructions, immediateRecordResults.immediatesByPredicates()).stream()
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
         specification.registerTensors().filter(RegisterTensor::isRegisterFile)
@@ -190,7 +194,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<FrameIndexElimination> getEliminateFrameIndexEntries(
       @Nullable Map<MachineInstructionLabel, List<Instruction>> instructionLabels,
       @Nullable IdentityHashMap<Instruction, UninlinedGraph> uninlined,
-      List<TableGenMachineInstruction> tableGenMachineInstructions) {
+      List<TableGenMachineInstruction> tableGenMachineInstructions,
+      Map<Function, TableGenImmediateRecord> immediatesByPredicates) {
     ensureNonNull(instructionLabels, "labels must exist");
     ensureNonNull(uninlined, "uninlined must exist");
 
@@ -219,9 +224,13 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
           long minValue = isSigned ? -1 * (long) Math.pow(2, fieldBitWidth - 1) : 0;
           long maxValue = isSigned ? (long) Math.pow(2, fieldBitWidth - 1) - 1 :
               (long) Math.pow(2, fieldBitWidth);
-          var entry = new FrameIndexElimination(label, instruction, immediate,
-              TableGenImmediateRecord.createPredicateMethod(instruction, immediate.fieldAccess())
-                  .lower(),
+          var predicateFunction = immediate.fieldAccess().predicate();
+          var tableGenImmediateRecord = ensureNonNull(
+              immediatesByPredicates.get(predicateFunction),
+              "Expected to find an immediate record for the given predicate function.");
+          var predicateName = tableGenImmediateRecord.predicateMethod().lower();
+
+          var entry = new FrameIndexElimination(label, instruction, immediate, predicateName,
               instruction.behavior().getNodes(ReadsRegisterTensor.class)
                   .filter(HasRegisterTensor::hasRegisterFile)
                   .findFirst().get()
