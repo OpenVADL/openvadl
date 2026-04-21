@@ -18,7 +18,6 @@ package vadl.utils;
 
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -72,9 +71,8 @@ public interface VirtualFileSystem {
    *
    * @param path          to read from.
    * @return              a stream of the lines from the file.
-   * @throws IOException  if the file cannot be read.
    */
-  default Stream<String> readLines(Path path) throws IOException {
+  default Stream<String> readLines(Path path) {
     return new BufferedReader(new InputStreamReader(getInputStream(path), StandardCharsets.UTF_8))
         .lines();
   }
