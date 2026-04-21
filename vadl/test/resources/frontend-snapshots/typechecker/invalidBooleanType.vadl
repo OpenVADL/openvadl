@@ -9,7 +9,7 @@ constant b: Bool<1> = true
 //     1 │ constant b: Bool<1> = true
 //       │             ^^^^^^^
 //       │
-//       The Bool type doesn't use the size notation.
+//       The `Bool` type doesn't use the size notation.
 //       help: Try removing the size parameter here.
 //
 //

@@ -173,9 +173,9 @@ public class TypeChecker
 
     var nodeId = System.identityHashCode(expr);
     if (currentlyVisiting.contains(nodeId)) {
-      throw error("Infinite Recursion", expr)
+      throw addErrorAndAbortChecking(error("Infinite Recursion", expr)
           .description("The node is defined by itself.")
-          .build();
+          .build());
     }
 
     var previousExpectedType = this.expectedType;
@@ -221,9 +221,9 @@ public class TypeChecker
 
     var nodeId = System.identityHashCode(stmt);
     if (currentlyVisiting.contains(nodeId)) {
-      throw error("Infinite Recursion", stmt)
+      throw addErrorAndAbortChecking(error("Infinite Recursion", stmt)
           .description("The node is defined by itself.")
-          .build();
+          .build());
     }
 
     currentlyVisiting.add(nodeId);
@@ -244,8 +244,9 @@ public class TypeChecker
     Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
     def.annotations.forEach(annotation -> {
       if (annotationNames.containsKey(annotation.name())) {
-        errors.add(error("Duplicate Annotation", def)
-            .locationNote(annotationNames.get(annotation.name()), "First used here")
+        addErrorAndContinueChecking(error("Duplicate Annotation", def)
+            .locationNote(annotationNames.get(annotation.name()), "First usage here")
+            .locationNote(def, "Second usage here")
             .build()
         );
       }
@@ -285,9 +286,9 @@ public class TypeChecker
             "Definition `%s` is defined by itself.".formatted(identifiableNode.identifier().name);
       }
 
-      throw error("Infinite Recursion", def)
+      throw addErrorAndAbortChecking(error("Infinite Recursion", def)
           .description("%s", message)
-          .build();
+          .build());
     }
 
     // Visit the definitions
@@ -337,17 +338,43 @@ public class TypeChecker
   }
 
   /**
+   * Add an error to the internal list and continue checking.
+   *
+   * @param error to be recorded.
+   */
+  private void addErrorAndContinueChecking(Diagnostic error) {
+    errors.add(error);
+  }
+
+
+  /**
    * Add a recoverable error to the internal list and throw a StopPartialCheckingSignal.
    *
    * @param error to be recorded.
    * @return StopPartialCheckingSignal is never actually returned but thrown, however sometimes it
-   *     is used to trick the compiler.
+   *     is used to trick the java compiler.
    * @throws StopPartialCheckingSignal always.
    */
   private StopPartialCheckingSignal addErrorAndStopChecking(Diagnostic error) {
     errors.add(error);
     throw new StopPartialCheckingSignal();
   }
+
+  /**
+   * Add a non-recoverable error and abort all further checking.
+   * <b>WARNING:</b> This will reduce the developer experience because all still missing nodes won't
+   * be checked and reported. Only use when this lands in a state where the compiler is so confused
+   * that there is no way to continue.
+   *
+   * @param error to be recorded.
+   * @return RuntimeException is never actually returned but, sometimes this is needed to trick the
+   *      java compiler.
+   * @throws Diagnostic always
+   */
+  private RuntimeException addErrorAndAbortChecking(Diagnostic error) {
+    throw error;
+  }
+
 
   private static Diagnostic typeMismatchError(WithLocation locatable, Type expected, Type actual) {
     return typeMismatchError(locatable, "`%s`".formatted(expected), actual);
@@ -865,7 +892,7 @@ public class TypeChecker
 
       if (!left.type().equals(right.type())) {
         addErrorAndStopChecking(error("Type Mismatch", location)
-            .locationNote(location, "The left type is %s while right is %s", left.type(),
+            .locationNote(location, "The left type is `%s` while right is `%s`", left.type(),
                 right.type())
             .description(
                 "Both types on the left and right side of an binary operation should be equal.")
@@ -1195,10 +1222,10 @@ public class TypeChecker
 
     var field = definition.target();
     if (!(field instanceof DerivedFormatField)) {
-      throw error("Invalid format field predicate", definition.identifier)
+      throw addErrorAndAbortChecking(error("Invalid format field predicate", definition.identifier)
           .locationDescription(definition.identifier,
               "The predicate must reference a field access function.")
-          .build();
+          .build());
     }
     if (definition.expr.type() != Type.bool()) {
       addErrorAndStopChecking(error("Invalid field access predicate", definition.identifier)
@@ -1245,10 +1272,10 @@ public class TypeChecker
 
     var type = definition.typeLiteral.resultType().type();
     if (!(type instanceof DataType)) {
-      throw error("Invalid Type", definition)
-          .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
-          .note("Type was %s.", type)
-          .build();
+      throw addErrorAndStopChecking(error("Invalid Type", definition)
+          .description("Expected register type to be one of `Bits`, `SInt`, `UInt` or `Bool`.")
+          .note("Type was `%s`.", type)
+          .build());
     }
 
     // In case the user wrote the relational type syntax, let's remap it to tensor type which makes
@@ -1265,10 +1292,10 @@ public class TypeChecker
     definition.typeLiteral.argTypes().forEach((argType) -> {
       var argTypeType = argType.type();
       if (!(argTypeType instanceof DataType)) {
-        throw error("Invalid Type", definition)
+        addErrorAndStopChecking(error("Invalid Type", definition)
             .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
             .note("Type was %s.", argTypeType)
-            .build();
+            .build());
       }
     });
     if (!definition.typeLiteral.argTypes().isEmpty()) {
@@ -1278,14 +1305,14 @@ public class TypeChecker
         type = new TensorType(List.of(newIndex), tensorType);
       } else {
         if (!(type instanceof BitsType bitsType)) {
-          throw error("Type Mismatch", definition.typeLiteral.resultType())
+          throw addErrorAndStopChecking(error("Type Mismatch", definition.typeLiteral.resultType())
               .description(
                   "Expected result type to be either a tensor or a bits type, but received `%s`",
                   type)
               .note(
                   "For type literals in the relation syntax (with the arrow syntax) the result "
                       + "type must be a bits type.")
-              .build();
+              .build());
         }
 
         type = new TensorType(List.of(newIndex), bitsType);
@@ -1305,14 +1332,14 @@ public class TypeChecker
     check(definition.behavior);
 
     if (definition.assemblyDefinition == null) {
-      throw error("Missing Assembly", definition.identifier())
+      addErrorAndContinueChecking(error("Missing Assembly", definition.identifier())
           .description("Every instruction needs an matching assembly definition.")
-          .build();
+          .build());
     }
     if (definition.encodingDefinition == null) {
-      throw error("Missing Encoding", definition.identifier())
+      addErrorAndContinueChecking(error("Missing Encoding", definition.identifier())
           .description("Every instruction needs an matching encoding definition.")
-          .build();
+          .build());
     }
 
     return null;
@@ -1328,9 +1355,9 @@ public class TypeChecker
 
     // Verify the existenc of a matching assemblyDefinition
     if (definition.assemblyDefinition == null) {
-      throw error("Missing Assembly", definition.identifier())
+      addErrorAndContinueChecking(error("Missing Assembly", definition.identifier())
           .description("Every pseudo instruction needs an matching assembly definition.")
-          .build();
+          .build());
     }
 
     return null;
@@ -1351,9 +1378,7 @@ public class TypeChecker
     definition.expr = wrapImplicitCast(definition.expr, definedType);
     var actualType = requireNonNull(definition.expr.type);
     if (!definedType.equals(actualType)) {
-      throw error("Type Mismatch", definition.expr)
-          .description("Expected %s but got %s", definedType, actualType)
-          .build();
+      throw addErrorAndStopChecking(typeMismatchError(definition.expr, definedType, actualType));
     }
 
     var argTypes = definition.params.stream().map(p -> p.typeLiteral.type).toList();
@@ -1378,7 +1403,7 @@ public class TypeChecker
       var valueType = requireNonNull(encodingField.value.type);
 
       if (!fieldType.equals(valueType)) {
-        throw typeMismatchError(encodingField.value, fieldType, valueType);
+        throw addErrorAndStopChecking(typeMismatchError(encodingField.value, fieldType, valueType));
       }
     }
     return null;
@@ -1396,7 +1421,7 @@ public class TypeChecker
     var exprType = check(definition.expr);
 
     if (exprType.getClass() != StringType.class) {
-      throw typeMismatchError(definition.expr, "`String`", exprType);
+      throw addErrorAndStopChecking(typeMismatchError(definition.expr, "`String`", exprType));
     }
     return null;
   }
@@ -1418,9 +1443,9 @@ public class TypeChecker
     check(abiClangNumericTypeDefinition.size);
     var ty = abiClangNumericTypeDefinition.size.type();
     if (!(ty instanceof ConstantType)) {
-      throw error("Type Mismatch", abiClangNumericTypeDefinition.size)
+      throw addErrorAndStopChecking(error("Type Mismatch", abiClangNumericTypeDefinition.size)
           .description("Expected a number as data type")
-          .build();
+          .build());
     }
 
     return null;
@@ -1448,10 +1473,10 @@ public class TypeChecker
     var exprType = requireNonNull(definition.expr.type);
 
     if (!exprType.equals(retType)) {
-      throw error("Type Mismatch", definition.expr)
+      throw addErrorAndStopChecking(error("Type Mismatch", definition.expr)
           .locationDescription(definition.retType, "Return type defined here as `%s`", retType)
           .locationDescription(definition.expr, "Expected `%s` but got `%s`", retType, exprType)
-          .build();
+          .build());
     }
 
 
@@ -1512,9 +1537,9 @@ public class TypeChecker
     var targetIdent = switch (definition.value) {
       case Identifier ident -> ident;
       case CallIndexExpr expr -> expr.target.path();
-      default -> throw error("Invalid alias", definition.value)
+      default -> throw addErrorAndStopChecking(error("Invalid alias", definition.value)
           .locationDescription(definition.value, "The target must be a direct register access.")
-          .build();
+          .build());
     };
 
     definition.computedFixedArgs = List.of();
@@ -1525,9 +1550,11 @@ public class TypeChecker
         // it might reference an other alias definition
         var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
         if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
-          throw error("Unknown alias source register", targetIdent.location())
-              .locationDescription(targetIdent.location(), "Unknown register `%s`.", targetIdent)
-              .build();
+          throw addErrorAndStopChecking(
+              error("Unknown alias source register", targetIdent.location())
+                  .locationDescription(targetIdent.location(), "Unknown register `%s`.",
+                      targetIdent)
+                  .build());
         }
         check(alias);
         reg = (RegisterDefinition) requireNonNull(alias.computedTarget);
@@ -1678,19 +1705,19 @@ public class TypeChecker
   public Void visit(EnumerationDefinition definition) {
     var type = definition.enumType != null ? check(definition.enumType) : null;
     if (type != null && !(type instanceof BitsType)) {
-      throw error("Type mismatch", definition)
+      throw addErrorAndStopChecking(error("Type mismatch", definition)
           .locationDescription(requireNonNull(definition.enumType),
-              "Expected bits type but got `%s`", type)
+              "Expected `Bits` type but got `%s`", type)
           .note("In future there will be support for Strings and other types as well.")
-          .build();
+          .build());
     }
 
     // check if there are enums
     if (definition.entries.isEmpty()) {
-      throw error("No enumeration entries", definition)
+      throw addErrorAndStopChecking(error("No enumeration entries", definition)
           .locationDescription(definition,
               "The enumeration has no entries, but at least one is required.")
-          .build();
+          .build());
     }
 
     int nextVal = 0;
@@ -1796,9 +1823,10 @@ public class TypeChecker
         }
 
         // We don't need to stop checking we can continue after an error.
-        default -> errors.add(
+        default -> addErrorAndContinueChecking(
             error("Invalid Operation Member", resource)
-                .locationNote(resource, "Operation members must be instructions but this was a %s",
+                .locationNote(resource,
+                    "Operation members must be instructions but this was a `%s`",
                     requireNonNull(resource.target()).nodeName())
                 .build());
       }
@@ -1888,19 +1916,19 @@ public class TypeChecker
       switch (entry.getValue()) {
         case ONE -> {
           if (pseudoInstructions.isEmpty()) {
-            throw noValues;
+            throw addErrorAndStopChecking(noValues);
           } else if (pseudoInstructions.size() > 1) {
-            throw multipleValues;
+            throw addErrorAndStopChecking(multipleValues);
           }
         }
         case OPTIONAL -> {
           if (pseudoInstructions.size() > 1) {
-            throw multipleValues;
+            throw addErrorAndStopChecking(multipleValues);
           }
         }
         case AT_LEAST_ONE -> {
           if (pseudoInstructions.isEmpty()) {
-            throw noValues;
+            throw addErrorAndStopChecking(noValues);
           }
         }
       }
@@ -1990,8 +2018,8 @@ public class TypeChecker
     if (!asmRuleInvocationChain.add(definition.identifier().name)) {
       var cycle =
           String.join(" -> ", asmRuleInvocationChain) + " -> " + definition.identifier().name;
-      throw error("Found a cycle in grammar rules: %s.".formatted(cycle),
-          definition.location()).build();
+      throw addErrorAndAbortChecking(error("Found a cycle in grammar rules: %s.".formatted(cycle),
+          definition.location()).build());
     }
 
     check(definition.alternatives);
@@ -2053,13 +2081,13 @@ public class TypeChecker
         if (element.localVar != null) {
           for (int j = 0; j < i; j++) {
             if (elements.get(j).localVar == null && elements.get(j).semanticPredicate == null) {
-              throw error(
+              throw addErrorAndAbortChecking(error(
                   "Local variable declaration is not at the beginning of a block.",
                   element.location())
                   .locationDescription(element.localVar.location(),
                       "Local variable declared here.")
                   .locationDescription(elements.get(0).location(), "Block starts here.")
-                  .build();
+                  .build());
             }
           }
         }
@@ -2112,9 +2140,9 @@ public class TypeChecker
     if (element.attribute != null && !element.isAttributeLocalVar
         && !element.isWithinRepetitionBlock) {
       if (groupSubtypeMap.containsKey(element.attribute.name)) {
-        throw error("Found multiple assignments to attribute.", element)
-            .description("Attribute %s has already been assigned to.",
-                element.attribute.name).build();
+        throw addErrorAndAbortChecking(error("Found multiple assignments to attribute.", element)
+            .description("Attribute `%s` has already been assigned to.",
+                element.attribute.name).build());
       }
       groupSubtypeMap.put(element.attribute.name, element.asmType);
       assignedAttributes.put(element.attribute.name, element);
@@ -2150,11 +2178,11 @@ public class TypeChecker
                                                              Map<String, AsmType> groupSubtypeMap,
                                                              String attributeToBeAdded) {
     if (groupSubtypeMap.containsKey(attributeToBeAdded)) {
-      throw error("Found invalid attribute assignment.", element)
+      throw addErrorAndAbortChecking(error("Found invalid attribute assignment.", element)
           .description(
               "Attribute %s assigned in this block is already assigned in enclosing block.",
               attributeToBeAdded)
-          .build();
+          .build());
     }
   }
 
@@ -2171,14 +2199,14 @@ public class TypeChecker
     }
 
     if (!allAlternativeType.equals(curAlternativeType)) {
-      throw error(
+      throw addErrorAndAbortChecking(error(
           "Found asm alternatives with differing AsmTypes.", definition.location())
           .note("All alternatives must resolve to the same AsmType.")
           .locationDescription(allAlternativeTypeElement,
               "Found alternative with type %s,", allAlternativeType)
           .locationDescription(elements.get(0),
               "Found other alternative with type %s,", curAlternativeType)
-          .build();
+          .build());
     }
   }
 
@@ -2206,8 +2234,9 @@ public class TypeChecker
     if (definition.semanticPredicate != null) {
       check(definition.semanticPredicate);
       if (definition.semanticPredicate.type != Type.bool()) {
-        throw error("Semantic predicate expression does not evaluate to Boolean.",
-            definition.semanticPredicate).build();
+        throw addErrorAndAbortChecking(
+            error("Semantic predicate expression does not evaluate to Boolean.",
+                definition.semanticPredicate).build());
       }
     }
 
@@ -2267,14 +2296,14 @@ public class TypeChecker
       requireNonNull(definition.asmType);
       requireNonNull(localVarDefinition.asmType);
       if (localVarDefinition.asmType != definition.asmType) {
-        throw error("Type Mismatch", definition)
-            .locationDescription(localVarDefinition, "Local variable %s is "
-                    + "defined with AsmType %s.",
+        throw addErrorAndAbortChecking(error("Type Mismatch", definition)
+            .locationDescription(localVarDefinition, "Local variable `%s` is "
+                    + "defined with AsmType `%s`.",
                 definition.attribute.name, localVarDefinition.asmType)
-            .locationDescription(definition, "Local variable %s is "
-                    + "updated with another AsmType %s.",
+            .locationDescription(definition, "Local variable `%s` is "
+                    + "updated with another AsmType `%s`.",
                 definition.attribute.name, definition.asmType)
-            .build();
+            .build());
       }
     }
   }
@@ -2282,23 +2311,25 @@ public class TypeChecker
   private void validateAttributeAsmType(AsmGrammarElementDefinition definition) {
     if (definition.attribute != null && !definition.isAttributeLocalVar) {
       if (!definition.isWithinRepetitionBlock && definition.isPlusEqualsAttributeAssign) {
-        throw error("'+=' assignments are only allowed inside of repetition blocks.",
-            definition.location()).build();
+        throw addErrorAndAbortChecking(
+            error("'+=' assignments are only allowed inside of repetition blocks.",
+                definition.location()).build());
       }
 
       if (definition.isWithinRepetitionBlock) {
         if (!definition.isPlusEqualsAttributeAssign) {
-          throw error("Only '+=' assignments are allowed in repetition blocks.",
-              definition.location()).build();
+          throw addErrorAndAbortChecking(
+              error("Only '+=' assignments are allowed in repetition blocks.",
+                  definition.location()).build());
         }
 
         var parentAttributeElement = attributesAssignedInParent.get(definition.attribute.name);
         if (parentAttributeElement == null || parentAttributeElement.asmType == null) {
-          throw error(
+          throw addErrorAndAbortChecking(error(
               "'%s' does not exist in the surrounding block."
                   .formatted(definition.attribute.name), definition.location())
               .note("'+=' assignments have to reference an attribute in the surrounding block.")
-              .build();
+              .build());
         }
 
         if (definition.asmType == null) {
@@ -2307,14 +2338,14 @@ public class TypeChecker
         }
 
         if (!definition.asmType.canBeCastTo(parentAttributeElement.asmType)) {
-          throw error(
+          throw addErrorAndAbortChecking(error(
               "Element of AsmType %s cannot be '+=' assigned to attribute %s of AsmType %s."
                   .formatted(definition.asmType, definition.attribute.name,
                       parentAttributeElement.asmType), definition.location())
               .locationDescription(parentAttributeElement,
                   "Attribute %s is assigned to AsmType %s here.", definition.attribute.name,
                   parentAttributeElement.asmType)
-              .build();
+              .build());
         }
       }
     }
@@ -2347,11 +2378,12 @@ public class TypeChecker
     } else if (invocationSymbolOrigin instanceof FunctionDefinition function) {
       visitAsmFunctionInvocation(definition, function);
     } else {
-      throw error(("Symbol %s used in grammar rule does not reference a grammar rule "
-          + "/ function / local variable.").formatted(definition.id.name), definition)
-          .locationDescription(invocationSymbolOrigin, "Symbol %s is defined here.",
-              definition.id.name)
-          .build();
+      throw addErrorAndAbortChecking(
+          error(("Symbol %s used in grammar rule does not reference a grammar rule "
+              + "/ function / local variable.").formatted(definition.id.name), definition)
+              .locationDescription(invocationSymbolOrigin, "Symbol %s is defined here.",
+                  definition.id.name)
+              .build());
     }
 
     return null;
@@ -2387,8 +2419,8 @@ public class TypeChecker
   private void visitAsmLocalVarUsage(AsmGrammarLiteralDefinition enclosingAsmLiteral,
                                      AsmGrammarLocalVarDefinition localVar) {
     if (!enclosingAsmLiteral.parameters.isEmpty()) {
-      throw error("Local variable with parameters.", enclosingAsmLiteral)
-          .note("Usage of a local variable cannot have parameters.").build();
+      throw addErrorAndAbortChecking(error("Local variable with parameters.", enclosingAsmLiteral)
+          .note("Usage of a local variable cannot have parameters.").build());
     }
 
     if (localVar.asmType == null) {
@@ -2408,11 +2440,11 @@ public class TypeChecker
     check(function);
 
     if (enclosingAsmLiteral.parameters.size() != function.params.size()) {
-      throw error("Arguments Mismatch", enclosingAsmLiteral)
+      throw addErrorAndAbortChecking(error("Arguments Mismatch", enclosingAsmLiteral)
           .locationDescription(function, "Expected %d arguments.", function.params.size())
           .locationDescription(enclosingAsmLiteral, "But got %d arguments.",
               enclosingAsmLiteral.parameters.size())
-          .build();
+          .build());
     }
 
     for (int i = 0; i < enclosingAsmLiteral.parameters.size(); i++) {
@@ -2424,11 +2456,12 @@ public class TypeChecker
       requireNonNull(argumentType);
 
       if (!canImplicitCast(asmParam.asmType.toOperationalType(), argumentType)) {
-        throw error("Type Mismatch in function argument", enclosingAsmLiteral)
-            .locationDescription(function.params.get(i), "Expected %s.", argumentType)
-            .locationDescription(asmParam, "Got %s (from %s).",
-                asmParam.asmType.toOperationalType(), asmParam.asmType)
-            .build();
+        throw addErrorAndAbortChecking(
+            error("Type Mismatch in function argument", enclosingAsmLiteral)
+                .locationDescription(function.params.get(i), "Expected `%s`.", argumentType)
+                .locationDescription(asmParam, "Got `%s` (from `%s`).",
+                    asmParam.asmType.toOperationalType(), asmParam.asmType)
+                .build());
       }
     }
 
@@ -2468,9 +2501,9 @@ public class TypeChecker
         definition.asmType =
             getAsmTypeFromAsmTypeDefinition(definition.asmLiteral.asmTypeDefinition);
       } else {
-        throw error("Local variable without AsmType", definition)
+        throw addErrorAndAbortChecking(error("Local variable without AsmType", definition)
             .note("Local variables declarations with value 'null' must have an AsmType.")
-            .build();
+            .build());
       }
       return null;
     }
@@ -2504,20 +2537,21 @@ public class TypeChecker
         SpecialPurposeRegisterDefinition.Purpose.numberOfExpectedArguments.get(definition.purpose);
 
     if (actual == null) {
-      errors.add(error("Cannot determine number of expected registers",
+      addErrorAndContinueChecking(error("Cannot determine number of expected registers",
           definition.location()).build());
     }
 
     if (actual == Occurrence.ONE) {
       if (definition.exprs.size() != 1) {
-        errors.add(error("Number of registers is incorrect. This definition expects only one",
-            definition.location()).build());
+        addErrorAndContinueChecking(
+            error("Number of registers is incorrect. This definition expects only one",
+                definition.location()).build());
       }
     }
 
     if (actual == Occurrence.ONE) {
       if (definition.exprs.isEmpty()) {
-        errors.add(error(
+        addErrorAndContinueChecking(error(
             "Number of registers is incorrect. This definition expects at least one.",
             definition.location()).build());
       }
@@ -2535,7 +2569,7 @@ public class TypeChecker
     //  (like Resource access -- except memory write of course)
 
     BiConsumer<Definition, String> addConflictDiag =
-        (def, name) -> errors.add(
+        (def, name) -> addErrorAndContinueChecking(
             error("Conflicting definitions.", definition.identifier())
                 .locationDescription(definition.identifier(), "Contains multiple `%s` definitions.",
                     name)
@@ -2610,9 +2644,9 @@ public class TypeChecker
   @Override
   public Void visit(MicroArchitectureDefinition definition) {
     if (!(definition.isa.target() instanceof InstructionSetDefinition)) {
-      throw error("ISA required", definition.isa)
-          .locationDescription(definition.isa, "A MIA implements an ISA but this points to a %s",
-              requireNonNull(definition.isa.target()).nodeName()).build();
+      addErrorAndContinueChecking(error("ISA required", definition.isa)
+          .locationDescription(definition.isa, "A MIA implements an ISA but this points to a `%s`",
+              requireNonNull(definition.isa.target()).nodeName()).build());
     }
     definition.definitions.forEach(this::check);
     return null;
@@ -2645,7 +2679,8 @@ public class TypeChecker
         addErrorAndStopChecking(
             error("Type Mismatch", output)
                 .description(
-                    "The type of a stage output must be an InstructionType or a FetchResultType.")
+                    "The type of a stage output must be an `InstructionType` "
+                        + "or a `FetchResultType`.")
                 .build());
       }
     });
@@ -2802,7 +2837,7 @@ public class TypeChecker
 
       if (!exceptionDef.params.isEmpty()) {
         // No need to stop evaluation we can still continue.
-        errors.add(error("Invalid Exception Raise", expr)
+        addErrorAndContinueChecking(error("Invalid Exception Raise", expr)
             .description("Expected %s arguments but got %s.", exceptionDef.params.size(),
                 0)
             .build());
@@ -2874,7 +2909,7 @@ public class TypeChecker
     // Both sides must be boolean
     if (!(left.type() instanceof BoolType) && !canImplicitCast(left.type(), Type.bool())) {
       // We can still continue here, the expression still returns a boolean.
-      errors.add(error("Type Mismatch", location)
+      addErrorAndContinueChecking(error("Type Mismatch", location)
           .locationDescription(location, "Expected a `Bool` here but the left side was an `%s`",
               left.type())
           //.description("The `%s` operator only works on booleans.", builtIn.operator())
@@ -2884,7 +2919,7 @@ public class TypeChecker
 
     if (!(right.type() instanceof BoolType) && !canImplicitCast(right.type(), Type.bool())) {
       // We can still continue here, the expression still returns a boolean.
-      errors.add(error("Type Mismatch", location)
+      addErrorAndContinueChecking(error("Type Mismatch", location)
           .locationDescription(location, "Expected a `Bool` here but the right side was an `%s`",
               right.type())
           //.description("The `%s` operator only works on booleans.", builtIn.operator())
@@ -2949,7 +2984,7 @@ public class TypeChecker
       if (concreteTypes.isEmpty()) {
         addErrorAndStopChecking(error("Type Mismatch", expr)
             .locationDescription(expr,
-                "At least one value has to have a concrete bitwidth for a concatination")
+                "At least one value has to have a concrete bitwidth for a concatenation")
             .build());
       }
       if (concreteTypes.size() > 1) {
@@ -2957,7 +2992,7 @@ public class TypeChecker
             .locationDescription(expr,
                 "The concatination operation can only concat bits or strings.")
             .locationNote(expr, "Provided types: %s",
-                String.join(", ", types.stream().map(Type::toString).toList()))
+                String.join(", ", types.stream().map(type -> "`%s`".formatted(type)).toList()))
             .locationHelp(expr,
                 "Constant types can be implicitly casted to a concrete type if only one such "
                     + "concrete type appears.")
@@ -2976,7 +3011,7 @@ public class TypeChecker
 
     throw addErrorAndStopChecking(error("Type Mismatch", expr)
         .locationNote(expr, "Provided types: %s",
-            String.join(", ", types.stream().map(Type::toString).toList()))
+            String.join(", ", types.stream().map(type -> "`%s`".formatted(type)).toList()))
         .description(
             "The concatenation operation can only be applied on a set of strings or a set of bits.")
         .build());
@@ -3180,7 +3215,7 @@ public class TypeChecker
     if (unSizedBuiltins.containsKey(base)) {
       if (!sizes.isEmpty()) {
         return new Either(null, error("Invalid Type Notation", expr.location())
-            .description("The %s type doesn't use the size notation.", base)
+            .description("The `%s` type doesn't use the size notation.", base)
             .help("Try removing the size parameter here.")
             .build());
       }
@@ -3565,7 +3600,7 @@ public class TypeChecker
         if (!allowedStatusfields.contains(fieldName)) {
           var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
           addErrorAndStopChecking(error("Unknown status field `%s`".formatted(fieldName), expr)
-              .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
+              .suggestions(suggestions)
               .build());
         }
         var fieldType = Type.bool();
@@ -3580,7 +3615,7 @@ public class TypeChecker
           var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
           addErrorAndStopChecking(
               error("Unknown status or subcall field `%s`".formatted(fieldName), expr)
-                  .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
+                  .suggestions(suggestions)
                   .build());
         }
 
@@ -3851,7 +3886,7 @@ public class TypeChecker
     var condType = expr.condition.type();
     if (condType != Type.bool()) {
       // We can still proceed checking the rest of the program.
-      errors.add(typeMismatchError(expr, Type.bool(), condType));
+      addErrorAndContinueChecking(typeMismatchError(expr, Type.bool(), condType));
     }
 
     var thenType = checkWith(expr.thenExpr, expectedType);
@@ -3939,7 +3974,7 @@ public class TypeChecker
 
     if (!canExplicitCast(valType, litType)) {
       // No need to stop checking we can just assume it works and assign the declared type.
-      errors.add(error("Invalid cast", expr)
+      addErrorAndContinueChecking(error("Invalid cast", expr)
           .locationDescription(expr, "Cannot cast `%s` to `%s`.", valType, litType)
           .build());
     }
@@ -4063,7 +4098,7 @@ public class TypeChecker
     // FIXME: multiple indexes are hard to lower so let's throw an temporary error
     if (expr.indices.size() > 1) {
       addErrorAndStopChecking(error("Not Supported", expr)
-          .locationDescription(expr, "Multiple indicies aren't yet supported.")
+          .locationDescription(expr, "Multiple indices aren't yet supported.")
           .locationHelp(expr, "You can try a workaround with nested forall expressions.")
           .build());
     }
@@ -4122,7 +4157,7 @@ public class TypeChecker
       if (!allowedFoldBuiltins.contains(builtIn)) {
         // We can continue with this error
         var location = requireNonNull(((BinOp) expr.foldOperator)).location;
-        errors.add(
+        addErrorAndContinueChecking(
             error("Invalid Fold Operator", location)
                 .locationDescription(location,
                     "The operator `%s` isn't allowed for a forall fold. ", expr.getFoldOperator())
@@ -4213,7 +4248,7 @@ public class TypeChecker
     var condType = statement.condition.type();
     if (condType != Type.bool()) {
       // We can continue typechecking with this error.
-      errors.add(typeMismatchError(statement.condition, Type.bool(), condType));
+      addErrorAndContinueChecking(typeMismatchError(statement.condition, Type.bool(), condType));
     }
 
     check(statement.thenStmt);
@@ -4236,7 +4271,8 @@ public class TypeChecker
 
     if (!targetType.equals(valueType)) {
       // We can continue after this.
-      errors.add(typeMismatchError(statement.valueExpression, targetType, valueType));
+      addErrorAndContinueChecking(
+          typeMismatchError(statement.valueExpression, targetType, valueType));
     }
 
     var targetSource = switch (statement.target) {
@@ -4254,13 +4290,11 @@ public class TypeChecker
         message += " (originates from a %s)".formatted(targetSource.nodeName());
       }
       message += ", but a static value.";
-      var diagnostic = error("Cannot Write To Static Target", statement.target)
+      addErrorAndContinueChecking(error("Cannot Write To Static Target", statement.target)
           .locationDescription(statement.target, "%s", message)
           .locationNote(statement.target,
               "Only registers, counters, alias and memory are writable.")
-          .build();
-      // We can continue after this.
-      errors.add(diagnostic);
+          .build());
     }
 
     return null;
@@ -4276,8 +4310,7 @@ public class TypeChecker
   public Void visit(CallStatement statement) {
     check(statement.expr);
     if (statement.expr.type != Type.void_()) {
-      errors.add(
-          // We can continue directly
+      addErrorAndContinueChecking(
           typeMismatchError(statement.expr, Type.void_(), requireNonNull(statement.expr.type)));
     }
     return null;
@@ -4402,7 +4435,7 @@ public class TypeChecker
         var actualType = statement.unnamedArguments.get(i).type();
 
         if (!targetType.equals(actualType)) {
-          errors.add(typeMismatchError(arg, targetType, actualType));
+          addErrorAndContinueChecking(typeMismatchError(arg, targetType, actualType));
         }
       }
 

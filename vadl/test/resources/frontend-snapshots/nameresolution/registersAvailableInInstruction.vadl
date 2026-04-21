@@ -19,5 +19,13 @@ instruction set architecture ISA = {
 //       │
 //       Every instruction needs an matching assembly definition.
 //
+//  error: Missing Encoding
+//       ╭── test/resources/frontend-snapshots/nameresolution/registersAvailableInInstruction.vadl:6:15
+//       │
+//     6 │   instruction BEQ : Btype = {
+//       │               ^^^
+//       │
+//       Every instruction needs an matching encoding definition.
+//
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

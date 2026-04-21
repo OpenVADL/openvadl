@@ -15,7 +15,7 @@ constant second = $apfelstrudel
 //       ╭── test/resources/frontend-snapshots/parser/invalidModelWithErrorInModel.vadl:4:3
 //       │
 //     4 │   false + 42
-//       │   ^^^^^^^^^^ note: The left type is Bits<1> while right is Bits<6>
+//       │   ^^^^^^^^^^ note: The left type is `Bits<1>` while right is `Bits<6>`
 //       ⋮
 //     9 │ constant second = $apfelstrudel
 //       │                   ------------- from this model invocation
