@@ -89,8 +89,7 @@ public class IssExceptionHandlingCodeGenerator extends IssProcGen
 
   @Override
   public void handle(CGenContext<Node> ctx, ReadRegTensorNode node) {
-    // use register variables defined at start
-    ctx().wr(readRegVariable(node));
+    emitReadReg(ctx, node);
   }
 
   /**

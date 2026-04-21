@@ -18,22 +18,27 @@ package vadl.iss.codegen;
 
 import static vadl.error.DiagUtils.throwNotAllowed;
 
+import java.util.HashSet;
+import java.util.Set;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
+import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -57,6 +62,7 @@ abstract class IssProcGen implements CDefaultMixins.All,
   private final CNodeContext ctx;
   private final StringBuilder builder;
   private final IssAccessorRegistry accessorRegistry;
+  private final Set<ReadRegTensorNode> preloadedReadRegs = new HashSet<>();
 
   public IssProcGen(IssAccessorRegistry accessorRegistry) {
     this(accessorRegistry, IssProcGenDispatcher::dispatch);
@@ -93,11 +99,15 @@ abstract class IssProcGen implements CDefaultMixins.All,
    * @param graph that contains register reads
    */
   void initReadRegs(Graph graph) {
+    preloadedReadRegs.clear();
     graph.getNodes(ReadRegTensorNode.class)
         .forEach(this::initSingleReadReg);
   }
 
   void initSingleReadReg(ReadRegTensorNode read) {
+    if (dependsOnForallIndex(read)) {
+      return;
+    }
     var width = read.type().asDataType().bitWidth();
     read.ensure(width <= 64,
         "Helper read preload expects <=64-bit reads, got %d-bit on %s", width, read);
@@ -110,6 +120,7 @@ abstract class IssProcGen implements CDefaultMixins.All,
       ctx.wr(", ").gen(i);
     }
     ctx.ln(");");
+    preloadedReadRegs.add(read);
   }
 
   /**
@@ -124,6 +135,52 @@ abstract class IssProcGen implements CDefaultMixins.All,
       name += "_" + read.id;
     }
     return name;
+  }
+
+  void emitReadReg(CGenContext<Node> ctx, ReadRegTensorNode read) {
+    if (preloadedReadRegs.contains(read)) {
+      ctx.wr(readRegVariable(read));
+      return;
+    }
+    RegisterAccessEmitters.emitRead(ctx, read, accessorRegistry);
+  }
+
+  private String exprSaveVariable(ExprSaveNode save) {
+    return "expr_save_" + save.id().numericId();
+  }
+
+  private boolean dependsOnForallIndex(Node node) {
+    return dependsOnForallIndex(node, new HashSet<>());
+  }
+
+  private boolean dependsOnForallIndex(Node node, Set<Node> visited) {
+    if (!visited.add(node)) {
+      return false;
+    }
+    if (node instanceof ForIdxNode) {
+      return true;
+    }
+    return node.inputs().anyMatch(input -> dependsOnForallIndex(input, visited));
+  }
+
+  @Handler
+  @Override
+  public void handle(CGenContext<Node> ctx, ScheduledNode node) {
+    if (node.node() instanceof ExprSaveNode save) {
+      var type = CppTypeMap.nextFittingUInt(save.type().asDataType());
+      ctx.wr(type + " " + exprSaveVariable(save) + " = ")
+          .gen(save.value())
+          .ln(";");
+      ctx.gen(node.next());
+      return;
+    }
+    ctx.gen(node.node()).ln(";");
+    ctx.gen(node.next());
+  }
+
+  @Handler
+  public void handle(CGenContext<Node> ctx, ExprSaveNode toHandle) {
+    ctx.wr(exprSaveVariable(toHandle));
   }
 
   @Handler

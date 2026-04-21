@@ -147,23 +147,39 @@ class IssResourceReadSecurer {
    * Runs the resource read securer on the instruction.
    */
   void run() {
-    // Use post-lowering graph resources instead of Instruction.readResources() cache,
-    // because alias lowering rewrites accesses to their effective base resources.
-    var readResources = instruction.behavior().getNodes(ReadResourceNode.class)
-        .map(ReadResourceNode::resourceDefinition)
-        .collect(Collectors.toSet());
-
-    for (var resource : readResources) {
-      handleReadResource(resource);
-    }
+    readResources().forEach(resource -> {
+      var saveLocation = saveLocation(resource);
+      if (saveLocation != null) {
+        applySave(resource, saveLocation);
+      }
+    });
   }
 
   /**
-   * Handles securing reads for a specific resource.
+   * Determines whether securing this instruction would require at least one saved resource read.
+   *
+   * <p>This is intentionally a dry-run variant of {@link #run()} so analyses can ask the same
+   * question without mutating the graph.</p>
+   */
+  boolean requiresReadSave() {
+    return readResources().anyMatch(resource -> saveLocation(resource) != null);
+  }
+
+  private Stream<Resource> readResources() {
+    // Use post-lowering graph resources instead of Instruction.readResources() cache,
+    // because alias lowering rewrites accesses to their effective base resources.
+    return instruction.behavior().getNodes(ReadResourceNode.class)
+        .map(ReadResourceNode::resourceDefinition)
+        .collect(Collectors.toSet())
+        .stream();
+  }
+
+  /**
+   * Determines the save location for a specific resource, if a save is needed.
    *
    * @param resource The resource to secure reads for.
    */
-  private void handleReadResource(Resource resource) {
+  private @Nullable ControlNode saveLocation(Resource resource) {
     var writeSchedules = instruction.behavior().getNodes(WriteResourceNode.class)
         .filter(wn -> wn.resourceDefinition() == resource)
         .map(wn -> wn.usages()
@@ -177,12 +193,16 @@ class IssResourceReadSecurer {
         .filter(wn -> wn.resourceDefinition() == resource)
         .toList();
 
-    var saveLocation = determineIfReadSaveIsRequired(reads, writeSchedules);
-    if (saveLocation == null) {
-      // No read save required
-      return;
-    }
+    return determineIfReadSaveIsRequired(reads, writeSchedules);
+  }
 
+  /**
+   * Applies saved reads for a resource at the provided control location.
+   */
+  private void applySave(Resource resource, ControlNode saveLocation) {
+    var reads = instruction.behavior().getNodes(ReadResourceNode.class)
+        .filter(wn -> wn.resourceDefinition() == resource)
+        .toList();
     for (var read : reads) {
       // Set spill location for conflicting read resources
       result.readTempSpillLocations().put(read, saveLocation);
