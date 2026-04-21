@@ -27,7 +27,6 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FoldNode;
-import vadl.viam.graph.dependency.ForIdxNode;
 
 /**
  * Decomposes {@link FoldNode} expressions by materializing only the requested result slice.
