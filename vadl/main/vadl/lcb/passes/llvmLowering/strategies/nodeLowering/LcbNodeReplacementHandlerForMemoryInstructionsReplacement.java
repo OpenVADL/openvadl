@@ -16,11 +16,14 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
+import java.util.Map;
 import java.util.Objects;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.types.DataType;
+import vadl.viam.Function;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -33,8 +36,10 @@ public class LcbNodeReplacementHandlerForMemoryInstructionsReplacement
   public LcbNodeReplacementHandlerForMemoryInstructionsReplacement(
       PrintableInstruction printableInstruction,
       ValueType architectureType,
-      ValueType smallestRegisterClassType) {
-    super(printableInstruction, architectureType, smallestRegisterClassType);
+      ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediateRecords) {
+    super(printableInstruction, architectureType, smallestRegisterClassType, 
+        tablegenImmediateRecords);
   }
 
   @Override

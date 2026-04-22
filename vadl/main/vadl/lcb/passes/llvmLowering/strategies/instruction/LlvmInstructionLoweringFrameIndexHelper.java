@@ -18,14 +18,18 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
 import vadl.utils.Pair;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -37,8 +41,9 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
 public abstract class LlvmInstructionLoweringFrameIndexHelper
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringFrameIndexHelper(
-      ValueType architectureType, ValueType smallestRegisterClassType) {
-    super(architectureType, smallestRegisterClassType);
+      ValueType architectureType, ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+    super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
   @Override

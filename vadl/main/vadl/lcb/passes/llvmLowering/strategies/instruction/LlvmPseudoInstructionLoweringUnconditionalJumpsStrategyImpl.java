@@ -18,10 +18,12 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils.replaceBasicBlockByLabelImmediateInMachineInstruction;
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
@@ -45,8 +47,10 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.viam.Abi;
 import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -57,12 +61,17 @@ import vadl.viam.graph.control.InstrCallNode;
  */
 public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
     LlvmPseudoInstructionLowerStrategy {
+
+  private final Map<Function, TableGenImmediateRecord> tablegenImmediateRecords;
+
   /**
    * Constructor.
    */
   public LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(
-      List<LlvmInstructionLoweringStrategy> strategies) {
+      List<LlvmInstructionLoweringStrategy> strategies,
+      Map<Function, TableGenImmediateRecord> tablegenImmediateRecords) {
     super(strategies);
+    this.tablegenImmediateRecords = tablegenImmediateRecords;
   }
 
   @Override
@@ -121,15 +130,20 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
           var instrCallNode = getInstrCallNodeOrThrowError(pseudo);
           var parameter = pseudo.parameters()[0];
           var fieldAccess = getFieldAccessFunctionFromFormatOrThrowError(instrCallNode);
+          var predicateMethod = fieldAccess.predicate();
+          var tablegenImmediateOperand = ensureNonNull(
+              tablegenImmediateRecords.get(predicateMethod), 
+              "Expected associated tablegen immediate operand record for given predicate function.");
           var fieldAccessNode = new LlvmFieldAccessRefNode(pseudo,
               fieldAccess,
               fieldAccess.type(),
               upcastFieldAccess(fieldAccess),
-              LlvmFieldAccessRefNode.Usage.BasicBlock);
+              LlvmFieldAccessRefNode.Usage.BasicBlock,
+              tablegenImmediateOperand);
           // Overwrite the name of the selector with the name of the pseudo instruction.
           var inputOperand =
               new TableGenInstructionLabelOperand(fieldAccessNode,
-                  fieldAccessNode.immediateOperand(), parameter.simpleName());
+                  tablegenImmediateOperand, parameter.simpleName());
           var flags =
               LlvmLoweringPass.Flags.withPseudo(
                   LlvmLoweringPass.Flags.withBarrier(LlvmLoweringPass.Flags.withBranch(

@@ -33,12 +33,14 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -54,8 +56,9 @@ public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
       Set.of(MachineInstructionLabel.LTS);
 
   public LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl(
-      ValueType architectureType, ValueType smallestRegisterClassType) {
-    super(architectureType, smallestRegisterClassType);
+      ValueType architectureType, ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+    super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
   @Override

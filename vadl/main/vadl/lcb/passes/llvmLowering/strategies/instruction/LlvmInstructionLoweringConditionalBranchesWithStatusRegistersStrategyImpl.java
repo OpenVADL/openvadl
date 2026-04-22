@@ -21,6 +21,7 @@ import static vadl.gcb.passes.MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
@@ -32,9 +33,11 @@ import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Abi;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
@@ -46,8 +49,9 @@ import vadl.viam.graph.dependency.SideEffectNode;
 public class LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl(
-      ValueType architectureType, ValueType smallestRegisterClassType) {
-    super(architectureType, smallestRegisterClassType);
+      ValueType architectureType, ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+    super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
   @Override
@@ -58,7 +62,7 @@ public class LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrate
   @Override
   protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
     return new LcbNodeReplacementHandlerWithBasicBlockReplacement(instruction, architectureType, 
-        this.smallestRegisterClassType);
+        this.smallestRegisterClassType, this.tablegenImmediatesRecords);
   }
 
   @Override

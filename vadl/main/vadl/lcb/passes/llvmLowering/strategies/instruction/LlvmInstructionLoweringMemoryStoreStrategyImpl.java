@@ -20,6 +20,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import vadl.error.Diagnostic;
@@ -44,6 +45,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerForMemoryInstructionsReplacement;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
@@ -51,6 +53,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
@@ -69,8 +72,9 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
     extends LlvmInstructionLoweringFrameIndexHelper {
 
   public LlvmInstructionLoweringMemoryStoreStrategyImpl(
-      ValueType architectureType, ValueType smallestRegisterClassType) {
-    super(architectureType, smallestRegisterClassType);
+      ValueType architectureType, ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+    super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
   @Override
@@ -108,7 +112,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   @Override
   protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
     return new LcbNodeReplacementHandlerForMemoryInstructionsReplacement(instruction,
-        architectureType, this.smallestRegisterClassType);
+        architectureType, this.smallestRegisterClassType, this.tablegenImmediatesRecords);
   }
 
   /**

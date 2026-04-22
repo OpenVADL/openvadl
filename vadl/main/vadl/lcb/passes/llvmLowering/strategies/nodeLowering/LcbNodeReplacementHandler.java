@@ -21,6 +21,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import vadl.cppCodeGen.CppTypeMap;
@@ -59,10 +60,12 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmURemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmXorSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
+import vadl.viam.Function;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchBeginNode;
@@ -120,14 +123,17 @@ public class LcbNodeReplacementHandler {
   protected final PrintableInstruction printableInstruction;
   protected final ValueType architectureType;
   protected final ValueType smallestRegisterClassType;
+  protected final Map<Function, TableGenImmediateRecord> tablegenImmediateRecords;
 
   @SuppressWarnings("MissingJavadocMethod")
   public LcbNodeReplacementHandler(PrintableInstruction printableInstruction,
-                                   ValueType architectureType,
-                                   ValueType smallestRegisterClassType) {
+                                 ValueType architectureType,
+                                 ValueType smallestRegisterClassType,
+                                 Map<Function, TableGenImmediateRecord> tablegenImmediateRecords) {
     this.printableInstruction = printableInstruction;
     this.architectureType = architectureType;
     this.smallestRegisterClassType = smallestRegisterClassType;
+    this.tablegenImmediateRecords = tablegenImmediateRecords;
   }
 
   @Handler
@@ -439,13 +445,15 @@ public class LcbNodeReplacementHandler {
         ? this.smallestRegisterClassType
         : llvmType;
 
+    var predicateMethod = fieldAccessRefNode.fieldAccess().predicate();
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(
             printableInstruction,
             fieldAccessRefNode.fieldAccess(),
             originalType,
             llvmType,
-            LlvmFieldAccessRefNode.Usage.Immediate));
+            LlvmFieldAccessRefNode.Usage.Immediate,
+            tablegenImmediateRecords.get(predicateMethod)));
   }
 
   @Handler

@@ -21,6 +21,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
@@ -45,6 +46,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadResourceFactory;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -53,6 +55,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
+import vadl.viam.Function;
 import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -70,8 +73,9 @@ import vadl.viam.graph.dependency.SideEffectNode;
 public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(
-      ValueType architectureType, ValueType smallestRegisterClassType) {
-    super(architectureType, smallestRegisterClassType);
+      ValueType architectureType, ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+    super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
   @Override
@@ -215,7 +219,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     );
   }
 
-  private static @Nonnull TableGenPseudoInstExpansionPattern generateBranchIndirect(
+  private @Nonnull TableGenPseudoInstExpansionPattern generateBranchIndirect(
       Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       GcbInstructionRegisterFileOperand inputRegister) {
@@ -241,9 +245,10 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
+    var predicateMethod = immediate.fieldAccess().predicate();
     var fieldRef =
         new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,
-            LlvmFieldAccessRefNode.Usage.Immediate);
+            LlvmFieldAccessRefNode.Usage.Immediate, tablegenImmediatesRecords.get(predicateMethod));
     var machine = new Graph("machine");
     machine.addWithInputs(new LcbMachineInstructionNode(
         new NodeList<>(

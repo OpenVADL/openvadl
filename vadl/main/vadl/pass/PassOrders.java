@@ -324,11 +324,11 @@ public class PassOrders {
     order.add(new IsaMachineInstructionMatchingPass(configuration));
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
 
+    order.add(new GenerateTableGenImmediateRecordPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));
     order.add(new GenerateTableGenAbiSequenceInstructionRecordPass(configuration));
-    order.add(new GenerateTableGenImmediateRecordPass(configuration));
     order.add(new CreateFunctionsFromImmediatesPass(configuration));
     order.add(new CompensationPatternPass(configuration));
     order.add(new ISelLoweringOperationActionPass(configuration));

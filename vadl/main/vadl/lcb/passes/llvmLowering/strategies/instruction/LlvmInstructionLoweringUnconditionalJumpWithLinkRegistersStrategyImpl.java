@@ -20,6 +20,7 @@ import static vadl.gcb.passes.MachineInstructionLabel.JAL;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
@@ -30,10 +31,12 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.types.DataType;
 import vadl.viam.Abi;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -45,8 +48,9 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 public class LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringUnconditionalJumpWithLinkRegistersStrategyImpl(
-      ValueType architectureType, ValueType smallestRegisterClassType) {
-    super(architectureType, smallestRegisterClassType);
+      ValueType architectureType, ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+    super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
   @Override

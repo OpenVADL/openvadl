@@ -16,9 +16,13 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
+import java.util.Map;
+
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.viam.Function;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
@@ -32,8 +36,10 @@ public class LcbNodeReplacementHandlerWithBasicBlockReplacement extends LcbNodeR
   public LcbNodeReplacementHandlerWithBasicBlockReplacement(
       PrintableInstruction printableInstruction,
       ValueType architectureType,
-      ValueType smallestRegisterClassType) {
-    super(printableInstruction, architectureType, smallestRegisterClassType);
+      ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediateRecords) {
+    super(printableInstruction, architectureType, smallestRegisterClassType,
+        tablegenImmediateRecords);
   }
 
   @Override

@@ -22,6 +22,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -63,6 +64,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadArtificialResour
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerDispatcher;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -72,6 +74,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PrintableInstruction;
@@ -111,11 +114,14 @@ import vadl.viam.passes.canonicalization.Canonicalizer;
 public abstract class LlvmInstructionLoweringStrategy {
   protected final ValueType architectureType;
   protected final ValueType smallestRegisterClassType;
+  protected final Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords;
 
-  public LlvmInstructionLoweringStrategy(ValueType architectureType,
-                                         ValueType smallestRegisterClassType) {
+  public LlvmInstructionLoweringStrategy(ValueType architectureType, 
+      ValueType smallestRegisterClassType, 
+      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
     this.architectureType = architectureType;
     this.smallestRegisterClassType = smallestRegisterClassType;
+    this.tablegenImmediatesRecords = tablegenImmediatesRecords;
   }
 
   /**
@@ -252,14 +258,29 @@ public abstract class LlvmInstructionLoweringStrategy {
                 immediateOperand.fieldAccess(),
                 immediateOperand.fieldAccess().type(),
                 llvmType,
-                LlvmFieldAccessRefNode.Usage.Immediate);
+                LlvmFieldAccessRefNode.Usage.Immediate,
+                tablegenImmediatesRecords.get(immediateOperand.fieldAccess().predicate()));
 
         operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
       } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
           && basicBlocks.containsKey(immediateOperand.fieldAccess())) {
-        var llvmNode = ensureNonNull(basicBlocks.get(immediateOperand.fieldAccess()),
+        var llvmNodeBB = ensureNonNull(basicBlocks.get(immediateOperand.fieldAccess()),
             () -> Diagnostic.error("There is no lowered field access",
                 instruction.location().join(immediateOperand.fieldAccess().location())));
+
+        var fieldAccess = immediateOperand.fieldAccess();
+        var predicateMethod = fieldAccess.predicate();
+        var tablegenImmediate = ensureNonNull(
+          this.tablegenImmediatesRecords.get(predicateMethod),
+          "Expected to find associated tablegen immediates record to predicate function.");
+        var llvmNode = new LlvmBasicBlockSD(
+          instruction,
+          llvmNodeBB.fieldAccess(),
+          llvmNodeBB.variableName(),
+          llvmNodeBB.type(),
+          llvmNodeBB.llvmType(),
+          tablegenImmediate
+        );
 
         operands.set(i, new TableGenInstructionLabelOperand(llvmNode));
       } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
@@ -281,7 +302,8 @@ public abstract class LlvmInstructionLoweringStrategy {
                 fieldAccess,
                 fieldAccess.type(),
                 upcastedType,
-                LlvmFieldAccessRefNode.Usage.Immediate);
+                LlvmFieldAccessRefNode.Usage.Immediate,
+                tablegenImmediatesRecords.get(immediateOperand.fieldAccess().predicate()));
         operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
       } else if (operand instanceof GcbInstructionRegisterFileOperand registerFileOperand
           && registerFileOperand.origin() instanceof ReadRegTensorNode readNode) {
@@ -307,8 +329,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   protected LcbNodeReplacementHandler getReplacementHandler(PrintableInstruction instruction) {
-    return new LcbNodeReplacementHandler(instruction, architectureType,
-        this.smallestRegisterClassType);
+    return new LcbNodeReplacementHandler(instruction, architectureType, 
+        this.smallestRegisterClassType, this.tablegenImmediatesRecords);
   }
 
   /**

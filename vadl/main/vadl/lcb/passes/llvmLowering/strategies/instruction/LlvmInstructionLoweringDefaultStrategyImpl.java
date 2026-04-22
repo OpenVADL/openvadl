@@ -18,6 +18,7 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.gcb.passes.MachineInstructionLabel;
@@ -25,10 +26,12 @@ import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.types.DataType;
 import vadl.viam.Abi;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 
@@ -38,8 +41,9 @@ import vadl.viam.graph.Graph;
 public class LlvmInstructionLoweringDefaultStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringDefaultStrategyImpl(
-      ValueType architectureType, ValueType smallestRegisterClassType) {
-    super(architectureType, smallestRegisterClassType);
+      ValueType architectureType, ValueType smallestRegisterClassType,
+      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+    super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
   @Override
