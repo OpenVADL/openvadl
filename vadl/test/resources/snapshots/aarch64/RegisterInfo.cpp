@@ -80,7 +80,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_ADDXI_imm12X_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_ADDWI_imm12X_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -184,7 +184,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRH_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -236,7 +236,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRSBW_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -288,7 +288,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRSBX_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -340,7 +340,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRSHW_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -392,7 +392,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRSHX_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -444,7 +444,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRSWX_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -496,7 +496,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRW_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -548,7 +548,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRX_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -600,7 +600,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURB_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -652,7 +652,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURH_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -704,7 +704,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURSBW_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -756,7 +756,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURSBX_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -808,7 +808,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURSHW_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -860,7 +860,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURSHX_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -912,7 +912,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURSWX_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -964,7 +964,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURW_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1016,7 +1016,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_LDURX_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1068,7 +1068,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_STRB_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1120,7 +1120,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_STRH_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1172,7 +1172,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_STRW_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1224,7 +1224,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= 0 && Offset <= 4096 && AArch64Base_STRX_offset_predicate(Offset))
+if(Offset >= 0 && Offset <= 4096 && AArch64Base_LDRB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1276,7 +1276,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_STURB_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1328,7 +1328,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_STURH_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1380,7 +1380,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_STURW_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -1432,7 +1432,7 @@ int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 // try to inline the offset into the instruction
 //
 
-if(Offset >= -256 && Offset <= 255 && AArch64Base_STURX_offset_predicate(Offset))
+if(Offset >= -256 && Offset <= 255 && AArch64Base_LDRPreB_offset_predicate(Offset))
 {
 // immediate can be encoded and instruction can be inlined.
 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
