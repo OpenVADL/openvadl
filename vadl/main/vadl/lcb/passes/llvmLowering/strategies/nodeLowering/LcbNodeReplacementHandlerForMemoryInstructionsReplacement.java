@@ -21,10 +21,8 @@ import java.util.Objects;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.types.DataType;
-import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -38,7 +36,7 @@ public class LcbNodeReplacementHandlerForMemoryInstructionsReplacement
       PrintableInstruction printableInstruction,
       ValueType architectureType,
       ValueType smallestRegisterClassType,
-      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords) {
+      Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediateRecords) {
     super(printableInstruction, architectureType, smallestRegisterClassType, 
         tablegenImmediateRecords);
   }

@@ -49,6 +49,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
@@ -57,11 +58,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
-import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.RegisterTensor;
@@ -79,7 +77,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringConditionalBranchesStrategyImpl(ValueType architectureType, 
       ValueType smallestRegisterClassType,
-      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 

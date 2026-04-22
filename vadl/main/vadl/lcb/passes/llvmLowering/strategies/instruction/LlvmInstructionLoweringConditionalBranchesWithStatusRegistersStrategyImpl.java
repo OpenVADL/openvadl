@@ -30,6 +30,7 @@ import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerWithBasicBlockReplacement;
@@ -37,8 +38,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstraint;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Abi;
-import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
@@ -51,7 +50,7 @@ public class LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrate
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringConditionalBranchesWithStatusRegistersStrategyImpl(
       ValueType architectureType, ValueType smallestRegisterClassType,
-      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 

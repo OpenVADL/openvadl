@@ -62,6 +62,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadArtificialResourceNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandler;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHandlerDispatcher;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
@@ -74,8 +75,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
-import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PrintableInstruction;
@@ -115,7 +114,7 @@ import vadl.viam.passes.canonicalization.Canonicalizer;
 public abstract class LlvmInstructionLoweringStrategy {
   protected final ValueType architectureType;
   protected final ValueType smallestRegisterClassType;
-  protected final Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords;
+  protected final Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediatesRecords;
 
   /**
    * Constructor.
@@ -126,7 +125,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   public LlvmInstructionLoweringStrategy(ValueType architectureType,
       ValueType smallestRegisterClassType, 
-      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediatesRecords) {
     this.architectureType = architectureType;
     this.smallestRegisterClassType = smallestRegisterClassType;
     this.tablegenImmediatesRecords = tablegenImmediatesRecords;
@@ -261,8 +260,10 @@ public abstract class LlvmInstructionLoweringStrategy {
             ? this.smallestRegisterClassType
             : ValueType.from(llvmNode.type().asDataType()).get();
         var tablegenImmediateRecord = ensureNonNull(
-            tablegenImmediatesRecords.get(immediateOperand.fieldAccess()),
-            "Expected to find an immediate record for the given predicate function.");
+            tablegenImmediatesRecords.get(new ImmediateKey(
+                instruction,
+                immediateOperand.fieldAccess())),
+            "Expected to find an immediate record for the given instruction and field access.");
         llvmNode =
             new LlvmFieldAccessRefNode(
                 instruction,
@@ -280,8 +281,10 @@ public abstract class LlvmInstructionLoweringStrategy {
                 instruction.location().join(immediateOperand.fieldAccess().location())));
 
         var tablegenImmediate = ensureNonNull(
-            this.tablegenImmediatesRecords.get(llvmNodeBB.fieldAccess()),
-            "Expected to find associated tablegen immediates record to predicate function.");
+            this.tablegenImmediatesRecords.get(new ImmediateKey(
+                instruction,
+                llvmNodeBB.fieldAccess())),
+            "Expected to find an immediate record for the given instruction and field access.");
         var llvmNode = new LlvmBasicBlockSD(
             instruction,
             llvmNodeBB.fieldAccess(),
@@ -300,8 +303,10 @@ public abstract class LlvmInstructionLoweringStrategy {
         // because of optimisations. However, we still need to replace this operand.
         var fieldAccess = immediateOperand.fieldAccess();
         var tablegenImmediateRecord = ensureNonNull(
-            tablegenImmediatesRecords.get(fieldAccess), 
-            "Expected to find an immediate record for the given predicate function.");
+            tablegenImmediatesRecords.get(new ImmediateKey(
+                instruction,
+                fieldAccess)), 
+            "Expected to find an immediate record for the given instruction and field access.");
         var upcastedType =
             (ValueType) ValueType.from(CppTypeMap.upcast(fieldAccess.accessFunction().returnType()))
                 .orElseThrow(

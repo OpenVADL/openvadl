@@ -22,7 +22,6 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -291,7 +290,7 @@ public class LlvmLoweringPass extends Pass {
             GenerateTableGenRegistersPass.class));
     var smallestRegisterClassType = generateTableGenRegistersPassOutput.smallestRegisterClassType();
     var tablegenImmediatesRecords = ((GenerateTableGenImmediateRecordPass.Output) passResults
-        .lastResultOf(GenerateTableGenImmediateRecordPass.class)).immediatesByFieldAccess();
+        .lastResultOf(GenerateTableGenImmediateRecordPass.class)).immediatesByKey();
 
     var architectureType =
         ensurePresent(ValueType.from(abi.stackPointer().registerFile().resultType()),
@@ -329,8 +328,7 @@ public class LlvmLoweringPass extends Pass {
             new LlvmInstructionLoweringDefaultStrategyImpl(architectureType, 
                 smallestRegisterClassType, tablegenImmediatesRecords));
     var pseudoStrategies =
-        List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies, 
-              tablegenImmediatesRecords),
+        List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
             new LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl(machineStrategies,
                 viam.abi().orElseThrow()),
             new LlvmPseudoInstructionLoweringDefaultStrategyImpl(machineStrategies));

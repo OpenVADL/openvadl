@@ -18,12 +18,10 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils.replaceBasicBlockByLabelImmediateInMachineInstruction;
 import static vadl.viam.ViamError.ensure;
-import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
@@ -61,16 +59,12 @@ import vadl.viam.graph.control.InstrCallNode;
 public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
     LlvmPseudoInstructionLowerStrategy {
 
-  private final Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords;
-
   /**
    * Constructor.
    */
   public LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(
-      List<LlvmInstructionLoweringStrategy> strategies,
-      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords) {
+      List<LlvmInstructionLoweringStrategy> strategies) {
     super(strategies);
-    this.tablegenImmediateRecords = tablegenImmediateRecords;
   }
 
   @Override
@@ -129,10 +123,8 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
           var instrCallNode = getInstrCallNodeOrThrowError(pseudo);
           var parameter = pseudo.parameters()[0];
           var fieldAccess = getFieldAccessFunctionFromFormatOrThrowError(instrCallNode);
-          var tablegenImmediateOperand = ensureNonNull(
-              tablegenImmediateRecords.get(fieldAccess), 
-              "Expected associated tablegen immediate operand record for given predicate function."
-          );
+          var tablegenImmediateOperand = new TableGenImmediateRecord(pseudo, fieldAccess, 
+              upcastFieldAccess(fieldAccess));
           var fieldAccessNode = new LlvmFieldAccessRefNode(pseudo,
               fieldAccess,
               fieldAccess.type(),
@@ -183,9 +175,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
     var fieldAccess = getFieldAccessFunctionFromFormatOrThrowError(instrCallNode);
     var upcasted = upcastFieldAccess(fieldAccess);
     var parameter = pseudo.parameters()[0];
-    var immediateOperand = ensureNonNull(
-        tablegenImmediateRecords.get(fieldAccess),
-        "Expected to find tablegen immediate record for given predicate function.");
+    var immediateOperand = new TableGenImmediateRecord(pseudo, fieldAccess, upcasted);
 
     selector.addWithInputs(
         new LlvmBrSD(new LlvmBasicBlockSD(

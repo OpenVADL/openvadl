@@ -60,12 +60,12 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmURemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmXorSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
-import vadl.viam.Format;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchBeginNode;
@@ -123,13 +123,13 @@ public class LcbNodeReplacementHandler {
   protected final PrintableInstruction printableInstruction;
   protected final ValueType architectureType;
   protected final ValueType smallestRegisterClassType;
-  protected final Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords;
+  protected final Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediateRecords;
 
   @SuppressWarnings("MissingJavadocMethod")
   public LcbNodeReplacementHandler(PrintableInstruction printableInstruction,
                    ValueType architectureType,
                    ValueType smallestRegisterClassType,
-                   Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords) {
+                   Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediateRecords) {
     this.printableInstruction = printableInstruction;
     this.architectureType = architectureType;
     this.smallestRegisterClassType = smallestRegisterClassType;
@@ -446,8 +446,10 @@ public class LcbNodeReplacementHandler {
         : llvmType;
 
     var tablegenImmediateRecord = ensureNonNull(
-        tablegenImmediateRecords.get(fieldAccessRefNode.fieldAccess()),
-        "Expected to find an immediate record for the given predicate function.");
+        tablegenImmediateRecords.get(new ImmediateKey(
+            this.printableInstruction,
+            fieldAccessRefNode.fieldAccess())),
+        "Expected to find an immediate record for the given instruction and field access.");
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(
             printableInstruction,

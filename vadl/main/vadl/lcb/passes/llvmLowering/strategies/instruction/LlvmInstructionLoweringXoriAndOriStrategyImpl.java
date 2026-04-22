@@ -25,14 +25,12 @@ import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.types.DataType;
 import vadl.viam.Abi;
-import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 
@@ -44,7 +42,7 @@ public class LlvmInstructionLoweringXoriAndOriStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringXoriAndOriStrategyImpl(
       ValueType architectureType, ValueType smallestRegisterClassType,
-      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 

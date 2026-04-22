@@ -46,18 +46,16 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadResourceFactory;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
-import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
-import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -76,7 +74,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(
       ValueType architectureType, ValueType smallestRegisterClassType,
-      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
@@ -248,8 +246,10 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
     var tablegenImmediateRecord = ensureNonNull(
-        tablegenImmediatesRecords.get(immediate.fieldAccess()),
-        "Expected to find an immediate record for the given predicate function.");
+        tablegenImmediatesRecords.get(new ImmediateKey(
+            instruction,
+            immediate.fieldAccess())),
+        "Expected to find an immediate record for the given instruction and field access.");
     var fieldRef =
         new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,
             LlvmFieldAccessRefNode.Usage.Immediate, tablegenImmediateRecord);
@@ -302,8 +302,10 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
     var immediateOperand = ensureNonNull(
-        tablegenImmediatesRecords.get(immediate.fieldAccess()), 
-        "Expected to find an immediate record for the given predicate function.");
+        tablegenImmediatesRecords.get(new ImmediateKey(
+            instruction,
+            immediate.fieldAccess())), 
+        "Expected to find an immediate record for the given instruction and field access.");
     var fieldRef =
         new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,
             LlvmFieldAccessRefNode.Usage.Immediate, immediateOperand);

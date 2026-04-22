@@ -36,6 +36,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -48,8 +49,6 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.types.SIntType;
 import vadl.viam.Abi;
-import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
@@ -133,7 +132,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         "globalPointer", abi.globalPointer().map(Abi.RegisterRef::render).orElse(""),
         "frameIndexEliminations",
         getEliminateFrameIndexEntries(instructionLabels, uninlined,
-            tableGenMachineInstructions, immediateRecordResults.immediatesByFieldAccess()).stream()
+            tableGenMachineInstructions, immediateRecordResults.immediatesByKey()).stream()
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
         specification.registerTensors().filter(RegisterTensor::isRegisterFile)
@@ -196,7 +195,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
       @Nullable Map<MachineInstructionLabel, List<Instruction>> instructionLabels,
       @Nullable IdentityHashMap<Instruction, UninlinedGraph> uninlined,
       List<TableGenMachineInstruction> tableGenMachineInstructions,
-      Map<Format.FieldAccess, TableGenImmediateRecord> immediatesByFieldAccess) {
+      Map<ImmediateKey, TableGenImmediateRecord> immediatesByKey) {
     ensureNonNull(instructionLabels, "labels must exist");
     ensureNonNull(uninlined, "uninlined must exist");
 
@@ -226,8 +225,10 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
           long maxValue = isSigned ? (long) Math.pow(2, fieldBitWidth - 1) - 1 :
               (long) Math.pow(2, fieldBitWidth);
           var tableGenImmediateRecord = ensureNonNull(
-              immediatesByFieldAccess.get(immediate.fieldAccess()),
-              "Expected to find an immediate record for the given predicate function.");
+              immediatesByKey.get(new ImmediateKey(
+                  instruction,
+                  immediate.fieldAccess())),
+              "Expected to find an immediate record for the given instruction and field access.");
           var predicateName = tableGenImmediateRecord.predicateMethod().lower();
 
           var entry = new FrameIndexElimination(label, instruction, immediate, predicateName,

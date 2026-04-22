@@ -22,8 +22,8 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass.ImmediateKey;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.viam.Format;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
@@ -38,7 +38,7 @@ public class LcbNodeReplacementHandlerWithBasicBlockReplacement extends LcbNodeR
       PrintableInstruction printableInstruction,
       ValueType architectureType,
       ValueType smallestRegisterClassType,
-      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords) {
+      Map<ImmediateKey, TableGenImmediateRecord> tablegenImmediateRecords) {
     super(printableInstruction, architectureType, smallestRegisterClassType,
         tablegenImmediateRecords);
   }
@@ -47,8 +47,10 @@ public class LcbNodeReplacementHandlerWithBasicBlockReplacement extends LcbNodeR
   public void handle(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
     var immediateRecord = ensureNonNull(
-        tablegenImmediateRecords.get(fieldAccessRefNode.fieldAccess()),
-        "Expected to find an immediate record for the given predicate function.");
+        tablegenImmediateRecords.get(new ImmediateKey(
+            printableInstruction,
+            fieldAccessRefNode.fieldAccess())),
+        "Expected to find an immediate record for the given instruction and field access.");
 
     fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(printableInstruction,
         fieldAccessRefNode.fieldAccess(),

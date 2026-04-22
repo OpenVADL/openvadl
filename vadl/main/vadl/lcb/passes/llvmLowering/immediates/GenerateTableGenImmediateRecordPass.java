@@ -43,6 +43,7 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -71,11 +72,16 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
 
 
   /**
+   * Key to identify a given immediate record.
+   */
+  public record ImmediateKey(PrintableInstruction instr, Format.FieldAccess fieldAccess) {}
+
+  /**
    * Output of the pass.
    */
   public record Output(
       List<TableGenImmediateRecord> immediates,
-      Map<Format.FieldAccess, TableGenImmediateRecord> immediatesByFieldAccess
+      Map<ImmediateKey, TableGenImmediateRecord> immediatesByKey
   ) {}
 
 
@@ -92,7 +98,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
     var smallestRegisterClassType = generateTableGenRegistersPassOutput.smallestRegisterClassType();
 
     var predicateMethodIdentifiers = new HashMap<Function, Identifier>();
-    var immediatesByFieldAccess = new HashMap<Format.FieldAccess, TableGenImmediateRecord>();
+    var immediatesByKey = new HashMap<ImmediateKey, TableGenImmediateRecord>();
 
     // We do it first for machine instructions.
     snapshots.entrySet().stream().sorted(
@@ -157,7 +163,8 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                     upcastedValueType,
                     predicateMethodIdentifier);
                 immediates.add(tablegenImmediateRecord);
-                immediatesByFieldAccess.put(fieldAccess, tablegenImmediateRecord);
+                immediatesByKey.put(new ImmediateKey(instruction, fieldAccess), 
+                    tablegenImmediateRecord);
               });
             });
 
@@ -187,7 +194,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
           }
         });
 
-    return new Output(immediates, immediatesByFieldAccess);
+    return new Output(immediates, immediatesByKey);
   }
 
   private static boolean predicateMethodEqual(Function a, Function b) {
