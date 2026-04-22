@@ -20,11 +20,14 @@ import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -37,6 +40,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.annotations.BiEndianAnnotation;
 import vadl.viam.annotations.BigEndianAnnotation;
+import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ProcEndNode;
@@ -44,19 +48,27 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
- * Changes memory read and write operations of all behaviors to operate with the
+ * Verifies that the memory endianness condition expression(s) only contain reads from
+ * tb-state saved simple registers.
+ *
+ * <p>Changes memory read and write operations of all behaviors to operate with the
  * correct byte order (as specified on the memory definition they use).
- * By default, memory operations are little-endian. If the memory is big-endian the reads
- * and writes are changed to byte-reversed operations. If it is bi-endian, then the
- * condition determining the endianness is inserted into the behaviors. If memory operations
- * used in memory region init procedures are bi-endian, then the condition must be statically
- * evaluated since register reads are not possible at that point. Therefore, register values
- * are taken from the default branch of the cpu reset procedure and must be constant.
+ * If the memory is big-endian the reads and writes are changed to byte-reversed operations.
+ * If it is bi-endian, then the condition determining the endianness is inserted into the
+ * behaviors.
+ *
+ * <p>If memory operations used in memory region init procedures are bi-endian, then the
+ * condition must be statically evaluated since register reads are not possible at that point.
+ * Therefore, register values are taken from the default branch of the cpu reset procedure and
+ * must be constant.
  */
 public class ApplyMemoryEndiannessPass extends Pass {
   public ApplyMemoryEndiannessPass(GeneralConfiguration configuration) {
@@ -71,19 +83,59 @@ public class ApplyMemoryEndiannessPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
+    checkMemoryEndiannessConditions(viam);
     ViamUtils.findAllBehaviors(viam).forEach(behaviour ->
         new ApplyMemoryEndianness(behaviour).run());
     viam.processor().ifPresent(processor ->
-        new ApplyMemoryEndiannessInProcessorReset(processor).run());
+        new ApplyMemoryEndiannessInMemoryRegionInit(processor).run());
     return null;
+  }
+
+  private void checkMemoryEndiannessConditions(Specification viam) {
+    var errors = new ArrayList<Diagnostic>();
+    viam.isa().ifPresent(isa -> isa.ownMemories().forEach(mem -> {
+      var ann = mem.annotation(BiEndianAnnotation.class);
+      if (ann == null) {
+        return;
+      }
+      ann.condition().getNodes(WriteResourceNode.class).findAny()
+          .ifPresent(n -> errors.add(error(
+              "Endianness condition may not write to any resource", n
+          ).build()));
+
+      ann.condition().getNodes(ReadResourceNode.class)
+          .filter(n -> {
+            if (n instanceof ReadRegTensorNode r) {
+              return !r.regTensor().isSingleRegister() || !onlyReadsStaticBits(r);
+            }
+            return true;
+          })
+          .findAny().ifPresent(n -> errors.add(error(
+              "Endianness condition may only read bits from simple registers annotated with "
+                  + "[ execution state ]", n
+          ).build()));
+    }));
+
+    if (!errors.isEmpty()) {
+      throw new DiagnosticList(errors);
+    }
+  }
+
+  private boolean onlyReadsStaticBits(ReadRegTensorNode read) {
+    var ann = read.regTensor().annotation(TbStateRegisterAnnotation.class);
+    return ann != null && read.usages().allMatch(usage ->
+        usage instanceof SliceNode sliceNode
+            ? ann.covers(sliceNode.bitSlice())
+            : ann.wholeRegister()
+    );
   }
 }
 
-class ApplyMemoryEndiannessInProcessorReset {
+class ApplyMemoryEndiannessInMemoryRegionInit {
 
   private final Processor processor;
 
-  ApplyMemoryEndiannessInProcessorReset(Processor processor) {
+  ApplyMemoryEndiannessInMemoryRegionInit(Processor processor) {
     this.processor = processor;
   }
 

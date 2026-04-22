@@ -25,7 +25,6 @@ import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.MemoryRegionInfo;
 import vadl.iss.template.hw.EmitIssHwMachineCPass;
 import vadl.viam.Processor;
-import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -103,7 +102,7 @@ public class IssMemoryRegionInitCodeGen extends IssProcGen {
     //    uint32_t val0x0 = cpu_to_le32(   ((uint32_t) 0x00000297 )   );
     //    memcpy(&init_vec[0x0], &val0x0, sizeof(val0x0));
 
-    var endian = node.memory().hasAnnotation(BigEndianAnnotation.class) ? "be" : "le";
+    var endian = node.reverseBytes() ? "be" : "le";
     var endiannessConversion = writeWidth == 8 ? "" : "cpu_to_" + endian + writeWidth;
     var val = "val0x" + offset.toString(16);
     // uint32_t val0x0 = cpu_to_le32(((uint32_t) 0x00000297));
