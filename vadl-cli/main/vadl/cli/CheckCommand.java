@@ -16,8 +16,11 @@
 
 package vadl.cli;
 
+import java.util.Objects;
 import java.util.concurrent.Callable;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import vadl.cli.decoder.mixin.CheckDecoderOptions;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
@@ -32,8 +35,13 @@ import vadl.pass.PassOrders;
 )
 public class CheckCommand extends BaseCommand implements Callable<Integer> {
 
+  @CommandLine.Mixin
+  final CheckDecoderOptions decoderOptions = new CheckDecoderOptions();
+
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) {
+    configuration.setDecoderOptions(
+        decoderOptions.getDecoderOptions(Objects.requireNonNull(spec).commandLine()));
     return PassOrders.check(configuration);
   }
 }

@@ -53,14 +53,16 @@ public class DecoderOptions {
      * Resolve the generator strategy from its selector.
      *
      * @param selector The selector to match.
+     * @param options  The restriction on the available options, if any.
      * @return The generator, or null if no match was found.
      */
     @Nullable
-    public static Generator fromSelector(String selector) {
+    public static Generator fromSelector(String selector, Generator... options) {
       if (selector == null || selector.isBlank()) {
         return null;
       }
-      for (Generator gen : values()) {
+      final var opts = options.length == 0 ? Generator.values() : options;
+      for (Generator gen : opts) {
         if (gen.getSelector().equals(selector)) {
           return gen;
         }
@@ -74,6 +76,9 @@ public class DecoderOptions {
    */
   public enum OptionToSkip {
 
+    OPT_ALL("Skip all decoder related verification and generation passes, default: enabled",
+        "all"),
+
     OPT_CONSTRAINT_SYNTHESIS("Skip constraint synthesis for decoder generation, default: enabled",
         "constraint-synthesis"),
 
@@ -81,7 +86,7 @@ public class DecoderOptions {
         "encoding-verification"),
 
     OPT_DECODER_VERIFICATION("Skip the correctness verification of the decode tree, default: "
-                                 + "enabled", "decoder-verification");
+        + "enabled", "decoder-verification");
 
     private final String selector;
     private final String desc;
@@ -103,14 +108,16 @@ public class DecoderOptions {
      * Resolve the skipped option from its selector.
      *
      * @param selector The selector to match.
+     * @param options  The restriction on the available options, if any.
      * @return The skipped option, or null if no match was found.
      */
     @Nullable
-    public static OptionToSkip fromSelector(String selector) {
+    public static OptionToSkip fromSelector(String selector, OptionToSkip... options) {
       if (selector == null || selector.isBlank()) {
         return null;
       }
-      for (OptionToSkip opt : values()) {
+      final var opts = options.length == 0 ? OptionToSkip.values() : options;
+      for (OptionToSkip opt : opts) {
         if (opt.getSelector().equals(selector)) {
           return opt;
         }
