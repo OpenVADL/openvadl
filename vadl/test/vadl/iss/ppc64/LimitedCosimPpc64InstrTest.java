@@ -40,6 +40,7 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
   private List<CosimTestUtils.TestCase> buildInstructionTests() throws IOException {
     return concatInstructionTests(List.of(
+        this::divbug,
         this::mtspr,
         this::mfspr,
         this::mtmsr,
@@ -63,6 +64,18 @@ public class LimitedCosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   @FunctionalInterface
   private interface InstructionTestFactory {
     List<CosimTestUtils.TestCase> create() throws IOException;
+  }
+
+  private List<CosimTestUtils.TestCase> divbug() throws IOException {
+    return buildTests3264With(id -> {
+      var b = getBuilder("DIV BUG", id);
+      b.add("lis 23, -32768                           # X(23) := 0xFFFFFFFF80000000 (-2147483648)\n"
+          + "ori 23, 23, 0                            # ↑\n"
+          + "lis 5, -1                                # X( 5) := 0xFFFFFFFFFFFFFFFF (-1)\n"
+          + "ori 5, 5, 65535                          # ↑\n"
+          + "divweo. 3, 23, 5");
+      return b.toTestCase();
+    });
   }
 
   private List<CosimTestUtils.TestCase> mtspr() throws IOException {
