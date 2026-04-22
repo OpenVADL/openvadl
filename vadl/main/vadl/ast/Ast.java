@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
@@ -56,6 +57,38 @@ public class Ast {
   public void withPassTiming(String name, Runnable pass) {
     timingRecorder.withPassTiming(name, pass);
   }
+
+  /**
+   * Returns the list of all files that are included from this AST.
+   *
+   * @param recursive if true, recursively include files from imported modules.
+   * @return the list of paths.
+   */
+  public List<Path> includedFiles(boolean recursive) {
+    return definitions.stream()
+        .filter(def -> def instanceof ImportDefinition)
+        .flatMap(def -> {
+          var ast = ((ImportDefinition) def).moduleAst;
+          var stream = Stream.of(ast.filePath);
+          if (recursive) {
+            stream = Stream.concat(stream, ast.includedFiles(true).stream());
+          }
+          return stream;
+        })
+        .toList();
+  }
+
+  /**
+   * Returns the list of all files that were read to generate this AST.
+   *
+   * @return the list of paths.
+   */
+  public List<Path> allReadFiles() {
+    var paths = new ArrayList<>(includedFiles(true));
+    paths.addFirst(filePath);
+    return paths;
+  }
+
 
   /**
    * Convert the tree back into sourcecode.
