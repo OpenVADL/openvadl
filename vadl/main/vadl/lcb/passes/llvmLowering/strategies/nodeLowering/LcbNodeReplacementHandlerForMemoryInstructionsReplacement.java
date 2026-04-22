@@ -23,6 +23,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.types.DataType;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -37,7 +38,7 @@ public class LcbNodeReplacementHandlerForMemoryInstructionsReplacement
       PrintableInstruction printableInstruction,
       ValueType architectureType,
       ValueType smallestRegisterClassType,
-      Map<Function, TableGenImmediateRecord> tablegenImmediateRecords) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords) {
     super(printableInstruction, architectureType, smallestRegisterClassType, 
         tablegenImmediateRecords);
   }

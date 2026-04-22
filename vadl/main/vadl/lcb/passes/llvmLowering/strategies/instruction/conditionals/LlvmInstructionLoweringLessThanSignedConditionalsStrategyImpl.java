@@ -40,6 +40,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -57,7 +58,7 @@ public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
 
   public LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl(
       ValueType architectureType, ValueType smallestRegisterClassType,
-      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 

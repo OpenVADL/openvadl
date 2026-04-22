@@ -65,7 +65,7 @@ import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
-import vadl.viam.Function;
+import vadl.viam.Format;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchBeginNode;
@@ -123,13 +123,13 @@ public class LcbNodeReplacementHandler {
   protected final PrintableInstruction printableInstruction;
   protected final ValueType architectureType;
   protected final ValueType smallestRegisterClassType;
-  protected final Map<Function, TableGenImmediateRecord> tablegenImmediateRecords;
+  protected final Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords;
 
   @SuppressWarnings("MissingJavadocMethod")
   public LcbNodeReplacementHandler(PrintableInstruction printableInstruction,
-                                 ValueType architectureType,
-                                 ValueType smallestRegisterClassType,
-                                 Map<Function, TableGenImmediateRecord> tablegenImmediateRecords) {
+                   ValueType architectureType,
+                   ValueType smallestRegisterClassType,
+                   Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords) {
     this.printableInstruction = printableInstruction;
     this.architectureType = architectureType;
     this.smallestRegisterClassType = smallestRegisterClassType;
@@ -445,10 +445,9 @@ public class LcbNodeReplacementHandler {
         ? this.smallestRegisterClassType
         : llvmType;
 
-    var predicateMethod = fieldAccessRefNode.fieldAccess().predicate();
     var tablegenImmediateRecord = ensureNonNull(
-      tablegenImmediateRecords.get(predicateMethod),
-      "Expected to find an immediate record for the given predicate function.");
+        tablegenImmediateRecords.get(fieldAccessRefNode.fieldAccess()),
+        "Expected to find an immediate record for the given predicate function.");
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(
             printableInstruction,

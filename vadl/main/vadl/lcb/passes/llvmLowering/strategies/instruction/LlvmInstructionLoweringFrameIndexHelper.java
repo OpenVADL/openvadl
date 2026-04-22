@@ -19,7 +19,6 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
@@ -29,7 +28,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
 import vadl.utils.Pair;
-import vadl.viam.Function;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -42,7 +41,7 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringFrameIndexHelper(
       ValueType architectureType, ValueType smallestRegisterClassType,
-      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 

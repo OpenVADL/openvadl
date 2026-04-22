@@ -54,6 +54,9 @@ public class TableGenImmediateRecord {
     this(instruction, fieldAccess, llvmType, createPredicateMethod(instruction, fieldAccess));
   }
 
+  /**
+   * Constructor.
+   */
   public TableGenImmediateRecord(
       PrintableInstruction instruction,
       Format.FieldAccess fieldAccess,

@@ -56,6 +56,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
@@ -75,7 +76,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl(
       ValueType architectureType, ValueType smallestRegisterClassType,
-      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
@@ -246,10 +247,9 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
-    var predicateMethod = immediate.fieldAccess().predicate();
     var tablegenImmediateRecord = ensureNonNull(
-      tablegenImmediatesRecords.get(predicateMethod),
-      "Expected to find an immediate record for the given predicate function.");
+        tablegenImmediatesRecords.get(immediate.fieldAccess()),
+        "Expected to find an immediate record for the given predicate function.");
     var fieldRef =
         new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,
             LlvmFieldAccessRefNode.Usage.Immediate, tablegenImmediateRecord);
@@ -301,9 +301,8 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
-    var predicateMethod = immediate.fieldAccess().predicate();
     var immediateOperand = ensureNonNull(
-        tablegenImmediatesRecords.get(predicateMethod), 
+        tablegenImmediatesRecords.get(immediate.fieldAccess()), 
         "Expected to find an immediate record for the given predicate function.");
     var fieldRef =
         new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,

@@ -17,7 +17,6 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import javax.annotation.Nullable;
-
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
@@ -78,12 +77,14 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
 
   @Override
   public ExpressionNode copy() {
-    return new LlvmFieldAccessRefNode(instruction, fieldAccess, type(), llvmType, usage, immediateOperand);
+    return new LlvmFieldAccessRefNode(instruction, fieldAccess, type(), llvmType,
+        usage, immediateOperand);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmFieldAccessRefNode(instruction, fieldAccess, type(), llvmType, usage, immediateOperand);
+    return new LlvmFieldAccessRefNode(instruction, fieldAccess, type(), llvmType,
+        usage, immediateOperand);
   }
 
   public TableGenImmediateRecord immediateOperand() {

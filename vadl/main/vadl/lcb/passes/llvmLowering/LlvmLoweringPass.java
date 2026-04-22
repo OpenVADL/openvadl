@@ -290,8 +290,8 @@ public class LlvmLoweringPass extends Pass {
         ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
             GenerateTableGenRegistersPass.class));
     var smallestRegisterClassType = generateTableGenRegistersPassOutput.smallestRegisterClassType();
-    var tablegenImmediatesRecords = ((GenerateTableGenImmediateRecordPass.Output) 
-        passResults.lastResultOf(GenerateTableGenImmediateRecordPass.class)).immediatesByPredicates();
+    var tablegenImmediatesRecords = ((GenerateTableGenImmediateRecordPass.Output) passResults
+        .lastResultOf(GenerateTableGenImmediateRecordPass.class)).immediatesByFieldAccess();
 
     var architectureType =
         ensurePresent(ValueType.from(abi.stackPointer().registerFile().resultType()),

@@ -94,12 +94,14 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
 
   @Override
   public ExpressionNode copy() {
-    return new LlvmBasicBlockSD(instruction, fieldAccess, variableName, type(), llvmType, immediateOperand);
+    return new LlvmBasicBlockSD(instruction, fieldAccess, variableName, type(),
+        llvmType, immediateOperand);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmBasicBlockSD(instruction, fieldAccess, variableName, type(), llvmType, immediateOperand);
+    return new LlvmBasicBlockSD(instruction, fieldAccess, variableName, type(),
+        llvmType, immediateOperand);
   }
 
   @Override

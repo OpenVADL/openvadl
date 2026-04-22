@@ -143,8 +143,8 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
 
     var seenPredicates = new HashMap<Identifier, GcbCppFunctionWithBody>();
     var predicates = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
-    var immediateRecordPassResult = (GenerateTableGenImmediateRecordPass.Output) passResults.lastResultOf(
-        GenerateTableGenImmediateRecordPass.class);
+    var immediateRecordPassResult = (GenerateTableGenImmediateRecordPass.Output)
+        passResults.lastResultOf(GenerateTableGenImmediateRecordPass.class);
     var immediates = immediateRecordPassResult.immediates();
 
     for (var immediate : immediates) {
@@ -161,8 +161,8 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
       decodings.put(immediate, decoding(immediate));
 
       var predicateMethod = Optional
-        .ofNullable(seenPredicates.get(immediate.predicateMethod()))
-        .orElseGet(() -> predicate(stackPointerType, immediate));
+          .ofNullable(seenPredicates.get(immediate.predicateMethod()))
+          .orElseGet(() -> predicate(stackPointerType, immediate));
       seenPredicates.putIfAbsent(immediate.predicateMethod(), predicateMethod);
       predicates.put(immediate, predicateMethod);
     }

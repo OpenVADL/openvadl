@@ -48,6 +48,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.types.SIntType;
 import vadl.viam.Abi;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
@@ -132,7 +133,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         "globalPointer", abi.globalPointer().map(Abi.RegisterRef::render).orElse(""),
         "frameIndexEliminations",
         getEliminateFrameIndexEntries(instructionLabels, uninlined,
-            tableGenMachineInstructions, immediateRecordResults.immediatesByPredicates()).stream()
+            tableGenMachineInstructions, immediateRecordResults.immediatesByFieldAccess()).stream()
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
         specification.registerTensors().filter(RegisterTensor::isRegisterFile)
@@ -195,7 +196,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
       @Nullable Map<MachineInstructionLabel, List<Instruction>> instructionLabels,
       @Nullable IdentityHashMap<Instruction, UninlinedGraph> uninlined,
       List<TableGenMachineInstruction> tableGenMachineInstructions,
-      Map<Function, TableGenImmediateRecord> immediatesByPredicates) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> immediatesByFieldAccess) {
     ensureNonNull(instructionLabels, "labels must exist");
     ensureNonNull(uninlined, "uninlined must exist");
 
@@ -224,9 +225,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
           long minValue = isSigned ? -1 * (long) Math.pow(2, fieldBitWidth - 1) : 0;
           long maxValue = isSigned ? (long) Math.pow(2, fieldBitWidth - 1) - 1 :
               (long) Math.pow(2, fieldBitWidth);
-          var predicateFunction = immediate.fieldAccess().predicate();
           var tableGenImmediateRecord = ensureNonNull(
-              immediatesByPredicates.get(predicateFunction),
+              immediatesByFieldAccess.get(immediate.fieldAccess()),
               "Expected to find an immediate record for the given predicate function.");
           var predicateName = tableGenImmediateRecord.predicateMethod().lower();
 

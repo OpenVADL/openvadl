@@ -53,6 +53,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
@@ -73,7 +74,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
 
   public LlvmInstructionLoweringMemoryStoreStrategyImpl(
       ValueType architectureType, ValueType smallestRegisterClassType,
-      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 

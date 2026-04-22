@@ -19,17 +19,14 @@ package vadl.lcb.passes.llvmLowering.immediates;
 import static vadl.utils.GraphUtils.getSingleNode;
 import static vadl.viam.ViamError.ensurePresent;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
-
-import com.google.common.collect.Streams;
-
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
@@ -42,6 +39,7 @@ import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.utils.Pair;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
@@ -72,9 +70,12 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
   }
 
 
+  /**
+   * Output of the pass.
+   */
   public record Output(
-    List<TableGenImmediateRecord> immediates,
-    Map<Function, TableGenImmediateRecord> immediatesByPredicates
+      List<TableGenImmediateRecord> immediates,
+      Map<Format.FieldAccess, TableGenImmediateRecord> immediatesByFieldAccess
   ) {}
 
 
@@ -91,7 +92,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
     var smallestRegisterClassType = generateTableGenRegistersPassOutput.smallestRegisterClassType();
 
     var predicateMethodIdentifiers = new HashMap<Function, Identifier>();
-    var immediatesByPredicates = new HashMap<Function, TableGenImmediateRecord>();
+    var immediatesByFieldAccess = new HashMap<Format.FieldAccess, TableGenImmediateRecord>();
 
     // We do it first for machine instructions.
     snapshots.entrySet().stream().sorted(
@@ -138,25 +139,25 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                 var immediatePredicateMethod = TableGenImmediateRecord.createPredicateMethod(
                     instruction, fieldAccess);
                 var existingPredicateMethodOpt = predicateMethodIdentifiers
-                  .keySet()
-                  .stream()
-                  .filter(x -> predicateMethodEqual(x, fieldAccess.predicate()))
-                  .findFirst();
+                    .keySet()
+                    .stream()
+                    .filter(x -> predicateMethodEqual(x, fieldAccess.predicate()))
+                    .findFirst();
 
-                if(existingPredicateMethodOpt.isEmpty()) {
+                if (existingPredicateMethodOpt.isEmpty()) {
                   predicateMethodIdentifiers.put(fieldAccess.predicate(), immediatePredicateMethod);
                 }
 
                 var predicateMethod = existingPredicateMethodOpt
-                  .orElseGet(() -> fieldAccess.predicate());
+                    .orElseGet(() -> fieldAccess.predicate());
                 var predicateMethodIdentifier = predicateMethodIdentifiers
-                  .getOrDefault(predicateMethod, immediatePredicateMethod);
+                    .getOrDefault(predicateMethod, immediatePredicateMethod);
                 var tablegenImmediateRecord = new TableGenImmediateRecord(instruction,
                     fieldAccess,
                     upcastedValueType,
                     predicateMethodIdentifier);
                 immediates.add(tablegenImmediateRecord);
-                immediatesByPredicates.put(fieldAccess.predicate(), tablegenImmediateRecord);
+                immediatesByFieldAccess.put(fieldAccess, tablegenImmediateRecord);
               });
             });
 
@@ -186,7 +187,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
           }
         });
 
-    return new Output(immediates, immediatesByPredicates);
+    return new Output(immediates, immediatesByFieldAccess);
   }
 
   private static boolean predicateMethodEqual(Function a, Function b) {

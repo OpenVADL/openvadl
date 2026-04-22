@@ -19,12 +19,11 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.Map;
-
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.viam.Function;
+import vadl.viam.Format;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
@@ -39,7 +38,7 @@ public class LcbNodeReplacementHandlerWithBasicBlockReplacement extends LcbNodeR
       PrintableInstruction printableInstruction,
       ValueType architectureType,
       ValueType smallestRegisterClassType,
-      Map<Function, TableGenImmediateRecord> tablegenImmediateRecords) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediateRecords) {
     super(printableInstruction, architectureType, smallestRegisterClassType,
         tablegenImmediateRecords);
   }
@@ -47,9 +46,8 @@ public class LcbNodeReplacementHandlerWithBasicBlockReplacement extends LcbNodeR
   @Override
   public void handle(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
-    var predicateMethod = fieldAccessRefNode.fieldAccess().predicate();
     var immediateRecord = ensureNonNull(
-        tablegenImmediateRecords.get(predicateMethod),
+        tablegenImmediateRecords.get(fieldAccessRefNode.fieldAccess()),
         "Expected to find an immediate record for the given predicate function.");
 
     fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(printableInstruction,

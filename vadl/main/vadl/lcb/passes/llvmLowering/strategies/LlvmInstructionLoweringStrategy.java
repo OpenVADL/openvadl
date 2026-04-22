@@ -74,6 +74,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -114,11 +115,18 @@ import vadl.viam.passes.canonicalization.Canonicalizer;
 public abstract class LlvmInstructionLoweringStrategy {
   protected final ValueType architectureType;
   protected final ValueType smallestRegisterClassType;
-  protected final Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords;
+  protected final Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords;
 
-  public LlvmInstructionLoweringStrategy(ValueType architectureType, 
+  /**
+   * Constructor.
+   *
+   * @param architectureType Architecture type
+   * @param smallestRegisterClassType Smallest register class type of the abi
+   * @param tablegenImmediatesRecords Map of available immediate records for given field accesses
+   */
+  public LlvmInstructionLoweringStrategy(ValueType architectureType,
       ValueType smallestRegisterClassType, 
-      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
     this.architectureType = architectureType;
     this.smallestRegisterClassType = smallestRegisterClassType;
     this.tablegenImmediatesRecords = tablegenImmediatesRecords;
@@ -252,9 +260,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         var llvmType = llvmNodeBitwidth < this.smallestRegisterClassType.getBitwidth()
             ? this.smallestRegisterClassType
             : ValueType.from(llvmNode.type().asDataType()).get();
-        var predicateMethod = immediateOperand.fieldAccess().predicate();
         var tablegenImmediateRecord = ensureNonNull(
-            tablegenImmediatesRecords.get(predicateMethod),
+            tablegenImmediatesRecords.get(immediateOperand.fieldAccess()),
             "Expected to find an immediate record for the given predicate function.");
         llvmNode =
             new LlvmFieldAccessRefNode(
@@ -272,18 +279,16 @@ public abstract class LlvmInstructionLoweringStrategy {
             () -> Diagnostic.error("There is no lowered field access",
                 instruction.location().join(immediateOperand.fieldAccess().location())));
 
-        var fieldAccess = immediateOperand.fieldAccess();
-        var predicateMethod = fieldAccess.predicate();
         var tablegenImmediate = ensureNonNull(
-          this.tablegenImmediatesRecords.get(predicateMethod),
-          "Expected to find associated tablegen immediates record to predicate function.");
+            this.tablegenImmediatesRecords.get(llvmNodeBB.fieldAccess()),
+            "Expected to find associated tablegen immediates record to predicate function.");
         var llvmNode = new LlvmBasicBlockSD(
-          instruction,
-          llvmNodeBB.fieldAccess(),
-          llvmNodeBB.variableName(),
-          llvmNodeBB.type(),
-          llvmNodeBB.llvmType(),
-          tablegenImmediate
+            instruction,
+            llvmNodeBB.fieldAccess(),
+            llvmNodeBB.variableName(),
+            llvmNodeBB.type(),
+            llvmNodeBB.llvmType(),
+            tablegenImmediate
         );
 
         operands.set(i, new TableGenInstructionLabelOperand(llvmNode));
@@ -295,7 +300,7 @@ public abstract class LlvmInstructionLoweringStrategy {
         // because of optimisations. However, we still need to replace this operand.
         var fieldAccess = immediateOperand.fieldAccess();
         var tablegenImmediateRecord = ensureNonNull(
-            tablegenImmediatesRecords.get(fieldAccess.predicate()), 
+            tablegenImmediatesRecords.get(fieldAccess), 
             "Expected to find an immediate record for the given predicate function.");
         var upcastedType =
             (ValueType) ValueType.from(CppTypeMap.upcast(fieldAccess.accessFunction().returnType()))

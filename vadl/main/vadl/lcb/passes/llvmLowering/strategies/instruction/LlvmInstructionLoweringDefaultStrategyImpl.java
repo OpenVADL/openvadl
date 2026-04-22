@@ -29,9 +29,8 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.types.DataType;
 import vadl.viam.Abi;
-import vadl.viam.Function;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 
@@ -42,7 +41,7 @@ public class LlvmInstructionLoweringDefaultStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   public LlvmInstructionLoweringDefaultStrategyImpl(
       ValueType architectureType, ValueType smallestRegisterClassType,
-      Map<Function, TableGenImmediateRecord> tablegenImmediatesRecords) {
+      Map<Format.FieldAccess, TableGenImmediateRecord> tablegenImmediatesRecords) {
     super(architectureType, smallestRegisterClassType, tablegenImmediatesRecords);
   }
 
