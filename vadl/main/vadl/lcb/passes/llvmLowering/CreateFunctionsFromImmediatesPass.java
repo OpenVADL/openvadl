@@ -18,10 +18,12 @@ package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -139,9 +141,11 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
     var encodings = new IdentityHashMap<Instruction, List<GcbCppEncodeFunction>>();
     var encodingWrappers = new IdentityHashMap<Instruction, GcbCppEncodingWrapperFunction>();
 
+    var seenPredicates = new HashMap<Identifier, GcbCppFunctionWithBody>();
     var predicates = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
-    var immediates = (List<TableGenImmediateRecord>) passResults.lastResultOf(
+    var immediateRecordPassResult = (GenerateTableGenImmediateRecordPass.Output) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class);
+    var immediates = immediateRecordPassResult.immediates();
 
     for (var immediate : immediates) {
       // We do not need to encode pseudo instructions.
@@ -155,7 +159,12 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
 
       decodingWrappers.put(immediate, decodingWrapper(immediate));
       decodings.put(immediate, decoding(immediate));
-      predicates.put(immediate, predicate(stackPointerType, immediate));
+
+      var predicateMethod = Optional
+        .ofNullable(seenPredicates.get(immediate.predicateMethod()))
+        .orElseGet(() -> predicate(stackPointerType, immediate));
+      seenPredicates.putIfAbsent(immediate.predicateMethod(), predicateMethod);
+      predicates.put(immediate, predicateMethod);
     }
 
     for (var pair : tableGenMachineInstructions.entrySet()) {

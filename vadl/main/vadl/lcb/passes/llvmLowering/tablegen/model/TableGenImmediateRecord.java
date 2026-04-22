@@ -51,6 +51,14 @@ public class TableGenImmediateRecord {
       PrintableInstruction instruction,
       Format.FieldAccess fieldAccess,
       ValueType llvmType) {
+    this(instruction, fieldAccess, llvmType, createPredicateMethod(instruction, fieldAccess));
+  }
+
+  public TableGenImmediateRecord(
+      PrintableInstruction instruction,
+      Format.FieldAccess fieldAccess,
+      ValueType llvmType,
+      Identifier predicateMethod) {
     this.instructionRef = instruction;
     final var decodingIdentifier =
         Objects.requireNonNull(fieldAccess).accessFunction().identifier.dropLast().last();
@@ -60,7 +68,7 @@ public class TableGenImmediateRecord {
     this.rawDecoderMethod =
         decodingIdentifier.prepend(instruction.identifier()).append("decode");
     this.decoderMethod = rawDecoderMethod.append(DISASSEMBLER_WRAPPER);
-    this.predicateMethod = createPredicateMethod(instruction, fieldAccess);
+    this.predicateMethod = predicateMethod;
     this.llvmType = llvmType;
     this.fieldAccessRef = fieldAccess;
     this.rawType = (BitsType) fieldAccessRef.type();

@@ -16,14 +16,20 @@
 
 package vadl.lcb.passes.llvmLowering.immediates;
 
+import static vadl.utils.GraphUtils.getSingleNode;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nullable;
+
+import com.google.common.collect.Streams;
+
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
@@ -34,13 +40,22 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
+import vadl.types.BoolType;
+import vadl.utils.Pair;
+import vadl.viam.Function;
+import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * This pass extracts the immediates from the TableGen records.
@@ -56,9 +71,16 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
     return new PassName("GenerateTableGenImmediateRecordPass");
   }
 
+
+  public record Output(
+    List<TableGenImmediateRecord> immediates,
+    Map<Function, TableGenImmediateRecord> immediatesByPredicates
+  ) {}
+
+
   @Nullable
   @Override
-  public List<TableGenImmediateRecord> execute(PassResults passResults,
+  public Output execute(PassResults passResults,
                                                Specification viam) throws IOException {
     var snapshots =
         (Map<Instruction, Graph>) passResults.lastResultOf(SnapshotInstructionBehaviorPass.class);
@@ -67,6 +89,9 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
         ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
             GenerateTableGenRegistersPass.class));
     var smallestRegisterClassType = generateTableGenRegistersPassOutput.smallestRegisterClassType();
+
+    var predicateMethodIdentifiers = new HashMap<Function, Identifier>();
+    var immediatesByPredicates = new HashMap<Function, TableGenImmediateRecord>();
 
     // We do it first for machine instructions.
     snapshots.entrySet().stream().sorted(
@@ -107,10 +132,31 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                 upcastedValueType = upcastedValueTypeBitwidth < smallestRegisterClassBitwidth
                     ? smallestRegisterClassType
                     : upcastedValueType;
-                immediates.add(new TableGenImmediateRecord(instruction,
-                    fieldAccess,
-                    upcastedValueType));
 
+                // do not create a predicate method for every immedate record,
+                // reuse identical predicate methods
+                var immediatePredicateMethod = TableGenImmediateRecord.createPredicateMethod(
+                    instruction, fieldAccess);
+                var existingPredicateMethodOpt = predicateMethodIdentifiers
+                  .keySet()
+                  .stream()
+                  .filter(x -> predicateMethodEqual(x, fieldAccess.predicate()))
+                  .findFirst();
+
+                if(existingPredicateMethodOpt.isEmpty()) {
+                  predicateMethodIdentifiers.put(fieldAccess.predicate(), immediatePredicateMethod);
+                }
+
+                var predicateMethod = existingPredicateMethodOpt
+                  .orElseGet(() -> fieldAccess.predicate());
+                var predicateMethodIdentifier = predicateMethodIdentifiers
+                  .getOrDefault(predicateMethod, immediatePredicateMethod);
+                var tablegenImmediateRecord = new TableGenImmediateRecord(instruction,
+                    fieldAccess,
+                    upcastedValueType,
+                    predicateMethodIdentifier);
+                immediates.add(tablegenImmediateRecord);
+                immediatesByPredicates.put(fieldAccess.predicate(), tablegenImmediateRecord);
               });
             });
 
@@ -140,6 +186,94 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
           }
         });
 
-    return immediates;
+    return new Output(immediates, immediatesByPredicates);
+  }
+
+  private static boolean predicateMethodEqual(Function a, Function b) {
+    if (!(a.returnType() instanceof BoolType) || !(b.returnType() instanceof BoolType)) {
+      throw Diagnostic
+        .error("Expected return type of predicate function to be boolean.", a.location())
+        .build();
+    }
+
+    if (a.parameters().length != b.parameters().length) {
+      return false;
+    }
+
+    Graph canonicalA = a.behavior().copy();
+    Graph canonicalB = b.behavior().copy();
+    Canonicalizer.canonicalize(canonicalA);
+    Canonicalizer.canonicalize(canonicalB);
+
+    ReturnNode returnA = getSingleNode(canonicalA, ReturnNode.class);
+    ReturnNode returnB = getSingleNode(canonicalB, ReturnNode.class);
+
+    return predicateMethodEqualNode(returnA, returnB);
+  }
+
+  /**
+   * Equality check over two nodes, aligned with what
+   * {@link vadl.cppCodeGen.common.PredicateFunctionCodeGenerator} emits.
+   *
+   * <p>Default rule: two nodes are equal if they have the same concrete class, the same
+   * {@link Node#dataList()} payload, and pairwise-equal inputs in the same order.
+   *
+   * <p>Three node types are special-cased because their {@code dataList()} contains
+   * identity-based definition objects that the C++ emitter collapses to a simple name (or
+   * ignores entirely):
+   *
+   * <ul>
+   *   <li>{@link FuncParamNode}: {@link vadl.viam.Parameter} uses reference equality, so
+   *       parameters from different {@link Function}s never match. Compared by
+   *       {@code (index, type)} instead.</li>
+   *   <li>{@link FieldAccessRefNode}: inside a predicate this always refers to the predicate's
+   *       own field access (enforced by the emitter) and is rendered as
+   *       {@code fieldAccess().simpleName()}. The specific {@link Format.FieldAccess} object
+   *       carries no semantic weight here, so it is ignored; only the result type is compared.</li>
+   *   <li>{@link FuncCallNode}: rendered as {@code function().simpleName()}, so two calls to
+   *       distinct {@link Function} objects that share a simple name collapse to identical C++.
+   *       Compared by the function's simple name and return type.</li>
+   * </ul>
+   */
+  private static boolean predicateMethodEqualNode(Node a, Node b) {
+    if (a == b) {
+      return true;
+    }
+
+    if (a == null || b == null) {
+      return false;
+    }
+
+    if (!a.getClass().equals(b.getClass())) {
+      return false;
+    }
+
+    if (a instanceof FuncParamNode pa && b instanceof FuncParamNode pb) {
+      if (pa.parameter().index() != pb.parameter().index()
+          || !pa.parameter().type().equals(pb.parameter().type())) {
+        return false;
+      }
+    } else if (a instanceof FieldAccessRefNode fa && b instanceof FieldAccessRefNode fb) {
+      if (!fa.type().equals(fb.type())) {
+        return false;
+      }
+    } else if (a instanceof FuncCallNode fca && b instanceof FuncCallNode fcb) {
+      if (!fca.function().simpleName().equals(fcb.function().simpleName())
+          || !fca.function().returnType().equals(fcb.function().returnType())) {
+        return false;
+      }
+    } else if (!a.dataList().equals(b.dataList())) {
+      return false;
+    }
+
+    List<Node> inputsA = a.inputs().toList();
+    List<Node> inputsB = b.inputs().toList();
+    if (inputsA.size() != inputsB.size()) {
+      return false;
+    }
+
+    return Streams
+      .zip(inputsA.stream(), inputsB.stream(), Pair::of)
+      .allMatch(p -> predicateMethodEqualNode(p.left(), p.right()));
   }
 }

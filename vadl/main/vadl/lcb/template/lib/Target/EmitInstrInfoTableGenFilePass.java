@@ -45,7 +45,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionPattern
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPseudoInstExpansionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenCompilerInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
@@ -99,6 +98,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         GenerateGcbIntrinsicsPass.class)).intrinsics();
     var tableGenMachineRecordsLookup = tableGenMachineRecords.stream().collect(Collectors.toMap(
         TableGenMachineInstruction::instruction, x -> x));
+    var immediateRecordPassResult = (GenerateTableGenImmediateRecordPass.Output) passResults
+        .lastResultOf(GenerateTableGenImmediateRecordPass.class);
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
@@ -108,8 +109,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         () -> Diagnostic.error("Instruction set requires an addition with immediate",
             specification.location()));
 
-    var renderedImmediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
-        GenerateTableGenImmediateRecordPass.class))
+    var renderedImmediates = immediateRecordPassResult.immediates()
         .stream()
         .map(TableGenImmediateOperandRenderer::lower)
         .toList();
