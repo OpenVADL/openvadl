@@ -252,6 +252,10 @@ public abstract class LlvmInstructionLoweringStrategy {
         var llvmType = llvmNodeBitwidth < this.smallestRegisterClassType.getBitwidth()
             ? this.smallestRegisterClassType
             : ValueType.from(llvmNode.type().asDataType()).get();
+        var predicateMethod = immediateOperand.fieldAccess().predicate();
+        var tablegenImmediateRecord = ensureNonNull(
+            tablegenImmediatesRecords.get(predicateMethod),
+            "Expected to find an immediate record for the given predicate function.");
         llvmNode =
             new LlvmFieldAccessRefNode(
                 instruction,
@@ -259,7 +263,7 @@ public abstract class LlvmInstructionLoweringStrategy {
                 immediateOperand.fieldAccess().type(),
                 llvmType,
                 LlvmFieldAccessRefNode.Usage.Immediate,
-                tablegenImmediatesRecords.get(immediateOperand.fieldAccess().predicate()));
+                tablegenImmediateRecord);
 
         operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
       } else if (operand instanceof GcbInstructionImmediateOperand immediateOperand
@@ -290,6 +294,9 @@ public abstract class LlvmInstructionLoweringStrategy {
         // This branch is taken when the field access was removed from the instruction's behavior
         // because of optimisations. However, we still need to replace this operand.
         var fieldAccess = immediateOperand.fieldAccess();
+        var tablegenImmediateRecord = ensureNonNull(
+            tablegenImmediatesRecords.get(fieldAccess.predicate()), 
+            "Expected to find an immediate record for the given predicate function.");
         var upcastedType =
             (ValueType) ValueType.from(CppTypeMap.upcast(fieldAccess.accessFunction().returnType()))
                 .orElseThrow(
@@ -303,7 +310,7 @@ public abstract class LlvmInstructionLoweringStrategy {
                 fieldAccess.type(),
                 upcastedType,
                 LlvmFieldAccessRefNode.Usage.Immediate,
-                tablegenImmediatesRecords.get(immediateOperand.fieldAccess().predicate()));
+                tablegenImmediateRecord);
         operands.set(i, new TableGenInstructionImmediateOperand(llvmNode));
       } else if (operand instanceof GcbInstructionRegisterFileOperand registerFileOperand
           && registerFileOperand.origin() instanceof ReadRegTensorNode readNode) {

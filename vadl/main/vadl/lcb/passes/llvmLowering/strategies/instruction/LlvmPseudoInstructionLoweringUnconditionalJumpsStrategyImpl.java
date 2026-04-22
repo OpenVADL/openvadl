@@ -184,6 +184,9 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
     var fieldAccess = getFieldAccessFunctionFromFormatOrThrowError(instrCallNode);
     var upcasted = upcastFieldAccess(fieldAccess);
     var parameter = pseudo.parameters()[0];
+    var immediateOperand = ensureNonNull(
+        tablegenImmediateRecords.get(fieldAccess.predicate()),
+        "Expected to find tablegen immediate record for given predicate function.");
 
     selector.addWithInputs(
         new LlvmBrSD(new LlvmBasicBlockSD(
@@ -191,12 +194,13 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
             fieldAccess,
             parameter.simpleName(),
             fieldAccess.type(),
-            upcasted)));
+            upcasted,
+            immediateOperand)));
     machine.addWithInputs(new LcbPseudoInstructionNode(
         new NodeList<>(
             new LcbMachineInstructionParameterNode(new GcbInstructionBareSymbolOperand(
                 new LlvmBasicBlockSD(pseudo, fieldAccess, parameter.simpleName(),
-                    fieldAccess.type(), upcasted),
+                    fieldAccess.type(), upcasted, immediateOperand),
                 parameter.simpleName()))
         ), pseudo));
 

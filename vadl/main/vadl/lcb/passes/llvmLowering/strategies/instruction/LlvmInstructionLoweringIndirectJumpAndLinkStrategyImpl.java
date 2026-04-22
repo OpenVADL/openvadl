@@ -16,6 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -246,9 +247,12 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
     var predicateMethod = immediate.fieldAccess().predicate();
+    var tablegenImmediateRecord = ensureNonNull(
+      tablegenImmediatesRecords.get(predicateMethod),
+      "Expected to find an immediate record for the given predicate function.");
     var fieldRef =
         new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,
-            LlvmFieldAccessRefNode.Usage.Immediate, tablegenImmediatesRecords.get(predicateMethod));
+            LlvmFieldAccessRefNode.Usage.Immediate, tablegenImmediateRecord);
     var machine = new Graph("machine");
     machine.addWithInputs(new LcbMachineInstructionNode(
         new NodeList<>(
@@ -297,9 +301,13 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
+    var predicateMethod = immediate.fieldAccess().predicate();
+    var immediateOperand = ensureNonNull(
+        tablegenImmediatesRecords.get(predicateMethod), 
+        "Expected to find an immediate record for the given predicate function.");
     var fieldRef =
         new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,
-            LlvmFieldAccessRefNode.Usage.Immediate);
+            LlvmFieldAccessRefNode.Usage.Immediate, immediateOperand);
     selector.addWithInputs(new LlvmBrindSD(new NodeList<>(
         new LlvmAddSD(new NodeList<>(llvmRegister, fieldRef), Type.dummy())),
         Type.dummy()));

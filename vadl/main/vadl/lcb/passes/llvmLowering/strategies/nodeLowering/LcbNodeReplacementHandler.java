@@ -446,6 +446,9 @@ public class LcbNodeReplacementHandler {
         : llvmType;
 
     var predicateMethod = fieldAccessRefNode.fieldAccess().predicate();
+    var tablegenImmediateRecord = ensureNonNull(
+      tablegenImmediateRecords.get(predicateMethod),
+      "Expected to find an immediate record for the given predicate function.");
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(
             printableInstruction,
@@ -453,7 +456,7 @@ public class LcbNodeReplacementHandler {
             originalType,
             llvmType,
             LlvmFieldAccessRefNode.Usage.Immediate,
-            tablegenImmediateRecords.get(predicateMethod)));
+            tablegenImmediateRecord));
   }
 
   @Handler

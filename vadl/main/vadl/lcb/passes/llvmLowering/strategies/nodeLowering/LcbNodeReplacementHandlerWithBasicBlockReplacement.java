@@ -16,6 +16,8 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.util.Map;
 
 import vadl.gcb.valuetypes.ValueType;
@@ -45,11 +47,16 @@ public class LcbNodeReplacementHandlerWithBasicBlockReplacement extends LcbNodeR
   @Override
   public void handle(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
+    var predicateMethod = fieldAccessRefNode.fieldAccess().predicate();
+    var immediateRecord = ensureNonNull(
+        tablegenImmediateRecords.get(predicateMethod),
+        "Expected to find an immediate record for the given predicate function.");
 
     fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(printableInstruction,
         fieldAccessRefNode.fieldAccess(),
         originalType,
-        architectureType)
+        architectureType,
+        immediateRecord)
     );
   }
 }

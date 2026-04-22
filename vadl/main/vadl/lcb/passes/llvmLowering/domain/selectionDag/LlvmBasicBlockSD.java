@@ -53,11 +53,11 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
   public LlvmBasicBlockSD(PrintableInstruction instruction,
                           Format.FieldAccess fieldAccess,
                           Type originalType,
-                          ValueType llvmType) {
+                          ValueType llvmType,
+                          TableGenImmediateRecord immediateOperand) {
     super(fieldAccess, originalType);
     this.instruction = instruction;
-    this.immediateOperand =
-        new TableGenImmediateRecord(instruction, fieldAccess, llvmType);
+    this.immediateOperand = immediateOperand;
     this.llvmType = llvmType;
     this.variableName = immediateOperand.fieldAccessRef().simpleName();
   }
@@ -75,19 +75,6 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
    * @param llvmType     is same as {@code originalType} when it is a valid LLVM type. Otherwise,
    *                     it is the next upcasted type.
    */
-  public LlvmBasicBlockSD(PrintableInstruction instruction,
-                          Format.FieldAccess fieldAccess,
-                          String variableName,
-                          Type originalType,
-                          ValueType llvmType) {
-    super(fieldAccess, originalType);
-    this.instruction = instruction;
-    this.immediateOperand =
-        new TableGenImmediateRecord(instruction, fieldAccess, llvmType);
-    this.llvmType = llvmType;
-    this.variableName = variableName;
-  }
-
   public LlvmBasicBlockSD(PrintableInstruction instruction,
                           Format.FieldAccess fieldAccess,
                           String variableName,

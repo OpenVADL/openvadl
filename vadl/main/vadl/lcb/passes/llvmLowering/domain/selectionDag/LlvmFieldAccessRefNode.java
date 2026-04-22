@@ -66,23 +66,11 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
       Format.FieldAccess fieldAccess,
       Type originalType,
       ValueType llvmType,
-      Usage usage) {
-    this(instruction, fieldAccess, originalType, llvmType, usage, 
-        new TableGenImmediateRecord(instruction, fieldAccess, llvmType));
-  }
-
-  public LlvmFieldAccessRefNode(
-      PrintableInstruction instruction,
-      Format.FieldAccess fieldAccess,
-      Type originalType,
-      ValueType llvmType,
       Usage usage,
-      @Nullable TableGenImmediateRecord immediateOperand) {
+      TableGenImmediateRecord immediateOperand) {
     super(fieldAccess, originalType);
     this.instruction = instruction;
-    this.immediateOperand = immediateOperand == null ? 
-        new TableGenImmediateRecord(instruction, fieldAccess, llvmType) 
-        : immediateOperand;
+    this.immediateOperand = immediateOperand;
     this.llvmType = llvmType;
     this.usage = usage;
     setSourceLocation(fieldAccess.location());
