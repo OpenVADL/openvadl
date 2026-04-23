@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.lcb.AbstractPredicateCodeGeneratorCppVerificationTest;
-import vadl.viam.Format;
 
 /**
  * This test classes tests the instruction immediates where the predicate should match.
@@ -59,7 +58,7 @@ public class PredicateCodeGeneratorCppPositiveCasesVerificationTest extends
   }
 
   @Override
-  public String render(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess, int sample) {
-    return renderPositive(record, fieldAccess, sample);
+  public String render(GcbCppFunctionWithBody record, int sample) {
+    return renderPositive(record, sample);
   }
 }

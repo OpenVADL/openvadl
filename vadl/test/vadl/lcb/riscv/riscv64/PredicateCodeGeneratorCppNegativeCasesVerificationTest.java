@@ -19,7 +19,6 @@ package vadl.lcb.riscv.riscv64;
 import java.util.stream.Stream;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.lcb.AbstractPredicateCodeGeneratorCppVerificationTest;
-import vadl.viam.Format;
 
 /**
  * This test classes tests the instruction immediates where the predicate should not match.
@@ -58,7 +57,7 @@ public class PredicateCodeGeneratorCppNegativeCasesVerificationTest extends
   }
 
   @Override
-  public String render(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess, int sample) {
-    return renderNegative(record, fieldAccess, sample);
+  public String render(GcbCppFunctionWithBody record, int sample) {
+    return renderNegative(record, sample);
   }
 }

@@ -33,7 +33,6 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.DockerImage;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.common.PredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -41,7 +40,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 import vadl.utils.VadlFileUtils;
-import vadl.viam.Format;
 
 public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends AbstractLcbTest {
   public record Test(String name, String fieldAccessFunction, Arbitrary<Integer> arbitrary) {
@@ -52,8 +50,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
 
   public abstract Stream<Test> inputs();
 
-  public abstract String render(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
-                                int sample);
+  public abstract String render(GcbCppFunctionWithBody record, int sample);
 
   protected Arbitrary<Integer> allIntegersExcept(int minExclusive, int maxExclusive) {
     return Arbitraries.oneOf(Arbitraries.integers().lessOrEqual(minExclusive - 1),
@@ -80,13 +77,12 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
     var mappings = inputs()
         .flatMap(input -> {
           var value = predicates.get(Pair.of(input.name, input.fieldAccessFunction));
-          var fieldAccess = value.left();
           var record = value.right();
           List<Pair<String, String>> copyMappings = new ArrayList<>();
           input.arbitrary.sampleStream().limit(5).forEach(sample -> {
             var fileName = record.header().functionName().lower() + "_sample_" + sample + ".cpp";
             var filePath = configuration.outputPath() + "/inputs/" + fileName;
-            var code = render(record, fieldAccess, sample);
+            var code = render(record, sample);
             copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
 
             try {
@@ -151,14 +147,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile")), setup);
   }
 
-  protected String renderPositive(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
-                                  int sample) {
-    var predicateFunctionGenerator =
-        new PredicateFunctionCodeGenerator(record.header(), fieldAccess,
-            record.header().functionName().lower());
-
-    var predicateFunction = predicateFunctionGenerator.genFunctionDefinition();
-
+  protected String renderPositive(GcbCppFunctionWithBody record, int sample) {
     String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
@@ -208,21 +197,14 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
               }
             }
             """,
-        predicateFunction,
+        record.code(),
         record.header().identifier.lower(),
         sample);
 
     return cppCode;
   }
 
-  protected String renderNegative(GcbCppFunctionWithBody record, Format.FieldAccess fieldAccess,
-                               int sample) {
-    var predicateFunctionGenerator =
-        new PredicateFunctionCodeGenerator(record.header(), fieldAccess,
-            record.header().functionName().lower());
-
-    var predicateFunction = predicateFunctionGenerator.genFunctionDefinition();
-
+  protected String renderNegative(GcbCppFunctionWithBody record, int sample) {
     String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
@@ -272,7 +254,7 @@ public abstract class AbstractPredicateCodeGeneratorCppVerificationTest extends 
               }
             }
             """,
-        predicateFunction,
+        record.code(),
         record.header().identifier.lower(),
         sample);
 
