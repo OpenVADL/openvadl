@@ -40,7 +40,7 @@ public class UmeHardcodedRiscvDefinitionPass extends AbstractIssPass {
   @CheckForNull
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    UserModeEmulation ume = UserModeEmulation.createDefault();
+    UserModeEmulation ume = UserModeEmulation.createDummySolution();
     viam.add(ume);
     return null;
   }

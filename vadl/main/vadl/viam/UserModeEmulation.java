@@ -44,14 +44,15 @@ public class UserModeEmulation extends Definition {
   private final RegisterUtils.Register spReg;
   private final RegisterUtils.Register raReg;
   private final RegisterUtils.Register tpReg;
+  private final List<RegisterTensor> signalStateTensors;
   private final List<RegisterUtils.Register> args;
   private final Map<String, Integer> excIds;
   private final Instruction syscallInstr;
   private final ExceptionDef syscallException;
   private final ExceptionDef breakpointExcName;
   private final ExceptionDef illegalInstrExcName;
-  private final String ptRegPc;
-  private final String ptRegSp;
+  private final Identifier ptRegPc;
+  private final Identifier ptRegSp;
   private final boolean hasIcacheFlush;
   private final int insnWidthBytes;
   private final int stackAlignMask;
@@ -66,16 +67,18 @@ public class UserModeEmulation extends Definition {
       RegisterTensor mainRegisterFile,
       RegisterUtils.Register sysReg, RegisterUtils.Register retReg,
       RegisterUtils.Register spReg, RegisterUtils.Register raReg, RegisterUtils.Register tpReg,
+      List<RegisterTensor> signalStateTensors,
       List<RegisterUtils.Register> args, Map<String, Integer> excIds,
       Instruction syscallInstr, ExceptionDef breakpointExcName,
       ExceptionDef illegalInstrExcName,
-      String ptRegPc, String ptRegSp, Identifier excCauseVar, boolean hasIcacheFlush,
+      Identifier ptRegPc, Identifier ptRegSp, Identifier excCauseVar, boolean hasIcacheFlush,
       int insnWidthBytes, int stackAlignMask, int sigtrampLoadSyscallInstr,
       int sigtrampTrapInstr) {
 
     super(identifier);
     this.syscallException = syscallException;
     this.mainRegisterFile = mainRegisterFile;
+    this.signalStateTensors = signalStateTensors;
     if (args == null || args.isEmpty()) {
       throw new IllegalArgumentException("args must not be null/empty");
     }
@@ -109,7 +112,7 @@ public class UserModeEmulation extends Definition {
    * pre-configured for the RISC-V architecture.
    * * @return a standard RISC-V user-mode emulation setup.
    */
-  public static UserModeEmulation createDefault() {
+  public static UserModeEmulation createDummySolution() {
     Identifier identifier = new Identifier(new String[]{"ume"},
         SourceLocation.INVALID_SOURCE_LOCATION);
 
@@ -210,18 +213,24 @@ public class UserModeEmulation extends Definition {
         "ECALL", 11
     );
 
+    Identifier ptRegsPcField = new Identifier(new String[]{"sepc"},
+        SourceLocation.INVALID_SOURCE_LOCATION);
+    Identifier ptRegsSpField = new Identifier(new String[]{"sp"},
+        SourceLocation.INVALID_SOURCE_LOCATION);
+
+    List<RegisterTensor> signalStateTensors = List.of(mainFile);
 
     return new UserModeEmulation(
         identifier,
         mockSyscallExc,
         mainFile,
         sys, ret, sp, ra, tp,
-        args,
+        signalStateTensors, args,
         excIds,
         mockSyscallInsn,
         mockBreakpointExc,
         mockIllegalExc,
-        "sepc", "sp", riscvCauseVar,
+        ptRegsPcField, ptRegsSpField, riscvCauseVar,
         true, 4, 0xf,
         0x08b00893, 0x00000073
     );
@@ -243,11 +252,11 @@ public class UserModeEmulation extends Definition {
     return insnWidthBytes;
   }
 
-  public String getPtRegPc() {
+  public Identifier getPtRegPc() {
     return ptRegPc;
   }
 
-  public String getPtRegSp() {
+  public Identifier getPtRegSp() {
     return ptRegSp;
   }
 
@@ -316,5 +325,9 @@ public class UserModeEmulation extends Definition {
   public String toString() {
     return simpleName() + " [sysReg=" + sysReg + ", retReg=" + retReg + ", spReg=" + spReg
         + ", raReg=" + raReg + ", tpReg=" + tpReg + ", args=" + args + ", excIds=" + excIds + "]";
+  }
+
+  public List<RegisterTensor> getSignalStateTensors() {
+    return signalStateTensors;
   }
 }
