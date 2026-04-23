@@ -16,18 +16,15 @@
 
 package vadl.cli;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.stream.Streams;
 import picocli.CommandLine;
 import vadl.OpenVadlProperties;
-import vadl.configuration.DecoderOptions;
 import vadl.configuration.DumpMode;
 import vadl.configuration.IssConfiguration;
 
@@ -108,79 +105,6 @@ class IssOptsConverter implements CommandLine.ITypeConverter<IssConfiguration.Is
   }
 }
 
-interface DecoderOpt {
-}
-
-record DecoderStrategy(DecoderOptions.Generator generator) implements DecoderOpt {
-}
-
-record DecoderSkipOption(DecoderOptions.OptionToSkip option) implements DecoderOpt {
-}
-
-class DecoderOptsConverter implements Iterable<String>, CommandLine.ITypeConverter<DecoderOpt> {
-
-  static final String KEY_STRATEGY = "strategy";
-  static final String KEY_SKIP = "skip";
-
-  @Override
-  public DecoderOpt convert(String value) throws Exception {
-    final String[] fragments = value.split("=", -1);
-    if (fragments.length != 2) {
-      throw new CommandLine.TypeConversionException(
-          "Unable to parse decoder option '%s'".formatted(value));
-    }
-
-    if (KEY_STRATEGY.equals(fragments[0].trim())) {
-      var val = fragments[1].trim();
-      var strategy = DecoderOptions.Generator.fromSelector(val);
-      if (strategy != null) {
-        return new DecoderStrategy(strategy);
-      }
-
-      throw new CommandLine.TypeConversionException(
-          "Unable to parse decoder strategy '%s'. Available strategies are: %s".formatted(val,
-              Arrays.stream(DecoderOptions.Generator.values())
-                  .map(DecoderOptions.Generator::getSelector).toList()));
-    }
-
-    if (KEY_SKIP.equals(fragments[0].trim())) {
-      var val = fragments[1].trim();
-      var skipOpt = DecoderOptions.OptionToSkip.fromSelector(val);
-      if (skipOpt != null) {
-        return new DecoderSkipOption(skipOpt);
-      }
-
-      throw new CommandLine.TypeConversionException(
-          "Unable to parse decoder option to skip: '%s'. Available options are: %s".formatted(val,
-              Arrays.stream(DecoderOptions.OptionToSkip.values())
-                  .map(DecoderOptions.OptionToSkip::getSelector).toList()));
-    }
-
-    throw new CommandLine.TypeConversionException(
-        "Illegal decoder option '%s'. Available options are: %s".formatted(value,
-            List.of(KEY_SKIP, KEY_STRATEGY)));
-  }
-
-  public static List<String> getOptions() {
-
-    final List<String> options = new ArrayList<>();
-    for (DecoderOptions.Generator generator : DecoderOptions.Generator.values()) {
-      options.add(
-          "%n%s=%s (%s)".formatted(KEY_STRATEGY, generator.getSelector(), generator.getDesc()));
-    }
-    for (DecoderOptions.OptionToSkip skipOption : DecoderOptions.OptionToSkip.values()) {
-      options.add(
-          "%n%s=%s (%s)".formatted(KEY_SKIP, skipOption.getSelector(), skipOption.getDesc()));
-    }
-    return options;
-  }
-
-  @Nonnull
-  @Override
-  public Iterator<String> iterator() {
-    return getOptions().iterator();
-  }
-}
 
 class DumpModeConverter implements CommandLine.ITypeConverter<DumpMode>, Iterable<String>,
     CommandLine.IParameterConsumer {

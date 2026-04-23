@@ -19,9 +19,11 @@ package vadl.cli;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import java.io.IOException;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import vadl.cli.decoder.mixin.RtlDecoderOptions;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.pass.PassOrder;
@@ -89,6 +91,9 @@ public class RtlCommand extends BaseCommand {
       description = "Don't emit generated files.")
   boolean dryRun;
 
+  @CommandLine.Mixin
+  final RtlDecoderOptions decoderOptions = new RtlDecoderOptions();
+
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
     var rtlConfig = new RtlConfiguration(configuration);
@@ -100,6 +105,8 @@ public class RtlCommand extends BaseCommand {
     rtlConfig.setProjectName(projectName);
     rtlConfig.setEmitRVFI(emitRVFI);
     rtlConfig.setDryRun(dryRun);
+    rtlConfig.setDecoderOptions(
+        decoderOptions.getDecoderOptions(Objects.requireNonNull(spec).commandLine()));
     return PassOrders.rtl(rtlConfig);
   }
 }

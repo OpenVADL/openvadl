@@ -29,9 +29,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.EnumSet;
+import java.util.Objects;
 import org.apache.commons.io.file.PathUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import vadl.cli.decoder.mixin.IssDecoderOptions;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrder;
@@ -65,6 +67,9 @@ public class IssCommand extends BaseCommand {
   private EnumSet<IssConfiguration.IssOptsToSkip> skipOpts = EnumSet.noneOf(
       IssConfiguration.IssOptsToSkip.class);
 
+  @CommandLine.Mixin
+  final IssDecoderOptions decoderOptions = new IssDecoderOptions();
+
   private static final String QEMU_VERSION = "9.2.2";
   private static final String QEMU_DOWNLOAD_URL =
       "https://github.com/qemu/qemu/archive/refs/tags/v" + QEMU_VERSION + ".tar.gz";
@@ -77,6 +82,8 @@ public class IssCommand extends BaseCommand {
     var issConfig = new IssConfiguration(configuration);
     issConfig.setDryRun(dryRun);
     issConfig.setOptsToSkip(skipOpts);
+    issConfig.setDecoderOptions(
+        decoderOptions.getDecoderOptions(Objects.requireNonNull(spec).commandLine()));
     return PassOrders.iss(issConfig);
   }
 

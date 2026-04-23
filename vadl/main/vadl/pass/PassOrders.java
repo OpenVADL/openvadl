@@ -17,6 +17,7 @@
 package vadl.pass;
 
 import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
+import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_ALL;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_CONSTRAINT_SYNTHESIS;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_DECODER_VERIFICATION;
 import static vadl.configuration.DecoderOptions.OptionToSkip.OPT_ENCODING_VERIFICATION;
@@ -667,6 +668,13 @@ public class PassOrders {
    * @param config from which to decide if a dump is wanted.
    */
   private static void addDecodePasses(PassOrder order, GeneralConfiguration config) {
+
+    var skipAll = Stream.of(config.getDecoderOptions().getOptsToSkip())
+        .anyMatch(o -> o == OPT_ALL);
+
+    if (skipAll) {
+      return;
+    }
 
     // VDT Decode Passes
     order
