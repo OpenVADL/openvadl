@@ -75,16 +75,23 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
         Map.entry("syscallException", ume.getSyscallException().simpleName()),
         Map.entry("breakpointExcName", ume.getBreakpointExcName().simpleName()),
         Map.entry("illegalInstrExcName", ume.getIllegalInstrExcName().simpleName()),
-        Map.entry("ptRegPc", ume.getPtRegPc()),
-        Map.entry("ptRegSp", ume.getPtRegSp()),
+        Map.entry("ptRegPc", ume.getPtRegPc().simpleName()),
+        Map.entry("ptRegSp", ume.getPtRegSp().simpleName()),
         Map.entry("excCauseVar", ume.getExcCauseVar().simpleName()),
         Map.entry("hasIcacheFlush", ume.hasIcacheFlush()),
         Map.entry("insn_width_bytes", ume.getInsnWidthBytes()),
         Map.entry("stack_align_mask", ume.getStackAlignMask()),
         Map.entry("sigtrampLoadSyscallInstr", ume.getSigtrampLoadSyscallInstr()),
         Map.entry("sigtrampTrapInstr", ume.getSigtrampTrapInstr()),
-        Map.entry("mainRegisterFile", ume.getMainRegisterFile().simpleName().toLowerCase())
-    ));
+        Map.entry("mainRegisterFile", ume.getMainRegisterFile().simpleName().toLowerCase()),
+        Map.entry("mainRegFileSize", ume.getMainRegisterFile().outermostDim().size()),
+        Map.entry("signalStateTensors", ume.getSignalStateTensors().stream()
+            .map(t -> Map.of(
+                "name_lower", t.simpleName().toLowerCase(),
+                "size", t.outermostDim().size()
+            ))
+            .toList())
+        ));
 
     return vars;
   }

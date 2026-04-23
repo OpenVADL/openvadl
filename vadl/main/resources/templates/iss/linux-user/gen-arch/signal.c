@@ -15,7 +15,10 @@
  */
 struct target_sigcontext {
     abi_long [(${pc_reg.name_lower})];
-    abi_long gpr[ [(${register_tensors[0].size - 1})] ];
+
+    [# th:each="tensor : ${config.signalStateTensors}"]
+        abi_long [(${tensor.name_lower})][ [(${tensor.size})] ];
+    [/]
 };
 
 struct target_ucontext {
@@ -52,8 +55,8 @@ static void setup_sigcontext(struct target_sigcontext *sc, CPU[(${gen_arch_upper
     int i;
 
     __put_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
-    for (i = 1; i < [(${register_tensors[0].size})]; i++) {
-        __put_user(env->[(${register_tensors[0].name_lower})][i], &sc->gpr[i - 1]);
+    for (i = 1; i < [(${config.mainRegFileSize})]; i++) {
+        __put_user(env->[(${config.mainRegisterFile})][i], &sc->gpr[i - 1]);
     }
 }
 
@@ -92,11 +95,17 @@ void setup_rt_frame(int sig, struct target_sigaction *ka,
     frame->info = *info;
 
     env->[(${pc_reg.name_lower})] = ka->_sa_handler;
-    env->[(${register_tensors[0].name_lower})][ [(${config.spReg})] ] = frame_addr;
-    env->[(${register_tensors[0].name_lower})][ [(${config.args[0]})] ] = sig;
-    env->[(${register_tensors[0].name_lower})][ [(${config.args[1]})] ] = frame_addr + offsetof(struct target_rt_sigframe, info);
-    env->[(${register_tensors[0].name_lower})][ [(${config.args[2]})] ] = frame_addr + offsetof(struct target_rt_sigframe, uc);
-    env->[(${register_tensors[0].name_lower})][ [(${config.raReg})] ] = default_rt_sigreturn;
+    env->[(${config.mainRegisterFile})][ [(${config.spReg})] ] = frame_addr;
+    env->[(${config.mainRegisterFile})][ [(${config.args[0]})] ] = sig;
+    [# th:if="${#lists.size(config.args) > 1}"]
+      env->[(${config.mainRegisterFile})][ [(${config.args[1]})] ] = frame_addr + offsetof(struct target_rt_sigframe, info);
+    [/]
+    [# th:if="${#lists.size(config.args) > 2}"]
+      env->[(${config.mainRegisterFile})][ [(${config.args[2]})] ] = frame_addr + offsetof(struct target_rt_sigframe, uc);
+    [/]
+    [# th:if="${config.raReg != null}"]
+      env->[(${config.mainRegisterFile})][ [(${config.raReg})] ] = default_rt_sigreturn;
+    [/]
 
     return;
 
@@ -113,8 +122,8 @@ static void restore_sigcontext(CPU[(${gen_arch_upper})]State *env, struct target
     int i;
 
     __get_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
-    for (i = 1; i < [(${register_tensors[0].size})]; ++i) {
-        __get_user(env->[(${register_tensors[0].name_lower})][i], &sc->gpr[i - 1]);
+    for (i = 1; i < [(${config.mainRegFileSize})]; ++i) {
+        __get_user(env->[(${config.mainRegisterFile})][i], &sc->gpr[i - 1]);
     }
 }
 
@@ -140,7 +149,7 @@ long do_rt_sigreturn(CPU[(${gen_arch_upper})]State *env)
     struct target_rt_sigframe *frame;
     abi_ulong frame_addr;
 
-    frame_addr = env->[(${register_tensors[0].name_lower})][ [(${config.spReg})] ];
+    frame_addr = env->[(${config.mainRegisterFile})][ [(${config.spReg})] ];
     trace_user_do_sigreturn(env, frame_addr);
     if (!lock_user_struct(VERIFY_READ, frame, frame_addr, 1)) {
         goto badframe;
