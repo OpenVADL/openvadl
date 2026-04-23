@@ -14,5 +14,9 @@
   {
     "name": "java.lang.String",
     "allPublicMethods": true
+  },
+  {
+    "name": "ch.qos.logback.core.ConsoleAppender",
+    "allPublicMethods": true
   }
 ]

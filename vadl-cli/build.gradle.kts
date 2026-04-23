@@ -26,7 +26,12 @@ application {
 graalvmNative {
     binaries {
         named("main") {
-            resources.autodetect()
+            resources {
+                autodetection {
+                    enabled = true
+                    ignoreExistingResourcesConfigFile = true
+                }
+            }
             imageName.set("openvadl")
             mainClass.set(application.mainClass)
             buildArgs.addAll("-O2", "--gc=epsilon")
