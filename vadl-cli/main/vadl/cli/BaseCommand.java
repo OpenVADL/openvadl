@@ -113,6 +113,12 @@ public abstract class BaseCommand implements Callable<Integer> {
       description = "Print the statistics of the specification")
   boolean showSpecStats;
 
+  @Option(names = "--spec-stats-csv",
+      scope = INHERIT,
+      hidden = true,
+      description = "Write specification statistics to <output>/spec-stats.csv")
+  boolean writeSpecStatsCsv;
+
   @Option(names = "--expand-macros",
       scope = INHERIT,
       description = "Expand all macros and write them to disk.")
@@ -259,6 +265,7 @@ public abstract class BaseCommand implements Callable<Integer> {
   private Specification parseToVIAM() {
     var ast = parseToAst();
     printSpecStats(ast, new DiskVirtualFileSystem());
+    printSpecStatsCsv(ast, new DiskVirtualFileSystem());
     ast.timingRecorder.passTimings.forEach(
         t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
     ast.timingRecorder.passTimings.clear();
@@ -309,6 +316,30 @@ public abstract class BaseCommand implements Callable<Integer> {
     System.out.printf("\t- %-30s %6d\n", "Total Definitions:", stats.totalDefinitions);
     System.out.printf("\t- %-30s %6d\n", "Total Statements:", stats.totalStatements);
     System.out.printf("\t- %-30s %6d\n", "Total Expressions:", stats.totalExpressions);
+  }
+
+  protected void printSpecStatsCsv(Ast ast, VirtualFileSystem fileSystem) {
+    if (!writeSpecStatsCsv) {
+      return;
+    }
+
+    var stats = SpecStatAnalyser.run(ast, fileSystem);
+    var sb = new StringBuilder("stat,value\n");
+    sb.append("files,").append(stats.files).append('\n');
+    sb.append("lines_of_code,").append(stats.linesOfCode).append('\n');
+    sb.append("function_definitions,").append(stats.functionDefinitions).append('\n');
+    sb.append("format_definitions,").append(stats.formatDefinitions).append('\n');
+    sb.append("instruction_definitions,").append(stats.instructionDefinition).append('\n');
+    sb.append("total_definitions,").append(stats.totalDefinitions).append('\n');
+    sb.append("total_statements,").append(stats.totalStatements).append('\n');
+    sb.append("total_expressions,").append(stats.totalExpressions).append('\n');
+    var csvPath = output.resolve("spec-stats.csv");
+    try {
+      Files.writeString(csvPath, sb, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      System.err.printf("Warning: could not write spec-stats CSV to %s: %s%n",
+          csvPath, e.getMessage());
+    }
   }
 
   protected void printTimings() {
