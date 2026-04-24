@@ -331,6 +331,22 @@ public record SourceLocation(
     return printPath;
   }
 
+  /**
+   * Same as the default equals, but ignores the expandedFrom field.
+   *
+   * @param other source location to compare to.
+   * @return true if the source locations are equal, ignoring the expandedFrom field
+   */
+  @SuppressWarnings("ReferenceEquality") // I know what I'm doing.
+  public boolean equalsIgnoringExpandedFrom(SourceLocation other) {
+    if (this == other) {
+      return true;
+    }
+    return Objects.equals(path, other.path)
+        && Objects.equals(begin, other.begin)
+        && Objects.equals(end, other.end);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

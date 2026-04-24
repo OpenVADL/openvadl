@@ -16,9 +16,9 @@ constant second = $apfelstrudel
 //       │
 //     4 │   false + 42
 //       │   ^^^^^^^^^^ note: The left type is `Bits<1>` while right is `Bits<6>`
-//       ⋮
-//     9 │ constant second = $apfelstrudel
-//       │                   ------------- from this model invocation
+//       │
+//       ├─ From this model invocation (outermost call first):
+//       │       test/resources/frontend-snapshots/parser/invalidModelWithErrorInModel.vadl:9:19
 //       │
 //       Both types on the left and right side of an binary operation should be equal.
 //

@@ -14,9 +14,9 @@ $instr()
 //       │
 //     4 │   instruction ABC: X = { }
 //       │   ^^^^^^^^^^^^^^^^^^^^^^^^
-//       ⋮
-//     7 │ $instr()
-//       │ -------- from this model invocation
+//       │
+//       ├─ From this model invocation (outermost call first):
+//       │       test/resources/frontend-snapshots/macro/invalidTopLevelMacroProducesIsaDef.vadl:7:1
 //       │
 //       Expected node of type Defs, received IsaDefs
 //

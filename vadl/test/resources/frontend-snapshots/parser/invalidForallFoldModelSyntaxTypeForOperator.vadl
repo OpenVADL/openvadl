@@ -15,9 +15,9 @@ model FoldStat (): Stat = {
 //       │
 //     4 │ model TestOP (): Ex = {42}
 //       │                        ^^
-//       ⋮
-//     7 │   Reg := forall i: Bits<4> in 0 .. 3 fold $TestOP() with Reg(i)
-//       │                                           --------- from this model invocation
+//       │
+//       ├─ From this model invocation (outermost call first):
+//       │       test/resources/frontend-snapshots/parser/invalidForallFoldModelSyntaxTypeForOperator.vadl:7:43
 //       │
 //       Expected node of type BinOp, received Ex - GroupedExpr
 //

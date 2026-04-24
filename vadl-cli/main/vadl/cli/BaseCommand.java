@@ -392,7 +392,8 @@ public abstract class BaseCommand implements Callable<Integer> {
       }
       returnVal = 1;
     } catch (DiagnosticList d) {
-      System.out.println(new DiagnosticPrinter(new DiskVirtualFileSystem()).toString(d));
+      System.out.println(
+          new DiagnosticPrinter(new DiskVirtualFileSystem()).toString(d.deflateSimilar()));
       if (showStacktrace) {
         System.out.println(getStackTrace(d));
       }
@@ -427,7 +428,8 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     if (!DeferredDiagnosticStore.isEmpty()) {
       System.out.println(new DiagnosticPrinter(new DiskVirtualFileSystem()).toString(
-          DeferredDiagnosticStore.getAll()));
+          Diagnostic.collapseSimilar(DeferredDiagnosticStore.getAll())
+      ));
 
       // Only exit abnormally if any diagnostic message is an error.
       if (DeferredDiagnosticStore.getAll().stream()

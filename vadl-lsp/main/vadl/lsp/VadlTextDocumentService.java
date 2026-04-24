@@ -273,7 +273,7 @@ public class VadlTextDocumentService implements TextDocumentService {
       } catch (DiagnosticList dl) {
         log.debug("Raw diagnostics ({}): {}", document.uri, dl.getMessage());
         List<String> importedFileErrors = new ArrayList<>();
-        for (vadl.error.Diagnostic item : dl.items) {
+        for (vadl.error.Diagnostic item : dl.deflateSimilar().items) {
           Path itemPath = item.multiLocation.primaryLocation().location().path();
           if (!Objects.equals(itemPath, path)) {
             if (itemPath == null) {
