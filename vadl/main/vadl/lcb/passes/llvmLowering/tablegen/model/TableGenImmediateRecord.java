@@ -72,7 +72,7 @@ public class TableGenImmediateRecord {
 
   public static Identifier createPredicateMethod(PrintableInstruction instruction,
                                                  Format.FieldAccess fieldAccess) {
-    return fieldAccess.identifier.last().prepend(instruction.identifier())
+    return fieldAccess.identifier.last().prepend(fieldAccess.format().identifier)
         .append("predicate");
   }
 
