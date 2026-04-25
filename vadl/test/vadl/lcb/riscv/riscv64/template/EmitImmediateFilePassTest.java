@@ -288,109 +288,28 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         
         
         
-        static bool RV3264Base_ADDIW_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
+        static bool RV3264Base_Btype_immS_predicate(uint64_t immS) {
+           return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_ADDI_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
+        static bool RV3264Base_Ftype_shamt_predicate(uint64_t shamt) {
+           return (VADL_and(VADL_sgeq(shamt, 6, ((int64_t) 0xffffffffffffffe0 ), 64), 1, VADL_sleq(shamt, 6, ((int64_t) 0x1f ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_ANDI_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
+        static bool RV3264Base_Itype_immS_predicate(uint64_t immS) {
+           return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_AUIPC_immUp_predicate(uint64_t immUp) {
-        return (VADL_and(VADL_equ(VADL_and(immUp, 64, ((int64_t) 0x800 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immUp, 64, ((int64_t) 0x7fffffff ), 64), 1, VADL_sgeq(immUp, 64, ((int64_t) 0xffffffff80000000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
+        static bool RV3264Base_Jtype_immS_predicate(uint64_t immS) {
+           return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfffff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffff00000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_BEQ_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
+        static bool RV3264Base_Rtype_shamt_predicate(uint64_t shamt) {
+           return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_BGEU_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
+        static bool RV3264Base_Stype_immS_predicate(uint64_t immS) {
+           return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_BGE_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
+        static bool RV3264Base_Utype_immUp_predicate(uint64_t immUp) {
+           return (VADL_and(VADL_equ(VADL_and(immUp, 64, ((int64_t) 0x800 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immUp, 64, ((int64_t) 0x7fffffff ), 64), 1, VADL_sgeq(immUp, 64, ((int64_t) 0xffffffff80000000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
         }
-        static bool RV3264Base_BLTU_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_BLT_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_BNE_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_JALR_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_JAL_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_equ(VADL_and(immS, 64, ((int64_t) 0x1 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immS, 64, ((int64_t) 0xfffff ), 64), 1, VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffff00000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_LBU_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_LB_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_LD_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_LHU_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_LH_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_LUI_immUp_predicate(uint64_t immUp) {
-        return (VADL_and(VADL_equ(VADL_and(immUp, 64, ((int64_t) 0x800 ), 64), 64, ((uint64_t) 0x0 ), 64), 1, VADL_and(VADL_sleq(immUp, 64, ((int64_t) 0x7fffffff ), 64), 1, VADL_sgeq(immUp, 64, ((int64_t) 0xffffffff80000000 ), 64), 1), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_LWU_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_LW_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_ORI_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SB_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SD_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SH_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SLLIW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SLLI_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 6, ((int64_t) 0xffffffffffffffe0 ), 64), 1, VADL_sleq(shamt, 6, ((int64_t) 0x1f ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SLTIU_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SLTI_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SRAIW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SRAI_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 6, ((int64_t) 0xffffffffffffffe0 ), 64), 1, VADL_sleq(shamt, 6, ((int64_t) 0x1f ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SRLIW_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 5, ((int64_t) 0xfffffffffffffff0 ), 64), 1, VADL_sleq(shamt, 5, ((int64_t) 0xf ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SRLI_shamt_predicate(uint64_t shamt) {
-        return (VADL_and(VADL_sgeq(shamt, 6, ((int64_t) 0xffffffffffffffe0 ), 64), 1, VADL_sleq(shamt, 6, ((int64_t) 0x1f ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_SW_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        static bool RV3264Base_XORI_immS_predicate(uint64_t immS) {
-        return (VADL_and(VADL_sgeq(immS, 64, ((int64_t) 0xfffffffffffff800 ), 64), 1, VADL_sleq(immS, 64, ((int64_t) 0x7ff ), 64), 1) ? ((bool) 0x1 ): ((bool) 0x0 ));
-        }
-        
+              
         
         namespace
         {
