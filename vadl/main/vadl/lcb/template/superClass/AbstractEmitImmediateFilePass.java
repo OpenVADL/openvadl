@@ -23,6 +23,7 @@ import static vadl.lcb.template.utils.ImmediatePredicateFunctionProvider.generat
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunctionName;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
@@ -70,7 +71,7 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
             .map(GcbCppFunctionWithBody::code)
             .sorted()
             .toList(),
-        "predicateFunctions", predicateFunctions.values().stream()
+        "predicateFunctions", Set.copyOf(predicateFunctions.values()).stream()
             .map(GcbCppFunctionWithBody::code)
             .sorted()
             .toList());
