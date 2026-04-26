@@ -8,7 +8,7 @@ model XYZ() = { }
 //  Reported Diagnostics:
 //
 //  error: Parsing Error
-//       ╭── test/resources/frontend-snapshots/parser/invalidModelMissingReturnType.vadl:5:13
+//       ╭── test/resources/frontend-snapshots/macro/invalidModelMissingReturnType.vadl:5:13
 //       │
 //     5 │ model XYZ() = { }
 //       │             ^ The parser expected `:` here.

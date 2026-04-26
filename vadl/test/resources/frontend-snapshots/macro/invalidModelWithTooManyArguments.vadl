@@ -8,7 +8,7 @@ constant x = $flo(y; z)
 //  Reported Diagnostics:
 //
 //  error: Invalid Model Invocation
-//       ╭── test/resources/frontend-snapshots/parser/invalidModelWithTooManyArguments.vadl:5:22
+//       ╭── test/resources/frontend-snapshots/macro/invalidModelWithTooManyArguments.vadl:5:22
 //       │
 //     5 │ constant x = $flo(y; z)
 //       │                      ^ Model `flo` only expected 1 arguments but, you provided at least 2.

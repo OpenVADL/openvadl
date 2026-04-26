@@ -12,13 +12,13 @@ constant second = $apfelstrudel
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭── test/resources/frontend-snapshots/parser/invalidModelWithErrorInModel.vadl:4:3
+//       ╭── test/resources/frontend-snapshots/macro/invalidModelWithErrorInModel.vadl:4:3
 //       │
 //     4 │   false + 42
 //       │   ^^^^^^^^^^ note: The left type is `Bits<1>` while right is `Bits<6>`
 //       │
 //       ├─ From this model invocation (outermost call first):
-//       │       test/resources/frontend-snapshots/parser/invalidModelWithErrorInModel.vadl:9:19
+//       │       test/resources/frontend-snapshots/macro/invalidModelWithErrorInModel.vadl:9:19
 //       │
 //       Both types on the left and right side of an binary operation should be equal.
 //

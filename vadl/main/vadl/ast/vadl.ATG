@@ -2227,8 +2227,8 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   .
 
   /// Parses the longest macro expression (either instance or placeholder) from the parser.
-  maximumMacroExpr<out Node node>                 (. node = null; var startLoc = nextTokenLoc(); .)
-  = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); .)
+  maximumMacroExpr<out Node node>                 (. node = null; var startLoc = nextTokenLoc(); var segments = new ArrayList<String>(); .)
+  = SYM_DOLLAR
     identifier<out Identifier id>                 (. var macro = macroTable.getMacro(id.name);
                                                      var paramType = paramSyntaxType(this, id.name);
                                                      segments.add(id.name); .)
@@ -2353,13 +2353,20 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | IF (type == BasicSyntaxType.UN_OP)
     unaryOperator<out IsUnOp op>                            (. body = (Node) op; .)
   | IF (type instanceof RecordType recordType)
-    ( SYM_PAREN_OPEN                                        (. var entries = new ArrayList<Node>(recordType.entries.size()); var nextEntry = recordType.entries.iterator(); .)
-      macroBody<out Node entry, nextEntry.next().type()>    (. entries.add(entry); .)
+    ( SYM_PAREN_OPEN                                        (. var entries = new ArrayList<Node>(recordType.entries.size());
+                                                               var syntaxTypeIterator = recordType.entries.iterator();
+                                                               if (!syntaxTypeIterator.hasNext()) {throw tooManyRecordArgumentsError(recordType, nextTokenLoc());}
+                                                               var nextEntry = syntaxTypeIterator.next();
+                                                            .)
+      macroBody<out Node entry, nextEntry.type()>    (. entries.add(entry); .)
       {
-        SYM_SEMICOLON
-        macroBody<out entry, nextEntry.next().type()>       (. entries.add(entry); .)
+        SYM_SEMICOLON                                (.  if (!syntaxTypeIterator.hasNext()) {throw tooManyRecordArgumentsError(recordType, nextTokenLoc());}
+                                                         nextEntry = syntaxTypeIterator.next();
+                                                     .)
+        macroBody<out entry, nextEntry.type()>       (. entries.add(entry); .)
       }
-      SYM_PAREN_CLOSE                                       (. body = new RecordInstance(recordType, entries, start.join(lastTokenLoc())); .)
+      SYM_PAREN_CLOSE                                       (.
+                                                               body = createRecordInstance(recordType, entries, start.join(lastTokenLoc())); .)
     | macroReplacement<out body>
     )
   | IF (type instanceof ProjectionType projection)
