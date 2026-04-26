@@ -1831,7 +1831,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     assembly $i.id = ($i.mnemo, ' ', SysRegName(sysreg), ', ', XSize(rt))
     }
 
-  model ExceptionCallEncAsm (i: InstrWithFunct): IsaDefs = {
+  model ExceptionCallEncAsm (i: InstrNoFunct): IsaDefs = {
     encoding $i.id = {op = $i.opcode}
     assembly $i.id = ($i.mnemo, ' #', udec(imm16))
     }
@@ -1841,10 +1841,12 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: SuperVisorCallFormat = {
       raise GeneralException (ExceptionClass::$i.funct, 0, PC.next, 0)
       }
-    $ExceptionCallEncAsm ($i)
+    $ExceptionCallEncAsm (($i.id; $i.mnemo; $i.opcode))
     }
 
-  model HaltInstr (i: InstrWithFunct): IsaDefs = {
+
+
+  model HaltInstr (i: InstrNoFunct): IsaDefs = {
     [add operands : imm16]
     instruction $i.id: SuperVisorCallFormat = {}
     $ExceptionCallEncAsm ($i)
