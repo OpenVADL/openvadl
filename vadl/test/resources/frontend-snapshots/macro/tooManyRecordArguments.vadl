@@ -1,0 +1,22 @@
+// Previously this would crash the parser.
+
+record Person ( name: Id, age: Ex )
+
+model constModel (info: Person) : Defs = {
+  constant $info.name = $info.age
+}
+
+$constModel((flo; 27; 104))
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Record Invocation
+//       ╭── test/resources/frontend-snapshots/macro/tooManyRecordArguments.vadl:9:23
+//       │
+//     9 │ $constModel((flo; 27; 104))
+//       │                       ^^^ The record `Person` only expected 2 arguments but, you provided at least 3.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

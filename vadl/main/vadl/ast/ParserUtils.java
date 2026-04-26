@@ -321,6 +321,17 @@ class ParserUtils {
     }
   }
 
+  static RecordInstance createRecordInstance(RecordType recordType, List<Node> entries,
+                                             SourceLocation location) {
+    if (recordType.entries.size() != entries.size()) {
+      throw error("Invalid Record Invocation", location)
+          .locationDescription(location, "Record `%s` expected %d arguments but got %d.",
+              recordType.name, recordType.entries.size(), entries.size())
+          .build();
+    }
+    return new RecordInstance(recordType, entries, location);
+  }
+
   static SyntaxType paramSyntaxType(Parser parser, String name) {
     for (List<MacroParam> params : parser.macroContext) {
       for (MacroParam param : params) {
@@ -549,6 +560,16 @@ class ParserUtils {
           argCount, argCount + 1);
     }
     return builder.build();
+  }
+
+  static Diagnostic tooManyRecordArgumentsError(RecordType recordType, SourceLocation location) {
+    // Unfortunately, we don't know how many arguments actually were provided because we cannot
+    // continue parsing to find out.
+    return error("Invalid Record Invocation", location)
+        .locationDescription(location,
+          "The record `%s` only expected %d arguments but, you provided at least %d.",
+          recordType.name, recordType.entries.size(), recordType.entries.size() + 1)
+    .build();
   }
 
   private static boolean isPlaceholder(Node n) {
