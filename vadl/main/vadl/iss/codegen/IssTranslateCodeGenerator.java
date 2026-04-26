@@ -30,8 +30,6 @@ import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
-import vadl.iss.passes.nodes.IssStaticPcRegNode;
-import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.javaannotations.DispatchFor;
@@ -135,7 +133,7 @@ public class IssTranslateCodeGenerator {
 )
 class DefaultGenerator implements
     // default implementations
-    CDefaultMixins.All, IssCMixins.Default,
+    CDefaultMixins.All, IssCMixins.Default, IssCMixins.StaticReadRegTensor,
     // invalid nodes
     CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads,
     CInvalidMixins.InstrCall, CInvalidMixins.HardwareRelated {
@@ -187,16 +185,6 @@ class DefaultGenerator implements
     }
     ctx.ln(c)
         .gen(node.next());
-  }
-
-  @Handler
-  void impl(CGenContext<Node> ctx, IssStaticPcRegNode node) {
-    ctx.wr("(ctx->pc_curr)");
-  }
-
-  @Handler
-  void impl(CGenContext<Node> ctx, IssStaticReadRegNode node) {
-    ctx.wr("(ctx->tb_state." + node.regTensor().simpleName().toLowerCase() + ")");
   }
 
   @Handler

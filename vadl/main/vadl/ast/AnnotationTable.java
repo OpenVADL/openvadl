@@ -64,7 +64,6 @@ import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
-import vadl.viam.annotations.BiEndianAnnotation;
 import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
@@ -235,7 +234,7 @@ public class AnnotationTable {
             var graph = new BehaviorLowering(ctx.lowering).getFunctionGraph(ann.expr,
                 memDef.simpleName() + " Little Endian Condition");
             graph.setParentDefinition(memDef);
-            memDef.addAnnotation(new BiEndianAnnotation(graph));
+            memDef.setLittleEndianCondition(graph);
           });
         }).build();
 

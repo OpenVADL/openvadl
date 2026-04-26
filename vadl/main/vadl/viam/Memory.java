@@ -18,9 +18,12 @@ package vadl.viam;
 
 import java.util.List;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.graph.Graph;
 
 /**
  * The Memory class represents a VADL memory definition.
@@ -28,10 +31,13 @@ import vadl.types.Type;
  * <p>It always takes an address type and result type. The result type
  * specifies the word size of the memory.</p>
  */
-public class Memory extends Resource {
+public class Memory extends Resource implements DefProp.WithOptionalBehaviour {
 
   private final DataType addressType;
   private final DataType resultType;
+
+  @Nullable
+  private Graph littleEndianCondition;
 
   /**
    * Constructs a new Memory object.
@@ -82,6 +88,22 @@ public class Memory extends Resource {
   @Override
   public ConcreteRelationType relationType() {
     return Type.concreteRelation(addressType, resultType);
+  }
+
+  @Nullable
+  public Graph littleEndianCondition() {
+    return littleEndianCondition;
+  }
+
+  public void setLittleEndianCondition(@Nullable Graph littleEndianCondition) {
+    this.littleEndianCondition = littleEndianCondition;
+  }
+
+  @Override
+  public List<Graph> behaviors() {
+    return littleEndianCondition == null
+        ? List.of()
+        : List.of(littleEndianCondition);
   }
 
   @Override

@@ -39,6 +39,9 @@ public class ReadMemNode extends ReadResourceNode {
   @DataValue
   protected int words;
 
+  /**
+   * Whether to read with big-endian byte order.
+   */
   @DataValue
   protected boolean reverseBytes;
 
@@ -90,6 +93,9 @@ public class ReadMemNode extends ReadResourceNode {
     return memory.wordSize() * words;
   }
 
+  /**
+   * Whether to read with big-endian byte order.
+   */
   public boolean reverseBytes() {
     return reverseBytes;
   }

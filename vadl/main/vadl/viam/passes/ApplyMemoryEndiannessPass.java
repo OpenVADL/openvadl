@@ -38,7 +38,6 @@ import vadl.viam.Procedure;
 import vadl.viam.Processor;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
-import vadl.viam.annotations.BiEndianAnnotation;
 import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Graph;
@@ -94,16 +93,16 @@ public class ApplyMemoryEndiannessPass extends Pass {
   private void checkMemoryEndiannessConditions(Specification viam) {
     var errors = new ArrayList<Diagnostic>();
     viam.isa().ifPresent(isa -> isa.ownMemories().forEach(mem -> {
-      var ann = mem.annotation(BiEndianAnnotation.class);
-      if (ann == null) {
+      var condition = mem.littleEndianCondition();
+      if (condition == null) {
         return;
       }
-      ann.condition().getNodes(WriteResourceNode.class).findAny()
+      condition.getNodes(WriteResourceNode.class).findAny()
           .ifPresent(n -> errors.add(error(
               "Endianness condition may not write to any resource", n
           ).build()));
 
-      ann.condition().getNodes(ReadResourceNode.class)
+      condition.getNodes(ReadResourceNode.class)
           .filter(n -> {
             if (n instanceof ReadRegTensorNode r) {
               return !r.regTensor().isSingleRegister() || !onlyReadsStaticBits(r);
@@ -180,7 +179,9 @@ class ApplyMemoryEndiannessInMemoryRegionInit {
           reset,
           "Cpu reset procedure"
       ).locationHelp(
-          memory.expectAnnotation(BiEndianAnnotation.class).condition().sourceLocation(),
+          // we know that the memory is bi-endian, because there are reg reads, which
+          // can only stem from the bi-endian condition
+          requireNonNull(memory.littleEndianCondition()).sourceLocation(),
           "Bi-endian condition"
       ).build();
     }
@@ -208,7 +209,7 @@ class ApplyMemoryEndianness {
       read.safeDelete();
       return;
     }
-    var condition = getCondition(read.memory());
+    var condition = getConditionCopy(read.memory());
     if (condition == null) {
       // leave read as is since the memory is not bi-endian
       return;
@@ -226,7 +227,7 @@ class ApplyMemoryEndianness {
       write.safeDelete();
       return;
     }
-    var condition = getCondition(write.memory());
+    var condition = getConditionCopy(write.memory());
     if (condition == null) {
       // leave write as is since the memory is not bi-endian
       return;
@@ -249,10 +250,10 @@ class ApplyMemoryEndianness {
   }
 
   @Nullable
-  private ExpressionNode getCondition(Memory mem) {
-    var ann = mem.annotation(BiEndianAnnotation.class);
-    return ann == null
+  private ExpressionNode getConditionCopy(Memory mem) {
+    var condition = mem.littleEndianCondition();
+    return condition == null
         ? null
-        : ann.condition().getNodes(ReturnNode.class).findFirst().get().value().copy();
+        : condition.getNodes(ReturnNode.class).findFirst().get().value().copy();
   }
 }

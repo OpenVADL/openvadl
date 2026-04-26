@@ -72,7 +72,7 @@ instruction set architecture PPC64SFS = {
 
   program counter PC  : Address
 
-  [ bigEndian ]
+  [ littleEndian : MSR.le = 1 ]
   memory          MEM : Address -> Byte
 
   register X : XIndex -> Reg64                   // 32 general-purpose 64-bit registers
@@ -84,7 +84,7 @@ instruction set architecture PPC64SFS = {
 
   register CRF  : Nibble<8>                      // 8x4-bit condition register fields
 
-  [ execution state : sf, pr ]
+  [ execution state : sf, pr, le ]
   register MSR  : MSRFormat                      // machine state register
   register SRR0 : Reg64                          // machine status save/ restore register 1
   register SRR1 : Reg64                          // machine status save/ restore register 2

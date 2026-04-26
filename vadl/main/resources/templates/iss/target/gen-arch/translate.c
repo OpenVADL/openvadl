@@ -49,6 +49,17 @@ typedef struct DisasContext {
 
 } DisasContext;
 
+static bool swap_insn(const DisasContext *ctx) {
+  // default byte order is LE, but VDT assumes BE
+[# th:if="${mem_bi_endian}"]
+#if TARGET_BIG_ENDIAN
+  return !([(${little_endian_condition})]);
+#else
+  return [(${little_endian_condition})];
+#endif
+[/][# th:unless="${mem_bi_endian}"]
+  return true;
+[/]}
 
 void [(${gen_arch_lower})]_tcg_init(void)
 {
@@ -68,7 +79,7 @@ void [(${gen_arch_lower})]_tcg_init(void)
 static target_ulong next_insn(DisasContext *ctx)
 {
     vaddr  pc_next = ctx->base.pc_next;
-    return translator_ld[(${insn_width.short})]_swap(ctx->env, &ctx->base, pc_next, true);
+    return translator_ld[(${insn_width.short})]_swap(ctx->env, &ctx->base, pc_next, swap_insn(ctx));
 }
 
 [# th:each="reg : ${register_tensors}" th:if="${reg.is_tcg}"]

@@ -24,6 +24,8 @@ import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssSelectNode;
+import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
@@ -342,6 +344,23 @@ public interface IssCMixins {
             .wr("),").wr(ra).wr(")");
       }
     }
+  }
+
+  /**
+   * Implements static resource reads from the {@code DisasContext}.
+   */
+  interface StaticReadRegTensor {
+
+    @Handler
+    default void handler(CGenContext<Node> ctx, IssStaticPcRegNode node) {
+      ctx.wr("(ctx->pc_curr)");
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, IssStaticReadRegNode node) {
+      ctx.wr("(ctx->tb_state." + node.regTensor().simpleName().toLowerCase() + ")");
+    }
+
   }
 
   /**

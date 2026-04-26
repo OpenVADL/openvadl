@@ -44,6 +44,9 @@ public class WriteMemNode extends WriteResourceNode {
   @DataValue
   protected int words;
 
+  /**
+   * Whether to read with big-endian byte order.
+   */
   @DataValue
   protected boolean reverseBytes;
 
@@ -102,6 +105,9 @@ public class WriteMemNode extends WriteResourceNode {
     return words;
   }
 
+  /**
+   * Whether to read with big-endian byte order.
+   */
   public boolean reverseBytes() {
     return reverseBytes;
   }
