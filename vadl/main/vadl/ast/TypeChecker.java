@@ -1789,14 +1789,14 @@ public class TypeChecker
 
   @Override
   public Void visit(RecordTypeDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(definition.getClass().getSimpleName()));
   }
 
   @Override
   public Void visit(ModelTypeDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(definition.getClass().getSimpleName()));
   }
 
   @Override
@@ -1842,9 +1842,9 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(GroupDefinition groupDefinition) {
-    throwUnimplemented(groupDefinition);
-    return null;
+  public Void visit(GroupDefinition definition) {
+    throw new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(definition.getClass().getSimpleName()));
   }
 
   @Override
@@ -4318,20 +4318,20 @@ public class TypeChecker
 
   @Override
   public Void visit(PlaceholderStatement statement) {
-    throwUnimplemented(statement);
-    return null;
+    throw new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(statement.getClass().getSimpleName()));
   }
 
   @Override
   public Void visit(MacroInstanceStatement statement) {
-    throwUnimplemented(statement);
-    return null;
+    throw new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(statement.getClass().getSimpleName()));
   }
 
   @Override
   public Void visit(MacroMatchStatement statement) {
-    throwUnimplemented(statement);
-    return null;
+    throw new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(statement.getClass().getSimpleName()));
   }
 
   @Override
