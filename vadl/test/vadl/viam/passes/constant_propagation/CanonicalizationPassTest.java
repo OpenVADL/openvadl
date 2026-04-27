@@ -94,7 +94,8 @@ class CanonicalizationPassTest extends AbstractTest {
         Collections.emptyList(),
         null,
         Collections.emptyList(),
-        Collections.emptyList()
+        Collections.emptyList(),
+        null
     );
 
     viam.add(isa);

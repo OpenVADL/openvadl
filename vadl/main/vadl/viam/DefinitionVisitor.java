@@ -42,6 +42,8 @@ public interface DefinitionVisitor {
 
   void visit(Operation operation);
 
+  void visit(Group group);
+
   void visit(Format format);
 
   void visit(Format.Field formatField);
@@ -106,7 +108,7 @@ public interface DefinitionVisitor {
    * It provides default implementations for the visit methods for all types of definitions in a
    * VADL specification, allowing for recursive traversal of the definition hierarchy.
    */
-  abstract class Recursive implements DefinitionVisitor {
+  abstract class Recursive implements DefinitionVisitor, Group.ExpressionVisitor<Void> {
 
     public void beforeTraversal(Definition definition) {
     }
@@ -140,6 +142,10 @@ public interface DefinitionVisitor {
       var pc = isa.pc();
       if (pc != null) {
         pc.accept(this);
+      }
+      var group = isa.group();
+      if (group != null) {
+        group.accept(this);
       }
       afterTraversal(isa);
     }
@@ -184,6 +190,42 @@ public interface DefinitionVisitor {
     public void visit(Operation operation) {
       beforeTraversal(operation);
       afterTraversal(operation);
+    }
+
+    @Override
+    public void visit(Group group) {
+      beforeTraversal(group);
+      group.getExpression().accept(this);
+      afterTraversal(group);
+    }
+
+    @Override
+    public Void visit(Group.Literal lit) {
+      lit.op().accept(this);
+      return null;
+    }
+
+    @Override
+    public Void visit(Group.Sequence seq) {
+      seq.elems().forEach(e -> e.accept(this));
+      return null;
+    }
+
+    @Override
+    public Void visit(Group.Alternation alt) {
+      alt.elems().forEach(e -> e.accept(this));
+      return null;
+    }
+
+    @Override
+    public Void visit(Group.Repetition rep) {
+      return rep.expr().accept(this);
+    }
+
+    @Override
+    public Void visit(Group.Permutation perm) {
+      perm.elems().forEach(e -> e.accept(this));
+      return null;
     }
 
     @Override
@@ -463,6 +505,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Operation operation) {
+
+    }
+
+    @Override
+    public void visit(Group group) {
 
     }
 

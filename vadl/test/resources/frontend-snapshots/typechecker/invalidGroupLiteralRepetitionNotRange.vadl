@@ -1,0 +1,28 @@
+instruction set architecture ISA = {
+  program counter PC : Bits<32>
+
+  format IType : Bits<32> = {
+    opcode : Bits<32>
+  }
+
+  instruction A : IType = PC := 0
+  encoding A = {opcode = 0b00}
+  assembly A = (mnemonic, "")
+
+  operation Op = {A}
+
+  group VLIW = Op<PC>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Repetition
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupLiteralRepetitionNotRange.vadl:14:19
+//       │
+//    14 │   group VLIW = Op<PC>
+//       │                   ^^ note: Repetitions of literals must specify a range expression but this was a `Bits<32>`
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

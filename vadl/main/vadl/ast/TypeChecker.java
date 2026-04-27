@@ -40,6 +40,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.ast.Group.DefaultGroupVisitor;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -75,7 +76,7 @@ import vadl.viam.Constant;
  * of) them.
  */
 @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
-public class TypeChecker
+public class TypeChecker extends DefaultGroupVisitor
     implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
 
   /**
@@ -1865,7 +1866,87 @@ public class TypeChecker
 
   @Override
   public Void visit(GroupDefinition groupDefinition) {
-    throw addErrorAndStopChecking(unimplementedError(groupDefinition));
+    groupDefinition.groupSequence.accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(Group.Literal lit) {
+
+
+    if (!(lit.id.target() instanceof OperationDefinition op)) {
+      addErrorAndContinueChecking(
+          error("Invalid Group Literal", lit)
+              .locationNote(lit,
+                  "Group literals must be operations but this was a `%s`",
+                  requireNonNull(lit.id.target()).nodeName())
+              .build());
+      return null;
+    }
+
+    lit.setOperation(op);
+
+    if (lit.size == null) {
+      return null;
+    }
+
+    if (!(lit.size instanceof RangeExpr range)) {
+      check(lit.size);
+      addErrorAndContinueChecking(
+          error("Invalid Repetition", lit.size)
+              .locationNote(lit.size, "Repetitions of literals must specify a range expression "
+                  + "but this was a `%s`", requireNonNull(lit.size.type()))
+              .build());
+      return null;
+    }
+
+    // Don't check full range, as we allow custom range semantics for repetitions. That is, we allow
+    // (and require) the lower bound to be lower or equal to the upper bound.
+    check(range.from);
+    check(range.to);
+
+    ConstantValue from;
+    try {
+      from = constantEvaluator.eval(range.from);
+    } catch (EvaluationError e) {
+      addErrorAndContinueChecking(
+          error("Invalid lower bound", range.from)
+              .locationNote(range.from, "Lower bounds of repetition expressions must be constant")
+              .build());
+      from = null;
+    }
+
+
+    ConstantValue to;
+    try {
+      to = constantEvaluator.eval(range.to);
+    } catch (EvaluationError e) {
+      addErrorAndContinueChecking(
+          error("Invalid upper bound", range.to)
+              .locationNote(range.to, "Upper bounds of repetition expressions must be constant")
+              .build());
+      to = null;
+    }
+
+    if (from == null || to == null) {
+      return null;
+    }
+
+    if (from.value().compareTo(BigInteger.ZERO) < 0) {
+      addErrorAndContinueChecking(
+          error("Invalid lower bound", range.from)
+              .locationNote(range.from, "Lower bounds of repetition expressions must be positive")
+              .build());
+    }
+
+    if (from.value().compareTo(to.value()) > 0) {
+      addErrorAndContinueChecking(
+          error("Invalid upper bound", range)
+              .locationNote(range, "Upper bounds of repetition expressions must be "
+                  + "greater or equal to the lower bound").build());
+    }
+
+    return null;
   }
 
   @Override

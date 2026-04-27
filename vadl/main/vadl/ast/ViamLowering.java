@@ -44,6 +44,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import vadl.ast.Group.GroupVisitor;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -67,6 +68,7 @@ import vadl.viam.Encoding;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
+import vadl.viam.Group;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Logic;
@@ -127,7 +129,8 @@ import vadl.viam.passes.functionInliner.Inliner;
  * The lowering that converts the AST to the VIAM.
  */
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
-public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
+public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Definition>>,
+    GroupVisitor<Group.Expression> {
 
   final ConstantEvaluator constantEvaluator;
 
@@ -1441,8 +1444,40 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(GroupDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    final Group.Expression expr = definition.groupSequence.accept(this);
+    return Optional.of(new Group(generateIdentifier(definition.viamId, definition.identifier()),
+        expr));
+  }
+
+  @Override
+  public Group.Expression visit(vadl.ast.Group.Literal lit) {
+    final Operation op = (Operation) fetch(lit.operation).orElseThrow(IllegalStateException::new);
+    final Group.Expression l = new Group.Literal(op);
+    if (lit.size == null) {
+      return l;
+    }
+    final var range = (RangeExpr) lit.size;
+    final var from = constantEvaluator.eval(range.from).toViamConstant();
+    final var to = constantEvaluator.eval(range.from).toViamConstant();
+    return new Group.Repetition(l, from, to);
+  }
+
+  @Override
+  public Group.Expression visit(vadl.ast.Group.Sequence seq) {
+    final var elems = seq.groups.stream().map(g -> g.accept(this)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Sequence(elems);
+  }
+
+  @Override
+  public Group.Expression visit(vadl.ast.Group.Alternative alt) {
+    final var elems = alt.sequences.stream().map(g -> g.accept(this)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Alternation(elems);
+  }
+
+  @Override
+  public Group.Expression visit(vadl.ast.Group.Permutation perm) {
+    final var elems = perm.sequences.stream().map(g -> g.accept(this)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Permutation(elems);
   }
 
   @Override
@@ -1554,6 +1589,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
     // TODO: @flofriday compute artifical resources
     var artificialResources = filterAndCastToInstance(allDefinitions, ArtificialResource.class);
+    var group = allDefinitions.stream()
+        .filter(Group.class::isInstance)
+        .map(Group.class::cast)
+        .findFirst().orElse(null);
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
@@ -1574,7 +1613,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         registers,
         programCounter,
         memories,
-        artificialResources
+        artificialResources,
+        group
     );
 
     definitionCache.put(definition, Optional.of(isa));
