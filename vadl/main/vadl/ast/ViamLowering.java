@@ -377,6 +377,33 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         });
   }
 
+  @Nullable
+  private Group checkOneGroupDefinition(List<vadl.viam.Definition> definitions) {
+    final var groups = definitions.stream()
+        .filter(Group.class::isInstance)
+        .map(Group.class::cast)
+        .collect(Collectors.toList());
+
+    if (groups.isEmpty()) {
+      return null;
+    }
+
+    if (groups.size() == 1) {
+      return groups.getFirst();
+    }
+
+    var primary = groups.removeFirst();
+    var diagnostic = error("Multiple Group Definitions", primary)
+        .locationDescription(primary,
+            "An instruction set architecture can have at most one group definition.");
+
+    for (var group : groups) {
+      diagnostic.locationNote(group, "This additional group definition is not allowed.");
+    }
+
+    throw diagnostic.build();
+  }
+
   private void checkLeafNodes(Graph behavior,
                               Consumer<ExpressionNode> check) {
     behavior.getNodes()
@@ -1454,7 +1481,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     final vadl.viam.Identifier litId = generateIdentifier(groupDefinition.viamId, lit.id);
     final Operation op = (Operation) fetch(lit.operation).orElseThrow(IllegalStateException::new);
     final Group.Expression l = new Group.Literal(litId, op);
-    
+
     if (lit.size == null) {
       return l;
     }
@@ -1597,10 +1624,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
     // TODO: @flofriday compute artifical resources
     var artificialResources = filterAndCastToInstance(allDefinitions, ArtificialResource.class);
-    var group = allDefinitions.stream()
-        .filter(Group.class::isInstance)
-        .map(Group.class::cast)
-        .findFirst().orElse(null);
+    var group = checkOneGroupDefinition(allDefinitions);
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
