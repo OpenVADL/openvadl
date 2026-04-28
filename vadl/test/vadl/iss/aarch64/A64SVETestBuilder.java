@@ -30,9 +30,16 @@ public class A64SVETestBuilder extends A64TestBuilder {
     if (vlBits <= 0) {
       throw new IllegalArgumentException("SVE VL must be > 0, got " + vlBits);
     }
+    if (vlBits % 128 != 0) {
+      throw new IllegalArgumentException("SVE VL must be a multiple of 128, got " + vlBits);
+    }
+    var zcrLen = (vlBits / 128) - 1;
     add("# configure CPACR to enable SIMD/SVE access in reference QEMU");
     add("mov %s, #0x330000", tmpReg);
     add("msr cpacr_el1, %s", tmpReg);
+    add("# match reference QEMU's runtime SVE vector length to the fixed VADL test VL");
+    add("mov %s, #%d", tmpReg, zcrLen);
+    add("msr zcr_el1, %s", tmpReg);
   }
 
   public void fillMemory64(long addr, int words, String addrReg, String dataReg) {

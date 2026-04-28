@@ -54,6 +54,7 @@ import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
 import vadl.iss.passes.IssBitfieldWriteLoweringPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssCFunctionExtractionPass;
+import vadl.iss.passes.IssCommonExprSavePass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExecStrategyPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
@@ -535,6 +536,7 @@ public class PassOrders {
         .add(new IssLoopUnrollPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
+        .add(new IssCommonExprSavePass(config))
         .add(new IssPcAccessConversionPass(config))
         .add(new IssTcgContextPass(config))
         .add(new IssSelectLoweringPass(config))

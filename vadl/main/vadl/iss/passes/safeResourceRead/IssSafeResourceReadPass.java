@@ -16,17 +16,12 @@
 
 package vadl.iss.passes.safeResourceRead;
 
-import static java.util.Objects.requireNonNull;
-import static vadl.utils.GraphUtils.getSingleNode;
-
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -35,28 +30,23 @@ import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
+import vadl.iss.passes.utils.IssDominatorAnalysis;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
-import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
-import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ScheduledNode;
-import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**
@@ -133,7 +123,7 @@ class IssResourceReadSecurer {
   Instruction instruction;
   IssSafeResourceReadPass.Result result;
 
-  Map<ControlNode, List<ControlNode>> dominatorSets;
+  IssDominatorAnalysis dominatorAnalysis;
 
   /**
    * Constructs an IssResourceReadSecurer for the given instruction and pass result.
@@ -144,7 +134,7 @@ class IssResourceReadSecurer {
   IssResourceReadSecurer(Instruction instruction, IssSafeResourceReadPass.Result result) {
     this.instruction = instruction;
     this.result = result;
-    dominatorSets = IssDominatorAnalysis.getDominatorSets(instruction.behavior());
+    dominatorAnalysis = IssDominatorAnalysis.analyze(instruction.behavior());
   }
 
   /**
@@ -339,7 +329,7 @@ class IssResourceReadSecurer {
         continue;
       }
       for (var writeSchedule : scheduledWrites) {
-        var writeDominators = requireNonNull(dominatorSets.get(writeSchedule));
+        var writeDominators = dominatorAnalysis.dominatorsOf(writeSchedule);
         if (!writeDominators.contains(conflictNode)) {
           allDominators = false;
           break;
@@ -360,7 +350,7 @@ class IssResourceReadSecurer {
       return null;
     }
 
-    return findLatestCommonNode(conflictNodes, dominatorSets);
+    return dominatorAnalysis.latestCommonDominator(conflictNodes);
 
   }
 
@@ -408,91 +398,4 @@ class IssResourceReadSecurer {
     return Stream.concat(s1, s2);
   }
 
-  /**
-   * Finds the control node that is the latest common dominator of all nodes in the given set.
-   *
-   * @param set           The set of control nodes.
-   * @param dominatorSets The map of dominator sets for each control node.
-   * @return The control node that is the latest common dominator.
-   */
-  @SuppressWarnings("LineLength")
-  private static ControlNode findLatestCommonNode(Set<ControlNode> set,
-                                                  Map<ControlNode, List<ControlNode>> dominatorSets) {
-
-    var domSets = new ArrayList<List<ControlNode>>();
-    for (ControlNode node : set) {
-      domSets.add(new ArrayList<>(dominatorSets.get(node)));
-    }
-
-    // Start node is always common
-    var lastCommon = domSets.get(0).get(0);
-
-    // Remove first from all (as first is always the start node)
-    for (var s : domSets) {
-      s.remove(0);
-    }
-
-    while (true) {
-      @Nullable ControlNode nextCommon = null;
-
-      for (var dominators : domSets) {
-        if (dominators.isEmpty()) {
-          return lastCommon;
-        }
-
-        var thisNext = dominators.remove(0);
-        if (lastCommon != null && thisNext != lastCommon) {
-          return lastCommon;
-        }
-        nextCommon = thisNext;
-      }
-
-      lastCommon = requireNonNull(nextCommon);
-    }
-
-  }
-}
-
-/**
- * Performs dominator analysis on a control flow graph (CFG)
- * to compute dominator sets for control nodes.
- */
-class IssDominatorAnalysis implements CfgTraverser {
-
-  Map<ControlNode, List<ControlNode>> dominatorSets = new HashMap<>();
-  ArrayDeque<Integer> splitDominatorIndexStack = new ArrayDeque<>();
-
-  // The current dominators during traversal
-  List<ControlNode> dominators = new ArrayList<>();
-
-  /**
-   * Computes the dominator sets for the given control flow graph.
-   *
-   * @param cfg The control flow graph to compute dominator sets for.
-   * @return A map of control nodes to their dominator sets.
-   */
-  static Map<ControlNode, List<ControlNode>> getDominatorSets(Graph cfg) {
-    var analysis = new IssDominatorAnalysis();
-    var start = getSingleNode(cfg, StartNode.class);
-    analysis.traverseBranch(start);
-    return analysis.dominatorSets;
-  }
-
-  @Override
-  public ControlNode onControlNode(ControlNode n) {
-    if (n instanceof ControlSplitNode) {
-      // Push index of splitNode
-      splitDominatorIndexStack.push(dominators.size() - 1);
-    } else if (n instanceof BranchEndNode || n instanceof MergeNode) {
-      // Reset sub-branch dominators
-      dominators = dominators.subList(0, requireNonNull(splitDominatorIndexStack.peek()) + 1);
-    }
-
-    // Add itself to dominator list
-    dominators.add(n);
-
-    // Copy to dominator sets
-    dominatorSets.put(n, new ArrayList<>(dominators));
-    return n;
-  }
 }

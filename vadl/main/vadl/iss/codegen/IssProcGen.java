@@ -29,16 +29,20 @@ import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
+import vadl.utils.GraphUtils;
 import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
+import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -146,23 +150,17 @@ abstract class IssProcGen implements CDefaultMixins.All,
   }
 
   private boolean dependsOnForallIndex(Node node) {
-    return dependsOnForallIndex(node, new HashSet<>());
-  }
-
-  private boolean dependsOnForallIndex(Node node, Set<Node> visited) {
-    if (!visited.add(node)) {
-      return false;
-    }
-    if (node instanceof ForIdxNode) {
-      return true;
-    }
-    return node.inputs().anyMatch(input -> dependsOnForallIndex(input, visited));
+    return GraphUtils.isOrHasDependencies(node, ForIdxNode.class::isInstance);
   }
 
   @Handler
   @Override
   public void handle(CGenContext<Node> ctx, ScheduledNode node) {
     if (node.node() instanceof ExprSaveNode save) {
+      if (shouldInlineExprSave(save)) {
+        ctx.gen(node.next());
+        return;
+      }
       var type = CppTypeMap.nextFittingUInt(save.type().asDataType());
       ctx.wr(type + " " + exprSaveVariable(save) + " = ")
           .gen(save.value())
@@ -176,6 +174,10 @@ abstract class IssProcGen implements CDefaultMixins.All,
 
   @Handler
   public void handle(CGenContext<Node> ctx, ExprSaveNode toHandle) {
+    if (shouldInlineExprSave(toHandle)) {
+      ctx.gen(toHandle.value());
+      return;
+    }
     ctx.wr(exprSaveVariable(toHandle));
   }
 
@@ -207,6 +209,32 @@ abstract class IssProcGen implements CDefaultMixins.All,
   @Handler
   void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throwNotAllowed(toHandle, "forall fold expressions");
+  }
+
+  private boolean shouldInlineExprSave(ExprSaveNode save) {
+    return isIdentifierLike(save.value(), new HashSet<>());
+  }
+
+  private boolean isIdentifierLike(Node node, Set<Node> visited) {
+    if (!visited.add(node)) {
+      return false;
+    }
+    if (node instanceof ReadRegTensorNode read && preloadedReadRegs.contains(read)) {
+      return true;
+    }
+    if (node instanceof ParamNode
+        || node instanceof FieldRefNode
+        || node instanceof FieldAccessRefNode
+        || node instanceof ConstantNode) {
+      return true;
+    }
+    if (node instanceof LetNode letNode) {
+      return isIdentifierLike(letNode.expression(), visited);
+    }
+    if (node instanceof ExprSaveNode saveNode) {
+      return isIdentifierLike(saveNode.value(), visited);
+    }
+    return false;
   }
 
 }

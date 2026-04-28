@@ -40065,7 +40065,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,CPACR_EL1,VBAR_EL1,ELR_EL1,SP_EL1,SP_EL0,SPSel,ESR_EL1,SPSR_EL1,SP ];
+let Defs = [ NZCV_N,NZCV_Z,NZCV_C,NZCV_V,ZCR_EL1,CPACR_EL1,VBAR_EL1,ELR_EL1,SP_EL1,SP_EL0,SPSel,ESR_EL1,SPSR_EL1,SP ];
 }
 
 def MSUBW : Instruction
