@@ -333,10 +333,10 @@ instruction set architecture AArch32v6 = {
     }
 
   enumeration AddrMode : Bits<3> =    // PUW addressing modes
-    { Notused0                        // not meaningful
-    , PstDecUp                        // post decrement with update
-    , Notused1                        // not meaningful
+    { PstDecUp                        // post decrement with update
+    , LDRT0                           // ldrt post decrement with update
     , PstIncUp                        // post increment with update
+    , LDRT1                           // ldrt post increment with update
     , PreDecNo                        // pre  decrement no   update
     , PreDecUp                        // pre  decrement with update
     , PreIncNo                        // pre  increment no   update
@@ -429,6 +429,74 @@ instruction set architecture AArch32v6 = {
     $MemoryInstr ($c ;  $i                                ; WordStore ; MEM<4>(a) := R(rt))
     $MemoryInstr ($c ; (STRB ; "strb" ; None ; $i.opcode) ; ByteStore ; MEM(a)    := R(rt) as Byte)
     }
+
+// signed / unsigned byte and halfword and load / store  Models ****************
+
+  format HalfMemImmFormat : Word =    // (signed) half/byte memory immediate format
+    { cond     [31..28]               // condition
+    , op       [27..25]               // opcode = 0b000
+    , puw      [24,23,21]             // Pre=1 (post=0), Up=1 (down=0), Writeback=1
+    , op1      [22,20,7..4]           // operation code
+    , rn       [19..16]               // base register
+    , rt       [15..12]               // source/target register
+    , imm8     [11..8,3..0]           // unsigned offset
+    , offset   = imm8 as Word         // zero extended offset
+    }
+
+  format HalfMemRegFormat : Word =    // (signed) half/byte memory register format
+    { cond     [31..28]               // condition
+    , op       [27..25]               // opcode = 0b000
+    , puw      [24,23,21]             // Pre=1 (post=0), Up=1 (down=0), Writeback=1
+    , op1      [22,20,7..4]           // operation code
+    , rn       [19..16]               // base register
+    , rt       [15..12]               // source/target register
+    , zero     [11..8]                // zeroes
+    , rm       [3..0]                 // index register
+    }
+
+  model LdSB() : Ex = {(MEM<1> as SIntW)}
+  model LdSH() : Ex = {(MEM<2> as SIntW)}
+  model LdUH() : Ex = {(MEM<2> as  Word)}
+
+  model HalfMemImmPstInstr (c : CondRec, i : InstrRec, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
+    instruction AsId($i.id, $m.mode, $c.condId) : HalfMemImmFormat =
+      if ($c.condEx) then
+        let a = R(rn) in {
+          $memStmt 
+          R(rn) := a $m.op offset
+          }
+    encoding AsId($i.id, $m.mode, $c.condId) = {cond = CondCode::$c.condId, op = 0b010, puw = AddrMode::$m.mode}
+    assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
+    }
+
+  model HalfMemImmPreInstr (c : CondRec, i : InstrRec, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
+    instruction AsId($i.id, $m.mode, $c.condId) : HalfMemImmFormat =
+      if ($c.condEx) then
+        let a = R(rn) $m.op offset in {
+          $m.upStmt
+          $memStmt
+          }
+    encoding AsId($i.id, $m.mode, $c.condId) = {cond = CondCode::$c.condId, op = 0b010, puw = AddrMode::$m.mode}
+    assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
+    }
+
+  model HalfMemImmediateInstr (c : CondRec, i : InstrRec, memStmt : Stats) : IsaDefs = {
+    $HalfMemImmPstInstr ($c ; $i ; $memStmt ; (PstDecUp ; - ; {}        ) ; ('],#-', udec(imm8)      ))
+    $HalfMemImmPstInstr ($c ; $i ; $memStmt ; (PstIncUp ; + ; {}        ) ; ('],#+', udec(imm8)      ))
+    $HalfMemImmPreInstr ($c ; $i ; $memStmt ; (PreDecNo ; - ; {}        ) ; ( ',#-', udec(imm8), ']' ))
+    $HalfMemImmPreInstr ($c ; $i ; $memStmt ; (PreDecUp ; - ; R(rn) := a) ; ( ',#-', udec(imm8), ']!'))
+    $HalfMemImmPreInstr ($c ; $i ; $memStmt ; (PreIncNo ; + ; {}        ) ; ( ',#+', udec(imm8), ']' ))
+    $HalfMemImmPreInstr ($c ; $i ; $memStmt ; (PreIncUp ; + ; R(rn) := a) ; ( ',#+', udec(imm8), ']!'))
+    }
+
+  model HalfMemLoadImmInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $HalfMemImmediateInstr ($c ; $i ; R(rt) := $i.funct())
+    }
+
+  model HalfMemStoreImmInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $HalfMemImmediateInstr ($c ; $i ; MEM<2>(a) := R(rt) as Bits<16>)
+    }
+
 
 // branch models ***************************************************************
 
@@ -525,44 +593,49 @@ instruction set architecture AArch32v6 = {
 
 // base instructions ***********************************************************
 
-  $CondInstr4Flags    (ArithmeticSftInstr ; (ADD   ; "add"   ; AddS  ; 0b000'0100 ))
-  $CondInstr4Flags    (ArithmeticSftInstr ; (ADC   ; "adc"   ; AddC  ; 0b000'0101 ))
-  $CondInstr4Flags    (ArithmeticSftInstr ; (SUB   ; "sub"   ; SubSC ; 0b000'0010 ))
-  $CondInstr4Flags    (ArithmeticSftInstr ; (SBC   ; "sbc"   ; SubC  ; 0b000'0110 ))
-  $CondInstr4Flags    (ArithmeticSftInstr ; (RSB   ; "rsb"   ; SubR  ; 0b000'0011 ))
-  $CondInstr3Flags    (ArithmeticSftInstr ; (AND   ; "and"   ; AndS  ; 0b000'0000 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithmeticSftInstr ; (ORR   ; "orr"   ; OrS   ; 0b000'1100 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithmeticSftInstr ; (EOR   ; "eor"   ; XOrS  ; 0b000'0001 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithmeticSftInstr ; (BIC   ; "bic"   ; AndNot; 0b000'1110 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithMovSftInstr   ; (MOV   ; "mov"   ; Mov   ; 0b000'1101 )) // TODO set correct flags
+  $CondInstr4Flags    (ArithmeticSftInstr   ; (ADD   ; "add"   ; AddS  ; 0b000'0100 ))
+  $CondInstr4Flags    (ArithmeticSftInstr   ; (ADC   ; "adc"   ; AddC  ; 0b000'0101 ))
+  $CondInstr4Flags    (ArithmeticSftInstr   ; (SUB   ; "sub"   ; SubSC ; 0b000'0010 ))
+  $CondInstr4Flags    (ArithmeticSftInstr   ; (SBC   ; "sbc"   ; SubC  ; 0b000'0110 ))
+  $CondInstr4Flags    (ArithmeticSftInstr   ; (RSB   ; "rsb"   ; SubR  ; 0b000'0011 ))
+  $CondInstr3Flags    (ArithmeticSftInstr   ; (AND   ; "and"   ; AndS  ; 0b000'0000 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticSftInstr   ; (ORR   ; "orr"   ; OrS   ; 0b000'1100 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticSftInstr   ; (EOR   ; "eor"   ; XOrS  ; 0b000'0001 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticSftInstr   ; (BIC   ; "bic"   ; AndNot; 0b000'1110 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithMovSftInstr     ; (MOV   ; "mov"   ; Mov   ; 0b000'1101 )) // TODO set correct flags
 
-  $CondInstr4Flags    (ArithmeticImmInstr ; (ADDI  ; "add"   ; AddS  ; 0b001'0100 ))
-  $CondInstr4Flags    (ArithmeticImmInstr ; (ADCI  ; "adc"   ; AddC  ; 0b001'0101 ))
-  $CondInstr4Flags    (ArithmeticImmInstr ; (SUBI  ; "sub"   ; SubSC ; 0b001'0010 ))
-  $CondInstr4Flags    (ArithmeticImmInstr ; (SBCI  ; "sbc"   ; SubC  ; 0b001'0110 ))
-  $CondInstr4Flags    (ArithmeticImmInstr ; (RSBI  ; "rsb"   ; SubR  ; 0b001'0011 ))
-  $CondInstr3Flags    (ArithmeticImmInstr ; (ANDI  ; "and"   ; AndS  ; 0b001'0000 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithmeticImmInstr ; (ORRI  ; "orr"   ; OrS   ; 0b001'1100 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithmeticImmInstr ; (EORI  ; "eor"   ; XOrS  ; 0b001'0001 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithmeticImmInstr ; (BICI  ; "bic"   ; AndNot; 0b001'1110 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithMovImmInstr   ; (MOVI  ; "mov"   ; Mov   ; 0b001'1101 )) // TODO set correct flags
+  $CondInstr4Flags    (ArithmeticImmInstr   ; (ADDI  ; "add"   ; AddS  ; 0b001'0100 ))
+  $CondInstr4Flags    (ArithmeticImmInstr   ; (ADCI  ; "adc"   ; AddC  ; 0b001'0101 ))
+  $CondInstr4Flags    (ArithmeticImmInstr   ; (SUBI  ; "sub"   ; SubSC ; 0b001'0010 ))
+  $CondInstr4Flags    (ArithmeticImmInstr   ; (SBCI  ; "sbc"   ; SubC  ; 0b001'0110 ))
+  $CondInstr4Flags    (ArithmeticImmInstr   ; (RSBI  ; "rsb"   ; SubR  ; 0b001'0011 ))
+  $CondInstr3Flags    (ArithmeticImmInstr   ; (ANDI  ; "and"   ; AndS  ; 0b001'0000 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticImmInstr   ; (ORRI  ; "orr"   ; OrS   ; 0b001'1100 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticImmInstr   ; (EORI  ; "eor"   ; XOrS  ; 0b001'0001 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticImmInstr   ; (BICI  ; "bic"   ; AndNot; 0b001'1110 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithMovImmInstr     ; (MOVI  ; "mov"   ; Mov   ; 0b001'1101 )) // TODO set correct flags
 
-  $CondInstrTst4Flags (ArithTestSftInstr  ; (CMP   ; "cmp"   ; SubSC ; 0b000'1010 ))
-  $CondInstrTst4Flags (ArithTestSftInstr  ; (CMN   ; "cmn"   ; AddS  ; 0b000'1011 ))
-  $CondInstrTst3Flags (ArithTestSftInstr  ; (TST   ; "tst"   ; AndS  ; 0b000'1000 )) // TODO set correct carry
-  $CondInstrTst3Flags (ArithTestSftInstr  ; (TEQ   ; "teq"   ; XOrS  ; 0b000'1001 )) // TODO set correct carry
-  $CondInstrTst4Flags (ArithTestImmInstr  ; (CMPI  ; "cmp"   ; SubSC ; 0b001'1010 ))
-  $CondInstrTst4Flags (ArithTestImmInstr  ; (CMNI  ; "cmn"   ; AddS  ; 0b001'1011 ))
-  $CondInstrTst3Flags (ArithTestImmInstr  ; (TSTI  ; "tst"   ; AndS  ; 0b001'1000 )) // TODO set correct carry
-  $CondInstrTst3Flags (ArithTestImmInstr  ; (TEQI  ; "teq"   ; XOrS  ; 0b001'1001 )) // TODO set correct carry
+  $CondInstrTst4Flags (ArithTestSftInstr    ; (CMP   ; "cmp"   ; SubSC ; 0b000'1010 ))
+  $CondInstrTst4Flags (ArithTestSftInstr    ; (CMN   ; "cmn"   ; AddS  ; 0b000'1011 ))
+  $CondInstrTst3Flags (ArithTestSftInstr    ; (TST   ; "tst"   ; AndS  ; 0b000'1000 )) // TODO set correct carry
+  $CondInstrTst3Flags (ArithTestSftInstr    ; (TEQ   ; "teq"   ; XOrS  ; 0b000'1001 )) // TODO set correct carry
+  $CondInstrTst4Flags (ArithTestImmInstr    ; (CMPI  ; "cmp"   ; SubSC ; 0b001'1010 ))
+  $CondInstrTst4Flags (ArithTestImmInstr    ; (CMNI  ; "cmn"   ; AddS  ; 0b001'1011 ))
+  $CondInstrTst3Flags (ArithTestImmInstr    ; (TSTI  ; "tst"   ; AndS  ; 0b001'1000 )) // TODO set correct carry
+  $CondInstrTst3Flags (ArithTestImmInstr    ; (TEQI  ; "teq"   ; XOrS  ; 0b001'1001 )) // TODO set correct carry
 
-  $CondInstr          (LoadInstr          ; (LDR   ; "ldr"   ; None  ; 0b010      ))
-  $CondInstr          (StoreInstr         ; (STR   ; "str"   ; None  ; 0b010      ))
+  $CondInstr          (LoadInstr            ; (LDR   ; "ldr"   ; None  ; 0b010      ))
+  $CondInstr          (StoreInstr           ; (STR   ; "str"   ; None  ; 0b010      ))
 
-  $CondInstr          (BranchBInstr       ; (B     ; "b"     ; None  ; 0b1010     ))
-  $CondInstr          (BranchBInstr       ; (BL    ; "bl"    ; None  ; 0b1011     ))
-  $CondInstr          (BranchBXInstr      ; (BX    ; "bx"    ; None  ; 0b0001     ))
-  $CondInstr          (BranchBXInstr      ; (BLX   ; "blx"   ; None  ; 0b0011     ))
+  $CondInstr          (HalfMemStoreImmInstr ; (STRHI ; "strh"  ; None  ; 0b10'1011  ))
+//  $CondInstr          (HalfMemLoadImmInstr  ; (LDRHI ; "ldrh"  ; LdUH  ; 0b11'1011  ))
+//  $CondInstr          (HalfMemLoadImmInstr  ; (LDRSHI; "ldrsh" ; LdSH  ; 0b11'1111  ))
+//  $CondInstr          (HalfMemLoadImmInstr  ; (LDRSBI; "ldrsb" ; LdSB  ; 0b11'1101  ))
+
+  $CondInstr          (BranchBInstr         ; (B     ; "b"     ; None  ; 0b1010     ))
+  $CondInstr          (BranchBInstr         ; (BL    ; "bl"    ; None  ; 0b1011     ))
+  $CondInstr          (BranchBXInstr        ; (BX    ; "bx"    ; None  ; 0b0001     ))
+  $CondInstr          (BranchBXInstr        ; (BLX   ; "blx"   ; None  ; 0b0011     ))
 
 }
 /*
