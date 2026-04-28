@@ -158,7 +158,7 @@ public class TypeChecker
   /**
    * Typecheck the expression if not yet checked.
    *
-   * @param expr to check.
+   * @param expr         to check.
    * @param expectedType the expected type of the expression.
    * @return the type of the expression.
    */
@@ -331,10 +331,27 @@ public class TypeChecker
     }
   }
 
-  private void throwUnimplemented(Node node) {
-    throw new RuntimeException(
-        "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
-            node.nodeName(), node.location().toConciseString()));
+  private Diagnostic unimplementedError(Node node) {
+    return error("Unimplemented", node)
+        .locationDescription(node, "The typechecker doesn't know how to handle `%s` yet.",
+            node.nodeName())
+        .locationHelp(node,
+            "If you desire this feature, please let us know at: "
+                + "https://github.com/OpenVADL/openvadl/issues/new")
+        .build();
+  }
+
+  /**
+   * There are some nodes that only live in the parser and should never be reached by the
+   * typechecker.
+   * This should never happen.
+   *
+   * @param node that is foreign.
+   * @return an exception to be thrown.
+   */
+  private IllegalStateException foreignNodeException(Node node) {
+    return new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(node.nodeName()));
   }
 
   /**
@@ -368,7 +385,7 @@ public class TypeChecker
    *
    * @param error to be recorded.
    * @return RuntimeException is never actually returned but, sometimes this is needed to trick the
-   *      java compiler.
+   *     java compiler.
    * @throws Diagnostic always
    */
   private RuntimeException addErrorAndAbortChecking(Diagnostic error) {
@@ -910,7 +927,6 @@ public class TypeChecker
         return new BuiltInCheckResult(type, List.of(left, right));
       }
 
-      //throw new RuntimeException("Don't yet know how to handle " + builtIn);
       // Fallback: This concludes all the special handling we do on functions with two arguments.
       // Now revert to the generic handling of functions.
     }
@@ -928,8 +944,8 @@ public class TypeChecker
     // in Java.
     var declaredTypes = builtIn.signature().hasVarArgs()
         ? Streams.concat(
-            builtIn.argTypeClasses().stream(),
-            Stream.generate(() -> builtIn.argTypeClasses().getLast()))
+        builtIn.argTypeClasses().stream(),
+        Stream.generate(() -> builtIn.argTypeClasses().getLast()))
         : builtIn.argTypeClasses().stream();
 
     // Inject implicit casts for constant types
@@ -947,11 +963,11 @@ public class TypeChecker
       var calledTypes = String.join(", ", argTypes.stream().map(Type::toString).toList());
       addErrorAndStopChecking(
           error("Type Mismatch", location)
-          .locationDescription(location, "The builtin has the signature `%s` but got `%s`.",
-              builtIn.signature(), calledTypes)
-          .applyIf(areSomeConst, b -> b.locationHelp(location,
-              "Try casting some of the constant arguments to explicit types."))
-          .build());
+              .locationDescription(location, "The builtin has the signature `%s` but got `%s`.",
+                  builtIn.signature(), calledTypes)
+              .applyIf(areSomeConst, b -> b.locationHelp(location,
+                  "Try casting some of the constant arguments to explicit types."))
+              .build());
     }
 
     return new BuiltInCheckResult(builtIn.returns(argTypes), args);
@@ -1125,7 +1141,8 @@ public class TypeChecker
           }
         }
       } else {
-        throw new RuntimeException("Unknown FormatField Class ".concat(field.getClass().getName()));
+        throw new IllegalStateException(
+            "Unknown FormatField Class ".concat(field.getClass().getName()));
       }
     }
 
@@ -1284,9 +1301,12 @@ public class TypeChecker
     //    Bits<n> -> Bit<m_1>...<m_k>     ==>     Bits<2^n><m_1>...<m_k>
     //    ^^^^^^ Relation Type ^^^^^^   becomes   ^^^^^ Tensor Type ^^^^
 
-    // FIXME: Don't know what to do with multiple args, figure out later.
     if (definition.typeLiteral.argTypes().size() > 1) {
-      throw new IllegalStateException("Multiple arguments for type in register not yet defined");
+      addErrorAndStopChecking(
+          error("Invalid Register Type", definition.typeLiteral)
+              .description("The type for a register must be a single type, not multiple types.")
+              .build()
+      );
     }
 
     definition.typeLiteral.argTypes().forEach((argType) -> {
@@ -1390,9 +1410,7 @@ public class TypeChecker
   @Override
   public Void visit(EncodingDefinition definition) {
     for (var item : definition.encodings.items) {
-      if (!(item instanceof EncodingDefinition.EncodingField encodingField)) {
-        throw new IllegalStateException("Should that be possible?");
-      }
+      var encodingField = (EncodingDefinition.EncodingField) item;
 
       check(encodingField.value);
       var fieldType = requireNonNull(
@@ -1565,9 +1583,15 @@ public class TypeChecker
 
       if (definition.targetType != null) {
         // FIXME: Support relational alias types on registers
-        throw new IllegalStateException(
-            "Relational alias types are not yet supported, found at: %s".formatted(
-                definition.loc.toConciseString()));
+        addErrorAndStopChecking(
+            error("Unsupported Alias Type", definition)
+                .locationDescription(definition,
+                    "The typechecker doesn't know how such aliases yet.")
+                .locationHelp(definition,
+                    "If you desire this feature, please let us know at: "
+                        + "https://github.com/OpenVADL/openvadl/issues/new")
+                .build()
+        );
       }
 
       // we have to check the CallIndexExpr "manually" as the normal check cannot handle
@@ -1680,9 +1704,14 @@ public class TypeChecker
       return null;
     }
 
-    throw new IllegalStateException(
-        "Kind %s not yet implemented, found at: %s".formatted(definition.kind,
-            definition.loc.toConciseString()));
+    throw addErrorAndStopChecking(
+        error("Unimplemented", definition)
+            .locationDescription(definition, "Alias of type `%s` aren't implemented yet.",
+                definition.kind)
+            .locationHelp(definition,
+                "If you desire this feature, please let us know at: "
+                    + "https://github.com/OpenVADL/openvadl/issues/new")
+            .build());
   }
 
   private Type setInnerMostType(Type type, BitsType innerType) {
@@ -1759,20 +1788,17 @@ public class TypeChecker
 
   @Override
   public Void visit(PlaceholderDefinition definition) {
-    throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(definition.nodeName()));
+    throw foreignNodeException(definition);
   }
 
   @Override
   public Void visit(MacroInstanceDefinition definition) {
-    throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(definition.nodeName()));
+    throw foreignNodeException(definition);
   }
 
   @Override
   public Void visit(MacroMatchDefinition definition) {
-    throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(definition.nodeName()));
+    throw foreignNodeException(definition);
   }
 
   @Override
@@ -1783,20 +1809,17 @@ public class TypeChecker
 
   @Override
   public Void visit(ModelDefinition definition) {
-    throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(definition.nodeName()));
+    throw foreignNodeException(definition);
   }
 
   @Override
   public Void visit(RecordTypeDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw foreignNodeException(definition);
   }
 
   @Override
   public Void visit(ModelTypeDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw foreignNodeException(definition);
   }
 
   @Override
@@ -1807,8 +1830,7 @@ public class TypeChecker
 
   @Override
   public Void visit(ProcessDefinition processDefinition) {
-    throwUnimplemented(processDefinition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(processDefinition));
   }
 
   @Override
@@ -1843,8 +1865,7 @@ public class TypeChecker
 
   @Override
   public Void visit(GroupDefinition groupDefinition) {
-    throwUnimplemented(groupDefinition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(groupDefinition));
   }
 
   @Override
@@ -2609,19 +2630,17 @@ public class TypeChecker
 
   @Override
   public Void visit(PatchDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(definition));
   }
 
   @Override
   public Void visit(SourceDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(definition));
   }
 
   @Override
   public Void visit(CpuFunctionDefinition definition) {
-    throw new IllegalStateException("Not implemented behavior kind: " + definition.kind);
+    throw addErrorAndStopChecking(unimplementedError(definition));
   }
 
   @Override
@@ -2636,7 +2655,11 @@ public class TypeChecker
   public Void visit(CpuProcessDefinition definition) {
     switch (definition.kind) {
       case RESET -> check(definition.statement);
-      default -> throwUnimplemented(definition);
+      default -> throw addErrorAndStopChecking(
+          error("Unimplemented %s Kind: `%s`".formatted(definition.nodeName(), definition.kind),
+              definition)
+              .build()
+      );
     }
     return null;
   }
@@ -2654,20 +2677,17 @@ public class TypeChecker
 
   @Override
   public Void visit(MacroInstructionDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(definition));
   }
 
   @Override
   public Void visit(PortBehaviorDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(definition));
   }
 
   @Override
   public Void visit(PipelineDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(definition));
   }
 
   @Override
@@ -2692,8 +2712,7 @@ public class TypeChecker
 
   @Override
   public Void visit(CacheDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(definition));
   }
 
   @Override
@@ -2718,8 +2737,7 @@ public class TypeChecker
 
   @Override
   public Void visit(SignalDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(definition));
   }
 
   /**
@@ -2743,7 +2761,7 @@ public class TypeChecker
       innerName = segments.get(segments.size() - 1);
       fullName = path.pathToString();
     } else {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unknown identifyable: " + expr.getClass().getSimpleName());
     }
 
     if (origin instanceof ConstantDefinition constDef) {
@@ -3027,7 +3045,7 @@ public class TypeChecker
   public Void visit(WildcardLiteral expr) {
     // if a node contains a potential wildcard literal expression, it must ensure that
     // it is not type checked.
-    throw new IllegalStateException("The wildcard literal should never be typechecked.");
+    throw foreignNodeException(expr);
   }
 
   @Override
@@ -3050,14 +3068,12 @@ public class TypeChecker
 
   @Override
   public Void visit(PlaceholderExpr expr) {
-    throw new IllegalStateException(
-        "The typechecker should never see a %s".formatted(expr.nodeName()));
+    throw foreignNodeException(expr);
   }
 
   @Override
   public Void visit(MacroInstanceExpr expr) {
-    throw new IllegalStateException(
-        "The typechecker should never see a %s".formatted(expr.nodeName()));
+    throw foreignNodeException(expr);
   }
 
   @Override
@@ -3985,14 +4001,25 @@ public class TypeChecker
 
   @Override
   public Void visit(SymbolExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    // Note of personal frustration.
+    // A couple of users ran into this problem previously when they forgot to add the parenthesis.
+    // Semantics of SymbolExpr are still not defined (as mentioned
+    // https://github.com/OpenVADL/openvadl/issues/914#issuecomment-4337648932).
+    // Let's be nice to the users and still provide a helpful error message (that's not the part of
+    // frustration).
+    // But if we don't know why this syntax is here why do we even allow to parse it?
+    throw addErrorAndStopChecking(
+        error("Unimplemented", expr)
+            .locationDescription(expr, "The typechecker doesn't know how to handle `%s` yet.",
+                expr.nodeName())
+            .locationHelp(expr, "Did you forget to add the parentheses at the end?")
+            .build()
+    );
   }
 
   @Override
   public Void visit(MacroMatchExpr expr) {
-    throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(expr.nodeName()));
+    throw foreignNodeException(expr);
   }
 
   @Override
@@ -4070,26 +4097,22 @@ public class TypeChecker
 
   @Override
   public Void visit(AsIdExpr expr) {
-    throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(expr.nodeName()));
+    throw foreignNodeException(expr);
   }
 
   @Override
   public Void visit(AsStrExpr expr) {
-    throw new IllegalStateException(
-        "No %s should ever reach the Typechecker".formatted(expr.nodeName()));
+    throw foreignNodeException(expr);
   }
 
   @Override
   public Void visit(ExistsInExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(expr));
   }
 
   @Override
   public Void visit(ExistsInThenExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(expr));
   }
 
 
@@ -4179,20 +4202,17 @@ public class TypeChecker
 
   @Override
   public Void visit(SequenceCallExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(expr));
   }
 
   @Override
   public Void visit(ExpandedSequenceCallExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(expr));
   }
 
   @Override
   public Void visit(ExpandedAliasDefSequenceCallExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(expr));
   }
 
   @Override
@@ -4318,20 +4338,17 @@ public class TypeChecker
 
   @Override
   public Void visit(PlaceholderStatement statement) {
-    throwUnimplemented(statement);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(statement));
   }
 
   @Override
   public Void visit(MacroInstanceStatement statement) {
-    throwUnimplemented(statement);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(statement));
   }
 
   @Override
   public Void visit(MacroMatchStatement statement) {
-    throwUnimplemented(statement);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(statement));
   }
 
   @Override
@@ -4449,8 +4466,7 @@ public class TypeChecker
 
   @Override
   public Void visit(LockStatement statement) {
-    throwUnimplemented(statement);
-    return null;
+    throw addErrorAndStopChecking(unimplementedError(statement));
   }
 
   @Override
