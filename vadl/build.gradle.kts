@@ -89,6 +89,10 @@ tasks.processResources {
     from(createProperties)
 }
 
+tasks.processTestResources {
+    exclude("**/__pycache__/**", "**/*.pyc")
+}
+
 tasks.withType<Test>().configureEach {
     environment("PROJECT_ROOT", rootDir.absolutePath)
     useJUnitPlatform {

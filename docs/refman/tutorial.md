@@ -933,6 +933,9 @@ instruction set architecture ISA = {
   alias register ZR : Word = X(31)        // zero register
   register        Y : Word<32>            // alternative specification instead of arrow syntax
   alias register  Z : Bits<32><2><16> = Y // Y is interpreted as 32 registers with two 16 bit parts
+  [ overwrite source : zero ]             // fills the upper 32 bits of the S(*) register with zeros
+  [ overwrite source : sign ]             // sign extends the upper 32 bits of the S(*) register
+  alias register  V = S(*)(30..0)         // slices the lower 32 bits of the S(*) register
 }
 ~~~
 \endlisting
@@ -949,6 +952,22 @@ The only requirement is that both registers have the same number of bits.
 It is allowed that the alias register has other annotations than the aliased register as demonstrated with the registers `X` and `S`.
 The alias register inherits all attributes from the aliased register.
 It is possible to make the \ac{PC} an alias of a register using the keywords `alias program counter`.
+
+When an alias refers only to a slice of its source register, reads always access only that slice.
+Writes need additional care because the alias value is smaller than the underlying source register.
+If no `[ overwrite source : ... ]` annotation is given, writing the alias performs a partial update:
+the written value replaces only the aliased slice, while all bits outside that slice are preserved
+from the original source register.
+This is the default merge behavior for sliced register aliases.
+
+The annotation `[ overwrite source : zero ]` changes this behavior by zero extending the written
+alias value to the full width of the source register before writing it back.
+Accordingly, all bits outside the aliased slice are set to zero.
+The annotation `[ overwrite source : sign ]` sign extends the written alias value to the full
+width of the source register before writing it back.
+This is useful when the alias models a narrower architectural view whose write semantics define the
+complete source register, for example by zero extension or sign extension, instead of preserving the
+remaining high bits.
 
 Listing \r{partial_register_access} shows the declaration of a status register with some bit fields.
 It is possible that these bit fields can be accessed directly (partial read and write) or the register can be accessed only as a whole (full read and write).

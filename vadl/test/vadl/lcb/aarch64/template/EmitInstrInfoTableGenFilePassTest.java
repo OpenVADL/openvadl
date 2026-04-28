@@ -16,13 +16,12 @@
 
 package vadl.lcb.aarch64.template;
 
-import java.io.File;
+import static vadl.TestUtils.assertEqualsFileLines;
+
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.file.Path;
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.com.google.common.io.Files;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
 import vadl.pass.PassKey;
@@ -43,14 +42,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
             .lastResultOf(EmitInstrInfoTableGenFilePass.class);
 
     // Then
-    var resultFile = passResult.emittedFile().toFile();
-    var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var resultFile = passResult.emittedFile();
+    var actual = FileUtils.readFileToString(resultFile.toFile(), "UTF-8");
+    var fs = Path.of("test/resources/snapshots/aarch64/InstrInfoTableGen.td");
 
-    var fs = new File(
-        "test/resources/snapshots/aarch64/InstrInfoTableGen.td");
-    var expected = FileUtils.readFileToString(fs, "UTF-8");
-
-    Assertions.assertLinesMatch(expected.trim().lines(), output);
+    assertEqualsFileLines(fs, actual);
   }
 }

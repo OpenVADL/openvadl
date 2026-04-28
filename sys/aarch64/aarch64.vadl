@@ -1655,6 +1655,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     , ESR_EL1   = 0b11'000'0101'0010'000     // exception syndrome register exception level 1
     , SPSR_EL1  = 0b11'000'0100'0000'000     // saved program state register exception level 1
     , CPACR_EL1 = 0b11'000'0001'0000'010     // architectural feature access control register exception level 1
+    , ZCR_EL1   = 0b11'000'0001'0010'000     // SVE control register exception level 1
     }
 
   constant SysRegNZCV15 = SysRegEncode::NZCV as Bits15
@@ -1668,6 +1669,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
   register ESR_EL1:  ExceptionSyndromeFormat // exception syndrome register exception level level 1
   register SPSR_EL1: SavedProgramStateFormat // saved program state register exception level level 1
   register CPACR_EL1:CPACRFormat             // architectural feature access control register exception level 1
+  register ZCR_EL1:  BitsX                   // SVE control register exception level 1
 
   model SaveProgramState (): Stats = {
     SPSR_EL1 := (SPSR_EL1(63..32), NZCV_N, NZCV_Z, NZCV_C, NZCV_V, SPSR_EL1(27..4), SPSel as Bits4 | 0b0100)
@@ -1751,6 +1753,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
       , SysRegEncode::SPSR_EL1  => "spsr_el1"
       , SysRegEncode::VBAR_EL1  => "vbar_el1"
       , SysRegEncode::CPACR_EL1 => "cpacr_el1"
+      , SysRegEncode::ZCR_EL1   => "zcr_el1"
       , _ => ("S", udec(sysreg(15..14)), "_",
                    udec(sysreg(13..11)), "_",
                    udec(sysreg(10.. 7)), "_",
@@ -1786,6 +1789,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
                                          }
           , SysRegEncode::ELR_EL1   => X(rt) := ELR_EL1
           , SysRegEncode::VBAR_EL1  => X(rt) := VBAR_EL1
+          , SysRegEncode::ZCR_EL1   => X(rt) := ZCR_EL1
           , _                       => raise $UndefinedException ()
           }
     [select when : rs != SysRegNZCV15]
@@ -1825,6 +1829,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
           , SysRegEncode::ELR_EL1   => ELR_EL1 := X(rt)
           , SysRegEncode::VBAR_EL1  => VBAR_EL1 := X(rt)
           , SysRegEncode::CPACR_EL1 => CPACR_EL1 := X(rt)
+          , SysRegEncode::ZCR_EL1   => ZCR_EL1 := X(rt)
           , _                       => raise $UndefinedException ()
           }
     encoding $i.id = {op = $i.opcode}

@@ -59,6 +59,7 @@ instruction set architecture AArch64SVEandSME extending AArch64Base = {
   alias register ZH : BitsZH<NumZ> = Z    // half   vector register file
   alias register ZS : BitsZS<NumZ> = Z    // single vector register file
   alias register ZD : BitsZD<NumZ> = Z    // double vector register file
+  [ overwrite source : zero ]
   alias register V = Z(*)(VSize-1..0)     // scalar view of the vector registers
 
   enumeration ElSize =                    // element size encoding

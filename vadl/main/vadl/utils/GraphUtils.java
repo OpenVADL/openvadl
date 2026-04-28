@@ -19,12 +19,15 @@ package vadl.utils;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -149,7 +152,7 @@ public class GraphUtils {
    * <p>Copied nodes are canonicalized when they implement {@link Canonicalizable}. The substituted
    * replacement itself is returned as provided and is not copied.</p>
    *
-   * @param root the expression root to copy
+   * @param root         the expression root to copy
    * @param substitution function returning a replacement expression, or {@code null} to keep
    *                     copying
    * @return the copied expression root with substitutions applied
@@ -265,38 +268,38 @@ public class GraphUtils {
   }
 
   /**
-   * Determines if a specified filter applies to the given node or at least one of its dependencies.
+   * Determines if the given node itself or any node in its transitive input subtree matches the
+   * provided predicate.
    *
-   * @param node   The starting node to check.
-   * @param filter A function that applies a condition to each node,
-   *               returning true if the node has a dependency and should be considered.
-   * @return true if itself or any dependency satisfies the filter condition; false otherwise.
+   * @param node      the root node whose dependency subtree should be searched
+   * @param predicate the condition to test on the root and all transitive inputs
+   * @return true if the root or any transitive input matches the predicate; false otherwise
    */
-  public static boolean isOrhasDependencies(Node node, Function<Node, Boolean> filter) {
-    return filter.apply((Node) node) || hasDependencies(node, filter);
+  public static boolean isOrHasDependencies(Node node, Predicate<Node> predicate) {
+    return isOrHasDependencies(node, predicate, new HashSet<>());
   }
 
+  private static boolean isOrHasDependencies(Node node,
+                                             Predicate<Node> predicate,
+                                             Set<Node> visited) {
+    if (!visited.add(node)) {
+      return false;
+    }
+    if (predicate.test(node)) {
+      return true;
+    }
+    return node.inputs().anyMatch(input -> isOrHasDependencies(input, predicate, visited));
+  }
 
   /**
-   * Determines if a given node has dependencies based on a provided filter function.
+   * Determines if any transitive input of the given node matches the provided predicate.
    *
-   * @param node   The starting node to check for dependencies.
-   * @param filter A function that applies a condition to each node,
-   *               returning true if the node has a dependency and should be considered.
-   * @return true if any dependency satisfies the filter condition; false otherwise.
+   * @param node      the root node whose input subtree should be searched, excluding the root
+   * @param predicate the condition to test on transitive inputs
+   * @return true if any transitive input matches the predicate; false otherwise
    */
-  public static boolean hasDependencies(Node node, Function<Node, Boolean> filter) {
-    GraphVisitor<Boolean> visitor = new GraphVisitor<>() {
-      @Override
-      public @Nonnull Boolean visit(Node from, @Nullable Node to) {
-        if (to == null || filter.apply(to)) {
-          return filter.apply(to);
-        }
-        return to.inputs().anyMatch(input -> visit(node, input));
-      }
-    };
-
-    return node.inputs().anyMatch(input -> visitor.visit(node, input));
+  public static boolean hasDependencies(Node node, Predicate<Node> predicate) {
+    return node.inputs().anyMatch(input -> isOrHasDependencies(input, predicate));
   }
 
   /**
@@ -635,10 +638,11 @@ public class GraphUtils {
    * Finds the end node of the branch the given node is on.
    *
    * @param node the node from which to search from
-   * @return     the branch end node
+   * @return the branch end node
    */
   public static AbstractEndNode branchEnd(DirectionalNode node) {
-    return new CfgTraverser() {}.traverseBranch(node);
+    return new CfgTraverser() {
+    }.traverseBranch(node);
   }
 
 

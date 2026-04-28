@@ -53,6 +53,8 @@ bin/
 
 ### Python ###
 .venv
+**/__pycache__/
+*.pyc
 
 ### OTHER ###
 .swp
