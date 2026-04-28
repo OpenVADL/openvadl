@@ -1,0 +1,606 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// ARM AArch32 base instruction set
+
+instruction set architecture AArch32v6 = {
+
+  constant Size  = 32                 // 32 bit architecture
+
+  using Index    = Bits<4>            // register file index for 16 registers
+  using Bits5    = Bits<5>            // size for shift/rotate amounts
+  using Byte     = Bits<8>            // memory size
+  using Word     = Bits<Size>         // word size
+  using SIntW    = SInt<Size>         // signed word size
+  using Addr     = Word               // address has word size
+
+  memory MEM : Addr  -> Byte          // byte addressed memory
+
+  register R : Index -> Word          // general purpose register file
+
+  [next next]                         // PC points to the end of the following instruction
+  program counter PC : Addr           // program counter TODO alias R(15)
+//alias program counter PC : Addr = R(15)  // program counter
+  alias register LR : Addr = R(14)    // link register
+  alias register SP : Addr = R(13)    // stack pointer
+
+  [negative status register]
+  register APSR_N : Bits<1>           // Negative
+  [zero status register]
+  register APSR_Z : Bits<1>           // Zero
+  [carry status register]
+  register APSR_C : Bits<1>           // Carry
+  [overflow status register]
+  register APSR_V : Bits<1>           // oVerflow
+  [overflow status register]
+  register APSR_Q : Bits<1>           // overflow or saturation
+
+  format ApplicationProgramStatusRegister : Word =
+    { N     [31]         // negative
+    , Z     [30]         // zero
+    , C     [29]         // carry
+    , V     [28]         // overflow
+    , Q     [27]         // overflow or saturation
+    , Res0  [26..20]     // reserved
+    , GE    [19..16]     // greater or equal parallel addition flags
+    , Res1  [15..0]      // reserved
+    }
+
+  register APSR : ApplicationProgramStatusRegister
+
+  enumeration CondCode : Bits<4> =    // condition code encodings, do not change order
+    { EQ                              // EQual                    Z == 1
+    , NE                              // Not Equal                Z == 0
+    , CS                              // Carry Set                C == 1    HS unsigned Higher or Same
+    , CC                              // Carry Clear              C == 0    LO unsigned LOwer
+    , MI                              // MInus                    N == 1
+    , PL                              // PLus                     N == 0
+    , VS                              // oVerflow Set             V == 1
+    , VC                              // oVerflow Clear           V == 0
+    , HI                              // unsigned HIgher          C == 1 and Z == 0
+    , LS                              // unsigned Lower or Same   C == 0  or Z == 1
+    , GE                              // signed Greater or Equal  N == V
+    , LT                              // signed Less Than         N != V
+    , GT                              // signed Greater Than      N == V and Z == 0
+    , LE                              // signed Less or Equal     N != V  or Z == 1
+    , AL                              // ALways true
+    , NV                              // NeVer, Not Valid, reserved, gives true
+    }
+
+  enumeration ShiftType : Bits<3> =   // operand shift type
+    { LSLI                            // logical shift left immediate
+    , LSLR                            // logical shift left register
+    , LSRI                            // logical shift right immediate
+    , LSRR                            // logical shift right register
+    , ASRI                            // arithmetic shift right immediate
+    , ASRR                            // arithmetic shift right register
+    , RORI                            // rotate right immediate
+    , RORR                            // rotate right register
+    }
+
+  function lslW (left : Word, right : Word) -> Word =
+    if right > 31 then 0 else left << right
+
+  function lsrW (left : Word, right : Word) -> Word =
+    if right > 31 then 0 else left >> right
+
+  function asrW (left : Word, right : Word) -> Word =
+    let amount = if right > 31 then 31 else right in
+      left as SInt >> right
+
+// syntax records and model types **********************************************
+
+  // condition: CondCode id, assembly extension string, condition expression
+  record CondRec  (condId : Id, condStr : Str, condEx : Ex)
+
+  // flag settings statment, statuscode, assembly extionsion string
+  record FlagRec (flagStmt : () -> Stats, setFlag : Ex, flagExt : Str)
+
+  // shifted operands: shift identifier, expression, encodings, assembly elements
+  record ShiftRec (sftId : Id, encs : Encs, sftEx : Ex, asms : Ex)
+
+  // addressing mode: mode id, inc/dec operator, pre statement, update statement
+  record AddrRec  (mode : Id, op : BinOp, upStmt : Stat)
+
+  // higher order expression model
+  model-type ExModel = () -> Ex
+  model None () : Ex = {none}
+
+  // instruction: instruction id, assembly name, function or type, opcode
+  record InstrRec (id : Id, name : Str, funct : ExModel, opcode : Ex)
+
+  model-type CondInstrModel = (CondRec, InstrRec) -> IsaDefs
+
+  model-type CondInstrFlagsModel = (CondRec, InstrRec, FlagRec) -> IsaDefs
+
+  model-type CondIdInstrFlagsShiftModel = (Id, CondRec, InstrRec, FlagRec, ShiftRec) -> IsaDefs
+
+// Flag Setting Models *********************************************************
+
+// set first 2 Flags
+  model Set2Flags () : Stats = {
+    APSR_N := flags.negative
+    APSR_Z := flags.zero
+    }
+
+// set first 3 Flags
+  model Set3Flags () : Stats = {
+    $Set2Flags()
+    APSR_C := flags.carry
+    }
+
+// set all 4 Flags
+  model Set4Flags () : Stats = {
+    $Set3Flags()
+    APSR_V := flags.overflow
+    }
+
+// assign result to destination register R(rd) only
+  model Result () : Stats = {
+    R(rd) := result
+    }
+
+// assign result to destination register R(rd) and set 2 flags
+  model Result2Flags () : Stats = {
+    R(rd) := result
+    $Set2Flags()
+    }
+
+// assign result to destination register R(rd) and set 3 flags
+  model Result3Flags () : Stats = {
+    R(rd) := result
+    $Set3Flags()
+    }
+
+// assign result to destination register R(rd) and set all 4 flags
+  model Result4Flags () : Stats = {
+    R(rd) := result
+    $Set4Flags()
+    }
+
+// arithmetic / logic models ***************************************************
+
+  function immConst (imm : Bits<12>) -> Word = imm(7..0) as Word <>> (imm(11..8) as Bits5 << 1)
+
+  format ArithmeticImmFormat : Word = // arithmetic immediate format
+    { cond     [31..28]               // condition
+    , op       [27..21]               // opcode
+    , setflags [20]                   // set status flags
+    , rn       [19..16]               // source register
+    , rd       [15..12]               // destination register
+    , imm12    [11..0]                // [7..0] immediate rotated by [11..8]
+    , immW     = immConst(imm12)
+    }
+
+  format ArithShiftImmFormat : Word = // arithmetic register shifted by immediate format
+    { cond     [31..28]               // condition
+    , op       [27..21]               // opcode
+    , setflags [20]                   // set status flags
+    , rn       [19..16]               // 1st source register
+    , rd       [15..12]               // destination register
+    , imm5     [11..7]                // immediate shift amount
+    , type     [6..4]                 // shift type (immediate only, lowest bit 0)
+    , rm       [3..0]                 // 2nd source register possibly shifted
+    }
+
+  format ArithShiftRegFormat : Word = // arithmetic register shifted by register format
+    { cond     [31..28]               // condition
+    , op       [27..21]               // opcode
+    , setflags [20]                   // set status flags
+    , rn       [19..16]               // 1st source register
+    , rd       [15..12]               // destination register
+    , rs       [11..8]                // register containing shift amount
+    , op1      [7]                    // op1 = 0
+    , type     [6..4]                 // shift type (register only, lowest bit 1)
+    , rm       [3..0]                 // 2nd source register possibly shifted
+    }
+
+  model AddS()   : Ex = {VADL::adds (R(rn),  operand2)}
+  model AddC()   : Ex = {VADL::addc (R(rn),  operand2, APSR_C)}
+  model SubSC()  : Ex = {VADL::subsc(R(rn),  operand2)}
+  model SubC()   : Ex = {VADL::subc (R(rn),  operand2, APSR_C)}
+  model SubR()   : Ex = {VADL::subsc(operand2,  R(rn))}
+  model AndS()   : Ex = {VADL::ands (R(rn),  operand2)}
+  model OrS()    : Ex = {VADL::ors  (R(rn),  operand2)}
+  model XOrS()   : Ex = {VADL::xors (R(rn),  operand2)}
+  model AndNot() : Ex = {VADL::ands (R(rn), ~operand2)}
+  model OrNot()  : Ex = {VADL::ors  (R(rn), ~operand2)}
+  model Mov()    : Ex = {VADL::rors (operand2, 0)}
+
+  model ArithmeticImmBehavior (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    instruction AsId ($i.id, $f.flagExt, $c.condStr) : ArithmeticImmFormat =
+      if ($c.condEx) then
+        let operand2 = immW  in
+        let result, flags = $i.funct() in {
+          $f.flagStmt ()
+        }
+    }
+
+  model ArithmeticImmInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $ArithmeticImmBehavior ($c ; $i ; $f)
+    encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag}
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',', register(rn), ',#', udec(immW))
+    }
+
+  model ArithTestImmInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $ArithmeticImmBehavior ($c ; $i ; $f)
+    encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rd = 0}
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rn), ',#', udec(immW))
+    }
+
+  model ArithMovImmInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $ArithmeticImmBehavior ($c ; $i ; $f)
+    encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rn = 0}
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',#', udec(immW))
+    }
+
+  model ArithShiftBehavior (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
+    instruction AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) : $iForm =
+      if ($c.condEx) then
+        let operand2 = $sft.sftEx  in
+        let result, flags = $i.funct() in {
+          $f.flagStmt ()
+        }
+    }
+
+  model ArithShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
+    $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
+    encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, $sft.encs}
+    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm), $sft.asms)
+    }
+
+  model ArithTestShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
+    $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
+    encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rd = 0, $sft.encs}
+    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rn), ',', register(rm), $sft.asms)
+    }
+
+  model ArithMovShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
+    $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
+    encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rn = 0, $sft.encs}
+    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',', register(rm), $sft.asms)
+    }
+
+  model ShiftedImmOpInstr (m : CondIdInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                        ;  ''                     ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5                ; (', lsl #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                    ; (', lsr #32'          ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5                ; (', lsr #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31          ; (', asr #32'          ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5        ; (', asr #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), 1, APSR_C) ; (', rrx #1')            ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5               ; (', ror #', udec(imm5)) ))
+    }
+
+  model ShiftedRegOpInstr (m : CondIdInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSLR ; type = ShiftType::LSLR           ; lslW (R(rm), R(rs))          ; (', lsl ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSRR ; type = ShiftType::LSRR           ; lsrW (R(rm), R(rs))          ; (', lsr ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (ASRR ; type = ShiftType::ASRR           ; asrW (R(rm), R(rs))          ; (', asr ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (RORR ; type = ShiftType::RORR           ; R(rm) <>> R(rs)              ; (', ror ', register(rs))))
+    }
+
+  model ArithmeticSftInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $ShiftedImmOpInstr (ArithShiftBaseInstr ; $c ; $i ; $f)
+    $ShiftedRegOpInstr (ArithShiftBaseInstr ; $c ; $i ; $f)
+    }
+
+  model ArithTestSftInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $ShiftedImmOpInstr (ArithTestShiftBaseInstr ; $c ; $i ; $f)
+    $ShiftedRegOpInstr (ArithTestShiftBaseInstr ; $c ; $i ; $f)
+    }
+
+  model ArithMovSftInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $ShiftedImmOpInstr (ArithMovShiftBaseInstr ; $c ; $i ; $f)
+    $ShiftedRegOpInstr (ArithMovShiftBaseInstr ; $c ; $i ; $f)
+    }
+
+
+// load and store models *******************************************************
+
+  format MemmoryImmFormat : Word =    // memory immediate format
+    { cond     [31..28]               // condition
+    , op       [27..25]               // opcode = 0b010
+    , puw      [24,23,21]             // Pre=1 (post=0), Up=1 (down=0), Writeback=1
+    , bl       [22,20]                // Byte=1 (word=0), Load=1 (store=0)
+    , rn       [19..16]               // base register
+    , rt       [15..12]               // source/target register
+    , imm12    [11..0]                // unsigned offset
+    , offset   = imm12 as Word        // zero extended offest
+    }
+
+  format MemmoryRegFormat : Word =    // memory register format
+    { cond     [31..28]               // condition
+    , op       [27..25]               // opcode = 0b011
+    , puw      [24,23,21]             // Pre=1 (post=0), Up=1 (down=0), Writeback=1
+    , bl       [22,20]                // Byte=1 (word=0), Load=1 (store=0)
+    , rn       [19..16]               // base register
+    , rt       [15..12]               // source/target register
+    , imm5     [11..7]                // unsigned shift amount
+    , type     [6..4]                 // shift type (immediate only, lowest bit 0)
+    , rm       [3..0]                 // index register
+    }
+
+  enumeration AddrMode : Bits<3> =    // PUW addressing modes
+    { Notused0                        // not meaningful
+    , PstDecUp                        // post decrement with update
+    , Notused1                        // not meaningful
+    , PstIncUp                        // post increment with update
+    , PreDecNo                        // pre  decrement no   update
+    , PreDecUp                        // pre  decrement with update
+    , PreIncNo                        // pre  increment no   update
+    , PreIncUp                        // pre  increment with update
+    }
+
+  enumeration MemMode : Bits<2> =     // BL field memory mode
+    { WordStore                       // store word
+    , WordLoad                        // load  word
+    , ByteStore                       // store byte
+    , ByteLoad                        // load  byte
+    }
+
+  model MemImmPstInstr (c : CondRec, i : InstrRec, m : AddrRec, blId : Id, memStmt : Stats, asms : Ex) : IsaDefs = {
+    instruction AsId($i.id, $m.mode, $c.condId) : MemmoryImmFormat =
+      if ($c.condEx) then
+        let a = R(rn) in
+          {$memStmt R(rn) := a $m.op offset}
+    encoding AsId($i.id, $m.mode, $c.condId) = {cond = CondCode::$c.condId, op = 0b010, puw = AddrMode::$m.mode, bl = MemMode::$blId}
+    assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
+    }
+
+  model MemImmPreInstr (c : CondRec, i : InstrRec, m : AddrRec, blId : Id, memStmt : Stats, asms : Ex) : IsaDefs = {
+    instruction AsId($i.id, $m.mode, $c.condId) : MemmoryImmFormat =
+      if ($c.condEx) then
+        let a = R(rn) $m.op offset in
+          {$m.upStmt $memStmt}
+    encoding AsId($i.id, $m.mode, $c.condId) = {cond = CondCode::$c.condId, op = 0b010, puw = AddrMode::$m.mode, bl = MemMode::$blId}
+    assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
+    }
+
+  model MemImmediateInstr (c : CondRec, i : InstrRec, blId : Id, memStmt : Stats) : IsaDefs = {
+    $MemImmPstInstr ($c ; $i ; (PstDecUp ; - ; {}        ) ; $blId ; $memStmt ; ('],#-', udec(imm12)      ))
+    $MemImmPstInstr ($c ; $i ; (PstIncUp ; + ; {}        ) ; $blId ; $memStmt ; ('],#+', udec(imm12)      ))
+    $MemImmPreInstr ($c ; $i ; (PreDecNo ; - ; {}        ) ; $blId ; $memStmt ; ( ',#-', udec(imm12), ']' ))
+    $MemImmPreInstr ($c ; $i ; (PreDecUp ; - ; R(rn) := a) ; $blId ; $memStmt ; ( ',#-', udec(imm12), ']!'))
+    $MemImmPreInstr ($c ; $i ; (PreIncNo ; + ; {}        ) ; $blId ; $memStmt ; ( ',#+', udec(imm12), ']' ))
+    $MemImmPreInstr ($c ; $i ; (PreIncUp ; + ; R(rn) := a) ; $blId ; $memStmt ; ( ',#+', udec(imm12), ']!'))
+    }
+
+  model MemRegPstInstr (c : CondRec, i : InstrRec, s : ShiftRec, m : AddrRec, blId : Id, memStmt : Stats, asms : Ex) : IsaDefs = {
+    instruction AsId($i.id, $m.mode, $s.sftId, $c.condId) : MemmoryRegFormat =
+      if ($c.condEx) then
+        let a = R(rn) in
+          {$memStmt R(rn) := a $m.op ($s.sftEx)}
+    encoding AsId($i.id, $m.mode, $s.sftId, $c.condId) = {cond = CondCode::$c.condId, op = 0b011, puw = AddrMode::$m.mode, bl = MemMode::$blId, $s.encs}
+    assembly AsId($i.id, $m.mode, $s.sftId, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
+    }
+
+  model MemRegPreInstr (c : CondRec, i : InstrRec, s : ShiftRec, m : AddrRec, blId : Id, memStmt : Stats, asms : Ex) : IsaDefs = {
+    instruction AsId($i.id, $m.mode, $s.sftId, $c.condId) : MemmoryRegFormat =
+      if ($c.condEx) then
+        let a = R(rn) $m.op ($s.sftEx) in
+          {$m.upStmt $memStmt}
+    encoding AsId($i.id, $m.mode, $s.sftId, $c.condId) = {cond = CondCode::$c.condId, op = 0b011, puw = AddrMode::$m.mode, bl = MemMode::$blId, $s.encs}
+    assembly AsId($i.id, $m.mode, $s.sftId, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
+    }
+
+  model MemRegInstr (c : CondRec, i : InstrRec, blId : Id, memStmt : Stats, s : ShiftRec) : IsaDefs = {
+    $MemRegPstInstr ($c ; $i ; $s ; (PstDecUp ; - ; {}        ) ; $blId ; $memStmt ; ('], -', register(rm), $s.asms      ))
+    $MemRegPstInstr ($c ; $i ; $s ; (PstIncUp ; + ; {}        ) ; $blId ; $memStmt ; ('], +', register(rm), $s.asms      ))
+    $MemRegPreInstr ($c ; $i ; $s ; (PreDecNo ; - ; {}        ) ; $blId ; $memStmt ; ( ', -', register(rm), $s.asms, ']' ))
+    $MemRegPreInstr ($c ; $i ; $s ; (PreDecUp ; - ; R(rn) := a) ; $blId ; $memStmt ; ( ', -', register(rm), $s.asms, ']!'))
+    $MemRegPreInstr ($c ; $i ; $s ; (PreIncNo ; + ; {}        ) ; $blId ; $memStmt ; ( ', +', register(rm), $s.asms, ']' ))
+    $MemRegPreInstr ($c ; $i ; $s ; (PreIncUp ; + ; R(rn) := a) ; $blId ; $memStmt ; ( ', +', register(rm), $s.asms, ']!'))
+    }
+
+  model MemRegShiftInstr (c : CondRec, i : InstrRec, blId : Id, memStmt : Stats) : IsaDefs = {
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                        ;  ''                     ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5                ; (', lsl #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                    ; (', lsr #32')           ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5                ; (', lsr #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31          ; (', asr #32')           ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5        ; (', asr #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), 1, APSR_C) ; (', rrx #1')            ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5               ; (', ror #', udec(imm5)) ))
+    }
+
+  model MemoryInstr (c : CondRec, i : InstrRec,  blId : Id, memStmt : Stats) : IsaDefs = {
+    $MemImmediateInstr ($c ; $i ;  $blId ; $memStmt)
+    $MemRegShiftInstr  ($c ; $i ;  $blId ; $memStmt)
+    }
+
+  model LoadInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $MemoryInstr ($c ;  $i                                ; WordLoad ; R(rt) := MEM<4>(a))
+    $MemoryInstr ($c ; (LDRB ; "ldrb" ; None ; $i.opcode) ; ByteLoad ; R(rt) := MEM(a) as Word)
+    }
+
+  model StoreInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $MemoryInstr ($c ;  $i                                ; WordStore ; MEM<4>(a) := R(rt))
+    $MemoryInstr ($c ; (STRB ; "strb" ; None ; $i.opcode) ; ByteStore ; MEM(a)    := R(rt) as Byte)
+    }
+
+// branch models ***************************************************************
+
+  format BranchFormat : Word =          // branch immediate format
+    { cond     [31..28]                 // condition
+    , op       [27..24]                 // opcode
+    , imm24    [23..0]                  // signed branch offset
+    , offset   = imm24 as SIntW << 2    // sign extended shifted offset
+    }
+
+  format BranchXFormat : Word =         // branch register format
+    { cond     [31..28]                 // condition
+    , opbx     [27..20]                 // fixed bx opcode
+    , ones     [19..8]                  // all ones
+    , op       [7..4]                   // opcode
+    , rm       [3..0]                   // branch register
+    }
+
+  model BranchBInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    instruction AsId ($i.id, $c.condId) : BranchFormat =
+      if ($c.condEx) then {
+        match : Stat ( $i.id = BL => LR := PC.next ; _ => {} )
+        PC := (PC & -4) + offset
+        }
+    encoding AsId ($i.id, $c.condId) = {cond = CondCode::$c.condId, op = $i.opcode}
+    assembly AsId ($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', sdec(offset))
+    }
+
+  model BranchBXInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    instruction AsId ($i.id, $c.condId) : BranchXFormat =
+      if ($c.condEx) then {
+        match : Stat ( $i.id = BLX => LR := PC.next ; _ => {} )
+        PC := R(rm) & -4
+        }
+    encoding AsId ($i.id, $c.condId) = {cond = CondCode::$c.condId, op = $i.opcode, opbx = 0x12, ones = 0xfff}
+    assembly AsId ($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rm))
+    }
+
+// instruction enriching models ************************************************
+
+  model CondInstrNFlags (instrModel : CondInstrFlagsModel, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $instrModel (( EQ ; "eq" ; APSR_Z = 1                     ) ; $i ; $f )
+    $instrModel (( NE ; "ne" ; APSR_Z = 0                     ) ; $i ; $f )
+    $instrModel (( CS ; "cs" ; APSR_C = 1                     ) ; $i ; $f )
+    $instrModel (( CC ; "cc" ; APSR_C = 0                     ) ; $i ; $f )
+    $instrModel (( MI ; "mi" ; APSR_N = 1                     ) ; $i ; $f )
+    $instrModel (( PL ; "pl" ; APSR_N = 0                     ) ; $i ; $f )
+    $instrModel (( VS ; "vs" ; APSR_V = 1                     ) ; $i ; $f )
+    $instrModel (( VC ; "vc" ; APSR_V = 0                     ) ; $i ; $f )
+    $instrModel (( HI ; "hi" ; APSR_C = 1 && APSR_Z = 0       ) ; $i ; $f )
+    $instrModel (( LS ; "ls" ; APSR_C = 0 || APSR_Z = 1       ) ; $i ; $f )
+    $instrModel (( GE ; "ge" ; APSR_N  = APSR_V               ) ; $i ; $f )
+    $instrModel (( LT ; "lt" ; APSR_N != APSR_V               ) ; $i ; $f )
+    $instrModel (( GT ; "gt" ; APSR_N  = APSR_V && APSR_Z = 0 ) ; $i ; $f )
+    $instrModel (( LE ; "le" ; APSR_N != APSR_V || APSR_Z = 1 ) ; $i ; $f )
+    $instrModel (( AL ; ""   ; true                           ) ; $i ; $f )
+    }
+
+  model CondInstr4Flags (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
+    $CondInstrNFlags ($instrModel ; $i ; (Result       ; 0 ;  ""))
+    $CondInstrNFlags ($instrModel ; $i ; (Result4Flags ; 1 ; "s"))
+    }
+
+  model CondInstr3Flags (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
+    $CondInstrNFlags ($instrModel ; $i ; (Result       ; 0 ;  ""))
+    $CondInstrNFlags ($instrModel ; $i ; (Result3Flags ; 1 ; "s"))
+    }
+
+  model CondInstrTst4Flags (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
+    $CondInstrNFlags ($instrModel ; $i ; (Set4Flags ; 1 ; ""))
+    }
+
+  model CondInstrTst3Flags (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
+    $CondInstrNFlags ($instrModel ; $i ; (Set3Flags ; 1 ; ""))
+    }
+
+  model CondInstr (instrModel : CondInstrModel, i : InstrRec) : IsaDefs = {
+    $instrModel (( EQ ; "eq" ; APSR_Z = 1                     ) ; $i )
+    $instrModel (( NE ; "ne" ; APSR_Z = 0                     ) ; $i )
+    $instrModel (( CS ; "cs" ; APSR_C = 1                     ) ; $i )
+    $instrModel (( CC ; "cc" ; APSR_C = 0                     ) ; $i )
+    $instrModel (( MI ; "mi" ; APSR_N = 1                     ) ; $i )
+    $instrModel (( PL ; "pl" ; APSR_N = 0                     ) ; $i )
+    $instrModel (( VS ; "vs" ; APSR_V = 1                     ) ; $i )
+    $instrModel (( VC ; "vc" ; APSR_V = 0                     ) ; $i )
+    $instrModel (( HI ; "hi" ; APSR_C = 1 && APSR_Z = 0       ) ; $i )
+    $instrModel (( LS ; "ls" ; APSR_C = 0 || APSR_Z = 1       ) ; $i )
+    $instrModel (( GE ; "ge" ; APSR_N  = APSR_V               ) ; $i )
+    $instrModel (( LT ; "lt" ; APSR_N != APSR_V               ) ; $i )
+    $instrModel (( GT ; "gt" ; APSR_N  = APSR_V && APSR_Z = 0 ) ; $i )
+    $instrModel (( LE ; "le" ; APSR_N != APSR_V || APSR_Z = 1 ) ; $i )
+    $instrModel (( AL ; ""   ; true                           ) ; $i )
+    }
+
+// base instructions ***********************************************************
+
+  $CondInstr4Flags    (ArithmeticSftInstr ; (ADD   ; "add"   ; AddS  ; 0b000'0100 ))
+  $CondInstr4Flags    (ArithmeticSftInstr ; (ADC   ; "adc"   ; AddC  ; 0b000'0101 ))
+  $CondInstr4Flags    (ArithmeticSftInstr ; (SUB   ; "sub"   ; SubSC ; 0b000'0010 ))
+  $CondInstr4Flags    (ArithmeticSftInstr ; (SBC   ; "sbc"   ; SubC  ; 0b000'0110 ))
+  $CondInstr4Flags    (ArithmeticSftInstr ; (RSB   ; "rsb"   ; SubR  ; 0b000'0011 ))
+  $CondInstr3Flags    (ArithmeticSftInstr ; (AND   ; "and"   ; AndS  ; 0b000'0000 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticSftInstr ; (ORR   ; "orr"   ; OrS   ; 0b000'1100 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticSftInstr ; (EOR   ; "eor"   ; XOrS  ; 0b000'0001 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticSftInstr ; (BIC   ; "bic"   ; AndNot; 0b000'1110 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithMovSftInstr   ; (MOV   ; "mov"   ; Mov   ; 0b000'1101 )) // TODO set correct flags
+
+  $CondInstr4Flags    (ArithmeticImmInstr ; (ADDI  ; "add"   ; AddS  ; 0b001'0100 ))
+  $CondInstr4Flags    (ArithmeticImmInstr ; (ADCI  ; "adc"   ; AddC  ; 0b001'0101 ))
+  $CondInstr4Flags    (ArithmeticImmInstr ; (SUBI  ; "sub"   ; SubSC ; 0b001'0010 ))
+  $CondInstr4Flags    (ArithmeticImmInstr ; (SBCI  ; "sbc"   ; SubC  ; 0b001'0110 ))
+  $CondInstr4Flags    (ArithmeticImmInstr ; (RSBI  ; "rsb"   ; SubR  ; 0b001'0011 ))
+  $CondInstr3Flags    (ArithmeticImmInstr ; (ANDI  ; "and"   ; AndS  ; 0b001'0000 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticImmInstr ; (ORRI  ; "orr"   ; OrS   ; 0b001'1100 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticImmInstr ; (EORI  ; "eor"   ; XOrS  ; 0b001'0001 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithmeticImmInstr ; (BICI  ; "bic"   ; AndNot; 0b001'1110 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithMovImmInstr   ; (MOVI  ; "mov"   ; Mov   ; 0b001'1101 )) // TODO set correct flags
+
+  $CondInstrTst4Flags (ArithTestSftInstr  ; (CMP   ; "cmp"   ; SubSC ; 0b000'1010 ))
+  $CondInstrTst4Flags (ArithTestSftInstr  ; (CMN   ; "cmn"   ; AddS  ; 0b000'1011 ))
+  $CondInstrTst3Flags (ArithTestSftInstr  ; (TST   ; "tst"   ; AndS  ; 0b000'1000 )) // TODO set correct carry
+  $CondInstrTst3Flags (ArithTestSftInstr  ; (TEQ   ; "teq"   ; XOrS  ; 0b000'1001 )) // TODO set correct carry
+  $CondInstrTst4Flags (ArithTestImmInstr  ; (CMPI  ; "cmp"   ; SubSC ; 0b001'1010 ))
+  $CondInstrTst4Flags (ArithTestImmInstr  ; (CMNI  ; "cmn"   ; AddS  ; 0b001'1011 ))
+  $CondInstrTst3Flags (ArithTestImmInstr  ; (TSTI  ; "tst"   ; AndS  ; 0b001'1000 )) // TODO set correct carry
+  $CondInstrTst3Flags (ArithTestImmInstr  ; (TEQI  ; "teq"   ; XOrS  ; 0b001'1001 )) // TODO set correct carry
+
+  $CondInstr          (LoadInstr          ; (LDR   ; "ldr"   ; None  ; 0b010      ))
+  $CondInstr          (StoreInstr         ; (STR   ; "str"   ; None  ; 0b010      ))
+
+  $CondInstr          (BranchBInstr       ; (B     ; "b"     ; None  ; 0b1010     ))
+  $CondInstr          (BranchBInstr       ; (BL    ; "bl"    ; None  ; 0b1011     ))
+  $CondInstr          (BranchBXInstr      ; (BX    ; "bx"    ; None  ; 0b0001     ))
+  $CondInstr          (BranchBXInstr      ; (BLX   ; "blx"   ; None  ; 0b0011     ))
+
+}
+/*
+  function conditionHolds (cond: Bits<4>) -> Bool = // evaluate condition code
+    match cond with
+      { CondCode::EQ => APSR_Z  = 1
+      , CondCode::NE => APSR_Z  = 0
+      , CondCode::CS => APSR_C  = 1
+      , CondCode::CC => APSR_C  = 0
+      , CondCode::MI => APSR_N  = 1
+      , CondCode::PL => APSR_N  = 0
+      , CondCode::VS => APSR_V  = 1
+      , CondCode::VC => APSR_V  = 0
+      , CondCode::HI => APSR_C  = 1 && APSR_Z = 0
+      , CondCode::LS => APSR_C  = 0 || APSR_Z = 1
+      , CondCode::GE => APSR_N  = APSR_V
+      , CondCode::LT => APSR_N != APSR_V
+      , CondCode::GT => APSR_N  = APSR_V && APSR_Z = 0
+      , CondCode::LE => APSR_N != APSR_V || APSR_Z = 1
+      , _            => true
+      }
+
+  function printcond (condition: Bits<4>) -> String = match condition with
+    { CondCode::EQ => "eq"
+    , CondCode::NE => "ne"
+    , CondCode::CS => "cs"
+    , CondCode::CC => "cc"
+    , CondCode::MI => "mi"
+    , CondCode::PL => "pl"
+    , CondCode::VS => "vs"
+    , CondCode::VC => "vc"
+    , CondCode::HI => "hi"
+    , CondCode::LS => "ls"
+    , CondCode::GE => "ge"
+    , CondCode::LT => "lt"
+    , CondCode::GT => "gt"
+    , CondCode::LE => "le"
+    , CondCode::AL => ""
+    , _            => "nv"
+    }
+*/
