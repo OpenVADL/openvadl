@@ -66,6 +66,7 @@ import vadl.utils.Either;
 import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
+import vadl.utils.Unit;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
 
@@ -1866,12 +1867,12 @@ public class TypeChecker extends DefaultGroupVisitor
 
   @Override
   public Void visit(GroupDefinition groupDefinition) {
-    groupDefinition.groupSequence.accept(this);
+    groupDefinition.groupSequence.accept(this, Unit.UNIT);
     return null;
   }
 
   @Override
-  public Void visit(Group.Literal lit) {
+  public Unit visit(Group.Literal lit, Unit unused) {
 
 
     if (!(lit.id.target() instanceof OperationDefinition op)) {
@@ -1881,13 +1882,13 @@ public class TypeChecker extends DefaultGroupVisitor
                   "Group literals must be operations but this was a `%s`",
                   requireNonNull(lit.id.target()).nodeName())
               .build());
-      return null;
+      return Unit.UNIT;
     }
 
     lit.setOperation(op);
 
     if (lit.size == null) {
-      return null;
+      return Unit.UNIT;
     }
 
     if (!(lit.size instanceof RangeExpr range)) {
@@ -1897,7 +1898,7 @@ public class TypeChecker extends DefaultGroupVisitor
               .locationNote(lit.size, "Repetitions of literals must specify a range expression "
                   + "but this was a `%s`", requireNonNull(lit.size.type()))
               .build());
-      return null;
+      return Unit.UNIT;
     }
 
     // Don't check full range, as we allow custom range semantics for repetitions. That is, we allow
@@ -1929,7 +1930,7 @@ public class TypeChecker extends DefaultGroupVisitor
     }
 
     if (from == null || to == null) {
-      return null;
+      return Unit.UNIT;
     }
 
     if (from.value().compareTo(BigInteger.ZERO) < 0) {
@@ -1946,7 +1947,7 @@ public class TypeChecker extends DefaultGroupVisitor
                   + "greater or equal to the lower bound").build());
     }
 
-    return null;
+    return Unit.UNIT;
   }
 
   @Override

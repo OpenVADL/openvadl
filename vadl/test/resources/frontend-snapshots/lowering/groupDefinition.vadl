@@ -131,12 +131,18 @@ instruction set architecture ISA = {
 //    . : ' Indices: []
 //    . : ' ResultType: b32
 //    . : Group name: "VLIW"
-//    . : ' Operation name: "O1"
-//    . : ' | Instructions: [A]
-//    . : ' Operation name: "O2"
-//    . : ' | Instructions: [A, B]
-//    . : ' Operation name: "O1"
-//    . : ' | Instructions: [A]
+//    . : ' Alternation name: "VLIW"
+//    . : ' | Permutation name: "VLIW"
+//    . : ' | . Literal name: "VLIW"
+//    . : ' | . : Operation name: "O1"
+//    . : ' | . : ' Instructions: [A]
+//    . : ' | . Literal name: "VLIW"
+//    . : ' | . : Operation name: "O2"
+//    . : ' | . : ' Instructions: [A, B]
+//    . : ' | Repetition name: "VLIW"
+//    . : ' | . Literal name: "VLIW"
+//    . : ' | . : Operation name: "O1"
+//    . : ' | . : ' Instructions: [A]
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

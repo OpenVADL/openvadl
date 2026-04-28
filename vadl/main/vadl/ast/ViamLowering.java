@@ -130,7 +130,7 @@ import vadl.viam.passes.functionInliner.Inliner;
  */
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Definition>>,
-    GroupVisitor<Group.Expression> {
+    GroupVisitor<Group.Expression, GroupDefinition> {
 
   final ConstantEvaluator constantEvaluator;
 
@@ -1444,40 +1444,48 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(GroupDefinition definition) {
-    final Group.Expression expr = definition.groupSequence.accept(this);
+    final Group.Expression expr = definition.groupSequence.accept(this, definition);
     return Optional.of(new Group(generateIdentifier(definition.viamId, definition.identifier()),
         expr));
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Literal lit) {
+  public Group.Expression visit(vadl.ast.Group.Literal lit, GroupDefinition groupDefinition) {
+    final vadl.viam.Identifier litId = generateIdentifier(groupDefinition.viamId, lit.id);
     final Operation op = (Operation) fetch(lit.operation).orElseThrow(IllegalStateException::new);
-    final Group.Expression l = new Group.Literal(op);
+    final Group.Expression l = new Group.Literal(litId, op);
+    
     if (lit.size == null) {
       return l;
     }
+
     final var range = (RangeExpr) lit.size;
     final var from = constantEvaluator.eval(range.from).toViamConstant();
     final var to = constantEvaluator.eval(range.from).toViamConstant();
-    return new Group.Repetition(l, from, to);
+
+    final vadl.viam.Identifier repId = generateIdentifier(groupDefinition.viamId, lit.size);
+    return new Group.Repetition(repId, l, from, to);
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Sequence seq) {
-    final var elems = seq.groups.stream().map(g -> g.accept(this)).toList();
-    return elems.size() == 1 ? elems.getFirst() : new Group.Sequence(elems);
+  public Group.Expression visit(vadl.ast.Group.Sequence seq, GroupDefinition groupDefinition) {
+    final vadl.viam.Identifier ident = generateIdentifier(groupDefinition.viamId, seq);
+    final var elems = seq.groups.stream().map(g -> g.accept(this, groupDefinition)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Sequence(ident, elems);
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Alternative alt) {
-    final var elems = alt.sequences.stream().map(g -> g.accept(this)).toList();
-    return elems.size() == 1 ? elems.getFirst() : new Group.Alternation(elems);
+  public Group.Expression visit(vadl.ast.Group.Alternative alt, GroupDefinition groupDefinition) {
+    final vadl.viam.Identifier ident = generateIdentifier(groupDefinition.viamId, alt);
+    final var elems = alt.sequences.stream().map(g -> g.accept(this, groupDefinition)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Alternation(ident, elems);
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Permutation perm) {
-    final var elems = perm.sequences.stream().map(g -> g.accept(this)).toList();
-    return elems.size() == 1 ? elems.getFirst() : new Group.Permutation(elems);
+  public Group.Expression visit(vadl.ast.Group.Permutation perm, GroupDefinition groupDefinition) {
+    final vadl.viam.Identifier ident = generateIdentifier(groupDefinition.viamId, perm);
+    final var elems = perm.sequences.stream().map(g -> g.accept(this, groupDefinition)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Permutation(ident, elems);
   }
 
   @Override

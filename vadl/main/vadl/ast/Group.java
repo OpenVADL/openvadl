@@ -22,12 +22,13 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
+import vadl.utils.Unit;
 
 sealed interface Group {
 
   void prettyPrint(int indent, StringBuilder builder);
 
-  <R> R accept(GroupVisitor<R> visitor);
+  <R, P> R accept(GroupVisitor<R, P> visitor, P param);
 
   final class Sequence extends Node implements Group {
 
@@ -63,8 +64,8 @@ sealed interface Group {
     }
 
     @Override
-    public <R> R accept(GroupVisitor<R> visitor) {
-      return visitor.visit(this);
+    public <R, P> R accept(GroupVisitor<R, P> visitor, P param) {
+      return visitor.visit(this, param);
     }
 
     @Override
@@ -135,8 +136,8 @@ sealed interface Group {
     }
 
     @Override
-    public <R> R accept(GroupVisitor<R> visitor) {
-      return visitor.visit(this);
+    public <R, P> R accept(GroupVisitor<R, P> visitor, P param) {
+      return visitor.visit(this, param);
     }
 
     @Override
@@ -193,8 +194,8 @@ sealed interface Group {
     }
 
     @Override
-    public <R> R accept(GroupVisitor<R> visitor) {
-      return visitor.visit(this);
+    public <R, P> R accept(GroupVisitor<R, P> visitor, P param) {
+      return visitor.visit(this, param);
     }
 
     @Override
@@ -251,8 +252,8 @@ sealed interface Group {
     }
 
     @Override
-    public <R> R accept(GroupVisitor<R> visitor) {
-      return visitor.visit(this);
+    public <R, P> R accept(GroupVisitor<R, P> visitor, P param) {
+      return visitor.visit(this, param);
     }
 
     @Override
@@ -273,39 +274,39 @@ sealed interface Group {
     }
   }
 
-  interface GroupVisitor<R> {
-    R visit(Sequence seq);
+  interface GroupVisitor<R, P> {
+    R visit(Sequence seq, P param);
 
-    R visit(Alternative alt);
+    R visit(Alternative alt, P param);
 
-    R visit(Permutation perm);
+    R visit(Permutation perm, P param);
 
-    R visit(Literal lit);
+    R visit(Literal lit, P param);
   }
 
-  abstract class DefaultGroupVisitor implements GroupVisitor<Void> {
+  abstract class DefaultGroupVisitor implements GroupVisitor<Unit, Unit> {
 
     @Override
-    public Void visit(Sequence seq) {
-      seq.groups.forEach(g -> g.accept(this));
-      return null;
+    public Unit visit(Sequence seq, Unit param) {
+      seq.groups.forEach(g -> g.accept(this, param));
+      return Unit.UNIT;
     }
 
     @Override
-    public Void visit(Alternative alt) {
-      alt.sequences.forEach(s -> s.accept(this));
-      return null;
+    public Unit visit(Alternative alt, Unit param) {
+      alt.sequences.forEach(s -> s.accept(this, param));
+      return Unit.UNIT;
     }
 
     @Override
-    public Void visit(Permutation perm) {
-      perm.sequences.forEach(s -> s.accept(this));
-      return null;
+    public Unit visit(Permutation perm, Unit param) {
+      perm.sequences.forEach(s -> s.accept(this, param));
+      return Unit.UNIT;
     }
 
     @Override
-    public Void visit(Literal lit) {
-      return null;
+    public Unit visit(Literal lit, Unit param) {
+      return Unit.UNIT;
     }
   }
 }

@@ -17,6 +17,7 @@
 package vadl.viam;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a VADL operation group, which is an extended regular expression over
@@ -40,56 +41,264 @@ public class Group extends Definition {
     return expression;
   }
 
-  sealed public interface Expression {
-    <U> U accept(ExpressionVisitor<U> visitor);
+  /**
+   * An extended regular expression node of a VADL group definition.
+   */
+  public sealed interface Expression {
+    void accept(DefinitionVisitor visitor);
   }
 
-  public record Literal(Operation op) implements Expression {
-    @Override
-    public <U> U accept(ExpressionVisitor<U> visitor) {
-      return visitor.visit(this);
+  /**
+   * An expression literal.
+   */
+  public static final class Literal extends Definition implements Expression {
+
+    private final Operation operation;
+
+    public Literal(Identifier identifier, Operation operation) {
+      super(identifier);
+      this.operation = operation;
     }
-  }
 
-  public record Sequence(List<Expression> elems) implements Expression {
     @Override
-    public <U> U accept(ExpressionVisitor<U> visitor) {
-      return visitor.visit(this);
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
     }
-  }
 
-  public record Alternation(List<Expression> elems) implements Expression {
+    public Operation op() {
+      return operation;
+    }
+
     @Override
-    public <U> U accept(ExpressionVisitor<U> visitor) {
-      return visitor.visit(this);
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (Literal) obj;
+      return Objects.equals(this.operation, that.operation);
     }
-  }
 
-  public record Repetition(Expression expr, Constant.Value from, Constant.Value to)
-      implements Expression {
     @Override
-    public <U> U accept(ExpressionVisitor<U> visitor) {
-      return visitor.visit(this);
+    public int hashCode() {
+      return Objects.hash(operation);
     }
-  }
 
-  public record Permutation(List<Expression> elems) implements Expression {
     @Override
-    public <U> U accept(ExpressionVisitor<U> visitor) {
-      return visitor.visit(this);
+    public String toString() {
+      return "Literal["
+          + "op=" + operation + ']';
     }
+
   }
 
-  public interface ExpressionVisitor<U> {
-    U visit(Literal lit);
+  /**
+   * A sequence expression.
+   */
+  public static final class Sequence extends Definition implements Expression {
+    private final List<Expression> elems;
 
-    U visit(Sequence seq);
+    public Sequence(Identifier identifier, List<Expression> elems) {
+      super(identifier);
+      this.elems = elems;
+    }
 
-    U visit(Alternation alt);
+    public List<Expression> elements() {
+      return elems;
+    }
 
-    U visit(Repetition rep);
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
+    }
 
-    U visit(Permutation perm);
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (Sequence) obj;
+      return Objects.equals(this.elems, that.elems);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(elems);
+    }
+
+    @Override
+    public String toString() {
+      return "Sequence["
+          + "elems=" + elems + ']';
+    }
+
+  }
+
+  /**
+   * An alternation expression.
+   */
+  public static final class Alternation extends Definition implements Expression {
+    private final List<Expression> elements;
+
+    public Alternation(Identifier identifier, List<Expression> elements) {
+      super(identifier);
+      this.elements = elements;
+    }
+
+    public List<Expression> elements() {
+      return elements;
+    }
+
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (Alternation) obj;
+      return Objects.equals(this.elements, that.elements);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(elements);
+    }
+
+    @Override
+    public String toString() {
+      return "Alternation["
+          + "elems=" + elements + ']';
+    }
+
+  }
+
+  /**
+   * A repetition expression.
+   */
+  public static final class Repetition extends Definition implements Expression {
+
+    private final Expression expr;
+    private final Constant.Value from;
+    private final Constant.Value to;
+
+    /**
+     * Creates a repetition expression.
+     *
+     * @param identifier the identifier of the repetition expression
+     * @param expression the expression to be repeated
+     * @param from       the minimum number of repetitions
+     * @param to         the maximum number of repetitions
+     */
+    public Repetition(Identifier identifier, Expression expression, Constant.Value from,
+                      Constant.Value to) {
+      super(identifier);
+      this.expr = expression;
+      this.from = from;
+      this.to = to;
+    }
+
+    public Expression expression() {
+      return expr;
+    }
+
+    public Constant.Value from() {
+      return from;
+    }
+
+    public Constant.Value to() {
+      return to;
+    }
+
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (Repetition) obj;
+      return Objects.equals(this.expr, that.expr)
+          && Objects.equals(this.from, that.from)
+          && Objects.equals(this.to, that.to);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(expr, from, to);
+    }
+
+    @Override
+    public String toString() {
+      return "Repetition["
+          + "expr=" + expr + ", "
+          + "from=" + from + ", "
+          + "to=" + to + ']';
+    }
+
+  }
+
+  /**
+   * A permutation expression.
+   */
+  public static final class Permutation extends Definition implements Expression {
+
+    private final List<Expression> elements;
+
+    public Permutation(Identifier identifier, List<Expression> elements) {
+      super(identifier);
+      this.elements = elements;
+    }
+
+    public List<Expression> elements() {
+      return elements;
+    }
+
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (Permutation) obj;
+      return Objects.equals(this.elements, that.elements);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(elements);
+    }
+
+    @Override
+    public String toString() {
+      return "Permutation["
+          + "elems=" + elements + ']';
+    }
+
   }
 
 }
