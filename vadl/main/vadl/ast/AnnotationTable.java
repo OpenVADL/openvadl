@@ -56,6 +56,7 @@ import vadl.viam.Constant;
 import vadl.viam.Encoding;
 import vadl.viam.Endianness;
 import vadl.viam.Format;
+import vadl.viam.Group;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.MemoryRegion;
@@ -263,6 +264,20 @@ public class AnnotationTable {
           ctx.get("little endian", OptExprAnnotation.class)
               .ifPresent(ann -> apply.accept(ann, Endianness.LITTLE));
         }).build();
+
+    annotationOn(GroupDefinition.class, "assert", GroupAssertionAnnotation::new)
+        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .applyViam((def, annotation, lowering) -> {
+          // TODO: Implement
+
+          var group = (Group) def;
+          var graph = new BehaviorLowering(lowering).getFunctionGraph(annotation.expr,
+              group.simpleName() + " Group");
+          graph.setParentDefinition(group);
+
+          // TODO: Append annotation to group definition
+        })
+        .build();
 
     /// PROCESSOR RELATED ///
 
@@ -1624,6 +1639,15 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
     var format = requireNonNull(((InstructionDefinition) definition.target).formatNode);
     // Extend annotation's symbol table by the symbol table of the encoding's format.
     definition.symbolTable().extendBy(format.symbolTable());
+    super.resolveName(definition, resolver);
+  }
+}
+
+class GroupAssertionAnnotation extends ExprAnnotation {
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    // TODO:
     super.resolveName(definition, resolver);
   }
 }
