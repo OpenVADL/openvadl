@@ -4256,6 +4256,11 @@ public class TypeChecker
     throw addErrorAndStopChecking(unimplementedError(expr));
   }
 
+  @Override
+  public Void visit(ForallThenExpr expr) {
+    throwUnimplemented(expr);
+    return null;
+  }
 
   @Override
   public Void visit(ForallExpr expr) {

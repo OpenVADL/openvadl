@@ -490,6 +490,16 @@ class MacroExpander
     return new ExistsInThenExpr(conditions, expandExpr(expr.thenExpr), copyLoc(expr.loc));
   }
 
+  @Override
+  public Expr visit(ForallThenExpr expr) {
+    var indices = new ArrayList<>(expr.indices);
+    indices.replaceAll(index -> {
+      var operations = new ArrayList<>(index.operations);
+      operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
+      return new ForallThenExpr.Index((IsId) expandExpr(index.identifier()), operations);
+    });
+    return new ForallThenExpr(indices, expandExpr(expr.thenExpr), copyLoc(expr.loc));
+  }
 
   @Override
   public Expr visit(ForallExpr expr) {

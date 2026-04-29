@@ -907,8 +907,23 @@ class SymbolTable {
       afterTravel(expr);
       return null;
     }
-  }
 
+    @Override
+    public Void visit(ForallThenExpr expr) {
+      beforeTravel(expr);
+
+      // The identifiers of the for must be visible in it's children
+      var childTable = currentSymbols().createChild();
+      expr.symbolTable = childTable;
+      expr.indices.forEach(index -> {
+        childTable.defineSymbol(index.identifier().name, expr);
+      });
+      withSymbols(childTable, () -> expr.thenExpr.accept(this));
+
+      afterTravel(expr);
+      return null;
+    }
+  }
 
   /**
    * Resolves identifiers used in expressions, as well as types used in definitions,
