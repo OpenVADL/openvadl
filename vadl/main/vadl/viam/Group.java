@@ -17,7 +17,8 @@
 package vadl.viam;
 
 import java.util.List;
-import java.util.Objects;
+import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * Represents a VADL operation group, which is an extended regular expression over
@@ -44,46 +45,40 @@ public class Group extends Definition {
   /**
    * An extended regular expression node of a VADL group definition.
    */
-  public sealed interface Expression {
-    void accept(DefinitionVisitor visitor);
+  public abstract static sealed class Expression implements WithLocation {
+    private final SourceLocation location;
+
+    public Expression(SourceLocation location) {
+      this.location = location;
+    }
+
+    public abstract <R> R accept(GroupVisitor<R> visitor);
+
+    @Override
+    public SourceLocation location() {
+      return location;
+    }
   }
 
   /**
    * An expression literal.
    */
-  public static final class Literal extends Definition implements Expression {
+  public static final class Literal extends Expression {
 
     private final Operation operation;
 
-    public Literal(Identifier identifier, Operation operation) {
-      super(identifier);
+    public Literal(WithLocation node, Operation operation) {
+      super(node.location());
       this.operation = operation;
     }
 
     @Override
-    public void accept(DefinitionVisitor visitor) {
-      visitor.visit(this);
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
     }
 
     public Operation op() {
       return operation;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (obj == null || obj.getClass() != this.getClass()) {
-        return false;
-      }
-      var that = (Literal) obj;
-      return Objects.equals(this.operation, that.operation);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(operation);
     }
 
     @Override
@@ -97,11 +92,11 @@ public class Group extends Definition {
   /**
    * A sequence expression.
    */
-  public static final class Sequence extends Definition implements Expression {
+  public static final class Sequence extends Expression {
     private final List<Expression> elems;
 
-    public Sequence(Identifier identifier, List<Expression> elems) {
-      super(identifier);
+    public Sequence(WithLocation node, List<Expression> elems) {
+      super(node.location());
       this.elems = elems;
     }
 
@@ -110,25 +105,8 @@ public class Group extends Definition {
     }
 
     @Override
-    public void accept(DefinitionVisitor visitor) {
-      visitor.visit(this);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (obj == null || obj.getClass() != this.getClass()) {
-        return false;
-      }
-      var that = (Sequence) obj;
-      return Objects.equals(this.elems, that.elems);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(elems);
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
     }
 
     @Override
@@ -142,11 +120,11 @@ public class Group extends Definition {
   /**
    * An alternation expression.
    */
-  public static final class Alternation extends Definition implements Expression {
+  public static final class Alternation extends Expression {
     private final List<Expression> elements;
 
-    public Alternation(Identifier identifier, List<Expression> elements) {
-      super(identifier);
+    public Alternation(WithLocation node, List<Expression> elements) {
+      super(node.location());
       this.elements = elements;
     }
 
@@ -155,25 +133,8 @@ public class Group extends Definition {
     }
 
     @Override
-    public void accept(DefinitionVisitor visitor) {
-      visitor.visit(this);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (obj == null || obj.getClass() != this.getClass()) {
-        return false;
-      }
-      var that = (Alternation) obj;
-      return Objects.equals(this.elements, that.elements);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(elements);
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
     }
 
     @Override
@@ -187,7 +148,7 @@ public class Group extends Definition {
   /**
    * A repetition expression.
    */
-  public static final class Repetition extends Definition implements Expression {
+  public static final class Repetition extends Expression {
 
     private final Expression expr;
     private final Constant.Value from;
@@ -196,14 +157,14 @@ public class Group extends Definition {
     /**
      * Creates a repetition expression.
      *
-     * @param identifier the identifier of the repetition expression
+     * @param node       the source node of the repetition expression
      * @param expression the expression to be repeated
      * @param from       the minimum number of repetitions
      * @param to         the maximum number of repetitions
      */
-    public Repetition(Identifier identifier, Expression expression, Constant.Value from,
+    public Repetition(WithLocation node, Expression expression, Constant.Value from,
                       Constant.Value to) {
-      super(identifier);
+      super(node.location());
       this.expr = expression;
       this.from = from;
       this.to = to;
@@ -222,27 +183,8 @@ public class Group extends Definition {
     }
 
     @Override
-    public void accept(DefinitionVisitor visitor) {
-      visitor.visit(this);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (obj == null || obj.getClass() != this.getClass()) {
-        return false;
-      }
-      var that = (Repetition) obj;
-      return Objects.equals(this.expr, that.expr)
-          && Objects.equals(this.from, that.from)
-          && Objects.equals(this.to, that.to);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(expr, from, to);
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
     }
 
     @Override
@@ -258,12 +200,12 @@ public class Group extends Definition {
   /**
    * A permutation expression.
    */
-  public static final class Permutation extends Definition implements Expression {
+  public static final class Permutation extends Expression {
 
     private final List<Expression> elements;
 
-    public Permutation(Identifier identifier, List<Expression> elements) {
-      super(identifier);
+    public Permutation(WithLocation node, List<Expression> elements) {
+      super(node.location());
       this.elements = elements;
     }
 
@@ -272,25 +214,8 @@ public class Group extends Definition {
     }
 
     @Override
-    public void accept(DefinitionVisitor visitor) {
-      visitor.visit(this);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (obj == null || obj.getClass() != this.getClass()) {
-        return false;
-      }
-      var that = (Permutation) obj;
-      return Objects.equals(this.elements, that.elements);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(elements);
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
     }
 
     @Override
@@ -299,6 +224,23 @@ public class Group extends Definition {
           + "elems=" + elements + ']';
     }
 
+  }
+
+  /**
+   * Visitor over the extended regular expression nodes.
+   *
+   * @param <R> the result type.
+   */
+  public interface GroupVisitor<R> {
+    R visit(Literal literal);
+
+    R visit(Sequence sequence);
+
+    R visit(Alternation alternation);
+
+    R visit(Permutation permutation);
+
+    R visit(Repetition repetition);
   }
 
 }

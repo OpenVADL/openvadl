@@ -44,16 +44,6 @@ public interface DefinitionVisitor {
 
   void visit(Group group);
 
-  void visit(Group.Literal lit);
-
-  void visit(Group.Sequence seq);
-
-  void visit(Group.Alternation alt);
-
-  void visit(Group.Repetition rep);
-
-  void visit(Group.Permutation perm);
-
   void visit(Format format);
 
   void visit(Format.Field formatField);
@@ -205,43 +195,7 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Group group) {
       beforeTraversal(group);
-      group.getExpression().accept(this);
       afterTraversal(group);
-    }
-
-    @Override
-    public void visit(Group.Literal lit) {
-      beforeTraversal(lit);
-      lit.op().accept(this);
-      afterTraversal(lit);
-    }
-
-    @Override
-    public void visit(Group.Sequence seq) {
-      beforeTraversal(seq);
-      seq.elements().forEach(e -> e.accept(this));
-      afterTraversal(seq);
-    }
-
-    @Override
-    public void visit(Group.Alternation alt) {
-      beforeTraversal(alt);
-      alt.elements().forEach(e -> e.accept(this));
-      afterTraversal(alt);
-    }
-
-    @Override
-    public void visit(Group.Repetition rep) {
-      beforeTraversal(rep);
-      rep.expression().accept(this);
-      afterTraversal(rep);
-    }
-
-    @Override
-    public void visit(Group.Permutation perm) {
-      beforeTraversal(perm);
-      perm.elements().forEach(e -> e.accept(this));
-      afterTraversal(perm);
     }
 
     @Override
@@ -526,31 +480,6 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Group group) {
-
-    }
-
-    @Override
-    public void visit(Group.Literal lit) {
-
-    }
-
-    @Override
-    public void visit(Group.Sequence seq) {
-
-    }
-
-    @Override
-    public void visit(Group.Alternation alt) {
-
-    }
-
-    @Override
-    public void visit(Group.Repetition rep) {
-
-    }
-
-    @Override
-    public void visit(Group.Permutation perm) {
 
     }
 

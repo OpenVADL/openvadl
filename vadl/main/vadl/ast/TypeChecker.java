@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.ast.Group.DefaultGroupVisitor;
+import vadl.ast.Group.GroupVisitor;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -66,7 +66,6 @@ import vadl.utils.Either;
 import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
-import vadl.utils.Unit;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
 
@@ -77,8 +76,9 @@ import vadl.viam.Constant;
  * of) them.
  */
 @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
-public class TypeChecker extends DefaultGroupVisitor
-    implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
+public class TypeChecker
+    implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void>,
+    GroupVisitor<Void> {
 
   /**
    * The expected type of the expression being checked.
@@ -1264,8 +1264,36 @@ public class TypeChecker extends DefaultGroupVisitor
       check(def);
     }
 
+    checkOneGroupDefinition(definition);
+
     // FIXME: Verify at least one programcounter
     return null;
+  }
+
+  private void checkOneGroupDefinition(InstructionSetDefinition isa) {
+
+    final List<GroupDefinition> groups = isa
+        .allInheritedNodesOf(GroupDefinition.class)
+        .collect(Collectors.toList());
+
+    if (groups.isEmpty()) {
+      return;
+    }
+
+    if (groups.size() == 1) {
+      return;
+    }
+
+    var primary = groups.removeLast();
+    var diagnostic = error("Multiple Group Definitions", primary)
+        .locationDescription(primary,
+            "An instruction set architecture can have at most one group definition.");
+
+    for (var group : groups) {
+      diagnostic.locationNote(group, "This additional group definition is not allowed.");
+    }
+
+    addErrorAndContinueChecking(diagnostic.build());
   }
 
   @Override
@@ -1867,12 +1895,12 @@ public class TypeChecker extends DefaultGroupVisitor
 
   @Override
   public Void visit(GroupDefinition groupDefinition) {
-    groupDefinition.groupSequence.accept(this, Unit.UNIT);
+    groupDefinition.groupSequence.accept(this);
     return null;
   }
 
   @Override
-  public Unit visit(Group.Literal lit, Unit unused) {
+  public Void visit(Group.Literal lit) {
 
 
     if (!(lit.id.target() instanceof OperationDefinition op)) {
@@ -1882,13 +1910,13 @@ public class TypeChecker extends DefaultGroupVisitor
                   "Group literals must be operations but this was a `%s`",
                   requireNonNull(lit.id.target()).nodeName())
               .build());
-      return Unit.UNIT;
+      return null;
     }
 
     lit.setOperation(op);
 
     if (lit.size == null) {
-      return Unit.UNIT;
+      return null;
     }
 
     if (!(lit.size instanceof RangeExpr range)) {
@@ -1898,7 +1926,7 @@ public class TypeChecker extends DefaultGroupVisitor
               .locationNote(lit.size, "Repetitions of literals must specify a range expression "
                   + "but this was a `%s`", requireNonNull(lit.size.type()))
               .build());
-      return Unit.UNIT;
+      return null;
     }
 
     // Don't check full range, as we allow custom range semantics for repetitions. That is, we allow
@@ -1930,7 +1958,7 @@ public class TypeChecker extends DefaultGroupVisitor
     }
 
     if (from == null || to == null) {
-      return Unit.UNIT;
+      return null;
     }
 
     if (from.value().compareTo(BigInteger.ZERO) < 0) {
@@ -1947,7 +1975,25 @@ public class TypeChecker extends DefaultGroupVisitor
                   + "greater or equal to the lower bound").build());
     }
 
-    return Unit.UNIT;
+    return null;
+  }
+
+  @Override
+  public Void visit(Group.Sequence seq) {
+    seq.groups.forEach(g -> g.accept(this));
+    return null;
+  }
+
+  @Override
+  public Void visit(Group.Alternative alt) {
+    alt.sequences.forEach(s -> s.accept(this));
+    return null;
+  }
+
+  @Override
+  public Void visit(Group.Permutation perm) {
+    perm.sequences.forEach(s -> s.accept(this));
+    return null;
   }
 
   @Override

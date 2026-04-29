@@ -962,6 +962,21 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
         .toList();
   }
 
+  /**
+   * Get all nodes of the given type, possibly inherited by a base ISA.
+   *
+   * @param type The node type.
+   * @param <T>  The generic node type.
+   * @return The stream of nodes.
+   */
+  public <T extends Node> Stream<T> allInheritedNodesOf(Class<T> type) {
+    return Stream.concat(extendingNodes().stream()
+            .flatMap(isa -> isa.allInheritedNodesOf(type)),
+        definitions.stream()
+            .filter(type::isInstance)
+            .map(type::cast));
+  }
+
   @Override
   public SourceLocation location() {
     return loc;

@@ -29,13 +29,13 @@ instruction set architecture IsaB extending IsaA = {
 //  Reported Diagnostics:
 //
 //  error: Multiple Group Definitions
-//       ╭── test/resources/frontend-snapshots/lowering/invalidMultipleGroupDefinitions.vadl:21:3
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidMultipleGroupDefinitions.vadl:25:3
 //       │
 //    21 │   group VLIW1 = ({O1,O2}|O1<2..5>)
-//       │   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ An instruction set architecture can have at most one group definition.
+//       │   -------------------------------- note: This additional group definition is not allowed.
 //       ⋮
 //    25 │   group VLIW2 = O1<5..6>
-//       │   ---------------------- note: This additional group definition is not allowed.
+//       │   ^^^^^^^^^^^^^^^^^^^^^^ An instruction set architecture can have at most one group definition.
 //       │
 //
 //

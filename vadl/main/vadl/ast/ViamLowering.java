@@ -130,7 +130,7 @@ import vadl.viam.passes.functionInliner.Inliner;
  */
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Definition>>,
-    GroupVisitor<Group.Expression, GroupDefinition> {
+    GroupVisitor<Group.Expression> {
 
   final ConstantEvaluator constantEvaluator;
 
@@ -375,33 +375,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
               .locationDescription(n, "Resource access is not allowed in %s.", inDescription)
               .build();
         });
-  }
-
-  @Nullable
-  private Group checkOneGroupDefinition(List<vadl.viam.Definition> definitions) {
-    final var groups = definitions.stream()
-        .filter(Group.class::isInstance)
-        .map(Group.class::cast)
-        .collect(Collectors.toList());
-
-    if (groups.isEmpty()) {
-      return null;
-    }
-
-    if (groups.size() == 1) {
-      return groups.getFirst();
-    }
-
-    var primary = groups.removeFirst();
-    var diagnostic = error("Multiple Group Definitions", primary)
-        .locationDescription(primary,
-            "An instruction set architecture can have at most one group definition.");
-
-    for (var group : groups) {
-      diagnostic.locationNote(group, "This additional group definition is not allowed.");
-    }
-
-    throw diagnostic.build();
   }
 
   private void checkLeafNodes(Graph behavior,
@@ -1471,16 +1444,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(GroupDefinition definition) {
-    final Group.Expression expr = definition.groupSequence.accept(this, definition);
+    final Group.Expression expr = definition.groupSequence.accept(this);
     return Optional.of(new Group(generateIdentifier(definition.viamId, definition.identifier()),
         expr));
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Literal lit, GroupDefinition groupDefinition) {
-    final vadl.viam.Identifier litId = generateIdentifier(groupDefinition.viamId, lit.id);
+  public Group.Expression visit(vadl.ast.Group.Literal lit) {
     final Operation op = (Operation) fetch(lit.operation).orElseThrow(IllegalStateException::new);
-    final Group.Expression l = new Group.Literal(litId, op);
+    final Group.Expression l = new Group.Literal(lit, op);
 
     if (lit.size == null) {
       return l;
@@ -1488,31 +1460,27 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     final var range = (RangeExpr) lit.size;
     final var from = constantEvaluator.eval(range.from).toViamConstant();
-    final var to = constantEvaluator.eval(range.from).toViamConstant();
+    final var to = constantEvaluator.eval(range.to).toViamConstant();
 
-    final vadl.viam.Identifier repId = generateIdentifier(groupDefinition.viamId, lit.size);
-    return new Group.Repetition(repId, l, from, to);
+    return new Group.Repetition(range, l, from, to);
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Sequence seq, GroupDefinition groupDefinition) {
-    final vadl.viam.Identifier ident = generateIdentifier(groupDefinition.viamId, seq);
-    final var elems = seq.groups.stream().map(g -> g.accept(this, groupDefinition)).toList();
-    return elems.size() == 1 ? elems.getFirst() : new Group.Sequence(ident, elems);
+  public Group.Expression visit(vadl.ast.Group.Sequence seq) {
+    final var elems = seq.groups.stream().map(g -> g.accept(this)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Sequence(seq, elems);
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Alternative alt, GroupDefinition groupDefinition) {
-    final vadl.viam.Identifier ident = generateIdentifier(groupDefinition.viamId, alt);
-    final var elems = alt.sequences.stream().map(g -> g.accept(this, groupDefinition)).toList();
-    return elems.size() == 1 ? elems.getFirst() : new Group.Alternation(ident, elems);
+  public Group.Expression visit(vadl.ast.Group.Alternative alt) {
+    final var elems = alt.sequences.stream().map(g -> g.accept(this)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Alternation(alt, elems);
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Permutation perm, GroupDefinition groupDefinition) {
-    final vadl.viam.Identifier ident = generateIdentifier(groupDefinition.viamId, perm);
-    final var elems = perm.sequences.stream().map(g -> g.accept(this, groupDefinition)).toList();
-    return elems.size() == 1 ? elems.getFirst() : new Group.Permutation(ident, elems);
+  public Group.Expression visit(vadl.ast.Group.Permutation perm) {
+    final var elems = perm.sequences.stream().map(g -> g.accept(this)).toList();
+    return elems.size() == 1 ? elems.getFirst() : new Group.Permutation(perm, elems);
   }
 
   @Override
@@ -1624,7 +1592,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
     // TODO: @flofriday compute artifical resources
     var artificialResources = filterAndCastToInstance(allDefinitions, ArtificialResource.class);
-    var group = checkOneGroupDefinition(allDefinitions);
+    var group = filterAndCastToInstance(allDefinitions, Group.class)
+        .stream().findFirst()
+        .orElse(null);
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
