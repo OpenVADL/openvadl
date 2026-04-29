@@ -38,7 +38,6 @@ import vadl.viam.Procedure;
 import vadl.viam.Processor;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
-import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractEndNode;
@@ -52,21 +51,19 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Verifies that the memory endianness condition expression(s) only contain reads from
  * tb-state saved simple registers.
  *
  * <p>Changes memory read and write operations of all behaviors to operate with the
- * correct byte order (as specified on the memory definition they use).
- * If the memory is big-endian the reads and writes are changed to byte-reversed operations.
- * If it is bi-endian, then the condition determining the endianness is inserted into the
+ * correct byte order (as specified on the memory definition they use). If the memory
+ * is bi-endian, then the condition determining the endianness is inserted into the
  * behaviors.
  *
  * <p>If memory operations used in memory region init procedures are bi-endian, then the
  * condition must be statically evaluated since register reads are not possible at that point.
- * Therefore, register values are taken from the default branch of the cpu reset procedure and
+ * Therefore, register values are taken from the default branch of the processor reset procedure and
  * must be constant.
  */
 public class ApplyMemoryEndiannessPass extends Pass {
@@ -93,15 +90,10 @@ public class ApplyMemoryEndiannessPass extends Pass {
   private void checkMemoryEndiannessConditions(Specification viam) {
     var errors = new ArrayList<Diagnostic>();
     viam.isa().ifPresent(isa -> isa.ownMemories().forEach(mem -> {
-      var condition = mem.littleEndianCondition();
+      var condition = mem.biEndianCondition();
       if (condition == null) {
         return;
       }
-      condition.getNodes(WriteResourceNode.class).findAny()
-          .ifPresent(n -> errors.add(error(
-              "Endianness condition may not write to any resource", n
-          ).build()));
-
       condition.getNodes(ReadResourceNode.class)
           .filter(n -> {
             if (n instanceof ReadRegTensorNode r) {
@@ -170,18 +162,18 @@ class ApplyMemoryEndiannessInMemoryRegionInit {
           """, reg.simpleName()),
           read
       ).description("""
-          The memory written here is be-endian. What endianness is used depends on the \
+          The memory written here is bi-endian. What endianness is used depends on the \
           value of register %s, which is not known at this point. Only registers initialized \
-          to a constant value in the default branch of the cpu reset procedure can be \
+          to a constant value in the default branch of the processor reset procedure can be \
           statically inferred.
           """, reg.simpleName()
       ).locationHelp(
           reset,
-          "Cpu reset procedure"
+          "Processor reset procedure"
       ).locationHelp(
           // we know that the memory is bi-endian, because there are reg reads, which
           // can only stem from the bi-endian condition
-          requireNonNull(memory.littleEndianCondition()).sourceLocation(),
+          requireNonNull(memory.biEndianCondition()).sourceLocation(),
           "Bi-endian condition"
       ).build();
     }
@@ -204,56 +196,38 @@ class ApplyMemoryEndianness {
   }
 
   private void handleRead(ReadMemNode read) {
-    if (isBigEndian(read.memory())) {
-      read.replace(read.withByteReversal(true));
+    var mem = read.memory();
+    if (mem.isBiEndian()) {
+      read.replace(new SelectNode(
+          getConditionCopy(mem),
+          read.overwriteEndianness(mem.endianness()),
+          read.overwriteEndianness(mem.endianness().other())
+      ));
       read.safeDelete();
-      return;
     }
-    var condition = getConditionCopy(read.memory());
-    if (condition == null) {
-      // leave read as is since the memory is not bi-endian
-      return;
-    }
-    read.replace(new SelectNode(
-        condition,
-        read, // byte reversal is false by default
-        read.withByteReversal(true)
-    ));
   }
 
   private void handeWrite(WriteMemNode write) {
-    if (isBigEndian(write.memory())) {
-      write.replace(write.withByteReversal(true));
+    var mem = write.memory();
+    if (mem.isBiEndian()) {
+      var next = GraphUtils.getSingleUsage(write, AbstractEndNode.class);
+      next.removeSideEffect(write);
+      var prev = requireNonNull(next.predecessor());
+      prev.unlinkNext();
+      prev.setNext(GraphUtils.ifElseSideEffect(
+          behaviour, getConditionCopy(mem),
+          List.of(write.overwriteEndianness(mem.endianness())),
+          List.of(write.overwriteEndianness(mem.endianness().other())),
+          next,
+          write.location()
+      ));
       write.safeDelete();
-      return;
     }
-    var condition = getConditionCopy(write.memory());
-    if (condition == null) {
-      // leave write as is since the memory is not bi-endian
-      return;
-    }
-    var next = GraphUtils.getSingleUsage(write, AbstractEndNode.class);
-    next.removeSideEffect(write);
-    var prev = requireNonNull(next.predecessor());
-    prev.setNext(null);
-    prev.setNext(GraphUtils.ifElseSideEffect(
-        behaviour, condition,
-        List.of(write), // byte reversal is false by default
-        List.of(write.withByteReversal(true)),
-        next,
-        write.location()
-    ));
   }
 
-  private boolean isBigEndian(Memory mem) {
-    return mem.hasAnnotation(BigEndianAnnotation.class);
-  }
-
-  @Nullable
   private ExpressionNode getConditionCopy(Memory mem) {
-    var condition = mem.littleEndianCondition();
-    return condition == null
-        ? null
-        : condition.getNodes(ReturnNode.class).findFirst().get().value().copy();
+    return requireNonNull(mem.biEndianCondition())
+        .getNodes(ReturnNode.class).findFirst().get()
+        .value().copy();
   }
 }

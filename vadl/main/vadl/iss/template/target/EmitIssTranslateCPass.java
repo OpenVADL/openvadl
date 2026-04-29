@@ -72,7 +72,7 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     vars.put("trans_includes", translationIncludes(passResults));
     vars.put("tcg_v_init_code", genRegInitCode(specification));
     vars.put("alias_accessors", renderAliasAccessors(accessorRegistry));
-    vars.put("little_endian_condition", renderLittleEndianCondition(specification));
+    vars.put("bi_endian_condition", renderBiEndianCondition(specification));
     return vars;
   }
 
@@ -141,12 +141,12 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     return sb.toString();
   }
 
-  private String renderLittleEndianCondition(Specification specification) {
+  private String renderBiEndianCondition(Specification specification) {
     var isa = specification.processor().get().isa();
     var memories = isa.ownMemories();
     ensure(memories.size() == 1,
         () -> error("Only one memory definition is supported", isa));
-    var condition = memories.getFirst().littleEndianCondition();
+    var condition = memories.getFirst().biEndianCondition();
     if (condition == null) {
       return "";
     }

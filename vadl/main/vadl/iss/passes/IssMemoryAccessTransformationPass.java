@@ -86,7 +86,7 @@ class MemoryTransformer {
     var loadSize = Tcg_8_16_32_64.fromWidth(
         read.words() * read.memory().wordSize()
     );
-    var endianness = TcgEndianness.fromBoolean(read.reverseBytes());
+    var endianness = TcgEndianness.fromViamEndianness(read.endianness());
     // assign the default
     var issLoadNode = new IssLoadNode(read, TcgExtend.ZERO, loadSize, endianness, read.type());
 
@@ -117,7 +117,7 @@ class MemoryTransformer {
     var storeSize = Tcg_8_16_32_64.fromWidth(
         write.words() * write.memory().wordSize()
     );
-    var endianness = TcgEndianness.fromBoolean(write.reverseBytes());
+    var endianness = TcgEndianness.fromViamEndianness(write.endianness());
 
     if (write.value() instanceof IssConstExtractNode extract
         && extract.toWidth() >= storeSize.width

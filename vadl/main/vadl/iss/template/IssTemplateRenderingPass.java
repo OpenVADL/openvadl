@@ -35,9 +35,9 @@ import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Endianness;
 import vadl.viam.Memory;
 import vadl.viam.Specification;
-import vadl.viam.annotations.BigEndianAnnotation;
 
 /**
  * The template rendering pass all ISS (QEMU) rendering passes extend from.
@@ -131,8 +131,8 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("target_size", configuration().targetSize().width);
     vars.put("mem_regions", memRegions(specification));
     vars.put("exc_info", getExceptionInfo(specification));
-    vars.put("mem_big_endian", memIsBigEndian(specification));
-    vars.put("mem_bi_endian", memIsBiEndian(specification));
+    vars.put("mem_big_endian", getSingleMem(specification).endianness() == Endianness.BIG);
+    vars.put("mem_bi_endian", getSingleMem(specification).isBiEndian());
     return vars;
   }
 
@@ -153,15 +153,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     return pc.registerTensor().expectExtension(RegInfo.class);
   }
 
-  private boolean memIsBigEndian(Specification viam) {
-    return getMem(viam).hasAnnotation(BigEndianAnnotation.class);
-  }
-
-  private boolean memIsBiEndian(Specification viam) {
-    return getMem(viam).littleEndianCondition() != null;
-  }
-
-  private Memory getMem(Specification viam) {
+  private Memory getSingleMem(Specification viam) {
     var isa = viam.isa().get();
     var memories = isa.ownMemories();
     ensure(memories.size() == 1,

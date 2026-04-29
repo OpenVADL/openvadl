@@ -17,8 +17,10 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
+import vadl.viam.Endianness;
 import vadl.viam.Memory;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -39,11 +41,9 @@ public class ReadMemNode extends ReadResourceNode {
   @DataValue
   protected int words;
 
-  /**
-   * Whether to read with big-endian byte order.
-   */
   @DataValue
-  protected boolean reverseBytes;
+  @Nullable
+  protected Endianness endiannessOverwrite;
 
   /**
    * Constructs a ReadMemNode object with the specified memory, address, and data type.
@@ -54,27 +54,27 @@ public class ReadMemNode extends ReadResourceNode {
    * @param type    the data type of the value being read
    */
   public ReadMemNode(Memory memory, int words, ExpressionNode address, DataType type) {
-    this(memory, words, false, address, type);
+    this(memory, words, null, address, type);
   }
 
   /**
    * Constructs a ReadMemNode object with the specified memory, address, and data type.
    *
-   * @param memory       the memory definition from which to read the value
-   * @param words        the number of words that are read from address ({@code MEM<words>(addr)})
-   * @param reverseBytes whether the bytes should be read in reverse
-   * @param address      the address expression node representing the address in memory to read from
-   * @param type         the data type of the value being read
+   * @param memory  the memory definition from which to read the value
+   * @param words   the number of words that are read from address ({@code MEM<words>(addr)})
+   * @param address the address expression node representing the address in memory to read from
+   * @param type    the data type of the value being read
+   * @param endiannessOverwrite overwrites the memory endianness for this read, if not null
    */
   public ReadMemNode(Memory memory,
                      int words,
-                     boolean reverseBytes,
+                     @Nullable Endianness endiannessOverwrite,
                      ExpressionNode address,
                      DataType type) {
     super(address, type);
     this.memory = memory;
     this.words = words;
-    this.reverseBytes = reverseBytes;
+    this.endiannessOverwrite = endiannessOverwrite;
   }
 
   @Override
@@ -94,10 +94,17 @@ public class ReadMemNode extends ReadResourceNode {
   }
 
   /**
-   * Whether to read with big-endian byte order.
+   * Returns what endianness this node operates with. Uses the endianness of its
+   * {@link #memory()} by default. If this node overwrites that endianness
+   * (see {@link #overwriteEndianness(Endianness)}), then that endianness is
+   * returned instead.
+   *
+   * @return the endianness of this memory operation
    */
-  public boolean reverseBytes() {
-    return reverseBytes;
+  public Endianness endianness() {
+    return endiannessOverwrite != null
+        ? endiannessOverwrite
+        : memory.endianness();
   }
 
   @Override
@@ -115,27 +122,27 @@ public class ReadMemNode extends ReadResourceNode {
     super.collectData(collection);
     collection.add(memory);
     collection.add(words);
-    collection.add(reverseBytes);
+    collection.add(endiannessOverwrite);
   }
 
   @Override
   public ExpressionNode copy() {
-    return new ReadMemNode(memory, words, reverseBytes, address().copy(), type());
+    return new ReadMemNode(memory, words, endiannessOverwrite, address().copy(), type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ReadMemNode(memory, words, reverseBytes, address(), type());
+    return new ReadMemNode(memory, words, endiannessOverwrite, address(), type());
   }
 
   /**
-   * Copies the node with {@code reverseBytes} set to the given value.
+   * Creates a copy of this node. The new node will use the given endianness
+   * instead of the endianness of the {@link #memory()}
    *
-   * @param reverseBytes whether to reverse the byte order of the read
-   * @return a copy of this node with the new value
+   * @param endianness the endianness overwrite
    */
-  public ReadMemNode withByteReversal(boolean reverseBytes) {
-    return new ReadMemNode(memory, words, reverseBytes, address().copy(), type());
+  public ReadMemNode overwriteEndianness(Endianness endianness) {
+    return new ReadMemNode(memory, words, endianness, address().copy(), type());
   }
 
   @Override

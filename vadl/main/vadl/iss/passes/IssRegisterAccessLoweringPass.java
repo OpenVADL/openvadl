@@ -103,7 +103,7 @@ public class IssRegisterAccessLoweringPass extends AbstractIssPass {
     tcgInstrs(viam).forEach(i ->
         new IssStaticRegisterAccessConverter(i.behavior()).run());
     viam.isa().get().ownMemories().stream()
-        .map(Memory::littleEndianCondition)
+        .map(Memory::biEndianCondition)
         .filter(Objects::nonNull)
         .forEach(c -> new IssStaticRegisterAccessConverter(c).run());
     ViamUtils.findAllBehaviors(viam).forEach(behavior ->

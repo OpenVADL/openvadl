@@ -19,7 +19,6 @@ package vadl.viam;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -36,8 +35,14 @@ public class Memory extends Resource implements DefProp.WithOptionalBehaviour {
   private final DataType addressType;
   private final DataType resultType;
 
+  private Endianness endianness = Endianness.LITTLE;
+
+  /**
+   * If this condition is not {@code null} and evaluates to {@code false}, then
+   * the opposite endianness as returned by {@link #endianness()} is used.
+   */
   @Nullable
-  private Graph littleEndianCondition;
+  private Graph biEndianCondition;
 
   /**
    * Constructs a new Memory object.
@@ -90,20 +95,56 @@ public class Memory extends Resource implements DefProp.WithOptionalBehaviour {
     return Type.concreteRelation(addressType, resultType);
   }
 
-  @Nullable
-  public Graph littleEndianCondition() {
-    return littleEndianCondition;
+  /**
+   * Returns whether the endianness of this memory depends on a condition
+   * (meaning it can change). The condition, if present, is returned by
+   * {@link #biEndianCondition()}.
+   *
+   * @return whether this memory is bi-endian
+   */
+  public boolean isBiEndian() {
+    return biEndianCondition != null;
   }
 
-  public void setLittleEndianCondition(@Nullable Graph littleEndianCondition) {
-    this.littleEndianCondition = littleEndianCondition;
+  /**
+   * The endiannes of this memory. See also {@link #isBiEndian()} and
+   * {@link #biEndianCondition()}.
+   *
+   * @return the endianness of this memory
+   */
+  public Endianness endianness() {
+    return endianness;
+  }
+
+  public void setEndianness(Endianness endianness) {
+    this.endianness = endianness;
+  }
+
+  /**
+   * If this condition is not {@code null} and evaluates to {@code false}, then
+   * the opposite endianness as returned by {@link #endianness()} is used.
+   *
+   * @return a function graph without params containing the condition
+   */
+  @Nullable
+  public Graph biEndianCondition() {
+    return biEndianCondition;
+  }
+
+  /**
+   * Sets the bi-endian condition (see {@link #biEndianCondition()}).
+   *
+   * @param biEndianCondition a function graph without params containing the condition
+   */
+  public void setBiEndianCondition(@Nullable Graph biEndianCondition) {
+    this.biEndianCondition = biEndianCondition;
   }
 
   @Override
   public List<Graph> behaviors() {
-    return littleEndianCondition == null
+    return biEndianCondition == null
         ? List.of()
-        : List.of(littleEndianCondition);
+        : List.of(biEndianCondition);
   }
 
   @Override

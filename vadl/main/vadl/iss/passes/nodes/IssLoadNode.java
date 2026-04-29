@@ -62,7 +62,7 @@ public class IssLoadNode extends ReadMemNode {
     return tcgExtend;
   }
 
-  public TcgEndianness endianness() {
+  public TcgEndianness tcgEndianness() {
     return endianness;
   }
 

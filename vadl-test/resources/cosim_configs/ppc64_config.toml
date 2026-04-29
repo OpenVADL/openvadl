@@ -63,9 +63,9 @@ additional_args = [
 # This setting also *does not* have an effect on tracing, data will still be stored in the original endianess
 
 # This setting must match the `TARGET_BIG_ENDIAN` definition in `gen-arch-softmmu.mak`
-# If the vadl memory definition is annotated with `[ bigEndian ]`, this setting should be set to "big" or be ommitted.
-# Otherwise, if it is little endian or bi-endian (annotated with `[ littleEndian : Condition ]`), this setting
-# should be set to "little".
+# If the vadl memory definition is annotated with `[ big endian : Condition ]`, this setting should be set to
+# "big" or be ommitted. If it is annotated with `[ little endian : Condition ]` or not annotated with any
+# of the two, this setting should be explicitly set to "little".
 endian = "little"
 
 # The following three options configure which instructions from the `test_exec` executable should actually be tested.

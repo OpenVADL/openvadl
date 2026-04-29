@@ -53,6 +53,7 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
+import vadl.viam.Endianness;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
@@ -64,7 +65,6 @@ import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
-import vadl.viam.annotations.BigEndianAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
@@ -219,23 +219,32 @@ public class AnnotationTable {
         .build();
 
     groupOn(MemoryDefinition.class)
-        .add("bigEndian", EnableAnnotation::new)
-        .add("littleEndian", ExprAnnotation::new)
+        .add("big endian",    OptExprAnnotation::new)
+        .add("little endian", OptExprAnnotation::new)
         .check(ctx -> {
           ctx.verifyOnlyOneOfGroup();
-          ctx.get("littleEndian", ExprAnnotation.class).ifPresent(ann -> {
-            ann.verifyExprType(Type.bool());
-          });
+          ctx.getOnly(OptExprAnnotation.class)
+              .ifPresent(ann -> ann.verifyExprType(Type.bool()));
         })
         .applyViam(ctx -> {
           var memDef = ctx.viamDef(Memory.class);
-          ctx.get("bigEndian").ifPresent(ann -> memDef.addAnnotation(new BigEndianAnnotation()));
-          ctx.get("littleEndian", ExprAnnotation.class).ifPresent(ann -> {
-            var graph = new BehaviorLowering(ctx.lowering).getFunctionGraph(ann.expr,
-                memDef.simpleName() + " Little Endian Condition");
-            graph.setParentDefinition(memDef);
-            memDef.setLittleEndianCondition(graph);
-          });
+
+          BiConsumer<OptExprAnnotation, Endianness> apply = (ann, endianness) -> {
+            memDef.setEndianness(endianness);
+            if (ann.expr != null) {
+              var graph = new BehaviorLowering(ctx.lowering).getFunctionGraph(
+                  ann.expr,
+                  memDef.simpleName() + " Bi Endian Condition"
+              );
+              graph.setParentDefinition(memDef);
+              memDef.setBiEndianCondition(graph);
+            }
+          };
+
+          ctx.get("big endian", OptExprAnnotation.class)
+              .ifPresent(ann -> apply.accept(ann, Endianness.BIG));
+          ctx.get("little endian", OptExprAnnotation.class)
+              .ifPresent(ann -> apply.accept(ann, Endianness.LITTLE));
         }).build();
 
     /// PROCESSOR RELATED ///
@@ -1427,9 +1436,55 @@ class IdentifersAnnotation extends Annotation {
   }
 }
 
+/**
+ * An annotation that holds a single optional expression.
+ *
+ * <p>Examples for such annotations:
+ * <pre>
+ * [ little endian ]
+ * [ little endian : MSR.le = 1 ]
+ * </pre>
+ */
+class OptExprAnnotation extends Annotation {
+  @LazyInit
+  @Nullable
+  Expr expr;
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    verifyValuesCntBetween(definition, 0, 1);
+    if (!definition.values.isEmpty()) {
+      expr = definition.values.getFirst();
+      expr.accept(resolver);
+    }
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    if (expr != null) {
+      expr.accept(typeChecker);
+    }
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <expr> ]";
+  }
+
+  public void verifyExprType(Type type) {
+    if (expr != null) {
+      var presentExpr = expr;
+      Diagnostic.ensure(
+          presentExpr.type() == type,
+          () -> error("Invalid annotation presentExpression", presentExpr)
+              .locationDescription(presentExpr, "Expression must be a %s", type)
+      );
+    }
+  }
+}
 
 /**
- * A annotation that holds a single expression. Used for more complex annotations.
+ * An annotation that holds a single expression. Used for more complex annotations.
  *
  * <p>Examples for such annotations:
  * <pre>

@@ -72,7 +72,7 @@ instruction set architecture PPC64SFS = {
 
   program counter PC  : Address
 
-  [ littleEndian : MSR.le = 1 ]
+  [ little endian : MSR.le = 1 ]
   memory          MEM : Address -> Byte
 
   register X : XIndex -> Reg64                   // 32 general-purpose 64-bit registers

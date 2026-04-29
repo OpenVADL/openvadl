@@ -640,7 +640,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var src = singleDestOf(toHandle.address());
 
     replaceCurrent(new TcgLoadMemory(
-        toHandle.loadSize(), toHandle.tcgExtend(), toHandle.endianness(), dest, src
+        toHandle.loadSize(), toHandle.tcgExtend(), toHandle.tcgEndianness(), dest, src
     ));
   }
 
@@ -697,7 +697,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var mode = TcgExtend.SIGN;
 
     replaceCurrent(
-        new TcgStoreMemory(storeSize, mode, toHandle.endianness(), value, addr)
+        new TcgStoreMemory(storeSize, mode, toHandle.tcgEndianness(), value, addr)
     );
   }
 

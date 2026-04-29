@@ -20,6 +20,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.Endianness;
 import vadl.viam.Memory;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -44,11 +45,9 @@ public class WriteMemNode extends WriteResourceNode {
   @DataValue
   protected int words;
 
-  /**
-   * Whether to read with big-endian byte order.
-   */
   @DataValue
-  protected boolean reverseBytes;
+  @Nullable
+  protected Endianness endiannessOverwrite;
 
   /**
    * Constructs a new WriteMemNode object.
@@ -74,26 +73,26 @@ public class WriteMemNode extends WriteResourceNode {
    */
   public WriteMemNode(Memory memory, int words, ExpressionNode address, ExpressionNode value,
                       @Nullable ExpressionNode condition) {
-    this(memory, words, false, address, value, condition);
+    this(memory, words, null, address, value, condition);
   }
 
   /**
    * Constructs a new WriteMemNode object.
    *
-   * @param memory       the memory definition to write to
-   * @param words        the number of words that are written to memory
-   * @param reverseBytes whether the bytes should be written in reverse
-   * @param address      the expression representing the memory address
-   * @param value        the expression representing the value to write
+   * @param memory  the memory definition to write to
+   * @param words   the number of words that are written to memory
+   * @param address the expression representing the memory address
+   * @param value   the expression representing the value to write
+   * @param endiannessOverwrite overwrites the memory endianness for this write, if not null
    */
   public WriteMemNode(Memory memory, int words,
-                      boolean reverseBytes,
+                      @Nullable Endianness endiannessOverwrite,
                       ExpressionNode address, ExpressionNode value,
                       @Nullable ExpressionNode condition) {
     super(address, value);
     this.memory = memory;
     this.words = words;
-    this.reverseBytes = reverseBytes;
+    this.endiannessOverwrite = endiannessOverwrite;
     this.condition = condition;
   }
 
@@ -106,10 +105,17 @@ public class WriteMemNode extends WriteResourceNode {
   }
 
   /**
-   * Whether to read with big-endian byte order.
+   * Returns what endianness this node operates with. Uses the endianness of its
+   * {@link #memory()} by default. If this node overwrites that endianness
+   * (see {@link #overwriteEndianness(Endianness)}), then that endianness is
+   * returned instead.
+   *
+   * @return the endianness of this memory operation
    */
-  public boolean reverseBytes() {
-    return reverseBytes;
+  public Endianness endianness() {
+    return endiannessOverwrite != null
+        ? endiannessOverwrite
+        : memory.endianness();
   }
 
   @Nonnull
@@ -133,13 +139,13 @@ public class WriteMemNode extends WriteResourceNode {
     super.collectData(collection);
     collection.add(memory);
     collection.add(words);
-    collection.add(reverseBytes);
+    collection.add(endiannessOverwrite);
   }
 
   @Override
   public Node copy() {
     var node = new WriteMemNode(memory, words,
-        reverseBytes,
+        endiannessOverwrite,
         address().copy(),
         value.copy(),
         (condition != null ? condition.copy() : null));
@@ -149,20 +155,20 @@ public class WriteMemNode extends WriteResourceNode {
 
   @Override
   public Node shallowCopy() {
-    var node = new WriteMemNode(memory, words, reverseBytes, address(), value, condition);
+    var node = new WriteMemNode(memory, words, endiannessOverwrite, address(), value, condition);
     node.setSourceLocation(location());
     return node;
   }
 
   /**
-   * Copies the node with {@code reverseBytes} set to the given value.
+   * Creates a copy of this node. The new node will use the given endianness
+   * instead of the endianness of the {@link #memory()}
    *
-   * @param reverseBytes whether to reverse the byte order of the write
-   * @return a copy of this node with the new value
+   * @param endianness the endianness overwrite
    */
-  public WriteMemNode withByteReversal(boolean reverseBytes) {
+  public WriteMemNode overwriteEndianness(Endianness endianness) {
     var node = new WriteMemNode(memory, words,
-        reverseBytes,
+        endianness,
         address().copy(),
         value.copy(),
         (condition != null ? condition.copy() : null));

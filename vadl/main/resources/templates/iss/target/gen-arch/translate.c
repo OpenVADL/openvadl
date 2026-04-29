@@ -53,9 +53,9 @@ static bool swap_insn(const DisasContext *ctx) {
   // default byte order is LE, but VDT assumes BE
 [# th:if="${mem_bi_endian}"]
 #if TARGET_BIG_ENDIAN
-  return !([(${little_endian_condition})]);
+  return [# th:unless="${mem_big_endian}"]![/]([(${bi_endian_condition})]);
 #else
-  return [(${little_endian_condition})];
+  return [# th:if="${mem_big_endian}"]![/]([(${bi_endian_condition})]);
 #endif
 [/][# th:unless="${mem_bi_endian}"]
   return true;

@@ -52,7 +52,7 @@ public class IssStoreNode extends WriteMemNode {
     return storeSize;
   }
 
-  public TcgEndianness endianness() {
+  public TcgEndianness tcgEndianness() {
     return endianness;
   }
 

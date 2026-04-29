@@ -75,6 +75,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgUnaryNopNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.Handler;
+import vadl.viam.Endianness;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -247,7 +248,7 @@ public interface IssCMixins {
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
       var endianSuffix = bitWidth == 8
           ? "" // there are no le/be versions of single byte ops
-          : (node.reverseBytes() ? "_be" : "_le");
+          : (node.endianness() == Endianness.BIG ? "_be" : "_le");
       if (bitWidth <= 64) {
         var widthSuffix = switch (bitWidth) {
           case 8 -> "ub";
@@ -296,7 +297,7 @@ public interface IssCMixins {
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
       var endianSuffix = bitWidth == 8
           ? "" // there are no le/be versions of single byte ops
-          : (node.reverseBytes() ? "_be" : "_le");
+          : (node.endianness() == Endianness.BIG ? "_be" : "_le");
       if (bitWidth <= 64) {
         var widthSuffix = switch (bitWidth) {
           case 8 -> "b";

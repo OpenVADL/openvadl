@@ -1020,8 +1020,8 @@ instruction set architecture ISA = {
   [ordering : rvWeakMemoryOrdering]  // memory consistency model is RISC-V weak memory ordering
   [translate VMEM]                   // address translation with the process called VMEM
   [raise ExceptionName : Condition]  // when Condition is met then raise exception ExceptionName
-  [bigEndian]                        // big endian memory access
-  [littleEndian : Condition]         // if Condition met little endian else big endian access
+  [big endian]                       // big endian memory access
+  [little endian : Condition]        // if Condition met little endian else big endian access
   [instruction]                      // instruction memory only
   [data]                             // data memory only 
   memory Mem : Addr -> Byte          // byte addressed memory with 64 bit address space
