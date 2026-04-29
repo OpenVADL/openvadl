@@ -22,7 +22,7 @@ import java.util.Set;
 import picocli.CommandLine;
 import vadl.cli.decoder.DecoderOptsConverter;
 import vadl.configuration.DecoderOptions.Generator;
-import vadl.configuration.DecoderOptions.OptionToSkip;
+import vadl.configuration.DecoderOptions.OptionalStep;
 
 /**
  * Decoder options available to the {@link vadl.cli.RtlCommand}.
@@ -47,9 +47,9 @@ public class RtlDecoderOptions extends DecoderMixin {
 
     public RtlDecoderOptsContributor() {
       strategies = Generator.values();
-      skipOptions = Arrays.stream(OptionToSkip.values())
-          .filter(s -> s != OptionToSkip.OPT_ALL)
-          .toArray(OptionToSkip[]::new);
+      steps = Arrays.stream(OptionalStep.values())
+          .filter(s -> s != OptionalStep.OPT_ALL)
+          .toArray(OptionalStep[]::new);
     }
   }
 

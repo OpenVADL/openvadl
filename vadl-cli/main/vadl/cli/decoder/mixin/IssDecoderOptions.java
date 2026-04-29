@@ -22,7 +22,7 @@ import java.util.Set;
 import picocli.CommandLine;
 import vadl.cli.decoder.DecoderOptsConverter;
 import vadl.configuration.DecoderOptions.Generator;
-import vadl.configuration.DecoderOptions.OptionToSkip;
+import vadl.configuration.DecoderOptions.OptionalStep;
 
 /**
  * Decoder options available to the {@link vadl.cli.IssCommand}.
@@ -49,9 +49,9 @@ public class IssDecoderOptions extends DecoderMixin {
       strategies = Arrays.stream(Generator.values())
           .filter(g -> g != Generator.RTL_TABLE)
           .toArray(Generator[]::new);
-      skipOptions = Arrays.stream(OptionToSkip.values())
-          .filter(s -> s != OptionToSkip.OPT_ALL)
-          .toArray(OptionToSkip[]::new);
+      steps = Arrays.stream(OptionalStep.values())
+          .filter(s -> s != OptionalStep.OPT_ALL)
+          .toArray(OptionalStep[]::new);
     }
 
   }

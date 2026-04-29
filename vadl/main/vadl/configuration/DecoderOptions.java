@@ -16,7 +16,8 @@
 
 package vadl.configuration;
 
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -74,24 +75,24 @@ public class DecoderOptions {
   /**
    * The options for decoder generation which can be disabled.
    */
-  public enum OptionToSkip {
+  public enum OptionalStep {
 
-    OPT_ALL("Skip all decoder related verification and generation passes, default: enabled",
+    OPT_ALL("All decoder related verification and generation passes, default: enabled",
         "all"),
 
-    OPT_CONSTRAINT_SYNTHESIS("Skip constraint synthesis for decoder generation, default: enabled",
+    OPT_CONSTRAINT_SYNTHESIS("Constraint synthesis for decoder generation, default: enabled",
         "constraint-synthesis"),
 
-    OPT_ENCODING_VERIFICATION("Skip the encoding verification, default: enabled",
+    OPT_ENCODING_VERIFICATION("Encoding verification, default: disabled",
         "encoding-verification"),
 
-    OPT_DECODER_VERIFICATION("Skip the correctness verification of the decode tree, default: "
+    OPT_DECODER_VERIFICATION("correctness verification of the decode tree, default: "
         + "enabled", "decoder-verification");
 
     private final String selector;
     private final String desc;
 
-    OptionToSkip(String desc, String selector) {
+    OptionalStep(String desc, String selector) {
       this.desc = desc;
       this.selector = selector;
     }
@@ -112,12 +113,12 @@ public class DecoderOptions {
      * @return The skipped option, or null if no match was found.
      */
     @Nullable
-    public static OptionToSkip fromSelector(String selector, OptionToSkip... options) {
+    public static OptionalStep fromSelector(String selector, OptionalStep... options) {
       if (selector == null || selector.isBlank()) {
         return null;
       }
-      final var opts = options.length == 0 ? OptionToSkip.values() : options;
-      for (OptionToSkip opt : opts) {
+      final var opts = options.length == 0 ? OptionalStep.values() : options;
+      for (OptionalStep opt : opts) {
         if (opt.getSelector().equals(selector)) {
           return opt;
         }
@@ -126,20 +127,33 @@ public class DecoderOptions {
     }
   }
 
-  private OptionToSkip[] optsToSkip;
+  private Map<OptionalStep, Boolean> opts;
   private Generator generator;
 
   public DecoderOptions() {
-    optsToSkip = new OptionToSkip[0];
+    opts = new HashMap<>(Map.of(
+        OptionalStep.OPT_ALL, true,
+        OptionalStep.OPT_CONSTRAINT_SYNTHESIS, true,
+        OptionalStep.OPT_ENCODING_VERIFICATION, false,
+        OptionalStep.OPT_DECODER_VERIFICATION, true
+    ));
     generator = Generator.IRREGULAR;
   }
 
-  public OptionToSkip[] getOptsToSkip() {
-    return optsToSkip;
+  public Map<OptionalStep, Boolean> getOpts() {
+    return opts;
   }
 
-  public void setOptsToSkip(OptionToSkip[] optsToSkip) {
-    this.optsToSkip = optsToSkip;
+  public void setOpts(Map<OptionalStep, Boolean> opts) {
+    this.opts = opts;
+  }
+
+  public boolean isEnabled(OptionalStep opt) {
+    return opts.getOrDefault(opt, true);
+  }
+
+  public boolean isDisabled(OptionalStep opt) {
+    return !isEnabled(opt);
   }
 
   public Generator getGenerator() {
@@ -153,7 +167,7 @@ public class DecoderOptions {
   @Override
   public String toString() {
     return "DecoderOptions{"
-        + "optsToSkip=" + Arrays.toString(optsToSkip)
+        + "steps=" + opts
         + ", generator=" + generator
         + '}';
   }

@@ -45,7 +45,7 @@ public class CheckDecoderOptions extends DecoderMixin {
 
     public CheckDecoderOptsContributor() {
       strategies = DecoderOptions.Generator.values();
-      skipOptions = DecoderOptions.OptionToSkip.values();
+      steps = DecoderOptions.OptionalStep.values();
     }
   }
 
