@@ -154,6 +154,8 @@ interface DefinitionVisitor<R> {
 
   R visit(FormatDefinition definition);
 
+  R visit(PseudoFormat pseudoFormat);
+
   R visit(DerivedFormatField definition);
 
   R visit(RangeFormatField definition);
@@ -405,7 +407,7 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 }
 
-abstract class FormatField extends Definition {
+sealed abstract class FormatField extends Definition {
   IdentifierOrPlaceholder identifier;
 
   Identifier identifier() {
@@ -418,7 +420,7 @@ abstract class FormatField extends Definition {
 }
 
 
-class RangeFormatField extends FormatField implements IdentifiableNode {
+final class RangeFormatField extends FormatField implements IdentifiableNode {
   @Child
   List<Expr> ranges;
   @Child
@@ -501,7 +503,7 @@ class RangeFormatField extends FormatField implements IdentifiableNode {
   }
 }
 
-class TypedFormatField extends FormatField implements IdentifiableNode {
+final class TypedFormatField extends FormatField implements IdentifiableNode {
   @Child
   TypeLiteral typeLiteral;
 
@@ -578,7 +580,7 @@ class TypedFormatField extends FormatField implements IdentifiableNode {
  * }
  * </pre>
  */
-class DerivedFormatField extends FormatField implements IdentifiableNode {
+final class DerivedFormatField extends FormatField implements IdentifiableNode {
   @Child
   Expr expr;
 
@@ -640,7 +642,7 @@ class DerivedFormatField extends FormatField implements IdentifiableNode {
 /**
  * Encoding format field definition.
  */
-class EncodingFormatField extends FormatField {
+final class EncodingFormatField extends FormatField {
   @Child
   Expr expr;
 
@@ -708,7 +710,7 @@ class EncodingFormatField extends FormatField {
 /**
  * Predicate format field definition.
  */
-class PredicateFormatField extends FormatField {
+final class PredicateFormatField extends FormatField {
   @Child
   Expr expr;
 

@@ -750,6 +750,29 @@ public class TypeChecker
       }
     }
 
+    if (args.size() == 2 && BuiltInTable.equalityPredicates.contains(builtIn)) {
+      // Special case for equality over bound variables of the forall..then expression
+      final Expr l = args.getFirst();
+      final Expr r = args.getLast();
+      if (l.type() instanceof PseudoFormatType left && r.type() instanceof PseudoFormatType right) {
+
+        // Static sanity check if the instructions from both pseudo formats even overlap
+        var overlap = new HashSet<>(left.format().instructions());
+        overlap.retainAll(right.format().instructions());
+
+        if (overlap.isEmpty()) {
+          DeferredDiagnosticStore.add(
+              warning("This expression is always `%s`".formatted(builtIn == BuiltInTable.NEQ),
+                  location)
+                  .description("The sets of instructions bound by `%s` and `%s` do not overlap",
+                      ((Identifier) l).name, ((Identifier) r).name)
+                  .build());
+        }
+
+        return new BuiltInCheckResult(Type.bool(), args);
+      }
+    }
+
     if (args.size() == 2 && (BuiltInTable.arithmeticOperators.contains(builtIn)
         || BuiltInTable.arithmeticComparisons.contains(builtIn))) {
       var left = args.getFirst();
@@ -1191,6 +1214,12 @@ public class TypeChecker
           .build());
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(PseudoFormat pseudoFormat) {
+    // Do nothing, this is just a pseudo definition, which is checked during construction.
     return null;
   }
 
@@ -2963,6 +2992,11 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof PseudoFormat pseudoFormat) {
+      expr.type = pseudoFormat.type();
+      return;
+    }
+
     if (origin instanceof ForallExpr forallExpr) {
       // No need to check because this can only be the case if we are inside the for statement.
       expr.type =
@@ -3753,6 +3787,29 @@ public class TypeChecker
         subCall.formatFieldType = fieldType;
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
+      } else if (type instanceof PseudoFormatType pseudoFormatType) {
+        check(pseudoFormatType.format());
+
+        var fieldType = pseudoFormatType.format().getFieldType(fieldName);
+        if (fieldType == null) {
+          var formatName = pseudoFormatType.format().name();
+          var formatFieldNames = pseudoFormatType.format().fields().stream()
+              .map(PseudoFormat.FormatField::name).toList();
+          var suggestions = Levenshtein.suggestions(fieldName, formatFieldNames);
+          if (suggestions.isEmpty()) {
+            suggestions = formatFieldNames.stream().limit(3).toList();
+          }
+
+          addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
+              .description("Intersection format `%s` doesn't have any field with this name",
+                  formatName)
+              .suggestions(suggestions)
+              .build());
+        }
+
+        subCall.formatFieldType = fieldType;
+        visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
+        type = expr.type;
       } else if (type instanceof StatusType) {
         var allowedStatusfields = List.of("negative", "zero", "carry", "overflow");
         if (!allowedStatusfields.contains(fieldName)) {
@@ -4258,29 +4315,45 @@ public class TypeChecker
 
   @Override
   public Void visit(ForallThenExpr expr) {
-
-    for (ForallThenExpr.Index i : expr.indices) {
-
-      // empty operations set is fine, the expression is trivially true
-
-      for (IsId o : i.operations) {
-
-        if (o.target() instanceof OperationDefinition) {
-          continue;
-        }
-
-        addErrorAndContinueChecking(
-            error("Invalid Operation List", o)
-                .locationNote(o,
-                    "Elements must be operations, but this was a `%s`",
-                    requireNonNull(o.target()).nodeName())
-                .build());
-      }
-    }
-
+    expr.indices.forEach(this::checkForAllThenIndex);
     checkWith(expr.thenExpr, Type.bool());
+    if (expr.thenExpr.type() != Type.bool()) {
+      addErrorAndContinueChecking(error("Type Mismatch", expr.thenExpr)
+          .locationDescription(expr.thenExpr,
+              "Expected an expression of type `Bool`, but got `%s`", expr.thenExpr.type())
+          .build());
+    }
     expr.type = Type.bool();
     return null;
+  }
+
+  private void checkForAllThenIndex(ForallThenExpr.Index i) {
+
+    final Map<IsId, OperationDefinition> ops = new LinkedHashMap<>();
+    for (IsId o : i.operations) {
+      if (o.target() instanceof OperationDefinition op) {
+        ops.put(o, op);
+        continue;
+      }
+
+      addErrorAndContinueChecking(
+          error("Invalid Operation List", o)
+              .locationNote(o, "Elements must be operations, but this was a `%s`",
+                  requireNonNull(o.target()).nodeName())
+              .build());
+    }
+
+    final PseudoFormat pseudoFormat = i.symbolTable().findAs(i.id, PseudoFormat.class);
+    requireNonNull(pseudoFormat);
+
+    if (ops.isEmpty()) {
+      // empty operation sets are fine, the expression is trivially true
+      i.identifier().type = pseudoFormat.type();
+      return;
+    }
+
+    ops.values().forEach(o -> o.instructions.forEach(pseudoFormat::add));
+    i.identifier().type = pseudoFormat.type();
   }
 
   @Override

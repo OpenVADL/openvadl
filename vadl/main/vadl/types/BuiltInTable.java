@@ -1453,6 +1453,10 @@ public class BuiltInTable {
       CONCATENATE_STRINGS
   );
 
+  public static final List<BuiltIn> equalityPredicates = List.of(
+      EQU, NEQ
+  );
+
   public static final List<BuiltIn> arithmeticComparisons = List.of(
       EQU, NEQ,
       SGEQ, UGEQ,
