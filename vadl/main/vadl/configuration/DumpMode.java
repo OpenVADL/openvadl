@@ -34,6 +34,10 @@ public enum DumpMode {
    */
   ISS_PASS_GRAPHS,
   /**
+   * Dumps the SMT constraints verified during the encoding semantic verification pass.
+   */
+  ENC_SEM_VER_SMT,
+  /**
    * Dumps are only generated if an internal error occurs.
    */
   ON_FAILURE,

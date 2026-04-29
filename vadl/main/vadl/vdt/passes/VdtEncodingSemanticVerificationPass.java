@@ -28,11 +28,16 @@ import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import io.github.rascmatt.z3.Z3Bootstrap;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
+import vadl.dump.ArtifactTracker;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.pass.Pass;
@@ -110,6 +115,10 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
       final Solver solver = ctx.mkSolver();
       solver.add(atLeastTwo);
 
+      if (configuration().dumpMode() == DumpMode.ENC_SEM_VER_SMT) {
+        dumpConstraints(solver);
+      }
+
       final Status result = solver.check();
 
       if (result == Status.UNSATISFIABLE) {
@@ -121,6 +130,10 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
         var diagnostic = warning("Unable to verify encoding definitions.", loc);
         DeferredDiagnosticStore.add(diagnostic);
         return null;
+      }
+
+      if (configuration().dumpMode() == DumpMode.ENC_SEM_VER_SMT) {
+        dumpModel(solver);
       }
 
       final BitVecNum counterexample = (BitVecNum) solver.getModel().getConstInterp(insn);
@@ -219,6 +232,44 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
     }
 
     return diagnostic.build();
+  }
+
+  private void dumpConstraints(Solver solver) throws IOException {
+    var outputDir = initializeDumpDirectory();
+
+    var outFile = outputDir.resolve("constraints.smt");
+
+    Files.writeString(outFile, solver.toString(), StandardCharsets.UTF_8);
+    ArtifactTracker.addDump(outFile);
+  }
+
+  private void dumpModel(Solver solver) throws IOException {
+    if (solver.getModel() == null) {
+      return;
+    }
+
+    var outputDir = initializeDumpDirectory();
+
+    var outFile = outputDir.resolve("model.smt");
+
+    Files.writeString(outFile, solver.getModel().toString(), StandardCharsets.UTF_8);
+    ArtifactTracker.addDump(outFile);
+  }
+
+  private Path initializeDumpDirectory() throws IOException {
+    var outputDir = configuration().outputPath()
+        .resolve("dump")
+        .resolve(sanitize(getName().value()));
+    Files.createDirectories(outputDir);
+    return outputDir;
+  }
+
+  private static String sanitize(String value) {
+    var sanitized = value.replaceAll("[^\\w.-]", "_");
+    if (sanitized.isBlank()) {
+      return "unnamed";
+    }
+    return sanitized;
   }
 
 }
