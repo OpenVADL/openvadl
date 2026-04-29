@@ -42,7 +42,6 @@ import vadl.utils.WithLocation;
 class SymbolTable {
   @Nullable
   SymbolTable parent = null;
-  final List<SymbolTable> children = new ArrayList<>();
   final Map<String, Symbol> symbols = new HashMap<>();
   final Map<String, AstSymbol> macroSymbols = new HashMap<>();
   // the errors list is the same obj as the parent's error list
@@ -115,7 +114,6 @@ class SymbolTable {
     SymbolTable child = new SymbolTable();
     child.parent = this;
     child.errors = this.errors;
-    this.children.add(child);
     return child;
   }
 

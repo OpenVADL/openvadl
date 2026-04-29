@@ -2885,8 +2885,7 @@ public class TypeChecker
       fullName = identifier.name;
     } else if (expr instanceof IdentifierPath path) {
       origin = path.target();
-      var segments = path.pathToSegments();
-      innerName = segments.get(segments.size() - 1);
+      innerName = path.lastSegmentName();
       fullName = path.pathToString();
     } else {
       throw new IllegalStateException("Unknown identifyable: " + expr.getClass().getSimpleName());
