@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -60,7 +60,7 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
 
   @Override
   public String getVadlSpec() {
-    return "sys/aarch64/virt.vadl";
+    return "sys/aarch64/vprocessor.vadl";
   }
 
   @Override
@@ -87,9 +87,13 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
   }
 
   @Test
-  void testAutoAssembler() {
-    // just test that all instructions can be assembled
-    for (var instr : isa.ownInstructions()) {
+  void testAutoAssembler() throws IOException, DuplicatedPassKeyException {
+    var a64Isa = setupPassManagerAndRunSpec("sys/aarch64/virt.vadl",
+        PassOrders.iss(getConfiguration(false))
+    ).specification().isa().get();
+    
+    // just test that all aarch64 base instructions can be assembled
+    for (var instr : a64Isa.ownInstructions()) {
       System.out.println(autoAssembler.produce(instr).assembly());
     }
   }

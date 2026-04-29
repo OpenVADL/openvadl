@@ -13,7 +13,7 @@ ABI = lp64
 ASFLAGS = -march=$(ARCH) -mabi=$(ABI)
 LDFLAGS = -T link.ld
 
-QEMU=qemu-system-rv64im
+QEMU=qemu-system-rv64imv
 QFLAGS = -nographic
 
 PREPROCESSED=$(TESTS:tests/%.S=$(OUT_DIR)/%.preprocessed.S)

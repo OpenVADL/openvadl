@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ public class IssAarch64EmbenchTest extends QemuIssTest {
 
   @Test
   void a64EmbenchTest() throws IOException {
-    runEmbenchTest("sys/aarch64/virt.vadl", "build_virt-iss-a64.sh", "qemu-system-a64");
+    runEmbenchTest("sys/aarch64/vprocessor.vadl", "build_virt-iss-a64.sh", "qemu-system-a64");
   }
 
   private void runEmbenchTest(String vadlPath, String buildScript, String qemuSystem)

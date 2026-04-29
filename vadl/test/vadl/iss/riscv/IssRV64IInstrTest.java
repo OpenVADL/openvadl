@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ import vadl.iss.AsmTestBuilder;
  */
 public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
 
-  private static final String VADL_SPEC = "sys/risc-v/rv64im.vadl";
+  private static final String VADL_SPEC = "sys/risc-v/rv64v.vadl";
   private static final int TESTS_PER_INSTRUCTION = 50;
 
   @Override
