@@ -2653,6 +2653,7 @@ class ForallThenExpr extends Expr {
 
   static final class Index extends Node implements IdentifiableNode {
     IsId id;
+    @Child
     List<IsId> operations;
 
     public Index(IsId id, List<IsId> operations) {

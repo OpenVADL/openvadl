@@ -4258,7 +4258,28 @@ public class TypeChecker
 
   @Override
   public Void visit(ForallThenExpr expr) {
-    throwUnimplemented(expr);
+
+    for (ForallThenExpr.Index i : expr.indices) {
+
+      // empty operations set is fine, the expression is trivially true
+
+      for (IsId o : i.operations) {
+
+        if (o.target() instanceof OperationDefinition) {
+          continue;
+        }
+
+        addErrorAndContinueChecking(
+            error("Invalid Operation List", o)
+                .locationNote(o,
+                    "Elements must be operations, but this was a `%s`",
+                    requireNonNull(o.target()).nodeName())
+                .build());
+      }
+    }
+
+    checkWith(expr.thenExpr, Type.bool());
+    expr.type = Type.bool();
     return null;
   }
 

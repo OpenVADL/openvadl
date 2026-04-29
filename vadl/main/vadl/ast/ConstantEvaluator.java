@@ -559,6 +559,13 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   }
 
+  @Override
+  public ConstantValue visit(ForallThenExpr expr) {
+    throw new EvaluationError(
+        "The constant evaluator cannot evaluate a %s.".formatted(expr.nodeName()),
+        expr);
+  }
+
 
   @Override
   public ConstantValue visit(ForallExpr expr) {

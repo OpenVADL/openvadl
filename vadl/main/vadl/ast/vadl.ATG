@@ -2022,11 +2022,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
       operationsList<.out List<IsId> operations.>             (. indices.add(new ForallThenExpr.Index(id, operations)); .)
       {
         SYM_COMMA
-        identifierOrPlaceholder<out id>                       (. typeLiteral = null; .)
-        [
-          SYM_COLON
-          typeLiteral<out typeLiteral>
-        ]
+        identifierOrPlaceholder<out id>
         SYM_IN
         operationsList<out operations>                        (. indices.add(new ForallThenExpr.Index(id, operations)); .)
       }

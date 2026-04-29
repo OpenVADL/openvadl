@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BuiltInTable;
+import vadl.types.InstructionType;
+import vadl.types.MicroArchitectureType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.Levenshtein;
@@ -912,11 +914,18 @@ class SymbolTable {
     public Void visit(ForallThenExpr expr) {
       beforeTravel(expr);
 
-      // The identifiers of the for must be visible in it's children
+      // The identifiers of the for must be visible in its children
       var childTable = currentSymbols().createChild();
       expr.symbolTable = childTable;
       expr.indices.forEach(index -> {
         childTable.defineSymbol(index.identifier().name, expr);
+        index.identifier().symbolTable = childTable;
+        // TODO:
+        //index.identifier().type =
+
+        for (IsId o : index.operations) {
+          withSymbols(currentSymbols(), () -> ((Identifier) o).accept(this));
+        }
       });
       withSymbols(childTable, () -> expr.thenExpr.accept(this));
 
