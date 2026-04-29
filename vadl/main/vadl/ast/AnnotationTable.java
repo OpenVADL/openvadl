@@ -266,15 +266,12 @@ public class AnnotationTable {
         }).build();
 
     annotationOn(GroupDefinition.class, "assert", GroupAssertionAnnotation::new)
-        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
         .applyViam((def, annotation, lowering) -> {
-          // TODO: Implement
 
           var group = (Group) def;
           var graph = new BehaviorLowering(lowering).getFunctionGraph(annotation.expr,
               group.simpleName() + " Group");
           graph.setParentDefinition(group);
-
           // TODO: Append annotation to group definition
         })
         .build();
@@ -1149,7 +1146,8 @@ class FormatFieldAnnotation extends Annotation {
   Constant.BitSlice slice;
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) { }
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {

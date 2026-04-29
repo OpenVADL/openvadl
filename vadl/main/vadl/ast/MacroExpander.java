@@ -578,6 +578,13 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(PseudoFormat definition) {
+    return new PseudoFormat(definition.location(), definition.instructions().stream()
+        .map(this::expandDefinition)
+        .toList());
+  }
+
+  @Override
   public Definition visit(DerivedFormatField definition) {
     return new DerivedFormatField(
         expandExpr(definition.identifier),

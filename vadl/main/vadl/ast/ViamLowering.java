@@ -1242,6 +1242,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return Optional.of(format);
   }
 
+  @Override
+  public Optional<vadl.viam.Definition> visit(PseudoFormat pseudoFormat) {
+    // Pseudo format is not included in the VIAM
+    return Optional.empty();
+  }
+
   /**
    * The user has to specify a predicate when she specifies an encoding function.
    */
