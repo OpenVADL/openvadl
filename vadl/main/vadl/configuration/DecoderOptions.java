@@ -130,6 +130,9 @@ public class DecoderOptions {
   private Map<OptionalStep, Boolean> opts;
   private Generator generator;
 
+  /**
+   * Default constructor.
+   */
   public DecoderOptions() {
     opts = new HashMap<>(Map.of(
         OptionalStep.OPT_ALL, true,
