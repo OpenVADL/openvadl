@@ -1,9 +1,12 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import util.registerBenchmarkSuiteTask
+import util.registerBenchmarkTestTask
 import vadl.GenerateCocoParserTask
 import java.util.*
 
 plugins {
     id("conventions-jvm")
+    id("conventions-benchmark-tests")
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.z3)
 }
@@ -95,20 +98,6 @@ tasks.processTestResources {
 
 tasks.withType<Test>().configureEach {
     environment("PROJECT_ROOT", rootDir.absolutePath)
-    useJUnitPlatform {
-        val include = System.getProperty("tags.include")
-        val exclude = System.getProperty("tags.exclude")
-
-        if (include != null) {
-            includeTags(include)
-        } else {
-            excludeTags("BenchmarkTest")
-        }
-
-        if (exclude != null) {
-            excludeTags(exclude)
-        }
-    }
     jvmArgs("--enable-preview")
     reports {
         junitXml.required.set(true)
@@ -130,6 +119,24 @@ for (gen in generators) {
         }
     }
 }
+
+val testIssBenchmarkRiscv = registerBenchmarkTestTask(
+    name = "test-iss-benchmark-riscv",
+    description = "Runs the ISS RISC-V benchmark tests",
+    includePattern = "vadl.iss.riscv.IssRiscvEmbenchBenchmarkTest"
+)
+
+val testIssBenchmarkAarch64 = registerBenchmarkTestTask(
+    name = "test-iss-benchmark-aarch64",
+    description = "Runs the ISS AArch64 benchmark tests",
+    includePattern = "vadl.iss.aarch64.IssAarch64EmbenchBenchmarkTest"
+)
+
+registerBenchmarkSuiteTask(
+    name = "test-iss-benchmark",
+    description = "Runs the ISS benchmark tests",
+    dependencies = listOf(testIssBenchmarkRiscv.get(), testIssBenchmarkAarch64.get())
+)
 
 tasks.register<Test>("test-others") {
     group = "verification"

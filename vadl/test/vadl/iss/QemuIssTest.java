@@ -119,6 +119,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
             "soft", softmmuTarget + refTarget,
             "qemu-bin", qemuBin)).replace("""
             FROM ${qemu}
+            
+            # required for embench
+            RUN pip install pandas
+            
             COPY iss /qemu
             WORKDIR /qemu/build
             LABEL key=VADL_TEST_CONTAINER
