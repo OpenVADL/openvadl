@@ -1,0 +1,28 @@
+instruction set architecture ISA = {
+  program counter PC : Bits<32>
+
+  format IType : Bits<32> = {
+    opcode : Bits<32>
+  }
+
+  instruction A : IType = PC := 0
+  encoding A = {opcode = 0b00}
+  assembly A = (mnemonic, "")
+
+  operation Op = {A}
+
+  group VLIW = Op<1..PC>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid upper bound
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupLiteralUpperBoundNotConstant.vadl:14:22
+//       │
+//    14 │   group VLIW = Op<1..PC>
+//       │                      ^^ note: Upper bounds of repetition expressions must be constant
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

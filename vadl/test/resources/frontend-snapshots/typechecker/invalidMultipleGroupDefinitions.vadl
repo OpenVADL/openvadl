@@ -1,0 +1,42 @@
+instruction set architecture IsaA = {
+
+  program counter PC : Bits<32>
+
+  format IType : Bits<32> = {
+      opcode : Bits<32>
+  }
+
+  instruction A : IType = PC := 0
+  encoding A = {opcode = 0b00}
+  assembly A = (mnemonic, "")
+
+  instruction B : IType = PC := 0
+  encoding B = {opcode = 0b01}
+  assembly B = (mnemonic, "")
+
+  operation O1 = {A}
+  operation O2 = {A,B}
+
+
+  group VLIW1 = ({O1,O2}|O1<2..5>)
+}
+
+instruction set architecture IsaB extending IsaA = {
+  group VLIW2 = O1<5..6>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Multiple Group Definitions
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidMultipleGroupDefinitions.vadl:25:3
+//       │
+//    21 │   group VLIW1 = ({O1,O2}|O1<2..5>)
+//       │   -------------------------------- note: This additional group definition is not allowed.
+//       ⋮
+//    25 │   group VLIW2 = O1<5..6>
+//       │   ^^^^^^^^^^^^^^^^^^^^^^ An instruction set architecture can have at most one group definition.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

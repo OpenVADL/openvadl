@@ -133,7 +133,8 @@ public class IssTensorAssignmentToForallPassTest extends AbstractTest {
         List.of(reg, otherReg),
         null,
         Collections.emptyList(),
-        Collections.emptyList()
+        Collections.emptyList(),
+        null
     ));
 
     return new Fixture(spec, instruction, tensorWrite, otherWrite);

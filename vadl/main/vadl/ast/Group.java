@@ -16,17 +16,22 @@
 
 package vadl.ast;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 sealed interface Group {
 
   void prettyPrint(int indent, StringBuilder builder);
 
-  class Sequence extends Node {
+  <R> R accept(GroupVisitor<R> visitor);
 
+  final class Sequence extends Node implements Group {
+
+    @Child
     List<Group> groups;
     SourceLocation loc;
 
@@ -46,7 +51,7 @@ sealed interface Group {
     }
 
     @Override
-    void prettyPrint(int indent, StringBuilder builder) {
+    public void prettyPrint(int indent, StringBuilder builder) {
       var isFirst = true;
       for (var group : groups) {
         if (!isFirst) {
@@ -55,6 +60,11 @@ sealed interface Group {
         isFirst = false;
         group.prettyPrint(indent, builder);
       }
+    }
+
+    @Override
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
     }
 
     @Override
@@ -77,15 +87,31 @@ sealed interface Group {
 
   final class Literal extends Node implements Group {
 
+    @Child
     IsId id;
+    @Child
     @Nullable
     Expr size;
     SourceLocation loc;
+
+    /**
+     * Operation literal matched by this literal, initialized during type checking.
+     */
+    @LazyInit
+    OperationDefinition operation;
 
     Literal(IsId id, @Nullable Expr size, SourceLocation loc) {
       this.id = id;
       this.size = size;
       this.loc = loc;
+    }
+
+    public OperationDefinition getOperation() {
+      return operation;
+    }
+
+    public void setOperation(OperationDefinition operation) {
+      this.operation = operation;
     }
 
     @Override
@@ -109,6 +135,11 @@ sealed interface Group {
     }
 
     @Override
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
@@ -128,6 +159,7 @@ sealed interface Group {
 
   final class Alternative extends Node implements Group {
 
+    @Child
     List<Sequence> sequences;
     SourceLocation loc;
 
@@ -161,6 +193,11 @@ sealed interface Group {
     }
 
     @Override
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
@@ -180,6 +217,7 @@ sealed interface Group {
 
   final class Permutation extends Node implements Group {
 
+    @Child
     List<Sequence> sequences;
     SourceLocation loc;
 
@@ -213,6 +251,11 @@ sealed interface Group {
     }
 
     @Override
+    public <R> R accept(GroupVisitor<R> visitor) {
+      return visitor.visit(this);
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
@@ -228,5 +271,15 @@ sealed interface Group {
     public int hashCode() {
       return Objects.hashCode(sequences);
     }
+  }
+
+  interface GroupVisitor<R> {
+    R visit(Sequence seq);
+
+    R visit(Alternative alt);
+
+    R visit(Permutation perm);
+
+    R visit(Literal lit);
   }
 }

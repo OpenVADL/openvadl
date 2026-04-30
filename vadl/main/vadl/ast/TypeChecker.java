@@ -40,6 +40,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.ast.Group.GroupVisitor;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -76,7 +77,8 @@ import vadl.viam.Constant;
  */
 @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
 public class TypeChecker
-    implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
+    implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void>,
+    GroupVisitor<Void> {
 
   /**
    * The expected type of the expression being checked.
@@ -1262,8 +1264,36 @@ public class TypeChecker
       check(def);
     }
 
+    checkOneGroupDefinition(definition);
+
     // FIXME: Verify at least one programcounter
     return null;
+  }
+
+  private void checkOneGroupDefinition(InstructionSetDefinition isa) {
+
+    final List<GroupDefinition> groups = isa
+        .allInheritedNodesOf(GroupDefinition.class)
+        .collect(Collectors.toList());
+
+    if (groups.isEmpty()) {
+      return;
+    }
+
+    if (groups.size() == 1) {
+      return;
+    }
+
+    var primary = groups.removeLast();
+    var diagnostic = error("Multiple Group Definitions", primary)
+        .locationDescription(primary,
+            "An instruction set architecture can have at most one group definition.");
+
+    for (var group : groups) {
+      diagnostic.locationNote(group, "This additional group definition is not allowed.");
+    }
+
+    addErrorAndContinueChecking(diagnostic.build());
   }
 
   @Override
@@ -1865,7 +1895,105 @@ public class TypeChecker
 
   @Override
   public Void visit(GroupDefinition groupDefinition) {
-    throw addErrorAndStopChecking(unimplementedError(groupDefinition));
+    groupDefinition.groupSequence.accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(Group.Literal lit) {
+
+
+    if (!(lit.id.target() instanceof OperationDefinition op)) {
+      addErrorAndContinueChecking(
+          error("Invalid Group Literal", lit)
+              .locationNote(lit,
+                  "Group literals must be operations but this was a `%s`",
+                  requireNonNull(lit.id.target()).nodeName())
+              .build());
+      return null;
+    }
+
+    lit.setOperation(op);
+
+    if (lit.size == null) {
+      return null;
+    }
+
+    if (!(lit.size instanceof RangeExpr range)) {
+      check(lit.size);
+      addErrorAndContinueChecking(
+          error("Invalid Repetition", lit.size)
+              .locationNote(lit.size, "Repetitions of literals must specify a range expression "
+                  + "but this was a `%s`", requireNonNull(lit.size.type()))
+              .build());
+      return null;
+    }
+
+    // Don't check full range, as we allow custom range semantics for repetitions. That is, we allow
+    // (and require) the lower bound to be lower or equal to the upper bound.
+    check(range.from);
+    check(range.to);
+
+    ConstantValue from;
+    try {
+      from = constantEvaluator.eval(range.from);
+    } catch (EvaluationError e) {
+      addErrorAndContinueChecking(
+          error("Invalid lower bound", range.from)
+              .locationNote(range.from, "Lower bounds of repetition expressions must be constant")
+              .build());
+      from = null;
+    }
+
+
+    ConstantValue to;
+    try {
+      to = constantEvaluator.eval(range.to);
+    } catch (EvaluationError e) {
+      addErrorAndContinueChecking(
+          error("Invalid upper bound", range.to)
+              .locationNote(range.to, "Upper bounds of repetition expressions must be constant")
+              .build());
+      to = null;
+    }
+
+    if (from == null || to == null) {
+      return null;
+    }
+
+    if (from.value().compareTo(BigInteger.ZERO) < 0) {
+      addErrorAndContinueChecking(
+          error("Invalid lower bound", range.from)
+              .locationNote(range.from, "Lower bounds of repetition expressions must be positive")
+              .build());
+    }
+
+    if (from.value().compareTo(to.value()) > 0) {
+      addErrorAndContinueChecking(
+          error("Invalid upper bound", range)
+              .locationNote(range, "Upper bounds of repetition expressions must be "
+                  + "greater or equal to the lower bound").build());
+    }
+
+    return null;
+  }
+
+  @Override
+  public Void visit(Group.Sequence seq) {
+    seq.groups.forEach(g -> g.accept(this));
+    return null;
+  }
+
+  @Override
+  public Void visit(Group.Alternative alt) {
+    alt.sequences.forEach(s -> s.accept(this));
+    return null;
+  }
+
+  @Override
+  public Void visit(Group.Permutation perm) {
+    perm.sequences.forEach(s -> s.accept(this));
+    return null;
   }
 
   @Override

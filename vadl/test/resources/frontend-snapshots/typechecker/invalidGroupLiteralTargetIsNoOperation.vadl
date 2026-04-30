@@ -1,0 +1,18 @@
+instruction set architecture ISA = {
+  program counter PC : Bits<32>
+
+  group VLIW = PC
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Group Literal
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupLiteralTargetIsNoOperation.vadl:4:16
+//       │
+//     4 │   group VLIW = PC
+//       │                ^^ note: Group literals must be operations but this was a `counter definition`
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

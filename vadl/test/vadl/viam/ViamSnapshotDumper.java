@@ -141,7 +141,9 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
     }
   }
 
-  private class DefinitionInfoPrinter extends DefinitionVisitor.Empty {
+  private class DefinitionInfoPrinter extends DefinitionVisitor.Empty
+      implements Group.GroupVisitor<Void> {
+
     private final int atIndent;
 
     DefinitionInfoPrinter(int atIndent) {
@@ -457,6 +459,56 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
     public void visit(AsmNonTerminalRule nonTerminalRule) {
       lineAt(atIndent, "AsmType: %s".formatted(compactAsmType(nonTerminalRule)));
       lineAt(atIndent, "Alternatives: %s".formatted(nonTerminalRule.getAlternatives()));
+    }
+
+    @Override
+    public void visit(Group group) {
+      indent++;
+      group.getExpression().accept(this);
+      indent--;
+    }
+
+    @Override
+    public Void visit(Group.Literal literal) {
+      dumpDefinition(literal.op());
+      return null;
+    }
+
+    @Override
+    public Void visit(Group.Sequence sequence) {
+      lineAt(indent, "Sequence");
+      indent++;
+      sequence.elements().forEach(e -> e.accept(this));
+      indent--;
+      return null;
+    }
+
+    @Override
+    public Void visit(Group.Alternation alternation) {
+      lineAt(indent, "Alternation");
+      indent++;
+      alternation.elements().forEach(e -> e.accept(this));
+      indent--;
+      return null;
+    }
+
+    @Override
+    public Void visit(Group.Permutation permutation) {
+      lineAt(indent, "Permutation");
+      indent++;
+      permutation.elements().forEach(e -> e.accept(this));
+      indent--;
+      return null;
+    }
+
+    @Override
+    public Void visit(Group.Repetition repetition) {
+      lineAt(indent,
+          "Repetition: %s..%s".formatted(repetition.from().intValue(), repetition.to().intValue()));
+      indent++;
+      repetition.expression().accept(this);
+      indent--;
+      return null;
     }
   }
 

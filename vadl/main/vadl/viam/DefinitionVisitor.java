@@ -42,6 +42,8 @@ public interface DefinitionVisitor {
 
   void visit(Operation operation);
 
+  void visit(Group group);
+
   void visit(Format format);
 
   void visit(Format.Field formatField);
@@ -141,6 +143,10 @@ public interface DefinitionVisitor {
       if (pc != null) {
         pc.accept(this);
       }
+      var group = isa.group();
+      if (group != null) {
+        group.accept(this);
+      }
       afterTraversal(isa);
     }
 
@@ -184,6 +190,12 @@ public interface DefinitionVisitor {
     public void visit(Operation operation) {
       beforeTraversal(operation);
       afterTraversal(operation);
+    }
+
+    @Override
+    public void visit(Group group) {
+      beforeTraversal(group);
+      afterTraversal(group);
     }
 
     @Override
@@ -463,6 +475,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Operation operation) {
+
+    }
+
+    @Override
+    public void visit(Group group) {
 
     }
 

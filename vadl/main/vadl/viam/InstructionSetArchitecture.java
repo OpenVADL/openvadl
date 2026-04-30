@@ -38,6 +38,9 @@ public class InstructionSetArchitecture extends Definition {
   private final List<Function> functions;
   private final List<Operation> operations;
 
+  @Nullable
+  private final Group group;
+
   // contains declared and anonymous exceptions
   private final List<ExceptionDef> exceptions;
   private final List<Relocation> relocations;
@@ -68,7 +71,8 @@ public class InstructionSetArchitecture extends Definition {
                                     List<RegisterTensor> registers,
                                     @Nullable Counter pc,
                                     List<Memory> memories,
-                                    List<ArtificialResource> artificialResources
+                                    List<ArtificialResource> artificialResources,
+                                    @Nullable Group group
   ) {
     super(identifier);
     this.specification = specification;
@@ -83,6 +87,7 @@ public class InstructionSetArchitecture extends Definition {
     this.pc = pc;
     this.memories = memories;
     this.artificialResources = artificialResources;
+    this.group = group;
 
     // set parent architecture of instructions
     for (var instr : instructions) {
@@ -127,6 +132,14 @@ public class InstructionSetArchitecture extends Definition {
     return operations;
   }
 
+  /**
+   * Returns the {@link Group} of this ISA.
+   * So it might not include a group definition defined by the super ISA.
+   */
+  @Nullable
+  public Group group() {
+    return group;
+  }
 
   public List<ExceptionDef> exceptions() {
     return exceptions;
