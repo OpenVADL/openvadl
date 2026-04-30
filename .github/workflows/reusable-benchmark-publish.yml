@@ -1,0 +1,76 @@
+name: Reusable Benchmark Publish Workflow
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Runs-on property'
+        required: false
+        default: 'self-hosted-x64'
+        type: string
+      benchmark-command:
+        description: 'Command that produces the benchmark artifact'
+        required: true
+        type: string
+      artifact-source:
+        description: 'Path to the produced artifact'
+        required: true
+        type: string
+      artifact-name:
+        description: 'Published artifact filename'
+        required: true
+        type: string
+      destination-folder:
+        description: 'Destination folder in the target repository'
+        required: true
+        type: string
+      commit-message:
+        description: 'Commit message for the pushed artifact'
+        required: true
+        type: string
+      extra-env:
+        description: 'Additional environment variables in KEY=VALUE form, one per line'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  benchmark:
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
+      - name: Set benchmark environment
+        if: ${{ inputs.extra-env != '' }}
+        run: printf '%s\n' "${{ inputs.extra-env }}" >> "$GITHUB_ENV"
+      - name: Run benchmark
+        run: ${{ inputs.benchmark-command }}
+        env:
+          isCI: true
+      - name: Prepare artifact
+        run: cp "${{ inputs.artifact-source }}" "${{ github.workspace }}/${{ inputs.artifact-name }}"
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          repository: openVADL/resselpark
+          token: ${{ secrets.ACCESS_TOKEN_RESSELPARK }}
+          ref: master
+          path: resselpark
+      - name: Copy artifact into target repository
+        run: |
+          mkdir -p "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}"
+          cp "${{ github.workspace }}/${{ inputs.artifact-name }}" \
+            "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}/${{ inputs.artifact-name }}"
+      - name: Commit and push artifact
+        run: |
+          cd "${{ github.workspace }}/resselpark"
+          git config user.email "ci@openvadl.org"
+          git config user.name "ci"
+          git add "${{ inputs.destination-folder }}/${{ inputs.artifact-name }}"
+          git commit -m "${{ inputs.commit-message }}" || exit 0
+          git push origin HEAD:master

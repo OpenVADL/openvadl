@@ -30,7 +30,7 @@ public abstract class IssEmbenchBenchmark extends QemuIssTest {
   private static final String DEFAULT_HOST_RESULTS_DIR = "vadl/build/iss-benchmarks";
 
   protected record BenchmarkSpec(
-      String resultKey,
+      String outputPath,
       String vadlPath,
       String runnerScript,
       String normalizedResultsDir
@@ -38,19 +38,20 @@ public abstract class IssEmbenchBenchmark extends QemuIssTest {
   }
 
   protected BenchmarkSpec benchmarkSpec(
-      String resultKey,
+      String outputPath,
       String vadlPath,
       String runnerScript,
       String normalizedResultsDir
   ) {
-    return new BenchmarkSpec(resultKey, vadlPath, runnerScript, normalizedResultsDir);
+    return new BenchmarkSpec(outputPath, vadlPath, runnerScript, normalizedResultsDir);
   }
 
   protected void runBenchmark(BenchmarkSpec benchmark) throws IOException {
     var image = generateIssSimulator(benchmark.vadlPath());
     var embenchPath = VadlFileUtils.copyResourceDirToTempDir("embench", "embench");
     var hostResultsDir = resolveHostResultsDir();
-    var guestOutputDir = DEFAULT_BENCHMARK_OUTPUT_DIR + "/" + benchmark.resultKey();
+    var outputPath = Path.of(benchmark.outputPath());
+    var guestOutputDir = Path.of(DEFAULT_BENCHMARK_OUTPUT_DIR).resolve(outputPath).toString();
 
     var runCommand = String.join(" && ",
         "chmod -R +x /work/embench",
@@ -68,9 +69,9 @@ public abstract class IssEmbenchBenchmark extends QemuIssTest {
             .withCommand("/bin/bash", "-c", runCommand),
         container -> {
           try {
-            var outputPath = hostResultsDir.resolve(benchmark.resultKey());
-            Files.createDirectories(outputPath.getParent());
-            copyPathFromContainer(container, guestOutputDir, outputPath);
+            var hostOutputPath = hostResultsDir.resolve(outputPath);
+            Files.createDirectories(hostOutputPath.getParent());
+            copyPathFromContainer(container, guestOutputDir, hostOutputPath);
           } catch (IOException e) {
             throw new RuntimeException("Failed to copy ISS benchmark results to host", e);
           }

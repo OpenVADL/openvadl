@@ -26,8 +26,7 @@ echo "Benchmarking open-vadl..."
 ./run-benchmark.sh "a64-open-vadl" ./benchmark_qemu.sh "qemu-system-a64" -nographic -bios
 echo "Benchmarking qemu..."
 ./run-benchmark.sh "a64-qemu" ./benchmark_qemu.sh \
-  "qemu-system-aarch64" -M virt -cpu cortex-a57 -m 4G -net none -nographic -semihosting \
-  -accel tcg,one-insn-per-tb=off -kernel
+  "qemu-system-aarch64" -M virt -cpu cortex-a57 -m 4G -net none -nographic -semihosting -kernel
 echo "Done."
 
 python3 data-relative.py results-a64-iss \
