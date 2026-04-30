@@ -52,8 +52,13 @@ jobs:
         run: ${{ inputs.benchmark-command }}
         env:
           isCI: true
+      - name: Sanitize artifact filename
+        run: |
+          sanitized_name="${{ inputs.artifact-name }}"
+          sanitized_name="${sanitized_name//:/-}"
+          printf 'SANITIZED_ARTIFACT_NAME=%s\n' "$sanitized_name" >> "$GITHUB_ENV"
       - name: Prepare artifact
-        run: cp "${{ inputs.artifact-source }}" "${{ github.workspace }}/${{ inputs.artifact-name }}"
+        run: cp "${{ inputs.artifact-source }}" "${{ github.workspace }}/${SANITIZED_ARTIFACT_NAME}"
       - name: Checkout target repository
         uses: actions/checkout@v4
         with:
@@ -64,13 +69,13 @@ jobs:
       - name: Copy artifact into target repository
         run: |
           mkdir -p "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}"
-          cp "${{ github.workspace }}/${{ inputs.artifact-name }}" \
-            "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}/${{ inputs.artifact-name }}"
+          cp "${{ github.workspace }}/${SANITIZED_ARTIFACT_NAME}" \
+            "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}/${SANITIZED_ARTIFACT_NAME}"
       - name: Commit and push artifact
         run: |
           cd "${{ github.workspace }}/resselpark"
           git config user.email "ci@openvadl.org"
           git config user.name "ci"
-          git add "${{ inputs.destination-folder }}/${{ inputs.artifact-name }}"
+          git add "${{ inputs.destination-folder }}/${SANITIZED_ARTIFACT_NAME}"
           git commit -m "${{ inputs.commit-message }}" || exit 0
           git push origin HEAD:master

@@ -34,7 +34,7 @@ jobs:
       runner: self-hosted-x64
       benchmark-command: ./gradlew test -i --tests "vadl.rtl.riscv.RtlRiscVBenchmarkTest" -Dtags.include=BenchmarkTest
       artifact-source: riscv_rtl_dec_benchmarks.csv
-      artifact-name: ${{ github.event.repository.updated_at }}-${{ github.sha }}.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/rtl/riscv/benchmark
       commit-message: 'data: Pushed RTL data'
       extra-env: |
