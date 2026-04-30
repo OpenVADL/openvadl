@@ -25,13 +25,18 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.DynamicNode;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestMethodOrder;
 import vadl.iss.IssTestUtils;
 
 /**
  * Tests the RV64V instructions set.
  */
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
 
   private static final String VADL_SPEC = "sys/risc-v/rv64v.vadl";
@@ -69,6 +74,19 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
 
   public RV64IMVTestBuilder getBuilder(String testNamePrefix, int id) {
     return new RV64IMVTestBuilder(testNamePrefix + "_" + id);
+  }
+
+  @Test
+  @Order(1)
+  void setupInstructionTests() throws IOException {
+    initializeInstructionBatchFromTestCases(this::buildInstructionTestCases, this::getInstructionName);
+  }
+
+  @TestFactory
+  @Order(2)
+  Stream<DynamicNode> buildInstructionTests() throws IOException {
+    initializeInstructionBatchFromTestCases(this::buildInstructionTestCases, this::getInstructionName);
+    return buildInstructionTestContainers();
   }
 
   private IssTestUtils.TestCase createBinaryVecInstrTest(RV64IMVTestBuilder b, String instruction,
@@ -153,9 +171,46 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
     return b.toTestCase();
   }
 
-  private Stream<DynamicTest> testBinaryVecInstr(String instruction,
-                                                 boolean v, boolean x, boolean i)
-      throws IOException {
+  private List<IssTestUtils.TestCase> buildInstructionTestCases() {
+    var tests = new ArrayList<IssTestUtils.TestCase>();
+    tests.addAll(testBinaryVecInstr("vadd", true, true, true));
+    tests.addAll(testBinaryVecInstr("vsub", true, true, false));
+    tests.addAll(testBinaryVecInstr("vmul", true, true, false));
+    tests.addAll(testBinaryVecInstr("vmulh", true, true, false));
+    tests.addAll(testBinaryVecInstr("vmulhu", true, true, false));
+    tests.addAll(testBinaryVecInstr("vmulhsu", true, true, false));
+    tests.addAll(testBinaryVecInstr("vdiv", true, true, false));
+    tests.addAll(testBinaryVecInstr("vdivu", true, true, false));
+    tests.addAll(testBinaryVecInstr("vrem", true, true, false));
+    tests.addAll(testBinaryVecInstr("vremu", true, true, false));
+    tests.addAll(testBinaryVecInstr("vminu", true, true, false));
+    tests.addAll(testBinaryVecInstr("vmin", true, true, false));
+    tests.addAll(testBinaryVecInstr("vmaxu", true, true, false));
+    tests.addAll(testBinaryVecInstr("vmax", true, true, false));
+    tests.addAll(testBinaryVecInstr("vand", true, true, true));
+    tests.addAll(testBinaryVecInstr("vor", true, true, true));
+    tests.addAll(testBinaryVecInstr("vmseq", true, true, true));
+    tests.addAll(testBinaryVecInstr("vxor", true, true, true));
+    tests.addAll(testBinaryVecInstr("vmadd", true, true, true, true, false));
+    tests.addAll(testBinaryVecInstr("vnmsub", true, true, true, true, false));
+    tests.addAll(testBinaryVecInstr("vmacc", true, true, true, true, false));
+    tests.addAll(testBinaryVecInstr("vnmsac", true, true, true, true, false));
+    tests.addAll(buildTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDSUM.VS", id), "vredsum")));
+    tests.addAll(buildTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDAND.VS", id), "vredand")));
+    tests.addAll(buildTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDOR.VS", id), "vredor")));
+    tests.addAll(buildTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDXOR.VS", id), "vredxor")));
+    return tests;
+  }
+
+  private String getInstructionName(IssTestUtils.TestCase testCase) {
+    var separator = testCase.id().lastIndexOf('_');
+    var instructionId = separator <= 0 ? testCase.id() : testCase.id().substring(0, separator);
+    var dot = instructionId.indexOf('.');
+    return (dot >= 0 ? instructionId.substring(0, dot) : instructionId).toLowerCase();
+  }
+
+  private List<IssTestUtils.TestCase> testBinaryVecInstr(String instruction,
+                                                         boolean v, boolean x, boolean i) {
     return testBinaryVecInstr(instruction, false, false, v, x, i);
   }
 
@@ -176,10 +231,9 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
    * @return a stream of dynamic tests for the specified combinations of binary vector instructions.
    * @throws IOException if an error occurs during test case generation or execution.
    */
-  private Stream<DynamicTest> testBinaryVecInstr(String instruction,
-                                                 boolean fillDest, boolean flipArgs,
-                                                 boolean v, boolean x, boolean i)
-      throws IOException {
+  private List<IssTestUtils.TestCase> testBinaryVecInstr(String instruction,
+                                                         boolean fillDest, boolean flipArgs,
+                                                         boolean v, boolean x, boolean i) {
     var testNamePrefix = instruction.toUpperCase();
     List<Function<Integer, IssTestUtils.TestCase>> generators = new ArrayList<>();
     if (v) {
@@ -200,140 +254,7 @@ public class IssRV64VInstrTest extends AbstractIssRiscv64InstrTest {
         return createBinaryVecImmInstrTest(builder, instruction + ".vi", fillDest);
       });
     }
-    return runTestsWith(generators);
-  }
-
-
-// Test methods using helper functions
-
-  @TestFactory
-  Stream<DynamicTest> vadd() throws IOException {
-    return testBinaryVecInstr("vadd", true, true, true);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vsub() throws IOException {
-    return testBinaryVecInstr("vsub", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmul() throws IOException {
-    return testBinaryVecInstr("vmul", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmulh() throws IOException {
-    return testBinaryVecInstr("vmulh", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmulhu() throws IOException {
-    return testBinaryVecInstr("vmulhu", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmulhsu() throws IOException {
-    return testBinaryVecInstr("vmulhsu", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vdiv() throws IOException {
-    return testBinaryVecInstr("vdiv", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vdivu() throws IOException {
-    return testBinaryVecInstr("vdivu", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vrem() throws IOException {
-    return testBinaryVecInstr("vrem", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vremu() throws IOException {
-    return testBinaryVecInstr("vremu", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vminu() throws IOException {
-    return testBinaryVecInstr("vminu", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmin() throws IOException {
-    return testBinaryVecInstr("vmin", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmaxu() throws IOException {
-    return testBinaryVecInstr("vmaxu", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmax() throws IOException {
-    return testBinaryVecInstr("vmax", true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vand() throws IOException {
-    return testBinaryVecInstr("vand", true, true, true);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vor() throws IOException {
-    return testBinaryVecInstr("vor", true, true, true);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vm() throws IOException {
-    return testBinaryVecInstr("vmseq", true, true, true);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vxor() throws IOException {
-    return testBinaryVecInstr("vxor", true, true, true);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmadd() throws IOException {
-    return testBinaryVecInstr("vmadd", true, true, true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vnmsub() throws IOException {
-    return testBinaryVecInstr("vnmsub", true, true, true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vmacc() throws IOException {
-    return testBinaryVecInstr("vmacc", true, true, true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vnmsac() throws IOException {
-    return testBinaryVecInstr("vnmsac", true, true, true, true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vredsum() throws IOException {
-    return runTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDSUM.VS", id), "vredsum"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vredand() throws IOException {
-    return runTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDAND.VS", id), "vredand"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vredor() throws IOException {
-    return runTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDOR.VS", id), "vredor"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> vredxor() throws IOException {
-    return runTestsWith((id) -> createReductionVecInstrTest(getBuilder("VREDXOR.VS", id), "vredxor"));
+    return buildTestsWith(generators);
   }
 
 }

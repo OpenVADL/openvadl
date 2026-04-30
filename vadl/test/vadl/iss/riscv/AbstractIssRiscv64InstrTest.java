@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@ public abstract class AbstractIssRiscv64InstrTest extends IssInstrTest {
 
   @Override
   public Tool simulator() {
-    return new Tool("/qemu/build/qemu-system-rv64im", "-bios");
+    return new Tool("/qemu/build/qemu-system-rv64imv", "-bios");
   }
 
   @Override

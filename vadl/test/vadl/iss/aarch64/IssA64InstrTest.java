@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,9 +24,12 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.DynamicNode;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.shaded.com.google.errorprone.annotations.concurrent.LazyInit;
@@ -43,6 +46,7 @@ import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
 
   private static final Logger log = LoggerFactory.getLogger(IssA64InstrTest.class);
@@ -60,7 +64,7 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
 
   @Override
   public String getVadlSpec() {
-    return "sys/aarch64/virt.vadl";
+    return "sys/aarch64/vprocessor.vadl";
   }
 
   @Override
@@ -87,179 +91,69 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
   }
 
   @Test
-  void testAutoAssembler() {
-    // just test that all instructions can be assembled
-    for (var instr : isa.ownInstructions()) {
+  void testAutoAssembler() throws IOException, DuplicatedPassKeyException {
+    var a64Isa = setupPassManagerAndRunSpec("sys/aarch64/virt.vadl",
+        PassOrders.iss(getConfiguration(false))
+    ).specification().isa().get();
+    
+    // just test that all aarch64 base instructions can be assembled
+    for (var instr : a64Isa.ownInstructions()) {
       System.out.println(autoAssembler.produce(instr).assembly());
     }
   }
 
 
-  @TestFactory
-  Stream<DynamicTest> testADC() throws IOException {
-    return runTestsWith(makeTestCases("ADCW", "ADCX"));
+  @Test
+  @Order(1)
+  void setupInstructionTests() throws IOException {
+    initializeInstructionBatch(this::buildInstructionTestGroups);
   }
 
   @TestFactory
-  Stream<DynamicTest> testADCS() throws IOException {
-    return runTestsWith(makeTestCasesFromPrefixes("ADCS"));
+  @Order(2)
+  Stream<DynamicNode> buildInstructionTests() throws IOException {
+    initializeInstructionBatch(this::buildInstructionTestGroups);
+    return buildInstructionTestContainers();
   }
 
-  @TestFactory
-  Stream<DynamicTest> testADDExt() throws IOException {
-    // ADD (extended register): Add extended and scaled register.
-    return runTestsWith(makeTestCasesFromPrefixes("ADDWUX", "ADDWSX", "ADDXUX", "ADDXSX"));
+  private List<InstructionTestGroup> buildInstructionTestGroups() {
+    return List.of(
+        instructionGroup("ADC", makeTestCases("ADCW", "ADCX")),
+        instructionGroup("ADCS", makeTestCasesFromPrefixes("ADCS")),
+        instructionGroup("ADD_EXT", makeTestCasesFromPrefixes("ADDWUX", "ADDWSX", "ADDXUX", "ADDXSX")),
+        instructionGroup("ADD_IMM", makeTestCasesFromPrefixes("ADDXI", "ADDWI")),
+        instructionGroup("ADD_SHIFTED_REG", makeTestCases(
+            "ADDW", "ADDWLSL", "ADDWLSR", "ADDWASR", "ADDX", "ADDXLSL", "ADDXLSR", "ADDXASR")),
+        instructionGroup("ADDS_EXT", makeTestCasesFromPrefixes("ADDWSUX", "ADDWSSX", "ADDXSUX", "ADDXSSX")),
+        instructionGroup("ADDS_IMM", makeTestCasesFromPrefixes("ADDXSI", "ADDWSI")),
+        instructionGroup("ADDS_SHIFTED_REG", makeTestCases(
+            "ADDWS", "ADDWSLSL", "ADDWSLSR", "ADDWSASR", "ADDXS", "ADDXSLSL", "ADDXSLSR", "ADDXSASR")),
+        instructionGroup("ANDS_SHIFTED", makeTestCasesFromPrefixes("ANDSW", "ANDSX")),
+        instructionGroup("ASR", makeTestCasesFromPrefixes("ASRW", "ASRX")),
+        instructionGroup("BICS", makeTestCasesFromPrefixes("BICS")),
+        instructionGroup("CCMP", makeTestCasesFromPrefixes("CCMPI")),
+        instructionGroup("CSINC", makeTestCasesFromPrefixes("CSINC")),
+        instructionGroup("CSINV", makeTestCasesFromPrefixes("CSINV")),
+        instructionGroup("CSNEG", makeTestCasesFromPrefixes("CSNEG")),
+        instructionGroup("EXTR", makeTestCases("EXTRX", "EXTRW")),
+        instructionGroup("MOVK", makeTestCasesFromPrefixes("MOVK")),
+        instructionGroup("SBC", makeTestCases("SBCW", "SBCX")),
+        instructionGroup("SBCS", makeTestCasesFromPrefixes("SBCS")),
+        instructionGroup("SDIV", makeTestCasesFromPrefixes("SDIV")),
+        instructionGroup("SUB_EXT", makeTestCasesFromPrefixes("SUBWUX", "SUBWSX", "SUBXUX", "SUBXSX")),
+        instructionGroup("SUB_IMM", makeTestCasesFromPrefixes("SUBXI", "SUBWI")),
+        instructionGroup("SUB_SHIFTED_REG", makeTestCases(
+            "SUBW", "SUBWLSL", "SUBWLSR", "SUBWASR", "SUBX", "SUBXLSL", "SUBXLSR", "SUBXASR")),
+        instructionGroup("SUBS_EXT", makeTestCasesFromPrefixes("SUBWSUX", "SUBWSSX", "SUBXSUX", "SUBXSSX")),
+        instructionGroup("SUBS_IMM", makeTestCasesFromPrefixes("SUBXSI", "SUBWSI")),
+        instructionGroup("SUBS_SHIFTED_REG", makeTestCases(
+            "SUBWS", "SUBWSLSL", "SUBWSLSR", "SUBWSASR", "SUBXS", "SUBXSLSL", "SUBXSLSR", "SUBXSASR")),
+        instructionGroup("UDIV", makeTestCasesFromPrefixes("UDIV")));
   }
 
-  @TestFactory
-  Stream<DynamicTest> testADDImm() throws IOException {
-    // ADD (immediate): Add immediate value.
-    return runTestsWith(makeTestCasesFromPrefixes("ADDXI", "ADDWI"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testADDShiftedReg() throws IOException {
-    // ADD (shifted register): Add optionally-shifted register.
-    return runTestsWith(makeTestCases(
-        "ADDW", "ADDWLSL", "ADDWLSR", "ADDWASR", "ADDX", "ADDXLSL", "ADDXLSR", "ADDXASR"
-    ));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testADDSExt() throws IOException {
-    // ADDS (extended register): Add extended and scaled register.
-    return runTestsWith(makeTestCasesFromPrefixes("ADDWSUX", "ADDWSSX", "ADDXSUX", "ADDXSSX"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testADDSImm() throws IOException {
-    // ADDS (immediate): Add immediate value.
-    return runTestsWith(makeTestCasesFromPrefixes("ADDXSI", "ADDWSI"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testADDSShiftedReg() throws IOException {
-    // ADDS (shifted register): Add optionally-shifted register.
-    return runTestsWith(makeTestCases(
-        "ADDWS", "ADDWSLSL", "ADDWSLSR", "ADDWSASR", "ADDXS", "ADDXSLSL", "ADDXSLSR", "ADDXSASR"
-    ));
-  }
-
-  // TODO: Test ANDSImm (decoding to complicated to find correct constraint)
-
-  @TestFactory
-  Stream<DynamicTest> testANDSShifted() throws IOException {
-    // ANDS (shifted register): Bitwise AND (shifted register), setting flags
-    return runTestsWith(makeTestCasesFromPrefixes("ANDSW", "ANDSX"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testASR() throws IOException {
-    return runTestsWith(makeTestCasesFromPrefixes("ASRW", "ASRX"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testBICS() throws IOException {
-    // Bitwise bit clear (shifted register), setting flags
-    return runTestsWith(makeTestCasesFromPrefixes("BICS"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testCCMP() throws IOException {
-    // CCMP (immediate): Conditional compare (immediate)
-    return runTestsWith(makeTestCasesFromPrefixes("CCMPI"));
-  }
-
-
-  @TestFactory
-  Stream<DynamicTest> testCSINC() throws IOException {
-    // CSINC: Conditional select increment.
-    return runTestsWith(makeTestCasesFromPrefixes("CSINC"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testCSINV() throws IOException {
-    // CSINV: Conditional select invert.
-    return runTestsWith(makeTestCasesFromPrefixes("CSINV"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testCSNEG() throws IOException {
-    // CSNEG: Conditional select negation.
-    return runTestsWith(makeTestCasesFromPrefixes("CSNEG"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testEXTR() throws IOException {
-    // EXTR: Extract register.
-    return runTestsWith(makeTestCases("EXTRX", "EXTRW"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testMOVK() throws IOException {
-    return runTestsWith(makeTestCasesFromPrefixes("MOVK"));
-  }
-
-
-  @TestFactory
-  Stream<DynamicTest> testSBC() throws IOException {
-    return runTestsWith(makeTestCases("SBCW", "SBCX"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testSBCS() throws IOException {
-    return runTestsWith(makeTestCasesFromPrefixes("SBCS"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testSDIV() throws IOException {
-    return runTestsWith(makeTestCasesFromPrefixes("SDIV"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testSUBExt() throws IOException {
-    // SUB (extended register): Subtract extended and scaled register.
-    return runTestsWith(makeTestCasesFromPrefixes("SUBWUX", "SUBWSX", "SUBXUX", "SUBXSX"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testSUBImm() throws IOException {
-    // SUB (immediate): Subtract immediate value.
-    return runTestsWith(makeTestCasesFromPrefixes("SUBXI", "SUBWI"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testSUBShiftedReg() throws IOException {
-    // SUB (shifted register): Subtract optionally-shifted register.
-    return runTestsWith(makeTestCases(
-        "SUBW", "SUBWLSL", "SUBWLSR", "SUBWASR", "SUBX", "SUBXLSL", "SUBXLSR", "SUBXASR"
-    ));
-  }
-
-
-  @TestFactory
-  Stream<DynamicTest> testSUBSExt() throws IOException {
-    // SUBS (extended register): Subtract extended and scaled register.
-    return runTestsWith(makeTestCasesFromPrefixes("SUBWSUX", "SUBWSSX", "SUBXSUX", "SUBXSSX"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testSUBSImm() throws IOException {
-    // SUB (immediate): Subtract immediate value.
-    return runTestsWith(makeTestCasesFromPrefixes("SUBXSI", "SUBWSI"));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testSUBSShiftedReg() throws IOException {
-    // SUB (shifted register): Subtract optionally-shifted register.
-    return runTestsWith(makeTestCases(
-        "SUBWS", "SUBWSLSL", "SUBWSLSR", "SUBWSASR", "SUBXS", "SUBXSLSL", "SUBXSLSR", "SUBXSASR"
-    ));
-  }
-
-  @TestFactory
-  Stream<DynamicTest> testUDIV() throws IOException {
-    return runTestsWith(makeTestCasesFromPrefixes("UDIV"));
+  private InstructionTestGroup instructionGroup(String name,
+                                                List<Function<Integer, IssTestUtils.TestCase>> generators) {
+    return new InstructionTestGroup(name, buildTestsWith(generators));
   }
 
   private List<Function<Integer, IssTestUtils.TestCase>> makeTestCasesFromPrefixes(

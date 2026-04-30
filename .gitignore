@@ -25,6 +25,7 @@ docs/obj
 out/
 !vadl/src/main/**/out/
 !vadl/src/test/**/out/
+.output.txt
 
 ### Eclipse ###
 .apt_generated

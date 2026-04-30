@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -84,6 +84,12 @@ public class IssTestUtils {
     }
   }
 
+  public record TestResultHeader(
+      String id,
+      TestResult.Status status
+  ) {
+  }
+
   /**
    * Writes the test suite configuration YAML file.
    */
@@ -120,42 +126,57 @@ public class IssTestUtils {
    * @throws IOException if an I/O error occurs.
    */
   public static TestResult yamlToTestResult(File yamlFile) {
+    var result = loadYamlResult(yamlFile);
+
+    try {
+      String id = result.get("id").toString();
+      TestResult.Status status =
+          TestResult.Status.valueOf((String) result.get("status"));
+      List<TestResult.Stage> completedStages =
+          ((List<String>) result.get("completedStages")).stream()
+              .map(TestResult.Stage::valueOf)
+              .toList();
+      List<String> errors = (List<String>) result.get("errors");
+      String duration = (String) result.get("duration");
+      List<TestResult.RegTestResult> regTests =
+          ((Map<String, Object>) result.get("regTests")).entrySet()
+              .stream().map(e -> {
+                var val = (Map<String, String>) e.getValue();
+                return new TestResult.RegTestResult(e.getKey(),
+                    Objects.toString(val.get("exp")),
+                    Objects.toString(val.get("act")));
+              }).toList();
+
+      Map<String, List<String>> simLogs = (Map<String, List<String>>) result.get("simLogs");
+      Map<String, List<String>> refLogs = (Map<String, List<String>>) result.get("refLogs");
+
+      return new TestResult(id, status, completedStages, regTests, simLogs, refLogs, errors,
+          duration);
+
+    } catch (Exception e) {
+      log.error("Failed to parse file, result was\n {}", result);
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static TestResultHeader yamlToTestResultHeader(File yamlFile) {
+    var result = loadYamlResult(yamlFile);
+
+    try {
+      return new TestResultHeader(
+          result.get("id").toString(),
+          TestResult.Status.valueOf((String) result.get("status"))
+      );
+    } catch (Exception e) {
+      log.error("Failed to parse result header, result was\n {}", result);
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static Map<String, Object> loadYamlResult(File yamlFile) {
     try (var reader = new FileInputStream(yamlFile)) {
       Yaml yaml = new Yaml();
-
-      // load all results
-      Map<String, Object> result = yaml.load(reader);
-
-      try {
-        String id = result.get("id").toString();
-        // Assuming the YAML structure matches the fields in TestResult
-        TestResult.Status status =
-            TestResult.Status.valueOf((String) result.get("status"));
-        List<TestResult.Stage> completedStages =
-            ((List<String>) result.get("completedStages")).stream()
-                .map(e -> TestResult.Stage.valueOf(e))
-                .toList();
-        List<String> errors = (List<String>) result.get("errors");
-        String duration = (String) result.get("duration");
-        List<TestResult.RegTestResult> regTests =
-            ((Map<String, Object>) result.get("regTests")).entrySet()
-                .stream().map(e -> {
-                  var val = (Map<String, String>) e.getValue();
-                  return new TestResult.RegTestResult(e.getKey(),
-                      Objects.toString(val.get("exp")),
-                      Objects.toString(val.get("act")));
-                }).toList();
-
-        Map<String, List<String>> simLogs = (Map<String, List<String>>) result.get("simLogs");
-        Map<String, List<String>> refLogs = (Map<String, List<String>>) result.get("refLogs");
-
-        return new TestResult(id, status, completedStages, regTests, simLogs, refLogs, errors,
-            duration);
-
-      } catch (Exception e) {
-        log.error("Failed to parse file, result was\n {}", result);
-        throw new RuntimeException(e);
-      }
+      return yaml.load(reader);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

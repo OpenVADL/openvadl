@@ -18,23 +18,44 @@ package vadl.iss;
 
 import static vadl.iss.IssTestUtils.writeTestSuiteConfigYaml;
 import static vadl.iss.IssTestUtils.yamlToTestResult;
+import static vadl.iss.IssTestUtils.yamlToTestResultHeader;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DynamicContainer;
+import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
-import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.utility.MountableFile;
 import vadl.DockerImage;
 
+@SuppressWarnings("OverloadMethodsDeclarationOrder")
 public abstract class IssInstrTest extends QemuIssTest {
+  public record InstructionTestGroup(
+      String name,
+      List<IssTestUtils.TestCase> testCases
+  ) {
+  }
+
+  private static final Map<Class<? extends IssInstrTest>, InstructionBatchState>
+      INSTRUCTION_BATCHES =
+      new ConcurrentHashMap<>();
+
+  private static final class InstructionBatchState {
+    private List<InstructionTestGroup> instructionGroups;
+    private Map<String, String> failures;
+  }
 
   public record Tool(
       String path,
@@ -68,10 +89,123 @@ public abstract class IssInstrTest extends QemuIssTest {
     return runTestsWith(1, (i) -> test);
   }
 
+  /**
+   * Initializes a cached batched ISS run for the current test class.
+   *
+   * <p>Use this when the suite already has an explicit grouping structure. The batch is executed
+   * at most once per concrete subclass; repeated calls are cheap and simply reuse the cached
+   * results.</p>
+   */
+  protected final void initializeInstructionBatch(
+      List<InstructionTestGroup> instructionGroups)
+      throws IOException {
+    initializeInstructionBatch(() -> instructionGroups);
+  }
+
+  /**
+   * Lazy variant of {@link #initializeInstructionBatch(List)}.
+   *
+   * <p>The supplier is only evaluated if the current subclass has not initialized its cached batch
+   * yet. This is useful when both a setup test and a {@code @TestFactory} call into the same
+   * initialization path.</p>
+   */
+  protected final void initializeInstructionBatch(
+      Supplier<List<InstructionTestGroup>> instructionGroupsSupplier)
+      throws IOException {
+    var state =
+        INSTRUCTION_BATCHES.computeIfAbsent(getClass(), ignored -> new InstructionBatchState());
+    synchronized (state) {
+      if (state.instructionGroups != null && state.failures != null) {
+        return;
+      }
+      state.instructionGroups = List.copyOf(instructionGroupsSupplier.get());
+      var testCases = state.instructionGroups.stream()
+          .flatMap(group -> group.testCases().stream())
+          .toList();
+      state.failures =
+          runQemuInstrTestsAndCollectFailures(generateIssSimulator(getVadlSpec()), testCases);
+    }
+  }
+
+  /**
+   * Initializes a cached batched ISS run from a flat testcase list and a grouping function.
+   *
+   * <p>This is the most common entry point for instruction suites: subclasses build all testcases
+   * once, then provide a function that maps each testcase to the container name that should be
+   * shown in JUnit.</p>
+   */
+  protected final void initializeInstructionBatchFromTestCases(
+      List<IssTestUtils.TestCase> testCases,
+      Function<IssTestUtils.TestCase, String> groupName)
+      throws IOException {
+    initializeInstructionBatchFromTestCases(() -> testCases, groupName);
+  }
+
+  protected final void initializeInstructionBatchFromTestCases(
+      Supplier<List<IssTestUtils.TestCase>> testCasesSupplier,
+      Function<IssTestUtils.TestCase, String> groupName)
+      throws IOException {
+    initializeInstructionBatch(() -> {
+      var groups = new LinkedHashMap<String, List<IssTestUtils.TestCase>>();
+      for (var testCase : testCasesSupplier.get()) {
+        groups.computeIfAbsent(groupName.apply(testCase), ignored -> new ArrayList<>())
+            .add(testCase);
+      }
+      return groups.entrySet().stream()
+          .map(entry -> new InstructionTestGroup(entry.getKey(), List.copyOf(entry.getValue())))
+          .toList();
+    });
+  }
+
+  /**
+   * Builds one {@link DynamicContainer} per previously initialized instruction group.
+   *
+   * <p>Call one of the {@code initializeInstructionBatch*} methods first. Each container contains
+   * one dynamic test per testcase, and each dynamic test simply replays the cached pass/fail result
+   * of the batched ISS run.</p>
+   */
+  protected final Stream<DynamicNode> buildInstructionTestContainers() {
+    var state = requireInstructionBatchState();
+    return state.instructionGroups.stream()
+        .map(group -> DynamicContainer.dynamicContainer(
+            group.name(),
+            buildDynamicTests(group.testCases(), state.failures)));
+  }
+
+  protected final Map<String, String> getInstructionBatchFailures() {
+    return requireInstructionBatchState().failures;
+  }
+
+  protected final List<InstructionTestGroup> getInstructionBatchGroups() {
+    return requireInstructionBatchState().instructionGroups;
+  }
+
+  private InstructionBatchState requireInstructionBatchState() {
+    var state = INSTRUCTION_BATCHES.get(getClass());
+    if (state == null || state.instructionGroups == null || state.failures == null) {
+      throw new IllegalStateException(
+          "Instruction batch not initialized for " + getClass().getSimpleName());
+    }
+    return state;
+  }
+
   @SafeVarargs
   protected final Stream<DynamicTest> runTestsWith(
       Function<Integer, IssTestUtils.TestCase>... generators) throws IOException {
     return runTestsWith(getTestPerInstruction(), List.of(generators));
+  }
+
+  /**
+   * Builds testcase specifications without executing them.
+   *
+   * <p>Prefer this over {@code runTestsWith(...)} when a suite wants to batch all testcases into a
+   * single ISS run and report the results later via {@code DynamicContainer}s or cached dynamic
+   * tests.</p>
+   */
+  @SafeVarargs
+  protected final List<IssTestUtils.TestCase> buildTestsWith(
+      Function<Integer, IssTestUtils.TestCase>... generators) {
+    return buildTestsWith(getTestPerInstruction(), List.of(generators));
   }
 
   @SafeVarargs
@@ -81,25 +215,48 @@ public abstract class IssInstrTest extends QemuIssTest {
     return runTestsWith(runs, List.of(generators));
   }
 
+  @SafeVarargs
+  protected final List<IssTestUtils.TestCase> buildTestsWith(int runs,
+                                                             Function<Integer, IssTestUtils.TestCase>... generators) {
+    return buildTestsWith(runs, List.of(generators));
+  }
+
   protected final Stream<DynamicTest> runTestsWith(
       List<Function<Integer, IssTestUtils.TestCase>> generators)
       throws IOException {
     return runTestsWith(getTestPerInstruction(), generators);
   }
 
+  protected final List<IssTestUtils.TestCase> buildTestsWith(
+      List<Function<Integer, IssTestUtils.TestCase>> generators) {
+    return buildTestsWith(getTestPerInstruction(), generators);
+  }
+
   protected final Stream<DynamicTest> runTestsWith(
       int runs,
       List<Function<Integer, IssTestUtils.TestCase>> generators) throws IOException {
+    var image = generateIssSimulator(getVadlSpec());
+    var testCases = buildTestsWith(runs, generators);
+    return runQemuInstrTests(image, testCases);
+  }
+
+  /**
+   * Materializes testcase specifications by invoking each generator {@code runs} times.
+   *
+   * <p>This method is pure with respect to ISS execution: it only creates
+   * {@link IssTestUtils.TestCase} objects and does not run QEMU or containers.</p>
+   */
+  protected final List<IssTestUtils.TestCase> buildTestsWith(
+      int runs,
+      List<Function<Integer, IssTestUtils.TestCase>> generators) {
     if (generators.isEmpty()) {
       throw new IllegalArgumentException("No generators specified");
     }
-    var image = generateIssSimulator(getVadlSpec());
-    var testCases = generators.stream()
+    return generators.stream()
         .flatMap(genFunc -> IntStream.range(0, runs)
             .mapToObj(genFunc::apply)
         )
         .toList();
-    return runQemuInstrTests(image, testCases);
   }
 
   /**
@@ -112,7 +269,34 @@ public abstract class IssInstrTest extends QemuIssTest {
   protected Stream<DynamicTest> runQemuInstrTests(DockerImage image,
                                                   Collection<IssTestUtils.TestCase> testCases)
       throws IOException {
+    var failures = runQemuInstrTestsAndCollectFailures(image, testCases);
+    return buildDynamicTests(testCases, failures);
+  }
 
+  protected Stream<DynamicTest> buildDynamicTests(
+      Collection<IssTestUtils.TestCase> testCases,
+      Map<String, String> failures) {
+    return testCases.stream()
+        .sorted(Comparator.comparing(IssTestUtils.TestCase::id))
+        .map(testCase -> DynamicTest.dynamicTest(testCase.id(), () -> {
+          var failure = failures.get(testCase.id());
+          if (failure != null) {
+            Assertions.fail(failure);
+          }
+        }));
+  }
+
+  /**
+   * Executes the given testcase collection once and returns only the failing results.
+   *
+   * <p>The returned map is keyed by testcase id. Passing tests are intentionally omitted so
+   * subclasses can cheaply render either flat dynamic tests or grouped containers from the cached
+   * failure set.</p>
+   */
+  protected Map<String, String> runQemuInstrTestsAndCollectFailures(
+      DockerImage image,
+      Collection<IssTestUtils.TestCase> testCases)
+      throws IOException {
     var statePlugin = "/qemu/build/tests/tcg/plugins/libendstate.so";
 
     var testConfig = new IssTestUtils.TestConfig(
@@ -131,63 +315,79 @@ public abstract class IssInstrTest extends QemuIssTest {
     var resultDirectory = testDirectory.resolve("results").toAbsolutePath();
     // write the test cases to this yaml file
     writeTestSuiteConfigYaml(testConfig, testSuiteYaml);
+    var configuredJobs = System.getProperty("vadl.iss.jobs");
     // run the container and copy the test cases into the container
     // and after execution, copy the results from the container
     runContainer(image, container -> container
             .withCreateContainerCmdModifier(
                 createContainerCmd -> createContainerCmd.withTty(true).withStdinOpen(true))
             .withCopyToContainer(MountableFile.forHostPath(testSuiteYaml.getPath()),
-                "/work/test-suite.yaml"),
+                "/work/test-suite.yaml")
+            .withEnv(configuredJobs == null ? Map.of() : Map.of("VADL_ISS_JOBS", configuredJobs)),
         container -> copyPathFromContainer(container, "/work/results/", resultDirectory)
     );
 
-
-    List<IssTestUtils.TestResult> testResults = List.of();
+    var expectedTests = testCases.stream()
+        .collect(Collectors.toMap(
+            IssTestUtils.TestCase::id,
+            Function.identity(),
+            (left, right) -> left,
+            LinkedHashMap::new));
+    Map<String, String> failures = new LinkedHashMap<>();
 
     try (var walkStream = java.nio.file.Files.walk(resultDirectory)) {
-      // parse the result yaml files into a list of TestResults
-      testResults = walkStream
+      walkStream
           .filter(file -> file.toString().endsWith(".yaml"))
-          .map(file -> yamlToTestResult(file.toFile()))
-          .toList();
+          .forEach(file -> {
+            var resultFile = file.toFile();
+            var header = yamlToTestResultHeader(resultFile);
+            var testCase = expectedTests.remove(header.id());
+            if (testCase == null) {
+              return;
+            }
+            if (header.status() == IssTestUtils.TestResult.Status.PASS) {
+              return;
+            }
+            var result = yamlToTestResult(resultFile);
+            failures.put(testCase.id(), buildFailureMessage(testCase, result));
+          });
     } catch (Exception e) {
       Assertions.fail("Failed to load test results.", e);
     }
 
-    // just for fast access later
-    var specIds = testResults.stream()
-        .map(IssTestUtils.TestResult::id)
-        .collect(Collectors.toSet());
-    var testCaseMap = testCases.stream()
-        .collect(Collectors.toMap(IssTestUtils.TestCase::id, s -> s));
+    return testCases.stream()
+        .sorted(Comparator.comparing(IssTestUtils.TestCase::id))
+        .<Map.Entry<String, String>>mapMulti((testCase, consumer) -> {
+          var failure = validateResult(testCase, failures, expectedTests);
+          if (failure != null) {
+            consumer.accept(Map.entry(testCase.id(), failure));
+          }
+        })
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            (left, right) -> left,
+            LinkedHashMap::new));
+  }
 
-    // produce DynamicTests for all parsed test results.
-    // these will be listed in the JUnit test report
-    var normalTestResultDynamicTests = testResults.stream()
-        .map(e -> DynamicTest.dynamicTest(e.id(),
-            () -> {
-              var testSpec = testCaseMap.get(e.id());
-              var success = IssTestUtils.TestResult.Status.PASS == e.status();
-              if (!success) {
-                var sb = new StringBuilder();
-                appendFailureDetails(sb, testSpec, e);
-                Assertions.fail(sb.toString());
-              }
-            }
-        ));
+  private String validateResult(IssTestUtils.TestCase testCase,
+                                Map<String, String> failures,
+                                Map<String, IssTestUtils.TestCase> missingTests) {
+    var failure = failures.get(testCase.id());
+    if (failure != null) {
+      return failure;
+    }
+    if (missingTests.containsKey(testCase.id())) {
+      return "No result found for test " + testCase.id();
+    }
+    return null;
+  }
 
-    // produces dynamic tests for all cases where no result was found
-    var notFoundResultDynamicTests = testCases.stream()
-        .filter(c -> !specIds.contains(c.id()))
-        .map(c -> DynamicTest.dynamicTest("Find result of " + c.id(),
-            () -> Assertions.fail("No result found for test " + c.id())
-        ));
-
-    // return stream of all dynamic test cases
-    return Streams.concat(
-        normalTestResultDynamicTests,
-        notFoundResultDynamicTests
-    );
+  private String buildFailureMessage(IssTestUtils.TestCase testCase,
+                                     IssTestUtils.TestResult result) {
+    var sb = new StringBuilder();
+    appendFailureDetails(sb, testCase, result);
+    return sb.toString();
   }
 
   private void appendFailureDetails(StringBuilder sb,

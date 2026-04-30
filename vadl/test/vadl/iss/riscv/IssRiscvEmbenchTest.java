@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ public class IssRiscvEmbenchTest extends QemuIssTest {
 
   @Test
   void rv64imEmbenchTest() throws IOException {
-    runEmbenchTest("sys/risc-v/rv64im.vadl", "build_spike-rv64im.sh", "qemu-system-rv64im");
+    runEmbenchTest("sys/risc-v/rv64v.vadl", "build_spike-rv64im.sh", "qemu-system-rv64imv");
   }
 
   @Test
@@ -75,4 +75,3 @@ public class IssRiscvEmbenchTest extends QemuIssTest {
   }
 
 }
-

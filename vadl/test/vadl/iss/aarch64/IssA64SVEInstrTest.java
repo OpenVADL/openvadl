@@ -25,8 +25,12 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.DynamicNode;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestMethodOrder;
 import vadl.iss.IssTestUtils;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -37,6 +41,7 @@ import vadl.viam.RegisterTensor;
 /**
  * Tests a core subset of AArch64 SVE instructions.
  */
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
 
   private static final String VADL_SPEC = "sys/aarch64/vprocessor.vadl";
@@ -252,100 +257,72 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
     return new RandomRegs(zd, zn, zm, pg);
   }
 
-  private Stream<DynamicTest> runPredicatedBinaryInstrTests(String instruction,
-                                                            String... elemSuffixes)
-      throws IOException {
+  @Test
+  @Order(1)
+  void setupInstructionTests() throws IOException {
+    initializeInstructionBatch(this::buildInstructionTestGroups);
+  }
+
+  @TestFactory
+  @Order(2)
+  Stream<DynamicNode> buildInstructionTests() throws IOException {
+    initializeInstructionBatch(this::buildInstructionTestGroups);
+    return buildInstructionTestContainers();
+  }
+
+  private List<InstructionTestGroup> buildInstructionTestGroups() {
+    return List.of(
+        instructionGroup("svePredAdd", predicatedBinaryInstrTests("add", "b", "h", "s", "d")),
+        instructionGroup("svePredSub", predicatedBinaryInstrTests("sub", "b", "h", "s", "d")),
+        instructionGroup("svePredMul", predicatedBinaryInstrTests("mul", "b", "h", "s", "d")),
+        instructionGroup("sveUnpredAdd", unpredicatedBinaryInstrTests("add", "b", "h", "s", "d")),
+        instructionGroup("sveUnpredSub", unpredicatedBinaryInstrTests("sub", "b", "h", "s", "d")),
+        instructionGroup("sveUnpredMul", unpredicatedBinaryInstrTests("mul", "b", "h", "s", "d")),
+        instructionGroup("sveFoldSaddv", reductionInstrTests("saddv", true, "b", "h", "s")),
+        instructionGroup("sveFoldUaddv", reductionInstrTests("uaddv", true, "b", "h", "s")),
+        instructionGroup("sveFoldAndv", reductionInstrTests("andv", false, "b", "h", "s", "d")),
+        instructionGroup("sveFoldOrv", reductionInstrTests("orv", false, "b", "h", "s", "d")),
+        instructionGroup("sveFoldEorv", reductionInstrTests("eorv", false, "b", "h", "s", "d")),
+        instructionGroup("sveUmov",
+            buildTestsWith((id) -> createUmovInstrTest(getBuilder("SVE.UMOV", id), id))));
+  }
+
+  private InstructionTestGroup instructionGroup(String name,
+                                                List<IssTestUtils.TestCase> testCases) {
+    return new InstructionTestGroup(name, testCases);
+  }
+
+  private List<IssTestUtils.TestCase> predicatedBinaryInstrTests(String instruction,
+                                                                 String... elemSuffixes) {
     var generators = Arrays.stream(elemSuffixes)
         .map(elem -> (Function<Integer, IssTestUtils.TestCase>) (id -> {
           var builder = getBuilder("SVE.PRED." + instruction.toUpperCase() + "." + elem, id);
           return createPredicatedBinaryInstrTest(builder, instruction, elem, id);
         }))
         .toList();
-    return runTestsWith(generators);
+    return buildTestsWith(generators);
   }
 
-  private Stream<DynamicTest> runUnpredicatedBinaryInstrTests(String instruction,
-                                                              String... elemSuffixes)
-      throws IOException {
+  private List<IssTestUtils.TestCase> unpredicatedBinaryInstrTests(String instruction,
+                                                                   String... elemSuffixes) {
     var generators = Arrays.stream(elemSuffixes)
         .map(elem -> (Function<Integer, IssTestUtils.TestCase>) (id -> {
           var builder = getBuilder("SVE.UNPRED." + instruction.toUpperCase() + "." + elem, id);
           return createUnpredicatedBinaryInstrTest(builder, instruction, elem, id);
         }))
         .toList();
-    return runTestsWith(generators);
+    return buildTestsWith(generators);
   }
 
-  private Stream<DynamicTest> runReductionInstrTests(String instruction,
-                                                     boolean extendedAddReduction,
-                                                     String... elemSuffixes)
-      throws IOException {
+  private List<IssTestUtils.TestCase> reductionInstrTests(String instruction,
+                                                          boolean extendedAddReduction,
+                                                          String... elemSuffixes) {
     List<Function<Integer, IssTestUtils.TestCase>> generators = Arrays.stream(elemSuffixes)
         .map(elem -> (Function<Integer, IssTestUtils.TestCase>) (id -> {
           var builder = getBuilder("SVE.RED." + instruction.toUpperCase() + "." + elem, id);
           return createReductionInstrTest(builder, instruction, elem, extendedAddReduction, id);
         }))
         .toList();
-    return runTestsWith(generators);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> svePredAdd() throws IOException {
-    return runPredicatedBinaryInstrTests("add", "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> svePredSub() throws IOException {
-    return runPredicatedBinaryInstrTests("sub", "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> svePredMul() throws IOException {
-    return runPredicatedBinaryInstrTests("mul", "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveUnpredAdd() throws IOException {
-    return runUnpredicatedBinaryInstrTests("add", "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveUnpredSub() throws IOException {
-    return runUnpredicatedBinaryInstrTests("sub", "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveUnpredMul() throws IOException {
-    return runUnpredicatedBinaryInstrTests("mul", "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveFoldSaddv() throws IOException {
-    return runReductionInstrTests("saddv", true, "b", "h", "s");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveFoldUaddv() throws IOException {
-    return runReductionInstrTests("uaddv", true, "b", "h", "s");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveFoldAndv() throws IOException {
-    return runReductionInstrTests("andv", false, "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveFoldOrv() throws IOException {
-    return runReductionInstrTests("orv", false, "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveFoldEorv() throws IOException {
-    return runReductionInstrTests("eorv", false, "b", "h", "s", "d");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sveUmov() throws IOException {
-    return runTestsWith((id) -> createUmovInstrTest(getBuilder("SVE.UMOV", id), id));
+    return buildTestsWith(generators);
   }
 }

@@ -44,6 +44,7 @@ import vadl.iss.CosimTestUtils;
 public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
 
   private static final long BASE_ADDRESS_LOAD_STORE = 0x1000L;
+  private static final Object INIT_LOCK = new Object();
 
   private static List<CosimTestUtils.TestCase> testCases;
   private static Map<String, TestResult> failures;
@@ -53,13 +54,13 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
   @Test
   @Order(1)
   void setupInstructionTests() throws IOException {
-    testCases = buildInstructionTestCases();
-    failures = runQemuInstrTestsAndCollectFailures(generateIssSimulator(getVadlSpec()), testCases);
+    ensureInstructionTestsInitialized();
   }
 
   @TestFactory
   @Order(2)
-  Stream<DynamicTest> buildInstructionTests() {
+  Stream<DynamicTest> buildInstructionTests() throws IOException {
+    ensureInstructionTestsInitialized();
     return testCases.stream()
         .map(testCase -> DynamicTest.dynamicTest(
             testCase.id(),
@@ -69,6 +70,16 @@ public class CosimPpc64InstrTest extends AbstractCosimPpc64InstrTest {
                 fail(failure.failureMessage());
               }
             }));
+  }
+
+  private void ensureInstructionTestsInitialized() throws IOException {
+    synchronized (INIT_LOCK) {
+      if (testCases != null && failures != null) {
+        return;
+      }
+      testCases = buildInstructionTestCases();
+      failures = runQemuInstrTestsAndCollectFailures(generateIssSimulator(getVadlSpec()), testCases);
+    }
   }
 
   private List<CosimTestUtils.TestCase> buildInstructionTestCases() throws IOException {
