@@ -1,0 +1,53 @@
+name: Benchmark ISS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'vadl/main/vadl/iss/**'
+      - 'vadl/test/vadl/iss/**'
+      - 'sys/**'
+
+permissions:
+  contents: read
+  actions: write
+  checks: write
+
+jobs:
+  build:
+    runs-on: self-hosted-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        run: ./gradlew assemble testClasses -PFailOnWarnings
+
+  aarch64:
+    needs: build
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-arm64
+      benchmark-command: ./gradlew :vadl:benchmark-iss-aarch64
+      artifact-source: vadl/build/iss-benchmarks/a64/normalized-results/a64-open-vadl.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
+      destination-folder: data/iss/aarch64/embench/results
+      commit-message: 'data: Pushed ISS aarch64 embench data'
+    secrets: inherit
+
+  riscv64:
+    needs: build
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-arm64
+      benchmark-command: ./gradlew :vadl:benchmark-iss-riscv64
+      artifact-source: vadl/build/iss-benchmarks/rv64im/normalized-results/rv64im-open-vadl.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
+      destination-folder: data/iss/riscv64/embench/results
+      commit-message: 'data: Pushed ISS riscv64 embench data'
+    secrets: inherit

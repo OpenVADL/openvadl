@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import util.registerBenchmarkTestTask
 import vadl.GenerateCocoParserTask
 import java.util.*
 
@@ -98,10 +99,11 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform {
         val include = System.getProperty("tags.include")
         val exclude = System.getProperty("tags.exclude")
+        val benchmarkTask = name.startsWith("benchmark-iss")
 
         if (include != null) {
             includeTags(include)
-        } else {
+        } else if (!benchmarkTask) {
             excludeTags("BenchmarkTest")
         }
 
@@ -130,6 +132,18 @@ for (gen in generators) {
         }
     }
 }
+
+val benchmarkIssRiscv64 = registerBenchmarkTestTask(
+    name = "benchmark-iss-riscv64",
+    description = "Runs the ISS RISC-V 64 benchmark tests",
+    includePattern = "vadl.iss.riscv.IssRiscvEmbenchBenchmarkTest"
+)
+
+val benchmarkIssAarch64 = registerBenchmarkTestTask(
+    name = "benchmark-iss-aarch64",
+    description = "Runs the ISS AArch64 benchmark tests",
+    includePattern = "vadl.iss.aarch64.IssAarch64EmbenchBenchmarkTest"
+)
 
 tasks.register<Test>("test-others") {
     group = "verification"
