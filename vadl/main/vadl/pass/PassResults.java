@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -198,7 +198,7 @@ public final class PassResults {
   public static class SingleResult {
     protected final PassKey passKey;
     protected final Pass pass;
-    private final long durationMs;
+    private final long durationNs;
     @Nullable
     protected final Object result;
     private final boolean skipped;
@@ -206,17 +206,17 @@ public final class PassResults {
     /**
      * Constructor.
      */
-    public SingleResult(PassKey passKey, Pass pass, long durationMs, @Nullable Object result,
+    public SingleResult(PassKey passKey, Pass pass, long durationNs, @Nullable Object result,
                         boolean skipped) {
       this.passKey = passKey;
       this.pass = pass;
-      this.durationMs = durationMs;
+      this.durationNs = durationNs;
       this.result = result;
       this.skipped = skipped;
     }
 
-    public long durationMs() {
-      return durationMs;
+    public long durationNs() {
+      return durationNs;
     }
 
     public Pass pass() {
@@ -250,11 +250,11 @@ public final class PassResults {
      */
     public DotGraphResult(PassKey passKey,
                           Pass pass,
-                          long durationMs,
+                          long durationNs,
                           String result,
                           boolean skipped,
                           Definition definition) {
-      super(passKey, pass, durationMs, result, skipped);
+      super(passKey, pass, durationNs, result, skipped);
       this.definition = definition;
     }
 

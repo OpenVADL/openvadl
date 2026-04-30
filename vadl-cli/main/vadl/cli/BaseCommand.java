@@ -135,7 +135,7 @@ public abstract class BaseCommand implements Callable<Integer> {
    */
   private final List<Timing> timings = new ArrayList<>();
 
-  private record Timing(String name, long durationMs) {
+  private record Timing(String name, long durationNS) {
   }
 
   /**
@@ -150,9 +150,9 @@ public abstract class BaseCommand implements Callable<Integer> {
   }
 
   private void withTimings(String title, Runnable runnable) {
-    var startTime = System.currentTimeMillis();
+    var startTime = System.nanoTime();
     runnable.run();
-    timings.add(new Timing(title, System.currentTimeMillis() - startTime));
+    timings.add(new Timing(title, System.nanoTime() - startTime));
   }
 
   /**
@@ -267,20 +267,20 @@ public abstract class BaseCommand implements Callable<Integer> {
     printSpecStats(ast, new DiskVirtualFileSystem());
     printSpecStatsCsv(ast, new DiskVirtualFileSystem());
     ast.timingRecorder.passTimings.forEach(
-        t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
+        t -> timings.add(new Timing(t.description(), t.durationNS())));
     ast.timingRecorder.passTimings.clear();
     dumpExpaned(ast);
     dumpUntyped(ast);
 
     TypeChecker.verify(ast);
     ast.timingRecorder.passTimings.forEach(
-        t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
+        t -> timings.add(new Timing(t.description(), t.durationNS())));
     ast.timingRecorder.passTimings.clear();
     dumpTyped(ast);
 
     var spec = ViamLowering.generate(ast);
     ast.timingRecorder.passTimings.forEach(
-        t -> timings.add(new Timing(t.description(), t.durationNS() / 1000_000)));
+        t -> timings.add(new Timing(t.description(), t.durationNS())));
 
     return spec;
   }
@@ -349,7 +349,10 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     System.out.println("\nTimings:");
     timings.forEach(t -> {
-      System.out.printf("\t- %-40s %5dms\n", t.name + ":", t.durationMs);
+      var microSeconds = t.durationNS / 1000;
+      var beforePoint = microSeconds / 1000;
+      var afterPoint = microSeconds % 1000;
+      System.out.printf("\t- %-40s %5d.%03dms\n", t.name + ":", beforePoint, afterPoint);
     });
   }
 
@@ -358,7 +361,15 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
     var sb = new StringBuilder("pass,duration_ms\n");
-    timings.forEach(t -> sb.append(t.name()).append(',').append(t.durationMs()).append('\n'));
+
+    timings.forEach(
+        t -> {
+          var microSeconds = t.durationNS / 1000;
+          var beforePoint = microSeconds / 1000;
+          var afterPoint = microSeconds % 1000;
+          sb.append(t.name()).append(',').append("%d.03%d".formatted(beforePoint, afterPoint))
+              .append('\n');
+        });
     var csvPath = output.resolve("timings.csv");
     try {
       Files.writeString(csvPath, sb, StandardCharsets.UTF_8);
@@ -409,8 +420,8 @@ public abstract class BaseCommand implements Callable<Integer> {
       passManager.run(viam);
       var result = passManager.getPassResults();
       result.executedPasses()
-          .forEach(p -> timings.add(new Timing(p.pass().getName().value(), p.durationMs())));
-      timings.add(new Timing("Total", (System.nanoTime() - totalStartTime) / 1_000_000));
+          .forEach(p -> timings.add(new Timing(p.pass().getName().value(), p.durationNs())));
+      timings.add(new Timing("Total", System.nanoTime() - totalStartTime));
 
 
     } catch (TypeConversionException | MaxValuesExceededException e) {
