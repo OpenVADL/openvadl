@@ -40,8 +40,12 @@ public interface DefProp {
   /**
    * A marker interface for definitions that hold one or more behaviors.
    */
-  interface WithBehavior extends DefProp {
+  interface WithBehavior extends WithOptionalBehaviour { }
 
+  /**
+   * A marker interface for definitions that hold zero, one or more behaviors.
+   */
+  interface WithOptionalBehaviour extends DefProp {
     List<Graph> behaviors();
   }
 }

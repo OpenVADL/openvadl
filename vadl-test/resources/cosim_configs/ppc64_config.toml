@@ -56,6 +56,18 @@ additional_args = [
     "-d", "plugin"
 ]
 
+# A hint for the cosimulator whether the client uses little or big endian
+# This setting does not change the execution in any way and is only used in case clients have differing endianess
+# but should still be compared "correctly"
+# This field is optional, not setting it means the register-data is being compared left-to-right (i.e. big-endian by default)
+# This setting also *does not* have an effect on tracing, data will still be stored in the original endianess
+
+# This setting must match the `TARGET_BIG_ENDIAN` definition in `gen-arch-softmmu.mak`
+# If the vadl memory definition is annotated with `[ big endian : Condition ]`, this setting should be set to
+# "big" or be ommitted. If it is annotated with `[ little endian : Condition ]` or not annotated with any
+# of the two, this setting should be explicitly set to "little".
+endian = "little"
+
 # The following three options configure which instructions from the `test_exec` executable should actually be tested.
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
@@ -215,7 +227,7 @@ client2 = { name = "xer"     , slice = [ [0, 17] ] }
 layer = "insn"
 
 # Whether reads/writes from/to memory should also be compared
-with_memory_checks = false
+with_memory_checks = true
 
 # "lockstep": All clients are run and compared one *execution-step* at a time.
 # 			  This means that the test will exit on the first divergence (or at the end if no diffs where found)

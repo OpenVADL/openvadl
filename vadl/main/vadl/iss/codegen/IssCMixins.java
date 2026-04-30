@@ -24,6 +24,8 @@ import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssSelectNode;
+import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
@@ -73,7 +75,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgUnaryNopNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.Handler;
-import vadl.viam.annotations.BigEndianAnnotation;
+import vadl.viam.Endianness;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -246,7 +248,7 @@ public interface IssCMixins {
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
       var endianSuffix = bitWidth == 8
           ? "" // there are no le/be versions of single byte ops
-          : (node.memory().hasAnnotation(BigEndianAnnotation.class) ? "_be" : "_le");
+          : (node.endianness() == Endianness.BIG ? "_be" : "_le");
       if (bitWidth <= 64) {
         var widthSuffix = switch (bitWidth) {
           case 8 -> "ub";
@@ -295,7 +297,7 @@ public interface IssCMixins {
       var ra = withGetPcRetAddr ? "GETPC()" : "0";
       var endianSuffix = bitWidth == 8
           ? "" // there are no le/be versions of single byte ops
-          : (node.memory().hasAnnotation(BigEndianAnnotation.class) ? "_be" : "_le");
+          : (node.endianness() == Endianness.BIG ? "_be" : "_le");
       if (bitWidth <= 64) {
         var widthSuffix = switch (bitWidth) {
           case 8 -> "b";
@@ -343,6 +345,23 @@ public interface IssCMixins {
             .wr("),").wr(ra).wr(")");
       }
     }
+  }
+
+  /**
+   * Implements static resource reads from the {@code DisasContext}.
+   */
+  interface StaticReadRegTensor {
+
+    @Handler
+    default void handler(CGenContext<Node> ctx, IssStaticPcRegNode node) {
+      ctx.wr("(ctx->pc_curr)");
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, IssStaticReadRegNode node) {
+      ctx.wr("(ctx->tb_state." + node.regTensor().simpleName().toLowerCase() + ")");
+    }
+
   }
 
   /**

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,18 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.annotations;
-
-import vadl.viam.Annotation;
-import vadl.viam.Memory;
+package vadl.viam;
 
 /**
- * Annotation for big endian memory.
+ * Enum representing memory endianness.
+ *
+ * <p>The two modes are:
+ * <ul>
+ *    <li>BIG</li>
+ *    <li>LITTLE</li>
+ * </ul>
  */
-public class BigEndianAnnotation extends Annotation<Memory> {
+public enum Endianness {
+  BIG,
+  LITTLE;
 
-  @Override
-  public Class<Memory> parentDefinitionClass() {
-    return Memory.class;
+  /**
+   * Returns the opposite endianness of this.
+   *
+   * @return the opposite endianness
+   */
+  public Endianness other() {
+    return this == BIG ? LITTLE : BIG;
   }
 }

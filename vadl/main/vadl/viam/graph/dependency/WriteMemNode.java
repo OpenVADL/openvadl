@@ -20,6 +20,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.Endianness;
 import vadl.viam.Memory;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -44,6 +45,10 @@ public class WriteMemNode extends WriteResourceNode {
   @DataValue
   protected int words;
 
+  @DataValue
+  @Nullable
+  protected Endianness endiannessOverwrite;
+
   /**
    * Constructs a new WriteMemNode object.
    *
@@ -55,9 +60,7 @@ public class WriteMemNode extends WriteResourceNode {
   public WriteMemNode(Memory memory, int words,
                       ExpressionNode address,
                       ExpressionNode value) {
-    super(address, value);
-    this.memory = memory;
-    this.words = words;
+    this(memory, words, address, value, null);
   }
 
   /**
@@ -70,9 +73,26 @@ public class WriteMemNode extends WriteResourceNode {
    */
   public WriteMemNode(Memory memory, int words, ExpressionNode address, ExpressionNode value,
                       @Nullable ExpressionNode condition) {
+    this(memory, words, null, address, value, condition);
+  }
+
+  /**
+   * Constructs a new WriteMemNode object.
+   *
+   * @param memory  the memory definition to write to
+   * @param words   the number of words that are written to memory
+   * @param address the expression representing the memory address
+   * @param value   the expression representing the value to write
+   * @param endiannessOverwrite overwrites the memory endianness for this write, if not null
+   */
+  public WriteMemNode(Memory memory, int words,
+                      @Nullable Endianness endiannessOverwrite,
+                      ExpressionNode address, ExpressionNode value,
+                      @Nullable ExpressionNode condition) {
     super(address, value);
     this.memory = memory;
     this.words = words;
+    this.endiannessOverwrite = endiannessOverwrite;
     this.condition = condition;
   }
 
@@ -82,6 +102,20 @@ public class WriteMemNode extends WriteResourceNode {
 
   public int words() {
     return words;
+  }
+
+  /**
+   * Returns what endianness this node operates with. Uses the endianness of its
+   * {@link #memory()} by default. If this node overwrites that endianness
+   * (see {@link #overwriteEndianness(Endianness)}), then that endianness is
+   * returned instead.
+   *
+   * @return the endianness of this memory operation
+   */
+  public Endianness endianness() {
+    return endiannessOverwrite != null
+        ? endiannessOverwrite
+        : memory.endianness();
   }
 
   @Nonnull
@@ -105,11 +139,13 @@ public class WriteMemNode extends WriteResourceNode {
     super.collectData(collection);
     collection.add(memory);
     collection.add(words);
+    collection.add(endiannessOverwrite);
   }
 
   @Override
   public Node copy() {
     var node = new WriteMemNode(memory, words,
+        endiannessOverwrite,
         address().copy(),
         value.copy(),
         (condition != null ? condition.copy() : null));
@@ -119,7 +155,23 @@ public class WriteMemNode extends WriteResourceNode {
 
   @Override
   public Node shallowCopy() {
-    var node = new WriteMemNode(memory, words, address(), value, condition);
+    var node = new WriteMemNode(memory, words, endiannessOverwrite, address(), value, condition);
+    node.setSourceLocation(location());
+    return node;
+  }
+
+  /**
+   * Creates a copy of this node. The new node will use the given endianness
+   * instead of the endianness of the {@link #memory()}
+   *
+   * @param endianness the endianness overwrite
+   */
+  public WriteMemNode overwriteEndianness(Endianness endianness) {
+    var node = new WriteMemNode(memory, words,
+        endianness,
+        address().copy(),
+        value.copy(),
+        (condition != null ? condition.copy() : null));
     node.setSourceLocation(location());
     return node;
   }

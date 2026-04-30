@@ -23,6 +23,7 @@ import static vadl.utils.GraphUtils.intU;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.IssAliasAccessorDescriptors;
@@ -42,6 +43,7 @@ import vadl.utils.Pair;
 import vadl.utils.ViamUtils;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
+import vadl.viam.Memory;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
@@ -70,6 +72,9 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  *   <li>Rewrites {@link ReadArtificialResNode}/{@link WriteArtificialResNode} into
  *   {@link IssReadRegNode}/{@link IssWriteRegNode} plus shaping nodes where required.</li>
  *   <li>Normal base register accesses are normalized to unified ISS nodes as well.</li>
+ *   <li>Register accesses to translation block saved registers are rewritten into
+ *   {@link IssStaticReadRegNode} (this only happens in tcg instruction behaviors
+ *   and in the optional bi-endian memory condition behavior).</li>
  * </ul>
  *
  * <p>Contract:
@@ -97,6 +102,10 @@ public class IssRegisterAccessLoweringPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
     tcgInstrs(viam).forEach(i ->
         new IssStaticRegisterAccessConverter(i.behavior()).run());
+    viam.isa().get().ownMemories().stream()
+        .map(Memory::biEndianCondition)
+        .filter(Objects::nonNull)
+        .forEach(c -> new IssStaticRegisterAccessConverter(c).run());
     ViamUtils.findAllBehaviors(viam).forEach(behavior ->
         new IssRegisterAccessLowering(behavior).run());
     return null;
@@ -139,6 +148,7 @@ class IssStaticRegisterAccessConverter {
       if (isStatic) {
         if (staticRead == null) {
           staticRead = behaviour.add(new IssStaticReadRegNode(read.regTensor()));
+          staticRead.setSourceLocation(read.location());
         }
         usage.replaceInput(read, staticRead);
       }

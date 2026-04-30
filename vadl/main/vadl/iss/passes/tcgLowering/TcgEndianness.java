@@ -16,6 +16,8 @@
 
 package vadl.iss.passes.tcgLowering;
 
+import vadl.viam.Endianness;
+
 /**
  * Enum representing endianness for TCG (Tiny Code Generation) load/store operations.
  *
@@ -29,8 +31,14 @@ public enum TcgEndianness {
   BIG,
   LITTLE;
 
-  public static TcgEndianness fromBoolean(boolean value) {
-    return value ? BIG : LITTLE;
+  /**
+   * Converts from {@link Endianness}.
+   */
+  public static TcgEndianness fromViamEndianness(Endianness endianness) {
+    return switch (endianness) {
+      case BIG    -> BIG;
+      case LITTLE -> LITTLE;
+    };
   }
 
 }

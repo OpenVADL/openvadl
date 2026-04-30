@@ -96,8 +96,8 @@ public class ViamUtils {
    * @return A stream of Graph objects representing all behaviors found in the root definition.
    */
   public static Stream<Graph> findAllBehaviors(Definition root) {
-    return findDefinitionsByFilter(root, (d) -> d instanceof DefProp.WithBehavior)
+    return findDefinitionsByFilter(root, (d) -> d instanceof DefProp.WithOptionalBehaviour)
         .stream()
-        .flatMap(d -> ((DefProp.WithBehavior) d).behaviors().stream());
+        .flatMap(d -> ((DefProp.WithOptionalBehaviour) d).behaviors().stream());
   }
 }

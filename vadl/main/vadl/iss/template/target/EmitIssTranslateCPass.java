@@ -16,7 +16,9 @@
 
 package vadl.iss.template.target;
 
+import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
+import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.common.collect.Streams;
 import java.util.List;
@@ -26,6 +28,7 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.iss.IssUtils;
+import vadl.iss.codegen.IssTbStaticExpressionCodeGen;
 import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.RegInfo;
@@ -40,6 +43,7 @@ import vadl.utils.codegen.StringBuilderAppendable;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.ReturnNode;
 
 /**
  * Emits the target/gen-arch/translate.c includes the C files that contain the instruction
@@ -68,6 +72,7 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     vars.put("trans_includes", translationIncludes(passResults));
     vars.put("tcg_v_init_code", genRegInitCode(specification));
     vars.put("alias_accessors", renderAliasAccessors(accessorRegistry));
+    vars.put("bi_endian_condition", renderBiEndianCondition(specification));
     return vars;
   }
 
@@ -134,6 +139,20 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
           sb.append("\n");
         });
     return sb.toString();
+  }
+
+  private String renderBiEndianCondition(Specification specification) {
+    var isa = specification.processor().get().isa();
+    var memories = isa.ownMemories();
+    ensure(memories.size() == 1,
+        () -> error("Only one memory definition is supported", isa));
+    var condition = memories.getFirst().biEndianCondition();
+    if (condition == null) {
+      return "";
+    }
+    return new IssTbStaticExpressionCodeGen(
+        getSingleNode(condition, ReturnNode.class).value()
+    ).fetch();
   }
 
   private List<Map<String, Object>> renderAliasAccessors(IssAccessorRegistry accessorRegistry) {

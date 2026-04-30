@@ -17,6 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
+import vadl.iss.passes.tcgLowering.TcgEndianness;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -29,27 +30,36 @@ public class IssStoreNode extends WriteMemNode {
 
   @DataValue
   private final Tcg_8_16_32_64 storeSize;
+  @DataValue
+  private final TcgEndianness endianness;
 
   /**
    * Constructs an IssStoreNode object which is a specialized WriteMemNode that also contains
    * information about sign extension.
    *
-   * @param origin    the original read memory node
-   * @param storeSize the used TCG sized to store operation
+   * @param origin     the original read memory node
+   * @param storeSize  the used TCG sized to store operation
+   * @param endianness the endianness of the store operation
    */
-  public IssStoreNode(WriteMemNode origin, Tcg_8_16_32_64 storeSize) {
+  public IssStoreNode(WriteMemNode origin, Tcg_8_16_32_64 storeSize, TcgEndianness endianness) {
     super(origin.memory(), origin.words(), origin.address(), origin.value(),
         origin.nullableCondition());
     this.storeSize = storeSize;
+    this.endianness = endianness;
   }
 
   public Tcg_8_16_32_64 storeSize() {
     return storeSize;
   }
 
+  public TcgEndianness tcgEndianness() {
+    return endianness;
+  }
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(storeSize);
+    collection.add(endianness);
   }
 }

@@ -17,6 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
+import vadl.iss.passes.tcgLowering.TcgEndianness;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
@@ -33,20 +34,24 @@ public class IssLoadNode extends ReadMemNode {
   private final TcgExtend tcgExtend;
   @DataValue
   private final Tcg_8_16_32_64 loadSize;
+  @DataValue
+  private final TcgEndianness endianness;
 
   /**
    * Constructs an IssLoadNode object which is a specialized ReadMemNode that also contains
    * information about sign extension.
    *
-   * @param origin    the original read memory node
-   * @param tcgExtend the extension information (sign or unsigned)
-   * @param type      the data type of the value being read
+   * @param origin     the original read memory node
+   * @param tcgExtend  the extension information (sign or unsigned)
+   * @param endianness the endianness of the read operation
+   * @param type       the data type of the value being read
    */
   public IssLoadNode(ReadMemNode origin, TcgExtend tcgExtend, Tcg_8_16_32_64 loadSize,
-                     DataType type) {
+                     TcgEndianness endianness, DataType type) {
     super(origin.memory(), origin.words(), origin.address(), type);
     this.tcgExtend = tcgExtend;
     this.loadSize = loadSize;
+    this.endianness = endianness;
   }
 
   public Tcg_8_16_32_64 loadSize() {
@@ -57,10 +62,15 @@ public class IssLoadNode extends ReadMemNode {
     return tcgExtend;
   }
 
+  public TcgEndianness tcgEndianness() {
+    return endianness;
+  }
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(tcgExtend);
     collection.add(loadSize);
+    collection.add(endianness);
   }
 }
