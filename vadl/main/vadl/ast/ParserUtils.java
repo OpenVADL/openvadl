@@ -589,7 +589,7 @@ class ParserUtils {
 
     String message;
     if (isPlaceholder(node)) {
-      var sb = new StringBuilder("");
+    var sb = new StringBuilder("");
       node.prettyPrint(0, sb);
       var name = sb.toString();
 

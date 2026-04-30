@@ -307,15 +307,9 @@ public abstract class BaseCommand implements Callable<Integer> {
     }
 
     System.out.println("\nSpecification Statistics:");
-    var stats = SpecStatAnalyser.run(ast, fileSystem);
-    System.out.printf("\t- %-30s %6d\n", "Files:", stats.files);
-    System.out.printf("\t- %-30s %6d\n", "Lines of Code:", stats.linesOfCode);
-    System.out.printf("\t- %-30s %6d\n", "Function Definitions:", stats.functionDefinitions);
-    System.out.printf("\t- %-30s %6d\n", "Format Definitions:", stats.formatDefinitions);
-    System.out.printf("\t- %-30s %6d\n", "Instruction Definitions:", stats.instructionDefinition);
-    System.out.printf("\t- %-30s %6d\n", "Total Definitions:", stats.totalDefinitions);
-    System.out.printf("\t- %-30s %6d\n", "Total Statements:", stats.totalStatements);
-    System.out.printf("\t- %-30s %6d\n", "Total Expressions:", stats.totalExpressions);
+    SpecStatAnalyser.run(ast, fileSystem).forEach( stat ->
+        System.out.printf("\t- %-30s %6d\n", stat.name(), stat.count())
+    );
   }
 
   protected void printSpecStatsCsv(Ast ast, VirtualFileSystem fileSystem) {
@@ -325,14 +319,9 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     var stats = SpecStatAnalyser.run(ast, fileSystem);
     var sb = new StringBuilder("stat,value\n");
-    sb.append("files,").append(stats.files).append('\n');
-    sb.append("lines_of_code,").append(stats.linesOfCode).append('\n');
-    sb.append("function_definitions,").append(stats.functionDefinitions).append('\n');
-    sb.append("format_definitions,").append(stats.formatDefinitions).append('\n');
-    sb.append("instruction_definitions,").append(stats.instructionDefinition).append('\n');
-    sb.append("total_definitions,").append(stats.totalDefinitions).append('\n');
-    sb.append("total_statements,").append(stats.totalStatements).append('\n');
-    sb.append("total_expressions,").append(stats.totalExpressions).append('\n');
+    stats.forEach(stat ->
+        sb.append(stat.name()).append(',').append(stat.count()).append('\n')
+        );
     var csvPath = output.resolve("spec-stats.csv");
     try {
       Files.writeString(csvPath, sb, StandardCharsets.UTF_8);

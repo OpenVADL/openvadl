@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import java.nio.file.Path;
+import java.util.List;
 import vadl.utils.VirtualFileSystem;
 
 /**
@@ -24,8 +25,15 @@ import vadl.utils.VirtualFileSystem;
  */
 public class SpecStatAnalyser extends RecursiveAstVisitor {
 
-  private static final SpecStats stats = new SpecStats();
   private final VirtualFileSystem fileSystem;
+  private int files = 0;
+  private int linesOfCode = 0;
+  private int functionDefinitions = 0;
+  private int formatDefinitions = 0;
+  private int instructionDefinition = 0;
+  private int totalDefinitions = 0;
+  private int totalStatements = 0;
+  private int totalExpressions = 0;
 
   private SpecStatAnalyser(VirtualFileSystem fileSystem) {
     this.fileSystem = fileSystem;
@@ -38,42 +46,51 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
    * @param fileSystem from which the files can be read again to calcuulate the lines of code.
    * @return the collected statistics.
    */
-  public static SpecStats run(Ast ast, VirtualFileSystem fileSystem) {
+  public static List<SpecStat> run(Ast ast, VirtualFileSystem fileSystem) {
     var analyser = new SpecStatAnalyser(fileSystem);
     ast.definitions.forEach(definition -> definition.accept(analyser));
 
     ast.allReadFiles().forEach(analyser::handlePath);
 
-    return analyser.stats;
+    return List.of(
+        new SpecStat("Files", analyser.files),
+        new SpecStat("Lines of code", analyser.linesOfCode),
+        new SpecStat("Function Definitions", analyser.functionDefinitions),
+        new SpecStat("Format Definitions", analyser.formatDefinitions),
+        new SpecStat("Instruction Definitions", analyser.instructionDefinition),
+        new SpecStat("Total Definitions", analyser.totalDefinitions),
+        new SpecStat("Total Statements", analyser.totalStatements),
+        new SpecStat("Total Expressions", analyser.totalExpressions)
+    );
   }
 
   private void handlePath(Path path) {
-    stats.files++;
-    fileSystem.readLines(path).forEach(line -> stats.linesOfCode++);
+   files++;
+    fileSystem.readLines(path).forEach(line -> linesOfCode++);
   }
 
   @Override
   public void beforeTravel(Definition definition) {
-    stats.totalDefinitions++;
+    totalDefinitions++;
     if (definition instanceof FunctionDefinition) {
-      stats.functionDefinitions++;
+      functionDefinitions++;
     }
     if (definition instanceof FormatDefinition) {
-      stats.formatDefinitions++;
+      formatDefinitions++;
     }
     if (definition instanceof InstructionDefinition) {
-      stats.instructionDefinition++;
+      instructionDefinition++;
     }
   }
 
   @Override
   public void beforeTravel(Statement statement) {
-    stats.totalStatements++;
+    totalStatements++;
   }
 
   @Override
   public void beforeTravel(Expr expr) {
-    stats.totalExpressions++;
+    totalExpressions++;
   }
 
   @Override
@@ -87,15 +104,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   /**
    * Statistics container to hold the collected data.
    */
-  public static class SpecStats {
-    public int files = 0;
-    public int linesOfCode = 0;
-    public int functionDefinitions = 0;
-    public int formatDefinitions = 0;
-    public int instructionDefinition = 0;
-    public int totalDefinitions = 0;
-    public int totalStatements = 0;
-    public int totalExpressions = 0;
+  public record SpecStat(String name, int count) {
   }
 
 }
