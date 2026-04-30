@@ -23,7 +23,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import picocli.CommandLine;
 import vadl.cli.decoder.mixin.DecoderMixin.DecoderOpt;
-import vadl.cli.decoder.mixin.DecoderMixin.DecoderSkipOption;
+import vadl.cli.decoder.mixin.DecoderMixin.DecoderStep;
 import vadl.cli.decoder.mixin.DecoderMixin.DecoderStrategy;
 import vadl.configuration.DecoderOptions;
 
@@ -34,13 +34,14 @@ public abstract class DecoderOptsConverter
     implements Iterable<String>, CommandLine.ITypeConverter<DecoderOpt> {
 
   private static final String KEY_STRATEGY = "strategy";
-  private static final String KEY_SKIP = "skip";
+  private static final String KEY_STEP_INCLUDE = "with";
+  private static final String KEY_STEP_EXCLUDE = "skip";
 
   /**
    * Allow subclasses to override the available options.
    */
   protected DecoderOptions.Generator[] strategies = DecoderOptions.Generator.values();
-  protected DecoderOptions.OptionToSkip[] skipOptions = DecoderOptions.OptionToSkip.values();
+  protected DecoderOptions.OptionalStep[] steps = DecoderOptions.OptionalStep.values();
 
   @Override
   public DecoderOpt convert(String value) {
@@ -63,22 +64,35 @@ public abstract class DecoderOptsConverter
                   .map(DecoderOptions.Generator::getSelector).toList()));
     }
 
-    if (KEY_SKIP.equals(fragments[0].trim())) {
+    if (KEY_STEP_EXCLUDE.equals(fragments[0].trim())) {
       var val = fragments[1].trim();
-      var skipOpt = DecoderOptions.OptionToSkip.fromSelector(val, skipOptions);
-      if (skipOpt != null) {
-        return new DecoderSkipOption(skipOpt);
+      var step = DecoderOptions.OptionalStep.fromSelector(val, steps);
+      if (step != null) {
+        return new DecoderStep(step, false);
       }
 
       throw new CommandLine.TypeConversionException(
-          "Unable to parse decoder option to skip: '%s'. Available options are: %s".formatted(val,
-              Arrays.stream(skipOptions)
-                  .map(DecoderOptions.OptionToSkip::getSelector).toList()));
+          "Unable to parse decoder step to disable: '%s'. Available options are: %s".formatted(val,
+              Arrays.stream(steps)
+                  .map(DecoderOptions.OptionalStep::getSelector).toList()));
+    }
+
+    if (KEY_STEP_INCLUDE.equals(fragments[0].trim())) {
+      var val = fragments[1].trim();
+      var step = DecoderOptions.OptionalStep.fromSelector(val, steps);
+      if (step != null) {
+        return new DecoderStep(step, true);
+      }
+
+      throw new CommandLine.TypeConversionException(
+          "Unable to parse decoder step to enable: '%s'. Available options are: %s".formatted(val,
+              Arrays.stream(steps)
+                  .map(DecoderOptions.OptionalStep::getSelector).toList()));
     }
 
     throw new CommandLine.TypeConversionException(
-        "Illegal decoder option '%s'. Available options are: %s".formatted(value,
-            List.of(KEY_SKIP, KEY_STRATEGY)));
+        "Illegal decoder step '%s'. Available options are: %s".formatted(value,
+            List.of(KEY_STEP_INCLUDE, KEY_STEP_EXCLUDE, KEY_STRATEGY)));
   }
 
   /**
@@ -93,9 +107,10 @@ public abstract class DecoderOptsConverter
       options.add(
           "%n%s=%s (%s)".formatted(KEY_STRATEGY, generator.getSelector(), generator.getDesc()));
     }
-    for (DecoderOptions.OptionToSkip skipOption : skipOptions) {
+    for (DecoderOptions.OptionalStep step : steps) {
       options.add(
-          "%n%s=%s (%s)".formatted(KEY_SKIP, skipOption.getSelector(), skipOption.getDesc()));
+          "%n[%s|%s]=%s (%s)".formatted(KEY_STEP_INCLUDE, KEY_STEP_EXCLUDE,
+              step.getSelector(), step.getDesc()));
     }
     return options;
   }

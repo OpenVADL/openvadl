@@ -21,7 +21,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.MaxValuesExceededException;
 import vadl.configuration.DecoderOptions;
 import vadl.configuration.DecoderOptions.Generator;
-import vadl.configuration.DecoderOptions.OptionToSkip;
+import vadl.configuration.DecoderOptions.OptionalStep;
 
 /**
  * Base functionality for the decoder option mixins.
@@ -60,15 +60,10 @@ public abstract class DecoderMixin {
       result.setGenerator(strategies.getFirst().generator());
     }
 
-    var skipOpts = decoderOptions.stream()
-        .filter(DecoderSkipOption.class::isInstance)
-        .map(DecoderSkipOption.class::cast)
-        .map(DecoderSkipOption::option)
-        .toList();
-
-    if (!skipOpts.isEmpty()) {
-      result.setOptsToSkip(skipOpts.toArray(new OptionToSkip[0]));
-    }
+    decoderOptions.stream()
+        .filter(DecoderStep.class::isInstance)
+        .map(DecoderStep.class::cast)
+        .forEach(step -> result.getOpts().put(step.step(), step.enabled()));
 
     return result;
   }
@@ -88,11 +83,11 @@ public abstract class DecoderMixin {
   }
 
   /**
-   * Skip options.
+   * Optional step option.
    *
-   * @param option The option to skip.
+   * @param step The step to skip.
    */
-  public record DecoderSkipOption(OptionToSkip option) implements DecoderOpt {
+  public record DecoderStep(OptionalStep step, boolean enabled) implements DecoderOpt {
   }
 
 }
