@@ -140,7 +140,7 @@ public class PassManager {
     for (int passIdx = 0; passIdx < affectedSteps.size(); passIdx++) {
       var step = affectedSteps.get(passIdx);
       @SuppressWarnings("VariableDeclarationUsageDistance")
-      var startTime = System.currentTimeMillis();
+      var startTime = System.nanoTime();
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.
       var pass = step.pass();
@@ -162,7 +162,7 @@ public class PassManager {
       pass.verification(viam, passResult);
 
       // we always store the pass result, even if the result is `null`
-      var duration = System.currentTimeMillis() - startTime;
+      var duration = System.nanoTime() - startTime;
       passResults.add(step.key(), pass, duration, passResult);
 
       logger.debug(">>> [{}/{}] Pass done: key='{}' ({} ms)",

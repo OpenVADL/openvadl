@@ -290,7 +290,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         "nr", nr,
         "passKey", singleResult.passKey().value(),
         "pass", mapPass(singleResult.pass()),
-        "duration", singleResult.durationMs(),
+        "duration", singleResult.durationNs(),
         "hasLink", hasLink,
         "skipped", singleResult.skipped()
     );

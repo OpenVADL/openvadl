@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -72,7 +72,7 @@ public class CollectBehaviorDotGraphPass extends Pass {
               .map(behaviorDotGraph -> new PassResults.DotGraphResult(
                   prevPass.passKey(),
                   prevPass().pass(),
-                  prevPass().durationMs(),
+                  prevPass().durationNs(),
                   behaviorDotGraph,
                   prevPass().skipped(),
                   x.getKey())))
