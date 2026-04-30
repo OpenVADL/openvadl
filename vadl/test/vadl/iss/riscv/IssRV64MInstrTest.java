@@ -18,15 +18,22 @@ package vadl.iss.riscv;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.DynamicNode;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestMethodOrder;
 import vadl.iss.AsmTestBuilder;
 import vadl.iss.IssTestUtils;
 
 /**
  * Tests the RV64I instructions set.
  */
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
 
 
@@ -44,115 +51,57 @@ public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
     return new RV64IMVTestBuilder(testNamePrefix + "_" + id);
   }
 
-  @TestFactory
-  Stream<DynamicTest> mul() throws IOException {
-    return testBinaryRegRegInstruction("mul", "MUL");
+  @Test
+  @Order(1)
+  void setupInstructionTests() throws IOException {
+    initializeInstructionBatchFromTestCases(this::buildInstructionTestCases, this::getInstructionName);
   }
 
   @TestFactory
-  Stream<DynamicTest> mulh() throws IOException {
-    return testBinaryRegRegInstruction("mulh", "MULH");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> mulhu() throws IOException {
-    return testBinaryRegRegInstruction("mulhu", "MULHU");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> mulhsu() throws IOException {
-    return testBinaryRegRegInstruction("mulhsu", "MULHSU");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> div() throws IOException {
-    return testBinaryRegRegInstruction("div", "DIV");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> divByZero() throws IOException {
-    return testDivRemByCustom(10, "div", BigInteger.ZERO, "DIV_BY_ZERO");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> divByMinusOne() throws IOException {
-    return testDivRemByCustom(10, "div", BigInteger.ONE.negate(), "DIV_BY_MINUS_ONE");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> divu() throws IOException {
-    return testBinaryRegRegInstruction("divu", "DIVU");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> divuByZero() throws IOException {
-    return testDivRemByCustom(10, "divu", BigInteger.ZERO, "DIVU_BY_ZERO");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> divuByMinusOne() throws IOException {
-    return testDivRemByCustom(10, "divu", BigInteger.ONE.negate(), "DIVU_BY_MINUS_ONE");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> rem() throws IOException {
-    return testBinaryRegRegInstruction("rem", "REM");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> remByZero() throws IOException {
-    return testDivRemByCustom(10, "rem", BigInteger.ZERO, "REM_BY_ZERO");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> remByMinusOne() throws IOException {
-    return testDivRemByCustom(10, "rem", BigInteger.ONE.negate(), "REM_BY_MINUS_ONE");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> remu() throws IOException {
-    return testBinaryRegRegInstruction("remu", "REMU");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> remuByZero() throws IOException {
-    return testDivRemByCustom(10, "remu", BigInteger.ZERO, "REMU_BY_ZERO");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> remuByMinusOne() throws IOException {
-    return testDivRemByCustom(10, "remu", BigInteger.ONE.negate(), "REMU_BY_MINUS_ONE");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> mulw() throws IOException {
-    return testBinaryRegRegInstructionW("mulw", "MULW");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> divw() throws IOException {
-    return testBinaryRegRegInstructionW("divw", "DIVW");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> divuw() throws IOException {
-    return testBinaryRegRegInstructionW("divuw", "DIVUW");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> remw() throws IOException {
-    return testBinaryRegRegInstructionW("remw", "REMW");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> remuw() throws IOException {
-    return testBinaryRegRegInstructionW("remuw", "REMUW");
+  @Order(2)
+  Stream<DynamicNode> buildInstructionTests() throws IOException {
+    initializeInstructionBatchFromTestCases(this::buildInstructionTestCases, this::getInstructionName);
+    return buildInstructionTestContainers();
   }
 
   // Helper methods
-  private Stream<DynamicTest> testBinaryRegRegInstruction(String instruction, String testNamePrefix)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> buildInstructionTestCases() {
+    var tests = new ArrayList<IssTestUtils.TestCase>();
+    tests.addAll(testBinaryRegRegInstruction("mul", "MUL"));
+    tests.addAll(testBinaryRegRegInstruction("mulh", "MULH"));
+    tests.addAll(testBinaryRegRegInstruction("mulhu", "MULHU"));
+    tests.addAll(testBinaryRegRegInstruction("mulhsu", "MULHSU"));
+    tests.addAll(testBinaryRegRegInstruction("div", "DIV"));
+    tests.addAll(testDivRemByCustom(10, "div", BigInteger.ZERO, "DIV_BY_ZERO"));
+    tests.addAll(testDivRemByCustom(10, "div", BigInteger.ONE.negate(), "DIV_BY_MINUS_ONE"));
+    tests.addAll(testBinaryRegRegInstruction("divu", "DIVU"));
+    tests.addAll(testDivRemByCustom(10, "divu", BigInteger.ZERO, "DIVU_BY_ZERO"));
+    tests.addAll(testDivRemByCustom(10, "divu", BigInteger.ONE.negate(), "DIVU_BY_MINUS_ONE"));
+    tests.addAll(testBinaryRegRegInstruction("rem", "REM"));
+    tests.addAll(testDivRemByCustom(10, "rem", BigInteger.ZERO, "REM_BY_ZERO"));
+    tests.addAll(testDivRemByCustom(10, "rem", BigInteger.ONE.negate(), "REM_BY_MINUS_ONE"));
+    tests.addAll(testBinaryRegRegInstruction("remu", "REMU"));
+    tests.addAll(testDivRemByCustom(10, "remu", BigInteger.ZERO, "REMU_BY_ZERO"));
+    tests.addAll(testDivRemByCustom(10, "remu", BigInteger.ONE.negate(), "REMU_BY_MINUS_ONE"));
+    tests.addAll(testBinaryRegRegInstructionW("mulw", "MULW"));
+    tests.addAll(testBinaryRegRegInstructionW("divw", "DIVW"));
+    tests.addAll(testBinaryRegRegInstructionW("divuw", "DIVUW"));
+    tests.addAll(testBinaryRegRegInstructionW("remw", "REMW"));
+    tests.addAll(testBinaryRegRegInstructionW("remuw", "REMUW"));
+    return tests;
+  }
+
+  private String getInstructionName(IssTestUtils.TestCase testCase) {
+    var separator = testCase.id().lastIndexOf('_');
+    if (separator <= 0) {
+      return testCase.id();
+    }
+    return testCase.id().substring(0, separator).toLowerCase();
+  }
+
+  private List<IssTestUtils.TestCase> testBinaryRegRegInstruction(String instruction,
+                                                                  String testNamePrefix) {
+    return buildTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
@@ -176,10 +125,9 @@ public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
     return b.toTestCase(regSrc1, regSrc2, regDest);
   }
 
-  private Stream<DynamicTest> testDivRemByCustom(int runs, String instr, BigInteger divisor,
-                                                 String testPrefix)
-      throws IOException {
-    return runTestsWith(runs, (i) -> {
+  private List<IssTestUtils.TestCase> testDivRemByCustom(int runs, String instr, BigInteger divisor,
+                                                         String testPrefix) {
+    return buildTestsWith(runs, (i) -> {
       var b = getBuilder(testPrefix, i);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
@@ -192,10 +140,9 @@ public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
   }
 
   // Helper for 32-bit wide instructions (sign-extended)
-  private Stream<DynamicTest> testBinaryRegRegInstructionW(String instruction,
-                                                           String testNamePrefix)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> testBinaryRegRegInstructionW(String instruction,
+                                                                   String testNamePrefix) {
+    return buildTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();

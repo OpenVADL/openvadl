@@ -83,15 +83,16 @@ class TestCasePluginExecutor:
     filename = output_dir / f"{prefix}{self.test.id}.yaml"
 
     # Prepare the data to be written
+    should_emit_details = self.test_result.status != 'PASS'
     data = {
         'id': self.test.id,
         'status': self.test_result.status,
         'duration': self.test_result.duration,
         'completedStages': self.test_result.completed_stages,
         'errors': self.test_result.errors,
-        'regTests': self.test_result.reg_tests,
-        'simLogs': self.test_result.sim_logs,
-        'refLogs': self.test_result.ref_logs,
+        'regTests': should_emit_details and self.test_result.reg_tests or {},
+        'simLogs': should_emit_details and self.test_result.sim_logs or {},
+        'refLogs': should_emit_details and self.test_result.ref_logs or {},
     }
 
     # Write data to the YAML file asynchronously

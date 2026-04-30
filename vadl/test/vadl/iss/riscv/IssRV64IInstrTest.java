@@ -21,15 +21,22 @@ import static vadl.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
-import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.DynamicNode;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestMethodOrder;
 import vadl.iss.AsmTestBuilder;
+import vadl.iss.IssTestUtils;
 
 /**
  * Tests the RV64I instructions set.
  */
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
 
   private static final String VADL_SPEC = "sys/risc-v/rv64v.vadl";
@@ -49,10 +56,84 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return new RV64IMVTestBuilder(testNamePrefix + "_" + id);
   }
 
+  // We cannot use @BeforeAll here because it runs before AbstractTest.beforeEach initializes
+  // the frontend required by generateIssSimulator().
+  @Test
+  @Order(1)
+  void setupInstructionTests() throws IOException {
+    initializeInstructionBatchFromTestCases(this::buildInstructionTestCases, this::getInstructionName);
+  }
+
+  @TestFactory
+  @Order(2)
+  Stream<DynamicNode> buildInstructionTests() throws IOException {
+    initializeInstructionBatchFromTestCases(this::buildInstructionTestCases, this::getInstructionName);
+    return buildInstructionTestContainers();
+  }
+
+  private List<IssTestUtils.TestCase> buildInstructionTestCases() {
+    var tests = new java.util.ArrayList<IssTestUtils.TestCase>();
+    tests.addAll(testBinaryRegRegInstruction("add", "ADD"));
+    tests.addAll(testBinaryRegRegInstruction("sub", "SUB"));
+    tests.addAll(testBinaryRegRegInstruction("and", "AND"));
+    tests.addAll(testBinaryRegRegInstruction("or", "OR"));
+    tests.addAll(testBinaryRegRegInstruction("xor", "XOR"));
+    tests.addAll(testBinaryRegRegInstruction("slt", "SLT"));
+    tests.addAll(testBinaryRegRegInstruction("sltu", "SLTU"));
+    tests.addAll(testBinaryRegImmInstruction("addi", "ADDI"));
+    tests.addAll(testBinaryRegImmInstruction("andi", "ANDI"));
+    tests.addAll(testBinaryRegImmInstruction("ori", "ORI"));
+    tests.addAll(testBinaryRegImmInstruction("xori", "XORI"));
+    tests.addAll(testBinaryRegImmInstruction("slti", "SLTI"));
+    tests.addAll(testBinaryRegImmInstruction("sltiu", "SLTIU"));
+    tests.addAll(testShiftImmInstruction("slli", "SLLI"));
+    tests.addAll(testShiftImmInstruction("srli", "SRLI"));
+    tests.addAll(testShiftImmInstruction("srai", "SRAI"));
+    tests.addAll(testLoadInstruction("lb", "LB", "sb", 8));
+    tests.addAll(testLoadInstruction("lh", "LH", "sh", 16));
+    tests.addAll(testLoadInstruction("lw", "LW", "sw", 32));
+    tests.addAll(testLoadInstruction("ld", "LD", "sd", 64));
+    tests.addAll(testLoadInstruction("lbu", "LBU", "sb", 8));
+    tests.addAll(testLoadInstruction("lhu", "LHU", "sh", 16));
+    tests.addAll(testLoadInstruction("lwu", "LWU", "sw", 32));
+    tests.addAll(testStoreInstruction("sb", "SB", "lb", 8));
+    tests.addAll(testStoreInstruction("sh", "SH", "lh", 16));
+    tests.addAll(testStoreInstruction("sw", "SW", "lw", 32));
+    tests.addAll(testStoreInstruction("sd", "SD", "ld", 64));
+    tests.addAll(testEqualityBranchInstruction("beq", "BEQ", true));
+    tests.addAll(testEqualityBranchInstruction("bne", "BNE", false));
+    tests.addAll(testRelationalBranchInstruction("blt", "BLT", true, false));
+    tests.addAll(testRelationalBranchInstruction("bge", "BGE", false, false));
+    tests.addAll(testRelationalBranchInstruction("bltu", "BLTU", true, true));
+    tests.addAll(testRelationalBranchInstruction("bgeu", "BGEU", false, true));
+    tests.addAll(testBinaryRegRegInstruction("addw", "ADDW"));
+    tests.addAll(testBinaryRegRegInstruction("subw", "SUBW"));
+    tests.addAll(testBinaryRegImmInstruction("addiw", "ADDIW"));
+    tests.addAll(sllwCases());
+    tests.addAll(srlwCases());
+    tests.addAll(srawCases());
+    tests.addAll(slliwCases());
+    tests.addAll(srliwCases());
+    tests.addAll(sraiwCases());
+    tests.addAll(luiCases());
+    tests.addAll(auipcCases());
+    tests.addAll(jalCases());
+    tests.addAll(jalrCases());
+    return tests;
+  }
+
+  private String getInstructionName(IssTestUtils.TestCase testCase) {
+    var separator = testCase.id().lastIndexOf('_');
+    if (separator <= 0) {
+      return testCase.id();
+    }
+    return testCase.id().substring(0, separator).toLowerCase();
+  }
+
   // Helper methods
-  private Stream<DynamicTest> testBinaryRegRegInstruction(String instruction, String testNamePrefix)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> testBinaryRegRegInstruction(String instruction,
+                                                                  String testNamePrefix) {
+    return buildTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
@@ -64,9 +145,9 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testBinaryRegImmInstruction(String instruction, String testNamePrefix)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> testBinaryRegImmInstruction(String instruction,
+                                                                  String testNamePrefix) {
+    return buildTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var regSrc = b.anyTempReg().sample();
       b.fillRegSigned(regSrc, 64);
@@ -77,9 +158,9 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testShiftImmInstruction(String instruction, String testNamePrefix)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> testShiftImmInstruction(String instruction,
+                                                              String testNamePrefix) {
+    return buildTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var regSrc = b.anyTempReg().sample();
       b.fillRegSigned(regSrc, 64);
@@ -99,10 +180,11 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return Integer.highestOneBit(dataSizeInBytes);
   }
 
-  private Stream<DynamicTest> testLoadInstruction(String instruction, String testNamePrefix,
-                                                  String storeInstruction, int dataSize)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> testLoadInstruction(String instruction,
+                                                          String testNamePrefix,
+                                                          String storeInstruction,
+                                                          int dataSize) {
+    return buildTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var storeReg = b.anyTempReg().sample();
       b.fillRegSigned(storeReg, dataSize);
@@ -116,10 +198,11 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testStoreInstruction(String instruction, String testNamePrefix,
-                                                   String loadInstruction, int dataSize)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> testStoreInstruction(String instruction,
+                                                           String testNamePrefix,
+                                                           String loadInstruction,
+                                                           int dataSize) {
+    return buildTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var storeReg = b.anyTempReg().sample();
       b.fillRegSigned(storeReg, dataSize);
@@ -134,11 +217,10 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testEqualityBranchInstruction(String instruction,
-                                                            String testNamePrefix,
-                                                            boolean branchWhenEqual)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> testEqualityBranchInstruction(String instruction,
+                                                                    String testNamePrefix,
+                                                                    boolean branchWhenEqual) {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder(testNamePrefix + "_" + id);
       var rs1 = b.anyTempReg().sample();
       var rs2 = b.anyTempReg().sample();
@@ -163,12 +245,11 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  private Stream<DynamicTest> testRelationalBranchInstruction(String instruction,
-                                                              String testNamePrefix,
-                                                              boolean branchWhenLessThan,
-                                                              boolean unsignedComparison)
-      throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> testRelationalBranchInstruction(String instruction,
+                                                                      String testNamePrefix,
+                                                                      boolean branchWhenLessThan,
+                                                                      boolean unsignedComparison) {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder(testNamePrefix + "_" + id);
       var rs1 = b.anyTempReg().sample();
       var rs2 = b.anyTempReg().sample();
@@ -251,191 +332,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-// Test methods using helper functions
-
-  @TestFactory
-  Stream<DynamicTest> add() throws IOException {
-    return testBinaryRegRegInstruction("add", "ADD");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sub() throws IOException {
-    return testBinaryRegRegInstruction("sub", "SUB");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> and() throws IOException {
-    return testBinaryRegRegInstruction("and", "AND");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> or() throws IOException {
-    return testBinaryRegRegInstruction("or", "OR");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> xor() throws IOException {
-    return testBinaryRegRegInstruction("xor", "XOR");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> slt() throws IOException {
-    return testBinaryRegRegInstruction("slt", "SLT");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sltu() throws IOException {
-    return testBinaryRegRegInstruction("sltu", "SLTU");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> addi() throws IOException {
-    return testBinaryRegImmInstruction("addi", "ADDI");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> andi() throws IOException {
-    return testBinaryRegImmInstruction("andi", "ANDI");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> ori() throws IOException {
-    return testBinaryRegImmInstruction("ori", "ORI");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> xori() throws IOException {
-    return testBinaryRegImmInstruction("xori", "XORI");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> slti() throws IOException {
-    return testBinaryRegImmInstruction("slti", "SLTI");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sltiu() throws IOException {
-    return testBinaryRegImmInstruction("sltiu", "SLTIU");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> slli() throws IOException {
-    return testShiftImmInstruction("slli", "SLLI");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> srli() throws IOException {
-    return testShiftImmInstruction("srli", "SRLI");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> srai() throws IOException {
-    return testShiftImmInstruction("srai", "SRAI");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> lb() throws IOException {
-    return testLoadInstruction("lb", "LB", "sb", 8);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> lh() throws IOException {
-    return testLoadInstruction("lh", "LH", "sh", 16);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> lw() throws IOException {
-    return testLoadInstruction("lw", "LW", "sw", 32);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> ld() throws IOException {
-    return testLoadInstruction("ld", "LD", "sd", 64);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> lbu() throws IOException {
-    return testLoadInstruction("lbu", "LBU", "sb", 8);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> lhu() throws IOException {
-    return testLoadInstruction("lhu", "LHU", "sh", 16);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> lwu() throws IOException {
-    return testLoadInstruction("lwu", "LWU", "sw", 32);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sb() throws IOException {
-    return testStoreInstruction("sb", "SB", "lb", 8);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sh() throws IOException {
-    return testStoreInstruction("sh", "SH", "lh", 16);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sw() throws IOException {
-    return testStoreInstruction("sw", "SW", "lw", 32);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sd() throws IOException {
-    return testStoreInstruction("sd", "SD", "ld", 64);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> beq() throws IOException {
-    return testEqualityBranchInstruction("beq", "BEQ", true);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> bne() throws IOException {
-    return testEqualityBranchInstruction("bne", "BNE", false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> blt() throws IOException {
-    return testRelationalBranchInstruction("blt", "BLT", true, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> bge() throws IOException {
-    return testRelationalBranchInstruction("bge", "BGE", false, false);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> bltu() throws IOException {
-    return testRelationalBranchInstruction("bltu", "BLTU", true, true);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> bgeu() throws IOException {
-    return testRelationalBranchInstruction("bgeu", "BGEU", false, true);
-  }
-
-  @TestFactory
-  Stream<DynamicTest> addw() throws IOException {
-    return testBinaryRegRegInstruction("addw", "ADDW");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> subw() throws IOException {
-    return testBinaryRegRegInstruction("subw", "SUBW");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> addiw() throws IOException {
-    return testBinaryRegImmInstruction("addiw", "ADDIW");
-  }
-
-  @TestFactory
-  Stream<DynamicTest> sllw() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> sllwCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("SLLW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
@@ -447,9 +345,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  @TestFactory
-  Stream<DynamicTest> srlw() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> srlwCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("SRLW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
@@ -461,9 +358,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  @TestFactory
-  Stream<DynamicTest> sraw() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> srawCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("SRAW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
@@ -475,9 +371,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  @TestFactory
-  Stream<DynamicTest> slliw() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> slliwCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("SLLIW_" + id);
       var regSrc = b.anyTempReg().sample();
       b.fillRegSigned(regSrc, 64);
@@ -488,9 +383,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  @TestFactory
-  Stream<DynamicTest> srliw() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> srliwCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("SRLIW_" + id);
       var regSrc = b.anyTempReg().sample();
       b.fillRegSigned(regSrc, 64);
@@ -501,9 +395,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  @TestFactory
-  Stream<DynamicTest> sraiw() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> sraiwCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("SRAIW_" + id);
       var regSrc = b.anyTempReg().sample();
       b.fillRegSigned(regSrc, 64);
@@ -514,12 +407,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-
-// The following instructions are unique and might not fit into the above helpers, so we'll keep them as is.
-
-  @TestFactory
-  Stream<DynamicTest> lui() throws IOException {
-    return runTestsWith((id) -> {
+  private List<IssTestUtils.TestCase> luiCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("LUI_" + id);
       var destReg = b.anyTempReg().sample();
       var value = arbitraryUnsignedInt(20).sample();
@@ -528,9 +417,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  @TestFactory
-  Stream<DynamicTest> auipc() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> auipcCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("AUIPC_" + id);
       var rd = b.anyTempReg().sample();
       var imm = arbitraryUnsignedInt(20).sample();
@@ -539,9 +427,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  @TestFactory
-  Stream<DynamicTest> jal() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> jalCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("JAL_" + id);
       var rd = b.anyTempReg().sample();
       String targetLabel = "target_" + id;
@@ -556,9 +443,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
-  @TestFactory
-  Stream<DynamicTest> jalr() throws IOException {
-    return runTestsWith(id -> {
+  private List<IssTestUtils.TestCase> jalrCases() {
+    return buildTestsWith(id -> {
       var b = new RV64IMVTestBuilder("JALR_" + id);
       var rd = b.anyTempReg().sample();
       var rs1 = b.anyTempReg().sample();
