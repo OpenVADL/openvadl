@@ -38,9 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
@@ -90,6 +88,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
@@ -1146,6 +1145,11 @@ class InstructionFieldExpansionCodeGenerator implements CDefaultMixins.AllExpres
   }
 
   @Handler
+  protected void handle(CGenContext<Node> ctx, ForAllThenNode toHandle) {
+    throwNotAllowed(toHandle, "forall then node");
+  }
+
+  @Handler
   protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
     throwNotAllowed(toHandle, "field ref node");
   }
@@ -1273,6 +1277,11 @@ class InstructionFieldAccessExpansionCodeGeneratorForImmediateCase
   @Handler
   protected void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throwNotAllowed(toHandle, "fold node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ForAllThenNode toHandle) {
+    throwNotAllowed(toHandle, "forall then node");
   }
 
   @Handler
@@ -1407,6 +1416,11 @@ class InstructionFieldAccessExpansionCodeGeneratorForLabelCase
   @Handler
   protected void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throwNotAllowed(toHandle, "fold node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ForAllThenNode toHandle) {
+    throwNotAllowed(toHandle, "forall then node");
   }
 
   @Handler

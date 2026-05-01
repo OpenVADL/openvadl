@@ -86,6 +86,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -205,6 +206,12 @@ public class LcbNodeReplacementHandler {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(FoldNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(ForAllThenNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 

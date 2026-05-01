@@ -407,7 +407,7 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 }
 
-sealed abstract class FormatField extends Definition {
+abstract class FormatField extends Definition {
   IdentifierOrPlaceholder identifier;
 
   Identifier identifier() {
@@ -420,7 +420,7 @@ sealed abstract class FormatField extends Definition {
 }
 
 
-final class RangeFormatField extends FormatField implements IdentifiableNode {
+class RangeFormatField extends FormatField implements IdentifiableNode {
   @Child
   List<Expr> ranges;
   @Child
@@ -503,7 +503,7 @@ final class RangeFormatField extends FormatField implements IdentifiableNode {
   }
 }
 
-final class TypedFormatField extends FormatField implements IdentifiableNode {
+class TypedFormatField extends FormatField implements IdentifiableNode {
   @Child
   TypeLiteral typeLiteral;
 
@@ -580,7 +580,7 @@ final class TypedFormatField extends FormatField implements IdentifiableNode {
  * }
  * </pre>
  */
-final class DerivedFormatField extends FormatField implements IdentifiableNode {
+class DerivedFormatField extends FormatField implements IdentifiableNode {
   @Child
   Expr expr;
 
@@ -642,7 +642,7 @@ final class DerivedFormatField extends FormatField implements IdentifiableNode {
 /**
  * Encoding format field definition.
  */
-final class EncodingFormatField extends FormatField {
+class EncodingFormatField extends FormatField {
   @Child
   Expr expr;
 
@@ -710,7 +710,7 @@ final class EncodingFormatField extends FormatField {
 /**
  * Predicate format field definition.
  */
-final class PredicateFormatField extends FormatField {
+class PredicateFormatField extends FormatField {
   @Child
   Expr expr;
 

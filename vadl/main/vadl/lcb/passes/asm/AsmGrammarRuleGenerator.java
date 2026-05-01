@@ -70,9 +70,12 @@ import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForAllThenIdxNode;
+import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ProcCallNode;
@@ -363,6 +366,18 @@ public class AsmGrammarRuleGenerator {
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
+  public void handle(AsmRuleContext ctx, ForAllThenNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(AsmRuleContext ctx, ForAllThenIdxNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, AsmBuiltInCall node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
@@ -568,6 +583,12 @@ public class AsmGrammarRuleGenerator {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, SliceNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(AsmRuleContext ctx, GetFieldNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 }

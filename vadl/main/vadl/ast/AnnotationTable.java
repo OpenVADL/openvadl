@@ -67,6 +67,7 @@ import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.AssertAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
@@ -237,7 +238,7 @@ public class AnnotationTable {
         .build();
 
     groupOn(MemoryDefinition.class)
-        .add("big endian",    OptExprAnnotation::new)
+        .add("big endian", OptExprAnnotation::new)
         .add("little endian", OptExprAnnotation::new)
         .check(ctx -> {
           ctx.verifyOnlyOneOfGroup();
@@ -265,14 +266,14 @@ public class AnnotationTable {
               .ifPresent(ann -> apply.accept(ann, Endianness.LITTLE));
         }).build();
 
-    annotationOn(GroupDefinition.class, "assert", GroupAssertionAnnotation::new)
+    annotationOn(GroupDefinition.class, "assert", ExprAnnotation::new)
+        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
         .applyViam((def, annotation, lowering) -> {
-
           var group = (Group) def;
-          var graph = new BehaviorLowering(lowering).getFunctionGraph(annotation.expr,
-              group.simpleName() + " Group");
+          var graph = new BehaviorLowering(lowering)
+              .getFunctionGraph(annotation.expr, "Assert " + group.simpleName());
           graph.setParentDefinition(group);
-          // TODO: Append annotation to group definition
+          group.addAnnotation(new AssertAnnotation(graph));
         })
         .build();
 

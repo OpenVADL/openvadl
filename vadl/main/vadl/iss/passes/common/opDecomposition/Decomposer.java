@@ -49,9 +49,12 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForAllThenIdxNode;
+import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
@@ -820,6 +823,27 @@ class Decomposer
   @Handler
   void handle(Request rq, ReadSignalNode toHandle) {
     throw new UnsupportedOperationException("Type ReadSignalNode not yet implemented");
+  }
+
+  @Handler
+  void handle(Request rq, ForAllThenNode toHandle) {
+    final var indices = toHandle.indices().stream()
+        .map(i -> request(i, rq.slice))
+        .map(ForAllThenIdxNode.class::cast)
+        .toList();
+    final var body = request(toHandle.body(), rq.slice);
+    rq.result = new ForAllThenNode(toHandle.type(), indices, body);
+  }
+
+  @Handler
+  void handle(Request rq, ForAllThenIdxNode toHandle) {
+    // Nothing to decompose
+    rq.result = toHandle;
+  }
+
+  @Handler
+  void handle(Request rq, GetFieldNode toHandle) {
+    throw new UnsupportedOperationException("Type GetFieldNode not yet implemented");
   }
 
   private IssReadRegNode.AccessKind readAccessKind(ReadRegTensorNode read) {
