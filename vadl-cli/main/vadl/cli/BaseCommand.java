@@ -308,7 +308,7 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     System.out.println("\nSpecification Statistics:");
     SpecStatAnalyser.run(ast, fileSystem).forEach( stat ->
-        System.out.printf("\t- %-30s %6d\n", stat.name(), stat.count())
+        System.out.printf("\t- %-40s %6d\n", stat.name(), stat.count())
     );
   }
 
