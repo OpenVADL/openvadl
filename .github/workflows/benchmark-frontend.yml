@@ -1,0 +1,41 @@
+name: Benchmark Frontend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'vadl/main/vadl/ast/**'
+      - 'sys/**'
+
+permissions:
+  contents: read
+  actions: write
+  checks: write
+
+jobs:
+  build:
+    runs-on: self-hosted-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        run: ./gradlew nativeBuild
+
+  aarch64:
+    needs: build
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-arm64
+      benchmark-command: python3 vadl/test/resources/scripts/frontend/benchmark_frontend.py sys/aarch64/aarch64.vadl
+      artifact-source: vadl/output/timings-mean.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
+      destination-folder: data/frontend/aarch64/native/results
+      commit-message: 'data: Pushed frontend aarch64 native data'
+    secrets: inherit
+
