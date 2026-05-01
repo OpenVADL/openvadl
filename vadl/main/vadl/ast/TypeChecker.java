@@ -122,7 +122,14 @@ public class TypeChecker
    * visiting. This helps us detect cycles, which aren't allowed and so we can abort early with an
    * error instead of causing a crash due to a stack overflow.
    */
-  private final Deque<Integer> currentlyVisiting = new ArrayDeque<Integer>();
+  private final Deque<Integer> currentlyVisiting = new ArrayDeque<>();
+
+  /**
+   * For expressions within annotations, the top-level annotation definition providing
+   * context.
+   */
+  @Nullable
+  private AnnotationDefinition currentAnnotation = null;
 
   /**
    * There is no point in checking a statement or definition twice, so these sets record which
@@ -258,7 +265,12 @@ public class TypeChecker
       }
 
       // check annotation definition itself
-      check(annotation);
+      try {
+        currentAnnotation = annotation;
+        check(annotation);
+      } finally {
+        currentAnnotation = null;
+      }
 
       annotationNames.put(annotation.name(), annotation);
     });
@@ -4307,6 +4319,16 @@ public class TypeChecker
 
   @Override
   public Void visit(ForallThenExpr expr) {
+
+    expr.type = Type.bool();
+
+    if (currentAnnotation == null || !(currentAnnotation.target instanceof GroupDefinition)) {
+      addErrorAndContinueChecking(error(
+          "The forall-then expression is only permissible for annotations "
+              + "on the `group` definition.", expr).build());
+      return null;
+    }
+
     expr.indices.forEach(this::checkForAllThenIndex);
     checkWith(expr.thenExpr, Type.bool());
     if (expr.thenExpr.type() != Type.bool()) {
@@ -4315,7 +4337,7 @@ public class TypeChecker
               "Expected an expression of type `Bool`, but got `%s`", expr.thenExpr.type())
           .build());
     }
-    expr.type = Type.bool();
+
     return null;
   }
 
@@ -4344,7 +4366,7 @@ public class TypeChecker
       return;
     }
 
-    ops.values().forEach(o -> o.instructions.forEach(pseudoFormat::add));
+    ops.values().forEach(pseudoFormat::add);
     i.identifier().type = pseudoFormat.type();
   }
 

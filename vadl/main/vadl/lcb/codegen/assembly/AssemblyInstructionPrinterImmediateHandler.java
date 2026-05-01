@@ -74,6 +74,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ProcCallNode;
@@ -279,6 +280,12 @@ public class AssemblyInstructionPrinterImmediateHandler
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, FoldNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(CGenContext<Node> ctx, ForAllThenNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 

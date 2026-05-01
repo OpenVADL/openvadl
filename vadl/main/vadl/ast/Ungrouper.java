@@ -259,7 +259,7 @@ public class Ungrouper
   @Override
   public Void visit(PseudoFormat definition) {
     ungroupAnnotations(definition);
-    definition.instructions().forEach(f -> f.accept(this));
+    definition.operations().forEach(f -> f.accept(this));
     definition.formats().forEach(f -> f.accept(this));
     return null;
   }

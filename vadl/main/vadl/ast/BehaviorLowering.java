@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,6 +66,7 @@ import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Logic;
 import vadl.viam.Memory;
+import vadl.viam.Operation;
 import vadl.viam.Procedure;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
@@ -93,9 +95,12 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForAllThenIdxNode;
+import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ProcCallNode;
@@ -1118,6 +1123,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           requireNonNull(index.computedTo));
     }
 
+    if (computedTarget instanceof PseudoFormat format) {
+      final List<Operation> ops = format.operations().stream()
+          .map(viamLowering::fetch)
+          .filter(Optional::isPresent).map(Optional::get)
+          .map(Operation.class::cast)
+          .toList();
+      return new ForAllThenIdxNode(getViamType(format.type()), ops);
+    }
+
     // Function call without arguments (and no parenthesis)
     if (computedTarget instanceof FunctionDefinition functionDefinition) {
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
@@ -1286,7 +1300,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                 (DataType) getViamType(requireNonNull(subCall.formatFieldType)));
         resultExpr =
             visitSliceIndexCall(slice, subCall.formatFieldType, subCall.argsIndices);
-      } else if (exprBeforeSubcall.type() instanceof StatusType) {
+      } else if (exprBeforeSubcall.type() instanceof StatusType
+          || exprBeforeSubcall.type() instanceof PseudoFormatType) {
+        // TODO: Check that this works
         var indexing = new StructGetFieldNode(subCall.identifier().name, resultExpr, Type.bool());
         resultExpr = visitSliceIndexCall(indexing, Type.bool(), subCall.argsIndices);
       } else if (exprBeforeSubcall.type() == MicroArchitectureType.instruction()) {
@@ -1638,10 +1654,25 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(ForallThenExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
-  }
 
+    final List<ForAllThenIdxNode> indices = new ArrayList<>();
+    for (ForallThenExpr.Index idx : expr.indices) {
+
+      final List<Operation> ops = idx.operations.stream()
+          .map(o -> viamLowering.fetch((vadl.ast.Definition) requireNonNull(o.target())))
+          .filter(Optional::isPresent).map(Optional::get)
+          .map(Operation.class::cast)
+          .toList();
+
+      final var idxNode =
+          new ForAllThenIdxNode(getViamType(requireNonNull(idx.identifier().type)), ops);
+      indices.add(idxNode);
+    }
+
+    var body = fetch(expr.thenExpr);
+    var type = getViamType(expr.type());
+    return new ForAllThenNode(type, indices, body);
+  }
 
   @Override
   public ExpressionNode visit(ForallExpr expr) {

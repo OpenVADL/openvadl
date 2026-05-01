@@ -16,20 +16,8 @@
 
 package vadl.ast;
 
-import static java.util.Objects.requireNonNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.utils.SourceLocation;
-import vadl.utils.WithLocation;
 
 /**
  * Instruction type as it occurs in quantified logical expressions of group annotations.
@@ -40,7 +28,7 @@ import vadl.utils.WithLocation;
  *   group VLIW = O1.O2
  * </pre>
  */
-class PseudoFormatType extends Type {
+public class PseudoFormatType extends Type {
 
   /**
    * The pseudo format representing the intersection format of all instructions in the operation
@@ -67,178 +55,10 @@ class PseudoFormatType extends Type {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof PseudoFormatType iType)) {
+    if (!(other instanceof PseudoFormatType otherType)) {
       return false;
     }
-    return Objects.equals(pseudoFormat, iType.pseudoFormat);
+    return Objects.equals(pseudoFormat, otherType.pseudoFormat);
   }
 }
 
-/**
- * A pseudo format constructed by intersecting multiple formats.
- */
-class PseudoFormat extends Definition implements TypedNode {
-
-  private final SourceLocation location;
-  private final LinkedHashSet<InstructionDefinition> instructions = new LinkedHashSet<>();
-  private final LinkedHashSet<FormatDefinition> formats = new LinkedHashSet<>();
-
-  @Nullable
-  private LinkedHashSet<FormatField> fields = null;
-
-  public PseudoFormat(SourceLocation loc) {
-    this.location = loc;
-  }
-
-  public PseudoFormat(WithLocation node) {
-    this(node.location());
-  }
-
-  public PseudoFormat(SourceLocation loc, Collection<InstructionDefinition> insns) {
-    this.location = loc;
-    insns.forEach(this::add);
-  }
-
-  /**
-   * Add the given instruction to the pseudo format, retaining only the intersection
-   * of the pseudo format's current fields and the fields of the given instruction's format.
-   *
-   * @param insn the insn to append.
-   */
-  void add(InstructionDefinition insn) {
-    instructions.add(insn);
-    formats.add(requireNonNull(insn.formatNode));
-    final var formatFields = toPseudoFields(insn.formatNode);
-    if (fields == null) {
-      fields = new LinkedHashSet<>(formatFields);
-    } else {
-      fields.retainAll(formatFields);
-    }
-  }
-
-  private List<PseudoFormat.FormatField> toPseudoFields(FormatDefinition format) {
-    final List<PseudoFormat.FormatField> fields = new ArrayList<>();
-    for (vadl.ast.FormatField f : format.fieldsWithoutEncodingPredicate()) {
-      final DataType fieldType = switch (f) {
-        case DerivedFormatField field -> field.expr.type().asDataType();
-        case RangeFormatField field -> requireNonNull(field.type).asDataType();
-        case TypedFormatField field -> field.typeLiteral.type().asDataType();
-        case EncodingFormatField _, PredicateFormatField _ -> throw new IllegalStateException();
-      };
-      fields.add(new PseudoFormat.FormatField(f.identifier().name, fieldType));
-    }
-    return fields;
-  }
-
-  @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
-    return visitor.visit(this);
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.COMMON_DEFS;
-  }
-
-  @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
-    builder.append("pseudo format ");
-
-    builder.append(formats.stream()
-        .map(f -> f.identifier().name)
-        .collect(Collectors.joining(" ∩ ", "(", ")")));
-
-    if (fields == null || fields.isEmpty()) {
-      builder.append("\n");
-      return;
-    }
-    builder.append(" = { \n");
-    indent++;
-
-    final List<FormatField> fs = new ArrayList<>(fields);
-
-    builder.append(prettyIndentString(indent));
-    builder.append(fs.getFirst().name());
-    builder.append(": ");
-    builder.append(fs.getFirst().type());
-
-    for (int i = 1; i < fs.size(); i++) {
-      builder.append(", ");
-      builder.append("\n");
-      builder.append(prettyIndentString(indent));
-      builder.append(fs.get(i).name());
-      builder.append(": ");
-      builder.append(fs.get(i).type());
-    }
-
-    builder.append("\n");
-
-    indent--;
-    builder.append(prettyIndentString(indent));
-    builder.append("}");
-  }
-
-  public String name() {
-    return formats.stream()
-        .map(f -> f.identifier().name)
-        .collect(Collectors.joining(" ∩ ", "(", ")"));
-  }
-
-  @Override
-  public SourceLocation location() {
-    return location;
-  }
-
-  public Set<InstructionDefinition> instructions() {
-    return Set.of(instructions.toArray(new InstructionDefinition[0]));
-  }
-
-  public Set<FormatDefinition> formats() {
-    return Set.of(formats.toArray(new FormatDefinition[0]));
-  }
-
-  public Set<FormatField> fields() {
-    return fields == null ? Set.of() : Set.of(fields.toArray(new FormatField[0]));
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) {
-      return true;
-    }
-    if (obj == null || obj.getClass() != this.getClass()) {
-      return false;
-    }
-    var that = (PseudoFormat) obj;
-    return Objects.equals(this.fields, that.fields);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(fields);
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    prettyPrint(0, sb);
-    return sb.toString();
-  }
-
-  @Override
-  public Type type() {
-    return new PseudoFormatType(this);
-  }
-
-  @Nullable
-  public DataType getFieldType(String fieldName) {
-    return fields().stream()
-        .filter(f -> Objects.equals(f.name(), fieldName))
-        .map(FormatField::type)
-        .findAny().orElse(null);
-  }
-
-  public record FormatField(String name, DataType type) {
-  }
-}

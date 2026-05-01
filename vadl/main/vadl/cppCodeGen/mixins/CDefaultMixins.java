@@ -49,9 +49,11 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DynSliceNode;
+import vadl.viam.graph.dependency.ForAllThenIdxNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -313,7 +315,7 @@ public interface CDefaultMixins {
 
     @Handler
     default void handle(CGenContext<Node> ctx, TensorNode node) {
-      
+
     }
   }
 
@@ -328,7 +330,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface AllExpressions
       extends TypeCasts, Constant, FuncCall, BuiltIns, Slice, LetNode, Select, FuncParam, ForallIdx,
-      FieldAccess, Label {
+      FieldAccess, Label, ForAllThenIdx {
 
   }
 
@@ -457,6 +459,14 @@ public interface CDefaultMixins {
   }
 
   @SuppressWarnings("MissingJavadocType")
+  interface FieldAccess {
+    @Handler
+    default void handle(CGenContext<Node> ctx, GetFieldNode toHandle) {
+      throw new UnsupportedOperationException("Type GetFieldNode not yet implemented");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
   interface LetNode {
     @Handler
     default void handle(CGenContext<Node> ctx, vadl.viam.graph.dependency.LetNode toHandle) {
@@ -498,6 +508,13 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("checkstyle:MissingJavadocType")
+  interface ForAllThenIdx {
+    @Handler
+    default void handle(CGenContext<Node> ctx, ForAllThenIdxNode toHandle) {
+      ctx.wr("i" + toHandle.id().numericId());
+    }
+  }
 
   @SuppressWarnings("MissingJavadocType")
   interface BuiltIns {

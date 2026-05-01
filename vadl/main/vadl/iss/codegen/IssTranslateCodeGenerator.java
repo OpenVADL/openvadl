@@ -43,6 +43,7 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -212,6 +213,11 @@ class DefaultGenerator implements
   @Handler
   void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throwNotAllowed(toHandle, "forall fold expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, ForAllThenNode toHandle) {
+    throwNotAllowed(toHandle, "forall then expressions");
   }
 
   @Handler

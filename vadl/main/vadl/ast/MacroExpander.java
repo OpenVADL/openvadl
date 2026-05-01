@@ -579,7 +579,7 @@ class MacroExpander
 
   @Override
   public Definition visit(PseudoFormat definition) {
-    return new PseudoFormat(definition.location(), definition.instructions().stream()
+    return new PseudoFormat(definition.location(), definition.operations().stream()
         .map(this::expandDefinition)
         .toList());
   }
