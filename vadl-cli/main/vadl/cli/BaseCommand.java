@@ -307,7 +307,7 @@ public abstract class BaseCommand implements Callable<Integer> {
     }
 
     System.out.println("\nSpecification Statistics:");
-    SpecStatAnalyser.run(ast, fileSystem).forEach( stat ->
+    SpecStatAnalyser.run(ast, fileSystem).forEach(stat ->
         System.out.printf("\t- %-40s %6d\n", stat.name(), stat.count())
     );
   }
@@ -319,9 +319,7 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     var stats = SpecStatAnalyser.run(ast, fileSystem);
     var sb = new StringBuilder("stat,value\n");
-    stats.forEach(stat ->
-        sb.append(stat.name()).append(',').append(stat.count()).append('\n')
-        );
+    stats.forEach(stat -> sb.append(stat.name()).append(',').append(stat.count()).append('\n'));
     var csvPath = output.resolve("spec-stats.csv");
     try {
       Files.writeString(csvPath, sb, StandardCharsets.UTF_8);

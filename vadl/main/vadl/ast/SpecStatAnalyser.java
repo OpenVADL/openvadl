@@ -26,6 +26,7 @@ import vadl.utils.WithLocation;
 
 /**
  * An AST analyzer that collects statistics about the content of the specification.
+ * This can be useful for publications to let the reader estimate the size of the specification.
  */
 public class SpecStatAnalyser extends RecursiveAstVisitor {
 
@@ -39,6 +40,9 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   private int totalDefinitions = 0;
   private int totalStatements = 0;
   private int totalExpressions = 0;
+  private int modelDefinitions = 0;
+  private int recordDefinitions = 0;
+  private int modelTypeDefinitions = 0;
   private int functionDefinitionsUnexpanded = 0;
   private int formatDefinitionsUnexpanded = 0;
   private int instructionDefinitionUnexpanded = 0;
@@ -51,41 +55,62 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   }
 
   /**
-   * Runs the analyser on the given AST and returns the collected statistics.
+   * Runs the analyzer on the given AST and returns the collected statistics.
    *
-   * @param ast        to analyze.
-   * @param fileSystem from which the files can be read again to calcuulate the lines of code.
+   * @param ast        to analyze (should already have all models removed).
+   * @param fileSystem from which the files can be read again to calculate the lines of code.
    * @return the collected statistics.
    */
   public static List<SpecStat> run(Ast ast, VirtualFileSystem fileSystem) {
     var analyser = new SpecStatAnalyser(fileSystem);
     ast.definitions.forEach(definition -> definition.accept(analyser));
+    analyser.addModelNodes(ast.rootSymbolTable());
 
     ast.allReadFiles().forEach(analyser::handlePath);
 
     return List.of(
         new SpecStat("Files", analyser.files),
         new SpecStat("Lines of code", analyser.linesOfCode),
+        new SpecStat("Model Definitions", analyser.modelDefinitions),
+        new SpecStat("Record Definitions", analyser.recordDefinitions),
+        new SpecStat("Model-Type Definitions", analyser.modelTypeDefinitions),
+        new SpecStat("Function Definitions Unexpanded", analyser.functionDefinitionsUnexpanded),
+        new SpecStat("Format Definitions Unexpanded", analyser.formatDefinitionsUnexpanded),
+        new SpecStat("Instruction Definitions Unexpanded",
+            analyser.instructionDefinitionUnexpanded),
+        new SpecStat("Total Definitions Unexpanded", analyser.totalDefinitionsUnexpanded),
+        new SpecStat("Total Statements Unexpanded", analyser.totalStatementsUnexpanded),
+        new SpecStat("Total Expressions Unexpanded", analyser.totalExpressionsUnexpanded),
         new SpecStat("Function Definitions", analyser.functionDefinitions),
         new SpecStat("Format Definitions", analyser.formatDefinitions),
         new SpecStat("Instruction Definitions", analyser.instructionDefinition),
         new SpecStat("Total Definitions", analyser.totalDefinitions),
         new SpecStat("Total Statements", analyser.totalStatements),
-        new SpecStat("Total Expressions", analyser.totalExpressions),
-        new SpecStat("Function Definitions Unexpanded", analyser.functionDefinitionsUnexpanded),
-        new SpecStat("Format Definitions Unexpanded", analyser.formatDefinitionsUnexpanded),
-        new SpecStat("Instruction Definitions Unexpanded", analyser.instructionDefinitionUnexpanded),
-        new SpecStat("Total Definitions Unexpanded", analyser.totalDefinitionsUnexpanded),
-        new SpecStat("Total Statements Unexpanded", analyser.totalStatementsUnexpanded),
-        new SpecStat("Total Expressions Unexpanded", analyser.totalExpressionsUnexpanded)
+        new SpecStat("Total Expressions", analyser.totalExpressions)
+
     );
   }
 
   private void handlePath(Path path) {
     files++;
-    fileSystem.readLines(path).forEach(line -> linesOfCode++);
+    fileSystem.readLines(path).forEach(unused -> linesOfCode++);
   }
 
+  /**
+   * Execute a runnable if the node is contained in the unexpanded spec.
+   * So obviously this is a bit tricky because the parser already expands all macros so and there
+   * is no parser that can tell us if which node were in the original spec.
+   * However, expanded nodes always have the same location with only differing in the
+   * expanded from field. So if we ignore that field, we can calculate the
+   * unexpanded node count by only taking each location once. So we track them in
+   * {@link #seenUnexpandedLocations} and if we find a new one that isn't in there already, it must
+   * have also been in the unexpanded form once. And if we have already seen it, it was from a
+   * macro, and we already have added it once so we can ignore it.
+   *
+   * @param loctable on which it will be decided if we have seen this node before.
+   * @param action   that will be executed if the node hasn't been seen before.
+   * @return true if the node was new and action was executed, false otherwise.
+   */
   private boolean ifNewUnexpanded(WithLocation loctable, Runnable action) {
     var directLocation = new SourceLocation(loctable.location().path(), loctable.location().begin(),
         loctable.location().end());
@@ -97,21 +122,54 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
     return isNew;
   }
 
+  /**
+   * Counts the number of models and model-related types.
+   * This again seems hard because {@link ModelRemover} already has removed all the models from the
+   * AST. However, since models are scoped, they get entered into the symbolTables and never removed
+   * from them. So we can traverse all symbol tables of all definitions and count the models.
+   *
+   * @param table of a definition to import all the macros from.
+   */
+  private void addModelNodes(SymbolTable table) {
+    table.macroSymbols.values().forEach(symbol -> {
+      var node = symbol.origin();
+      ifNewUnexpanded(node, () -> {
+        if (node instanceof ModelDefinition) {
+          modelDefinitions++;
+        } else if (node instanceof RecordTypeDefinition) {
+          recordDefinitions++;
+        } else if (node instanceof ModelTypeDefinition) {
+          modelTypeDefinitions++;
+        }
+      });
+    });
+  }
+
   @Override
   public void beforeTravel(Definition definition) {
     totalDefinitions++;
     var isNew = ifNewUnexpanded(definition, () -> totalDefinitionsUnexpanded++);
     if (definition instanceof FunctionDefinition) {
       functionDefinitions++;
-      if (isNew) functionDefinitionsUnexpanded++;
+      if (isNew) {
+        functionDefinitionsUnexpanded++;
+      }
     }
     if (definition instanceof FormatDefinition) {
       formatDefinitions++;
-      if (isNew) formatDefinitionsUnexpanded++;
+      if (isNew) {
+        formatDefinitionsUnexpanded++;
+      }
     }
     if (definition instanceof InstructionDefinition) {
       instructionDefinition++;
-      if (isNew) instructionDefinitionUnexpanded++;
+      if (isNew) {
+        instructionDefinitionUnexpanded++;
+      }
+    }
+
+    if (definition.symbolTable != null) {
+      addModelNodes(definition.symbolTable());
     }
   }
 
