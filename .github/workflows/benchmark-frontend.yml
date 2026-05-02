@@ -32,10 +32,45 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-arm64
-      benchmark-command: python3 vadl/test/resources/scripts/frontend/benchmark_frontend.py sys/aarch64/aarch64.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py sys/aarch64/aarch64.vadl
       artifact-source: vadl/output/timings-mean.csv
       artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/aarch64/native/results
       commit-message: 'data: Pushed frontend aarch64 native data'
     secrets: inherit
 
+  rv32i:
+    needs: build
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-arm64
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py sys/risc-v/rv32i.vadl
+      artifact-source: vadl/output/timings-mean.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
+      destination-folder: data/frontend/rv32i/native/results
+      commit-message: 'data: Pushed frontend rv32i native data'
+    secrets: inherit
+
+  ppc64:
+    needs: build
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-arm64
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py sys/ppc64/ppc64.vadl
+      artifact-source: vadl/output/timings-mean.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
+      destination-folder: data/frontend/ppc64/native/results
+      commit-message: 'data: Pushed frontend ppc64 native data'
+    secrets: inherit
+
+  hexagon:
+    needs: build
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-arm64
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py sys/hexagon/hexagon.vadl
+      artifact-source: vadl/output/timings-mean.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
+      destination-folder: data/frontend/hexagon/native/results
+      commit-message: 'data: Pushed frontend hexagon native data'
+    secrets: inherit

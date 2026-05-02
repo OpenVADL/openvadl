@@ -8,21 +8,20 @@ import tempfile
 from collections import OrderedDict
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
-BINARY = REPO_ROOT / "vadl-cli/build/native/nativeCompile/openvadl"
+BINARY =  "vadl-cli/build/native/nativeCompile/openvadl"
 WARMUP_RUNS = 3
 MEASURED_RUNS = 10
 
 
 def build():
     print("==> Building native image...")
-    subprocess.run(["./gradlew", "nativeCompile"], cwd=REPO_ROOT, check=True)
+    subprocess.run(["./gradlew", "nativeCompile"], check=True)
 
 
 def run_once(spec: Path, out_dir: Path) -> dict[str, float]:
     out_dir.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        [str(BINARY), "check", "--timings-csv", "-o", str(out_dir), str(spec)],
+        [str(BINARY), "check", "--timings-csv", "--decoder", "skip=all", "-o", str(out_dir), str(spec)],
         check=True,
         stdout=subprocess.DEVNULL,
     )
@@ -49,8 +48,8 @@ def main():
     )
     args = parser.parse_args()
 
-    if not args.skip_build:
-        build()
+    # if not args.skip_build:
+    #    build()
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp)
