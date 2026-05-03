@@ -47,15 +47,17 @@ typedef struct DisasContext {
     [/][/]
   } tb_state;
 
+  [# th:if="${mem_bi_endian}"]bool endian_cond;[/]
+
 } DisasContext;
 
 static bool swap_insn(const DisasContext *ctx) {
   // default byte order is LE, but VDT assumes BE
 [# th:if="${mem_bi_endian}"]
 #if TARGET_BIG_ENDIAN
-  return [# th:unless="${mem_big_endian}"]![/]([(${bi_endian_condition})]);
+  return [# th:unless="${mem_big_endian}"]![/]ctx->endian_cond;
 #else
-  return [# th:if="${mem_big_endian}"]![/]([(${bi_endian_condition})]);
+  return [# th:if="${mem_big_endian}"]![/]ctx->endian_cond;
 #endif
 [/][# th:unless="${mem_bi_endian}"]
   return true;
@@ -233,6 +235,8 @@ static void [(${gen_arch_lower})]_tr_init_disas_context(DisasContextBase *db, CP
     ctx->tb_state.[(${reg.name_lower})] |= ((flags >> off) & [(${part.mask})]) << [(${part.lsb})];
     off += [(${part.width})];
     [/][/][/]
+
+    [# th:if="${mem_bi_endian}"]ctx->endian_cond = [(${bi_endian_condition})];[/]
 }
 
 static void [(${gen_arch_lower})]_tr_tb_start(DisasContextBase *db, CPUState *cpu)

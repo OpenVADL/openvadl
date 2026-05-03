@@ -26,6 +26,7 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
+import vadl.iss.passes.nodes.IssStaticEndianConditionNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
@@ -182,6 +183,12 @@ public class IssInstrHelperGenerator extends IssProcGen
   @Handler
   void handle(CGenContext<Node> ctx, IssStaticPcRegNode toHandle) {
     throw new UnsupportedOperationException("Type IssStaticPcRegNode not yet implemented");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssStaticEndianConditionNode toHandle) {
+    throw new UnsupportedOperationException(
+        "Type IssStaticEndianConditionNode not yet implemented");
   }
 
   @Handler

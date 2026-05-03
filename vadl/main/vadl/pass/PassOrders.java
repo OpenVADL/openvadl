@@ -51,6 +51,7 @@ import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
+import vadl.iss.passes.IssApplyMemoryEndiannessPass;
 import vadl.iss.passes.IssBitfieldWriteLoweringPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssCFunctionExtractionPass;
@@ -160,7 +161,6 @@ import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.vdt.passes.VdtVerificationPass;
 import vadl.viam.Specification;
-import vadl.viam.passes.ApplyMemoryEndiannessPass;
 import vadl.viam.passes.ControlFlowOptimizationPass;
 import vadl.viam.passes.DetectRegisterIndicesPass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
@@ -226,7 +226,6 @@ public class PassOrders {
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
     order.add(new RenamingConflictingRegistersPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
-    order.add(new ApplyMemoryEndiannessPass(configuration));
 
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
     order.add(new StatusBuiltInInlinePass(configuration));
@@ -523,6 +522,7 @@ public class PassOrders {
     order
         .add(new IssInfoRetrievalPass(config))
         .add(new IssConfigurationPass(config))
+        .add(new IssApplyMemoryEndiannessPass(config))
         .add(new IssMemoryDetectionPass(config))
         .add(new IssRegisterAccessLoweringPass(config))
         .add(new IssExecStrategyPass(config))
