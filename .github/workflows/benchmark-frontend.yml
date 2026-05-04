@@ -26,13 +26,20 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: ./gradlew nativeBuild
+      - name: Upload native binary
+        uses: actions/upload-artifact@v4
+        with:
+           name: openvadl-native
+           path: vadl-cli/build/native/nativeCompile/openvadl
+           retention-days: 1
 
   aarch64:
     needs: build
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-arm64
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py sys/aarch64/aarch64.vadl
+      download-artifact: openvadl-native
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=openvadl-native sys/aarch64/aarch64.vadl
       artifact-source: vadl/output/timings-mean.csv
       artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/aarch64/native/results
@@ -44,7 +51,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-arm64
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py sys/risc-v/rv32i.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py  --openvadl-binary=openvadl-native sys/risc-v/rv32i.vadl
       artifact-source: vadl/output/timings-mean.csv
       artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/rv32i/native/results
@@ -56,7 +63,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-arm64
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py sys/ppc64/ppc64.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py  --openvadl-binary=openvadl-native sys/ppc64/ppc64.vadl
       artifact-source: vadl/output/timings-mean.csv
       artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/ppc64/native/results
@@ -68,7 +75,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-arm64
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py sys/hexagon/hexagon.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py  --openvadl-binary=openvadl-native sys/hexagon/hexagon.vadl
       artifact-source: vadl/output/timings-mean.csv
       artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/hexagon/native/results
