@@ -56,7 +56,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '25'
-          cache: 'gradle'
       - name: Set benchmark environment
         if: ${{ inputs.extra-env != '' }}
         run: printf '%s\n' "${{ inputs.extra-env }}" >> "$GITHUB_ENV"
