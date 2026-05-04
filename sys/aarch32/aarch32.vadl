@@ -763,26 +763,28 @@ instruction set architecture AArch32v6 = {
 
   format SpecialRegMovFormat : Word = // special register move format
     { cond     [31..28]               // condition
-    , op       [27..20]               // opcode
-    , mask     [19..16]               // mask all ones
+    , op       [27..23,21,20]         // opcode
+    , a_s_psr  [22]                   // (A/S)PSR register
+    , m_mask   [8,19..16]             // mask / banked sysreg
     , rd       [15..12]               // destination register
-    , op1      [11..4]                // opcode
-    , rn       [3..0]                 // branch register
+    , op1      [11..9,7..4]           // opcode
+    , rn       [3..0]                 // zeroes
     }
 
-  enumeration SysReg : Bits<4> =      // system register numbers
-    { APSR    = 0b0000                // APSR register number
+  enumeration SysReg : Bits<1> =      // system register numbers
+    { APSR                            // APSR register number
+    , SPSR                            // SPSR register number
     }
 
-  function printSysReg (rn: Index) -> String =
-    if rn = SysReg::APSR then "apsr" else (udec(rn))
+  function printSysReg (rn: Bits<1>) -> String =
+    if rn = SysReg::APSR then "apsr" else "spsr"
 
   model ReadSpecialRegInstr (c : CondRec, i : InstrRec) : IsaDefs = {
     [undefined when : rd = 15]
     instruction AsId ($i.id, $c.condId) : SpecialRegMovFormat =
       R(rd) := (APSR_N, APSR_Z, APSR_C, APSR_V, APSR_Q, 0 as Bits<7>, APSR.GE, 0 as Bits<16>)
-    encoding AsId ($i.id, $c.condId) = {cond = CondCode::$c.condId, op = 0b0001'0000, mask = 0b1111, op1 = 0b0000'0000, rn = SysReg::$i.opcode}
-    assembly AsId ($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', printSysReg(rn))
+    encoding AsId ($i.id, $c.condId) = {cond = CondCode::$c.condId, op = 0b0001'000, a_s_psr = SysReg::$i.opcode, m_mask = 0b0'1111, op1 = 0b000'0000, rn = 0b0000}
+    assembly AsId ($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', printSysReg(a_s_psr))
     }
 
 // instruction enriching models ************************************************
