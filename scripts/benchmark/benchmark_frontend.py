@@ -20,7 +20,7 @@ def build():
 def run_once(binary: Path, spec: Path, out_dir: Path) -> dict[str, float]:
     out_dir.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        [str(binary), "check", "--timings-csv", "--decoder", "skip=all", "-o", str(out_dir), str(spec)],
+        [str(binary.resolve()), "check", "--timings-csv", "--decoder", "skip=all", "-o", str(out_dir), str(spec)],
         check=True,
         stdout=subprocess.DEVNULL,
     )
