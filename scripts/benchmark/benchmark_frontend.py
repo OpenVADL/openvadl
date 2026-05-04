@@ -8,7 +8,6 @@ import tempfile
 from collections import OrderedDict
 from pathlib import Path
 
-BINARY =  "vadl-cli/build/native/nativeCompile/openvadl"
 WARMUP_RUNS = 3
 MEASURED_RUNS = 10
 
@@ -18,10 +17,10 @@ def build():
     subprocess.run(["./gradlew", "nativeCompile"], check=True)
 
 
-def run_once(spec: Path, out_dir: Path) -> dict[str, float]:
+def run_once(binary: Path, spec: Path, out_dir: Path) -> dict[str, float]:
     out_dir.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        [str(BINARY), "check", "--timings-csv", "--decoder", "skip=all", "-o", str(out_dir), str(spec)],
+        [str(binary.resolve()), "check", "--timings-csv", "--decoder", "skip=all", "-o", str(out_dir), str(spec)],
         check=True,
         stdout=subprocess.DEVNULL,
     )
@@ -41,7 +40,9 @@ def write_mean_csv(pass_times: OrderedDict, out_path: Path):
 
 
 def main():
+    BINARY =  "vadl-cli/build/native/nativeCompile/openvadl"
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--openvadl-binary", type=Path, default=BINARY, help="Path to the VADL binary")
     parser.add_argument("spec", type=Path, help="Path to the VADL specification")
     parser.add_argument(
         "--skip-build", action="store_true", help="Skip the native image build step"
@@ -56,13 +57,13 @@ def main():
 
         print(f"==> Warming up ({WARMUP_RUNS} runs, not measured)...")
         for i in range(1, WARMUP_RUNS + 1):
-            run_once(args.spec, tmp_dir / "run")
+            run_once(args.openvadl_binary, args.spec, tmp_dir / "run")
             print(f"    warmup {i}/{WARMUP_RUNS} done")
 
         print(f"==> Running benchmark ({MEASURED_RUNS} measured runs)...")
         pass_times: OrderedDict = OrderedDict()
         for i in range(1, MEASURED_RUNS + 1):
-            for name, duration in run_once(args.spec, tmp_dir / "run").items():
+            for name, duration in run_once(args.openvadl_binary, args.spec, tmp_dir / "run").items():
                 if name not in pass_times:
                     pass_times[name] = []
                 pass_times[name].append(duration)

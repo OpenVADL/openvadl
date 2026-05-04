@@ -33,18 +33,29 @@ on:
         required: false
         default: ''
         type: string
+      download-artifact:
+        description: 'Name of a GitHub Actions artifact to download before benchmarking (optional)'
+        required: false
+        default: ''
+        type: string
 
 jobs:
   benchmark:
     runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v4
-      - uses: graalvm/setup-graalvm@v1
+      - name: Download pre-built artifact
+        if: ${{ inputs.download-artifact != '' }}
+        uses: actions/download-artifact@v4
         with:
+          name: ${{ inputs.download-artifact }}
+      - name: Make downloaded artifact executable
+        if: ${{ inputs.download-artifact != '' }}
+        run: chmod +x ${{ inputs.download-artifact }}
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
           java-version: '25'
-          distribution: 'graalvm'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
       - name: Set benchmark environment
         if: ${{ inputs.extra-env != '' }}
         run: printf '%s\n' "${{ inputs.extra-env }}" >> "$GITHUB_ENV"
