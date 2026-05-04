@@ -24,6 +24,7 @@ import vadl.viam.Counter;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
+import vadl.viam.graph.CanAccessCounter;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -39,12 +40,9 @@ import vadl.viam.graph.WritesRegisterTensor;
  * It is also possible to write {@code A := 10 as Bits<4 * 32>}, which would write
  * across all dimensions of the register tensor.
  * In this case, the indices list would be empty.
- *
- * <p>The {@link #staticCounterAccess()} indicates if this write is known to be
- * (program) counter access. It is set by the
- * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}</p>
  */
-public class WriteRegTensorNode extends WriteResourceNode implements WritesRegisterTensor {
+public class WriteRegTensorNode extends WriteResourceNode implements WritesRegisterTensor,
+    CanAccessCounter {
 
   @DataValue
   protected RegisterTensor regTensor;
@@ -85,11 +83,20 @@ public class WriteRegTensorNode extends WriteResourceNode implements WritesRegis
     return regTensor;
   }
 
-  /**
-   * Determines if the register is a PC based on whether staticCounterAccess is set.
-   */
+  @Override
   public boolean isPcAccess() {
     return staticCounterAccess != null;
+  }
+
+  @Override
+  @Nullable
+  public Counter staticCounterAccess() {
+    return staticCounterAccess;
+  }
+
+  @Override
+  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+    this.staticCounterAccess = staticCounterAccess;
   }
 
   /**
@@ -97,22 +104,6 @@ public class WriteRegTensorNode extends WriteResourceNode implements WritesRegis
    */
   public boolean writeAffectsTbState() {
     return registerTensor().hasAnnotation(TbStateRegisterAnnotation.class);
-  }
-
-  @Nullable
-  public Counter staticCounterAccess() {
-    return staticCounterAccess;
-  }
-
-  /**
-   * This is set by the
-   * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}.
-   *
-   * @param staticCounterAccess the counter that is accessed.
-   * @see vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass
-   */
-  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
-    this.staticCounterAccess = staticCounterAccess;
   }
 
   @Override

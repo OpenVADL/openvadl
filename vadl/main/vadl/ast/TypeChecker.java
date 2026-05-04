@@ -1591,157 +1591,167 @@ public class TypeChecker
     };
 
     definition.computedFixedArgs = List.of();
-    if (definition.kind == AliasDefinition.AliasKind.REGISTER) {
-      var reg = definition.symbolTable().findAs(targetIdent, RegisterDefinition.class);
-      if (reg == null) {
-        // if this does not directly reference a register,
-        // it might reference an other alias definition
-        var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
-        if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
-          throw addErrorAndStopChecking(
-              error("Unknown alias source register", targetIdent.location())
-                  .locationDescription(targetIdent.location(), "Unknown register `%s`.",
-                      targetIdent)
-                  .build());
-        }
-        check(alias);
-        reg = (RegisterDefinition) requireNonNull(alias.computedTarget);
+
+    var reg = definition.symbolTable().findAs(targetIdent, RegisterDefinition.class);
+    if (reg == null) {
+      // if this does not directly reference a register,
+      // it might reference another alias definition
+      var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
+      if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
+        throw addErrorAndStopChecking(
+            error("Unknown alias source register", targetIdent.location())
+                .locationDescription(targetIdent.location(), "Unknown register `%s`.",
+                    targetIdent)
+                .build());
       }
-
-      check(reg);
-      definition.computedTarget = reg;
-
-      if (definition.targetType != null) {
-        // FIXME: Support relational alias types on registers
-        addErrorAndStopChecking(
-            error("Unsupported Alias Type", definition)
-                .locationDescription(definition,
-                    "The typechecker doesn't know how such aliases yet.")
-                .locationHelp(definition,
-                    "If you desire this feature, please let us know at: "
-                        + "https://github.com/OpenVADL/openvadl/issues/new")
-                .build()
-        );
-      }
-
-      // we have to check the CallIndexExpr "manually" as the normal check cannot handle
-      // the wildcards in the alias definition
-      if (definition.value instanceof Identifier targetReg) {
-        check(targetReg);
-      } else if (definition.value instanceof CallIndexExpr expr) {
-        var i = 0;
-        var wildcardIndices = new ArrayList<Integer>();
-        CallIndexExpr.Arguments slice = null;
-        var dummyArgs = new ArrayList<CallIndexExpr.Arguments>();
-
-        for (var arg : expr.argsIndices) {
-          if (arg.values.size() != 1) {
-            addErrorAndStopChecking(
-                error("All arguments must have exactly one value", definition.value)
-                    .build()
-            );
-          }
-          var argVal = arg.values.getFirst();
-          if (argVal instanceof WildcardLiteral) {
-            wildcardIndices.add(i);
-          } else if (argVal instanceof RangeExpr) {
-            if (i != expr.argsIndices.size() - 1) {
-              addErrorAndStopChecking(
-                  error("Slices can only be done on the innermost dimension.", argVal).build());
-            }
-            slice = arg;
-          } else {
-            if (!wildcardIndices.isEmpty()) {
-              addErrorAndStopChecking(
-                  error("Constant accesses cannot occure after param accesses.",
-                      argVal).build());
-            }
-            dummyArgs.add(arg);
-          }
-
-          i++;
-        }
-
-        // Determine type based on the dummyArgs (none-wildcards or slice args)
-        if (!dummyArgs.isEmpty()) {
-          var dummyCallIndexExpr =
-              new CallIndexExpr(targetIdent, dummyArgs, List.of(), expr.location);
-          dummyCallIndexExpr.symbolTable = expr.symbolTable;
-          expr.type = check(dummyCallIndexExpr);
-          expr.typeBeforeSlice = dummyCallIndexExpr.typeBeforeSlice;
-        } else {
-          expr.type = reg.type;
-          expr.typeBeforeSlice = reg.type;
-        }
-
-        // If the target is a call index expression, we get all fixed arguments of the
-        // alias register call.
-        definition.computedFixedArgs = AstUtils.flatArguments(dummyArgs);
-        definition.computedFixedArgs.forEach(this::check);
-
-        if (slice != null) {
-          var typeBeforeSlice = switch (expr.type()) {
-            case TensorType type -> {
-              if (type.numberOfIndexDims() < wildcardIndices.size()) {
-                addErrorAndStopChecking(error("Invalid number of parameters", expr).build());
-              }
-              yield type.innerType();
-            }
-            case ConcreteRelationType type -> {
-              if (type.argTypes().size() != wildcardIndices.size()) {
-                addErrorAndStopChecking(error("Invalid number of parameters", expr).build());
-              }
-              yield type.resultType();
-            }
-            default -> {
-              if (!wildcardIndices.isEmpty()) {
-                addErrorAndStopChecking(error("Params can only acess tensor types", expr).build());
-              }
-              yield expr.type();
-            }
-          };
-
-          var oldType = expr.type();
-          visitSliceIndexCall(expr, typeBeforeSlice, List.of(slice));
-          var innerMostType = (BitsType) expr.type();
-          expr.type = setInnerMostType(oldType, innerMostType);
-          definition.slice = slice.computedstaticBitSlice;
-        }
-      }
-
-      var valType = definition.value.type();
-      if (definition.aliasType != null) {
-        var aliasType = check(definition.aliasType);
-        definition.type = aliasType;
-
-        // We have special casting rules here.
-        // They aren't as strict as implicit casting and not as lax as explicit casting.
-        // FIXME: Should we allow same rules as explicit casts here?
-        if (canImplicitCast(valType, aliasType)) {
-          definition.value = tryWrapImplicitCast(definition.value, definition.type);
-        } else if (aliasType instanceof DataType aliasDataType
-            && valType instanceof DataType valDataType
-            && canAliasCastType(valDataType, aliasDataType)
-        ) {
-          definition.value = new CastExpr(definition.value, aliasType);
-        } else {
-          throw typeMismatchError(definition.value, aliasType, valType);
-        }
-      } else {
-        definition.type = valType;
-      }
-
-      return null;
+      check(alias);
+      reg = (RegisterDefinition) requireNonNull(alias.computedTarget);
     }
 
-    throw addErrorAndStopChecking(
-        error("Unimplemented", definition)
-            .locationDescription(definition, "Alias of type `%s` aren't implemented yet.",
-                definition.kind)
-            .locationHelp(definition,
-                "If you desire this feature, please let us know at: "
-                    + "https://github.com/OpenVADL/openvadl/issues/new")
-            .build());
+    check(reg);
+    definition.computedTarget = reg;
+
+    if (definition.targetType != null) {
+      // FIXME: Support relational alias types on registers
+      addErrorAndStopChecking(
+          error("Unsupported Alias Type", definition)
+              .locationDescription(definition,
+                  "The typechecker doesn't know how such aliases yet.")
+              .locationHelp(definition,
+                  "If you desire this feature, please let us know at: "
+                      + "https://github.com/OpenVADL/openvadl/issues/new")
+              .build()
+      );
+    }
+
+    if (definition.value instanceof Identifier targetReg) {
+      check(targetReg);
+    } else if (definition.value instanceof CallIndexExpr expr) {
+      // we have to check the CallIndexExpr "manually" as the normal check cannot handle
+      // the wildcards in the alias definition
+      var i = 0;
+      var wildcardIndices = new ArrayList<Integer>();
+      CallIndexExpr.Arguments slice = null;
+      var dummyArgs = new ArrayList<CallIndexExpr.Arguments>();
+
+      for (var arg : expr.argsIndices) {
+        if (arg.values.size() != 1) {
+          addErrorAndStopChecking(
+              error("All arguments must have exactly one value", definition.value)
+                  .build()
+          );
+        }
+        var argVal = arg.values.getFirst();
+        if (argVal instanceof WildcardLiteral) {
+          if (definition.kind == AliasDefinition.AliasKind.PROGRAM_COUNTER) {
+            // Program counters are single registers and not register files
+            addErrorAndStopChecking(
+                error("Wildcards cannot be used in program counter aliases.", argVal).build());
+          }
+          wildcardIndices.add(i);
+        } else if (argVal instanceof RangeExpr) {
+          if (definition.kind == AliasDefinition.AliasKind.PROGRAM_COUNTER) {
+            // FIXME: should program counters be able to be a slice of a register?
+            //        eg. the lower 32 bits of a 64-bit register
+            addErrorAndStopChecking(
+                error("Slices cannot be used in program counter aliases.", argVal).build());
+          }
+          if (i != expr.argsIndices.size() - 1) {
+            addErrorAndStopChecking(
+                error("Slices can only be done on the innermost dimension.", argVal).build());
+          }
+          slice = arg;
+        } else {
+          if (!wildcardIndices.isEmpty()) {
+            addErrorAndStopChecking(
+                error("Constant accesses cannot occur after param accesses.",
+                    argVal).build());
+          }
+          dummyArgs.add(arg);
+        }
+
+        i++;
+      }
+
+      // Determine type based on the dummyArgs (none-wildcards or slice args)
+      if (!dummyArgs.isEmpty()) {
+        var dummyCallIndexExpr =
+            new CallIndexExpr(targetIdent, dummyArgs, List.of(), expr.location);
+        dummyCallIndexExpr.symbolTable = expr.symbolTable;
+        expr.type = check(dummyCallIndexExpr);
+        expr.typeBeforeSlice = dummyCallIndexExpr.typeBeforeSlice;
+      } else {
+        expr.type = reg.type;
+        expr.typeBeforeSlice = reg.type;
+      }
+
+      // If the target is a call index expression, we get all fixed arguments of the
+      // alias register call.
+      definition.computedFixedArgs = AstUtils.flatArguments(dummyArgs);
+      definition.computedFixedArgs.forEach(this::check);
+
+      if (slice != null) {
+        var typeBeforeSlice = switch (expr.type()) {
+          case TensorType type -> {
+            if (type.numberOfIndexDims() < wildcardIndices.size()) {
+              addErrorAndStopChecking(error("Invalid number of parameters", expr).build());
+            }
+            yield type.innerType();
+          }
+          case ConcreteRelationType type -> {
+            if (type.argTypes().size() != wildcardIndices.size()) {
+              addErrorAndStopChecking(error("Invalid number of parameters", expr).build());
+            }
+            yield type.resultType();
+          }
+          default -> {
+            if (!wildcardIndices.isEmpty()) {
+              addErrorAndStopChecking(error("Params can only acess tensor types", expr).build());
+            }
+            yield expr.type();
+          }
+        };
+
+        var oldType = expr.type();
+        visitSliceIndexCall(expr, typeBeforeSlice, List.of(slice));
+        var innerMostType = (BitsType) expr.type();
+        expr.type = setInnerMostType(oldType, innerMostType);
+        definition.slice = slice.computedstaticBitSlice;
+      }
+    }
+
+    var valType = definition.value.type();
+    if (definition.aliasType != null) {
+      var aliasType = check(definition.aliasType);
+      definition.type = aliasType;
+
+      // We have special casting rules here.
+      // They aren't as strict as implicit casting and not as lax as explicit casting.
+      // FIXME: Should we allow same rules as explicit casts here?
+      if (canImplicitCast(valType, aliasType)) {
+        definition.value = tryWrapImplicitCast(definition.value, definition.type);
+      } else if (aliasType instanceof DataType aliasDataType
+          && valType instanceof DataType valDataType
+          && canAliasCastType(valDataType, aliasDataType)
+      ) {
+        definition.value = new CastExpr(definition.value, aliasType);
+      } else {
+        throw typeMismatchError(definition.value, aliasType, valType);
+      }
+    } else {
+      definition.type = valType;
+    }
+
+    if (definition.kind == AliasDefinition.AliasKind.PROGRAM_COUNTER
+        && !(definition.type instanceof BitsType)) {
+      // FIXME: should multi-dimensional counters be supported?
+      addErrorAndStopChecking(
+          error("Program counter type must be a one-dimensional bit type.", definition)
+              .build()
+      );
+    }
+
+    return null;
   }
 
   private Type setInnerMostType(Type type, BitsType innerType) {
@@ -2992,9 +3002,7 @@ public class TypeChecker
       return;
     }
 
-    if (origin instanceof RegisterDefinition
-        || (origin instanceof AliasDefinition aliasDef && aliasDef.kind.equals(
-        AliasDefinition.AliasKind.REGISTER))) {
+    if (origin instanceof RegisterDefinition || origin instanceof AliasDefinition) {
       var originDef = (Definition) origin;
       check(originDef);
       expr.type = ((TypedNode) originDef).type();
@@ -3681,32 +3689,33 @@ public class TypeChecker
       return;
     }
 
-
     // FIXME: Make this more generic
-    switch (expr.target.path().target()) {
-      case CounterDefinition counter -> {
-        if (!expr.slices().isEmpty()) {
-          addErrorAndStopChecking(error("Invalid counter sub-call", expr)
-              .locationDescription(expr, "Cannot do sub call and slice on counter.").build());
-        }
-        var validSubCalls = List.of("current", "next", "nextnext");
-        if (expr.subCalls.size() != 1) {
-          addErrorAndStopChecking(error("Invalid counter sub-call", expr)
-              .locationDescription(expr, "Only a single sub-call expected.").build());
-        }
-        var subCall = expr.subCalls.getFirst();
-        if (!validSubCalls.contains(subCall.identifier().name)) {
-          addErrorAndStopChecking(error("Invalid counter sub-call", subCall.identifier())
-              .locationDescription(
-                  expr,
-                  "Counter has no sub-call named `%s`",
-                  subCall.identifier().name)
-              .build());
-        }
-        return;
+    boolean targetIsCounter = switch (expr.target.path().target()) {
+      case AliasDefinition alias -> alias.kind == AliasDefinition.AliasKind.PROGRAM_COUNTER;
+      case CounterDefinition counter -> true;
+      case null, default -> false;
+    };
+
+    if (targetIsCounter) {
+      if (!expr.slices().isEmpty()) {
+        addErrorAndStopChecking(error("Invalid counter sub-call", expr)
+            .locationDescription(expr, "Cannot do sub call and slice on counter.").build());
       }
-      case null, default -> {
+      var validSubCalls = List.of("current", "next", "nextnext");
+      if (expr.subCalls.size() != 1) {
+        addErrorAndStopChecking(error("Invalid counter sub-call", expr)
+            .locationDescription(expr, "Only a single sub-call expected.").build());
       }
+      var subCall = expr.subCalls.getFirst();
+      if (!validSubCalls.contains(subCall.identifier().name)) {
+        addErrorAndStopChecking(error("Invalid counter sub-call", subCall.identifier())
+            .locationDescription(
+                expr,
+                "Counter has no sub-call named `%s`",
+                subCall.identifier().name)
+            .build());
+      }
+      return;
     }
 
 

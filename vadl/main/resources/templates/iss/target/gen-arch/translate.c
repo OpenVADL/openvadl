@@ -132,7 +132,7 @@ static TCGv dest_[(${alias.name_lower})](DisasContext *ctx [(${alias.getter_para
 [/]
 
 static void gen_update_pc(DisasContext *ctx, target_ulong pc) {
-    tcg_gen_movi_tl(cpu_[(${pc_reg.name_lower})], pc);
+    tcg_gen_movi_tl(cpu_[(${pc_info.accessor})], pc);
 }
 
 static void gen_update_pc_diff(DisasContext *ctx, target_long diff) {

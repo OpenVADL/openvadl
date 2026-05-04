@@ -1033,7 +1033,7 @@ The memory characteristics can be detailed with different annotations.
 If no annotation is defined, the memory serves both as data and instruction memory, the memory access is carried out in little endian mode, there is no address translation and the memory consistency model is sequential consistency.
 With the annotation `[data]` a memory is only used for data.
 With the annotation `[instruction]` a memory is only used for instructions.
-With the annotation `[bigEndian]` a memory is only accessed in big endian mode.
+With the annotation `[big endian]` a memory is only accessed in big endian mode.
 If a processor supports bi-endianess, the endianess is selected by the condition evaluated to true, e.g. dependent on a system register.
 If the condition is evaluated to false, the opposite endianess is selected.
 Exceptions like alignment errors could be specified in every memory accessing instruction directly.

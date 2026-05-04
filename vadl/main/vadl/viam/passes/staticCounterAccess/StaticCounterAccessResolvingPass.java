@@ -25,9 +25,9 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
 import vadl.viam.Counter;
-import vadl.viam.DefProp;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
+import vadl.viam.graph.CanAccessCounter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -79,11 +79,7 @@ public class StaticCounterAccessResolvingPass extends Pass {
       return null;
     }
 
-    ViamUtils.findDefinitionsByFilter(viam, d -> d instanceof DefProp.WithBehavior)
-        .stream()
-        .map(DefProp.WithBehavior.class::cast)
-        .flatMap(d -> d.behaviors().stream())
-        .forEach(behavior -> resolveInBehavior(behavior, pc));
+    ViamUtils.findAllBehaviors(viam).forEach(behavior -> resolveInBehavior(behavior, pc));
     return null;
   }
 
@@ -92,70 +88,43 @@ public class StaticCounterAccessResolvingPass extends Pass {
       // if the counter is a register counter we only look at the register read/write nodes
       processRegisterNodes(behavior, counter);
     } else {
-      // if the counter is a register file counter we only look at the register file read/write
-      // nodes
-      processRegisterFileNodes(behavior, counter);
+      // the counter is part of a register file or tensor
+      processMultiDimRegisterNodes(behavior, counter);
     }
   }
 
   private static void processRegisterNodes(Graph behavior, Counter regCounter) {
     behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
-        .forEach(node -> {
-          if (node instanceof ReadRegTensorNode read
-              && read.regTensor().equals(regCounter.registerTensor())) {
-            // if the node is a read and
-            // the register file matches the register file of the counter
-            // we set the static counter access field of the read node
-            read.setStaticCounterAccess(regCounter);
-
-          } else if (node instanceof WriteRegTensorNode write
-              && write.regTensor().equals(regCounter.registerTensor())) {
-            // if the node is a write and
-            // the register file matches the register file of the counter
-            // we set the static counter access field of the write node
-            write.setStaticCounterAccess(regCounter);
-          }
-        });
+        .map(node -> (CanAccessCounter) node)
+        .filter(node -> node.registerTensor().equals(regCounter.registerTensor()))
+        .forEach(node -> node.setStaticCounterAccess(regCounter));
   }
 
-  private static void processRegisterFileNodes(Graph behavior,
-                                               Counter fileCounter) {
-    // TODO: Generalize this
-    if (fileCounter.indices().size() != 1) {
-      return;
-    }
-
-    // get all register file read and write nodes
+  private static void processMultiDimRegisterNodes(Graph behavior,
+                                                   Counter fileCounter) {
     behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
-        .forEach(node -> {
-
-          if (node instanceof ReadRegTensorNode read
-              && read.regTensor().equals(fileCounter.registerTensor())
-              && read.indices().getFirst() instanceof ConstantNode constIndex
-              && constIndex.constant().asVal().intValue()
-              == fileCounter.indices().getFirst().intValue()) {
-            // if the node is a read and
-            // the register file matches the register file of the counter and
-            // the address(index) of the read is constant and
-            // and the value of the address is the same as the one of the counter's index
-            // we set the static counter access field of the read node
-
-            read.setStaticCounterAccess(fileCounter);
-
-          } else if (node instanceof WriteRegTensorNode write
-              && write.regTensor().equals(fileCounter.registerTensor())
-              && write.indices().getFirst() instanceof ConstantNode constIndex
-              && constIndex.constant().asVal().intValue()
-              == fileCounter.indices().getFirst().intValue()) {
-
-            // if the node is a write and
-            // the register file matches the register file of the counter and
-            // the address(index) of the write is constant and
-            // and the value of the address is the same as the one of the counter's index
-            // we set the static counter access field of the write node
-            write.setStaticCounterAccess(fileCounter);
+        .map(node -> (CanAccessCounter) node)
+        .filter(node -> node.registerTensor().equals(fileCounter.registerTensor()))
+        .filter(node -> {
+          // check if the indices match
+          int indexCount = node.indices().size();
+          if (indexCount != fileCounter.indices().size()) {
+            return false;
           }
-        });
+          for (int i = 0; i < indexCount; i++) {
+            if (node.indices().get(i) instanceof ConstantNode cn) {
+              if (cn.constant().asVal().intValue() != fileCounter.indices().get(i).intValue()) {
+                return false;
+              }
+            } else {
+              // TODO: if any index cannot be statically evaluated, we must add an
+              //       instr-translation-time check
+              return false;
+            }
+          }
+          return true;
+        })
+        .forEach(node -> node.setStaticCounterAccess(fileCounter));
   }
 
 }

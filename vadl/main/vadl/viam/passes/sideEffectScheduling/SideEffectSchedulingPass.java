@@ -104,8 +104,8 @@ public class SideEffectSchedulingPass extends Pass {
 
     var isa = viam.isa().get();
     var pc = isa.pc();
-    isa.ensure(pc == null || pc.registerTensor().isSingleRegister(),
-        "Only RegisterCounters are currently supported for this pass. Got: %s", pc);
+    isa.ensure(pc == null || pc.isSingleRegister(),
+        "Only single register counters are currently supported for this pass. Got: %s", pc);
 
     for (var def : defs) {
       ((DefProp.WithBehavior) def).behaviors().forEach(behavior -> {

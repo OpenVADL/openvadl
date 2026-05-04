@@ -425,54 +425,58 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(AliasDefinition definition) {
 
-    if (definition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
-      var identifier = generateIdentifier(definition.viamId, definition.loc);
-      var innerResource =
-          (RegisterTensor) fetch(requireNonNull(definition.computedTarget)).orElseThrow();
+    var identifier = generateIdentifier(definition.viamId, definition.loc);
+    var innerResource =
+        (RegisterTensor) fetch(requireNonNull(definition.computedTarget)).orElseThrow();
 
-      List<RegisterTensor.Dimension> dimensions = switch (definition.type()) {
-        case TensorType tensorType -> Streams.mapWithIndex(
-                tensorType.indexDims().stream(),
-                (dim, index) -> {
-                  requireNonNull(dim);
-                  return new RegisterTensor.Dimension((int) index,
-                      Type.bits(BitsType.indexWidthFor((long) dim)), dim);
-                })
-            .toList();
-        default -> new ArrayList<>();
-      };
+    var fixedIndices = requireNonNull(definition.computedFixedArgs).stream()
+        .map(constantEvaluator::eval)
+        .map(ConstantValue::toViamConstant)
+        .toList();
 
-      var fixedIndices = requireNonNull(definition.computedFixedArgs).stream()
-          .map(constantEvaluator::eval)
-          .map(ConstantValue::toViamConstant)
-          .toList();
+    return switch (definition.kind) {
+      case REGISTER -> {
+        List<RegisterTensor.Dimension> dimensions = switch (definition.type()) {
+          case TensorType tensorType -> Streams.mapWithIndex(
+                  tensorType.indexDims().stream(),
+                  (dim, index) -> {
+                    requireNonNull(dim);
+                    return new RegisterTensor.Dimension((int) index,
+                        Type.bits(BitsType.indexWidthFor((long) dim)), dim);
+                  })
+              .toList();
+          default -> new ArrayList<>();
+        };
 
-      var overwriteMode = resolveEffectiveOverwriteMode(definition);
-      var zeroConstraint = resolveEffectiveZeroConstraint(definition);
+        var overwriteMode = resolveEffectiveOverwriteMode(definition);
+        var zeroConstraint = resolveEffectiveZeroConstraint(definition);
 
-      var semantics = new ArtificialResource.Semantics(
-          innerResource,
-          fixedIndices,
-          dimensions,
-          definition.slice,
-          overwriteMode,
-          zeroConstraint
-      );
+        var semantics = new ArtificialResource.Semantics(
+            innerResource,
+            fixedIndices,
+            dimensions,
+            definition.slice,
+            overwriteMode,
+            zeroConstraint
+        );
 
-      return Optional.of(new ArtificialResource(
+        yield Optional.of(new ArtificialResource(
+            identifier,
+            ArtificialResource.Kind.REGISTER,
+            innerResource,
+            new BehaviorLowering(this).getRegisterAliasReadFunc(definition, dimensions),
+            new BehaviorLowering(this).getRegisterAliasWriteProc(definition, dimensions),
+            dimensions,
+            definition.slice,
+            semantics
+        ));
+      }
+      case PROGRAM_COUNTER -> Optional.of(new Counter(
           identifier,
-          ArtificialResource.Kind.REGISTER,
           innerResource,
-          new BehaviorLowering(this).getRegisterAliasReadFunc(definition, dimensions),
-          new BehaviorLowering(this).getRegisterAliasWriteProc(definition, dimensions),
-          dimensions,
-          definition.slice,
-          semantics
+          fixedIndices
       ));
-    }
-
-    throw new RuntimeException("The ViamGenerator does not support `%s` of kind %s yet".formatted(
-        definition.getClass().getSimpleName(), definition.kind));
+    };
   }
 
   /**
@@ -537,11 +541,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     if (targetIdent == null) {
       return null;
     }
-    var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
-    if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
-      return null;
-    }
-    return alias;
+    return definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
   }
 
   /**
@@ -1599,7 +1599,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
     if (programCounter != null) {
-      registers.add(programCounter.registerTensor());
+      var pcReg = programCounter.registerTensor();
+      // If the programCounter is implicitly created using `alias program counter`
+      // referencing an existing register, then the register is already in the list
+      if (!registers.contains(pcReg)) {
+        registers.add(pcReg);
+      }
     }
 
     var isa = new InstructionSetArchitecture(
