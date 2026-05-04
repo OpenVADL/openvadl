@@ -39,6 +39,7 @@ import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssSelectNode;
+import vadl.iss.passes.nodes.IssStaticEndianConditionNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
@@ -725,6 +726,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(IssStaticPcRegNode node) {
+    // nothing to do
+  }
+
+  @Handler
+  void handle(IssStaticEndianConditionNode node) {
     // nothing to do
   }
 

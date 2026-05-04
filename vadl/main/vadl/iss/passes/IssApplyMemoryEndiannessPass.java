@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.passes;
+package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
+import vadl.iss.passes.nodes.IssStaticEndianConditionNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -42,7 +43,6 @@ import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ProcEndNode;
-import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -65,9 +65,11 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
  * condition must be statically evaluated since register reads are not possible at that point.
  * Therefore, register values are taken from the default branch of the processor reset procedure and
  * must be constant.
+ *
+ * <p><b>Note: this adds ISS-specific nodes</b>
  */
-public class ApplyMemoryEndiannessPass extends Pass {
-  public ApplyMemoryEndiannessPass(GeneralConfiguration configuration) {
+public class IssApplyMemoryEndiannessPass extends Pass {
+  public IssApplyMemoryEndiannessPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
@@ -143,6 +145,7 @@ class ApplyMemoryEndiannessInMemoryRegionInit {
             WriteRegTensorNode::value
         ));
 
+    // FIXME: this does not account for changes to the register values during the procedure
     processor.memoryRegions().forEach(mr ->
         mr.behavior().getNodes(ReadRegTensorNode.class).forEach(read ->
           handleRead(read, resetVector, reset, mr.memoryRef())
@@ -199,7 +202,7 @@ class ApplyMemoryEndianness {
     var mem = read.memory();
     if (mem.isBiEndian()) {
       read.replace(new SelectNode(
-          getConditionCopy(mem),
+          new IssStaticEndianConditionNode(),
           read.overwriteEndianness(mem.endianness()),
           read.overwriteEndianness(mem.endianness().other())
       ));
@@ -215,7 +218,8 @@ class ApplyMemoryEndianness {
       var prev = requireNonNull(next.predecessor());
       prev.unlinkNext();
       prev.setNext(GraphUtils.ifElseSideEffect(
-          behaviour, getConditionCopy(mem),
+          behaviour,
+          new IssStaticEndianConditionNode(),
           List.of(write.overwriteEndianness(mem.endianness())),
           List.of(write.overwriteEndianness(mem.endianness().other())),
           next,
@@ -223,11 +227,5 @@ class ApplyMemoryEndianness {
       ));
       write.safeDelete();
     }
-  }
-
-  private ExpressionNode getConditionCopy(Memory mem) {
-    return requireNonNull(mem.biEndianCondition())
-        .getNodes(ReturnNode.class).findFirst().get()
-        .value().copy();
   }
 }

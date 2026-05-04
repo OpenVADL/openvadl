@@ -24,6 +24,7 @@ import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssSelectNode;
+import vadl.iss.passes.nodes.IssStaticEndianConditionNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
@@ -355,6 +356,11 @@ public interface IssCMixins {
     @Handler
     default void handler(CGenContext<Node> ctx, IssStaticPcRegNode node) {
       ctx.wr("(ctx->pc_curr)");
+    }
+
+    @Handler
+    default void handler(CGenContext<Node> ctx, IssStaticEndianConditionNode node) {
+      ctx.wr("(ctx->endian_cond)");
     }
 
     @Handler
