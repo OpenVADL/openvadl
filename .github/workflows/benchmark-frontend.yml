@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: self-hosted-arm64
+    runs-on: self-hosted-x64
     steps:
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
@@ -37,7 +37,7 @@ jobs:
     needs: build
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
-      runner: self-hosted-arm64
+      runner: self-hosted-x64
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/aarch64/aarch64.vadl
       artifact-source: output/timings-mean.csv
@@ -45,12 +45,25 @@ jobs:
       destination-folder: data/frontend/aarch64/native/results
       commit-message: 'data: Pushed frontend aarch64 native data'
     secrets: inherit
+    
+  aarch32:
+    needs: build
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-x64
+      download-artifact: openvadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/aarch32/aarch32.vadl
+      artifact-source: output/timings-mean.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
+      destination-folder: data/frontend/aarch32/native/results
+      commit-message: 'data: Pushed frontend aarch32 native data'
+    secrets: inherit
 
   rv32i:
     needs: build
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
-      runner: self-hosted-arm64
+      runner: self-hosted-x64
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/risc-v/rv32i.vadl
       artifact-source: output/timings-mean.csv
@@ -63,7 +76,7 @@ jobs:
     needs: build
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
-      runner: self-hosted-arm64
+      runner: self-hosted-x64
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/ppc64/ppc64.vadl
       artifact-source: output/timings-mean.csv
@@ -76,7 +89,7 @@ jobs:
     needs: build
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
-      runner: self-hosted-arm64
+      runner: self-hosted-x64
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/hexagon/hexagon.vadl
       artifact-source: output/timings-mean.csv
