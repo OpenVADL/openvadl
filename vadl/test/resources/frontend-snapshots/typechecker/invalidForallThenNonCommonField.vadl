@@ -1,0 +1,44 @@
+instruction set architecture ISA = {
+  program counter PC : Bits<32>
+
+  format AType : Bits<32> = {
+    a : Bits<20>,
+    b : Bits<5>,
+    c : Bits<7>
+  }
+
+  format BType : Bits<32> = {
+    a : Bits<20>,
+    b : Bits<5>,
+    d : Bits<7>
+  }
+
+  instruction A : AType = PC := 0
+  encoding A = {a = 0b00}
+  assembly A = (mnemonic, "")
+
+  instruction B : BType = PC := 0
+  encoding B = {a = 0b01}
+  assembly B = (mnemonic, "")
+
+  operation OpA = {A}
+  operation OpB = {B}
+
+  [assert : forall i in {OpA, OpB} then i.c = 0b01]
+  group VLIW = OpA.OpB
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown format field `c`
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidForallThenNonCommonField.vadl:27:41
+//       │
+//    27 │   [assert : forall i in {OpA, OpB} then i.c = 0b01]
+//       │                                         ^^^
+//       │
+//       Intersection format `(AType ∩ BType)` doesn't have any field with this name
+//       help: Did you maybe mean one of: a, b
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
