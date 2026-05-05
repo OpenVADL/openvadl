@@ -34,7 +34,14 @@ graalvmNative {
             }
             imageName.set("openvadl")
             mainClass.set(application.mainClass)
-            buildArgs.addAll("-O2", "--gc=epsilon")
+            buildArgs.addAll(
+                "-O2",
+                // This is different from the GC as for graalvm builds, which is mainly because this is the only one that
+                // also works outside Linux.
+                "--gc=serial",
+                "-R:MinHeapSize=4g",
+                "-R:MaxNewSize=2g",
+            )
             buildArgs.add("--enable-url-protocols=https")
             buildArgs.add("--enable-native-access=ALL-UNNAMED")
         }
@@ -45,6 +52,9 @@ tasks.startScripts {
     defaultJvmOpts = listOf(
         "-XX:TieredStopAtLevel=1",
         "--enable-native-access=ALL-UNNAMED",
+        "-Xms4g",
+        "-Xmn2g",
+        "-XX:+UseParallelGC"
     )
 }
 
