@@ -91,11 +91,6 @@ public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegister
   }
 
   @Override
-  public boolean isPcAccess() {
-    return staticCounterAccess != null;
-  }
-
-  @Override
   @Nullable
   public Counter staticCounterAccess() {
     return staticCounterAccess;

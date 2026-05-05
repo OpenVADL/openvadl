@@ -77,15 +77,12 @@ public class TcgPassUtils {
    * objects with a resource definition different from the provided tensor.
    *
    * @param node the {@link DependencyNode} to be checked
-   * @param pc   the {@link RegisterTensor} against which resource definitions
-   *             in dependencies are compared
    * @return {@code true} if the node must be scheduled, {@code false} otherwise
    */
-  public static boolean mustBeScheduled(DependencyNode node, RegisterTensor pc) {
-    return GraphUtils.hasDependencies(node, dep -> dep instanceof ReadResourceNode readResourceNode
-        // pc reads can be done at translation time and are not translated to TCG
-        && readResourceNode.resourceDefinition() != pc
-    );
+  public static boolean mustBeScheduled(DependencyNode node) {
+    // pc reads can be done at translation time and are not translated to TCG
+    // pc reads are translated to IssStaticPcRegNode at this point -> no need to check
+    return GraphUtils.hasDependencies(node, dep -> dep instanceof ReadResourceNode);
   }
 
   public static RegInfo regInfo(RegisterTensor reg) {

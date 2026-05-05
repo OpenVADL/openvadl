@@ -84,11 +84,6 @@ public class WriteRegTensorNode extends WriteResourceNode implements WritesRegis
   }
 
   @Override
-  public boolean isPcAccess() {
-    return staticCounterAccess != null;
-  }
-
-  @Override
   @Nullable
   public Counter staticCounterAccess() {
     return staticCounterAccess;
@@ -128,13 +123,13 @@ public class WriteRegTensorNode extends WriteResourceNode implements WritesRegis
   }
 
   @Override
-  public Node copy() {
+  public WriteRegTensorNode copy() {
     return new WriteRegTensorNode(regTensor, indices.copy(), value.copy(), staticCounterAccess(),
         condition != null ? condition.copy() : null);
   }
 
   @Override
-  public Node shallowCopy() {
+  public WriteRegTensorNode shallowCopy() {
     return new WriteRegTensorNode(regTensor, indices, value, staticCounterAccess(), condition);
   }
 

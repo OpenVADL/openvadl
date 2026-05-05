@@ -94,6 +94,10 @@ public class DetermineBuiltinAttributesPass extends Pass {
   private boolean isRedFlag(Specification viam, Graph snapshot) {
     var pc =
         Objects.requireNonNull(ensurePresent(viam.isa(), "must be present").pc()).registerTensor();
+    // FIXME: Checking if the registers are equals is no sufficient for checking if the PC is read.
+    //        A PC can be only a single register file entry -> also check indexing or use
+    //        CanAccessCounter::isPcAccess
+    //        See Issue #941
     var hasPc = snapshot.getNodes(ReadsRegisterTensor.class).filter(
         x -> x.registerTensor().isSingleRegister() && x.registerTensor() == pc).findAny().isEmpty();
     return !hasPc;

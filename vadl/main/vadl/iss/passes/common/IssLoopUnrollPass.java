@@ -50,16 +50,15 @@ public class IssLoopUnrollPass extends AbstractIssPass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     tcgInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());
 
-    var pc = viam.isa().get().pc();
     helperInstrs(viam)
         .filter(i -> i.behavior().getNodes(ForallNode.class).findAny().isPresent())
-        .filter(i -> helperLoopMustBeUnrolled(i, pc))
+        .filter(this::helperLoopMustBeUnrolled)
         .forEach(i -> new LoopUnroller(i.behavior()).run());
 
     return null;
   }
 
-  private boolean helperLoopMustBeUnrolled(Instruction instruction, @CheckForNull Counter pc) {
+  private boolean helperLoopMustBeUnrolled(Instruction instruction) {
     // Probe the unrolled form: unrolling removes iteration boundaries, so the scheduled graph
     // exposes cross-iteration read/write conflicts that the loop form hides (the loop form
     // has only a single scheduled write per body, which always passes the conflict check).
@@ -75,7 +74,7 @@ public class IssLoopUnrollPass extends AbstractIssPass {
     Canonicalizer.canonicalize(unrolled.behavior());
 
     var scheduledProbe = unrolled.copy();
-    SideEffectSchedulingPass.schedule(scheduledProbe.behavior(), pc);
+    SideEffectSchedulingPass.schedule(scheduledProbe.behavior());
     return IssSafeResourceReadAnalysis.requiresReadSave(scheduledProbe);
   }
 }

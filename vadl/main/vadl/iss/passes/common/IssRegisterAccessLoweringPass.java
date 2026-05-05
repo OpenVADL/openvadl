@@ -30,6 +30,7 @@ import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.extensions.IssAliasAccessorDescriptors;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
@@ -76,6 +77,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  *   <li>Register accesses to translation block saved registers are rewritten into
  *   {@link IssStaticReadRegNode} (this only happens in tcg instruction behaviors
  *   and in the optional bi-endian memory condition behavior).</li>
+ *   <li>Similarly, PC reads are converted into {@link IssStaticPcRegNode}s, so they are
+ *   not scheduled in the {@link IssTcgSchedulingPass}.</li>
  * </ul>
  *
  * <p>Contract:
@@ -122,6 +125,11 @@ class IssStaticRegisterAccessConverter {
   }
 
   void run() {
+
+    // replace read reg nodes of PCs to be just a CpuReg access of the ISS (No tcg op required)
+    behaviour.getNodes(ReadRegTensorNode.class)
+        .filter(ReadRegTensorNode::isPcAccess)
+        .forEach(n -> n.replaceAndDelete(new IssStaticPcRegNode(n.regTensor())));
 
     // replace read reg nodes of TB state regs to be just a
     // CpuReg access of the ISS (No tcg op required)

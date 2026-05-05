@@ -148,6 +148,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     // create reset value write for pc if we have a reset vector input
     if (context.resetVector() != null) {
       var resetVector = new ReadSignalNode(context.resetVector());
+      // FIXME: PC can be single reg in reg file -> use counter indices here to access PC
       var pcReset = new RtlWriteRegTensorNode(pc.registerTensor(), new NodeList<>(), resetVector,
           pc, new RtlResetSignalNode());
       behavior.addWithInputs(pcReset);
@@ -163,6 +164,7 @@ public class EmitModulesPass extends RtlTemplateRenderingPass {
     // copy side effects to behavior, conditional writes
     resetBehavior.getNodes(SideEffectNode.class).forEach(node -> {
       if (node instanceof WriteResourceNode write) {
+        // FIXME: PC can be single reg in reg file -> also check counter indices here
         if (context.resetVector() != null && write.resourceDefinition()
             .equals(pc.registerTensor())) {
           return; // do not copy pc writes if we have an external reset vector

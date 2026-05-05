@@ -39,15 +39,6 @@ public class IssRenderUtils {
         .toList();
   }
 
-  /**
-   * Maps given {@link Specification} to the register mapping of the ISA's PC.
-   */
-  public static RegInfo mapPc(Specification spec) {
-    return Objects.requireNonNull(spec.isa().get()
-            .pc()).registerTensor()
-        .expectExtension(RegInfo.class);
-  }
-
 
   /**
    * A helper function that generates a nested C loop for the provided layers.

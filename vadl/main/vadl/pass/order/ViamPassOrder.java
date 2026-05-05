@@ -36,7 +36,7 @@ import vadl.viam.passes.functionInliner.ArtificialResInlinerPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
-import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
+import vadl.viam.passes.staticCounterAccess.CounterAccessResolvingPass;
 import vadl.viam.passes.statusBuiltInInlinePass.RemoveUnusedStatusFlagsFromBuiltinsPass;
 import vadl.viam.passes.statusBuiltInInlinePass.StatusBuiltInInlinePass;
 import vadl.viam.passes.verification.ViamVerificationPass;
@@ -69,7 +69,7 @@ public final class ViamPassOrder {
     order.add(new AlgebraicSimplificationPass(configuration));
     order.add(new BehaviorRewritePass(configuration));
 
-    order.add(new StaticCounterAccessResolvingPass(configuration));
+    order.add(new CounterAccessResolvingPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
     order.add(new FieldAccessInlinerPass(configuration));
     order.add(new ArtificialResInlinerPass(configuration));

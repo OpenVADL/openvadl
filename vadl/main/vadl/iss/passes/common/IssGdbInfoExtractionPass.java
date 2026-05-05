@@ -32,6 +32,8 @@ import vadl.iss.passes.AbstractIssPass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.viam.Constant;
+import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -91,7 +93,7 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
   @Override
   public Result execute(PassResults passResults, Specification viam) throws IOException {
     var isa = viam.processor().get().isa();
-    var pc = requireNonNull(isa.pc()).registerTensor();
+    var pc = requireNonNull(isa.pc());
 
     AtomicInteger i = new AtomicInteger();
     var res = new ArrayList<Result.Reg>();
@@ -105,13 +107,14 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
     return new Result(res);
   }
 
-  private Stream<Result.Reg> getRegTensor(RegisterTensor reg, int i, RegisterTensor pc) {
+  private Stream<Result.Reg> getRegTensor(RegisterTensor reg, int i, Counter pc) {
     var idxDimSizes = reg.indexDimensions().stream().map(RegisterTensor.Dimension::size).toList();
     var regs = regIndexes(idxDimSizes);
-    var isCodePtr = reg.equals(pc);
+    var pcIndices = pc.indices().stream().map(Constant.Value::intValue).toList();
     return IntStream.range(0, regs.size()).mapToObj(j -> {
       var regIndices = regs.get(j);
       var idxNames = regIndices.stream().map(ri -> "" + ri).collect(Collectors.joining("_"));
+      var isCodePtr = reg.equals(pc.registerTensor()) && pcIndices.equals(regIndices);
       return new Result.Reg(
           reg.simpleName().toLowerCase() + idxNames,
           i + j,

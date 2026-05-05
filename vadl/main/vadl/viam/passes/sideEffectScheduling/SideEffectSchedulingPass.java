@@ -43,6 +43,7 @@ import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ProcCallNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -102,15 +103,8 @@ public class SideEffectSchedulingPass extends Pass {
     var defs = ViamUtils.findDefinitionsByFilter(viam, def ->
         def instanceof Instruction || def instanceof Procedure);
 
-    var isa = viam.isa().get();
-    var pc = isa.pc();
-    isa.ensure(pc == null || pc.isSingleRegister(),
-        "Only single register counters are currently supported for this pass. Got: %s", pc);
-
     for (var def : defs) {
-      ((DefProp.WithBehavior) def).behaviors().forEach(behavior -> {
-        SideEffectScheduler.run(behavior, pc);
-      });
+      ((DefProp.WithBehavior) def).behaviors().forEach(SideEffectScheduler::run);
     }
     return null;
   }
@@ -118,8 +112,8 @@ public class SideEffectSchedulingPass extends Pass {
   /**
    * Schedules side effects in one behavior graph.
    */
-  public static void schedule(Graph behavior, @Nullable Counter pc) {
-    SideEffectScheduler.run(behavior, pc);
+  public static void schedule(Graph behavior) {
+    SideEffectScheduler.run(behavior);
   }
 }
 
@@ -130,21 +124,13 @@ public class SideEffectSchedulingPass extends Pass {
 class SideEffectScheduler {
 
   /**
-   * The program counter register counter, if available.
-   */
-  @Nullable
-  Counter pc;
-
-  /**
    * Runs the side effect scheduling on the given instruction.
    *
    * @param behavior The behavior to process.
-   * @param pc       The program counter register counter, or {@code null} if not available.
    */
-  public static void run(Graph behavior, @Nullable Counter pc) {
+  public static void run(Graph behavior) {
     var startNode = getSingleNode(behavior, StartNode.class);
     var scheduler = new SideEffectScheduler();
-    scheduler.pc = pc;
     scheduler.processBranch(startNode);
   }
 
@@ -160,12 +146,11 @@ class SideEffectScheduler {
     // Process until the corresponding end node of the branch
     var endNode = traverseUntilMatchingBranchEnd(beginNode);
 
-    var pcReg = pc != null ? pc.registerTensor() : null;
     var partitionedEffects = endNode.sideEffects().stream()
         // find side effects that cause instruction exits
         .collect(Collectors.partitioningBy(
             s ->
-                (s instanceof WriteResourceNode write && write.resourceDefinition().equals(pcReg))
+                (s instanceof WriteRegTensorNode write && write.isPcAccess())
                     || (s instanceof ProcCallNode procCall && procCall.exceptionRaise())
         ));
 

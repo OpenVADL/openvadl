@@ -19,33 +19,39 @@ package vadl.viam.graph;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.viam.Counter;
+import vadl.viam.passes.staticCounterAccess.CounterAccessResolvingPass;
 
 /**
  * Interface to indicate that the implementing class could access a {@link Counter}.
  *
  * <p>The {@link #staticCounterAccess()} indicates if this access is known to be
- * (program) counter access. It is set by the
- * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}</p>
+ * a (program) counter access. It is set by the
+ * {@link CounterAccessResolvingPass}. If it is not set, it is known that the access
+ * is <strong>not</strong> a counter access.</p>
  */
 public interface CanAccessCounter extends HasRegisterTensor {
 
   /**
    * Determines if the register is a PC based on whether staticCounterAccess is set.
    */
-  boolean isPcAccess();
+  default boolean isPcAccess() {
+    // FIXME: can there be other counters that are not PCs? If yes, fix this
+    return staticCounterAccess() != null;
+  }
 
   /**
-   * Returns the statically known counter this accesses, or {@code null}.
+   * Returns the statically known counter this accesses, or {@code null}, if
+   * this accesses no counter.
    */
   @Nullable
   Counter staticCounterAccess();
 
   /**
    * This is set by the
-   * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}.
+   * {@link CounterAccessResolvingPass}.
    *
    * @param staticCounterAccess the counter that is accessed.
-   * @see vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass
+   * @see CounterAccessResolvingPass
    */
   void setStaticCounterAccess(@Nonnull Counter staticCounterAccess);
 }

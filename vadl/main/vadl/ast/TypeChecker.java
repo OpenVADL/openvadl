@@ -1651,8 +1651,7 @@ public class TypeChecker
           wildcardIndices.add(i);
         } else if (argVal instanceof RangeExpr) {
           if (definition.kind == AliasDefinition.AliasKind.PROGRAM_COUNTER) {
-            // FIXME: should program counters be able to be a slice of a register?
-            //        eg. the lower 32 bits of a 64-bit register
+            // FIXME: implement alias program counter slicing. See Issue #939
             addErrorAndStopChecking(
                 error("Slices cannot be used in program counter aliases.", argVal).build());
           }

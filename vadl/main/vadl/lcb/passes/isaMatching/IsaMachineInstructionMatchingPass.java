@@ -174,6 +174,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       return new Result(Collections.emptyMap(), Collections.emptyMap());
     }
 
+    // FIXME: a pc can be a single register in a register file. if that should be supported
+    //        here, use `pc.isSingleRegister()` instead to check that
+    //        See Issue #941
     var pc = isa.pc();
     ensureNonNull(pc, () -> Diagnostic.error("PC must not be null", isa.location()));
     ensure(pc.registerTensor().isSingleRegister(),

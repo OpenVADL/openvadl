@@ -20,7 +20,6 @@ import static java.util.Objects.requireNonNull;
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import vadl.configuration.IssConfiguration;

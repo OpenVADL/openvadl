@@ -298,30 +298,6 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return "[" + IssUtils.cIndex(indexVars, reg()) + "]";
   }
 
-  /**
-   * Returns the array access for registers in the cpu state.
-   * CPU registers are rendered as a single value or 1D array, where all dimensions
-   * are flattened to one.
-   *
-   * @param indices the concrete indices to access with
-   * @return C array index expression or empty string if no indices
-   */
-  @SuppressWarnings("MethodName")
-  public String cArrayIndex(List<Constant.Value> indices) {
-    var strIndices = indices.stream().map(i -> Integer.toString(i.intValue())).toList();
-    if (reg().maxNumberOfAccessIndices() != indices.size()) {
-      throw new IllegalStateException(String.format(
-          "Accessing register with %d access indices with %d actual indices: %s",
-          reg().maxNumberOfAccessIndices(), indices.size(),
-          String.join(", ", strIndices)
-      ));
-    }
-    if (indices.isEmpty()) {
-      return "";
-    }
-    return "[" + IssUtils.cIndex(strIndices, reg()) + "]";
-  }
-
   private String renderCRegNameArrayDef() {
     if (reg().indexDimensions().isEmpty()) {
       return "";
