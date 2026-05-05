@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -156,7 +157,7 @@ public class PseudoFormat extends Definition implements TypedNode {
   }
 
   public Set<OperationDefinition> operations() {
-    return Set.of(operations.toArray(new OperationDefinition[0]));
+    return Collections.unmodifiableSet(new LinkedHashSet<>(operations));
   }
 
   public Set<InstructionDefinition> instructions() {
@@ -165,11 +166,11 @@ public class PseudoFormat extends Definition implements TypedNode {
   }
 
   public Set<FormatDefinition> formats() {
-    return Set.of(formats.toArray(new FormatDefinition[0]));
+    return Collections.unmodifiableSet(new LinkedHashSet<>(formats));
   }
 
   public Set<FormatField> fields() {
-    return fields == null ? Set.of() : Set.of(fields.toArray(new FormatField[0]));
+    return fields == null ? Set.of() : Collections.unmodifiableSet(new LinkedHashSet<>(fields));
   }
 
   @Override
