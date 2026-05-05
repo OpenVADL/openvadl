@@ -1,0 +1,25 @@
+
+import aarch32::AArch32v6
+
+instruction set architecture A32 extending AArch32v6 = { }
+
+[ htif ]
+processor Virt implements A32 = {
+
+  reset = {
+    PC := 0x0
+    // upstream QEMU sets everything to zero
+  }
+
+  [ firmware ]
+  [ base : 0x0 ]
+  [ size : 0x08000000 ]
+  memory region [ROM] FLASH in MEM = {
+    MEM<4>(0x0) := 0x0101a0e3  // mov  r0, 0x40000000
+    MEM<4>(0x4) := 0x10ff2fe1  // bx   r0
+  }
+
+  [ base : 0x40000000 ]
+  memory region [RAM] MAIN_RAM in MEM
+
+}
