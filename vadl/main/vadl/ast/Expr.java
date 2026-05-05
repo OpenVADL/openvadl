@@ -1828,13 +1828,22 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   List<Node> children() {
     // This is too complicated for the @Child annotation
     List<Node> childNodes = new ArrayList<>();
-    childNodes.add((Node) target);
-    childNodes.addAll(argsIndices.stream().flatMap(a -> a.values.stream()).toList());
-    childNodes.addAll(subCalls.stream()
-        .flatMap(subCall -> subCall.argsIndices.stream()
-            .flatMap(a -> a.values.stream()))
-        .toList());
-    return childNodes.stream().filter(Objects::nonNull).toList();
+    if (target != null) {
+      childNodes.add((Node) target);
+    }
+    for (var a : argsIndices) {
+      for (var v : a.values) {
+        if (v != null) childNodes.add(v);
+      }
+    }
+    for (var subCall : subCalls) {
+      for (var a : subCall.argsIndices) {
+        for (var v : a.values) {
+          if (v != null) childNodes.add(v);
+        }
+      }
+    }
+    return childNodes;
   }
 
   void replaceArgsFor(int index, List<Expr> newArgs) {

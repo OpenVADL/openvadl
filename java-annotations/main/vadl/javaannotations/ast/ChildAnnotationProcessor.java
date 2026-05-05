@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -150,6 +150,25 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
     }
   }
 
+  private String fieldAccessor(VariableElement field) {
+    String fieldName = field.getSimpleName().toString();
+    String accessPrefix = fieldName;
+    Set<Modifier> modifiers = field.getModifiers();
+    if (modifiers.contains(Modifier.PRIVATE)) {
+      // Need to use getter if field is private
+      String getterName =
+          "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+      accessPrefix = getterName + "()";
+    }
+    return accessPrefix;
+  }
+
+  private boolean isFieldList(VariableElement field) {
+    TypeMirror fieldType = field.asType();
+    String fieldTypeString = fieldType.toString();
+    return fieldTypeString.startsWith("java.util.List");
+  }
+
   private void generateNodeChildrenRegistry() throws IOException {
     JavaFileObject registryFile = Objects.requireNonNull(this.registryFile);
     try (PrintWriter out = new PrintWriter(registryFile.openWriter())) {
@@ -181,40 +200,48 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
         TypeElement classElement = entry.getKey();
 
         String className = classElement.getQualifiedName().toString();
+        List<VariableElement> childFields = entry.getValue();
+
+        // Optimization for when all children are already in a single list
+        if (childFields.size() == 1 && isFieldList(childFields.getFirst())) {
+          var field = childFields.getFirst();
+          TypeMirror fieldType = field.asType();
+          out.println(
+              "        COLLECTORS.put(" + className + ".class, (node) -> (List<Node>) (List<?>) (("
+                  + className + ") node)." + fieldAccessor(field) + ");");
+          continue;
+        }
 
         out.println("        COLLECTORS.put(" + className + ".class, (node) -> {");
         out.println("            " + className + " n = (" + className + ") node;");
-        out.println("            List<Node> children = new ArrayList<>();");
 
-        // Add code to collect children for this node type
-        List<VariableElement> childFields = entry.getValue();
+        // Calculate the capacity to optimize allocations
+        out.println("            int capacity = 0");
         for (VariableElement field : childFields) {
           String fieldName = field.getSimpleName().toString();
-          TypeMirror fieldType = field.asType();
-          String fieldTypeString = fieldType.toString();
-
-          // Handle field visibility
-          Set<Modifier> modifiers = field.getModifiers();
-          String accessPrefix = "";
-          if (modifiers.contains(Modifier.PRIVATE)) {
-            // Need to use getter if field is private
-            String getterName =
-                "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-            accessPrefix = "n." + getterName + "()";
+          if (isFieldList(field)) {
+            out.println("                  + n.%s.size() // %s".formatted(fieldAccessor(field), fieldName));
           } else {
-            accessPrefix = "n." + fieldName;
+            out.println("                  + 1 // %s".formatted(fieldName));
           }
+        }
+        out.println("                 ;");
 
+
+        out.println("            List<Node> children = new ArrayList<>(capacity);");
+
+        // Add code to collect children for this node type
+        for (VariableElement field : childFields) {
           // Handle different field types
-          if (fieldTypeString.startsWith("java.util.List")) {
-            out.println("            if (" + accessPrefix + " != null) {");
-            out.println("               for (var child: " + accessPrefix + ") {");
+          if (isFieldList(field)) {
+            out.println("            if ( n." + fieldAccessor(field) + " != null) {");
+            out.println("               for (var child: n." + fieldAccessor(field) + ") {");
             out.println("                   children.add((Node) child);");
             out.println("               }");
             out.println("            }");
           } else {
-            out.println("            if (" + accessPrefix + " != null) {");
-            out.println("                children.add((Node)" + accessPrefix + ");");
+            out.println("            if ( n." + fieldAccessor(field) + " != null) {");
+            out.println("                children.add((Node) n." + fieldAccessor(field) + ");");
             out.println("            }");
           }
         }
