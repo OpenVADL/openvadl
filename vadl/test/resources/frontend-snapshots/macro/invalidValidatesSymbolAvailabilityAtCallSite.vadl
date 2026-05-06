@@ -1,0 +1,28 @@
+instruction set architecture Test = {
+  format F : Bits<32> = { bits [31..0] }
+  register A : Bits<32>
+  model test(opName: Id, instrFormat : Id) : IsaDefs = {
+    instruction $opName : $instrFormat = {
+      A := bots // Typo!
+    }
+  }
+
+  $test(SET ; F)
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown Symbol: "bots"
+//       ╭── test/resources/frontend-snapshots/macro/invalidValidatesSymbolAvailabilityAtCallSite.vadl:6:12
+//       │
+//     6 │       A := bots // Typo!
+//       │            ^^^^ No Symbol with this name exists.
+//       │
+//       ├─ From this model invocation (outermost call first):
+//       │       test/resources/frontend-snapshots/macro/invalidValidatesSymbolAvailabilityAtCallSite.vadl:10:3
+//       │
+//       help: Did you maybe mean: bits
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

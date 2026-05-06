@@ -47,10 +47,10 @@ class MacroExpander
   final Map<String, Identifier> macroOverrides;
   final List<Diagnostic> errors = new ArrayList<>();
   @Nullable
-  final SourceLocation expandingFrom;
+  final List<SourceLocation.DirectLocation> expandingFrom;
 
   MacroExpander(Map<String, Node> args, Map<String, Identifier> macroOverrides,
-                @Nullable SourceLocation expandingFrom) {
+                @Nullable List<SourceLocation.DirectLocation> expandingFrom) {
     this.args = args;
     this.macroOverrides = macroOverrides;
     this.expandingFrom = expandingFrom;
@@ -292,7 +292,8 @@ class MacroExpander
       assertValidMacro(macro, expr.location());
       var arguments = collectMacroParameters(macro, expr.arguments, expr.location());
       var body = (Expr) macro.body();
-      var subpass = new MacroExpander(arguments, macroOverrides, copyLoc(expr.loc));
+      var subpass =
+          new MacroExpander(arguments, macroOverrides, copyLoc(expr.loc).fullExpandedFromStack());
       var expanded = subpass.expandExpr(body);
       if (macro.returnType().equals(BasicSyntaxType.EX)) {
         var group = new GroupedExpr(new ArrayList<>(), expanded.location());
@@ -813,7 +814,8 @@ class MacroExpander
       var arguments =
           collectMacroParameters(macro, definition.arguments, definition.location());
       var body = (Definition) macro.body();
-      var subpass = new MacroExpander(arguments, macroOverrides, copyLoc(definition.location()));
+      var subpass = new MacroExpander(arguments, macroOverrides,
+          copyLoc(definition.location()).fullExpandedFromStack());
       return body.accept(subpass);
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
@@ -1269,7 +1271,8 @@ class MacroExpander
       assertValidMacro(macro, copyLoc(stmt.location()));
       var arguments = collectMacroParameters(macro, stmt.arguments, copyLoc(stmt.location()));
       var body = (Statement) macro.body();
-      var subpass = new MacroExpander(arguments, macroOverrides, copyLoc(stmt.location()));
+      var subpass = new MacroExpander(arguments, macroOverrides,
+          copyLoc(stmt.location()).fullExpandedFromStack());
       return body.accept(subpass);
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
@@ -1510,7 +1513,8 @@ class MacroExpander
     try {
       assertValidMacro(macro, node.location());
       var arguments = collectMacroParameters(macro, node.arguments, node.location());
-      var subpass = new MacroExpander(arguments, macroOverrides, copyLoc(node.loc));
+      var subpass =
+          new MacroExpander(arguments, macroOverrides, copyLoc(node.loc).fullExpandedFromStack());
       return subpass.expandNode(macro.body());
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
@@ -1561,15 +1565,11 @@ class MacroExpander
   private SourceLocation copyLoc(SourceLocation loc) {
     // FIXME: At the time of writing we sometimes issued the pass twice resulting in double
     // reporting of expandedFrom
-    if (expandingFrom == null || Objects.equals(loc, expandingFrom)) {
+    if (expandingFrom == null) {
       return loc;
     }
 
-    if (loc.expandedFrom() == null) {
-      return new SourceLocation(loc.path(), loc.begin(), loc.end(), expandingFrom);
-    }
-
-    return new SourceLocation(loc.path(), loc.begin(), loc.end(), copyLoc(loc.expandedFrom()));
+    return loc.copyWithAppendedExpandedFrom(expandingFrom);
   }
 
   static class MacroExpansionException extends Exception {

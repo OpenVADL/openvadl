@@ -989,8 +989,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       fullName = identifier.name;
     } else if (expr instanceof IdentifierPath path) {
       computedTarget = path.target();
-      var segments = path.pathToSegments();
-      innerName = segments.get(segments.size() - 1);
+      innerName = path.lastSegmentName();
       fullName = path.pathToString();
     } else {
       throw new IllegalStateException();

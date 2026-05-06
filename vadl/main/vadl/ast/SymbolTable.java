@@ -41,12 +41,21 @@ import vadl.utils.WithLocation;
 
 class SymbolTable {
   @Nullable
-  SymbolTable parent = null;
-  final List<SymbolTable> children = new ArrayList<>();
+  SymbolTable parent;
   final Map<String, Symbol> symbols = new HashMap<>();
   final Map<String, AstSymbol> macroSymbols = new HashMap<>();
   // the errors list is the same obj as the parent's error list
-  List<Diagnostic> errors = new ArrayList<>();
+  List<Diagnostic> errors;
+
+  public SymbolTable() {
+    parent = null;
+    errors = new ArrayList<>();
+  }
+
+  private SymbolTable(SymbolTable parent, List<Diagnostic> errors) {
+    this.parent = parent;
+    this.errors = errors;
+  }
 
   sealed interface Symbol {
   }
@@ -112,10 +121,7 @@ class SymbolTable {
 
 
   SymbolTable createChild() {
-    SymbolTable child = new SymbolTable();
-    child.parent = this;
-    child.errors = this.errors;
-    this.children.add(child);
+    SymbolTable child = new SymbolTable(this, this.errors);
     return child;
   }
 

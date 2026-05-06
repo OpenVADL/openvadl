@@ -1,0 +1,18 @@
+model example(arg: Ex) : Ex =  {
+   1 + 2
+}
+
+constant n = 3 * $example()
+
+
+//  Reported Diagnostics:
+//
+//  error: The macro `example` expects 1 arguments but 0 were provided.
+//       ╭── test/resources/frontend-snapshots/macro/invalidInvalidNotEnoughArguments.vadl:5:18
+//       │
+//     5 │ constant n = 3 * $example()
+//       │                  ^^^^^^^^^^
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

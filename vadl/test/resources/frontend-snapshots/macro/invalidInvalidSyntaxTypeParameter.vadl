@@ -1,0 +1,18 @@
+model example(arg: DoesntExist) : Ex =  {
+   1 + 2
+}
+
+constant n = 3 * $example(3)
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown syntax type: `DoesntExist`
+//       ╭── test/resources/frontend-snapshots/macro/invalidInvalidSyntaxTypeParameter.vadl:1:20
+//       │
+//     1 │ model example(arg: DoesntExist) : Ex =  {
+//       │                    ^^^^^^^^^^^ No syntax type with this name exists.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

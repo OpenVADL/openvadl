@@ -18,11 +18,11 @@ package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.base.Preconditions;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.types.BitsType;
@@ -1550,8 +1550,6 @@ final class IdentifierPath extends Expr implements IsId {
   Node target;
 
   public IdentifierPath(List<IdentifierOrPlaceholder> segments) {
-    Preconditions.checkArgument(!segments.isEmpty(),
-        "IdentifierPath needs at least one Identifier");
     this.segments = segments;
   }
 
@@ -1569,9 +1567,10 @@ final class IdentifierPath extends Expr implements IsId {
 
   @Override
   public String pathToString() {
-    StringBuilder sb = new StringBuilder();
-    prettyPrint(0, sb);
-    return sb.toString();
+    return this.segments.stream()
+        .map(id -> (Identifier) id)
+        .map(id -> id.name)
+        .collect(Collectors.joining("::"));
   }
 
   @Nullable
@@ -1580,10 +1579,16 @@ final class IdentifierPath extends Expr implements IsId {
     return target;
   }
 
+  public String lastSegmentName() {
+    return ((Identifier) segments.getLast()).name;
+  }
+
   //  @Override
   public List<String> pathToSegments() {
-    // FIXME: There must be a better solution
-    return List.of(pathToString().split("::"));
+    return this.segments.stream()
+        .map(id -> (Identifier) id)
+        .map(id -> id.name)
+        .toList();
   }
 
   @Override
@@ -1823,13 +1828,26 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   List<Node> children() {
     // This is too complicated for the @Child annotation
     List<Node> childNodes = new ArrayList<>();
-    childNodes.add((Node) target);
-    childNodes.addAll(argsIndices.stream().flatMap(a -> a.values.stream()).toList());
-    childNodes.addAll(subCalls.stream()
-        .flatMap(subCall -> subCall.argsIndices.stream()
-            .flatMap(a -> a.values.stream()))
-        .toList());
-    return childNodes.stream().filter(Objects::nonNull).toList();
+    if (target != null) {
+      childNodes.add((Node) target);
+    }
+    for (var a : argsIndices) {
+      for (var v : a.values) {
+        if (v != null) {
+          childNodes.add(v);
+        }
+      }
+    }
+    for (var subCall : subCalls) {
+      for (var a : subCall.argsIndices) {
+        for (var v : a.values) {
+          if (v != null) {
+            childNodes.add(v);
+          }
+        }
+      }
+    }
+    return childNodes;
   }
 
   void replaceArgsFor(int index, List<Expr> newArgs) {

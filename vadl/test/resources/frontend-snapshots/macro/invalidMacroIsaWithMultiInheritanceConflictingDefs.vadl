@@ -1,0 +1,26 @@
+instruction set architecture Base0 = {
+  model Test(): Id = { XY }
+}
+instruction set architecture Base1 = {
+  model Test(): Id = { XZ }
+}
+instruction set architecture Sub extending Base0, Base1 = {
+  constant $Test() = 3
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Macro name already used: Test
+//       ╭── test/resources/frontend-snapshots/macro/invalidMacroIsaWithMultiInheritanceConflictingDefs.vadl:5:9
+//       │
+//     2 │   model Test(): Id = { XY }
+//       │         ---- First defined here.
+//       ⋮
+//     5 │   model Test(): Id = { XZ }
+//       │         ^^^^ Second definition here.
+//       │
+//       note: All macros must have a unique name.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

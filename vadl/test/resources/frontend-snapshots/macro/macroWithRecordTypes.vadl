@@ -1,0 +1,18 @@
+// INCLUDE-AST-DUMP
+
+record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
+
+model ExtendInstr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+  (AsId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

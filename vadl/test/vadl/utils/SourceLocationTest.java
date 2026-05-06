@@ -45,7 +45,7 @@ public class SourceLocationTest {
 
   @Test
   public void testToSourceString_singleLine() {
-    SourceLocation location = new SourceLocation(miniVadlPath, 12);
+    SourceLocation location = new SourceLocation.DirectLocation(miniVadlPath, 12);
     String expected =
         "  constant MLen   = $ArchSize()           // MLen = 32 or 64 depending on ArchSize";
     assertEquals(expected, location.toSourceString(new DiskVirtualFileSystem()));
@@ -53,7 +53,7 @@ public class SourceLocationTest {
 
   @Test
   public void testToSourceString_multipleLines() {
-    SourceLocation location = new SourceLocation(miniVadlPath, 14, 16);
+    SourceLocation location = new SourceLocation.DirectLocation(miniVadlPath, 14, 16);
     String expected = "  using Inst     = Bits<32>               // instruction word is 32 bit\n"
         + "  using Regs     = Bits<MLen>             // untyped register word type\n"
         + "  using Bits3    = Bits< 3>               // 3 bit type";
@@ -64,7 +64,7 @@ public class SourceLocationTest {
   public void testToSourceString_withColumn() {
     SourceLocation.Position start = new SourceLocation.Position(23, 10);
     SourceLocation.Position end = new SourceLocation.Position(23, 15);
-    SourceLocation location = new SourceLocation(miniVadlPath, start, end);
+    SourceLocation location = new SourceLocation.DirectLocation(miniVadlPath, start, end);
     String expected = "Rtype";
     assertEquals(expected, location.toSourceString(new DiskVirtualFileSystem()));
   }
@@ -73,7 +73,7 @@ public class SourceLocationTest {
   public void testToSourceString_multipleLinesWithColumn() {
     SourceLocation.Position start = new SourceLocation.Position(33, 3);
     SourceLocation.Position end = new SourceLocation.Position(34, 61);
-    SourceLocation location = new SourceLocation(miniVadlPath, start, end);
+    SourceLocation location = new SourceLocation.DirectLocation(miniVadlPath, start, end);
     String expected =
         "instruction ADD : Rtype =               // 3 register operand instructions\n"
             + "      X(rd) := ((X(rs1) as Bits) + (X(rs2) as Bits)) as Regs";
@@ -82,13 +82,13 @@ public class SourceLocationTest {
 
   @Test
   public void testToSourceString_whenBeginLineIsZero() {
-    SourceLocation location = new SourceLocation(miniVadlPath, 0);
+    SourceLocation location = new SourceLocation.DirectLocation(miniVadlPath, 0);
     assert (location.toSourceString(new DiskVirtualFileSystem()).contains("Invalid source location"));
   }
 
   @Test
   public void testToUriString() {
-    SourceLocation location = new SourceLocation(miniVadlPath, new SourceLocation.Position(1, 5));
+    SourceLocation location = new SourceLocation.DirectLocation(miniVadlPath, new SourceLocation.Position(1, 5));
     assertThat(location.toUriString(), startsWith("file:/"));
     assertThat(location.toUriString(), endsWith("mini.vadl:1:5 .. 1:5"));
   }
