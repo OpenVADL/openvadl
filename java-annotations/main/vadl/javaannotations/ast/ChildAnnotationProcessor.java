@@ -205,7 +205,6 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
         // Optimization for when all children are already in a single list
         if (childFields.size() == 1 && isFieldList(childFields.getFirst())) {
           var field = childFields.getFirst();
-          TypeMirror fieldType = field.asType();
           out.println(
               "        COLLECTORS.put(" + className + ".class, (node) -> (List<Node>) (List<?>) (("
                   + className + ") node)." + fieldAccessor(field) + ");");

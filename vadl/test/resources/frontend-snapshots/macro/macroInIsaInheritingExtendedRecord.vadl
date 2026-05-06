@@ -1,0 +1,30 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture Base = {
+  record Record (id: Id, mnemo: Str, opcode: Ex)
+}
+
+instruction set architecture Final extending Base = {
+  model Model (r: Record): Ex = {
+    42
+  }
+
+  constant x = $Model((abc; "xyz"; 1))
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "Base"
+//    InstructionSetDefinition name: "Final"
+//    . Identifier name: "Base" type: null
+//    . ConstantDefinition name: "x" evaluatedValue: 42
+//    . : IntegerLiteral literal: 42 (42) type: Const<42>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
 public sealed interface SourceLocation extends WithLocation, Comparable<SourceLocation>
     permits SourceLocation.DirectLocation, SourceLocation.ExpandedLocation {
 
-  SourceLocation INVALID_SOURCE_LOCATION = new DirectLocation(null, 0);
+  SourceLocation INVALID_SOURCE_LOCATION = new DirectLocation(null, new Position(0));
 
   @Nullable
   Path path();
@@ -360,6 +360,15 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
     public DirectLocation(@Nullable Path path, Position begin) {
       this(path, begin, begin);
     }
+
+    public DirectLocation(@Nullable Path path, int beginLine, int endLine) {
+      this(path, new Position(beginLine), new Position(endLine));
+    }
+
+    public DirectLocation(@Nullable Path path, int line) {
+      this(path, new Position(line));
+    }
+
   }
 
   /**

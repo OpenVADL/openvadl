@@ -16,7 +16,16 @@
 
 package vadl.ast;
 
-/*
+import static vadl.ast.AstTestUtils.assertAstEquality;
+
+import java.nio.file.Paths;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import vadl.error.DiagnosticList;
+import vadl.utils.SingleFileVirtualFileSystem;
+
 public class MacroTests {
 
   @Test
@@ -85,18 +94,6 @@ public class MacroTests {
   }
 
   @Test
-  void invalidMacroReturnType() {
-    var prog = """
-        model example() : Int =  {
-           1 + 2
-        }
-        
-        constant n = 3 * $example()
-        """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
-  }
-
-  @Test
   void macroWithUnusedArguments() {
     var prog1 = """
         model example(first: Int, second: Ex) : Ex =  {
@@ -106,69 +103,11 @@ public class MacroTests {
         constant n = 3 * $example(3 ; 5)
         """;
     var prog2 = "constant n = 3 * (1 + 2)";
-
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
-  @Test
-  void invalidSyntaxTypeReturn() {
-    var prog = """
-        model example(arg: Ex) : DoesntExist =  {
-           1 + 2
-        }
-        
-        constant n = 3 * $example(3)
-        """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
-  }
 
-  @Test
-  void invalidSyntaxTypeParameter() {
-    var prog = """
-        model example(arg: DoesntExist) : Ex =  {
-           1 + 2
-        }
-        
-        constant n = 3 * $example(3)
-        """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
-  }
 
-  @Test
-  void invalidNotEnoughArguments() {
-    var prog = """
-        model example(arg: Ex) : Ex =  {
-           1 + 2
-        }
-        
-        constant n = 3 * $example()
-        """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
-  }
-
-  @Test
-  void invalidTooManyArguments() {
-    var prog = """
-        model example(arg: Ex) : Ex =  {
-           1 + 2
-        }
-        
-        constant n = 3 * $example(1;2)
-        """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
-  }
-
-  @Test
-  void invalidProvidedArgumentType() {
-    var prog = """
-        model example(arg: Bool) : Ex =  {
-           1 + 2
-        }
-        
-        constant n = 3 * $example(5)
-        """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
-  }
 
   @Test
   void passIdAsParameter() {
@@ -199,24 +138,6 @@ public class MacroTests {
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
-  @Test
-  void validatesSymbolAvailabilityAtCallSite() {
-    var prog = """
-        instruction set architecture Test = {
-          format F : Bits<32> = { bits [31..0] }
-          register A : Bits<32>
-          model test(opName: Id, instrFormat : Id) : IsaDefs = {
-            instruction $opName : $instrFormat = {
-              A := bots // Typo!
-            }
-          }
-        
-          $test(SET ; F)
-        }
-        """;
-
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
-  }
 
   @Test
   void macroProducingStatements() {
@@ -303,9 +224,8 @@ public class MacroTests {
     var exception = Assertions.assertThrows(DiagnosticList.class,
         () -> VadlParser.parse(path, fileSystem));
     var location = exception.items.get(0).multiLocation.primaryLocation().location();
-    Assertions.assertNotNull(location.expandedFrom());
-    Assertions.assertEquals(5, location.expandedFrom().begin().line());
-    Assertions.assertNull(location.expandedFrom().expandedFrom());
+    Assertions.assertEquals(1, location.expandedFromStack().size());
+    Assertions.assertEquals(5, location.expandedFromStack().getFirst().begin().line());
   }
 
   @Test
@@ -327,11 +247,11 @@ public class MacroTests {
 
     var exception = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
     var location = exception.items.get(0).multiLocation.primaryLocation().location();
-    Assertions.assertNotNull(location.expandedFrom());
-    Assertions.assertEquals(6, location.expandedFrom().begin().line());
-    Assertions.assertNotNull(location.expandedFrom().expandedFrom());
-    Assertions.assertEquals(9, location.expandedFrom().expandedFrom().begin().line());
-    Assertions.assertNull(location.expandedFrom().expandedFrom().expandedFrom());
+    Assertions.assertEquals(2, location.expandedFromStack().size());
+    var firstExpanded = location.expandedFromStack().getFirst();
+    var secondExpanded = location.expandedFromStack().get(1);
+    Assertions.assertEquals(6, firstExpanded.begin().line());
+    Assertions.assertEquals(9, secondExpanded.begin().line());
   }
 
   @Test
@@ -380,74 +300,6 @@ public class MacroTests {
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
-  @Test
-  void macroIsaWithInheritanceConflictingDefs() {
-    var prog1 = """
-        instruction set architecture Base0 = {
-          model Test(): Id = { XY }
-        }
-        instruction set architecture Base1 extending Base0 = {
-          model Test(): Id = { XZ } 
-        }
-        instruction set architecture Sub extending Base1 = {
-          constant $Test() = 3
-        }
-        """;
-    var diag = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog1));
-    assertThat(diag.items.toArray(Diagnostic[]::new))
-        .anySatisfy(d ->
-            assertThat(d).hasMessageContaining("Macro name already used: Test"));
-  }
-
-  @Test
-  void macroIsaWithMultiInheritanceConflictingDefs() {
-    var prog1 = """
-        instruction set architecture Base0 = {
-          model Test(): Id = { XY }
-        }
-        instruction set architecture Base1 = {
-          model Test(): Id = { XZ } 
-        }
-        instruction set architecture Sub extending Base0, Base1 = {
-          constant $Test() = 3
-        }
-        """;
-    var diag = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog1));
-    assertThat(diag.items.toArray(Diagnostic[]::new))
-        .anySatisfy(d ->
-            assertThat(d).hasMessageContaining("Macro name already used: Test"));
-  }
-
-  @Test
-  void macroInIsaInheritingExtendedRecord() {
-    var prog1 = """
-        instruction set architecture Base = {
-          record Record (id: Id, mnemo: Str, opcode: Ex)
-        }
-        
-        instruction set architecture Final extending Base = {
-          model Model (r: Record): Ex = {
-            42
-          }
-        
-          constant x = $Model((abc; "xyz"; 1))
-        }
-        """;
-    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog1));
-  }
-
-  @Test
-  void macroWithRecordTypes() {
-    // There once was a time where record return types couldn't be parsed.
-    var prog1 = """
-        record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
-        
-        model ExtendInstr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
-          (AsId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
-        }
-        """;
-    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog1));
-  }
 
   @Test
   void asIdTest() {
@@ -497,35 +349,4 @@ public class MacroTests {
         diagnostic.reason.contains("Invalid") && diagnostic.reason.contains("Identifier"),
         "Reason was: `%s`".formatted(diagnostic.reason));
   }
-
-  @Test
-  void assemblyExpandedToMultipleDefinitions() {
-    // There once was a bug where the assemblies weren't expanded correctly, and the symboltable
-    // threw an error with code like that.
-    // https://github.com/OpenVADL/openvadl/issues/304
-    var prog = """
-        instruction set architecture TEST = {
-          format Fa: Bits<32> =
-          { field   [31..0]
-          }
-          format Fb: Bits<64> =
-          { field   [63..0]
-          }
-        
-          register    X : Bits<5>   -> Bits<32>
-        
-          instruction One : Fa = X(0) := 1
-          instruction Two : Fb = X(0) := 2
-          encoding One = {field = 1}
-          encoding Two = {field = 2}
-        
-          // This line caused the issue before
-          assembly One, Two = (mnemonic, " ", decimal(field))
-        }
-        """;
-    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog));
-  }
 }
-
-
-*/

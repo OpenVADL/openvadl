@@ -1,0 +1,35 @@
+model example(arg: Bool) : Ex =  {
+   1 + 2
+}
+
+constant n = 3 * $example(5)
+
+// FIXME: Investigate the surplus of diagnostics
+
+
+//  Reported Diagnostics:
+//
+//  error: Macro example expects parameter arg to be of type BOOL, got ID instead
+//       ╭── test/resources/frontend-snapshots/macro/invalidInvalidProvidedArgumentType.vadl:5:18
+//       │
+//     5 │ constant n = 3 * $example(5)
+//       │                  ^^^^^^^^^
+//       │
+//
+//  error: Parsing Error
+//       ╭── test/resources/frontend-snapshots/macro/invalidInvalidProvidedArgumentType.vadl:5:27
+//       │
+//     5 │ constant n = 3 * $example(5)
+//       │                           ^ invalid macroBody
+//       │
+//
+//  error: SyntaxType Mismatch
+//       ╭── Source Location was lost
+//       │
+//       │    No Preview available: No source location found
+//       │    
+//       │
+//       Mismatched node type: Required `BOOL`, but got `ID`
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
