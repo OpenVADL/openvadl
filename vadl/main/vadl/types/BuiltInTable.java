@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 import vadl.ast.AsmGrammarDefaultRules;
+import vadl.ast.PseudoFormatType;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
@@ -657,6 +658,26 @@ public class BuiltInTable {
           .returns(Type.bool())
           .build();
 
+  /**
+   * {@code function opequ ( a : PseudoFormat, b : PseudoFormat ) -> Bool // <=> a = b }
+   */
+  public static final BuiltIn OP_EQU =
+      func("VADL::opequ", "=",
+          Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+
+  /**
+   * {@code function opneq ( a : PseudoFormat, b : PseudoFormat ) -> Bool // <=> a != b }
+   */
+  public static final BuiltIn OP_NEQ =
+      func("VADL::opneq", "!=",
+          Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
 
   /**
    * {@code function slth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b }
@@ -1365,7 +1386,9 @@ public class BuiltInTable {
       SGTH,
       UGTH,
       SGEQ,
-      UGEQ
+      UGEQ,
+      OP_EQU,
+      OP_NEQ
   );
 
   public static final List<BuiltIn> SHIFTING_BUILT_INS = List.of(
@@ -1453,8 +1476,8 @@ public class BuiltInTable {
       CONCATENATE_STRINGS
   );
 
-  public static final List<BuiltIn> equalityPredicates = List.of(
-      EQU, NEQ
+  public static final List<BuiltIn> operationEqualityPredicates = List.of(
+      OP_EQU, OP_NEQ
   );
 
   public static final List<BuiltIn> arithmeticComparisons = List.of(
@@ -1644,7 +1667,7 @@ public class BuiltInTable {
           var constructedType = constructDataType(argTypeClass, argDataType.bitWidth());
           if (constructedType != null) {
             // check that the argument type can be trivially cast to the constructed type
-            if (argDataType.isTrivialCastTo(argDataType)) {
+            if (argDataType.isTrivialCastTo(constructedType)) {
               continue;
             }
           }
