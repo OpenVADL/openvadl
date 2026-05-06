@@ -762,11 +762,27 @@ public class TypeChecker
       }
     }
 
-    if (args.size() == 2 && BuiltInTable.equalityPredicates.contains(builtIn)) {
+    if (args.size() == 2 && BuiltInTable.operationEqualityPredicates.contains(builtIn)) {
       // Special case for equality over bound variables of the forall..then expression
       final Expr l = args.getFirst();
       final Expr r = args.getLast();
-      if (l.type() instanceof PseudoFormatType left && r.type() instanceof PseudoFormatType right) {
+      
+      if (!(l.type() instanceof PseudoFormatType left)) {
+
+        throw addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location, "Expected an intersection format here but the left side "
+                + "was an `%s`", l.type())
+            .build());
+
+      } else if (!(r.type() instanceof PseudoFormatType right)) {
+
+        throw addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location,
+                "Expected an intersection format here but the right side "
+                    + "was an `%s`", r.type())
+            .build());
+
+      } else {
 
         // Static sanity check if the instructions from both pseudo formats even overlap
         var overlap = new HashSet<>(left.format().instructions());
@@ -774,7 +790,7 @@ public class TypeChecker
 
         if (overlap.isEmpty()) {
           DeferredDiagnosticStore.add(
-              warning("This expression is always `%s`".formatted(builtIn == BuiltInTable.NEQ),
+              warning("This expression is always `%s`".formatted(builtIn == BuiltInTable.OP_NEQ),
                   location)
                   .description("The sets of instructions bound by `%s` and `%s` do not overlap",
                       ((Identifier) l).name, ((Identifier) r).name)
