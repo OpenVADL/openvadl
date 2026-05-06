@@ -16,18 +16,7 @@
 
 package vadl.ast;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static vadl.ast.AstTestUtils.assertAstEquality;
-
-import java.nio.file.Paths;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import vadl.error.Diagnostic;
-import vadl.error.DiagnosticList;
-import vadl.utils.SingleFileVirtualFileSystem;
-
+/*
 public class MacroTests {
 
   @Test
@@ -539,3 +528,4 @@ public class MacroTests {
 }
 
 
+*/

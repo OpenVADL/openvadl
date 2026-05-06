@@ -1568,7 +1568,7 @@ final class IdentifierPath extends Expr implements IsId {
   @Override
   public String pathToString() {
     return this.segments.stream()
-        .map(id -> (Identifier)id)
+        .map(id -> (Identifier) id)
         .map(id -> id.name)
         .collect(Collectors.joining("::"));
   }
@@ -1586,7 +1586,7 @@ final class IdentifierPath extends Expr implements IsId {
   //  @Override
   public List<String> pathToSegments() {
     return this.segments.stream()
-        .map(id -> (Identifier)id)
+        .map(id -> (Identifier) id)
         .map(id -> id.name)
         .toList();
   }
@@ -1833,13 +1833,17 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     }
     for (var a : argsIndices) {
       for (var v : a.values) {
-        if (v != null) childNodes.add(v);
+        if (v != null) {
+          childNodes.add(v);
+        }
       }
     }
     for (var subCall : subCalls) {
       for (var a : subCall.argsIndices) {
         for (var v : a.values) {
-          if (v != null) childNodes.add(v);
+          if (v != null) {
+            childNodes.add(v);
+          }
         }
       }
     }

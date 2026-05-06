@@ -220,7 +220,8 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
         for (VariableElement field : childFields) {
           String fieldName = field.getSimpleName().toString();
           if (isFieldList(field)) {
-            out.println("                  + n.%s.size() // %s".formatted(fieldAccessor(field), fieldName));
+            out.println(
+                "                  + n.%s.size() // %s".formatted(fieldAccessor(field), fieldName));
           } else {
             out.println("                  + 1 // %s".formatted(fieldName));
           }

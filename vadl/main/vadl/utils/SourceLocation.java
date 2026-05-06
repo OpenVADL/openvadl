@@ -32,61 +32,75 @@ import javax.annotation.Nullable;
 
 /**
  * References a location span in source.
- *
- * @param path         path to concrete source file
- * @param begin        the span begin with line and column
- * @param end          the span end with line and column (this is inclusive)
- * @param expandedFrom pointing to the location of a macro instantiation from which the current ast
- *                     got expanded. This is useful to both print the code in the macro as well as
- *                     the invocation. Is null for location that weren't expanded.
  */
-public record SourceLocation(
-    @Nullable Path path,
-    Position begin,
-    Position end,
-    @Nullable SourceLocation expandedFrom
-) implements WithLocation, Comparable<SourceLocation> {
+public sealed interface SourceLocation extends WithLocation, Comparable<SourceLocation>
+    permits SourceLocation.DirectLocation, SourceLocation.ExpandedLocation {
 
+  SourceLocation INVALID_SOURCE_LOCATION = new DirectLocation(null, 0);
 
-  public static final SourceLocation INVALID_SOURCE_LOCATION =
-      new SourceLocation(null, 0);
+  @Nullable
+  Path path();
 
-  public SourceLocation(@Nullable Path path, Position begin, Position end) {
-    this(path, begin, end, null);
-  }
+  Position begin();
 
-  public SourceLocation(@Nullable Path path, Position begin) {
-    this(path, begin, begin);
-  }
+  Position end();
 
-  public SourceLocation(@Nullable Path path, int lineBegin, int lineEnd) {
-    this(path, new Position(lineBegin), new Position(lineEnd));
-  }
-
-  public SourceLocation(@Nullable Path path, int line) {
-    this(path, line, line);
-  }
-
-  public boolean isValid() {
-    return this.path != null;
-  }
-
-  public SourceLocation orDefault(SourceLocation defaultLocation) {
-    return isValid() ? this : defaultLocation;
+  /**
+   * A ergonomic constructor that will select the either {@link DirectLocation} or
+   * {@link ExpandedLocation} based on the provided arguments.
+   *
+   * @param path of the source file
+   * @param begin position
+   * @param end position
+   * @param expandedFrom stack of expanded locations
+   * @return a source location instance
+   */
+  static SourceLocation of(@Nullable Path path, Position begin, Position end,
+                           @Nullable List<DirectLocation> expandedFrom) {
+    var primary = new DirectLocation(path, begin, end);
+    if (expandedFrom == null || expandedFrom.isEmpty()) {
+      return primary;
+    }
+    return new ExpandedLocation(primary, RopeList.of(expandedFrom));
   }
 
   /**
    * Return the stack of all the expandedFrom locations.
    * The stack is ordered from the most recent to outermost macro invocation.
+   * The stack doesn't include the current location.
    *
    * @return the stack of all the expandedFrom locations.
    */
-  public List<SourceLocation> expandedFromStack() {
-    var stack = new ArrayList<SourceLocation>();
-    for (var loc = this; loc != null; loc = loc.expandedFrom) {
-      stack.add(loc);
-    }
-    return stack;
+  default List<DirectLocation> expandedFromStack() {
+    return switch (this) {
+      case DirectLocation direct -> List.of();
+      case ExpandedLocation expanded -> expanded.expandedFrom.toList();
+    };
+  }
+
+  /**
+   * Return the stack of all the expandedFrom locations.
+   * The stack is ordered from the most recent to outermost macro invocation.
+   * The stack doesn't include the current location.
+   *
+   * @return the stack of all the expandedFrom locations.
+   */
+  default List<DirectLocation> fullExpandedFromStack() {
+    var inner = switch (this) {
+      case DirectLocation direct -> direct;
+      case ExpandedLocation expanded -> expanded.primaryLocation;
+    };
+    var list = new ArrayList<>(expandedFromStack());
+    list.addFirst(inner);
+    return list;
+  }
+
+  default boolean isValid() {
+    return path() != null;
+  }
+
+  default SourceLocation orDefault(SourceLocation defaultLocation) {
+    return isValid() ? this : defaultLocation;
   }
 
   /**
@@ -95,7 +109,7 @@ public record SourceLocation(
    * @return The joined source location or the invalid one, if an original one is invalid
    * @throws IllegalArgumentException if they point to different files.
    */
-  public static SourceLocation join(List<SourceLocation> others) {
+  static SourceLocation join(List<SourceLocation> others) {
     if (others.isEmpty()) {
       return SourceLocation.INVALID_SOURCE_LOCATION;
     }
@@ -117,7 +131,7 @@ public record SourceLocation(
    * @return The joined source location or the invalid one, if an original one is invalid
    * @throws IllegalArgumentException if they point to different files.
    */
-  public SourceLocation join(SourceLocation other) {
+  default SourceLocation join(SourceLocation other) {
     if (!this.isValid() || !other.isValid()) {
       return INVALID_SOURCE_LOCATION;
     }
@@ -126,8 +140,27 @@ public record SourceLocation(
       return this;
     }
 
-    var thisStack = this.expandedFromStack().reversed();
-    var otherStack = other.expandedFromStack().reversed();
+    if (!Objects.equals(this.path(), other.path())) {
+      throw new IllegalArgumentException("Cannot join source locations from different files");
+    }
+
+    // Shortcut for direct locations
+    if (this instanceof DirectLocation && other instanceof DirectLocation) {
+      var begin = this.begin().compareTo(other.begin()) < 0 ? this.begin() : other.begin();
+      var end = this.end().compareTo(other.end()) > 0 ? this.end() : other.end();
+      return new DirectLocation(this.path(), begin, end);
+    }
+
+    // Shortcut if both have the same expansion stack
+    if (this.expandedFromStack().equals(other.expandedFromStack())) {
+      return new ExpandedLocation(new DirectLocation(this.path(), this.begin(), other.end()),
+          RopeList.of(this.expandedFromStack()));
+    }
+
+    // The expansion stacks differ, let's find a shared substack or use the innermost invocation.
+    // NOTE: If this regularly happens, investigate it further to provide better help.
+    var thisStack = this.fullExpandedFromStack().reversed();
+    var otherStack = other.fullExpandedFromStack().reversed();
 
     var firstLocation = thisStack.getLast();
     var secondLocation = otherStack.getLast();
@@ -147,83 +180,61 @@ public record SourceLocation(
       if (!thisStack.get(i).equals(otherStack.get(i))) {
         firstLocation = thisStack.get(i);
         secondLocation = otherStack.get(i);
+        thisStack = thisStack.subList(i, thisStack.size());
+        otherStack = otherStack.subList(i, otherStack.size());
         break;
       }
     }
 
-
-    if (!Objects.equals(firstLocation.path, secondLocation.path)) {
-      throw new IllegalArgumentException(
-          "Cannot join source locations from different files.");
+    if (!Objects.equals(firstLocation.path(), secondLocation.path())) {
+      throw new IllegalArgumentException("Cannot join source locations from different files.");
     }
 
-    Position begin = firstLocation.begin.compareTo(secondLocation.begin) < 0 ? firstLocation.begin :
-        secondLocation.begin;
-    Position end = firstLocation.end.compareTo(secondLocation.end) > 0 ? firstLocation.end :
-        secondLocation.end;
-    SourceLocation expanedFrom =
-        Objects.equals(firstLocation.expandedFrom, secondLocation.expandedFrom)
-            ? firstLocation.expandedFrom : null;
+    var begin =
+        firstLocation.begin().compareTo(secondLocation.begin()) < 0 ? firstLocation.begin() :
+            secondLocation.begin();
+    var end = firstLocation.end().compareTo(secondLocation.end()) > 0 ? firstLocation.end() :
+        secondLocation.end();
+    var expanedFrom = Objects.equals(thisStack, otherStack) ? thisStack : null;
 
-    return new SourceLocation(firstLocation.path, begin, end, expanedFrom);
+    return SourceLocation.of(firstLocation.path(), begin, end, expanedFrom);
   }
 
-
   /**
-   * Returns a new {@code SourceLocation} object representing the intersection
-   * of this {@code SourceLocation} and the specified {@code SourceLocation} other.
+   * Create a new source location that is a copy of the current one with the provided expanded stack
+   * appended to the existing stack.
+   * This operation is especially performant and finishes in O(1) time.
    *
-   * <p>It will return a new {@code SourceLocation} object representing the intersection
-   * of this {@code SourceLocation} and the specified {@code SourceLocation} or
-   * the invalid one, if one of the original source locations are invalid.</p>
-   *
-   * @param other the {@code SourceLocation} to intersect with this {@code SourceLocation}
-   * @return a new {@code SourceLocation} object representing the intersection
-   * @throws IllegalArgumentException if this and other point to different files,
-   *                                  or if the source locations do not intersect
+   * @param newExpandedFrom to be appended.
+   * @return the new location.
    */
-  public SourceLocation meet(SourceLocation other) throws IllegalArgumentException {
-    if (!this.isValid() || !other.isValid()) {
-      return INVALID_SOURCE_LOCATION;
-    }
-
-    if (!Objects.equals(this.path, other.path)) {
-      throw new IllegalArgumentException(
-          "Cannot intersect source locations that point to different files.");
-    }
-
-    if (this.end.compareTo(other.begin) < 0 || other.end.compareTo(this.begin) < 0) {
-      throw new IllegalArgumentException("The source locations do not intersect.");
-    }
-
-    Position begin = (this.begin.compareTo(other.begin) > 0) ? this.begin : other.begin;
-    Position end = (this.end.compareTo(other.end) < 0) ? this.end : other.end;
-    SourceLocation expanedFrom =
-        Objects.equals(this.expandedFrom, other.expandedFrom)
-            ? this.expandedFrom : null;
-
-    return new SourceLocation(this.path, begin, end, expanedFrom);
+  default SourceLocation copyWithAppendedExpandedFrom(List<DirectLocation> newExpandedFrom) {
+    return switch (this) {
+      case DirectLocation direct -> new ExpandedLocation(direct, RopeList.of(newExpandedFrom));
+      case ExpandedLocation original -> new ExpandedLocation(original.primaryLocation,
+          original.expandedFrom.concat(RopeList.of(newExpandedFrom)));
+    };
   }
 
   @Override
-  public int compareTo(@Nonnull SourceLocation o) {
-    if (Objects.equals(this.path, o.path)) {
-      return this.begin.compareTo(o.begin);
+  default int compareTo(@Nonnull SourceLocation o) {
+    if (Objects.equals(this.path(), o.path())) {
+      return this.begin().compareTo(o.begin());
     }
 
-    if (this.path == null) {
+    if (this.path() == null) {
       return -1;
     }
-    if (o.path == null) {
+    if (o.path() == null) {
       return 1;
     }
-    return this.path.compareTo(o.path);
+    return this.path().compareTo(o.path());
   }
 
   /**
    * Modes of how the IDE should be detected or one format be forced.
    */
-  public enum IDEDetectionMode {
+  enum IDEDetectionMode {
     AUTO, RELATIVE, ABSOLUTE
   }
 
@@ -235,8 +246,8 @@ public record SourceLocation(
    * becomes  {@code "file:///absolut/path/to/file.vadl:1:3"} for IntelliJ
    * </p>
    */
-  public String toIDEString(VirtualFileSystem fileSystem, IDEDetectionMode mode,
-                            boolean forceUnixPaths) {
+  default String toIDEString(VirtualFileSystem fileSystem, IDEDetectionMode mode,
+                             boolean forceUnixPaths) {
     if (!this.isValid()) {
       return "Source Location was lost";
     }
@@ -245,17 +256,15 @@ public record SourceLocation(
 
     if (mode == IDEDetectionMode.ABSOLUTE || (mode == IDEDetectionMode.AUTO && isIntelliJIDE())) {
       // IntelliJ integrated terminal needs special treatment
-      printablePath = "file://" + fileSystem.toAbsolutePath(requireNonNull(path));
+      printablePath = "file://" + fileSystem.toAbsolutePath(requireNonNull(path()));
     } else {
-      printablePath = fileSystem.toRelativePath(requireNonNull(path)).toString();
+      printablePath = fileSystem.toRelativePath(requireNonNull(path())).toString();
     }
     if (forceUnixPaths) {
       printablePath = printablePath.replace(FileSystems.getDefault().getSeparator(), "/");
     }
 
-    return printablePath
-        + ":"
-        + this.begin;
+    return printablePath + ":" + this.begin();
   }
 
   /**
@@ -265,48 +274,42 @@ public record SourceLocation(
    * becomes  {@code "file.vadl:1:3..2:4"}
    * </p>
    */
-  public String toConciseString() {
-    var uriAsString = this.path != null ? "file://" + this.path : "memory://invalid";
+  default String toConciseString() {
+    var uriAsString = this.path() != null ? "file://" + this.path() : "memory://invalid";
     var indexOfLastSlash = uriAsString.lastIndexOf('/');
-    return uriAsString.substring(indexOfLastSlash + 1)
-        + ":"
-        + this.begin
-        + " .. "
-        + this.end;
+    return uriAsString.substring(indexOfLastSlash + 1) + ":" + this.begin() + " .. " + this.end();
   }
 
   /**
    * Reads the content of the source file at this location and
    * returns it as String.
    */
-  public String toSourceString(VirtualFileSystem fileSystem) {
+  default String toSourceString(VirtualFileSystem fileSystem) {
     if (!this.isValid()) {
       return "Invalid source location: " + this;
     }
 
-    try (Stream<String> lines = fileSystem.readLines(requireNonNull(this.path))) {
-      if (begin.line <= 0) {
+    try (Stream<String> lines = fileSystem.readLines(requireNonNull(this.path()))) {
+      if (begin().line <= 0) {
         return "Invalid source location: " + this;
       }
 
-      var lineDiff = end.line - begin.line;
-      var sourceLines = lines.skip(begin.line - 1).limit(lineDiff + 1)
+      var lineDiff = end().line - begin().line;
+      var sourceLines = lines.skip(begin().line - 1).limit(lineDiff + 1)
           .collect(Collectors.toCollection(ArrayList::new));
 
       var lineNumber = sourceLines.size();
-      return IntStream.range(0, lineNumber)
-          .mapToObj(i -> {
-            var line = sourceLines.get(i);
-            if (i == lineNumber - 1 && end.column != -1) {
-              line = line.substring(0, end.column - 1);
-            }
+      return IntStream.range(0, lineNumber).mapToObj(i -> {
+        var line = sourceLines.get(i);
+        if (i == lineNumber - 1 && end().column != -1) {
+          line = line.substring(0, end().column - 1);
+        }
 
-            if (i == 0 && begin.column != -1) {
-              line = line.substring(begin.column - 1);
-            }
-            return line;
-          })
-          .collect(Collectors.joining("\n"));
+        if (i == 0 && begin().column != -1) {
+          line = line.substring(begin().column - 1);
+        }
+        return line;
+      }).collect(Collectors.joining("\n"));
 
     }
   }
@@ -317,18 +320,11 @@ public record SourceLocation(
    * For example, SourceLocation("/path/file.vadl", (1, 3), (2, 4))
    * becomes "file:///path/file.vadl:1:3 .. 2:4"
    */
-  public String toUriString() {
-    if (path == null) {
+  default String toUriString() {
+    if (path() == null) {
       return "memory://invalid";
     }
-    return "file://" + path.toString() + ":" + begin + " .. " + end;
-  }
-
-  @Override
-  public String toString() {
-    var printPath = path != null ? path.toString() : "unknown";
-    printPath += ":" + begin + ".." + end;
-    return printPath;
+    return "file://" + path().toString() + ":" + begin() + " .. " + end();
   }
 
   /**
@@ -338,40 +334,60 @@ public record SourceLocation(
    * @return true if the source locations are equal, ignoring the expandedFrom field
    */
   @SuppressWarnings("ReferenceEquality") // I know what I'm doing.
-  public boolean equalsIgnoringExpandedFrom(SourceLocation other) {
+  default boolean equalsIgnoringExpandedFrom(SourceLocation other) {
     if (this == other) {
       return true;
     }
-    return Objects.equals(path, other.path)
-        && Objects.equals(begin, other.begin)
-        && Objects.equals(end, other.end);
+    return Objects.equals(path(), other.path()) && Objects.equals(begin(), other.begin())
+        && Objects.equals(end(), other.end());
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    SourceLocation that = (SourceLocation) o;
-    return Objects.equals(path, that.path)
-        && Objects.equals(begin, that.begin)
-        && Objects.equals(end, that.end)
-        && Objects.equals(expandedFrom, that.expandedFrom);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(path, begin, end, expandedFrom);
-  }
-
-  @Override
-  public SourceLocation location() {
+  default SourceLocation location() {
     return this;
   }
 
+  /**
+   * A direct location that wasn't expanded from anywhere.
+   *
+   * @param path of the file.
+   * @param begin position.
+   * @param end position.
+   */
+  record DirectLocation(@Nullable Path path, Position begin, Position end)
+      implements SourceLocation {
+
+    public DirectLocation(@Nullable Path path, Position begin) {
+      this(path, begin, begin);
+    }
+  }
+
+  /**
+   * A location that was expanded from another location.
+   *
+   * @param primaryLocation the innermost direct location.
+   * @param expandedFrom    the stack of locations (like a macro backtrace) from where it was
+   *                        expanded.
+   */
+  record ExpandedLocation(DirectLocation primaryLocation, RopeList<DirectLocation> expandedFrom)
+      implements SourceLocation {
+
+    @Nullable
+    @Override
+    public Path path() {
+      return primaryLocation.path();
+    }
+
+    @Override
+    public Position begin() {
+      return primaryLocation.begin();
+    }
+
+    @Override
+    public Position end() {
+      return primaryLocation.end();
+    }
+  }
 
   /**
    * Represents a position in the source file with line and column information.
@@ -379,10 +395,7 @@ public record SourceLocation(
    * @param line   starting at 1, just as displayed in an IDE.
    * @param column starting at 1, just as displayed in an IDE.
    */
-  public record Position(
-      int line,
-      int column
-  ) implements Comparable<Position> {
+  record Position(int line, int column) implements Comparable<Position> {
 
     public Position(int line) {
       this(line, -1);
@@ -397,7 +410,7 @@ public record SourceLocation(
     }
 
     @Override
-    public int compareTo(@Nonnull SourceLocation.Position other) {
+    public int compareTo(@Nonnull Position other) {
       if (this.line < other.line) {
         return -1;
       } else if (this.line > other.line) {
@@ -432,8 +445,7 @@ public record SourceLocation(
      */
     public boolean isWithin(SourceLocation location) {
       // Both begin and end are inclusive
-      return location.end().compareTo(this) >= 0
-          && location.begin().compareTo(this) <= 0;
+      return location.end().compareTo(this) >= 0 && location.begin().compareTo(this) <= 0;
     }
   }
 }

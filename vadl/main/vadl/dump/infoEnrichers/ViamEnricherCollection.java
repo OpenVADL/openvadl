@@ -224,9 +224,9 @@ public class ViamEnricherCollection {
             location.toConciseString()
         ));
 
-    for (var current = location; current.expandedFrom() != null; current = current.expandedFrom()) {
+    for (var current : location.expandedFromStack()) {
       header.append("//     expanded from macro call at: %s \n".formatted(
-          current.expandedFrom().toConciseString()));
+          current.toConciseString()));
     }
 
     header.append("\n");

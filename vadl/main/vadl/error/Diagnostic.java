@@ -120,7 +120,7 @@ public class Diagnostic extends RuntimeException {
    *   │
    * </pre>
    */
-  public final List<List<SourceLocation>> macroTraces;
+  public final List<List<SourceLocation.DirectLocation>> macroTraces;
 
   /**
    * It's generally recommended to not instantiate Diagnostics on their own but to make use of the
@@ -136,7 +136,7 @@ public class Diagnostic extends RuntimeException {
     this.messages = messages;
     this.macroTraces = new ArrayList<>();
 
-    var initialTrace = multiLocation.primaryLocation.location.expandedFromStack().reversed();
+    var initialTrace = multiLocation.primaryLocation.location.fullExpandedFromStack().reversed();
     initialTrace.removeLast();
     if (!initialTrace.isEmpty()) {
       this.macroTraces.add(initialTrace);

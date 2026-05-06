@@ -71,7 +71,7 @@ public class Parser {
 
 	void SynErr (int n) {
 		if (errDist >= minErrDist) {
-      var loc = new SourceLocation(this.sourceFile, new SourceLocation.Position(la.line, la.col)).join(nextTokenLoc());
+      var loc = new SourceLocation.DirectLocation(this.sourceFile, new SourceLocation.Position(la.line, la.col)).join(nextTokenLoc());
       this.diagnostics.add(error("Parsing Error", loc)
                               .locationDescription(loc, "%s", getErrorMessage(n))
                               .build());

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -34,10 +34,10 @@ import vadl.viam.helper.TestNodes.WithTwoInputs;
 public class NodeLocationTests {
 
   private static final SourceLocation LOC =
-      new SourceLocation(Path.of("test.vadl"), 1, 2);
+      new SourceLocation.DirectLocation(Path.of("test.vadl"), 1, 2);
 
   private static final SourceLocation OTHER_LOC =
-      new SourceLocation(Path.of("other.vadl"), 5, 6);
+      new SourceLocation.DirectLocation(Path.of("other.vadl"), 5, 6);
 
   TestGraph testGraph;
 

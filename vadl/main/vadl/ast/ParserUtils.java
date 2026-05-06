@@ -270,7 +270,7 @@ class ParserUtils {
    * Converts the parser's current token position to a vadl location.
    */
   static SourceLocation locationFromToken(Parser parser, Token token) {
-    return new SourceLocation(
+    return new SourceLocation.DirectLocation(
         parser.sourceFile,
         new SourceLocation.Position(token.line, token.col),
         new SourceLocation.Position(token.line, token.col + token.val.length() - 1));
@@ -667,7 +667,7 @@ class ParserUtils {
   }
 
   static Node expandNode(Parser parser, Node node) {
-    var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
+    var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, List.of());
     var expanded = macroExpander.expandNode(node, parser.ast);
     if (parser.macroContext.isEmpty()) {
       // TODO This is necessary to completely copy all nodes to not cause issues
@@ -689,7 +689,7 @@ class ParserUtils {
     return isaDefs.stream()
         .flatMap(def -> {
           if (def instanceof AssemblyDefinition assembly) {
-            return new MacroExpander(Map.of(), Map.of(), def.location())
+            return new MacroExpander(Map.of(), Map.of(), def.location().fullExpandedFromStack())
                 .expandAssemblies(assembly).stream();
           }
           return Stream.of(def);

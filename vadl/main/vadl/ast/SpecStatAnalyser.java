@@ -112,8 +112,9 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
    * @return true if the node was new and action was executed, false otherwise.
    */
   private boolean ifNewUnexpanded(WithLocation loctable, Runnable action) {
-    var directLocation = new SourceLocation(loctable.location().path(), loctable.location().begin(),
-        loctable.location().end());
+    var directLocation =
+        new SourceLocation.DirectLocation(loctable.location().path(), loctable.location().begin(),
+            loctable.location().end());
     var isNew = !seenUnexpandedLocations.contains(directLocation);
     if (isNew) {
       seenUnexpandedLocations.add(directLocation);
