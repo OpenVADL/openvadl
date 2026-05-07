@@ -1,0 +1,91 @@
+.text
+  LUI X20, 0x80010
+  ADDI X20, X20, 0
+  VLD v0, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 128
+  VLD v1, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 256
+  VLD v2, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 384
+  VLD v3, (X20)
+  ADDI X1, X0, 7
+  ADDI X2, X0, 11
+  ADDI X3, X0, 4091
+  ADDI X4, X0, 19
+  LUI X28, 0xa
+  ADDI X28, X28, 4057
+loop:
+  VADD_VX v0, v1, X1
+  VADD_VX v1, v0, X2
+  VADD_VX v2, v1, X3
+  VADD_VX v3, v2, X4
+  VADD_VX v0, v1, X1
+  VADD_VX v1, v0, X2
+  VADD_VX v2, v1, X3
+  VADD_VX v3, v2, X4
+  VADD_VX v0, v1, X1
+  VADD_VX v1, v0, X2
+  VADD_VX v2, v1, X3
+  VADD_VX v3, v2, X4
+  VADD_VX v0, v1, X1
+  VADD_VX v1, v0, X2
+  VADD_VX v2, v1, X3
+  VADD_VX v3, v2, X4
+  VADD_VX v0, v1, X1
+  VADD_VX v1, v0, X2
+  VADD_VX v2, v1, X3
+  VADD_VX v3, v2, X4
+  VADD_VX v0, v1, X1
+  VADD_VX v1, v0, X2
+  VADD_VX v2, v1, X3
+  VADD_VX v3, v2, X4
+  VADD_VX v0, v1, X1
+  VADD_VX v1, v0, X2
+  VADD_VX v2, v1, X3
+  VADD_VX v3, v2, X4
+  VADD_VX v0, v1, X1
+  VADD_VX v1, v0, X2
+  VADD_VX v2, v1, X3
+  VADD_VX v3, v2, X4
+  ADDI X28, X28, 4095
+  BEQ X28, X0, 4
+  JAL X0, 1048508
+loop_done:
+  LUI X20, 0x80010
+  ADDI X20, X20, 512
+  VST v3, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 512
+  ADDI X21, X0, 16
+  LUI X22, 0x80010
+  ADDI X22, X22, 648
+  LD X22, 0(X22)
+  LUI X23, 0x9e378
+  ADDI X23, X23, 2481
+checksum_loop:
+  LD X24, 0(X20)
+  MUL X22, X22, X23
+  ADD X22, X22, X24
+  ADDI X20, X20, 8
+  ADDI X21, X21, 4095
+  BNE X21, X0, 4086
+  LUI X25, 0x80010
+  ADDI X25, X25, 640
+  LD X26, 0(X25)
+  BNE X22, X26, 12
+  LUI X27, 0x80020
+  ADDI X27, X27, 0
+  ADDI X24, X0, 1
+  SD X24, 0(X27)
+spin_success:
+  JAL X0, 0
+checksum_fail:
+  LUI X27, 0x80020
+  ADDI X27, X27, 0
+  ADDI X24, X0, 3
+  SD X24, 0(X27)
+spin_fail:
+  JAL X0, 0

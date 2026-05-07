@@ -1,0 +1,71 @@
+.text
+  LUI X20, 0x80010
+  ADDI X20, X20, 0
+  MLD m0, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 128
+  MLD m1, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 256
+  MLD m2, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 384
+  MLD m3, (X20)
+  LUI X28, 0x176
+  ADDI X28, X28, 3841
+loop:
+  MADD_DO m0, m1, m2
+  MADD_DO m1, m0, m3
+  MADD_DO m2, m1, m0
+  MADD_DO m3, m2, m1
+  MADD_DO m0, m1, m2
+  MADD_DO m1, m0, m3
+  MADD_DO m2, m1, m0
+  MADD_DO m3, m2, m1
+  MADD_DO m0, m1, m2
+  MADD_DO m1, m0, m3
+  MADD_DO m2, m1, m0
+  MADD_DO m3, m2, m1
+  MADD_DO m0, m1, m2
+  MADD_DO m1, m0, m3
+  MADD_DO m2, m1, m0
+  MADD_DO m3, m2, m1
+  ADDI X28, X28, 4095
+  BEQ X28, X0, 4
+  JAL X0, 1048540
+loop_done:
+  LUI X20, 0x80010
+  ADDI X20, X20, 512
+  MST m3, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 512
+  ADDI X21, X0, 16
+  LUI X22, 0x80010
+  ADDI X22, X22, 648
+  LD X22, 0(X22)
+  LUI X23, 0x9e378
+  ADDI X23, X23, 2481
+checksum_loop:
+  LD X24, 0(X20)
+  MUL X22, X22, X23
+  ADD X22, X22, X24
+  ADDI X20, X20, 8
+  ADDI X21, X21, 4095
+  BNE X21, X0, 4086
+  LUI X25, 0x80010
+  ADDI X25, X25, 640
+  LD X26, 0(X25)
+  BNE X22, X26, 12
+  LUI X27, 0x80020
+  ADDI X27, X27, 0
+  ADDI X24, X0, 1
+  SD X24, 0(X27)
+spin_success:
+  JAL X0, 0
+checksum_fail:
+  LUI X27, 0x80020
+  ADDI X27, X27, 0
+  ADDI X24, X0, 3
+  SD X24, 0(X27)
+spin_fail:
+  JAL X0, 0

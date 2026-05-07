@@ -1,0 +1,104 @@
+.text
+  LUI X20, 0x80010
+  ADDI X20, X20, 0
+  VLD v0, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 128
+  VLD v1, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 256
+  VLD v2, (X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 384
+  VLD v3, (X20)
+  LUI X1, 0xa55a4
+  ADDI X1, X1, 3269
+  LUI X2, 0xf0ff
+  ADDI X2, X2, 240
+  LUI X3, 0xc3c34
+  ADDI X3, X3, 3132
+  LUI X4, 0x5aa5d
+  ADDI X4, X4, 3123
+  PMOVX p0, X1
+  PMOVX p1, X2
+  PMOVX p2, X3
+  PMOVX p3, X4
+  LUI X1, 0x80010
+  ADDI X1, X1, 512
+  LUI X2, 0x80010
+  ADDI X2, X2, 640
+  LUI X3, 0x80010
+  ADDI X3, X3, 768
+  LUI X4, 0x80010
+  ADDI X4, X4, 896
+  LUI X28, 0x35
+  ADDI X28, X28, 2231
+loop:
+  VST1_PRED v0, p0, (X1)
+  VST1_PRED v1, p1, (X2)
+  VST1_PRED v2, p2, (X3)
+  VST1_PRED v3, p3, (X4)
+  VST1_PRED v0, p0, (X1)
+  VST1_PRED v1, p1, (X2)
+  VST1_PRED v2, p2, (X3)
+  VST1_PRED v3, p3, (X4)
+  VST1_PRED v0, p0, (X1)
+  VST1_PRED v1, p1, (X2)
+  VST1_PRED v2, p2, (X3)
+  VST1_PRED v3, p3, (X4)
+  VST1_PRED v0, p0, (X1)
+  VST1_PRED v1, p1, (X2)
+  VST1_PRED v2, p2, (X3)
+  VST1_PRED v3, p3, (X4)
+  VST1_PRED v0, p0, (X1)
+  VST1_PRED v1, p1, (X2)
+  VST1_PRED v2, p2, (X3)
+  VST1_PRED v3, p3, (X4)
+  VST1_PRED v0, p0, (X1)
+  VST1_PRED v1, p1, (X2)
+  VST1_PRED v2, p2, (X3)
+  VST1_PRED v3, p3, (X4)
+  VST1_PRED v0, p0, (X1)
+  VST1_PRED v1, p1, (X2)
+  VST1_PRED v2, p2, (X3)
+  VST1_PRED v3, p3, (X4)
+  VST1_PRED v0, p0, (X1)
+  VST1_PRED v1, p1, (X2)
+  VST1_PRED v2, p2, (X3)
+  VST1_PRED v3, p3, (X4)
+  ADDI X28, X28, 4095
+  BEQ X28, X0, 4
+  JAL X0, 1048508
+loop_done:
+  LUI X20, 0x80010
+  ADDI X20, X20, 512
+  ADDI X21, X0, 64
+  LUI X22, 0x80010
+  ADDI X22, X22, 1032
+  LD X22, 0(X22)
+  LUI X23, 0x9e378
+  ADDI X23, X23, 2481
+checksum_loop:
+  LD X24, 0(X20)
+  MUL X22, X22, X23
+  ADD X22, X22, X24
+  ADDI X20, X20, 8
+  ADDI X21, X21, 4095
+  BNE X21, X0, 4086
+  LUI X25, 0x80010
+  ADDI X25, X25, 1024
+  LD X26, 0(X25)
+  BNE X22, X26, 12
+  LUI X27, 0x80020
+  ADDI X27, X27, 0
+  ADDI X24, X0, 1
+  SD X24, 0(X27)
+spin_success:
+  JAL X0, 0
+checksum_fail:
+  LUI X27, 0x80020
+  ADDI X27, X27, 0
+  ADDI X24, X0, 3
+  SD X24, 0(X27)
+spin_fail:
+  JAL X0, 0

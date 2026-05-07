@@ -1,0 +1,312 @@
+.text
+  LUI X28, 0x8
+  ADDI X28, X28, 2724
+loop:
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  PTRUE p0
+  PTRUE p1
+  PTRUE p2
+  PTRUE p3
+  ADDI X28, X28, 4095
+  BEQ X28, X0, 4
+  JAL X0, 1048060
+loop_done:
+  CNTP X1, p0
+  CNTP X2, p1
+  CNTP X3, p2
+  CNTP X4, p3
+  LUI X20, 0x80010
+  ADDI X20, X20, 0
+  SD X1, 0(X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 8
+  SD X2, 0(X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 16
+  SD X3, 0(X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 24
+  SD X4, 0(X20)
+  LUI X20, 0x80010
+  ADDI X20, X20, 0
+  ADDI X21, X0, 4
+  LUI X22, 0x80010
+  ADDI X22, X22, 40
+  LD X22, 0(X22)
+  LUI X23, 0x9e378
+  ADDI X23, X23, 2481
+checksum_loop:
+  LD X24, 0(X20)
+  MUL X22, X22, X23
+  ADD X22, X22, X24
+  ADDI X20, X20, 8
+  ADDI X21, X21, 4095
+  BNE X21, X0, 4086
+  LUI X25, 0x80010
+  ADDI X25, X25, 32
+  LD X26, 0(X25)
+  BNE X22, X26, 12
+  LUI X27, 0x80020
+  ADDI X27, X27, 0
+  ADDI X24, X0, 1
+  SD X24, 0(X27)
+spin_success:
+  JAL X0, 0
+checksum_fail:
+  LUI X27, 0x80020
+  ADDI X27, X27, 0
+  ADDI X24, X0, 3
+  SD X24, 0(X27)
+spin_fail:
+  JAL X0, 0
