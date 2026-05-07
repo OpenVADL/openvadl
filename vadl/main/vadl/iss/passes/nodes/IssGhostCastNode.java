@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
-import vadl.iss.passes.opDecomposition.nodes.IssExprNode;
+import vadl.iss.passes.common.opDecomposition.nodes.IssExprNode;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.viam.graph.GraphNodeVisitor;

@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssExceptionHandlingCodeGenerator;
-import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.common.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;

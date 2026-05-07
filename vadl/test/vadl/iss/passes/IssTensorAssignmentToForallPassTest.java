@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.TestUtils;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.common.IssTensorAssignmentToForallPass;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;

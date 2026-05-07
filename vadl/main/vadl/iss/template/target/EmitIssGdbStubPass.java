@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.IssGdbInfoExtractionPass;
+import vadl.iss.passes.common.IssGdbInfoExtractionPass;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;

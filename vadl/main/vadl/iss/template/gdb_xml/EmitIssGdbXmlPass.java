@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@ package vadl.iss.template.gdb_xml;
 
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.IssGdbInfoExtractionPass;
+import vadl.iss.passes.common.IssGdbInfoExtractionPass;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;

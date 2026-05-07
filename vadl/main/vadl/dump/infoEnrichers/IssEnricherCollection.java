@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.iss.passes.IssCFunctionExtractionPass;
-import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
+import vadl.iss.passes.common.safeResourceRead.IssSafeResourceReadPass;
+import vadl.iss.passes.helper.IssCFunctionExtractionPass;
 import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.ReadResourceNode;
 

@@ -18,7 +18,7 @@ package vadl.iss.template.target;
 
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.common.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
