@@ -662,14 +662,21 @@ class SymbolTable {
       }
       definition.viamId = String.join("::", viamPath);
 
-      definition.symbolTable = currentSymbols().createChild();
-      symbolTables.addLast(definition.symbolTable);
+      if (definition.hasDefinitionChildren()) {
+        definition.symbolTable = currentSymbols().createChild();
+        symbolTables.addLast(definition.symbolTable);
+      } else {
+        definition.symbolTable = currentSymbols();
+      }
     }
 
     @Override
     public void afterTravel(Definition definition) {
       viamPath.pollLast();
-      symbolTables.pollLast();
+
+      if (definition.hasDefinitionChildren()) {
+        symbolTables.pollLast();
+      }
     }
 
     @Override

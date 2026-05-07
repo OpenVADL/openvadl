@@ -52,6 +52,10 @@ abstract class Definition extends Node {
   @LazyInit
   String viamId;
 
+  boolean hasDefinitionChildren() {
+    return NodeChildrenRegistry.hasDefinitionChildren(this);
+  }
+
   Definition withAnnotations(List<AnnotationDefinition> annotations) {
     this.annotations = annotations;
     annotations.forEach(a -> {
@@ -1481,6 +1485,11 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
   }
 
   @Override
+  public boolean hasDefinitionChildren() {
+    return true;
+  }
+
+  @Override
   public List<Node> children() {
     // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
     return NodeChildrenRegistry.unsafeGetChildrenDirect(this,
@@ -1680,6 +1689,11 @@ class EncodingDefinition extends Definition {
   }
 
   @Override
+  boolean hasDefinitionChildren() {
+    return true;
+  }
+
+  @Override
   public SourceLocation location() {
     return loc;
   }
@@ -1856,6 +1870,11 @@ class AssemblyDefinition extends Definition {
     this.identifiers = identifiers;
     this.expr = expr;
     this.loc = location;
+  }
+
+  @Override
+  boolean hasDefinitionChildren() {
+    return true;
   }
 
   @Override
@@ -3574,6 +3593,11 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
                         SourceLocation loc) {
     super(params, statements, loc);
     this.kind = kind;
+  }
+
+  @Override
+  public boolean hasDefinitionChildren() {
+    return true;
   }
 
   @Override
@@ -5485,6 +5509,11 @@ class AsmGrammarAlternativesDefinition extends Definition {
                                           SourceLocation loc) {
     this.alternatives = alternatives;
     this.loc = loc;
+  }
+
+  @Override
+  boolean hasDefinitionChildren() {
+    return true;
   }
 
   @Override

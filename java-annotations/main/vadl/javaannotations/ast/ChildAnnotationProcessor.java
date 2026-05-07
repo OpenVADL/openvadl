@@ -40,8 +40,10 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
@@ -169,6 +171,29 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
     return fieldTypeString.startsWith("java.util.List");
   }
 
+
+
+  private boolean isFieldExtendingOrListOfDefinition(VariableElement field) {
+    TypeMirror fieldType = field.asType();
+    TypeMirror definitionType = processingEnv.getElementUtils()
+        .getTypeElement("vadl.ast.Definition")
+        .asType();
+
+    // Check 1: field type extends Definition
+    if (typeUtils.isAssignable(fieldType, definitionType)) {
+      return true;
+    }
+
+    // Check 2: field type is assignable to List<? extends Definition>
+    TypeElement listElement = processingEnv.getElementUtils()
+        .getTypeElement("java.util.List");
+    WildcardType wildcardDefinition = typeUtils.getWildcardType(definitionType, null);
+    DeclaredType listOfDefinition = typeUtils.getDeclaredType(listElement, wildcardDefinition);
+
+    return typeUtils.isAssignable(fieldType, listOfDefinition);
+  }
+
+
   private void generateNodeChildrenRegistry() throws IOException {
     JavaFileObject registryFile = Objects.requireNonNull(this.registryFile);
     try (PrintWriter out = new PrintWriter(registryFile.openWriter())) {
@@ -180,7 +205,9 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
       out.println("import java.util.ArrayList;");
       out.println("import java.util.Collections;");
       out.println("import java.util.Map;");
+      out.println("import java.util.Set;");
       out.println("import java.util.HashMap;");
+      out.println("import java.util.HashSet;");
       out.println("import java.util.function.Function;");
       out.println();
 
@@ -189,6 +216,7 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
       out.println(
           "    private static final Map<Class<?>, Function<Node, List<Node>>> COLLECTORS = "
               + "new HashMap<>();");
+      out.println("    private static final Set<Class<?>> DEFINITION_CONTAINERS = new HashSet<>();");
       out.println();
 
       // Static initializer to populate map
@@ -250,8 +278,38 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
         out.println("        });");
       }
 
+
+      for (Map.Entry<TypeElement, List<VariableElement>> entry :
+          annotatedFieldsByClass.entrySet()) {
+        TypeElement classElement = entry.getKey();
+        var fields = entry.getValue();
+
+        fields.stream()
+            .filter(child -> !child.getSimpleName().toString().equals("annotations"))
+            .filter(this::isFieldExtendingOrListOfDefinition)
+            .forEach(field -> {
+              String className = classElement.getQualifiedName().toString();
+              out.println("            // %s -> %s;".formatted(className, field.getSimpleName()));
+            });
+
+        var hasAnyDefinitionChild = fields.stream()
+            .filter(child -> !child.getSimpleName().toString().equals("annotations"))
+            .anyMatch(this::isFieldExtendingOrListOfDefinition);
+
+        if (hasAnyDefinitionChild) {
+          String className = classElement.getQualifiedName().toString();
+          out.println("     DEFINITION_CONTAINERS.add(" + className + ".class);");
+        }
+      }
+
       out.println("    }");
       out.println();
+
+      // Method to get children for any node
+      out.println("    public static boolean hasDefinitionChildren(Definition def) {");
+      out.println("        return DEFINITION_CONTAINERS.contains(def.getClass());");
+      out.println("    }");
+      out.println("");
 
       // Method to get children for any node
       out.println("    public static List<Node> getChildren(Node node) {");
