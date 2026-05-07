@@ -1,3 +1,4 @@
+import com.adarshr.gradle.testlogger.TestLoggerExtension
 import net.ltgt.gradle.errorprone.CheckSeverity
 import net.ltgt.gradle.errorprone.errorprone
 import util.libs
@@ -83,4 +84,15 @@ tasks.named<JavaCompile>("compileTestJava").configure {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+}
+
+afterEvaluate {
+    tasks.withType<Test>().forEach { task ->
+        val junitOptions = task.options as? JUnitPlatformOptions ?: return@forEach
+        if ("BenchmarkTest" in junitOptions.includeTags) {
+            task.extensions.configure<TestLoggerExtension> {
+                showStandardStreams = true
+            }
+        }
+    }
 }

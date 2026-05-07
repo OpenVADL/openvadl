@@ -1,0 +1,894 @@
+// VectorBench64 is a synthetic benchmark ISA for the ISS vector/tensor roadmap.
+// It is intentionally coverage-oriented rather than architecturally realistic.
+//
+// The instruction set keeps distinct specification styles when they exercise different
+// lowering patterns, especially explicit `forall ... do` loops versus tensor-style
+// `forall ... tensor` expressions. This is important for the ISS because future
+// vector/tensor work needs stable benchmark coverage for:
+// - scalarized loop-style vector bodies;
+// - tensor-expression vector and matrix bodies;
+// - predication, reductions, permutations, and structured memory shapes;
+// - large tensor registers that exceed direct gvec-sized fast paths.
+
+
+instruction set architecture VectorBench64 = {
+
+  constant GprWidth  = 64
+  constant VecLanes  = 32
+  constant ElemWidth = 32
+  constant PredBits  = VecBits >> 3
+  constant MaskBytes = 4
+  constant VecBytes  = 128
+  constant VecBits   = 1024
+
+  constant RowCount  = 4
+  constant ColCount  = 8
+  constant RowBytes  = 32
+  constant MatBytes  = 128
+  constant RowBits   = 256
+  constant MatBits   = 1024
+
+  constant HugeLanes = 1024
+  constant HugeBytes = 4096
+  constant HugeBits  = 32768
+
+  using Byte  = Bits<8>
+  using Inst  = Bits<32>
+  using Word  = Bits<GprWidth>
+  using SWord = SInt<GprWidth>
+  using UWord = UInt<GprWidth>
+  using Addr  = Word
+
+  using GReg  = Bits<5>
+  using VReg  = Bits<4>
+  using PReg  = Bits<2>
+  using RReg  = Bits<3>
+  using MReg  = Bits<3>
+  using HReg  = Bits<2>
+
+  using Elem  = Bits<ElemWidth>
+  using SElem = SInt<ElemWidth>
+  using UElem = UInt<ElemWidth>
+  using RawVec = Bits<VecBits>
+  using Vec   = Bits<VecLanes><ElemWidth>
+  using VecB  = Bits<VecBytes><8>
+  using VecH  = Bits<(VecBits >> 4)><16>
+  using LaneMask = Bits<VecLanes>
+  using Mask  = Bits<PredBits>
+  using Row   = Bits<ColCount><ElemWidth>
+  using Mat   = Bits<RowCount><ColCount><ElemWidth>
+  using Huge  = Bits<HugeLanes><ElemWidth>
+
+  [zero : X(0)]
+  register X : GReg -> Word
+  register Z : VReg -> RawVec
+  alias register V  : Vec<16> = Z
+  alias register VB : VecB<16> = Z
+  alias register VH : VecH<16> = Z
+  register P : PReg -> Mask
+  register R : RReg -> Row
+  register M : MReg -> Mat
+  register H : HReg -> Huge
+  memory MEM : Addr -> Byte
+  program counter PC : Addr
+
+  function xElem (x: Word) -> Elem = x(31..0)
+  function clampVl (x: Word) -> UWord =
+    if x as UWord < VecLanes as UWord
+    then x as UWord
+    else VecLanes as UWord
+  function wordLaneOffset (i: Bits<6>) -> Word = (i as UWord << 2) as Word
+  function pairLaneOffset (i: Bits<6>) -> Word = (i as UWord << 3) as Word
+  function tripleLaneOffset (i: Bits<6>) -> Word = (i as UWord * 12 as UWord) as Word
+  function quadLaneOffset (i: Bits<6>) -> Word = (i as UWord << 4) as Word
+  function countMask (m: Mask) -> UWord =
+    forall i : Bits<6> in 0..VecLanes - 1 fold + with
+      (if m(i) then 1 as UWord else 0 as UWord)
+
+  format RType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , rs2    [24..20] : GReg
+    , rs1    [19..15] : GReg
+    , funct3 [14..12] : Bits<3>
+    , rd     [11..7]  : GReg
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format IType : Inst =
+    { imm    [31..20] : Bits<12>
+    , rs1    [19..15] : GReg
+    , funct3 [14..12] : Bits<3>
+    , rd     [11..7]  : GReg
+    , opcode [6..0]   : Bits<7>
+    , immS = imm as SInt<GprWidth>
+    }
+
+  format SType : Inst =
+    { imm    [31..25,11..7]
+    , rs2    [24..20]
+    , rs1    [19..15]
+    , funct3 [14..12]
+    , opcode [6..0]
+    , immS = imm as SInt<GprWidth>
+    }
+
+  format BType : Inst =
+    { imm    [31,7,30..25,11..8]
+    , rs2    [24..20]
+    , rs1    [19..15]
+    , funct3 [14..12]
+    , opcode [6..0]
+    , immS = imm as SInt<GprWidth> << 1
+    }
+
+  format UType : Inst =
+    { immHi  [31..12] : Bits<20>
+    , rd     [11..7]  : GReg
+    , opcode [6..0]   : Bits<7>
+    , immU = immHi as UWord << 12
+    }
+
+  format JType : Inst =
+    { imm    [31,19..12,20,30..21]
+    , rd     [11..7]
+    , opcode [6..0]
+    , immS = imm as SInt<GprWidth> << 1
+    }
+
+  format VMemType : Inst =
+    { funct6 [31..26] : Bits<6>
+    , base   [25..21] : GReg
+    , vr     [20..17] : VReg
+    , kind   [16..7]  : Bits<10>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format PMoveType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , rs1    [24..20] : GReg
+    , pd     [19..18] : PReg
+    , kind   [17..7]  : Bits<11>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VOpType : Inst =
+    { funct6 [31..26] : Bits<6>
+    , vs2    [25..22] : VReg
+    , src1   [21..17] : Bits<5>
+    , funct3 [16..14] : Bits<3>
+    , vd     [13..10] : VReg
+    , mode   [9..7]   : Bits<3>
+    , opcode [6..0]   : Bits<7>
+    , vs1  = src1(3..0) as VReg
+    , xs1  = src1 as GReg
+    , imm5 = src1 as SInt<GprWidth>
+    }
+
+  format VOpVlType : Inst =
+    { funct4 [31..28] : Bits<4>
+    , vs2    [27..24] : VReg
+    , vs1    [23..20] : VReg
+    , xc     [19..15] : GReg
+    , vd     [14..11] : VReg
+    , mode   [10..7]  : Bits<4>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VOpPredType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , pm     [24..23] : PReg
+    , vs2    [22..19] : VReg
+    , vs1    [18..15] : VReg
+    , vd     [14..11] : VReg
+    , mode   [10..7]  : Bits<4>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VCmpPredType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , vs2    [24..21] : VReg
+    , vs1    [20..17] : VReg
+    , pd     [16..15] : PReg
+    , mode   [14..7]  : Bits<8>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VReduceType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , vs1    [24..21] : VReg
+    , rd     [20..16] : GReg
+    , mode   [15..7]  : Bits<9>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VMacType : Inst =
+    { funct5 [31..27] : Bits<5>
+    , vc     [26..23] : VReg
+    , vs2    [22..19] : VReg
+    , vs1    [18..15] : VReg
+    , vd     [14..11] : VReg
+    , mode   [10..7]  : Bits<4>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VScalarSideType : Inst =
+    { funct4 [31..28] : Bits<4>
+    , vs2    [27..24] : VReg
+    , vs1    [23..20] : VReg
+    , rd     [19..15] : GReg
+    , vd     [14..11] : VReg
+    , mode   [10..7]  : Bits<4>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format PPredType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , ps2    [24..23] : PReg
+    , src1   [22..18] : Bits<5>
+    , pd     [17..16] : PReg
+    , mode   [15..7]  : Bits<9>
+    , opcode [6..0]   : Bits<7>
+    , ps1 = src1(1..0) as PReg
+    , xs1 = src1 as GReg
+    }
+
+  format PWhileType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , xs2    [24..20] : GReg
+    , xs1    [19..15] : GReg
+    , pd     [14..13] : PReg
+    , mode   [12..7]  : Bits<6>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format PScalarType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , ps1    [24..23] : PReg
+    , rs1    [22..18] : GReg
+    , rd     [17..13] : GReg
+    , mode   [12..7]  : Bits<6>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VPermType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , vs2    [24..21] : VReg
+    , src1   [20..16] : Bits<5>
+    , vd     [15..12] : VReg
+    , mode   [11..7]  : Bits<5>
+    , opcode [6..0]   : Bits<7>
+    , vs1 = src1(3..0) as VReg
+    , xs1 = src1 as GReg
+    }
+
+  format VMemPredType : Inst =
+    { funct6 [31..26] : Bits<6>
+    , pm     [25..24] : PReg
+    , vr     [23..20] : VReg
+    , base   [19..15] : GReg
+    , mode   [14..7]  : Bits<8>
+    , opcode [6..0]   : Bits<7>
+    , vr2 = vr + 1
+    , vr3 = vr + 2
+    , vr4 = vr + 3
+    }
+
+  format PMemType : Inst =
+    { funct6 [31..26] : Bits<6>
+    , pt     [25..24] : PReg
+    , base   [23..19] : GReg
+    , mode   [18..7]  : Bits<12>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VMemPredIndexType : Inst =
+    { funct6 [31..26] : Bits<6>
+    , pm     [25..24] : PReg
+    , xoff   [23..19] : GReg
+    , vr     [18..15] : VReg
+    , base   [14..10] : GReg
+    , mode   [9..7]   : Bits<3>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format VGatherType : Inst =
+    { funct6 [31..26] : Bits<6>
+    , pm     [25..24] : PReg
+    , voff   [23..20] : VReg
+    , vr     [19..16] : VReg
+    , base   [15..11] : GReg
+    , mode   [10..7]  : Bits<4>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format M3Type : Inst =
+    { funct7 [31..25] : Bits<7>
+    , ms2    [24..22] : MReg
+    , ms1    [21..19] : MReg
+    , md     [18..16] : MReg
+    , mode   [15..7]  : Bits<9>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format MRowType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , ms1    [24..22] : MReg
+    , rr1    [21..19] : RReg
+    , md     [18..16] : MReg
+    , mode   [15..7]  : Bits<9>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format MReduceType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , ms1    [24..22] : MReg
+    , rd     [21..19] : RReg
+    , mode   [18..7]  : Bits<12>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  format HugeType : Inst =
+    { funct7 [31..25] : Bits<7>
+    , hs2    [24..23] : HReg
+    , hs1    [22..21] : HReg
+    , hd     [20..19] : HReg
+    , mode   [18..7]  : Bits<12>
+    , opcode [6..0]   : Bits<7>
+    }
+
+  instruction LUI : UType =
+    X(rd) := immU as Word
+  encoding LUI = { opcode = 0b000'1011 }
+  assembly LUI = ( mnemonic, " ", register(rd), ", ", hex(immHi) )
+
+  instruction ADDI : IType =
+    X(rd) := (X(rs1) as SWord + immS) as Word
+  encoding ADDI = { funct3 = 0b000, opcode = 0b000'1100 }
+  assembly ADDI = ( mnemonic, " ", register(rd), ", ", register(rs1), ", ", sdec(imm) )
+
+  instruction ADDVL : IType =
+    X(rd) := (X(rs1) as SWord + immS * VecBytes as SWord) as Word
+  encoding ADDVL = { funct3 = 0b001, opcode = 0b000'1100 }
+  assembly ADDVL = ( mnemonic, " ", register(rd), ", ", register(rs1), ", ", sdec(imm), ", vl" )
+
+  instruction LD : IType =
+    X(rd) := MEM<8>(X(rs1) + immS)
+  encoding LD = { funct3 = 0b011, opcode = 0b000'1101 }
+  assembly LD = ( mnemonic, " ", register(rd), ", ", sdec(imm), "(", register(rs1), ")" )
+
+  instruction JALR : IType = {
+    X(rd) := PC.next
+    PC := (X(rs1) + immS) & ~(1 as Word)
+  }
+  encoding JALR = { funct3 = 0b000, opcode = 0b000'1110 }
+  assembly JALR = ( mnemonic, " ", register(rd), ", ", sdec(imm), "(", register(rs1), ")" )
+
+  instruction ADD : RType =
+    X(rd) := X(rs1) + X(rs2)
+  encoding ADD = { funct7 = 0b000'0000, funct3 = 0b000, opcode = 0b000'1111 }
+  assembly ADD = ( mnemonic, " ", register(rd), ", ", register(rs1), ", ", register(rs2) )
+
+  instruction SUB : RType =
+    X(rd) := X(rs1) - X(rs2)
+  encoding SUB = { funct7 = 0b010'0000, funct3 = 0b000, opcode = 0b000'1111 }
+  assembly SUB = ( mnemonic, " ", register(rd), ", ", register(rs1), ", ", register(rs2) )
+
+  instruction MUL : RType =
+    X(rd) := (X(rs1) as UWord * X(rs2) as UWord) as Word
+  encoding MUL = { funct7 = 0b000'0001, funct3 = 0b000, opcode = 0b000'1111 }
+  assembly MUL = ( mnemonic, " ", register(rd), ", ", register(rs1), ", ", register(rs2) )
+
+  instruction SD : SType =
+    MEM<8>(X(rs1) + immS) := X(rs2)
+  encoding SD = { funct3 = 0b011, opcode = 0b001'0000 }
+  assembly SD = ( mnemonic, " ", register(rs2), ", ", sdec(imm), "(", register(rs1), ")" )
+
+  instruction BEQ : BType =
+    if X(rs1) = X(rs2) then
+      PC := PC + immS
+  encoding BEQ = { funct3 = 0b000, opcode = 0b001'0001 }
+  assembly BEQ = ( mnemonic, " ", register(rs1), ", ", register(rs2), ", ", sdec(imm) )
+
+  instruction BNE : BType =
+    if X(rs1) != X(rs2) then
+      PC := PC + immS
+  encoding BNE = { funct3 = 0b001, opcode = 0b001'0001 }
+  assembly BNE = ( mnemonic, " ", register(rs1), ", ", register(rs2), ", ", sdec(imm) )
+
+  instruction JAL : JType = {
+    X(rd) := PC.next
+    PC := PC + immS
+  }
+  encoding JAL = { opcode = 0b001'0010 }
+  assembly JAL = ( mnemonic, " ", register(rd), ", ", sdec(imm) )
+
+  instruction VLD : VMemType =
+    V(vr) := MEM<VecBytes>(X(base)) as Vec
+  encoding VLD = { funct6 = 0b000001, kind = 0, opcode = 0b010'0000 }
+  assembly VLD = ( mnemonic, " v", udec(vr), ", (", register(base), ")" )
+
+  instruction VST : VMemType =
+    MEM<VecBytes>(X(base)) := V(vr) as Bits<VecBits>
+  encoding VST = { funct6 = 0b000010, kind = 0, opcode = 0b010'0000 }
+  assembly VST = ( mnemonic, " v", udec(vr), ", (", register(base), ")" )
+
+  instruction RLD : VMemType =
+    R(vr(2..0) as RReg) := MEM<RowBytes>(X(base)) as Row
+  encoding RLD = { funct6 = 0b000011, kind = 0, opcode = 0b010'0000 }
+  assembly RLD = ( mnemonic, " r", udec(vr(2..0)), ", (", register(base), ")" )
+
+  instruction RST : VMemType =
+    MEM<RowBytes>(X(base)) := R(vr(2..0) as RReg) as Bits<RowBits>
+  encoding RST = { funct6 = 0b000100, kind = 0, opcode = 0b010'0000 }
+  assembly RST = ( mnemonic, " r", udec(vr(2..0)), ", (", register(base), ")" )
+
+  instruction MLD : VMemType =
+    M(vr(2..0) as MReg) := MEM<MatBytes>(X(base)) as Mat
+  encoding MLD = { funct6 = 0b000101, kind = 0, opcode = 0b010'0000 }
+  assembly MLD = ( mnemonic, " m", udec(vr(2..0)), ", (", register(base), ")" )
+
+  instruction MST : VMemType =
+    MEM<MatBytes>(X(base)) := M(vr(2..0) as MReg) as Bits<MatBits>
+  encoding MST = { funct6 = 0b000110, kind = 0, opcode = 0b010'0000 }
+  assembly MST = ( mnemonic, " m", udec(vr(2..0)), ", (", register(base), ")" )
+
+  instruction HLD : VMemType =
+    H(vr(1..0) as HReg) := MEM<HugeBytes>(X(base)) as Huge
+  encoding HLD = { funct6 = 0b000111, kind = 0, opcode = 0b010'0000 }
+  assembly HLD = ( mnemonic, " h", udec(vr(1..0)), ", (", register(base), ")" )
+
+  instruction HST : VMemType =
+    MEM<HugeBytes>(X(base)) := H(vr(1..0) as HReg) as Bits<HugeBits>
+  encoding HST = { funct6 = 0b001000, kind = 0, opcode = 0b010'0000 }
+  assembly HST = ( mnemonic, " h", udec(vr(1..0)), ", (", register(base), ")" )
+
+  instruction PMOVX : PMoveType =
+    P(pd) := X(rs1)(VecLanes - 1..0) as LaneMask as Mask
+  encoding PMOVX = { funct7 = 0b0000001, kind = 0, opcode = 0b010'0001 }
+  assembly PMOVX = ( mnemonic, " p", udec(pd), ", ", register(rs1) )
+
+  instruction PTRUE : PPredType =
+    P(pd) := ~X(xs1)(VecLanes - 1..0) as LaneMask as Mask
+  encoding PTRUE = { funct7 = 0b0000001, opcode = 0b010'1100 }
+  assembly PTRUE = ( mnemonic, " p", udec(pd) )
+
+  instruction PAND : PPredType =
+    P(pd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(ps1)(i) & P(ps2)(i)
+      then 1 as Bits<1>
+      else 0 as Bits<1>) as Bits<VecLanes> as LaneMask as Mask
+  encoding PAND = { funct7 = 0b0000010, opcode = 0b010'1100 }
+  assembly PAND = ( mnemonic, " p", udec(pd), ", p", udec(ps1), ", p", udec(ps2) )
+
+  instruction PFIRST : PPredType =
+    let mask = P(ps2)(VecLanes - 1..0) as LaneMask in
+    let src = P(ps1)(VecLanes - 1..0) as LaneMask in
+    let first =
+      if mask = 0
+      then 0 as LaneMask
+      else let pos = VADL::ctz(mask) in (1 as LaneMask) << pos in
+        P(pd) := (src | first) as Mask
+  encoding PFIRST = { funct7 = 0b0000011, opcode = 0b010'1100 }
+  assembly PFIRST = ( mnemonic, " p", udec(pd), ", p", udec(ps2), ", p", udec(ps1) )
+
+  instruction PNEXT : PPredType =
+    let mask = P(ps2)(VecLanes - 1..0) as LaneMask in
+    let src = P(ps1)(VecLanes - 1..0) as LaneMask in
+    let clrMask =
+      if src = 0
+      then mask
+      else let clr = VecLanes - VADL::clz(src) in mask >> clr << clr in
+        P(pd) :=
+          if clrMask = 0
+          then 0 as Mask
+          else (let pos = VADL::ctz(clrMask) in (1 as LaneMask) << pos) as Mask
+  encoding PNEXT = { funct7 = 0b0000100, opcode = 0b010'1100 }
+  assembly PNEXT = ( mnemonic, " p", udec(pd), ", p", udec(ps2), ", p", udec(ps1) )
+
+  instruction PWHILELT : PWhileType =
+    P(pd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if X(xs1) as UWord + i as UWord < X(xs2) as UWord
+      then 1 as Bits<1>
+      else 0 as Bits<1>) as Bits<VecLanes> as LaneMask as Mask
+  encoding PWHILELT = { funct7 = 0b0000001, opcode = 0b010'1101 }
+  assembly PWHILELT = ( mnemonic, " p", udec(pd), ", ", register(xs1), ", ", register(xs2) )
+
+  instruction CNTP : PScalarType =
+    X(rd) := countMask(P(ps1)) as Word
+  encoding CNTP = { funct7 = 0b0000001, opcode = 0b010'1110 }
+  assembly CNTP = ( mnemonic, " ", register(rd), ", p", udec(ps1) )
+
+  instruction INCP : PScalarType =
+    X(rd) := X(rs1) + countMask(P(ps1)) as Word
+  encoding INCP = { funct7 = 0b0000010, opcode = 0b010'1110 }
+  assembly INCP = ( mnemonic, " ", register(rd), ", ", register(rs1), ", p", udec(ps1) )
+
+  instruction PLD : PMemType =
+    P(pt) := MEM<MaskBytes>(X(base)) as Mask
+  encoding PLD = { funct6 = 0b000001, opcode = 0b011'0011 }
+  assembly PLD = ( mnemonic, " p", udec(pt), ", (", register(base), ")" )
+
+  instruction PST : PMemType =
+    MEM<MaskBytes>(X(base)) := P(pt)(VecLanes - 1..0) as LaneMask
+  encoding PST = { funct6 = 0b000010, opcode = 0b011'0011 }
+  assembly PST = ( mnemonic, " p", udec(pt), ", (", register(base), ")" )
+
+  instruction VADD_DO_VV : VOpType =
+    forall i : Bits<6> in 0..VecLanes - 1 do
+      V(vd)(i) := V(vs1)(i) + V(vs2)(i)
+  encoding VADD_DO_VV = { funct6 = 0b000001, funct3 = 0b000, mode = 0b000, opcode = 0b010'0010 }
+  assembly VADD_DO_VV = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VADD_TENSOR_VV : VOpType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs1)(i) + V(vs2)(i)) as Bits<VecBits> as Vec
+  encoding VADD_TENSOR_VV = { funct6 = 0b000010, funct3 = 0b000, mode = 0b000, opcode = 0b010'0010 }
+  assembly VADD_TENSOR_VV = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VADD_VX : VOpType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs2)(i) + xElem(X(xs1))) as Bits<VecBits> as Vec
+  encoding VADD_VX = { funct6 = 0b000011, funct3 = 0b001, mode = 0b000, opcode = 0b010'0010 }
+  assembly VADD_VX = ( mnemonic, " v", udec(vd), ", v", udec(vs2), ", ", register(xs1) )
+
+  instruction VMOV_VV : VOpType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs1)(i)) as Bits<VecBits> as Vec
+  encoding VMOV_VV = { funct6 = 0b000101, funct3 = 0b000, mode = 0b001, opcode = 0b010'0010 }
+  assembly VMOV_VV = ( mnemonic, " v", udec(vd), ", v", udec(vs1) )
+
+  instruction VBCAST_X : VOpType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      xElem(X(xs1))) as Bits<VecBits> as Vec
+  encoding VBCAST_X = { funct6 = 0b000110, funct3 = 0b001, mode = 0b001, opcode = 0b010'0010 }
+  assembly VBCAST_X = ( mnemonic, " v", udec(vd), ", ", register(xs1) )
+
+  instruction VADD_VL : VOpVlType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if i as UWord < clampVl(X(xc))
+      then V(vs1)(i) + V(vs2)(i)
+      else 0 as Elem) as Bits<VecBits> as Vec
+  encoding VADD_VL = { funct4 = 0b0001, mode = 0b0000, opcode = 0b010'0011 }
+  assembly VADD_VL = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2), ", ", register(xc) )
+
+  instruction VADD_PRED : VOpPredType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then V(vs1)(i) + V(vs2)(i)
+      else V(vd)(i)) as Bits<VecBits> as Vec
+  encoding VADD_PRED = { funct7 = 0b0000001, mode = 0b0000, opcode = 0b010'0100 }
+  assembly VADD_PRED = ( mnemonic, " v", udec(vd), ", p", udec(pm), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VSEL : VOpPredType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then V(vs1)(i)
+      else V(vs2)(i)) as Bits<VecBits> as Vec
+  encoding VSEL = { funct7 = 0b0000011, mode = 0b0000, opcode = 0b010'0100 }
+  assembly VSEL = ( mnemonic, " v", udec(vd), ", p", udec(pm), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VCMPLT_PVV : VCmpPredType =
+    P(pd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if V(vs1)(i) as SElem < V(vs2)(i) as SElem
+      then 1 as Bits<1>
+      else 0 as Bits<1>) as Bits<VecLanes> as LaneMask as Mask
+  encoding VCMPLT_PVV = { funct7 = 0b0000001, mode = 0b0000, opcode = 0b011'0101 }
+  assembly VCMPLT_PVV = ( mnemonic, " p", udec(pd), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VADD_COND : VOpType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if (V(vs1)(i) & 1) != 0
+      then V(vs1)(i) + V(vs2)(i)
+      else V(vs1)(i)) as Bits<VecBits> as Vec
+  encoding VADD_COND = { funct6 = 0b000111, funct3 = 0b000, mode = 0b010, opcode = 0b010'0010 }
+  assembly VADD_COND = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VREDSUM : VReduceType =
+    X(rd) := forall i : Bits<6> in 0..VecLanes - 1 fold + with V(vs1)(i) as UWord
+  encoding VREDSUM = { funct7 = 0b0000010, mode = 0, opcode = 0b010'0101 }
+  assembly VREDSUM = ( mnemonic, " ", register(rd), ", v", udec(vs1) )
+
+  instruction VMAC_VVV : VMacType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs1)(i) * V(vs2)(i) + V(vc)(i)) as Bits<VecBits> as Vec
+  encoding VMAC_VVV = { funct5 = 0b00001, mode = 0b0000, opcode = 0b010'0110 }
+  assembly VMAC_VVV = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2), ", v", udec(vc) )
+
+  instruction VADD_XINC : VScalarSideType = {
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs1)(i) + V(vs2)(i)) as Bits<VecBits> as Vec
+    X(rd) := X(rd) + 1
+  }
+  encoding VADD_XINC = { funct4 = 0b0010, mode = 0b0000, opcode = 0b010'0111 }
+  assembly VADD_XINC = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2), ", x", udec(rd) )
+
+  instruction VZIP_LO : VPermType = {
+    V(vd)( 0) := V(vs1)( 0)
+    V(vd)( 1) := V(vs2)( 0)
+    V(vd)( 2) := V(vs1)( 1)
+    V(vd)( 3) := V(vs2)( 1)
+    V(vd)( 4) := V(vs1)( 2)
+    V(vd)( 5) := V(vs2)( 2)
+    V(vd)( 6) := V(vs1)( 3)
+    V(vd)( 7) := V(vs2)( 3)
+    V(vd)( 8) := V(vs1)( 4)
+    V(vd)( 9) := V(vs2)( 4)
+    V(vd)(10) := V(vs1)( 5)
+    V(vd)(11) := V(vs2)( 5)
+    V(vd)(12) := V(vs1)( 6)
+    V(vd)(13) := V(vs2)( 6)
+    V(vd)(14) := V(vs1)( 7)
+    V(vd)(15) := V(vs2)( 7)
+    V(vd)(16) := V(vs1)( 8)
+    V(vd)(17) := V(vs2)( 8)
+    V(vd)(18) := V(vs1)( 9)
+    V(vd)(19) := V(vs2)( 9)
+    V(vd)(20) := V(vs1)(10)
+    V(vd)(21) := V(vs2)(10)
+    V(vd)(22) := V(vs1)(11)
+    V(vd)(23) := V(vs2)(11)
+    V(vd)(24) := V(vs1)(12)
+    V(vd)(25) := V(vs2)(12)
+    V(vd)(26) := V(vs1)(13)
+    V(vd)(27) := V(vs2)(13)
+    V(vd)(28) := V(vs1)(14)
+    V(vd)(29) := V(vs2)(14)
+    V(vd)(30) := V(vs1)(15)
+    V(vd)(31) := V(vs2)(15)
+  }
+  encoding VZIP_LO = { funct7 = 0b0000001, mode = 0, opcode = 0b011'0000 }
+  assembly VZIP_LO = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VEXT : VOpVlType = {
+    V(vd)( 0) := V(vs1)( 1)
+    V(vd)( 1) := V(vs1)( 2)
+    V(vd)( 2) := V(vs1)( 3)
+    V(vd)( 3) := V(vs1)( 4)
+    V(vd)( 4) := V(vs1)( 5)
+    V(vd)( 5) := V(vs1)( 6)
+    V(vd)( 6) := V(vs1)( 7)
+    V(vd)( 7) := V(vs1)( 8)
+    V(vd)( 8) := V(vs1)( 9)
+    V(vd)( 9) := V(vs1)(10)
+    V(vd)(10) := V(vs1)(11)
+    V(vd)(11) := V(vs1)(12)
+    V(vd)(12) := V(vs1)(13)
+    V(vd)(13) := V(vs1)(14)
+    V(vd)(14) := V(vs1)(15)
+    V(vd)(15) := V(vs1)(16)
+    V(vd)(16) := V(vs1)(17)
+    V(vd)(17) := V(vs1)(18)
+    V(vd)(18) := V(vs1)(19)
+    V(vd)(19) := V(vs1)(20)
+    V(vd)(20) := V(vs1)(21)
+    V(vd)(21) := V(vs1)(22)
+    V(vd)(22) := V(vs1)(23)
+    V(vd)(23) := V(vs1)(24)
+    V(vd)(24) := V(vs1)(25)
+    V(vd)(25) := V(vs1)(26)
+    V(vd)(26) := V(vs1)(27)
+    V(vd)(27) := V(vs1)(28)
+    V(vd)(28) := V(vs1)(29)
+    V(vd)(29) := V(vs1)(30)
+    V(vd)(30) := V(vs1)(31)
+    V(vd)(31) := V(vs2)( 0)
+  }
+  encoding VEXT = { funct4 = 0b0010, mode = 0b0000, opcode = 0b010'0011 }
+  assembly VEXT = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VUZP_LO : VPermType = {
+    V(vd)( 0) := V(vs1)( 0)
+    V(vd)( 1) := V(vs1)( 2)
+    V(vd)( 2) := V(vs1)( 4)
+    V(vd)( 3) := V(vs1)( 6)
+    V(vd)( 4) := V(vs1)( 8)
+    V(vd)( 5) := V(vs1)(10)
+    V(vd)( 6) := V(vs1)(12)
+    V(vd)( 7) := V(vs1)(14)
+    V(vd)( 8) := V(vs1)(16)
+    V(vd)( 9) := V(vs1)(18)
+    V(vd)(10) := V(vs1)(20)
+    V(vd)(11) := V(vs1)(22)
+    V(vd)(12) := V(vs1)(24)
+    V(vd)(13) := V(vs1)(26)
+    V(vd)(14) := V(vs1)(28)
+    V(vd)(15) := V(vs1)(30)
+    V(vd)(16) := V(vs2)( 0)
+    V(vd)(17) := V(vs2)( 2)
+    V(vd)(18) := V(vs2)( 4)
+    V(vd)(19) := V(vs2)( 6)
+    V(vd)(20) := V(vs2)( 8)
+    V(vd)(21) := V(vs2)(10)
+    V(vd)(22) := V(vs2)(12)
+    V(vd)(23) := V(vs2)(14)
+    V(vd)(24) := V(vs2)(16)
+    V(vd)(25) := V(vs2)(18)
+    V(vd)(26) := V(vs2)(20)
+    V(vd)(27) := V(vs2)(22)
+    V(vd)(28) := V(vs2)(24)
+    V(vd)(29) := V(vs2)(26)
+    V(vd)(30) := V(vs2)(28)
+    V(vd)(31) := V(vs2)(30)
+  }
+  encoding VUZP_LO = { funct7 = 0b0000011, mode = 0, opcode = 0b011'0000 }
+  assembly VUZP_LO = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2) )
+
+  instruction VZEXT8 : VOpType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs1)(i)(7..0) as Elem) as Bits<VecBits> as Vec
+  encoding VZEXT8 = { funct6 = 0b001000, funct3 = 0b000, mode = 0b011, opcode = 0b010'0010 }
+  assembly VZEXT8 = ( mnemonic, " v", udec(vd), ", v", udec(vs1) )
+
+  instruction VLD1_PRED_Z : VMemPredType =
+    V(vr) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + wordLaneOffset(i))
+      else 0 as Elem) as Bits<VecBits> as Vec
+  encoding VLD1_PRED_Z = { funct6 = 0b001001, opcode = 0b011'0001 }
+  assembly VLD1_PRED_Z = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ")" )
+
+  instruction VST1_PRED : VMemPredType =
+    forall i : Bits<6> in 0..VecLanes - 1 do
+      if P(pm)(i)
+      then MEM<4>(X(base) + wordLaneOffset(i)) := V(vr)(i)
+  encoding VST1_PRED = { funct6 = 0b001010, opcode = 0b011'0001 }
+  assembly VST1_PRED = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ")" )
+
+  instruction VLD1_PRED_Z_RR : VMemPredIndexType =
+    V(vr) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + X(xoff) + wordLaneOffset(i))
+      else 0 as Elem) as Bits<VecBits> as Vec
+  encoding VLD1_PRED_Z_RR = { funct6 = 0b001111, opcode = 0b011'0100 }
+  assembly VLD1_PRED_Z_RR = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ", ", register(xoff), ")" )
+
+  instruction VST1_PRED_RR : VMemPredIndexType =
+    forall i : Bits<6> in 0..VecLanes - 1 do
+      if P(pm)(i)
+      then MEM<4>(X(base) + X(xoff) + wordLaneOffset(i)) := V(vr)(i)
+  encoding VST1_PRED_RR = { funct6 = 0b010000, opcode = 0b011'0100 }
+  assembly VST1_PRED_RR = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ", ", register(xoff), ")" )
+
+  instruction VLD2_PRED_Z : VMemPredType = {
+    V(vr) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + pairLaneOffset(i))
+      else 0 as Elem) as Bits<VecBits> as Vec
+    V(vr2) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + pairLaneOffset(i) + 4 as Word)
+      else 0 as Elem) as Bits<VecBits> as Vec
+  }
+  encoding VLD2_PRED_Z = { funct6 = 0b001011, opcode = 0b011'0001 }
+  assembly VLD2_PRED_Z = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ")" )
+
+  instruction VST2_PRED : VMemPredType =
+    forall i : Bits<6> in 0..VecLanes - 1 do
+      if P(pm)(i)
+      then {
+        MEM<4>(X(base) + pairLaneOffset(i)) := V(vr)(i)
+        MEM<4>(X(base) + pairLaneOffset(i) + 4 as Word) := V(vr2)(i)
+      }
+  encoding VST2_PRED = { funct6 = 0b001100, opcode = 0b011'0001 }
+  assembly VST2_PRED = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ")" )
+
+  instruction VLD3_PRED_Z : VMemPredType = {
+    V(vr) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + tripleLaneOffset(i))
+      else 0 as Elem) as Bits<VecBits> as Vec
+    V(vr2) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + tripleLaneOffset(i) + 4 as Word)
+      else 0 as Elem) as Bits<VecBits> as Vec
+    V(vr3) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + tripleLaneOffset(i) + 8 as Word)
+      else 0 as Elem) as Bits<VecBits> as Vec
+  }
+  encoding VLD3_PRED_Z = { funct6 = 0b010001, opcode = 0b011'0001 }
+  assembly VLD3_PRED_Z = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ")" )
+
+  instruction VST3_PRED : VMemPredType =
+    forall i : Bits<6> in 0..VecLanes - 1 do
+      if P(pm)(i)
+      then {
+        MEM<4>(X(base) + tripleLaneOffset(i)) := V(vr)(i)
+        MEM<4>(X(base) + tripleLaneOffset(i) + 4 as Word) := V(vr2)(i)
+        MEM<4>(X(base) + tripleLaneOffset(i) + 8 as Word) := V(vr3)(i)
+      }
+  encoding VST3_PRED = { funct6 = 0b010010, opcode = 0b011'0001 }
+  assembly VST3_PRED = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ")" )
+
+  instruction VLD4_PRED_Z : VMemPredType = {
+    V(vr) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + quadLaneOffset(i))
+      else 0 as Elem) as Bits<VecBits> as Vec
+    V(vr2) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + quadLaneOffset(i) + 4 as Word)
+      else 0 as Elem) as Bits<VecBits> as Vec
+    V(vr3) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + quadLaneOffset(i) + 8 as Word)
+      else 0 as Elem) as Bits<VecBits> as Vec
+    V(vr4) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + quadLaneOffset(i) + 12 as Word)
+      else 0 as Elem) as Bits<VecBits> as Vec
+  }
+  encoding VLD4_PRED_Z = { funct6 = 0b010011, opcode = 0b011'0001 }
+  assembly VLD4_PRED_Z = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ")" )
+
+  instruction VST4_PRED : VMemPredType =
+    forall i : Bits<6> in 0..VecLanes - 1 do
+      if P(pm)(i)
+      then {
+        MEM<4>(X(base) + quadLaneOffset(i)) := V(vr)(i)
+        MEM<4>(X(base) + quadLaneOffset(i) + 4 as Word) := V(vr2)(i)
+        MEM<4>(X(base) + quadLaneOffset(i) + 8 as Word) := V(vr3)(i)
+        MEM<4>(X(base) + quadLaneOffset(i) + 12 as Word) := V(vr4)(i)
+      }
+  encoding VST4_PRED = { funct6 = 0b010100, opcode = 0b011'0001 }
+  assembly VST4_PRED = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", (", register(base), ")" )
+
+  instruction VGATHER_PRED_Z : VGatherType =
+    V(vr) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      if P(pm)(i)
+      then MEM<4>(X(base) + V(voff)(i) as Word)
+      else 0 as Elem) as Bits<VecBits> as Vec
+  encoding VGATHER_PRED_Z = { funct6 = 0b001101, opcode = 0b011'0010 }
+  assembly VGATHER_PRED_Z = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", v", udec(voff), ", (", register(base), ")" )
+
+  instruction VSCATTER_PRED : VGatherType =
+    forall i : Bits<6> in 0..VecLanes - 1 do
+      if P(pm)(i)
+      then MEM<4>(X(base) + V(voff)(i) as Word) := V(vr)(i)
+  encoding VSCATTER_PRED = { funct6 = 0b001110, opcode = 0b011'0010 }
+  assembly VSCATTER_PRED = ( mnemonic, " v", udec(vr), ", p", udec(pm), ", v", udec(voff), ", (", register(base), ")" )
+
+  instruction MADD_DO : M3Type =
+    forall i : Bits<3> in 0..RowCount - 1 do
+      forall j : Bits<4> in 0..ColCount - 1 do
+        M(md)(i)(j) := M(ms1)(i)(j) + M(ms2)(i)(j)
+  encoding MADD_DO = { funct7 = 0b0000100, mode = 0, opcode = 0b010'1000 }
+  assembly MADD_DO = ( mnemonic, " m", udec(md), ", m", udec(ms1), ", m", udec(ms2) )
+
+  instruction MADD_TENSOR : M3Type =
+    M(md) := (forall i : Bits<3> in 0..RowCount - 1 tensor
+      ((forall j : Bits<4> in 0..ColCount - 1 tensor
+        M(ms1)(i)(j) + M(ms2)(i)(j)) as Bits<RowBits> as Row)) as Bits<MatBits> as Mat
+  encoding MADD_TENSOR = { funct7 = 0b0000101, mode = 0, opcode = 0b010'1000 }
+  assembly MADD_TENSOR = ( mnemonic, " m", udec(md), ", m", udec(ms1), ", m", udec(ms2) )
+
+  instruction MADD_ROW_BCAST : MRowType =
+    M(md) := (forall i : Bits<3> in 0..RowCount - 1 tensor
+      ((forall j : Bits<4> in 0..ColCount - 1 tensor
+        M(ms1)(i)(j) + R(rr1)(j)) as Bits<RowBits> as Row)) as Bits<MatBits> as Mat
+  encoding MADD_ROW_BCAST = { funct7 = 0b0000110, mode = 0, opcode = 0b010'1001 }
+  assembly MADD_ROW_BCAST = ( mnemonic, " m", udec(md), ", m", udec(ms1), ", r", udec(rr1) )
+
+  instruction MREDUCE_COLS : MReduceType =
+    R(rd) := (forall j : Bits<4> in 0..ColCount - 1 tensor
+      forall i : Bits<3> in 0..RowCount - 1 fold + with M(ms1)(i)(j)) as Bits<RowBits> as Row
+  encoding MREDUCE_COLS = { funct7 = 0b0000111, mode = 0, opcode = 0b010'1010 }
+  assembly MREDUCE_COLS = ( mnemonic, " r", udec(rd), ", m", udec(ms1) )
+
+  instruction HADD_TENSOR : HugeType =
+    H(hd) := (forall i : Bits<11> in 0..HugeLanes - 1 tensor
+      H(hs1)(i) + H(hs2)(i)) as Bits<HugeBits> as Huge
+  encoding HADD_TENSOR = { funct7 = 0b0001000, mode = 0, opcode = 0b010'1011 }
+  assembly HADD_TENSOR = ( mnemonic, " h", udec(hd), ", h", udec(hs1), ", h", udec(hs2) )
+}
+
+[ htif ]
+processor BenchCpu implements VectorBench64 = {
+  reset = {
+    PC := 0x80000000
+  }
+
+  [ firmware ]
+  [ base : 0x80000000 ]
+  memory region [RAM] DRAM in MEM
+}

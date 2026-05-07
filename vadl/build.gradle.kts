@@ -145,6 +145,27 @@ val benchmarkIssAarch64 = registerBenchmarkTestTask(
     includePattern = "vadl.iss.aarch64.IssAarch64EmbenchBenchmarkTest"
 )
 
+val benchmarkIssVectorBench64 = registerBenchmarkTestTask(
+    name = "benchmark-iss-vectorbench64",
+    description = "Runs the synthetic vector benchmark ISA tests",
+    includePattern = "vadl.iss.vectorbench.IssVectorBenchBenchmarkTest"
+)
+
+benchmarkIssVectorBench64.configure {
+    listOf(
+        "VECTORBENCH64_QEMU_BIN",
+        "VECTORBENCH64_FILTER",
+        "VECTORBENCH64_ITERATION_SCALE",
+        "VECTORBENCH64_WARMUP_RUNS",
+        "VECTORBENCH64_MEASURED_RUNS",
+    ).forEach { prop ->
+        val value = project.findProperty(prop)?.toString()
+        if (!value.isNullOrBlank()) {
+            environment(prop, value)
+        }
+    }
+}
+
 tasks.register<Test>("test-others") {
     group = "verification"
     val excludedPackages = generators.joinToString(", ") { "vadl.$it" }

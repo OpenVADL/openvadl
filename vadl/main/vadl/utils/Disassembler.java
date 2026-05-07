@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@ package vadl.utils;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.nio.ByteOrder;
+import java.util.Set;
 import vadl.error.Diagnostic;
 import vadl.types.BuiltInTable;
 import vadl.vdt.model.DecodeTreeGenerator;
@@ -34,6 +35,7 @@ import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -142,8 +144,13 @@ class InstructionPrinter {
 
   private String registerNameFromField(Format.Field field, Constant.Value value,
                                        SourceLocation fieldLocation) {
-    var referencedResources = insn.source().behavior().getNodes(FieldRefNode.class)
-        .filter(f -> f.formatField().equals(field))
+    var referencedResources = insn.source().behavior()
+        .getNodes(Set.of(FieldRefNode.class, FieldAccessRefNode.class))
+        .filter(it -> switch (it) {
+          case FieldRefNode f -> f.formatField().equals(field);
+          case FieldAccessRefNode f -> f.fieldAccess().fieldRefs().contains(field);
+          default -> false;
+        })
         .flatMap(vadl.viam.graph.Node::usages)
         .filter(n -> n instanceof ReadResourceNode || n instanceof WriteResourceNode)
         .map(n -> {
@@ -156,7 +163,8 @@ class InstructionPrinter {
     if (referencedResources.isEmpty()) {
       throw Diagnostic.error("Unknown register name", fieldLocation)
           .locationDescription(fieldLocation,
-              "Field was never used to access a register in the instruction.")
+              "Field `%s` was never used to access a register in the instruction.",
+              field.simpleName())
           .build();
     }
 
@@ -166,7 +174,8 @@ class InstructionPrinter {
       if (areAllTheSame) {
         throw Diagnostic.error("Unknown register name", fieldLocation)
             .locationDescription(fieldLocation,
-                "Format field is used by multiple register accesses to different registers.")
+                "Format field `%s` is used by multiple register accesses to different registers.",
+                field.simpleName())
             .note(
                 "If the field is used for different registers accesses, "
                     + "no concrete name can be determined.")
