@@ -51,3 +51,14 @@ jobs:
       destination-folder: data/iss/riscv64/embench/results
       commit-message: 'data: Pushed ISS riscv64 embench data'
     secrets: inherit
+
+  vectorbench64:
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-arm64
+      benchmark-command: ./gradlew :vadl:benchmark-iss-vectorbench64 -i
+      artifact-source: vadl/build/iss-benchmarks/vectorbench64/normalized-results/vectorbench64-open-vadl.csv
+      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
+      destination-folder: data/iss/vectorbench64/vecbench/results
+      commit-message: 'data: Pushed ISS vectorbench64 benchmark data'
+    secrets: inherit
