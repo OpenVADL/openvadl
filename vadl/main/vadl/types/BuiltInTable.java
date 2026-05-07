@@ -1142,6 +1142,7 @@ public class BuiltInTable {
       func("hex", Type.relation(BitsType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
+          .computeUnary(a -> new Constant.Str(a.asVal().hexadecimal()))
           .build();
 
   /**
