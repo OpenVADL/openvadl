@@ -29,7 +29,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.iss.IssUtils;
 import vadl.iss.codegen.IssTbStaticExpressionCodeGen;
-import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.common.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.extensions.RegInfo.AliasAccessorDescriptor;

@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssMemoryRegionInitCodeGen;
-import vadl.iss.passes.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.common.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.MemoryRegionInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
