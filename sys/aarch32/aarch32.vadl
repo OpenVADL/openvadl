@@ -217,8 +217,11 @@ instruction set architecture AArch32v6 = {
   model XOrS()   : Ex = {VADL::xors (R(rn),  operand2)}
   model AndNot() : Ex = {VADL::ands (R(rn), ~operand2)}
   model OrNot()  : Ex = {VADL::ors  (R(rn), ~operand2)}
-  model MovSft() : Ex = {VADL::lsls (operand2, 0)}
-  model MovImm() : Ex = {VADL::rors (imm12(7..0) as Word, imm12(11..8) as Bits5 << 1)}
+
+  // TODO: re-enable once inlining for lsls/rors works
+  //       see RemoveUnusedStatusFlagsFromBuiltinsPass
+  //model MovSft() : Ex = {VADL::lsls (operand2, 0)}
+  //model MovImm() : Ex = {VADL::rors (imm12(7..0) as Word, imm12(11..8) as Bits5 << 1)}
 
   model ArithmeticImmBehavior (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
     instruction AsId ($i.id, $f.flagExt, $c.condStr) : ArithmeticImmFormat =
@@ -320,13 +323,19 @@ instruction set architecture AArch32v6 = {
     , rn       [3..0]                 // 1st source register
     }
 
-  model Mul()    : Ex = {VADL::muls  (R(rn), R(rm))}
+  // TODO: re-enable once inlining for muls works
+  //       see StatusBuiltInInlinePass
+  //model Mul()    : Ex = {VADL::muls  (R(rn), R(rm))}
   model MulAcc() : Ex = {VADL::adds  (R(rn) * R(rm), R(ra))}
   model MulSub() : Ex = {VADL::subsc (R(rn) * R(rm), R(ra))}
-  model SMull()  : Ex = {VADL::smulls(R(rn), R(rm))}
-  model UMull()  : Ex = {VADL::umulls(R(rn), R(rm))}
-  model SMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::smull(R(rn), R(rm)))}
-  model UMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::umull(R(rn), R(rm)))}
+  // TODO: re-enable once inlining for smulls works
+  //model SMull()  : Ex = {VADL::smulls(R(rn), R(rm))}
+  // TODO: re-enable once inlining for umulls works
+  //model UMull()  : Ex = {VADL::umulls(R(rn), R(rm))}
+  // TODO: re-enable once ISS supports smull/umull result size > 32 bits
+  //       see IssOpDecompositionPass::checkUserSliceOrTruncate
+  //model SMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::smull(R(rn), R(rm)))}
+  //model UMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::umull(R(rn), R(rm)))}
 
   model MultiplyInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
     instruction AsId ($i.id, $f.flagExt, $c.condStr) : MultiplyDivideFormat =
@@ -859,7 +868,8 @@ instruction set architecture AArch32v6 = {
   $CondInstr3Flags    (ArithmeticSftInstr   ; (ORR   ; "orr"   ; OrS   ; 0b000'1100 )) // TODO set correct carry
   $CondInstr3Flags    (ArithmeticSftInstr   ; (EOR   ; "eor"   ; XOrS  ; 0b000'0001 )) // TODO set correct carry
   $CondInstr3Flags    (ArithmeticSftInstr   ; (BIC   ; "bic"   ; AndNot; 0b000'1110 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithMovSftInstr     ; (MOV   ; "mov"   ; MovSft; 0b000'1101 )) // TODO set correct carry
+  // TODO: re-enable once inlining for lsls/rors works
+  //$CondInstr3Flags    (ArithMovSftInstr     ; (MOV   ; "mov"   ; MovSft; 0b000'1101 )) // TODO set correct carry
 
   $CondInstr4Flags    (ArithmeticImmInstr   ; (ADDI  ; "add"   ; AddS  ; 0b001'0100 ))
   $CondInstr4Flags    (ArithmeticImmInstr   ; (ADCI  ; "adc"   ; AddC  ; 0b001'0101 ))
@@ -870,15 +880,20 @@ instruction set architecture AArch32v6 = {
   $CondInstr3Flags    (ArithmeticImmInstr   ; (ORRI  ; "orr"   ; OrS   ; 0b001'1100 )) // TODO set correct carry
   $CondInstr3Flags    (ArithmeticImmInstr   ; (EORI  ; "eor"   ; XOrS  ; 0b001'0001 )) // TODO set correct carry
   $CondInstr3Flags    (ArithmeticImmInstr   ; (BICI  ; "bic"   ; AndNot; 0b001'1110 )) // TODO set correct carry
-  $CondInstr3Flags    (ArithMovImmInstr     ; (MOVI  ; "mov"   ; MovImm; 0b001'1101 ))
+  // TODO: re-enable once inlining for lsls/rors works
+  //$CondInstr3Flags    (ArithMovImmInstr     ; (MOVI  ; "mov"   ; MovImm; 0b001'1101 ))
 
-  $CondInstr2Flags    (MultiplyInstr        ; (MUL   ; "mul"   ; Mul   ; 0b000'0000 ))
+  // TODO: re-enable once inlining for muls works
+  //$CondInstr2Flags    (MultiplyInstr        ; (MUL   ; "mul"   ; Mul   ; 0b000'0000 ))
   $CondInstr2Flags    (MultiplyAccInstr     ; (MLA   ; "mla"   ; MulAcc; 0b000'0001 ))
   $CondInstr          (MultiplySubInstr     ; (MLS   ; "mls"   ; MulSub; 0b000'0011 ))
-  $CondInstr2Flags    (MultiplyLongInstr    ; (UMULL ; "umull" ; UMull ; 0b000'0100 ))
-  $CondInstr2Flags    (MultiplyLongInstr    ; (SMULL ; "smull" ; SMull ; 0b000'0110 ))
-  $CondInstr2Flags    (MultiplyLongInstr    ; (UMLAL ; "umlal" ; UMlAl ; 0b000'0101 ))
-  $CondInstr2Flags    (MultiplyLongInstr    ; (SMLAL ; "smlal" ; SMlAl ; 0b000'0111 ))
+  // TODO: re-enable once inlining for umulls works
+  //$CondInstr2Flags    (MultiplyLongInstr    ; (UMULL ; "umull" ; UMull ; 0b000'0100 ))
+  // TODO: re-enable once inlining for smulls works
+  //$CondInstr2Flags    (MultiplyLongInstr    ; (SMULL ; "smull" ; SMull ; 0b000'0110 ))
+  // TODO: re-enable once ISS supports smull/umull result size > 32 bits
+  //$CondInstr2Flags    (MultiplyLongInstr    ; (UMLAL ; "umlal" ; UMlAl ; 0b000'0101 ))
+  //$CondInstr2Flags    (MultiplyLongInstr    ; (SMLAL ; "smlal" ; SMlAl ; 0b000'0111 ))
 
   $CondInstr          (DivideInstr          ; (SDIV  ; "sdiv"  ; SDiv  ; 0b011'1000 ))
   $CondInstr          (DivideInstr          ; (UDIV  ; "udiv"  ; UDiv  ; 0b011'1001 ))
@@ -904,6 +919,7 @@ instruction set architecture AArch32v6 = {
   $CondInstr          (HalfMemStoreImmInstr ; (STRHI ; "strh"  ; None  ; 0b10'1011  ))
   $CondInstr          (HalfMemStoreRegInstr ; (STRH  ; "strh"  ; None  ; 0b00'1011  ))
 
+  // NOTE: IssTcgVAllocationPass takes very long for these instructions, use --skip=opt-var-alloc
   $CondInstr          (LoadMultipleInstr    ; (LDM   ; "ldm"   ; None  ; 0b100'01   ))
   $CondInstr          (StoreMultipleInstr   ; (STM   ; "stm"   ; None  ; 0b100'00   ))
 

@@ -489,8 +489,9 @@ class OpDecomposer {
     if (!(user instanceof SliceNode || user instanceof TruncateNode)) {
       throw Diagnostic.error("Slice or cast required", userLoc)
           .description(
-              "The ISS currently requires that a smull result greater than %s bit is "
+              "The ISS currently requires that a %s result greater than %s bit is "
                   + "directly cast or sliced to a value <= %s bit before further usage.",
+              call.builtIn().name(),
               targetSize.width, targetSize.width)
           .locationNote(callLoc, "The result of this is %s bits wide.",
               call.type().asDataType().bitWidth())
