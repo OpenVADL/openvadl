@@ -1594,6 +1594,12 @@ public class TypeChecker
 
     var reg = definition.symbolTable().findAs(targetIdent, RegisterDefinition.class);
     if (reg == null) {
+      if (definition.kind == AliasDefinition.AliasKind.PROGRAM_COUNTER) {
+        throw addErrorAndStopChecking(
+            error("Program counter alias cannot refer to register alias", targetIdent.location())
+                .build()
+        );
+      }
       // if this does not directly reference a register,
       // it might reference another alias definition
       var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);

@@ -155,8 +155,6 @@ public abstract class AbstractTest {
       return arguments(cleanPrefix + e.get()[0] + ".vadl", e.get()[1]);
     }).toList();
 
-    List<String> expectedSubstrings = preparedArgs.stream().map(e -> (String) e.get()[0]).toList();
-
     assertThat("Some test source not found", testSources, hasItems(
         preparedArgs.stream().map(e -> containsString((String) e.get()[0]))
             .toArray(Matcher[]::new)));

@@ -39,6 +39,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -53,7 +54,12 @@ public class RegisterTest extends AbstractTest {
 
   private static Stream<Arguments> invalidRegisterTestSources() {
     return AbstractTest.getTestSourceArgsForParameterizedTest("unit/register/invalid_",
-        arguments("reg_invalidFormat", "Invalid Format")
+        arguments("reg_invalidFormat", "Invalid Format"),
+
+        arguments("pc_alias_reg_subcall_currentOnReg",  "No subcall"),
+        arguments("pc_alias_reg_subcall_nextOnReg",     "No subcall"),
+        arguments("pc_alias_reg_subcall_nextnextOnReg", "No subcall"),
+        arguments("pc_alias_reg_referToRegAlias",       "Program counter alias cannot refer")
     );
   }
 
@@ -73,18 +79,15 @@ public class RegisterTest extends AbstractTest {
           assertTrue(x.hasAddress());
           assertEquals(Type.bits(5), x.addressType());
           assertEquals(Type.bits(32), x.resultType());
-
-          // FIXME: Renable once we parse annotations
-          //assertEquals(0, x.constraints().length);
+          assertEquals(0, x.constraints().size());
         }),
         dynamicTest("Test::Y", () -> {
           var y = (RegisterTensor) TestUtils.findResourceByName("Test::Y", spec);
-          // FIXME: Renable once we parse annotations
-          // var constraints = y.constraints();
-          // assertEquals(1, constraints.length);
-          // var constraint = constraints[0];
-          // assertEquals(2, constraint.indices().getFirst().integer().intValue());
-          // assertEquals(0, constraint.value().integer().intValue());
+          var constraints = y.constraints();
+          assertEquals(1, constraints.size());
+          var constraint = constraints.getFirst();
+          assertEquals(2, constraint.indices().getFirst().integer().intValue());
+          assertEquals(0, constraint.value().integer().intValue());
         })
     );
   }
@@ -258,7 +261,7 @@ public class RegisterTest extends AbstractTest {
 
 
   // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @TestFactory
+  @TestFactory
   public Stream<DynamicTest> testPcReg() {
     return Stream.of(
         testPc("valid_pc_normal.vadl", "PcTest::PC", "PcTest::PC", null),
@@ -266,9 +269,35 @@ public class RegisterTest extends AbstractTest {
         testPc("valid_pc_alias_regfile.vadl", "PcTest::PC", "PcTest::X", 31),
         testPc("valid_pc_current.vadl", "PcTest::PC", "PcTest::PC", null),
         testPc("valid_pc_next.vadl", "PcTest::PC", "PcTest::PC", null),
-        testPc("valid_pc_next_next.vadl", "PcTest::PC", "PcTest::PC", null)
+        testPc("valid_pc_next_next.vadl", "PcTest::PC", "PcTest::PC", null),
+
+        testPcSubcalls("valid_pc_alias_reg_subcalls.vadl"),
+        testPcSubcalls("valid_pc_alias_reg_subcalls_with_annotation.vadl")
     );
 
+  }
+
+  private DynamicTest testPcSubcalls(String fileName) {
+    return dynamicTest(fileName, () -> {
+      var spec = runAndGetViamSpecification("unit/register/" + fileName);
+      // FIXME: fix hardcoded instr lengths here
+      testPcSubcall("PcTest::READ_PC_CURRENT", spec, 0);
+      testPcSubcall("PcTest::READ_PC_NEXT", spec, 4);
+      testPcSubcall("PcTest::READ_PC_NEXTNEXT", spec, 8);
+    });
+  }
+
+  private void testPcSubcall(String instrName, Specification spec, int offset) {
+    var instr = TestUtils.findDefinitionByNameIn(instrName, spec, Instruction.class);
+    var readReg = getSingleNode(instr.behavior(), ReadRegTensorNode.class);
+    Assertions.assertTrue(readReg.hasUsages());
+    var usage = readReg.usages().findFirst().get();
+    Assertions.assertInstanceOf(BuiltInCall.class, usage);
+    var add = (BuiltInCall) usage;
+    Assertions.assertEquals(BuiltInTable.ADD, add.builtIn());
+    var offsetNode = add.arg(1);
+    Assertions.assertInstanceOf(ConstantNode.class, offsetNode);
+    Assertions.assertEquals(offset, ((ConstantNode) offsetNode).constant().asVal().intValue());
   }
 
   private DynamicTest testPc(String fileName, String counterName, String resourceName,
