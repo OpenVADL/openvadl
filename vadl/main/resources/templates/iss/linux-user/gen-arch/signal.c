@@ -55,9 +55,11 @@ static void setup_sigcontext(struct target_sigcontext *sc, CPU[(${gen_arch_upper
     int i;
 
     __put_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
-    for (i = 1; i < [(${config.mainRegFileSize})]; i++) {
-        __put_user(env->[(${config.mainRegisterFile})][i], &sc->gpr[i - 1]);
-    }
+    [# th:each="tensor : ${config.signalStateTensors}"]
+      for (i = 0; i < [(${tensor.size})]; i++) {
+          __put_user(env->[(${tensor.name_lower})][i], &sc->[(${tensor.name_lower})][i]);
+      }
+    [/]
 }
 
 static void setup_ucontext(struct target_ucontext *uc,
@@ -122,9 +124,11 @@ static void restore_sigcontext(CPU[(${gen_arch_upper})]State *env, struct target
     int i;
 
     __get_user(env->[(${pc_reg.name_lower})], &sc->[(${pc_reg.name_lower})]);
-    for (i = 1; i < [(${config.mainRegFileSize})]; ++i) {
-        __get_user(env->[(${config.mainRegisterFile})][i], &sc->gpr[i - 1]);
+    [# th:each="tensor : ${config.signalStateTensors}"]
+    for (i = 0; i < [(${tensor.size})]; i++) {
+        __get_user(env->[(${tensor.name_lower})][i], &sc->[(${tensor.name_lower})][i]);
     }
+    [/]
 }
 
 static void restore_ucontext(CPU[(${gen_arch_upper})]State *env, struct target_ucontext *uc)

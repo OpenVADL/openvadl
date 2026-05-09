@@ -51,8 +51,8 @@ public class UserModeEmulation extends Definition {
   private final ExceptionDef syscallException;
   private final ExceptionDef breakpointExcName;
   private final ExceptionDef illegalInstrExcName;
-  private final Identifier ptRegPc;
-  private final Identifier ptRegSp;
+  private final Identifier initialPc;
+  private final Identifier initialSp;
   private final boolean hasIcacheFlush;
   private final int insnWidthBytes;
   private final int stackAlignMask;
@@ -71,9 +71,10 @@ public class UserModeEmulation extends Definition {
       List<RegisterUtils.Register> args, Map<String, Integer> excIds,
       Instruction syscallInstr, ExceptionDef breakpointExcName,
       ExceptionDef illegalInstrExcName,
-      Identifier ptRegPc, Identifier ptRegSp, Identifier excCauseVar, boolean hasIcacheFlush,
+      Identifier initialPc, Identifier initialSp, Identifier excCauseVar, boolean hasIcacheFlush,
       int insnWidthBytes, int stackAlignMask, int sigtrampLoadSyscallInstr,
-      int sigtrampTrapInstr) {
+      int sigtrampTrapInstr
+  ) {
 
     super(identifier);
     this.syscallException = syscallException;
@@ -97,8 +98,8 @@ public class UserModeEmulation extends Definition {
     this.syscallInstr = syscallInstr;
     this.breakpointExcName = breakpointExcName;
     this.illegalInstrExcName = illegalInstrExcName;
-    this.ptRegPc = ptRegPc;
-    this.ptRegSp = ptRegSp;
+    this.initialPc = initialPc;
+    this.initialSp = initialSp;
     this.excCauseVar = excCauseVar;
     this.hasIcacheFlush = hasIcacheFlush;
     this.insnWidthBytes = insnWidthBytes;
@@ -204,7 +205,7 @@ public class UserModeEmulation extends Definition {
     );
 
 
-    Identifier riscvCauseVar = new Identifier(new String[]{"cause"},
+    Identifier riscvCauseVar = new Identifier(new String[]{"arg_exc_cause"},
         SourceLocation.INVALID_SOURCE_LOCATION);
 
     Map<String, Integer> excIds = Map.of(
@@ -232,8 +233,7 @@ public class UserModeEmulation extends Definition {
         mockIllegalExc,
         ptRegsPcField, ptRegsSpField, riscvCauseVar,
         true, 4, 0xf,
-        0x08b00893, 0x00000073
-    );
+        0x08b00893, 0x00000073);
   }
 
   public int getSigtrampLoadSyscallInstr() {
@@ -252,12 +252,12 @@ public class UserModeEmulation extends Definition {
     return insnWidthBytes;
   }
 
-  public Identifier getPtRegPc() {
-    return ptRegPc;
+  public Identifier getInitialPc() {
+    return initialPc;
   }
 
-  public Identifier getPtRegSp() {
-    return ptRegSp;
+  public Identifier getInitialSp() {
+    return initialSp;
   }
 
   public Identifier getExcCauseVar() {

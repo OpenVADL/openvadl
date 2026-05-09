@@ -75,9 +75,11 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
         Map.entry("syscallException", ume.getSyscallException().simpleName()),
         Map.entry("breakpointExcName", ume.getBreakpointExcName().simpleName()),
         Map.entry("illegalInstrExcName", ume.getIllegalInstrExcName().simpleName()),
-        Map.entry("ptRegPc", ume.getPtRegPc().simpleName()),
-        Map.entry("ptRegSp", ume.getPtRegSp().simpleName()),
-        Map.entry("excCauseVar", ume.getExcCauseVar().simpleName()),
+        Map.entry("initialPc", ume.getInitialPc().simpleName()),
+        Map.entry("initialSp", ume.getInitialSp().simpleName()),
+        Map.entry("excCauseVar", ume.getExcCauseVar() != null
+            ? ume.getExcCauseVar().simpleName()
+            : ""),
         Map.entry("hasIcacheFlush", ume.hasIcacheFlush()),
         Map.entry("insn_width_bytes", ume.getInsnWidthBytes()),
         Map.entry("stack_align_mask", ume.getStackAlignMask()),
