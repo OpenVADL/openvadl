@@ -15,8 +15,15 @@ processor Virt implements A32 = {
   [ base : 0x0 ]
   [ size : 0x08000000 ]
   memory region [ROM] FLASH in MEM = {
-    MEM<4>(0x0) := 0x0101a0e3  // mov  r0, 0x40000000
-    MEM<4>(0x4) := 0x10ff2fe1  // bx   r0
+    // TODO: use this instead once mov instructions work
+    //MEM<4>(0x0) := 0xe3a00101  // mov  r0, 0x40000000
+    //MEM<4>(0x4) := 0xe12fff10  // bx   r0
+
+    // branch currently only works with b and bx, not writes to r15
+    MEM<4>(0x0) := 0xe0200000  // eor r0, r0, r0
+    MEM<4>(0x4) := 0xe590000c  // ldr r0, [r0, #12]
+    MEM<4>(0x8) := 0xe12fff10  // bx r0
+    MEM<4>(0xc) := 0x40000000  // target address
   }
 
   [ base : 0x40000000 ]
