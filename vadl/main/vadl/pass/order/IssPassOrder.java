@@ -37,9 +37,9 @@ import vadl.iss.passes.common.IssLoopUnrollPass;
 import vadl.iss.passes.common.IssMemoryAccessTransformationPass;
 import vadl.iss.passes.common.IssMemoryDetectionPass;
 import vadl.iss.passes.common.IssNormalizationPass;
-import vadl.iss.passes.common.IssPcAccessConversionPass;
 import vadl.iss.passes.common.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.common.IssRegisterAccessLoweringPass;
+import vadl.iss.passes.common.IssScheduleIndirectJumpsPass;
 import vadl.iss.passes.common.IssTensorAssignmentToForallPass;
 import vadl.iss.passes.common.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.common.safeResourceRead.IssSafeResourceReadPass;
@@ -131,7 +131,7 @@ public final class IssPassOrder {
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
         .add(new IssCommonExprSavePass(config))
-        .add(new IssPcAccessConversionPass(config));
+        .add(new IssScheduleIndirectJumpsPass(config));
   }
 
   private static void addScalarTcgPasses(PassOrder order, IssConfiguration config) {

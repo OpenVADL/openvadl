@@ -11,8 +11,8 @@
 // no default memory ordering
 #define TCG_GUEST_DEFAULT_MO 0
 
-#define [(${gen_arch_upper})]_PC [(${pc_reg.name_lower})]
-#define [(${gen_arch_upper})]_PC_TYPE [(${pc_reg.value_c_type})]
+#define [(${gen_arch_upper})]_PC [(${pc_info.accessor})]
+#define [(${gen_arch_upper})]_PC_TYPE [(${pc_info.value_c_type})]
 
 #define MMU_USER_IDX 0
 

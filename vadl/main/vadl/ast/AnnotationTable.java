@@ -107,7 +107,23 @@ public class AnnotationTable {
         .add("next", EnableAnnotation::new)
         .add("next next", EnableAnnotation::new)
         .check(GroupedAnnotationBuilder.GroupCheckContext::verifyOnlyOneOfGroup)
-        // FIXME: Apply to AST
+        // FIXME: Apply to AST, see Issue #938
+        .build();
+
+    groupOn(AliasDefinition.class)
+        .add("current", EnableAnnotation::new)
+        .add("next", EnableAnnotation::new)
+        .add("next next", EnableAnnotation::new)
+        .check(ctx -> {
+          var alias = ctx.astTargetDef;
+          ensure(alias.kind.equals(AliasDefinition.AliasKind.PROGRAM_COUNTER),
+              () -> error("Invalid annotation target", alias)
+                  .locationDescription(alias,
+                      "Program counter annotations can only be applied on program counters "
+                          + "and program counter aliases"));
+          ctx.verifyOnlyOneOfGroup();
+        })
+        // FIXME: Apply to AST, see Issue #938
         .build();
 
     annotationOn(RegisterDefinition.class, "zero", ZeroConstraintAnnotation::new)

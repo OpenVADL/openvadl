@@ -66,7 +66,6 @@ public class IssSelectLoweringPass extends AbstractIssPass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     tcgInstrs(viam).forEach(instr -> new IssSelectLowerer(
         instr.behavior(),
-        requireNonNull(viam.isa().get().pc()),
         instr.expectExtension(TcgCtx.class).assignment()
     ).run());
     return null;
@@ -76,12 +75,10 @@ public class IssSelectLoweringPass extends AbstractIssPass {
 class IssSelectLowerer extends GraphProcessor<Void> {
 
   private Graph graph;
-  private Counter pc;
   private TcgCtx.Assignment assignments;
 
-  public IssSelectLowerer(Graph graph, Counter pc, TcgCtx.Assignment assignments) {
+  public IssSelectLowerer(Graph graph, TcgCtx.Assignment assignments) {
     this.graph = graph;
-    this.pc = pc;
     this.assignments = assignments;
   }
 
@@ -103,7 +100,7 @@ class IssSelectLowerer extends GraphProcessor<Void> {
       return null;
     }
 
-    if (!TcgPassUtils.mustBeScheduled(select, pc.registerTensor())) {
+    if (!TcgPassUtils.mustBeScheduled(select)) {
       // a select node not turned into a TCG node,
       // can stay a select node as the corresponding C code is a ternary expression.
       return null;

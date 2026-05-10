@@ -37,7 +37,7 @@ import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Constant;
-import vadl.viam.Counter;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -98,14 +98,9 @@ public class IssTcgSchedulingPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    viam.isa().ifPresent(isa -> {
-      var pc = requireNonNull(isa.pc());
-      pc.ensure(pc.registerTensor().isSingleRegister(), "Only one-dimensional PC supported yet");
-
-      tcgInstrs(viam)
-          .forEach(instr ->
-              IssTcgScheduler.runOn(instr.behavior(), pc));
-    });
+    tcgInstrs(viam)
+        .map(Instruction::behavior)
+        .forEach(IssTcgScheduler::runOn);
 
     return null;
   }
@@ -120,8 +115,6 @@ public class IssTcgSchedulingPass extends AbstractIssPass {
  * </p>
  */
 class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements CfgTraverser {
-
-  private Counter pc;
 
   @LazyInit
   private ControlNode currentRootUser;
@@ -143,23 +136,18 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
   private final ArrayDeque<Set<Node>> stackOfNestedBranches = new ArrayDeque<>();
 
   /**
-   * Constructs an {@code IssTcgScheduler} with the given program counter (PC) register counter.
-   *
-   * @param pc The program counter register counter.
+   * Constructs an {@code IssTcgScheduler}.
    */
-  public IssTcgScheduler(Counter pc) {
-    this.pc = pc;
-  }
+  public IssTcgScheduler() { }
 
   /**
-   * Runs the scheduler on the given graph with the specified program counter.
+   * Runs the scheduler on the given graph.
    *
    * @param graph The control flow graph to process.
-   * @param pc    The program counter register counter.
    */
-  static void runOn(Graph graph, Counter pc) {
+  static void runOn(Graph graph) {
     var start = getSingleNode(graph, StartNode.class);
-    new IssTcgScheduler(pc).traverseBranch(start);
+    new IssTcgScheduler().traverseBranch(start);
 
     // unschedule unnecessary conditions again
     cleanUpUnusedScheduledNodes(graph);
@@ -249,11 +237,6 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
     validateRegTensorAccessIndices(toProcess);
 
     if (toProcess instanceof ReadResourceNode readResourceNode) {
-      if (readResourceNode.resourceDefinition() == pc.registerTensor()) {
-        // PC registers are not lowered to TCG as they can be accessed directly using
-        // ctx->base.pc_next
-        return Optional.empty();
-      }
       return Optional.of(scheduleNode(readResourceNode));
     } else if (toProcess instanceof DependencyNode node) {
       if (TcgPassUtils.isTcg(node)) {

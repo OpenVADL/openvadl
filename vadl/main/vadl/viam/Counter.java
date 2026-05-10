@@ -34,7 +34,7 @@ import vadl.types.DataType;
  * provides a constant for each dimension that is accessed to reference the program counter.</p>
  *
  * <p>Currently, generators only support one-dimensional program counters, e.i.,
- * with an empty {@link #indices()} list.</p>
+ * indexing the referenced register with {@link #indices()} must result in a single register.</p>
  *
  * <p>In a VADL specification a program counter may be annotated with a position annotation
  * ({@code CURRENT, NEXT, NEXT NEXT}).
@@ -79,6 +79,15 @@ public class Counter extends Definition {
    */
   public RegisterTensor registerTensor() {
     return registerTensor;
+  }
+
+  /**
+   * Returns whether the accessed {@link #registerTensor()} is a single register
+   * or the indexed register (see {@link #indices()}) is a single register.
+   */
+  public boolean isSingleRegister() {
+    return registerTensor.isSingleRegister()
+        || registerTensor.maxNumberOfAccessIndices() == indices.size();
   }
 
   @Override

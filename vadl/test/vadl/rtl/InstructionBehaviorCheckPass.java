@@ -185,6 +185,7 @@ public class InstructionBehaviorCheckPass extends Pass {
       resources.addAll(isa.ownMemories());
 
       for (Resource res : resources) {
+        // FIXME: since PC can be single reg in register file, we must also check counter indices
         if (!res.equals(pc)) { // ipg always reads the pc, we can not check this
           compare(curInstr.behavior(), graph, ReadResourceNode.class, res, ignore);
           compare(curInstr.behavior(), graph, ReadRegTensorNode.class, RtlReadRegTensorNode.class,

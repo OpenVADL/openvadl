@@ -205,7 +205,7 @@ class ApplyMemoryEndianness {
           new IssStaticEndianConditionNode(),
           read.overwriteEndianness(mem.endianness()),
           read.overwriteEndianness(mem.endianness().other())
-      ));
+      )).setSourceLocation(read.location());
       read.safeDelete();
     }
   }

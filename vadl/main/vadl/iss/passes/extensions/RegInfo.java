@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -128,7 +129,10 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return reg().simpleName();
   }
 
-  protected String nameLower() {
+  /**
+   * The name of the register tensor in lower case.
+   */
+  public String nameLower() {
     return name().toLowerCase();
   }
 

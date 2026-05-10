@@ -208,7 +208,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   }
 
   @Override
-  public Node copy() {
+  public IssWriteRegNode copy() {
     return new IssWriteRegNode(
         regTensor(),
         indices().copy(),
@@ -227,7 +227,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   }
 
   @Override
-  public Node shallowCopy() {
+  public IssWriteRegNode shallowCopy() {
     return new IssWriteRegNode(
         regTensor(),
         indices(),

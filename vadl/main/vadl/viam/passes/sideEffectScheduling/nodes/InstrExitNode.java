@@ -34,7 +34,7 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  * @see PcChange
  * @see Raise
  * @see vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass
- * @see vadl.iss.passes.IssPcAccessConversionPass
+ * @see vadl.iss.passes.IssScheduleIndirectJumpsPass
  * @see vadl.iss.passes.tcgLowering.TcgOpLoweringPass
  */
 public abstract sealed class InstrExitNode extends DirectionalNode permits InstrExitNode.PcChange,

@@ -285,6 +285,7 @@ public class ControlLogicPass extends AbstractLogicPass {
       if (!isa.registerTensors().contains(res) && !isa.ownMemories().contains(res)) {
         continue;
       }
+      // FIXME: support PCs in register files (PC indices must be checked)
       if (excludePc && res.equals(Objects.requireNonNull(isa.pc()).registerTensor())) {
         continue;
       }
@@ -351,6 +352,7 @@ public class ControlLogicPass extends AbstractLogicPass {
     var writes = stage.behavior().getNodes(WriteResourceNode.class).toList();
     for (WriteResourceNode write : writes) {
       var res = write.resourceDefinition();
+      // FIXME: PC can be single reg in reg file -> also check counter indices
       if (!res.equals(Objects.requireNonNull(isa.pc()).registerTensor())) {
         continue;
       }

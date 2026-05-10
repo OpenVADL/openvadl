@@ -20,7 +20,6 @@ import static java.util.Objects.requireNonNull;
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import vadl.configuration.IssConfiguration;
@@ -80,12 +79,16 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     // add custom one for program counter
     var pc = requireNonNull(viam.isa().get().pc());
     var info = regInfo(pc.registerTensor());
+    var indexDims = pc.registerTensor().indexDimensions().stream()
+        .limit(pc.indices().size())
+        .map(d -> new RegInfo.AccessDim(d.indexType().bitWidth(), d.size()))
+        .toList();
     registry.addBaseAccessor(new RegInfo.BaseAccessorDescriptor(
-        info, RegInfo.AccessType.READ, List.of(), pc.resultType().bitWidth(),
+        info, RegInfo.AccessType.READ, indexDims, pc.resultType().bitWidth(),
         pc.resultType().bitWidth(), 0, pc
     ));
     registry.addBaseAccessor(new RegInfo.BaseAccessorDescriptor(
-        info, RegInfo.AccessType.WRITE, List.of(), pc.resultType().bitWidth(),
+        info, RegInfo.AccessType.WRITE, indexDims, pc.resultType().bitWidth(),
         pc.resultType().bitWidth(), 0, pc
     ));
 

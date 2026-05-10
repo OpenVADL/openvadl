@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.FilenameUtils;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.formatting.CodeFormatter;
+import vadl.iss.IssUtils;
 import vadl.iss.codegen.QemuClangFormatter;
 import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.iss.passes.extensions.MemoryRegionInfo;
@@ -127,7 +128,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_machine_upper", configuration().machineName().toUpperCase());
     vars.put("gen_machine_lower", configuration().machineName().toLowerCase());
     vars.put("register_tensors", mapRegTensors(specification));
-    vars.put("pc_reg", getPcReg(specification));
+    vars.put("pc_info", getPcInfo(specification));
     vars.put("target_size", configuration().targetSize().width);
     vars.put("mem_regions", memRegions(specification));
     vars.put("exc_info", getExceptionInfo(specification));
@@ -145,12 +146,18 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     return viam.processor().get().isa().expectExtension(ExceptionInfo.class);
   }
 
-  private RegInfo getPcReg(Specification viam) {
+  private Map<String, String> getPcInfo(Specification viam) {
     var pc = viam.processor().get().isa().pc();
     if (pc == null) {
       throw new IllegalStateException("PC is null");
     }
-    return pc.registerTensor().expectExtension(RegInfo.class);
+    var regInfo = pc.registerTensor().expectExtension(RegInfo.class);
+    var indices = pc.indices().stream().map(i -> Integer.toString(i.intValue())).toList();
+    var arrayIndex = indices.isEmpty() ? "" : "[" + IssUtils.cIndex(indices, regInfo.reg()) + "]";
+    return Map.of(
+        "accessor", regInfo.nameLower() + arrayIndex,
+        "value_c_type", regInfo.valueCType()
+    );
   }
 
   private Memory getSingleMem(Specification viam) {

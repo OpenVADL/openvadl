@@ -49,7 +49,6 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.RegisterResource;
-import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -353,6 +352,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
         .of(pcInc, Type.bits(BitsType.minimalRequiredWidthFor(pcInc))).asVal();
 
     // read pc address
+    // FIXME: PC can be a register in a register file -> also use counter indices
     var readPc = new RtlReadRegTensorNode(pc.registerTensor(), new NodeList<>(),
         pc.resultType(), Constant.Value.of(true).toNode(), pc);
     readPc = ipg.addWithInputs(readPc, ipg.instructions());

@@ -144,14 +144,14 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
     } else {
       var pc = isa.pc();
       Objects.requireNonNull(pc);
-      if (!pc.registerTensor().isSingleRegister()) {
+      if (!pc.isSingleRegister()) {
         diagnostics.add(
-            error("Only `program counter` definitions supported",
+            error("Program counter must be single register",
                 pc.location())
                 .locationDescription(pc.location(),
-                    "This is an alias program counter to a register file. "
-                        + "However the ISS generator currently only supports register "
-                        + "cell program counters.")
+                    "This program counter refers to multiple entries in the register file. "
+                        + "However the ISS generator currently only supports single "
+                        + "register program counters.")
                 .note("We have to implement this!")
 
         );

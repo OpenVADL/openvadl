@@ -1031,10 +1031,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Register Alias
-    if (computedTarget instanceof AliasDefinition aliasDefinition
-        && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
-      var alias = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
-      return readTensorResourceConcatinated(alias, List.of(),
+    if (computedTarget instanceof AliasDefinition aliasDefinition) {
+      var lowered = viamLowering.fetch(aliasDefinition).orElseThrow();
+      var resource = switch (aliasDefinition.kind) {
+        case REGISTER -> (ArtificialResource) lowered;
+        case PROGRAM_COUNTER -> ((Counter) lowered).registerTensor();
+      };
+      List<ExpressionNode> indices = switch (aliasDefinition.kind) {
+        case REGISTER -> List.of();
+        case PROGRAM_COUNTER -> ((Counter) lowered).indices().stream()
+            .map(idx -> (ExpressionNode) new ConstantNode(idx)).toList();
+      };
+      return readTensorResourceConcatinated(resource, indices,
           (DataType) getViamType(expr.type()));
     }
 
@@ -1302,7 +1310,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             }
 
             switch (viamArg) {
-              case Counter cnt -> call.add(cnt.registerTensor());
               case Resource res -> call.add(res);
               case Logic logic -> call.add(logic);
               default -> throw new IllegalStateException();
@@ -1311,8 +1318,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         }
         resultExpr = call;
       } else if (exprBeforeSubcall instanceof ReadResourceNode resRead) {
-        var computedTarget = expr.target.path().target();
-        if (computedTarget instanceof CounterDefinition) {
+        boolean targetIsCounter = switch (expr.target.path().target()) {
+          case AliasDefinition alias -> alias.kind == AliasDefinition.AliasKind.PROGRAM_COUNTER;
+          case CounterDefinition counter -> true;
+          case null, default -> false;
+        };
+        if (targetIsCounter) {
           // FIXME: @ffreitag this is currently hardcoded as was wrong before.
           //  It must add the instruction width in bytes.
           // This width is obtained by the format type of the current instruction
@@ -1445,9 +1456,21 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             (DataType) typeBeforeSlice
         );
 
-        case AliasDefinition aliasDef -> readTensorResourceConcatinated(
-            (ArtificialResource) viamLowering.fetch(aliasDef).orElseThrow(),
-            args, (DataType) typeBeforeSlice);
+        case AliasDefinition aliasDef -> {
+          var lowered = viamLowering.fetch(aliasDef).orElseThrow();
+          var resource = switch (aliasDef.kind) {
+            case REGISTER -> (ArtificialResource) lowered;
+            case PROGRAM_COUNTER -> ((Counter) lowered).registerTensor();
+          };
+          args = switch (aliasDef.kind) {
+            case REGISTER -> args;
+            case PROGRAM_COUNTER -> Stream.concat(
+                ((Counter) lowered).indices().stream().map(ConstantNode::new),
+                args.stream()
+            ).toList();
+          };
+          yield readTensorResourceConcatinated(resource, args, (DataType) typeBeforeSlice);
+        }
 
         case MemoryDefinition memDef -> {
           var sizeExpr = expr.target.size();
@@ -1755,9 +1778,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       // FIXME: Adjust value based on counter position
       case Counter counterDef -> {
-        var resourceRead = new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
-            counterDef.registerTensor().resultType(), null);
-        yield List.of(new WriteRegTensorNode(counterDef.registerTensor(), argExprs,
+        var finalArgExprs = new NodeList<>(Stream.concat(
+            counterDef.indices().stream().map(ConstantNode::new),
+            argExprs.stream()
+        ).toList());
+        var resourceRead = new ReadRegTensorNode(counterDef.registerTensor(),
+            finalArgExprs, counterDef.registerTensor().resultType(), null);
+        yield List.of(new WriteRegTensorNode(counterDef.registerTensor(), finalArgExprs,
             // slice the written value before writing it
             dynamicIndexWriteValue(staticSliceWriteValue(value,
                 resourceRead, staticSlices), resourceRead, dynamicIndex),

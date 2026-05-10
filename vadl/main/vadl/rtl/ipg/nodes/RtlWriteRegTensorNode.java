@@ -49,13 +49,13 @@ public class RtlWriteRegTensorNode extends WriteRegTensorNode implements RtlCond
   }
 
   @Override
-  public Node copy() {
+  public RtlWriteRegTensorNode copy() {
     return new RtlWriteRegTensorNode(regTensor, indices.copy(), value.copy(), staticCounterAccess(),
         (condition == null) ? null : condition.copy());
   }
 
   @Override
-  public Node shallowCopy() {
+  public RtlWriteRegTensorNode shallowCopy() {
     return new RtlWriteRegTensorNode(regTensor, indices, value, staticCounterAccess(), condition);
   }
 

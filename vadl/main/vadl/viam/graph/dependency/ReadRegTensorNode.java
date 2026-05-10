@@ -25,6 +25,7 @@ import vadl.types.Type;
 import vadl.viam.Counter;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.graph.CanAccessCounter;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.IsInstructionOperand;
 import vadl.viam.graph.NodeList;
@@ -41,13 +42,9 @@ import vadl.viam.graph.ReadsRegisterTensor;
  * across all dimensions of the register tensor.
  * In this case, the indices list would be empty.
  * The result type can be computed with {@link RegisterTensor#resultType(int)}.
- *
- * <p>The {@link #staticCounterAccess()} indicates if this read is known to be
- * (program) counter access. It is set by the
- * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}</p>
  */
 public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegisterTensor,
-    IsInstructionOperand {
+    CanAccessCounter, IsInstructionOperand {
 
   @DataValue
   protected RegisterTensor regTensor;
@@ -93,18 +90,13 @@ public class ReadRegTensorNode extends ReadResourceNode implements ReadsRegister
     return regTensor;
   }
 
-  /**
-   * Determines if the register is a PC based on whether staticCounterAccess is set.
-   */
-  public boolean isPcAccess() {
-    return staticCounterAccess != null;
-  }
-
+  @Override
   @Nullable
   public Counter staticCounterAccess() {
     return staticCounterAccess;
   }
 
+  @Override
   public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
     this.staticCounterAccess = staticCounterAccess;
   }

@@ -20,14 +20,12 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
-import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.GraphUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ScheduledNode;
-import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -38,13 +36,10 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * or if it is dependent of a statically unknown register (e.g. in {@code JALR} where the
  * new PC is read from a register in X).
  * If the latter is the case, the PC write must be scheduled, otherwise not.
- *
- * <p>Additionally, the pass converts all PC reads into {@link IssStaticPcRegNode}s, so
- * they are not scheduled in the succeeding {@link IssTcgSchedulingPass}.</p>
  */
-public class IssPcAccessConversionPass extends AbstractIssPass {
+public class IssScheduleIndirectJumpsPass extends AbstractIssPass {
 
-  public IssPcAccessConversionPass(IssConfiguration configuration) {
+  public IssScheduleIndirectJumpsPass(IssConfiguration configuration) {
     super(configuration);
   }
 
@@ -57,26 +52,21 @@ public class IssPcAccessConversionPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    tcgInstrs(viam).forEach(i -> new IssPcAccessConverter(i.behavior()).run());
+    tcgInstrs(viam).forEach(i -> new IssIndirectJumpScheduler(i.behavior()).run());
     return null;
   }
 }
 
 
-class IssPcAccessConverter {
+class IssIndirectJumpScheduler {
 
   Graph graph;
 
-  public IssPcAccessConverter(Graph graph) {
+  public IssIndirectJumpScheduler(Graph graph) {
     this.graph = graph;
   }
 
   void run() {
-
-    // replace read reg nodes of pcs to be just a CpuReg access of the ISS (No tcg op required)
-    graph.getNodes(ReadRegTensorNode.class)
-        .filter(ReadRegTensorNode::isPcAccess)
-        .forEach(n -> n.replaceAndDelete(new IssStaticPcRegNode(n.regTensor())));
 
     // handle the instr exits
     graph.getNodes(InstrExitNode.PcChange.class)
