@@ -59,7 +59,7 @@ async def build_assembly(id: str, core: str) -> Path:
 
       # exit upstream virt (semihosting)
       ldr     x1, =args
-      mov     w0, #0x20        // SYS_EXIT operation
+      mov     w0, #0x20        // SYS_EXIT_EXTENDED operation
       hlt     #0xF000          // Trigger semihosting call
 
   1:  b       1b               // Infinite loop

@@ -54,11 +54,40 @@ async def build_assembly(id: str, core: str) -> Path:
   
   _start:
       {core}
-
-  @ TODO: exit VADL virt (HTIF)
-  @ TODO: exit upstream virt (semihosting)
+  
+  exit:
+      @ exit VADL virt (HTIF)
+      eor     r0, r0, r0       @ cmd: exit 0
+      add     r0, r0, #1
+      ldr     r1, =tohost      @ load addr of 'tohost' into r1
+      str     r0, [r1]         @ store r0 to 'tohost'
+      
+      @ exit upstream (semihosting)
+      ldr r1, =args
+      eor r0, r0, r0           @ SYS_EXIT_EXTENDED operation
+      add r0, r0, #0x20
+      @ mov r0, #0x20  @ mov is not yet supported by aarch32.vadl
+      svc #0x123456            @ Trigger semihosting call
 
   1:  b       1b               @ Infinite loop
+  
+  .section .data
+  .align 3
+  
+  args:
+  .word 0x20026                @ ADP_Stopped_ApplicationExit command
+  .word 0x0                    @ Exit Code (0)
+  
+  .section .tohost, "aw", %progbits
+  .align 6
+  .global tohost
+  tohost: .quad 0
+  .size tohost, 8
+
+  .align 6
+  .global fromhost
+  fromhost: .quad 0
+  .size fromhost, 8
   """
   with open(asm_out, "w") as f:
     f.write(content)
