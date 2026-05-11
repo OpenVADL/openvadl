@@ -1192,34 +1192,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           case null, default -> false;
         };
         if (targetIsCounter) {
-          // FIXME: @ffreitag this is currently hardcoded as was wrong before.
-          //  It must add the instruction width in bytes.
-          // This width is obtained by the format type of the current instruction
-          var instrWidth = 32;
-          // The byte is defined by the "word" that is returned by the main memory definition.
-          // So essentially the return type in the relation type of the memory definition.
-          var byteWidth = 8;
-          var instrWidthInByte = instrWidth / byteWidth;
-
-          // FIXME: Handle slicing and format subcall propperly
+          // FIXME: Handle slicing and format subcall properly
           int offset = 0;
           for (var subcall : expr.subCalls) {
             var subcallName = subcall.identifier().name;
-            if (subcallName.equals("current")) {
-              offset = 0;
-            } else if (subcallName.equals("next")) {
-              offset += instrWidthInByte;
-            } else if (subcallName.equals("nextnext")) {
-              offset += instrWidthInByte * 2;
-            } else {
-              throw new IllegalStateException("unknown subcall: " + subcallName);
+            switch (subcallName) {
+              case "current" -> offset = 0;
+              case "next" -> offset += 1;
+              case "nextnext" -> offset += 2;
+              default -> throw new IllegalStateException("unknown subcall: " + subcallName);
             }
           }
-
-          resultExpr = BuiltInCall.of(BuiltInTable.ADD,
-              resRead,
-              intU(offset, resRead.type().bitWidth()).toNode()
-          );
+          resRead.setPcOffset(offset);
         }
       } else {
         throw new IllegalStateException();
