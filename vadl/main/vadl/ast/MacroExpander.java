@@ -1157,7 +1157,8 @@ class MacroExpander
 
   @Override
   public Definition visit(AsmGrammarAlternativesDefinition definition) {
-    var alternatives = new ArrayList<List<AsmGrammarElementDefinition>>(definition.alternatives.size());
+    var alternatives =
+        new ArrayList<List<AsmGrammarElementDefinition>>(definition.alternatives.size());
     for (var alternative : definition.alternatives) {
       alternatives.add(expandDefinitions(alternative));
     }
