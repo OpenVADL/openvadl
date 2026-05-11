@@ -3736,7 +3736,7 @@ public class TypeChecker
           var formatName = formatType.format.identifier().name;
           var suggestions = Levenshtein.suggestions(
               fieldName,
-              formatType.format.fieldsWithoutEncodingPredicate().stream()
+              formatType.format.fieldsWithoutEncodingPredicate()
                   .map(f -> f.identifier().name).toList());
 
           addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)

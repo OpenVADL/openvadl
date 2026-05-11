@@ -796,20 +796,19 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     this.loc = location;
   }
 
-  List<FormatField> fieldsWithoutEncodingPredicate() {
+  Stream<FormatField> fieldsWithoutEncodingPredicate() {
     return fields.stream()
         .filter(f -> !(f instanceof PredicateFormatField))
-        .filter(f -> !(f instanceof EncodingFormatField))
-        .toList();
+        .filter(f -> !(f instanceof EncodingFormatField));
   }
 
   boolean hasField(String name) {
-    return fieldsWithoutEncodingPredicate().stream()
+    return fieldsWithoutEncodingPredicate()
         .anyMatch(f -> f.identifier().name.equals(name));
   }
 
   FormatField getField(String name) {
-    return fieldsWithoutEncodingPredicate().stream()
+    return fieldsWithoutEncodingPredicate()
         .filter(f -> f.identifier().name.equals(name)).findFirst()
         .orElseThrow();
   }
