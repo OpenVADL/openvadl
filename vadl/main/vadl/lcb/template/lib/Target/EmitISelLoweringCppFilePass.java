@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -175,10 +175,10 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("stackPointer", stackPointer);
     map.put("stackPointerByteSize", abi.stackPointer().registerFile().resultType().bitWidth() / 8);
     map.put("argumentRegisterClasses",
-        abi.argumentRegisters().stream().map(Abi.RegisterRef::registerFile).distinct()
+        abi.argumentRegisters().stream().map(Abi.AbiRegister::registerFile).distinct()
             .map(LlvmRegisterFile::new).map(this::mapLlvmRegisterClass).toList());
     map.put("argumentRegisters",
-        abi.argumentRegisters().stream().map(Abi.RegisterRef::render).toList());
+        abi.argumentRegisters().stream().map(Abi.AbiRegister::render).toList());
     map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
     map.put("stackPointerType", stackPointerType.getLlvmType());
     map.put("absoluteAddressLoadInstruction",

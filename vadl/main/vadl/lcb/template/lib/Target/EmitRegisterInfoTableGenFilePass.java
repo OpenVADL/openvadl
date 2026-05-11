@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -90,7 +90,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     // The order of registers represents the preferred allocation sequence.
     // Registers are listed in the order caller-save, callee-save, specials.
-    var callerSaved = abi.callerSaved().stream().map(Abi.RegisterRef::render).toList();
+    var callerSaved = abi.callerSaved().stream().map(Abi.AbiRegister::render).toList();
     verifyAllTheSameRegisterFile(abi.callerSaved());
     verifyAllTheSameRegisterFile(abi.calleeSaved());
     verifyBothTheSame(abi.calleeSaved(), abi.callerSaved());
@@ -99,13 +99,13 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var exceptions = new HashSet<>(Stream.of(
         Optional.of(abi.returnAddress().render()),
         Optional.of(abi.stackPointer().render()),
-        abi.globalPointer().map(Abi.RegisterRef::render),
+        abi.globalPointer().map(Abi.AbiRegister::render),
         Optional.of(abi.framePointer().render()),
-        abi.threadPointer().map(Abi.RegisterRef::render)
+        abi.threadPointer().map(Abi.AbiRegister::render)
     ).filter(Optional::isPresent).map(Optional::get).toList());
 
     var calleeSaved = abi.calleeSaved().stream()
-        .map(Abi.RegisterRef::render)
+        .map(Abi.AbiRegister::render)
         .filter(render -> !exceptions.contains(render))
         .toList();
 
@@ -181,8 +181,8 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     );
   }
 
-  private void verifyBothTheSame(List<Abi.RegisterRef> calleeSaved,
-                                 List<Abi.RegisterRef> callerSaved) {
+  private void verifyBothTheSame(List<Abi.AbiRegister> calleeSaved,
+                                 List<Abi.AbiRegister> callerSaved) {
     if (!callerSaved.isEmpty() && !calleeSaved.isEmpty()) {
       var callerRegFile = getRegisterFile(callerSaved.getFirst().registerFile());
       var calleeRegFile = getRegisterFile(calleeSaved.getFirst().registerFile());
@@ -206,13 +206,13 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     return registerResource;
   }
 
-  private void verifyAllTheSameRegisterFile(List<Abi.RegisterRef> registerRefs) {
+  private void verifyAllTheSameRegisterFile(List<Abi.AbiRegister> registerRefs) {
     var set = registerRefs.stream().map(ref -> getRegisterFile(ref.registerFile()))
         .collect(Collectors.toSet());
 
     if (set.size() > 1) {
       throw Diagnostic.error("All register must have the same register file.",
-          registerRefs.stream().map(Abi.RegisterRef::location)
+          registerRefs.stream().map(Abi.AbiRegister::location)
               .reduce(registerRefs.get(0).location(),
                   SourceLocation::join).location()).build();
     }

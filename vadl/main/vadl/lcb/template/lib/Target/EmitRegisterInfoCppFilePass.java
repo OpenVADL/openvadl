@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -124,8 +124,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         "returnAddress", abi.returnAddress().render(),
         "stackPointer", abi.stackPointer().render(),
         "hasThreadPointer", abi.threadPointer().isPresent(),
-        "threadPointer", abi.threadPointer().map(Abi.RegisterRef::render).orElse(""),
-        "globalPointer", abi.globalPointer().map(Abi.RegisterRef::render).orElse(""),
+        "threadPointer", abi.threadPointer().map(Abi.AbiRegister::render).orElse(""),
+        "globalPointer", abi.globalPointer().map(Abi.AbiRegister::render).orElse(""),
         "frameIndexEliminations",
         getEliminateFrameIndexEntries(instructionLabels, uninlined,
             tableGenMachineInstructions).stream()
