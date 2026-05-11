@@ -16,10 +16,6 @@ on:
         description: 'Path to the produced artifact'
         required: true
         type: string
-      artifact-name:
-        description: 'Published artifact filename'
-        required: true
-        type: string
       destination-folder:
         description: 'Destination folder in the target repository'
         required: true
@@ -40,7 +36,16 @@ on:
         type: string
 
 jobs:
+  timestamp:
+    runs-on:  ${{ inputs.runner }}
+    outputs:
+      value: ${{ steps.ts.outputs.value }}
+    steps:
+      - id: ts
+        run: echo "value=$(date -u +%Y-%m-%dT%H-%M-%SZ)" >> "$GITHUB_OUTPUT"
+
   benchmark:
+    needs: timestamp
     runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -63,13 +68,10 @@ jobs:
         run: ${{ inputs.benchmark-command }}
         env:
           isCI: true
-      - name: Sanitize artifact filename
-        run: |
-          sanitized_name="${{ inputs.artifact-name }}"
-          sanitized_name="${sanitized_name//:/-}"
-          printf 'SANITIZED_ARTIFACT_NAME=%s\n' "$sanitized_name" >> "$GITHUB_ENV"
+      - name: Set artifact filename
+        run: printf 'ARTIFACT_NAME=%s_%s.csv\n' "${{ needs.timestamp.outputs.value }}" "${{ github.sha }}" >> "$GITHUB_ENV"
       - name: Prepare artifact
-        run: cp "${{ inputs.artifact-source }}" "${{ github.workspace }}/${SANITIZED_ARTIFACT_NAME}"
+        run: cp "${{ inputs.artifact-source }}" "${{ github.workspace }}/${ARTIFACT_NAME}"
       - name: Checkout target repository
         uses: actions/checkout@v4
         with:
@@ -80,13 +82,13 @@ jobs:
       - name: Copy artifact into target repository
         run: |
           mkdir -p "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}"
-          cp "${{ github.workspace }}/${SANITIZED_ARTIFACT_NAME}" \
-            "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}/${SANITIZED_ARTIFACT_NAME}"
+          cp "${{ github.workspace }}/${ARTIFACT_NAME}" \
+            "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}/${ARTIFACT_NAME}"
       - name: Commit and push artifact
         run: |
           cd "${{ github.workspace }}/resselpark"
           git config user.email "ci@openvadl.org"
           git config user.name "ci"
-          git add "${{ inputs.destination-folder }}/${SANITIZED_ARTIFACT_NAME}"
+          git add "${{ inputs.destination-folder }}/${ARTIFACT_NAME}"
           git commit -m "${{ inputs.commit-message }}" || exit 0
           git push origin HEAD:master

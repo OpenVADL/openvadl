@@ -41,7 +41,6 @@ jobs:
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/aarch64/aarch64.vadl
       artifact-source: output/timings-mean.csv
-      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/aarch64/native/results
       commit-message: 'data: Pushed frontend aarch64 native data'
     secrets: inherit
@@ -54,7 +53,6 @@ jobs:
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/aarch32/aarch32.vadl
       artifact-source: output/timings-mean.csv
-      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/aarch32/native/results
       commit-message: 'data: Pushed frontend aarch32 native data'
     secrets: inherit
@@ -67,7 +65,6 @@ jobs:
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/risc-v/rv32i.vadl
       artifact-source: output/timings-mean.csv
-      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/rv32i/native/results
       commit-message: 'data: Pushed frontend rv32i native data'
     secrets: inherit
@@ -80,7 +77,6 @@ jobs:
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/ppc64/ppc64.vadl
       artifact-source: output/timings-mean.csv
-      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/ppc64/native/results
       commit-message: 'data: Pushed frontend ppc64 native data'
     secrets: inherit
@@ -93,7 +89,6 @@ jobs:
       download-artifact: openvadl
       benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/hexagon/hexagon.vadl
       artifact-source: output/timings-mean.csv
-      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/frontend/hexagon/native/results
       commit-message: 'data: Pushed frontend hexagon native data'
     secrets: inherit
