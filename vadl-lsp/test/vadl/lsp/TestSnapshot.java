@@ -16,6 +16,7 @@
 
 package vadl.lsp;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.FileInfo;
 
@@ -42,6 +44,10 @@ import org.opentest4j.FileInfo;
 /// - Note that the test fails if the snapshot file is (re-)generated. This is intended to point out
 ///   that the snapshot has changed and the file should be inspected. The test will pass on the next
 ///   invocation.
+/// - Any kind of test input can be loaded from input files that are stored alongside the snapshot
+///   file.
+/// - If you have a parameterized test where each test case should have different input and snapshot
+///   files, the name of the current test case can be provided.
 public class TestSnapshot {
   private static final String BASE_PATH = "test/resources/snapshots";
   private static final String EXTENSION = ".dat";
@@ -49,7 +55,52 @@ public class TestSnapshot {
   private static final StackWalker stackWalker = StackWalker.getInstance(Set.of(), 3);
   private static final boolean UPDATE_SNAPSHOTS = System.getenv("UPDATE_SNAPSHOTS") != null;
 
+  /**
+   * fully-qualified class name.
+   */
+  private final String testClass;
+  /**
+   * testMethod relative to {@link #testClass}.
+   */
+  private final String testMethod;
+  @Nullable
+  private final String testCase;
+
   private final StringBuilder data = new StringBuilder();
+  @Nullable
+  private Path containingDirectoryPath = null;
+
+
+  /**
+   * Creates a new instance.
+   *
+   * <p>Note: The snapshot is stored under the name of the method that instantiates the Snapshot
+   * object.
+   */
+  public TestSnapshot() {
+    var callerData = getCallerData();
+    this.testClass = callerData.getClassName();
+    this.testMethod = callerData.getMethodName();
+
+    this.testCase = null;
+  }
+
+  /**
+   * Creates a new instance.
+   *
+   * <p>Note: The snapshot is stored under the name of the method that instantiates the Snapshot
+   * object.
+   *
+   * @param testCase If not null: In addition to test class and test method, this test case is used
+   *                 to identify this snapshot. Use this for ParameterizedTests.
+   */
+  public TestSnapshot(@Nullable String testCase) {
+    var callerData = getCallerData();
+    this.testClass = callerData.getClassName();
+    this.testMethod = callerData.getMethodName();
+
+    this.testCase = testCase;
+  }
 
 
   /**
@@ -79,68 +130,154 @@ public class TestSnapshot {
   }
 
   /**
+   * Provides the path of the input file with the given name. If the file doesn't exist yet, it is
+   * created and the test fails.
+   *
+   * @param name relative to this snapshot's test class and method
+   */
+  public Path getInputPath(String name) {
+    data.append("# % Requested path of input file").append(name).append(" %\n");
+    return requireNonNull(createInputPath(name));
+  }
+
+  private Path createInputPath(String name) {
+    try {
+      var filePath = getFilePath("-" + name);
+
+      if (!Files.exists(filePath)) {
+        Files.createFile(filePath);
+        fail(
+            "Generated input file " + name + " for " + testClass + "." + testMethod
+                + (testCase != null ? "(" + testCase + ")" : "")
+                + "\n  Please fill this file with input data as desired: " + filePath.toUri()
+                + "\n  This test will not fail here on the next invocation.");
+      }
+      return filePath;
+    } catch (IOException e) {
+      fail(e);
+      return null;
+    }
+  }
+
+  /**
+   * Provides the URI of the input file with the given name. If the file doesn't exist yet, it is
+   * created and the test fails.
+   *
+   * @param name relative to this snapshot's test class and method
+   */
+  public String getInputUri(String name) {
+    data.append("# % Requested uri of input file ").append(name).append(" %\n");
+    return requireNonNull(createInputPath(name)).toUri().toString();
+  }
+
+  /**
+   * Returns the name of an input file based on the given full uri. If the uri points to a file that
+   * couldn't be an input file of this snapshot, the test fails.
+   *
+   * @param uri e.g. the result of {@link #getInputUri(String)}
+   */
+  public String getInputNameFromUri(String uri) {
+    try {
+      var prefix = getFilePath("-").toUri().toString();
+      if (!uri.startsWith(prefix)) {
+        fail("Given uri does not point to an input file of this snapshot: " + uri);
+      }
+      return uri.substring(prefix.length());
+    } catch (IOException e) {
+      fail(e);
+      return null;
+    }
+  }
+
+  /**
+   * Provides the content of the input file with the given name. If the file doesn't exist yet, it
+   * is created and the test fails.
+   *
+   * @param name relative to this snapshot's test class and method
+   */
+  public String getInputData(String name) {
+    data.append("# % Requested data of input file ").append(name).append(" %\n");
+    try {
+      return Files.readString(requireNonNull(createInputPath(name)));
+    } catch (IOException e) {
+      fail(e);
+      return "";
+    }
+  }
+
+  /**
    * Call this at the end of the test. Verifies the snapshot data. I.e. test fails if data recorded
    * in this snapshot object differs from the data stored in the snapshot file.
-   *
-   * <p>Note: The snapshot is stored under the name of the method calling <i>this</i> method.
    */
   public void verify() {
-    var callerData = getCallerData();
-
     try {
-      verify(callerData.getClassName(), callerData.getMethodName());
+      String finalSnapshot = getFileHeader() + data;
+      var filePath = getFilePath(EXTENSION);
+
+      if (!Files.exists(filePath)) {
+        Files.createFile(filePath);
+        Files.writeString(filePath, finalSnapshot);
+
+        failOnFileChange("Generated",  filePath);
+      }
+
+      if (UPDATE_SNAPSHOTS) {
+        try {
+          assertEqualsFile(filePath, finalSnapshot);
+        } catch (AssertionFailedError e) {
+          Files.writeString(filePath, finalSnapshot);
+          failOnFileChange("Updated", filePath);
+        }
+        return;
+      }
+
+      assertEqualsFile(filePath, finalSnapshot);
     } catch (IOException e) {
       fail(e);
     }
   }
 
-  /**
-   * Internal implementation of {@link #verify()}.
-   *
-   * @param testClass fully-qualified class name
-   * @param testMethod relative to {@code testClass}
-   */
-  private void verify(String testClass, String testMethod) throws IOException {
-    String finalSnapshot = getFileHeader(testClass, testMethod) + data;
-
-    var directoryPath = Paths.get(BASE_PATH, testClass);
-    var filePath = directoryPath.resolve(testMethod + EXTENSION);
-    Files.createDirectories(directoryPath);
-
-    if (!Files.exists(filePath)) {
-      Files.createFile(filePath);
-      Files.writeString(filePath, finalSnapshot);
-
-      fail(
-          "Generated Test snapshot for " + testClass + "." + testMethod
-              + "\n  Please verify if snapshot data in this file is valid: " + filePath.toUri()
-              + "\n  This test will pass on the next invocation.");
-    }
-
-    if (UPDATE_SNAPSHOTS) {
-      try {
-        assertEqualsFile(filePath, finalSnapshot);
-      } catch (AssertionFailedError e) {
-        Files.writeString(filePath, finalSnapshot);
-        fail(
-            "Updated Test snapshot for " + testClass + "." + testMethod
-                + "\n  Please verify if snapshot data in this file is valid: " + filePath.toUri()
-                + "\n  This test will pass on the next invocation.");
-      }
-      return;
-    }
-
-    assertEqualsFile(filePath, finalSnapshot);
-  }
 
   private StackFrame getCallerData() {
     return stackWalker.walk(s -> s.skip(2).findFirst())
         .orElseThrow();
   }
 
-  private String getFileHeader(String testClass, String testMethod) {
+  private Path getAndCreateContainingDirectoryPath() throws IOException {
+    if (containingDirectoryPath == null) {
+      containingDirectoryPath = Paths.get(BASE_PATH, testClass);
+      Files.createDirectories(containingDirectoryPath);
+    }
+
+    return containingDirectoryPath;
+  }
+
+  private Path getFilePath(String afterPrefix) throws IOException {
+    var directoryPath = getAndCreateContainingDirectoryPath();
+
+    String relativePath = testMethod + (testCase != null ? "-" + testCase : "") + afterPrefix;
+    var filePath = directoryPath.resolve(relativePath);
+
+    if (!filePath.getParent().equals(directoryPath)) {
+      throw new IllegalArgumentException(
+          "Must not create file path that lies outside of snapshot directory, relative path is: "
+              + relativePath);
+    }
+    return filePath;
+  }
+
+  private String getFileHeader() {
     return "# This file contains a test snapshot, generated by " + getClass().getName()
-        + "\nTest method: " + testClass + "." + testMethod + "\n\n";
+        + "\nTest method: " + testClass + "." + testMethod
+        + (testCase != null ? ", Test case: " + testCase : "") + "\n\n";
+  }
+
+  private void failOnFileChange(String actionDone, Path filePath) {
+    fail(
+        actionDone + " Test snapshot for " + testClass + "." + testMethod
+            + (testCase != null ? "(" + testCase + ")" : "")
+            + "\n  Please verify if snapshot data in this file is valid: " + filePath.toUri()
+            + "\n  This test will pass on the next invocation.");
   }
 
   /**

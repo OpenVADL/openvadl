@@ -174,6 +174,10 @@ public class Document {
 
     String lineText = textLines.get(line);
     for (int i = 0; i < column; i++) {
+      if (i >= lineText.length()) {
+        column = lineText.length();
+        break;
+      }
       column -= utf8Utf16LengthDifference(lineText.charAt(i));
     }
 
@@ -213,6 +217,10 @@ public class Document {
 
       // deltaStart
       for (; linePos < targetPos; linePos++) {
+        if (linePos >= lineText.length()) {
+          linePos = targetPos = lineText.length();
+          break;
+        }
         targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
       }
       semanticTokens.set(i + 1, targetPos - previousTargetPos);
@@ -221,6 +229,10 @@ public class Document {
       // length
       targetPos = targetPos + semanticTokens.get(i + 2);
       for (; linePos < targetPos; linePos++) {
+        if (linePos >= lineText.length()) {
+          targetPos = lineText.length();
+          break;
+        }
         targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
       }
       semanticTokens.set(i + 2, targetPos - previousTargetPos);
@@ -248,6 +260,9 @@ public class Document {
 
     String lineText = textLines.get(line);
     for (int i = 0; i < character; i++) {
+      if (i >= lineText.length()) {
+        break;
+      }
       column += utf8Utf16LengthDifference(lineText.charAt(i));
     }
 

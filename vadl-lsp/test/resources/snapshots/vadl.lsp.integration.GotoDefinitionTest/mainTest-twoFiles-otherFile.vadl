@@ -1,0 +1,4 @@
+instruction set architecture TEST = {
+  constant foo = 13
+  register X : Bits<5> -> Bits<32>
+}

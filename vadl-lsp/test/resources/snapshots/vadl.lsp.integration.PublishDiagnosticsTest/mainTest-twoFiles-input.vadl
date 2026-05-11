@@ -1,0 +1,6 @@
+// error in imported file
+import "mainTest-twoFiles-otherFile"::TEST
+
+application binary interface ABI for TEST = {
+  alias register hello = X(0)
+}

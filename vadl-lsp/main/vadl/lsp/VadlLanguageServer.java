@@ -150,8 +150,8 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   }
   
   /**
-   * Sets the Future the Launcher produced. Canceling this Future stops the
-   * language server implementation.
+   * Sets the Future the Launcher produced. Canceling this Future stops the underlying LSP stack
+   * (as provided by lsp4j).
    *
    * @param listeningFuture As produced by LSPLauncher.startListening()
    */
@@ -199,7 +199,9 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     c.setTextDocumentSync(tdso);
 
     // Semantic Tokens
-    if (!settings.noSyntaxHighlighting()) {
+    var capabilities = params.getCapabilities().getTextDocument();
+    if (!settings.noSyntaxHighlighting()
+        && capabilities != null && capabilities.getSemanticTokens() != null) {
       String[] desiredTokenTypes = new String[] {
           SemanticTokenTypes.Type,
           SemanticTokenTypes.Variable,
@@ -210,8 +212,7 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
       };
       List<String> tokenTypes = new ArrayList<>(desiredTokenTypes.length);
       // Limit token types to those supported by the client
-      List<String> clientSupportedTypes = params.getCapabilities().getTextDocument()
-          .getSemanticTokens().getTokenTypes();
+      List<String> clientSupportedTypes = capabilities.getSemanticTokens().getTokenTypes();
       for (String token : desiredTokenTypes) {
         if (clientSupportedTypes.contains(token)) {
           tokenTypes.add(token);
