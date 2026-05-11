@@ -20,7 +20,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      benchmark-command: ./gradlew test -i --tests "vadl.rtl.riscv.RtlRiscVBenchmarkTest" -Dtags.include=BenchmarkTest
+      benchmark-command: ./gradlew :vadl:test -i --tests "vadl.rtl.riscv.RtlRiscVBenchmarkTest" -Dtags.include=BenchmarkTest
       artifact-source: vadl/riscv_rtl_dec_benchmarks.csv
       artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/rtl/riscv/benchmark/results
