@@ -27,6 +27,10 @@ import com.tngtech.archunit.lang.ArchRule;
 public class AnnotationRuleTest {
   public static final String ORG_JETBRAINS_ANNOTATIONS_NOT_NULL =
       "org.jetbrains.annotations.NotNull";
+
+  public static final String JAVAX_ANNOTATION_CHECK_FOR_NULL =
+      "javax.annotation.CheckForNull";
+
   public static final String JAVAX_VALIDATION_CONSTRAINTS_NOT_NULL =
       "javax.validation.constraints.NotNull";
   public static final String JAKARTA_VALIDATION_CONSTRAINTS_NOT_NULL =
@@ -34,13 +38,14 @@ public class AnnotationRuleTest {
   @ArchTest
   static final ArchRule noNotNullAnnotationsForClasses = // Intellij shows not used, but it is
       noClasses().should().beAnnotatedWith(ORG_JETBRAINS_ANNOTATIONS_NOT_NULL)
+          .orShould().beAnnotatedWith(JAVAX_ANNOTATION_CHECK_FOR_NULL)
           .orShould().beAnnotatedWith(JAVAX_VALIDATION_CONSTRAINTS_NOT_NULL)
           .orShould().beAnnotatedWith(JAKARTA_VALIDATION_CONSTRAINTS_NOT_NULL);
-
   @ArchTest
   static final ArchRule noNotNullAnnotationsForMethods = // Intellij shows not used, but it is
       noMethods().that().areDeclaredInClassesThat().areNotAnnotatedWith("kotlin.Metadata")
           .should().beAnnotatedWith(ORG_JETBRAINS_ANNOTATIONS_NOT_NULL)
+          .orShould().beAnnotatedWith(JAVAX_ANNOTATION_CHECK_FOR_NULL)
           .orShould().beAnnotatedWith(JAVAX_VALIDATION_CONSTRAINTS_NOT_NULL)
           .orShould().beAnnotatedWith(JAKARTA_VALIDATION_CONSTRAINTS_NOT_NULL);
 

@@ -21,7 +21,7 @@ import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
 import java.util.Set;
-import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
@@ -64,7 +64,7 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     return PassName.of("ISS Register Access Info Retrieval");
   }
 
-  @CheckForNull
+  @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var registry = new IssAccessorRegistry();
@@ -96,7 +96,7 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
   }
 
   private void collectAccessorDescriptors(Graph behavior,
-                                         IssAccessorRegistry registry) {
+                                          IssAccessorRegistry registry) {
     behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
         .forEach((n) -> {
           if (n instanceof ReadRegTensorNode readRegTensorNode) {
@@ -148,7 +148,7 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     collectAliasAccessorDescriptor(writeNode.aliasResource(), RegInfo.AccessType.WRITE, registry);
   }
 
-  private void collectAliasAccessorDescriptor(@CheckForNull ArtificialResource alias,
+  private void collectAliasAccessorDescriptor(@Nullable ArtificialResource alias,
                                               RegInfo.AccessType type,
                                               IssAccessorRegistry registry) {
     if (alias == null) {
