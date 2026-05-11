@@ -54,9 +54,9 @@ abstract class Definition extends Node {
 
   Definition withAnnotations(List<AnnotationDefinition> annotations) {
     this.annotations = annotations;
-    annotations.forEach(a -> {
-      a.target = this;
-    });
+    for (var annotation : annotations) {
+      annotation.target = this;
+    }
     return this;
   }
 
@@ -803,14 +803,27 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
   }
 
   boolean hasField(String name) {
-    return fieldsWithoutEncodingPredicate()
-        .anyMatch(f -> f.identifier().name.equals(name));
+    for (var field : fields) {
+      if (field instanceof PredicateFormatField || field instanceof EncodingFormatField) {
+        continue;
+      }
+      if (field.identifier().name.equals(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   FormatField getField(String name) {
-    return fieldsWithoutEncodingPredicate()
-        .filter(f -> f.identifier().name.equals(name)).findFirst()
-        .orElseThrow();
+    for (var field : fields) {
+      if (field instanceof PredicateFormatField || field instanceof EncodingFormatField) {
+        continue;
+      }
+      if (field.identifier().name.equals(name)) {
+        return field;
+      }
+    }
+    throw new IllegalArgumentException("Field with name '" + name + "' not found");
   }
 
   @Nullable
