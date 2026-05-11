@@ -2002,3 +2002,9 @@ In addition, several behavioral aspects of the cache can be specified, such as w
 ## Processor Definition
 
 \lbl{tut_prc_definition}
+
+## User Mode Emulation
+
+\lbl{tut_ume_definition}
+
+The \ac{UserModeEmulation} definition determines how a VADL specification maps to QEMU's Linux user-mode emulation (UME). 
