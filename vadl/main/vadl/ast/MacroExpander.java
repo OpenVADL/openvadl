@@ -1565,7 +1565,7 @@ class MacroExpander
   private SourceLocation copyLoc(SourceLocation loc) {
     // FIXME: At the time of writing we sometimes issued the pass twice resulting in double
     // reporting of expandedFrom
-    if (expandingFrom == null) {
+    if (expandingFrom == null || expandingFrom.isEmpty()) {
       return loc;
     }
 
