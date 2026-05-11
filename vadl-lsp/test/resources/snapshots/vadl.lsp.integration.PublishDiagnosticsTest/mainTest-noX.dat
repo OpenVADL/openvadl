@@ -34,7 +34,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
         code = null
         codeDescription = null
         source = null
-        message = "Unknown Symbol: "X"\nNo symbol with this name exists."
+        message = "Unknown Symbol: "X"\nNo Symbol with this name exists."
         tags = null
         relatedInformation = null
         data = null
@@ -45,7 +45,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
 
 - ... which looks like this: 
   Error: Unknown Symbol: "X"
-  No symbol with this name exists.
+  No Symbol with this name exists.
   ================
     // no X
     instruction set architecture TEST = {

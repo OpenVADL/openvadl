@@ -222,9 +222,11 @@ public class DocumentTest {
   public void rangeCalculation_asciiOnly() {
     Document document = new Document(TEST_URI, 0, TEST_TEXT);
 
-    var vadlRange = new SourceLocation(null,
+    var vadlRange = SourceLocation.of(null,
         new SourceLocation.Position(1, 3),
-        new SourceLocation.Position(2, 15));
+        new SourceLocation.Position(2, 15),
+        null
+    );
 
     var lspRange = document.calculateUtf16Range(vadlRange);
     assertThat(lspRange.getStart()).extracting("line", "character")

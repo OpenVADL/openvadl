@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.error.Diagnostic;
 import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
 
@@ -136,7 +137,11 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
     }
 
     List<String> textLines;
-    textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
+    try {
+      textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
+    } catch (Diagnostic e) {
+      return null;
+    }
     return new Document(uri, -1, textLines);
   }
 

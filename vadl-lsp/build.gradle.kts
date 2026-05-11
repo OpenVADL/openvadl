@@ -7,4 +7,6 @@ dependencies {
     implementation(libs.lsp4j)
 
     testImplementation(libs.assertj.core)
+    testCompileOnly(libs.jsr305)
+    testImplementation(libs.guava)
 }

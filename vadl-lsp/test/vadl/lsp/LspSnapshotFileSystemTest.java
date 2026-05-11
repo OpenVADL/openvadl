@@ -22,13 +22,13 @@ import static vadl.lsp.LspUtils.toPath;
 import static vadl.lsp.LspUtils.toUri;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import vadl.error.Diagnostic;
 import vadl.utils.SingleFileVirtualFileSystem;
 
 /**
@@ -37,7 +37,7 @@ import vadl.utils.SingleFileVirtualFileSystem;
 public class LspSnapshotFileSystemTest {
 
   @Test
-  public void emptyVfsDelegates() throws IOException {
+  public void emptyVfsDelegates() {
     var existingPath = SingleFileVirtualFileSystem.DEFAULT_PATH.toAbsolutePath();
     var invalidPath = toPath(DocumentTest.TEST_URI);
     var underlyingFs = new SingleFileVirtualFileSystem(DocumentTest.TEST_TEXT, existingPath);
@@ -55,12 +55,12 @@ public class LspSnapshotFileSystemTest {
     // getInputStream()
     assertThat(inputStreamToString(vfs.getInputStream(existingPath)))
         .isEqualTo(inputStreamToString(underlyingFs.getInputStream(existingPath)));
-    assertThrows(IOException.class, () -> vfs.getInputStream(invalidPath));
+    assertThrows(Diagnostic.class, () -> vfs.getInputStream(invalidPath));
 
     // readLines()
     assertThat(vfs.readLines(existingPath).collect(Collectors.joining("\n")))
         .isEqualTo(underlyingFs.readLines(existingPath).collect(Collectors.joining("\n")));
-    assertThrows(IOException.class, () -> vfs.readLines(invalidPath));
+    assertThrows(Diagnostic.class, () -> vfs.readLines(invalidPath));
 
     // toAbsolutePath()
     assertThat(vfs.toAbsolutePath(existingPath))
@@ -87,7 +87,7 @@ public class LspSnapshotFileSystemTest {
   }
 
   @Test
-  public void vfsWithDocuments() throws IOException {
+  public void vfsWithDocuments() {
     var existingPath = toPath(DocumentTest.TEST_URI);
     var overridenDocument = new Document(DocumentTest.TEST_URI, 3, DocumentTest.TEST_TEXT);
 
@@ -114,14 +114,14 @@ public class LspSnapshotFileSystemTest {
         .isNotEqualTo(inputStreamToString(underlyingFs.getInputStream(existingPath)));
     assertThat(inputStreamToString(vfs.getInputStream(newPath)))
         .isEqualTo(DocumentTest.TEST_TEXT2);
-    assertThrows(IOException.class, () -> vfs.getInputStream(invalidPath));
+    assertThrows(Diagnostic.class, () -> vfs.getInputStream(invalidPath));
 
     // readLines()
     assertThat(vfs.readLines(existingPath).collect(Collectors.joining("\n")))
         .isEqualTo(DocumentTest.TEST_TEXT);
     assertThat(vfs.readLines(newPath).collect(Collectors.joining("\n")))
         .isEqualTo(DocumentTest.TEST_TEXT2);
-    assertThrows(IOException.class, () -> vfs.readLines(invalidPath));
+    assertThrows(Diagnostic.class, () -> vfs.readLines(invalidPath));
 
     // toAbsolutePath()
     assertThat(vfs.toAbsolutePath(existingPath))
