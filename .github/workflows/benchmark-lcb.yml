@@ -22,7 +22,6 @@ jobs:
       runner: self-hosted-x64
       benchmark-command: ./gradlew :vadl:test -i --tests "vadl.lcb.riscv.riscv32.EmbenchBenchmarkRiscv32Test" -Dtags.include=BenchmarkTest
       artifact-source: vadl/riscv32.csv
-      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/lcb/riscv32/instruction-delta/results
       commit-message: 'data: Pushed LCB data'
       extra-env: |
@@ -35,7 +34,6 @@ jobs:
       runner: self-hosted-x64
       benchmark-command: ./gradlew :vadl:test -i --tests "vadl.lcb.riscv.riscv64.EmbenchBenchmarkRiscv64Test" -Dtags.include=BenchmarkTest
       artifact-source: vadl/riscv64.csv
-      artifact-name: ${{ github.event.repository.updated_at }}_${{ github.sha }}.csv
       destination-folder: data/lcb/riscv64/instruction-delta/results
       commit-message: 'data: Pushed LCB data'
       extra-env: |
