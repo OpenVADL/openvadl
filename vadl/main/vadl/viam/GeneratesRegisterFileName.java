@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,12 @@ import vadl.utils.SourceLocation;
 /**
  * Interface to combine common functionality for {@link RegisterTensor} and
  * {@link ArtificialResource}.
+ *
+ * @deprecated Use {@link RegisterResource} instead.
  */
+// TODO: This is a bad abstraction. We already have the RegisterResource class that
+//    combines RegisterTensor and ArtificialResource. (#945)
+@Deprecated
 public interface GeneratesRegisterFileName {
 
   /**
