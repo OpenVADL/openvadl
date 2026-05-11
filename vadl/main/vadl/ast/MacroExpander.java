@@ -48,13 +48,15 @@ class MacroExpander
   final Map<String, Identifier> macroOverrides;
   final List<Diagnostic> errors = new ArrayList<>();
   @Nullable
-  final List<SourceLocation.DirectLocation> expandingFrom;
+  final RopeList<SourceLocation.DirectLocation> expandingFrom;
 
   MacroExpander(Map<String, Node> args, Map<String, Identifier> macroOverrides,
                 @Nullable List<SourceLocation.DirectLocation> expandingFrom) {
     this.args = args;
     this.macroOverrides = macroOverrides;
-    this.expandingFrom = expandingFrom;
+    this.expandingFrom = expandingFrom == null || expandingFrom.isEmpty()
+        ? null
+        : RopeList.of(expandingFrom);
   }
 
   /**

@@ -208,11 +208,11 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
    * @param newExpandedFrom to be appended.
    * @return the new location.
    */
-  default SourceLocation copyWithAppendedExpandedFrom(List<DirectLocation> newExpandedFrom) {
+  default SourceLocation copyWithAppendedExpandedFrom(RopeList<DirectLocation> newExpandedFrom) {
     return switch (this) {
-      case DirectLocation direct -> new ExpandedLocation(direct, RopeList.of(newExpandedFrom));
+      case DirectLocation direct -> new ExpandedLocation(direct, newExpandedFrom);
       case ExpandedLocation original -> new ExpandedLocation(original.primaryLocation,
-          original.expandedFrom.concat(RopeList.of(newExpandedFrom)));
+          original.expandedFrom.concat(newExpandedFrom));
     };
   }
 
