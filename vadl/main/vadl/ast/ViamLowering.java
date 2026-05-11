@@ -2002,11 +2002,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
-   * Maps a {@link SpecialPurposeRegisterDefinition} to a {@link Abi.RegisterRef}.
+   * Maps a {@link SpecialPurposeRegisterDefinition} to a {@link Abi.AbiRegister}.
    * It expects only one register in the {@link SpecialPurposeRegisterDefinition}. Otherwise,
    * it will throw an error.
    */
-  private Abi.RegisterRef mapSingleSpecialPurposeRegisterDef(
+  private Abi.AbiRegister mapSingleSpecialPurposeRegisterDef(
       Map<Identifier, Expr> aliasLookup,
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
     return specialPurposeRegisterDef.exprs.stream()
@@ -2015,9 +2015,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
-   * Maps a {@link SpecialPurposeRegisterDefinition} to a list of {@link Abi.RegisterRef}.
+   * Maps a {@link SpecialPurposeRegisterDefinition} to a list of {@link Abi.AbiRegister}.
    */
-  private List<Abi.RegisterRef> mapSpecialPurposeRegistersDef(
+  private List<Abi.AbiRegister> mapSpecialPurposeRegistersDef(
       Map<Identifier, Expr> aliasLookup,
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
     return specialPurposeRegisterDef.exprs.stream()
@@ -2026,12 +2026,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
-   * Maps a {@link SpecialPurposeRegisterDefinition} to a list of {@link Abi.RegisterRef}.
+   * Maps a {@link SpecialPurposeRegisterDefinition} to a list of {@link Abi.AbiRegister}.
    */
-  private List<List<Abi.RegisterRef>> mapSpecialPurposeRegistersDefs(
+  private List<List<Abi.AbiRegister>> mapSpecialPurposeRegistersDefs(
       Map<Identifier, Expr> aliasLookup,
       List<SpecialPurposeRegisterDefinition> specialPurposeRegisterDefs) {
-    List<List<Abi.RegisterRef>> result = new ArrayList<>();
+    List<List<Abi.AbiRegister>> result = new ArrayList<>();
 
     for (var def : specialPurposeRegisterDefs) {
       var iter = def.exprs.stream()
@@ -2044,7 +2044,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return result;
   }
 
-  private Abi.RegisterRef getRegisterRefByAliasOrRegister(
+  private Abi.AbiRegister getRegisterRefByAliasOrRegister(
       Map<Identifier, Expr> aliasLookup,
       ExpandedSequenceCallExpr aliasOrRegister) {
     if (aliasOrRegister instanceof ExpandedAliasDefSequenceCallExpr registerCallExpr) {
@@ -2055,10 +2055,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
-   * Maps the aliases {@code alias register zero = X(0)} to {@link Abi.RegisterRef} to be
+   * Maps the aliases {@code alias register zero = X(0)} to {@link Abi.AbiRegister} to be
    * used in {@link Abi}.
    */
-  private Abi.RegisterRef mapAliasToRegisterRef(
+  private Abi.AbiRegister mapAliasToRegisterRef(
       Map<Identifier, Expr> aliasLookup,
       Identifier identifier) {
     var expr = ensureNonNull(aliasLookup.get(identifier),
@@ -2067,12 +2067,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return mapToRegisterRef(expr);
   }
 
-  private Abi.RegisterRef mapToRegisterRef(Expr expr) {
+  private Abi.AbiRegister mapToRegisterRef(Expr expr) {
     var pair = getRegisterFile(expr);
     var registerFile = pair.left();
     var index = pair.right();
 
-    return new Abi.RegisterRef(registerFile, index, new Abi.Alignment(-1), expr.location());
+    return new Abi.AbiRegister(registerFile, index, new Abi.Alignment(-1), expr.location());
   }
 
   /**

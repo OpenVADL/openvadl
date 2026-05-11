@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -151,21 +151,21 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var renderedIntrinsics =
         lcbConfiguration().skipPatternGeneration() ? Collections.emptyList() :
             intrinsics
-                .stream()
-                .filter(intrinsic -> {
-                  // We cannot map intrinsics to instructions when they do not have any operands
-                  // (input, output). Instead, it is mapped in the ISelLowering.
-                  var record = tableGenMachineRecordsLookup.get(intrinsic.instruction());
+            .stream()
+            .filter(intrinsic -> {
+              // We cannot map intrinsics to instructions when they do not have any operands
+              // (input, output). Instead, it is mapped in the ISelLowering.
+              var record = tableGenMachineRecordsLookup.get(intrinsic.instruction());
 
-                  if (record != null) {
-                    return !(record.getInOperands().isEmpty() && record.getOutOperands().isEmpty());
-                  }
+              if (record != null) {
+                return !(record.getInOperands().isEmpty() && record.getOutOperands().isEmpty());
+              }
 
-                  return true;
-                })
-                .map(x -> TableGenInstructionPatternRenderer.lower(tableGenMachineRecords, x))
-                .sorted()
-                .toList();
+              return true;
+            })
+            .map(x -> TableGenInstructionPatternRenderer.lower(tableGenMachineRecords, x))
+            .sorted()
+            .toList();
 
     var compensationPatterns =
         (List<TableGenSelectionWithOutputPattern>) passResults.lastResultOf(
@@ -197,9 +197,9 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase());
-    map.put("returnAddress", abi.returnAddress().render());
+    map.put("returnAddress", renderRegister(abi.returnAddress()));
     map.put("addi", addi.simpleName());
-    map.put("stackPointerRegister", abi.stackPointer().render());
+    map.put("stackPointerRegister", renderRegister(abi.stackPointer()));
     map.put("stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
     map.put("immediates", renderedImmediates);

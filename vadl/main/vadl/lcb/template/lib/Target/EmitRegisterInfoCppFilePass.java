@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -46,7 +46,6 @@ import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.types.SIntType;
-import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
@@ -120,12 +119,12 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "constraints", constraints,
-        "framePointer", abi.framePointer().render(),
-        "returnAddress", abi.returnAddress().render(),
-        "stackPointer", abi.stackPointer().render(),
+        "framePointer", renderRegister(abi.framePointer()),
+        "returnAddress", renderRegister(abi.returnAddress()),
+        "stackPointer", renderRegister(abi.stackPointer()),
         "hasThreadPointer", abi.threadPointer().isPresent(),
-        "threadPointer", abi.threadPointer().map(Abi.RegisterRef::render).orElse(""),
-        "globalPointer", abi.globalPointer().map(Abi.RegisterRef::render).orElse(""),
+        "threadPointer", abi.threadPointer().map(this::renderRegister).orElse(""),
+        "globalPointer", abi.globalPointer().map(this::renderRegister).orElse(""),
         "frameIndexEliminations",
         getEliminateFrameIndexEntries(instructionLabels, uninlined,
             tableGenMachineInstructions).stream()

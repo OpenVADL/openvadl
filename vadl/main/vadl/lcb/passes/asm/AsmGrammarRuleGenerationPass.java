@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
@@ -95,7 +94,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
 
   private int namingSequence = 0;
 
-  @CheckForNull
+  @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 

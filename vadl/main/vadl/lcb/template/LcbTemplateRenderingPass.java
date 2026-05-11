@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,9 +23,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.valuetypes.CompilerRegisterUtils;
 import vadl.template.AbstractTemplateRenderingPass;
-import vadl.viam.GeneratesRegisterFileName;
-import vadl.viam.RegisterTensor;
+import vadl.viam.Abi;
+import vadl.viam.RegisterResource;
 
 /**
  * Abstracts the subdir under the output.
@@ -39,8 +40,12 @@ public abstract class LcbTemplateRenderingPass extends AbstractTemplateRendering
     return (LcbConfiguration) configuration();
   }
 
-  protected String renderRegister(GeneratesRegisterFileName registerFile, int addr) {
-    return registerFile.generateRegisterFileName(addr);
+  protected String renderRegister(RegisterResource registerFile, int addr) {
+    return CompilerRegisterUtils.indexedRegisterName(registerFile, addr);
+  }
+
+  protected String renderRegister(Abi.AbiRegister register) {
+    return renderRegister(register.registerFile(), register.addr());
   }
 
   @Override

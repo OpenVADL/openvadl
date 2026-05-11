@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,7 +29,6 @@ import vadl.template.Renderable;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
-import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 
@@ -73,7 +72,7 @@ public class RegisterUtils {
    * Wrapper class for register file because the register file does
    * not specify the individual registers.
    */
-  public record RegisterClass(GeneratesRegisterFileName registerFile, List<Register> registers)
+  public record RegisterClass(RegisterResource registerFile, List<Register> registers)
       implements
       Renderable {
 

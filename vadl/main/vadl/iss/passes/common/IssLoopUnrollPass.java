@@ -17,13 +17,12 @@
 package vadl.iss.passes.common;
 
 import java.io.IOException;
-import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.common.safeResourceRead.IssSafeResourceReadAnalysis;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.ForallNode;
@@ -45,7 +44,7 @@ public class IssLoopUnrollPass extends AbstractIssPass {
     return PassName.of("ISS Loop Unroll Pass");
   }
 
-  @CheckForNull
+  @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     tcgInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());

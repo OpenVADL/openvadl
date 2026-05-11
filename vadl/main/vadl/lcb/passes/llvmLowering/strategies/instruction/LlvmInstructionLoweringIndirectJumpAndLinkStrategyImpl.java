@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -30,6 +30,7 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.RegisterRef;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
+import vadl.gcb.valuetypes.CompilerRegisterUtils;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
@@ -49,12 +50,11 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
-import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
-import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
+import vadl.viam.RegisterResource;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -194,7 +194,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
         new LlvmReadRegFileNode(ref.regTensor(), address.copy(), ref.type(),
             ref.staticCounterAccess());
     machine.addWithInputs(new LcbMachineInstructionNode(
-        new NodeList<>(new ConstantNode(new Constant.Str(abi.returnAddress().render())),
+        new NodeList<>(new ConstantNode(new Constant.Str(renderAbiRegister(abi.returnAddress()))),
             llvmReadRegFile,
             new ConstantNode(constant)), jalr));
     return new TableGenPseudoInstExpansionPattern("PseudoCALLIndirect",
@@ -247,7 +247,7 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     var machine = new Graph("machine");
     machine.addWithInputs(new LcbMachineInstructionNode(
         new NodeList<>(
-            new ConstantNode(new Constant.Str(zeroRegister(inputRegister.registerFile()))),
+            new ConstantNode(new Constant.Str(zeroRegisterName(inputRegister.registerFile()))),
             new LlvmReadRegFileNode(ref.registerTensor(), address, ref.type(),
                 ref.staticCounterAccess()),
             fieldRef), jalr));
@@ -332,15 +332,14 @@ public class LlvmInstructionLoweringIndirectJumpAndLinkStrategyImpl
     return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 
-  private static String zeroRegister(GeneratesRegisterFileName registerFile) {
-    var constraint =
-        ensurePresent(
-            registerFile.constraints().stream().filter(x -> x.value().intValue() == 0)
-                .findFirst(),
-            () -> Diagnostic.error("There must a constraint for the zero register.",
-                registerFile.location())
-        );
+  private static String zeroRegisterName(RegisterResource registerFile) {
+    var indices = ensurePresent(CompilerRegisterUtils.zeroRegister(registerFile),
+        () -> Diagnostic.error("There must a constraint for the zero register.",
+            registerFile.location()));
+    return CompilerRegisterUtils.indexedRegisterName(registerFile, indices.getFirst().intValue());
+  }
 
-    return registerFile.identifier().simpleName() + constraint.indices().getFirst().intValue();
+  private static String renderAbiRegister(Abi.AbiRegister register) {
+    return CompilerRegisterUtils.indexedRegisterName(register.registerFile(), register.addr());
   }
 }

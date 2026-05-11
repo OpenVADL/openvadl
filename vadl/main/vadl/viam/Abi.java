@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * VADL ABI representation.
@@ -190,20 +191,39 @@ public class Abi extends Definition {
   }
 
   /**
-   * Constructor.
+   * ABI-specific register role.
    *
-   * @param registerFile is the "parent" of the register.
-   * @param addr         represents the index in a register file.
-   *                     E.g., RISC-V's X11 would have {@code addr = 11}.
-   * @param alignment    for the spilling of the register.
+   * @param registerRef semantic register reference
+   * @param alignment   for the spilling of the register
    */
-  public record RegisterRef(RegisterResource registerFile,
-                            int addr,
-                            Alignment alignment,
-                            SourceLocation location) {
-    public String render() {
-      return registerFile.generateRegisterFileName(addr);
+  public record AbiRegister(RegisterRef registerRef,
+                            Alignment alignment) implements WithLocation {
+
+    /**
+     * Constructs an ABI register role from the historical single-index representation.
+     */
+    public AbiRegister(RegisterResource registerFile,
+                       int addr,
+                       Alignment alignment,
+                       SourceLocation location) {
+      this(new RegisterRef(registerFile,
+          List.of(Constant.Value.of(addr, registerFile.indexTypes().getFirst())),
+          location), alignment);
     }
+
+    public RegisterResource registerFile() {
+      return registerRef.resource();
+    }
+
+    public int addr() {
+      return registerRef.singleIndex();
+    }
+
+    @Override
+    public SourceLocation location() {
+      return registerRef.location();
+    }
+
   }
 
   /**
@@ -213,18 +233,18 @@ public class Abi extends Definition {
   }
 
 
-  private final RegisterRef returnAddress;
-  private final RegisterRef stackPointer;
-  private final Optional<RegisterRef> globalPointer;
-  private final RegisterRef framePointer;
-  private final Optional<RegisterRef> threadPointer;
+  private final AbiRegister returnAddress;
+  private final AbiRegister stackPointer;
+  private final Optional<AbiRegister> globalPointer;
+  private final AbiRegister framePointer;
+  private final Optional<AbiRegister> threadPointer;
 
 
   private final Map<Pair<RegisterResource, Integer>, List<RegisterAlias>> aliases;
-  private final List<RegisterRef> callerSaved;
-  private final List<RegisterRef> calleeSaved;
-  private final List<RegisterRef> argumentRegisters;
-  private final List<List<RegisterRef>> returnRegisters;
+  private final List<AbiRegister> callerSaved;
+  private final List<AbiRegister> calleeSaved;
+  private final List<AbiRegister> argumentRegisters;
+  private final List<List<AbiRegister>> returnRegisters;
   private final PrintableInstruction returnSequence;
   private final PrintableInstruction callSequence;
   private final Optional<PrintableInstruction> localAddressLoad;
@@ -248,16 +268,16 @@ public class Abi extends Definition {
    * Constructor.
    */
   public Abi(Identifier identifier,
-             RegisterRef returnAddress,
-             RegisterRef stackPointer,
-             RegisterRef framePointer,
-             Optional<RegisterRef> globalPointer,
-             Optional<RegisterRef> threadPointer,
+             AbiRegister returnAddress,
+             AbiRegister stackPointer,
+             AbiRegister framePointer,
+             Optional<AbiRegister> globalPointer,
+             Optional<AbiRegister> threadPointer,
              Map<Pair<RegisterResource, Integer>, List<RegisterAlias>> aliases,
-             List<RegisterRef> callerSaved,
-             List<RegisterRef> calleeSaved,
-             List<RegisterRef> argumentRegisters,
-             List<List<RegisterRef>> returnRegisters,
+             List<AbiRegister> callerSaved,
+             List<AbiRegister> calleeSaved,
+             List<AbiRegister> argumentRegisters,
+             List<List<AbiRegister>> returnRegisters,
              PrintableInstruction returnSequence,
              PrintableInstruction callSequence,
              Optional<PrintableInstruction> localAddressLoad,
@@ -300,23 +320,23 @@ public class Abi extends Definition {
   }
 
 
-  public RegisterRef returnAddress() {
+  public AbiRegister returnAddress() {
     return returnAddress;
   }
 
-  public RegisterRef stackPointer() {
+  public AbiRegister stackPointer() {
     return stackPointer;
   }
 
-  public RegisterRef framePointer() {
+  public AbiRegister framePointer() {
     return framePointer;
   }
 
-  public Optional<RegisterRef> globalPointer() {
+  public Optional<AbiRegister> globalPointer() {
     return globalPointer;
   }
 
-  public Optional<RegisterRef> threadPointer() {
+  public Optional<AbiRegister> threadPointer() {
     return threadPointer;
   }
 
@@ -324,19 +344,19 @@ public class Abi extends Definition {
     return aliases;
   }
 
-  public List<RegisterRef> callerSaved() {
+  public List<AbiRegister> callerSaved() {
     return callerSaved;
   }
 
-  public List<RegisterRef> calleeSaved() {
+  public List<AbiRegister> calleeSaved() {
     return calleeSaved;
   }
 
-  public List<RegisterRef> argumentRegisters() {
+  public List<AbiRegister> argumentRegisters() {
     return argumentRegisters;
   }
 
-  public List<List<RegisterRef>> returnRegisters() {
+  public List<List<AbiRegister>> returnRegisters() {
     return returnRegisters;
   }
 

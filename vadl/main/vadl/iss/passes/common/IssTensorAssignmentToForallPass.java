@@ -21,7 +21,7 @@ import static vadl.iss.passes.common.opDecomposition.decomposer.ForallSubstituti
 import static vadl.utils.StreamUtils.only;
 
 import java.io.IOException;
-import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.nodes.IssWriteRegNode;
@@ -78,7 +78,7 @@ public class IssTensorAssignmentToForallPass extends AbstractIssPass {
     return PassName.of("ISS Tensor Assignment To Forall Pass");
   }
 
-  @CheckForNull
+  @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     allInstrs(viam).forEach(instruction ->

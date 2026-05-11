@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Bundles {@link RegisterTensor} and {@link ArtificialResource} together.
  */
-public abstract class RegisterResource extends Resource implements GeneratesRegisterFileName  {
+public abstract class RegisterResource extends Resource {
   private final List<Constraint> constraints;
 
   public RegisterResource(Identifier identifier) {
@@ -31,7 +31,6 @@ public abstract class RegisterResource extends Resource implements GeneratesRegi
     this.constraints = new ArrayList<>();
   }
 
-  @Override
   public List<Constraint> constraints() {
     return constraints;
   }
@@ -44,6 +43,20 @@ public abstract class RegisterResource extends Resource implements GeneratesRegi
   public void addConstraint(Constraint constraint) {
     constraints.add(constraint);
   }
+
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  /**
+   * Returns the dimensions of this register resource.
+   */
+  public abstract List<RegisterTensor.Dimension> dimensions();
+
+  /**
+   * Returns whether this register resource represents a register file.
+   */
+  public abstract boolean isRegisterFile();
 
 
   /**

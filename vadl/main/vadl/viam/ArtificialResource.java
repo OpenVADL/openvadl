@@ -153,11 +153,6 @@ public class ArtificialResource extends RegisterResource {
   }
 
   @Override
-  public Identifier identifier() {
-    return identifier;
-  }
-
-  @Override
   public List<RegisterTensor.Dimension> dimensions() {
     return dimensions;
   }

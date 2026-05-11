@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@ package vadl.lcb.template.lib.Target;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.valuetypes.CompilerRegisterUtils;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -62,7 +63,7 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
         .registerTensors()
         .stream()
         .filter(RegisterTensor::isRegisterFile)
-        .filter(x -> x.zeroRegister().isPresent())
+        .filter(x -> CompilerRegisterUtils.zeroRegister(x).isPresent())
         .toList();
 
     // The idea is that when we have zero register then we can use it.
@@ -71,8 +72,8 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
     // we might get a problem.
     if (registerFilesCandidates.size() == 1) {
       var registerFile = registerFilesCandidates.stream().findFirst().get();
-      var zeroIndex = registerFile.zeroRegister().get().getFirst().intValue();
-      var zeroRegister = registerFile.generateRegisterFileName(zeroIndex);
+      var zeroIndex = CompilerRegisterUtils.zeroRegister(registerFile).get().getFirst().intValue();
+      var zeroRegister = CompilerRegisterUtils.indexedRegisterName(registerFile, zeroIndex);
 
       return Map.of(CommonVarNames.NAMESPACE,
           lcbConfiguration().targetName().value().toLowerCase(),

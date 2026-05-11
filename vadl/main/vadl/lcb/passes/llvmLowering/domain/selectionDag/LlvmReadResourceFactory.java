@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ import vadl.error.Diagnostic;
 import vadl.types.DataType;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Counter;
-import vadl.viam.GeneratesRegisterFileName;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -33,7 +33,7 @@ public class LlvmReadResourceFactory {
   /**
    * Based on the {@code registerFile} creates a node.
    */
-  public ExpressionNode create(GeneratesRegisterFileName registerFile,
+  public ExpressionNode create(RegisterResource registerFile,
                                FieldRefNode address,
                                DataType type,
                                @Nullable Counter counter) {
