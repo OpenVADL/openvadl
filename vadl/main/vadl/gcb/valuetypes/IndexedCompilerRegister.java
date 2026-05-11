@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
-import vadl.viam.GeneratesRegisterFileName;
+import vadl.viam.RegisterResource;
 
 /**
  * Like a {@link CompilerRegister} but contains the index in the register file.
@@ -44,7 +44,7 @@ public class IndexedCompilerRegister extends CompilerRegister {
                                   List<String> altNames,
                                   int dwarfNumber,
                                   boolean isArtificial,
-                                  GeneratesRegisterFileName registerFile) {
+                                  RegisterResource registerFile) {
     super(regFileName,
         asmName,
         altNames,
@@ -66,7 +66,7 @@ public class IndexedCompilerRegister extends CompilerRegister {
    * @param isArtificial      registers in {@code registerFile} do not really exist.
    * @return a list of registers generated from the register file.
    */
-  public static List<CompilerRegister> fromRegisterFile(GeneratesRegisterFileName registerFile,
+  public static List<CompilerRegister> fromRegisterFile(RegisterResource registerFile,
                                                         Abi abi,
                                                         int dwarfNumberOffset,
                                                         boolean isArtificial) {
@@ -81,13 +81,13 @@ public class IndexedCompilerRegister extends CompilerRegister {
               .stream().map(Abi.RegisterAlias::value).toList();
       var alias = altNames
           .stream().findFirst()
-          .orElse(registerFile.generateRegisterFileName(addr));
+          .orElse(CompilerRegisterUtils.indexedRegisterName(registerFile, addr));
 
       int dwarfNumber = dwarfNumberOffset + addr;
 
       registers.add(
           new IndexedCompilerRegister(
-              registerFile.generateRegisterFileName(addr),
+              CompilerRegisterUtils.indexedRegisterName(registerFile, addr),
               addr,
               alias,
               altNames,

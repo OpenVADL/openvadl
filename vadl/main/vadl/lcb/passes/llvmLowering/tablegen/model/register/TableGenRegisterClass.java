@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.template.Renderable;
-import vadl.viam.GeneratesRegisterFileName;
+import vadl.viam.RegisterResource;
 
 /**
  * Represents a single register file in TableGen. This is the lowered representation of a
@@ -35,7 +35,7 @@ public class TableGenRegisterClass implements
   private final int alignment;
   private final List<ValueType> regTypes;
   private final List<TableGenRegister> registers;
-  private final GeneratesRegisterFileName registerFileRef;
+  private final RegisterResource registerFileRef;
 
   /**
    * Constructor.
@@ -45,7 +45,7 @@ public class TableGenRegisterClass implements
                                int alignment,
                                List<ValueType> regTypes,
                                List<TableGenRegister> registers,
-                               GeneratesRegisterFileName registerFileRef) {
+                               RegisterResource registerFileRef) {
     this.namespace = namespace;
     this.name = name;
     this.alignment = alignment;
@@ -89,7 +89,7 @@ public class TableGenRegisterClass implements
     return registers;
   }
 
-  public GeneratesRegisterFileName registerFileRef() {
+  public RegisterResource registerFileRef() {
     return registerFileRef;
   }
 }

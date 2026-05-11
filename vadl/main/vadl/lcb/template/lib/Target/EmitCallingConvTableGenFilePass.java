@@ -79,7 +79,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
     var abi = specification.abi().orElseThrow();
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "calleeRegisters", abi.calleeSaved().stream().map(Abi.AbiRegister::render).toList(),
+        "calleeRegisters", abi.calleeSaved().stream().map(this::renderRegister).toList(),
         "functionRegisterType", getFuncArgsAssignToReg(abi).type,
         "functionRegisters", getFuncArgsAssignToReg(abi),
         "returnIfTypes", returnIfTypes(abi));
@@ -90,7 +90,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
 
     for (var def : abi.returnRegisters()) {
       var ty = ValueType.from(def.get(0).registerFile().resultType()).get();
-      var regs = def.stream().map(Abi.AbiRegister::render).toList();
+      var regs = def.stream().map(this::renderRegister).toList();
       var obj = new ReturnCCIfType(ty, regs);
       result.add(obj);
     }
@@ -106,7 +106,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
     return new AssignToReg(
         ValueType.from(abi.argumentRegisters().get(0).registerFile().resultType()).get()
             .getLlvmType(),
-        abi.argumentRegisters().stream().map(Abi.AbiRegister::render)
+        abi.argumentRegisters().stream().map(this::renderRegister)
             .collect(Collectors.joining(", ")));
   }
 }

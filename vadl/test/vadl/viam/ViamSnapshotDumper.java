@@ -21,6 +21,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import vadl.gcb.valuetypes.CompilerRegisterUtils;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
@@ -86,6 +87,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 /**
  * Produces a deterministic text snapshot of the VIAM for testing.
  */
+@SuppressWarnings("OverloadMethodsDeclarationOrder")
 public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
 
   private static final int INDENT_BY = 2;
@@ -395,9 +397,9 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
 
     @Override
     public void visit(Abi abi) {
-      lineAt(atIndent, "ReturnAddress: %s".formatted(abi.returnAddress().render()));
-      lineAt(atIndent, "StackPointer: %s".formatted(abi.stackPointer().render()));
-      lineAt(atIndent, "FramePointer: %s".formatted(abi.framePointer().render()));
+      lineAt(atIndent, "ReturnAddress: %s".formatted(renderAbiRegister(abi.returnAddress())));
+      lineAt(atIndent, "StackPointer: %s".formatted(renderAbiRegister(abi.stackPointer())));
+      lineAt(atIndent, "FramePointer: %s".formatted(renderAbiRegister(abi.framePointer())));
       lineAt(atIndent, "CallerSavedCount: %d".formatted(abi.callerSaved().size()));
       lineAt(atIndent, "CalleeSavedCount: %d".formatted(abi.calleeSaved().size()));
       lineAt(atIndent, "ArgumentRegistersCount: %d".formatted(abi.argumentRegisters().size()));
@@ -409,6 +411,10 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
       lineAt(atIndent, "RegisterAdjustmentSequenceCount: %d".formatted(
           abi.registerAdjustmentSequences().size()));
       lineAt(atIndent, "ClangTypeCount: %d".formatted(abi.clangTypes().size()));
+    }
+
+    private static String renderAbiRegister(Abi.AbiRegister register) {
+      return CompilerRegisterUtils.indexedRegisterName(register.registerFile(), register.addr());
     }
 
     @Override

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@ package vadl.gcb.valuetypes;
 
 import java.util.List;
 import vadl.viam.Abi;
-import vadl.viam.GeneratesRegisterFileName;
+import vadl.viam.RegisterResource;
 import vadl.viam.ViamError;
 
 /**
@@ -26,14 +26,14 @@ import vadl.viam.ViamError;
  */
 public class CompilerRegisterClass {
   private final String name;
-  private final GeneratesRegisterFileName registerFile;
+  private final RegisterResource registerFile;
   private final List<CompilerRegister> registers;
   private final Abi.Alignment alignment;
 
   /**
    * Constructor.
    */
-  public CompilerRegisterClass(GeneratesRegisterFileName registerFile,
+  public CompilerRegisterClass(RegisterResource registerFile,
                                List<CompilerRegister> registers,
                                Abi.Alignment alignment) {
     ViamError.ensure(registerFile.isRegisterFile(), "must be register file");
@@ -55,7 +55,7 @@ public class CompilerRegisterClass {
     return alignment;
   }
 
-  public GeneratesRegisterFileName registerFile() {
+  public RegisterResource registerFile() {
     return registerFile;
   }
 }

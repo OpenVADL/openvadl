@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ package vadl.gcb.valuetypes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import vadl.viam.GeneratesRegisterFileName;
+import vadl.viam.RegisterResource;
 
 /**
  * Extends the register with information which a compiler requires.
@@ -94,7 +94,7 @@ public abstract class CompilerRegister {
   protected final List<String> altNames;
   protected final List<CompilerRegister> subRegs;
   protected final List<SubRegIndex> subRegIndices;
-  protected final GeneratesRegisterFileName registerFile;
+  protected final RegisterResource registerFile;
 
   protected final int dwarfNumber;
   protected final int hwEncodingValue;
@@ -109,7 +109,7 @@ public abstract class CompilerRegister {
                           int dwarfNumber,
                           int hwEncodingValue,
                           boolean isArtificial,
-                          GeneratesRegisterFileName registerFile) {
+                          RegisterResource registerFile) {
     this.name = name;
     this.asmName = asmName;
     this.altNames = altNames;
@@ -153,7 +153,7 @@ public abstract class CompilerRegister {
     return subRegIndices;
   }
 
-  public GeneratesRegisterFileName registerFile() {
+  public RegisterResource registerFile() {
     return registerFile;
   }
 

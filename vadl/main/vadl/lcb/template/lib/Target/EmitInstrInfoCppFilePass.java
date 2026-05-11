@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -41,6 +41,7 @@ import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.MachineInstructionLabelGroup;
 import vadl.gcb.passes.PseudoInstructionLabel;
+import vadl.gcb.valuetypes.CompilerRegisterUtils;
 import vadl.lcb.passes.TableGenInstructionCtx;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
@@ -54,7 +55,6 @@ import vadl.template.Renderable;
 import vadl.types.BuiltInTable;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Definition;
-import vadl.viam.GeneratesRegisterFileName;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterResource;
@@ -101,8 +101,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param destRegisterFile is the register file for the destination register in LLVM.
    */
   record CopyPhysRegInstruction(Instruction instruction,
-                                List<GeneratesRegisterFileName> srcRegisterFile,
-                                List<GeneratesRegisterFileName> destRegisterFile) {
+                                List<RegisterResource> srcRegisterFile,
+                                List<RegisterResource> destRegisterFile) {
   }
 
   /**
@@ -113,7 +113,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param zeroRegister     is the name of the zero register in the register file.
    */
   record TruncateInstruction(Instruction instruction,
-                             GeneratesRegisterFileName destRegisterFile,
+                             RegisterResource destRegisterFile,
                              String zeroRegister) implements Renderable {
     @Override
     public Map<String, Object> renderObj() {
@@ -250,7 +250,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                       .findFirst(),
                   "There must be destination register").registerResource();
 
-          var zeroRegister = ensurePresent(destRegisterFile.zeroRegister(),
+          var zeroRegister = ensurePresent(CompilerRegisterUtils.zeroRegister(destRegisterFile),
               () -> Diagnostic.error("There is no zero register for the register file",
                   destRegisterFile.location()))
               .stream()
@@ -263,13 +263,15 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
           // reference.
           // However, we skip it when it is an alias with a smaller type.
           var base = new TruncateInstruction(i, destRegisterFile,
-              destRegisterFile.generateRegisterFileName(zeroRegisterValue.intValue()));
+              CompilerRegisterUtils.indexedRegisterName(destRegisterFile,
+                  zeroRegisterValue.intValue()));
           if (destRegisterFile instanceof ArtificialResource artificialResource
               && artificialResource.innerResourceRef() instanceof RegisterTensor registerTensor
               && artificialResource.type().equals(registerTensor.type())) {
             return Stream.of(base,
                 new TruncateInstruction(i, registerTensor,
-                    registerTensor.generateRegisterFileName(zeroRegisterValue.intValue())));
+                    CompilerRegisterUtils.indexedRegisterName(registerTensor,
+                        zeroRegisterValue.intValue())));
           } else {
             return Stream.of(base);
           }
@@ -312,10 +314,10 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
               .filter(x -> x.innerResourceRef() == destRegisterFile)
               .toList();
 
-          List<GeneratesRegisterFileName> srcResult = new ArrayList<>(srcAliases);
+          List<RegisterResource> srcResult = new ArrayList<>(srcAliases);
           srcResult.add(srcRegisterFile);
 
-          List<GeneratesRegisterFileName> destResult = new ArrayList<>(destAliases);
+          List<RegisterResource> destResult = new ArrayList<>(destAliases);
           destResult.add(destRegisterFile);
 
           return new CopyPhysRegInstruction(i, srcResult, destResult);
@@ -705,10 +707,11 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
       // Is it a register file?
       if (registerOrRegisterFile.registerFile() != null) {
         var registerFile = registerOrRegisterFile.registerFile();
-        var zeroRegisterAddr = registerFile.zeroRegister();
+        var zeroRegisterAddr = CompilerRegisterUtils.zeroRegister(registerFile);
         if (zeroRegisterAddr.isPresent()) {
           zeroRegister =
-              registerFile.generateRegisterFileName(zeroRegisterAddr.get().getFirst().intValue());
+              CompilerRegisterUtils.indexedRegisterName(registerFile,
+                  zeroRegisterAddr.get().getFirst().intValue());
           isCheckable = true;
         }
       }

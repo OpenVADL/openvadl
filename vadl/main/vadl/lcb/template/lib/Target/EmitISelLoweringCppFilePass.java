@@ -52,7 +52,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
-import vadl.viam.GeneratesRegisterFileName;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -81,7 +81,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     /**
      * Constructs a new RegisterFile object.
      **/
-    public LlvmRegisterFile(GeneratesRegisterFileName registerFile) {
+    public LlvmRegisterFile(RegisterResource registerFile) {
       super(registerFile.identifier(),
           registerFile.dimensions());
       for (var c : registerFile.constraints()) {
@@ -178,7 +178,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         abi.argumentRegisters().stream().map(Abi.AbiRegister::registerFile).distinct()
             .map(LlvmRegisterFile::new).map(this::mapLlvmRegisterClass).toList());
     map.put("argumentRegisters",
-        abi.argumentRegisters().stream().map(Abi.AbiRegister::render).toList());
+        abi.argumentRegisters().stream().map(this::renderRegister).toList());
     map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
     map.put("stackPointerType", stackPointerType.getLlvmType());
     map.put("absoluteAddressLoadInstruction",

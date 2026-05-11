@@ -90,22 +90,22 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     // The order of registers represents the preferred allocation sequence.
     // Registers are listed in the order caller-save, callee-save, specials.
-    var callerSaved = abi.callerSaved().stream().map(Abi.AbiRegister::render).toList();
+    var callerSaved = abi.callerSaved().stream().map(this::renderRegister).toList();
     verifyAllTheSameRegisterFile(abi.callerSaved());
     verifyAllTheSameRegisterFile(abi.calleeSaved());
     verifyBothTheSame(abi.calleeSaved(), abi.callerSaved());
 
     // Remove marked regs from callee to mark sure that they are allocated last.
     var exceptions = new HashSet<>(Stream.of(
-        Optional.of(abi.returnAddress().render()),
-        Optional.of(abi.stackPointer().render()),
-        abi.globalPointer().map(Abi.AbiRegister::render),
-        Optional.of(abi.framePointer().render()),
-        abi.threadPointer().map(Abi.AbiRegister::render)
+        Optional.of(renderRegister(abi.returnAddress())),
+        Optional.of(renderRegister(abi.stackPointer())),
+        abi.globalPointer().map(this::renderRegister),
+        Optional.of(renderRegister(abi.framePointer())),
+        abi.threadPointer().map(this::renderRegister)
     ).filter(Optional::isPresent).map(Optional::get).toList());
 
     var calleeSaved = abi.calleeSaved().stream()
-        .map(Abi.AbiRegister::render)
+        .map(this::renderRegister)
         .filter(render -> !exceptions.contains(render))
         .toList();
 

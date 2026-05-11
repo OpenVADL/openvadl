@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,7 @@ package vadl.gcb.passes.operands.model;
 import java.util.List;
 import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.viam.Format;
-import vadl.viam.GeneratesRegisterFileName;
-import vadl.viam.RegisterTensor;
+import vadl.viam.RegisterResource;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -33,7 +32,7 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 public class GcbInstructionRegisterFileOperand
     extends GcbDefaultInstructionOperand
     implements ReferencesFormatField {
-  private final GeneratesRegisterFileName registerFile;
+  private final RegisterResource registerFile;
   private final Format.Field formatField;
 
   /**
@@ -79,7 +78,7 @@ public class GcbInstructionRegisterFileOperand
         .ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
 
-  public GeneratesRegisterFileName registerFile() {
+  public RegisterResource registerFile() {
     return registerFile;
   }
 

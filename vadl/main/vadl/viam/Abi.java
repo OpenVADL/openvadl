@@ -224,15 +224,6 @@ public class Abi extends Definition {
       return registerRef.location();
     }
 
-    /**
-     * Render the compiler register name.
-     *
-     * <p>This is kept temporarily for the existing LCB emitters. Rendering should move to the
-     * respective backend later.</p>
-     */
-    public String render() {
-      return registerFile().generateRegisterFileName(addr());
-    }
   }
 
   /**
