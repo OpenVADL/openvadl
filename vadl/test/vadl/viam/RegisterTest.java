@@ -56,6 +56,9 @@ public class RegisterTest extends AbstractTest {
     return AbstractTest.getTestSourceArgsForParameterizedTest("unit/register/invalid_",
         arguments("reg_invalidFormat", "Invalid Format"),
 
+        arguments("alias_reg_referToPC",      "Unknown register"),
+        arguments("alias_reg_referToPCAlias", "Register alias cannot refer"),
+
         arguments("pc_alias_reg_subcall_currentOnReg",  "No subcall"),
         arguments("pc_alias_reg_subcall_nextOnReg",     "No subcall"),
         arguments("pc_alias_reg_subcall_nextnextOnReg", "No subcall"),
