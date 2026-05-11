@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
+import vadl.utils.RopeList;
 import vadl.utils.SourceLocation;
 
 /**
@@ -1565,7 +1566,7 @@ class MacroExpander
   private SourceLocation copyLoc(SourceLocation loc) {
     // FIXME: At the time of writing we sometimes issued the pass twice resulting in double
     // reporting of expandedFrom
-    if (expandingFrom == null || expandingFrom.isEmpty()) {
+    if (expandingFrom == null) {
       return loc;
     }
 
