@@ -552,13 +552,7 @@ class SymbolTable {
   static List<Diagnostic> collectAndResolveSymbols(Ast ast) {
     return ast.timingRecorder.withPassTiming("Symbol Resolution", () -> {
       SymbolCollector.collectSymbols(ast);
-      var errs =  SymbolResolver.resolveSymbols(ast);
-      try {
-        Thread.sleep(1000 * 60 * 60);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      return errs;
+      return SymbolResolver.resolveSymbols(ast);
     });
   }
 
