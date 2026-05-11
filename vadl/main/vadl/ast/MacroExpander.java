@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -87,9 +86,11 @@ class MacroExpander
   }
 
   private <T> List<T> expandExprs(List<T> expressions) {
-    return expressions.stream()
-        .map(this::expandExpr)
-        .collect(Collectors.toCollection(ArrayList::new));
+    var result = new ArrayList<T>(expressions.size());
+    for (var expr : expressions) {
+      result.add(expandExpr(expr));
+    }
+    return result;
   }
 
   @SuppressWarnings("unchecked")
@@ -154,17 +155,19 @@ class MacroExpander
   }
 
   private CallIndexExpr.Arguments expandArgs(CallIndexExpr.Arguments args) {
-    return new CallIndexExpr.Arguments(
-        args.values.stream()
-            .map(this::expandExpr)
-            .collect(Collectors.toCollection(ArrayList::new)),
-        copyLoc(args.location));
+    var values = new ArrayList<Expr>(args.values.size());
+    for (var value : args.values) {
+      values.add(expandExpr(value));
+    }
+    return new CallIndexExpr.Arguments(values, copyLoc(args.location));
   }
 
   private List<AnnotationDefinition> expandAnnotations(List<AnnotationDefinition> annotations) {
-    return annotations.stream()
-        .map(a -> (AnnotationDefinition) a.accept(this))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var result = new ArrayList<AnnotationDefinition>(annotations.size());
+    for (var a : annotations) {
+      result.add((AnnotationDefinition) a.accept(this));
+    }
+    return result;
   }
 
   public <T extends Node> T expandNode(T node, Ast ast) {
@@ -178,9 +181,10 @@ class MacroExpander
       case Definition definition -> expandDefinition(definition);
       case Statement statement -> expandStatement(statement);
       case RecordInstance recordInstance -> {
-        var entries = recordInstance.entries.stream()
-            .map(this::expandNode)
-            .collect(Collectors.toCollection(ArrayList::new));
+        var entries = new ArrayList<Node>(recordInstance.entries.size());
+        for (var entry : recordInstance.entries) {
+          entries.add(expandNode(entry));
+        }
         yield new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
       }
       case EncodingDefinition.EncsNode encs -> resolveEncs(encs);
@@ -206,12 +210,15 @@ class MacroExpander
    * @return a list of the expanded definitions.
    */
   public List<AssemblyDefinition> expandAssemblies(AssemblyDefinition definition) {
-    return definition.identifiers.stream().map(identifier -> new AssemblyDefinition(
-            new ArrayList<>(List.of(identifier)),
-            expandExpr(definition.expr),
-            copyLoc(definition.loc)
-        ))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var result = new ArrayList<AssemblyDefinition>(definition.identifiers.size());
+    for (var identifier : definition.identifiers) {
+      result.add(new AssemblyDefinition(
+          new ArrayList<>(List.of(identifier)),
+          expandExpr(definition.expr),
+          copyLoc(definition.loc)
+      ));
+    }
+    return result;
   }
 
   @Override
@@ -336,17 +343,18 @@ class MacroExpander
 
   @Override
   public Expr visit(CallIndexExpr expr) {
-    var argsIndices = expr.argsIndices.stream()
-        .map(this::expandArgs)
-        .collect(Collectors.toCollection(ArrayList::new));
-    var subCalls = expr.subCalls.stream()
-        .map(subCall -> {
-          var subCallArgsIndices = subCall.argsIndices.stream()
-              .map(this::expandArgs)
-              .collect(Collectors.toCollection(ArrayList::new));
-          return new CallIndexExpr.SubCall(expandExpr(subCall.id), subCallArgsIndices);
-        })
-        .collect(Collectors.toCollection(ArrayList::new));
+    var argsIndices = new ArrayList<CallIndexExpr.Arguments>(expr.argsIndices.size());
+    for (var argsIndex : expr.argsIndices) {
+      argsIndices.add(expandArgs(argsIndex));
+    }
+    var subCalls = new ArrayList<CallIndexExpr.SubCall>(expr.subCalls.size());
+    for (var subCall : expr.subCalls) {
+      var subCallArgsIndices = new ArrayList<CallIndexExpr.Arguments>(subCall.argsIndices.size());
+      for (var argsIndex : subCall.argsIndices) {
+        subCallArgsIndices.add(expandArgs(argsIndex));
+      }
+      subCalls.add(new CallIndexExpr.SubCall(expandExpr(subCall.id), subCallArgsIndices));
+    }
 
     return new CallIndexExpr(
         expandExpr(expr.target),
@@ -398,10 +406,10 @@ class MacroExpander
 
   @Override
   public Expr visit(MatchExpr expr) {
-    var cases = expr.cases.stream()
-        .map(matchCase ->
-            new MatchExpr.Case(expandExprs(matchCase.patterns), expandExpr(matchCase.result)))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var cases = new ArrayList<MatchExpr.Case>(expr.cases.size());
+    for (var matchCase : expr.cases) {
+      cases.add(new MatchExpr.Case(expandExprs(matchCase.patterns), expandExpr(matchCase.result)));
+    }
     return new MatchExpr(
         expandExpr(expr.candidate),
         cases,
@@ -476,24 +484,25 @@ class MacroExpander
 
   @Override
   public Expr visit(ExistsInThenExpr expr) {
-    var conditions = expr.conditions.stream()
-        .map(condition ->
-            new ExistsInThenExpr.Condition(
-                expandExpr(expandExpr(condition.id())),
-                expandExprs(condition.operations())))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var conditions = new ArrayList<ExistsInThenExpr.Condition>(expr.conditions.size());
+    for (var condition : expr.conditions) {
+      conditions.add(new ExistsInThenExpr.Condition(
+          expandExpr(expandExpr(condition.id())),
+          expandExprs(condition.operations())));
+    }
     return new ExistsInThenExpr(conditions, expandExpr(expr.thenExpr), copyLoc(expr.loc));
   }
 
 
   @Override
   public Expr visit(ForallExpr expr) {
-    var indices = expr.indices.stream()
-        .map(index -> new ForallIndex(
-            expandExpr(index.name),
-            index.typeLiteral == null ? null : expandExpr(index.typeLiteral),
-            expandExpr(index.domain)))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var indices = new ArrayList<ForallIndex>(expr.indices.size());
+    for (var index : expr.indices) {
+      indices.add(new ForallIndex(
+          expandExpr(index.name),
+          index.typeLiteral == null ? null : expandExpr(index.typeLiteral),
+          expandExpr(index.domain)));
+    }
 
     return new ForallExpr(
         indices,
@@ -548,9 +557,10 @@ class MacroExpander
 
   @Override
   public Definition visit(FormatDefinition definition) {
-    var fields = definition.fields.stream()
-        .map(this::expandDefinition)
-        .collect(Collectors.toCollection(ArrayList::new));
+    var fields = new ArrayList<FormatField>(definition.fields.size());
+    for (var field : definition.fields) {
+      fields.add(expandDefinition(field));
+    }
 
     return new FormatDefinition(
         expandExpr(definition.identifier),
@@ -570,9 +580,13 @@ class MacroExpander
 
   @Override
   public Definition visit(RangeFormatField definition) {
+    var ranges = new ArrayList<Expr>(definition.ranges.size());
+    for (var range : definition.ranges) {
+      ranges.add(expandExpr(range));
+    }
     return new RangeFormatField(
         expandExpr(definition.identifier),
-        definition.ranges.stream().map(this::expandExpr).toList(),
+        ranges,
         definition.typeLiteral == null ? null : expandExpr(definition.typeLiteral)
     );
   }
@@ -759,23 +773,25 @@ class MacroExpander
 
   @Override
   public Definition visit(AnnotationDefinition definition) {
-    return new AnnotationDefinition(
-        definition.keywords.stream()
-            .map(this::expandExpr)
-            .toList(),
-        definition.values.stream()
-            .map(this::expandExpr)
-            .collect(Collectors.toCollection(ArrayList::new)),
-        copyLoc(definition.loc));
+    var keywords = new ArrayList<IdentifierOrPlaceholder>(definition.keywords.size());
+    for (var keyword : definition.keywords) {
+      keywords.add(expandExpr(keyword));
+    }
+    var values = new ArrayList<Expr>(definition.values.size());
+    for (var value : definition.values) {
+      values.add(expandExpr(value));
+    }
+    return new AnnotationDefinition(keywords, values, copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(EnumerationDefinition definition) {
-    var entries = definition.entries.stream()
-        .map(entry -> new EnumerationDefinition.Entry(
-            expandExpr(entry.name),
-            entry.value == null ? null : expandExpr(entry.value)))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var entries = new ArrayList<EnumerationDefinition.Entry>(definition.entries.size());
+    for (var entry : definition.entries) {
+      entries.add(new EnumerationDefinition.Entry(
+          expandExpr(entry.name),
+          entry.value == null ? null : expandExpr(entry.value)));
+    }
 
     return new EnumerationDefinition(
         expandExpr(definition.id),
@@ -882,11 +898,12 @@ class MacroExpander
 
   @Override
   public Definition visit(ProcessDefinition processDefinition) {
-    var templateParams = processDefinition.templateParams.stream()
-        .map(templateParam -> new TemplateParam(templateParam.identifier(),
-            templateParam.type,
-            templateParam.value == null ? null : expandExpr(templateParam.value)))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var templateParams = new ArrayList<TemplateParam>(processDefinition.templateParams.size());
+    for (var templateParam : processDefinition.templateParams) {
+      templateParams.add(new TemplateParam(templateParam.identifier(),
+          templateParam.type,
+          templateParam.value == null ? null : expandExpr(templateParam.value)));
+    }
 
     return new ProcessDefinition(
         expandExpr(processDefinition.name),
@@ -1140,12 +1157,11 @@ class MacroExpander
 
   @Override
   public Definition visit(AsmGrammarAlternativesDefinition definition) {
-    return new AsmGrammarAlternativesDefinition(
-        definition.alternatives.stream()
-            .map(this::expandDefinitions)
-            .collect(Collectors.toCollection(ArrayList::new)),
-        copyLoc(definition.loc)
-    );
+    var alternatives = new ArrayList<List<AsmGrammarElementDefinition>>(definition.alternatives.size());
+    for (var alternative : definition.alternatives) {
+      alternatives.add(expandDefinitions(alternative));
+    }
+    return new AsmGrammarAlternativesDefinition(alternatives, copyLoc(definition.loc));
   }
 
   @Override
@@ -1296,11 +1312,12 @@ class MacroExpander
 
   @Override
   public Statement visit(MatchStatement matchStatement) {
-    var cases = matchStatement.cases.stream()
-        .map(matchCase -> new MatchStatement.Case(
-            expandExprs(matchCase.patterns),
-            expandStatement(matchCase.result)))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var cases = new ArrayList<MatchStatement.Case>(matchStatement.cases.size());
+    for (var matchCase : matchStatement.cases) {
+      cases.add(new MatchStatement.Case(
+          expandExprs(matchCase.patterns),
+          expandStatement(matchCase.result)));
+    }
 
     return new MatchStatement(
         expandExpr(matchStatement.candidate),
@@ -1320,11 +1337,14 @@ class MacroExpander
 
   @Override
   public InstructionCallStatement visit(InstructionCallStatement instructionCallStatement) {
-    var namedArguments = instructionCallStatement.namedArguments.stream()
-        .map(namedArgument -> new InstructionCallStatement.NamedArgument(
-            expandExpr(namedArgument.name),
-            expandExpr(namedArgument.value)))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var namedArguments =
+        new ArrayList<InstructionCallStatement.NamedArgument>(
+            instructionCallStatement.namedArguments.size());
+    for (var namedArgument : instructionCallStatement.namedArguments) {
+      namedArguments.add(new InstructionCallStatement.NamedArgument(
+          expandExpr(namedArgument.name),
+          expandExpr(namedArgument.value)));
+    }
 
     return new InstructionCallStatement(
         expandExpr(instructionCallStatement.id),
@@ -1344,12 +1364,13 @@ class MacroExpander
 
   @Override
   public Statement visit(ForallStatement forallStatement) {
-    var indices = forallStatement.indices.stream()
-        .map(index -> new ForallIndex(
-            expandExpr(index.name),
-            index.typeLiteral != null ? expandExpr(index.typeLiteral) : null,
-            expandExpr(index.domain)))
-        .collect(Collectors.toCollection(ArrayList::new));
+    var indices = new ArrayList<ForallIndex>(forallStatement.indices.size());
+    for (var index : forallStatement.indices) {
+      indices.add(new ForallIndex(
+          expandExpr(index.name),
+          index.typeLiteral != null ? expandExpr(index.typeLiteral) : null,
+          expandExpr(index.domain)));
+    }
 
     return new ForallStatement(
         indices,
