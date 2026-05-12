@@ -22,8 +22,8 @@ import static vadl.error.Diagnostic.warning;
 
 import com.google.common.collect.Streams;
 import java.math.BigInteger;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,6 +64,7 @@ import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.utils.Either;
+import vadl.utils.IdentityDeque;
 import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
@@ -122,14 +124,7 @@ public class TypeChecker
    * visiting. This helps us detect cycles, which aren't allowed and so we can abort early with an
    * error instead of causing a crash due to a stack overflow.
    */
-  private final Deque<Integer> currentlyVisiting = new ArrayDeque<>();
-
-  /**
-   * For expressions within annotations, the top-level annotation definition providing
-   * context.
-   */
-  @Nullable
-  private AnnotationDefinition currentAnnotation = null;
+  private final Deque<Node> currentlyVisiting = new IdentityDeque<>();
 
   /**
    * There is no point in checking a statement or definition twice, so these sets record which
@@ -180,8 +175,7 @@ public class TypeChecker
       return requireNonNull(expr.type);
     }
 
-    var nodeId = System.identityHashCode(expr);
-    if (currentlyVisiting.contains(nodeId)) {
+    if (currentlyVisiting.contains(expr)) {
       throw addErrorAndAbortChecking(error("Infinite Recursion", expr)
           .description("The node is defined by itself.")
           .build());
@@ -189,7 +183,7 @@ public class TypeChecker
 
     var previousExpectedType = this.expectedType;
     this.expectedType = expectedType;
-    currentlyVisiting.add(nodeId);
+    currentlyVisiting.add(expr);
     try {
       expr.accept(this);
     } catch (StopPartialCheckingSignal signal) {
@@ -228,14 +222,13 @@ public class TypeChecker
       return;
     }
 
-    var nodeId = System.identityHashCode(stmt);
-    if (currentlyVisiting.contains(nodeId)) {
+    if (currentlyVisiting.contains(stmt)) {
       throw addErrorAndAbortChecking(error("Infinite Recursion", stmt)
           .description("The node is defined by itself.")
           .build());
     }
 
-    currentlyVisiting.add(nodeId);
+    currentlyVisiting.add(stmt);
     try {
       stmt.accept(this);
     } catch (StopPartialCheckingSignal signal) {
@@ -253,10 +246,13 @@ public class TypeChecker
     }
 
     // NOTE: This could have been done in the symbol resolver
-    // Disallow the same annotation multiple times
-    Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
+    // Disallow the same annotation multiple times, unless explicitly allowed
+
+    final Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
     def.annotations.forEach(annotation -> {
-      if (annotationNames.containsKey(annotation.name())) {
+
+      final var isMulti = requireNonNull(annotation.annotation).allowMultiple();
+      if (!isMulti && annotationNames.containsKey(annotation.name())) {
         addErrorAndContinueChecking(error("Duplicate Annotation", def)
             .locationNote(annotationNames.get(annotation.name()), "First usage here")
             .locationNote(def, "Second usage here")
@@ -265,14 +261,11 @@ public class TypeChecker
       }
 
       // check annotation definition itself
-      try {
-        currentAnnotation = annotation;
-        check(annotation);
-      } finally {
-        currentAnnotation = null;
-      }
+      check(annotation);
 
-      annotationNames.put(annotation.name(), annotation);
+      if (isMulti) {
+        annotationNames.put(annotation.name(), annotation);
+      }
     });
 
     // Find annotations in groups and execute the check of the groups.
@@ -296,8 +289,7 @@ public class TypeChecker
       return;
     }
 
-    var nodeId = System.identityHashCode(def);
-    if (currentlyVisiting.contains(nodeId)) {
+    if (currentlyVisiting.contains(def)) {
       String message = "The node is defined by itself.";
       if (def instanceof IdentifiableNode identifiableNode) {
         message =
@@ -310,7 +302,7 @@ public class TypeChecker
     }
 
     // Visit the definitions
-    currentlyVisiting.add(nodeId);
+    currentlyVisiting.add(def);
     try {
       def.accept(this);
     } catch (StopPartialCheckingSignal signal) {
@@ -347,6 +339,32 @@ public class TypeChecker
     if (!checker.errors.isEmpty()) {
       throw new DiagnosticList(checker.errors);
     }
+  }
+
+  /**
+   * Access the stack of currently visiting nodes.
+   */
+  private Stream<Node> getContext() {
+    return Streams.stream(currentlyVisiting.descendingIterator());
+  }
+
+  /**
+   * Access the stack of currently visiting nodes by type, accepting additional filters.
+   *
+   * @param clz     class of the node
+   * @param filters the filters to apply
+   * @param <T>     type of the node
+   * @return the node
+   */
+  @Nullable
+  @SafeVarargs
+  private <T extends Node> T getContextNode(Class<T> clz, Predicate<T>... filters) {
+    final List<Predicate<T>> predicates = Arrays.asList(filters);
+    return getContext()
+        .filter(clz::isInstance)
+        .map(clz::cast)
+        .filter(n -> predicates.stream().allMatch(p -> p.test(n)))
+        .findFirst().orElse(null);
   }
 
   private Diagnostic unimplementedError(Node node) {
@@ -4338,7 +4356,8 @@ public class TypeChecker
 
     expr.type = Type.bool();
 
-    if (currentAnnotation == null || !(currentAnnotation.target instanceof GroupDefinition)) {
+    var annotation = getContextNode(AnnotationDefinition.class);
+    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
       final var diagnostic = error("Invalid `forall-then` expression", expr)
           .description("The forall-then expression is only permissible for annotations on "
               + "the `group` definition.");
