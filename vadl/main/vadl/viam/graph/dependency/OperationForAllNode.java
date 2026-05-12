@@ -18,8 +18,10 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
+import vadl.viam.Operation;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -28,10 +30,10 @@ import vadl.viam.graph.NodeList;
  * An expression node representing the {@code forall i in {<operations>} then <body>}
  * expression.
  */
-public class ForAllThenNode extends ExpressionNode {
+public class OperationForAllNode extends ExpressionNode {
 
   @Input
-  private NodeList<ForAllThenIdxNode> indices;
+  private NodeList<Index> indices;
 
   @Input
   private ExpressionNode body;
@@ -43,13 +45,13 @@ public class ForAllThenNode extends ExpressionNode {
    * @param indices the bound variables.
    * @param body    the expression body.
    */
-  public ForAllThenNode(Type type, List<ForAllThenIdxNode> indices, ExpressionNode body) {
+  public OperationForAllNode(Type type, List<Index> indices, ExpressionNode body) {
     super(type);
     this.indices = new NodeList<>(indices);
     this.body = body;
   }
 
-  public List<ForAllThenIdxNode> indices() {
+  public List<Index> indices() {
     return indices;
   }
 
@@ -59,14 +61,14 @@ public class ForAllThenNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new ForAllThenNode(type(),
-        indices.stream().map(ForAllThenIdxNode::copy).map(ForAllThenIdxNode.class::cast).toList(),
+    return new OperationForAllNode(type(),
+        indices.stream().map(Index::copy).map(Index.class::cast).toList(),
         body.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ForAllThenNode(type(), indices, body);
+    return new OperationForAllNode(type(), indices, body);
   }
 
   @Override
@@ -79,8 +81,49 @@ public class ForAllThenNode extends ExpressionNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    indices = indices.stream().map((e) -> visitor.apply(this, e, ForAllThenIdxNode.class))
+    indices = indices.stream().map((e) -> visitor.apply(this, e, Index.class))
         .collect(Collectors.toCollection(NodeList::new));
     body = visitor.apply(this, body, ExpressionNode.class);
+  }
+
+  /**
+   * An expression node representing an index of the forall-then expression. That is, a
+   * bound variable restricted to some operation set.
+   */
+  public static class Index extends ExpressionNode {
+
+    @DataValue
+    private final List<Operation> operations;
+
+    /**
+     * The constructor.
+     *
+     * @param type       type of the expression.
+     * @param operations operation restrictions.
+     */
+    public Index(Type type, List<Operation> operations) {
+      super(type);
+      this.operations = operations;
+    }
+
+    public List<Operation> operations() {
+      return operations;
+    }
+
+    @Override
+    public ExpressionNode copy() {
+      return new Index(type(), operations);
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new Index(type(), operations);
+    }
+
+    @Override
+    protected void collectData(List<Object> collection) {
+      super.collectData(collection);
+      collection.add(operations);
+    }
   }
 }

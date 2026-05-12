@@ -33,7 +33,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
-import vadl.viam.graph.dependency.ForAllThenNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.TensorNode;
 
 /**
@@ -108,7 +108,7 @@ public class IssTbStaticExpressionCodeGen implements
   }
 
   @Handler
-  void handle(CGenContext<Node> ctx, ForAllThenNode toHandle) {
+  void handle(CGenContext<Node> ctx, OperationForAllNode toHandle) {
     throw new UnsupportedOperationException("Type ForAll not allowed");
   }
 

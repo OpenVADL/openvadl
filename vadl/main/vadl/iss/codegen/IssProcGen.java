@@ -40,9 +40,9 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
-import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
@@ -213,7 +213,7 @@ abstract class IssProcGen implements CDefaultMixins.All,
   }
 
   @Handler
-  void handle(CGenContext<Node> ctx, ForAllThenNode toHandle) {
+  void handle(CGenContext<Node> ctx, OperationForAllNode toHandle) {
     throwNotAllowed(toHandle, "forall then expressions");
   }
 

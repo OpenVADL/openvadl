@@ -1641,12 +1641,3 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
     super.resolveName(definition, resolver);
   }
 }
-
-class GroupAssertionAnnotation extends ExprAnnotation {
-
-  @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-    // TODO:
-    super.resolveName(definition, resolver);
-  }
-}

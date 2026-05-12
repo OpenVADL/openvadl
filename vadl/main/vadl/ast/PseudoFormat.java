@@ -77,17 +77,15 @@ public class PseudoFormat extends Definition implements TypedNode {
   }
 
   private List<FormatField> toPseudoFields(FormatDefinition format) {
-    final List<FormatField> fields = new ArrayList<>();
-    for (vadl.ast.FormatField f : format.fieldsWithoutEncodingPredicate()) {
+    return format.fieldsWithoutEncodingPredicate().map(f -> {
       final DataType fieldType = switch (f) {
         case DerivedFormatField field -> field.expr.type().asDataType();
         case RangeFormatField field -> requireNonNull(field.type).asDataType();
         case TypedFormatField field -> field.typeLiteral.type().asDataType();
         default -> throw new IllegalStateException();
       };
-      fields.add(new FormatField(f.identifier().name, fieldType));
-    }
-    return fields;
+      return new FormatField(f.identifier().name, fieldType);
+    }).toList();
   }
 
   @Override

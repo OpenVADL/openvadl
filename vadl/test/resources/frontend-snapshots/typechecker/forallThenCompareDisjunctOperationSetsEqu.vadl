@@ -18,28 +18,26 @@ instruction set architecture ISA = {
   assembly A = (mnemonic, "")
 
   instruction B : BType = PC := 0
-
-  [select when : forall i in {OpA, OpB} then i.a = 0b01]
   encoding B = {a = 0b01}
   assembly B = (mnemonic, "")
 
   operation OpA = {A}
   operation OpB = {B}
 
-  [assert : forall i in {OpA, OpB} then i.a = 0b01]
+  [assert : forall i in {OpA}, j in {OpB} then i = j]
   group VLIW = OpA.OpB
 }
 
 
 //  Reported Diagnostics:
 //
-//  error: Invalid `forall-then` expression
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidForallThenNotInsideGroupAnnotation.vadl:22:18
+//  warning: This expression is always `false`
+//       ╭── test/resources/frontend-snapshots/typechecker/forallThenCompareDisjunctOperationSetsEqu.vadl:27:48
 //       │
-//    22 │   [select when : forall i in {OpA, OpB} then i.a = 0b01]
-//       │                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//    27 │   [assert : forall i in {OpA}, j in {OpB} then i = j]
+//       │                                                ^^^^^
 //       │
-//       The forall-then expression is only permissible for annotations on the `group` definition.
+//       The sets of instructions bound by `i` and `j` do not overlap
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

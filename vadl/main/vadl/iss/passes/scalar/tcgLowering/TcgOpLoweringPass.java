@@ -108,13 +108,12 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.FoldNode;
-import vadl.viam.graph.dependency.ForAllThenIdxNode;
-import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
@@ -728,12 +727,12 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   @Handler
-  void handle(ForAllThenNode node) {
+  void handle(OperationForAllNode node) {
     throw new UnsupportedOperationException("Type ForAllNode not supported");
   }
 
   @Handler
-  void handle(ForAllThenIdxNode node) {
+  void handle(OperationForAllNode.Index node) {
     throw new UnsupportedOperationException("Type ForAllIdxNode not supported");
   }
 
