@@ -129,7 +129,7 @@ public final class RegisterAccessEmitters {
   private static RegisterAccessEmitter emitterFor(RegInfo regInfo) {
     return regInfo.execClass() == RegInfo.ExecClass.TCG_SCALAR
         ? TcgScalarRegisterAccessEmitter.INSTANCE
-        : HelperOnlyRegisterAccessEmitter.INSTANCE;
+        : CpuVectorRegisterAccessEmitter.INSTANCE;
   }
 
   private interface RegisterAccessEmitter {
@@ -160,10 +160,10 @@ public final class RegisterAccessEmitters {
   }
 
   /**
-   * Emitter for helper-only register accesses.
+   * Emitter for CPU-vector register accesses.
    */
-  private static final class HelperOnlyRegisterAccessEmitter implements RegisterAccessEmitter {
-    static final HelperOnlyRegisterAccessEmitter INSTANCE = new HelperOnlyRegisterAccessEmitter();
+  private static final class CpuVectorRegisterAccessEmitter implements RegisterAccessEmitter {
+    static final CpuVectorRegisterAccessEmitter INSTANCE = new CpuVectorRegisterAccessEmitter();
 
     @Override
     public void emitRead(CGenContext<Node> ctx, ReadRegTensorNode node,

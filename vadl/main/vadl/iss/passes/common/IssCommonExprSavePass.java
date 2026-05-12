@@ -158,7 +158,7 @@ public class IssCommonExprSavePass extends AbstractIssPass {
   }
 
   private boolean containsDisallowedSubtree(Node node, Set<Node> visited) {
-    // Keep the pass conservative: helper-only repeated scalar arithmetic is fine to save,
+    // Keep the pass conservative: CPU-vector repeated scalar arithmetic is fine to save,
     // but memory reads and function calls may imply extra evaluation constraints or side effects.
     if (!visited.add(node)) {
       return false;

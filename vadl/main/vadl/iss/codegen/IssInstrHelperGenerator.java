@@ -48,7 +48,7 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 /**
  * Generates helper function implementations for instructions in {@code target/gen-arch/helper.c}.
  * These helper functions are called by the translate functions for instructions that are too
- * complex to be directly translated into TCG operations (e.g., instructions using generic vector
+ * complex to be directly translated into TCG operations (e.g., instructions using CPU-vector
  * registers).
  *
  * <p>The generated helper functions have the signature:

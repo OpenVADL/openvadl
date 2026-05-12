@@ -25,7 +25,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
- * Renders dynamic chunk read accessors for helper-only base register accesses.
+ * Renders dynamic chunk read accessors for CPU-vector base register accesses.
  *
  * <p>These accessors are consumed by helper/procedure/exception emitters for unified
  * {@code IssReadRegNode(BASE, CHUNK)} reads with translation-time or runtime bit windows.
@@ -40,7 +40,7 @@ final class BaseChunkCpuAccessors {
     var out = new ArrayList<Map<String, Object>>();
     specification.isa().get().registerTensors().forEach(reg -> {
       var info = reg.expectExtension(RegInfo.class);
-      if (info.execClass() == RegInfo.ExecClass.HELPER_ONLY) {
+      if (info.execClass() == RegInfo.ExecClass.CPU_VECTOR) {
         out.add(renderReadAccessor(reg, config));
       }
     });
@@ -52,7 +52,7 @@ final class BaseChunkCpuAccessors {
     var out = new ArrayList<Map<String, Object>>();
     specification.isa().get().registerTensors().forEach(reg -> {
       var info = reg.expectExtension(RegInfo.class);
-      if (info.execClass() == RegInfo.ExecClass.HELPER_ONLY) {
+      if (info.execClass() == RegInfo.ExecClass.CPU_VECTOR) {
         out.add(renderWriteAccessor(reg, config));
       }
     });

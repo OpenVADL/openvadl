@@ -90,8 +90,8 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     var dims = reg.indexDimensions();
     var regInfo = reg.expectExtension(RegInfo.class);
 
-    if (regInfo.execClass() == RegInfo.ExecClass.HELPER_ONLY) {
-      dumpHelperOnlyRegCode(sb, reg, regLower, names, dims.size());
+    if (regInfo.execClass() == RegInfo.ExecClass.CPU_VECTOR) {
+      dumpCpuVectorRegCode(sb, reg, regLower, names, dims.size());
     } else if (dims.isEmpty()) {
       sb.callStmt("qemu_fprintf", "f",
           "\" " + reg.simpleName() + ":    \" TARGET_FMT_lx \"\\n\"",
@@ -133,8 +133,8 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     }
   }
 
-  private void dumpHelperOnlyRegCode(CCodeBuilder sb, RegisterTensor reg, String regLower,
-                                     String names, int indexDimCount) {
+  private void dumpCpuVectorRegCode(CCodeBuilder sb, RegisterTensor reg, String regLower,
+                                    String names, int indexDimCount) {
     var bytesPerReg = reg.resultType(indexDimCount).bitWidth() / 8;
     if (indexDimCount == 0) {
       sb.callStmt("qemu_fprintf", "f", "\" " + reg.simpleName() + ":    \"");
