@@ -266,7 +266,7 @@ public class AnnotationTable {
               .ifPresent(ann -> apply.accept(ann, Endianness.LITTLE));
         }).build();
 
-    annotationOn(GroupDefinition.class, "assert", ExprAnnotation::new)
+    annotationOn(GroupDefinition.class, "assert", () -> new ExprAnnotation(true))
         .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
         .applyViam((def, annotation, lowering) -> {
           var group = (Group) def;
@@ -1016,7 +1016,13 @@ abstract class Annotation implements AnnotationDeclaration, WithLocation {
   @LazyInit
   AnnotationDefinition definition;
 
+  protected boolean allowMultiple;
+
   public Annotation() {
+  }
+
+  public Annotation(boolean allowMultiple) {
+    this.allowMultiple = allowMultiple;
   }
 
   /**
@@ -1070,6 +1076,10 @@ abstract class Annotation implements AnnotationDeclaration, WithLocation {
           .locationDescription(definition, "Expected at leat one argument but got none")
           .build();
     }
+  }
+
+  protected boolean allowMultiple() {
+    return false;
   }
 }
 
@@ -1530,6 +1540,10 @@ class ExprAnnotation extends Annotation {
 
   public ExprAnnotation() {
     super();
+  }
+
+  public ExprAnnotation(boolean allowMultiple) {
+    super(allowMultiple);
   }
 
   @Override
