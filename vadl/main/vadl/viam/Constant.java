@@ -625,37 +625,37 @@ public abstract class Constant {
     }
 
     /**
-     * Performs singed or and unsigned less comparison.
+     * Performs signed or and unsigned less comparison.
      */
-    public Constant.Value lth(Constant.Value other, boolean singed) {
-      return compare(other, singed, (a, b) -> a.compareTo(b) < 0);
+    public Constant.Value lth(Constant.Value other, boolean signed) {
+      return compare(other, signed, (a, b) -> a.compareTo(b) < 0);
     }
 
     /**
-     * Performs singed or and unsigned less equals comparison.
+     * Performs signed or and unsigned less equals comparison.
      */
-    public Constant.Value leq(Constant.Value other, boolean singed) {
-      return compare(other, singed, (a, b) -> a.compareTo(b) <= 0);
+    public Constant.Value leq(Constant.Value other, boolean signed) {
+      return compare(other, signed, (a, b) -> a.compareTo(b) <= 0);
     }
 
     /**
-     * Performs singed or and unsigned greater comparison.
+     * Performs signed or and unsigned greater comparison.
      */
-    public Constant.Value gth(Constant.Value other, boolean singed) {
-      return compare(other, singed, (a, b) -> a.compareTo(b) > 0);
+    public Constant.Value gth(Constant.Value other, boolean signed) {
+      return compare(other, signed, (a, b) -> a.compareTo(b) > 0);
     }
 
     /**
-     * Performs singed or and unsigned less equals comparison.
+     * Performs signed or and unsigned less equals comparison.
      */
-    public Constant.Value geq(Constant.Value other, boolean singed) {
-      return compare(other, singed, (a, b) -> a.compareTo(b) >= 0);
+    public Constant.Value geq(Constant.Value other, boolean signed) {
+      return compare(other, signed, (a, b) -> a.compareTo(b) >= 0);
     }
 
-    private Constant.Value compare(Constant.Value other, boolean singed,
+    private Constant.Value compare(Constant.Value other, boolean signed,
                                    BiFunction<BigInteger, BigInteger, Boolean> cmp) {
       boolean result;
-      if (singed) {
+      if (signed) {
         var thisBigInt = BigIntUtils.fromTwosComplement(value, type().bitWidth(), true);
         var otherBigInt =
             BigIntUtils.fromTwosComplement(other.value, other.type().bitWidth(), true);

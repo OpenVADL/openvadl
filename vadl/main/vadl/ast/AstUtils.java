@@ -30,7 +30,7 @@ class AstUtils {
   // FIXME: We decided that in the future this behaivor will be removed and only the
   //  signed/unsigned versions are available.
   // Discussion: https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/287#issuecomment-23771
-  // There are some pseudo functions that will get resolved to either the signed or unsinged one.
+  // There are some pseudo functions that will get resolved to either the signed or unsigned one.
   private static Map<String, List<String>> pseudoRewrites =
       Map.of("VADL::div", List.of("VADL::sdiv", "VADL::udiv"), "VADL::mod",
           List.of("VADL::smod", "VADL::umod"));
@@ -52,8 +52,8 @@ class AstUtils {
   @Nullable
   static BuiltInTable.BuiltIn getBuiltIn(String name, List<Type> argTypes) {
     if (pseudoRewrites.containsKey(name)) {
-      var singed = argTypes.stream().anyMatch(t -> t instanceof SIntType);
-      name = pseudoRewrites.get(name).get(singed ? 0 : 1);
+      var signed = argTypes.stream().anyMatch(t -> t instanceof SIntType);
+      name = pseudoRewrites.get(name).get(signed ? 0 : 1);
     } else if (name.equals("decimal")) {
       // TODO: Remove this once all decimal calls were replaced by s/udec in the VADL specs (#409)
       // set decimal to be an alias of sdec
@@ -81,7 +81,7 @@ class AstUtils {
         .filter(b -> b.signature().argTypeClasses().size() == argTypes.size())
         .toList();
 
-    // Sometimes there are a singed and unsigned version of builtin operation
+    // Sometimes there are a signed and unsigned version of builtin operation
     return switch (builtIns.size()) {
       case 0 -> throw new IllegalStateException(
           "Couldn't get any matching builtin for %s".formatted(operator));
