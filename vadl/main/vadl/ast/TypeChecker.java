@@ -766,7 +766,7 @@ public class TypeChecker
       // Special case for equality over bound variables of the forall..then expression
       final Expr l = args.getFirst();
       final Expr r = args.getLast();
-      
+
       if (!(l.type() instanceof PseudoFormatType left)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
@@ -4347,9 +4347,10 @@ public class TypeChecker
     expr.type = Type.bool();
 
     if (currentAnnotation == null || !(currentAnnotation.target instanceof GroupDefinition)) {
-      addErrorAndContinueChecking(error(
-          "The forall-then expression is only permissible for annotations "
-              + "on the `group` definition.", expr).build());
+      final var diagnostic = error("Invalid `forall-then` expression", expr)
+          .description("The forall-then expression is only permissible for annotations on "
+              + "the `group` definition.");
+      addErrorAndContinueChecking(diagnostic.build());
       return null;
     }
 

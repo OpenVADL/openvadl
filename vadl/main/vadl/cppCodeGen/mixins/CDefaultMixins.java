@@ -49,12 +49,12 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DynSliceNode;
-import vadl.viam.graph.dependency.ForAllThenIdxNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -511,7 +511,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("checkstyle:MissingJavadocType")
   interface ForAllThenIdx {
     @Handler
-    default void handle(CGenContext<Node> ctx, ForAllThenIdxNode toHandle) {
+    default void handle(CGenContext<Node> ctx, OperationForAllNode.Index toHandle) {
       ctx.wr("i" + toHandle.id().numericId());
     }
   }

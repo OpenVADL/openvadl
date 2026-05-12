@@ -95,14 +95,13 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
-import vadl.viam.graph.dependency.ForAllThenIdxNode;
-import vadl.viam.graph.dependency.ForAllThenNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -1129,7 +1128,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .filter(Optional::isPresent).map(Optional::get)
           .map(Operation.class::cast)
           .toList();
-      return new ForAllThenIdxNode(getViamType(format.type()), ops);
+      return new OperationForAllNode.Index(getViamType(format.type()), ops);
     }
 
     // Function call without arguments (and no parenthesis)
@@ -1655,7 +1654,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public ExpressionNode visit(ForallThenExpr expr) {
 
-    final List<ForAllThenIdxNode> indices = new ArrayList<>();
+    final List<OperationForAllNode.Index> indices = new ArrayList<>();
     for (ForallThenExpr.Index idx : expr.indices) {
 
       final List<Operation> ops = idx.operations.stream()
@@ -1665,13 +1664,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .toList();
 
       final var idxNode =
-          new ForAllThenIdxNode(getViamType(requireNonNull(idx.identifier().type)), ops);
+          new OperationForAllNode.Index(getViamType(requireNonNull(idx.identifier().type)), ops);
       indices.add(idxNode);
     }
 
     var body = fetch(expr.thenExpr);
     var type = getViamType(expr.type());
-    return new ForAllThenNode(type, indices, body);
+    return new OperationForAllNode(type, indices, body);
   }
 
   @Override

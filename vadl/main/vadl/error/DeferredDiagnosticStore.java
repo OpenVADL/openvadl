@@ -57,4 +57,8 @@ public class DeferredDiagnosticStore {
   public static boolean isEmpty() {
     return diagnosticList.isEmpty();
   }
+
+  public static void clear() {
+    diagnosticList.clear();
+  }
 }

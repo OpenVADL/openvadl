@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.error.DiagnosticPrinter;
@@ -81,6 +82,8 @@ public class FrontendSnapshotTests {
 
     var input = Files.readString(path);
     try {
+      DeferredDiagnosticStore.clear();
+
       ast = VadlParser.parse(path, new DiskVirtualFileSystem());
       ModelRemover.removeModels(ast);
       Ungrouper.ungroup(ast);
@@ -89,12 +92,16 @@ public class FrontendSnapshotTests {
       prettyPrint = generatePrettyPrint(input, ast);
 
       TypeChecker.verify(ast);
+
       spec = ViamLowering.generate(ast);
 
       ViamVerifier.verifyAllIn(spec);
 
       ViamLocationExistenceChecker.verify(spec);
 
+      if (!DeferredDiagnosticStore.isEmpty()) {
+        diagnostics = Diagnostic.collapseSimilar(DeferredDiagnosticStore.getAll());
+      }
     } catch (DiagnosticList d) {
       diagnostics = d.deflateSimilar().items;
     } catch (Diagnostic d) {
