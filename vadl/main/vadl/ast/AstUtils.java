@@ -18,7 +18,6 @@ package vadl.ast;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BuiltInTable;
@@ -28,16 +27,30 @@ import vadl.types.UIntType;
 
 class AstUtils {
 
+  // FIXME: We decided that in the future this behaivor will be removed and only the
+  //  signed/unsigned versions are available.
+  // Discussion: https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/287#issuecomment-23771
+  // There are some pseudo functions that will get resolved to either the signed or unsinged one.
+  private static Map<String, List<String>> pseudoRewrites =
+      Map.of("VADL::div", List.of("VADL::sdiv", "VADL::udiv"), "VADL::mod",
+          List.of("VADL::smod", "VADL::umod"));
+
+  private static Map<String, BuiltInTable.BuiltIn> nameLookupTable =
+      BuiltInTable.builtIns().collect(Collectors.toMap(BuiltInTable.BuiltIn::name, b -> b));
+
+  private static Map<String, String> operatorRewrites = Map.of(
+      "&&", "&",
+      "||", "|"
+  );
+
+  private static Map<String, List<BuiltInTable.BuiltIn>> operatorLookupTable =
+      BuiltInTable.builtIns()
+          .filter(b -> b.operator() != null)
+          .collect(Collectors.groupingBy(BuiltInTable.BuiltIn::operator));
+
+
   @Nullable
   static BuiltInTable.BuiltIn getBuiltIn(String name, List<Type> argTypes) {
-
-    // FIXME: We decided that in the future this behaivor will be removed and only the
-    //  signed/unsigned versions are available.
-    // Discussion: https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/287#issuecomment-23771
-
-    // There are some pseudo functions that will get resolved to either the signed or unsinged one.
-    var pseudoRewrites = Map.of("VADL::div", List.of("VADL::sdiv", "VADL::udiv"), "VADL::mod",
-        List.of("VADL::smod", "VADL::umod"));
     if (pseudoRewrites.containsKey(name)) {
       var singed = argTypes.stream().anyMatch(t -> t instanceof SIntType);
       name = pseudoRewrites.get(name).get(singed ? 0 : 1);
@@ -48,27 +61,13 @@ class AstUtils {
     }
 
     String finalBuiltinName = name;
-    var matchingBuiltin = BuiltInTable.builtIns()
-        .filter(b -> b.name().equals(finalBuiltinName)).toList();
-
-    if (matchingBuiltin.size() > 1) {
-      throw new IllegalStateException("Multiple builtin match '$s': " + finalBuiltinName);
-    }
-
-    if (matchingBuiltin.isEmpty()) {
-      return null;
-    }
-
-    return matchingBuiltin.get(0);
+    var matchingBuiltin = nameLookupTable.get(finalBuiltinName);
+    return matchingBuiltin;
   }
 
   static BuiltInTable.BuiltIn getOperatorBuiltIn(Operator operator, List<Type> argTypes) {
 
     var symbol = operator.symbol;
-    var operatorRewrites = Map.of(
-        "&&", "&",
-        "||", "|"
-    );
     if (operatorRewrites.containsKey(symbol)) {
       symbol = operatorRewrites.get(symbol);
     }
@@ -78,9 +77,8 @@ class AstUtils {
     }
 
     String finalOperatorSymbol = symbol;
-    var builtIns = BuiltInTable.builtIns()
+    var builtIns = operatorLookupTable.getOrDefault(finalOperatorSymbol, List.of()).stream()
         .filter(b -> b.signature().argTypeClasses().size() == argTypes.size())
-        .filter(b -> Objects.equals(b.operator(), finalOperatorSymbol))
         .toList();
 
     // Sometimes there are a singed and unsigned version of builtin operation

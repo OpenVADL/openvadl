@@ -152,9 +152,13 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
     }
 
     // Shortcut if both have the same expansion stack
-    if (this.expandedFromStack().equals(other.expandedFromStack())) {
-      return new ExpandedLocation(new DirectLocation(this.path(), this.begin(), other.end()),
-          RopeList.of(this.expandedFromStack()));
+    if (this instanceof ExpandedLocation thisExpandedLoc
+        && other instanceof ExpandedLocation otherExpandedLoc
+        && thisExpandedLoc.expandedFrom.equals(otherExpandedLoc.expandedFrom)) {
+      var begin = this.begin().compareTo(other.begin()) < 0 ? this.begin() : other.begin();
+      var end = this.end().compareTo(other.end()) > 0 ? this.end() : other.end();
+      return new ExpandedLocation(new DirectLocation(this.path(), begin, end),
+          thisExpandedLoc.expandedFrom);
     }
 
     // The expansion stacks differ, let's find a shared substack or use the innermost invocation.
@@ -208,11 +212,11 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
    * @param newExpandedFrom to be appended.
    * @return the new location.
    */
-  default SourceLocation copyWithAppendedExpandedFrom(List<DirectLocation> newExpandedFrom) {
+  default SourceLocation copyWithAppendedExpandedFrom(RopeList<DirectLocation> newExpandedFrom) {
     return switch (this) {
-      case DirectLocation direct -> new ExpandedLocation(direct, RopeList.of(newExpandedFrom));
+      case DirectLocation direct -> new ExpandedLocation(direct, newExpandedFrom);
       case ExpandedLocation original -> new ExpandedLocation(original.primaryLocation,
-          original.expandedFrom.concat(RopeList.of(newExpandedFrom)));
+          original.expandedFrom.concat(newExpandedFrom));
     };
   }
 

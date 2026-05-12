@@ -1165,7 +1165,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // first lower all format fields (that are not derived format fields).
     // this is because derived format fields may reference fields, which already must be lowered.
-    var fields = definition.fieldsWithoutEncodingPredicate().stream()
+    var fields = definition.fieldsWithoutEncodingPredicate()
         .filter(f -> !(f instanceof DerivedFormatField))
         .map(fieldDefinition -> {
           var fieldIdent =

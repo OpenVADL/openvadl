@@ -63,13 +63,17 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
     }
 
     // If it's just a intermediate node, just visit it's children
-    node.children().forEach(this::travel);
+    for (var child : node.children()) {
+      travel(child);
+    }
   }
 
   @Override
   public Void visit(AbiSequenceDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -77,7 +81,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AliasDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -85,7 +91,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AnnotationDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -93,7 +101,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ApplicationBinaryInterfaceDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -101,7 +111,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmDescriptionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -109,7 +121,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmDirectiveDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -117,7 +131,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmGrammarAlternativesDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -125,7 +141,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmGrammarElementDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -133,7 +151,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmGrammarLiteralDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -141,7 +161,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmGrammarLocalVarDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -149,7 +171,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmGrammarRuleDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -157,7 +181,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmGrammarTypeDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -165,7 +191,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsmModifierDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -173,7 +201,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AssemblyDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -181,7 +211,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(CacheDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -189,7 +221,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ConstantDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -197,7 +231,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(CounterDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -205,7 +241,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(CpuFunctionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -213,7 +251,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(CpuMemoryRegionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -221,7 +261,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(CpuProcessDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -229,7 +271,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(DefinitionList definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -237,7 +281,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(EncodingDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -245,7 +291,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(EnumerationDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -253,7 +301,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ExceptionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -261,7 +311,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(FormatDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -269,7 +321,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(DerivedFormatField definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -277,7 +331,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(RangeFormatField definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -285,7 +341,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(TypedFormatField definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -293,7 +351,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(EncodingFormatField definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -301,7 +361,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(PredicateFormatField definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -309,7 +371,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(FunctionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -317,7 +381,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(GroupDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -325,7 +391,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ImportDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -333,7 +401,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(InstructionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -341,7 +411,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(InstructionSetDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -349,7 +421,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(LogicDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -357,7 +431,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MacroInstanceDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -365,7 +441,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MacroInstructionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -373,7 +451,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MacroMatchDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -381,7 +461,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MemoryDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -389,7 +471,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MicroArchitectureDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -397,7 +481,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ProcessorDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -405,7 +491,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ModelDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -413,7 +501,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ModelTypeDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -421,7 +511,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(OperationDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -429,7 +521,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(Parameter definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -437,7 +531,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(PatchDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -445,7 +541,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(PipelineDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -453,7 +551,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(PlaceholderDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -461,7 +561,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(PortBehaviorDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -469,7 +571,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ProcessDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -477,7 +581,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(PseudoInstructionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -485,7 +591,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(RecordTypeDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -493,7 +601,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(RegisterDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -501,7 +611,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(RelocationDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -509,7 +621,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(SignalDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -517,7 +631,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(SourceDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -525,7 +641,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(SpecialPurposeRegisterDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -533,7 +651,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(StageDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -541,7 +661,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(UsingDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -549,7 +671,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AbiClangTypeDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -557,7 +681,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AbiClangNumericTypeDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -565,7 +691,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(StageOutputDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -573,7 +701,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AbiSpecialPurposeInstructionDefinition definition) {
     beforeTravel(definition);
-    definition.children().forEach(this::travel);
+    for (var child : definition.children()) {
+      travel(child);
+    }
     afterTravel(definition);
     return null;
   }
@@ -581,7 +711,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(Identifier expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -589,7 +721,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(BinaryExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -597,7 +731,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(GroupedExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -605,7 +741,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(IntegerLiteral expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -613,7 +751,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(WildcardLiteral expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -621,7 +761,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(BinaryLiteral expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -629,7 +771,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(BoolLiteral expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -637,7 +781,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(StringLiteral expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -645,7 +791,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(PlaceholderExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -653,7 +801,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MacroInstanceExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -661,7 +811,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(RangeExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -669,7 +821,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(TypeLiteral expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -677,7 +831,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(IdentifierPath expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -685,7 +841,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(UnaryExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -693,7 +851,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(CallIndexExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -701,7 +861,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(IfExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -709,7 +871,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(LetExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -717,7 +881,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(CastExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -725,7 +891,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(SymbolExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -733,7 +901,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MacroMatchExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -741,7 +911,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MatchExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -749,7 +921,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsIdExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -757,7 +931,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AsStrExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -765,7 +941,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ExistsInExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -773,7 +951,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ExistsInThenExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -781,7 +961,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ForallExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -789,7 +971,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(SequenceCallExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -797,7 +981,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ExpandedSequenceCallExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -805,7 +991,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ExpandedAliasDefSequenceCallExpr expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -813,7 +1001,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ResourceReferenceExression expr) {
     beforeTravel(expr);
-    expr.children().forEach(this::travel);
+    for (var child : expr.children()) {
+      travel(child);
+    }
     afterTravel(expr);
     return null;
   }
@@ -821,7 +1011,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(AssignmentStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -829,7 +1021,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(BlockStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -837,7 +1031,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(CallStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -845,7 +1041,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(ForallStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -853,7 +1051,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(IfStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -861,7 +1061,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(InstructionCallStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -869,7 +1071,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(LetStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -877,7 +1081,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(LockStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -885,7 +1091,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MacroInstanceStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -893,7 +1101,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MacroMatchStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -901,7 +1111,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(MatchStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -909,7 +1121,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(PlaceholderStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -917,7 +1131,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(RaiseStatement statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }
@@ -925,7 +1141,9 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(StatementList statement) {
     beforeTravel(statement);
-    statement.children().forEach(this::travel);
+    for (var child : statement.children()) {
+      travel(child);
+    }
     afterTravel(statement);
     return null;
   }

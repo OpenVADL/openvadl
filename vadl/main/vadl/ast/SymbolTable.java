@@ -1186,16 +1186,10 @@ class SymbolTable {
       if (format != null) {
         statement.instrDef = instr;
         for (var namedArgument : statement.namedArguments) {
-          FormatField foundField = null;
-          for (var field : format.fieldsWithoutEncodingPredicate()) {
-            if (field.identifier().name.equals(namedArgument.identifier().name)) {
-              foundField = field;
-              break;
-            }
-          }
+          FormatField foundField = format.getField(namedArgument.identifier().name);
           if (foundField == null) {
             var suggestions = Levenshtein.suggestions(namedArgument.identifier().name,
-                format.fieldsWithoutEncodingPredicate().stream()
+                format.fieldsWithoutEncodingPredicate()
                     .map(f -> f.identifier().name).toList());
 
             statement.symbolTable().reportUnkownError(

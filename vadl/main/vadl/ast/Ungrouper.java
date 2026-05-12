@@ -39,7 +39,9 @@ public class Ungrouper
   public static void ungroup(Ast ast) {
     ast.withPassTiming("Ungrouping", () -> {
       var ungrouper = new Ungrouper();
-      ast.definitions.forEach(def -> def.accept(ungrouper));
+      for (var def : ast.definitions) {
+        def.accept(ungrouper);
+      }
     });
   }
 
@@ -177,10 +179,10 @@ public class Ungrouper
   public Expr visit(MatchExpr expr) {
     expr.candidate = expr.candidate.accept(this);
     expr.defaultResult = expr.defaultResult.accept(this);
-    expr.cases.forEach(matchCase -> {
+    for (var matchCase : expr.cases) {
       matchCase.patterns.replaceAll(pattern -> pattern.accept(this));
       matchCase.result = matchCase.result.accept(this);
-    });
+    }
     return expr;
   }
 
@@ -207,8 +209,9 @@ public class Ungrouper
 
   @Override
   public Expr visit(ForallExpr expr) {
-    expr.indices.forEach(
-        index -> index.domain = index.domain.accept(this));
+    for (var index : expr.indices) {
+      index.domain = index.domain.accept(this);
+    }
     expr.body = expr.body.accept(this);
     return expr;
   }
@@ -243,7 +246,9 @@ public class Ungrouper
   @Override
   public Void visit(FormatDefinition definition) {
     ungroupAnnotations(definition);
-    definition.fields.forEach(f -> f.accept(this));
+    for (var f : definition.fields) {
+      f.accept(this);
+    }
     return null;
   }
 
@@ -286,7 +291,9 @@ public class Ungrouper
   @Override
   public Void visit(InstructionSetDefinition definition) {
     ungroupAnnotations(definition);
-    definition.definitions.forEach(d -> d.accept(this));
+    for (var d : definition.definitions) {
+      d.accept(this);
+    }
     return null;
   }
 
@@ -318,7 +325,9 @@ public class Ungrouper
   @Override
   public Void visit(PseudoInstructionDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statements.forEach(this::visit);
+    for (var stmt : definition.statements) {
+      stmt.accept(this);
+    }
     return null;
   }
 
@@ -331,10 +340,10 @@ public class Ungrouper
   @Override
   public Void visit(EncodingDefinition definition) {
     ungroupAnnotations(definition);
-    definition.encodings.items.forEach(encoding -> {
+    for (var encoding : definition.encodings.items) {
       var enc = (EncodingDefinition.EncodingField) encoding;
       enc.value = enc.value.accept(this);
-    });
+    }
     return null;
   }
 
@@ -456,12 +465,10 @@ public class Ungrouper
   @Override
   public Void visit(ProcessDefinition processDefinition) {
     ungroupAnnotations(processDefinition);
-    processDefinition.templateParams.forEach(
-        templateParam ->
-            templateParam.value =
-                templateParam.value == null
-                    ? null
-                    : templateParam.value.accept(this));
+    for (var templateParam : processDefinition.templateParams) {
+      templateParam.value =
+          templateParam.value == null ? null : templateParam.value.accept(this);
+    }
     processDefinition.statement.accept(this);
     return null;
   }
@@ -497,7 +504,9 @@ public class Ungrouper
   @Override
   public Void visit(AbiSequenceDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statements.forEach(stmt -> stmt.accept(this));
+    for (var stmt : definition.statements) {
+      stmt.accept(this);
+    }
     return null;
   }
 
@@ -510,7 +519,9 @@ public class Ungrouper
   @Override
   public Void visit(ProcessorDefinition definition) {
     ungroupAnnotations(definition);
-    definition.definitions.forEach(def -> def.accept(this));
+    for (var def : definition.definitions) {
+      def.accept(this);
+    }
     return null;
   }
 
@@ -552,7 +563,9 @@ public class Ungrouper
   @Override
   public Void visit(MicroArchitectureDefinition definition) {
     ungroupAnnotations(definition);
-    definition.definitions.forEach(def -> def.accept(this));
+    for (var def : definition.definitions) {
+      def.accept(this);
+    }
     return null;
   }
 
@@ -650,7 +663,9 @@ public class Ungrouper
 
   @Override
   public Void visit(BlockStatement blockStatement) {
-    blockStatement.statements.forEach(statement -> statement.accept(this));
+    for (var statement : blockStatement.statements) {
+      statement.accept(this);
+    }
     return null;
   }
 
@@ -711,24 +726,26 @@ public class Ungrouper
     if (matchStatement.defaultResult != null) {
       matchStatement.defaultResult.accept(this);
     }
-    matchStatement.cases.forEach(matchCase -> {
+    for (var matchCase : matchStatement.cases) {
       matchCase.patterns.replaceAll(pattern -> pattern.accept(this));
       matchCase.result.accept(this);
-    });
+    }
     return null;
   }
 
   @Override
   public Void visit(StatementList statementList) {
-    statementList.items.forEach(stmt -> stmt.accept(this));
+    for (var stmt : statementList.items) {
+      stmt.accept(this);
+    }
     return null;
   }
 
   @Override
   public Void visit(InstructionCallStatement instructionCallStatement) {
-    instructionCallStatement.namedArguments.forEach(namedArgument ->
-        namedArgument.value = namedArgument.value.accept(this)
-    );
+    for (var namedArgument : instructionCallStatement.namedArguments) {
+      namedArgument.value = namedArgument.value.accept(this);
+    }
     instructionCallStatement.unnamedArguments.replaceAll(expr -> expr.accept(this));
     return null;
   }
@@ -742,12 +759,16 @@ public class Ungrouper
 
   @Override
   public Void visit(ForallStatement forallStatement) {
-    forallStatement.indices.forEach(index -> index.domain = index.domain.accept(this));
+    for (var index : forallStatement.indices) {
+      index.domain = index.domain.accept(this);
+    }
     forallStatement.body.accept(this);
     return null;
   }
 
   private void ungroupAnnotations(Definition definition) {
-    definition.annotations.forEach(this::visit);
+    for (var annotation : definition.annotations) {
+      visit(annotation);
+    }
   }
 }

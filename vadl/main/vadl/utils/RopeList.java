@@ -71,6 +71,9 @@ public sealed interface RopeList<T> permits RopeList.ItemLeaf, RopeList.ListLeaf
    * @return a new rope list containing the elements.
    */
   static <T> RopeList<T> of(T... elements) {
+    if (elements.length == 1) {
+      return new ItemLeaf<>(elements[0]);
+    }
     return new ListLeaf<>(List.of(elements));
   }
 
@@ -82,6 +85,9 @@ public sealed interface RopeList<T> permits RopeList.ItemLeaf, RopeList.ListLeaf
    * @return a new rope list containing the elements.
    */
   static <T> RopeList<T> of(List<T> elements) {
+    if (elements.size() == 1) {
+      return new ItemLeaf<>(elements.get(0));
+    }
     return new ListLeaf<>(elements);
   }
 
