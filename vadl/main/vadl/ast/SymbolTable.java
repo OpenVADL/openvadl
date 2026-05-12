@@ -749,7 +749,7 @@ class SymbolTable {
       // Avoid creating a new scope since the elements should share the same scope
       beforeTravelWithoutScope(definition);
       definition.symbolTable = currentSymbols();
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravelWithoutScope(definition);
       return null;
     }
@@ -762,9 +762,7 @@ class SymbolTable {
       // This isn't a identifyableNode so we need to add custom handling here.
       currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
 
-      definition.children().stream()
-          .filter(c -> c != definition.stringLiteral)
-          .forEach(this::travel);
+      definition.forEachChild(c -> { if (c != definition.stringLiteral) travel(c); });
 
       afterTravelWithoutScope(definition);
       return null;
@@ -808,7 +806,7 @@ class SymbolTable {
       statement.identifiers().forEach(identifier -> {
         childTable.defineSymbol(identifier.name, statement);
       });
-      withSymbols(childTable, () -> statement.children().forEach(this::travel));
+      withSymbols(childTable, () -> statement.forEachChild(this::travel));
 
       afterTravel(statement);
       return null;
@@ -838,7 +836,7 @@ class SymbolTable {
     @Override
     public Void visit(AliasDefinition definition) {
       beforeTravel(definition);
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -853,7 +851,7 @@ class SymbolTable {
       expr.identifiers().forEach(identifier -> {
         childTable.defineSymbol(identifier.name, expr);
       });
-      withSymbols(childTable, () -> expr.children().forEach(this::travel));
+      withSymbols(childTable, () -> expr.forEachChild(this::travel));
 
       afterTravel(expr);
       return null;
@@ -995,7 +993,7 @@ class SymbolTable {
         }
       }
 
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -1012,7 +1010,7 @@ class SymbolTable {
         definition.formatNode = format;
       }
 
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -1059,7 +1057,7 @@ class SymbolTable {
         }
       }
 
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -1121,7 +1119,7 @@ class SymbolTable {
         definition.symbolTable().extendBy(isa.symbolTable());
       }
 
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -1136,7 +1134,7 @@ class SymbolTable {
         definition.symbolTable().extendBy(isa.symbolTable());
       }
 
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -1160,7 +1158,7 @@ class SymbolTable {
         }
       }
 
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -1171,7 +1169,7 @@ class SymbolTable {
 
       def.symbolTable().requireAs(def.memoryRef, MemoryDefinition.class);
 
-      def.children().forEach(this::travel);
+      def.forEachChild(this::travel);
       afterTravel(def);
       return null;
     }
@@ -1253,7 +1251,7 @@ class SymbolTable {
         definition.symbolTable().extendBy(abi.symbolTable());
       }
 
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -1273,7 +1271,7 @@ class SymbolTable {
             .reportUnkownError("Relocation", relocation.pathToString(), relocation, suggestions);
       }
 
-      definition.children().forEach(this::travel);
+      definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
     }
@@ -1312,9 +1310,7 @@ class SymbolTable {
       }
 
       // All other children have the default handling
-      definition.children().stream()
-          .filter(c -> c != definition.attribute)
-          .forEach(this::travel);
+      definition.forEachChild(c -> { if (c != definition.attribute) travel(c); });
 
       afterTravel(definition);
       return null;
@@ -1357,9 +1353,7 @@ class SymbolTable {
       // Resolve all other children like always
       // FIXME: At the moment id isn't even a child but I'm not sure if it should be so check in
       // later once we know it.
-      definition.children().stream()
-          .filter(c -> c != definition.id)
-          .forEach(this::travel);
+      definition.forEachChild(c -> { if (c != definition.id) travel(c); });
 
 
       afterTravel(definition);

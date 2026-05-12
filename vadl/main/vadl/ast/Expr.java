@@ -22,6 +22,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
@@ -1825,16 +1826,15 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
-    List<Node> childNodes = new ArrayList<>();
     if (target != null) {
-      childNodes.add((Node) target);
+      action.accept((Node) target);
     }
     for (var a : argsIndices) {
       for (var v : a.values) {
         if (v != null) {
-          childNodes.add(v);
+          action.accept(v);
         }
       }
     }
@@ -1842,12 +1842,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
       for (var a : subCall.argsIndices) {
         for (var v : a.values) {
           if (v != null) {
-            childNodes.add(v);
+            action.accept(v);
           }
         }
       }
     }
-    return childNodes;
   }
 
   void replaceArgsFor(int index, List<Expr> newArgs) {
@@ -2312,16 +2311,18 @@ class MatchExpr extends Expr {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
-    var childNodes = new ArrayList<Node>();
-    childNodes.add(candidate);
-    cases.forEach(c -> {
-      childNodes.addAll(c.patterns);
-      childNodes.add(c.result);
-    });
-    childNodes.add(defaultResult);
-    return childNodes.stream().filter(Objects::nonNull).toList();
+    action.accept(candidate);
+    for (var c : cases) {
+      c.patterns.forEach(p -> action.accept(p));
+      if (c.result != null) {
+        action.accept(c.result);
+      }
+    }
+    if (defaultResult != null) {
+      action.accept(defaultResult);
+    }
   }
 
   @Override
@@ -2822,8 +2823,8 @@ final class ExpandedAliasDefSequenceCallExpr extends ExpandedSequenceCallExpr {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // Remove this method when #293 is fixed.
-    return List.of(target);
+    action.accept(target);
   }
 }

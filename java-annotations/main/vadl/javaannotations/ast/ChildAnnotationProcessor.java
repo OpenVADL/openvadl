@@ -176,18 +176,16 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
       out.println("// Generated code from %s".formatted(this.getClass().getName()));
       out.println("package " + packageName + ";");
       out.println();
-      out.println("import java.util.List;");
-      out.println("import java.util.ArrayList;");
-      out.println("import java.util.Collections;");
       out.println("import java.util.Map;");
       out.println("import java.util.HashMap;");
-      out.println("import java.util.function.Function;");
+      out.println("import java.util.function.BiConsumer;");
+      out.println("import java.util.function.Consumer;");
       out.println();
 
       // Generate registry class
       out.println("public final class NodeChildrenRegistry {");
       out.println(
-          "    private static final Map<Class<?>, Function<Node, List<Node>>> COLLECTORS = "
+          "    private static final Map<Class<?>, BiConsumer<Node, Consumer<Node>>> COLLECTORS = "
               + "new HashMap<>();");
       out.println();
 
@@ -202,70 +200,41 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
         String className = classElement.getQualifiedName().toString();
         List<VariableElement> childFields = entry.getValue();
 
-        // Optimization for when all children are already in a single list
-        if (childFields.size() == 1 && isFieldList(childFields.getFirst())) {
-          var field = childFields.getFirst();
-          out.println(
-              "        COLLECTORS.put(" + className + ".class, (node) -> (List<Node>) (List<?>) (("
-                  + className + ") node)." + fieldAccessor(field) + ");");
-          continue;
-        }
-
-        out.println("        COLLECTORS.put(" + className + ".class, (node) -> {");
+        out.println("        COLLECTORS.put(" + className + ".class, (node, action) -> {");
         out.println("            " + className + " n = (" + className + ") node;");
 
-        // Calculate the capacity to optimize allocations
-        out.println("            int capacity = 0");
         for (VariableElement field : childFields) {
-          String fieldName = field.getSimpleName().toString();
           if (isFieldList(field)) {
-            out.println(
-                "                  + n.%s.size() // %s".formatted(fieldAccessor(field), fieldName));
-          } else {
-            out.println("                  + 1 // %s".formatted(fieldName));
-          }
-        }
-        out.println("                 ;");
-
-
-        out.println("            List<Node> children = new ArrayList<>(capacity);");
-
-        // Add code to collect children for this node type
-        for (VariableElement field : childFields) {
-          // Handle different field types
-          if (isFieldList(field)) {
-            out.println("            if ( n." + fieldAccessor(field) + " != null) {");
-            out.println("               for (var child: n." + fieldAccessor(field) + ") {");
-            out.println("                   children.add((Node) child);");
-            out.println("               }");
+            out.println("            if (n." + fieldAccessor(field) + " != null) {");
+            out.println("                for (var child : n." + fieldAccessor(field) + ") {");
+            out.println("                    action.accept((Node) child);");
+            out.println("                }");
             out.println("            }");
           } else {
-            out.println("            if ( n." + fieldAccessor(field) + " != null) {");
-            out.println("                children.add((Node) n." + fieldAccessor(field) + ");");
+            out.println("            if (n." + fieldAccessor(field) + " != null) {");
+            out.println("                action.accept((Node) n." + fieldAccessor(field) + ");");
             out.println("            }");
           }
         }
 
-        out.println("            return children;");
         out.println("        });");
       }
 
       out.println("    }");
       out.println();
 
-      // Method to get children for any node
-      out.println("    public static List<Node> getChildren(Node node) {");
+      // Method to iterate children for any node
       out.println(
-          "        Function<Node, List<Node>> collector = COLLECTORS.get(node.getClass());");
+          "    public static void forEachChild(Node node, Consumer<Node> action) {");
+      out.println(
+          "        BiConsumer<Node, Consumer<Node>> collector = COLLECTORS.get(node.getClass());");
       out.println("        if (collector != null) {");
-      out.println("            return collector.apply(node);");
+      out.println("            collector.accept(node, action);");
       out.println("        }");
-      out.println("        return Collections.emptyList();");
       out.println("    }");
       out.println("");
 
-
-      // Method to get all children but specify the exact class, only used for edgecases
+      // Method to iterate children but specify the exact class, only used for edge cases
       out.println("    /**");
       out.println("     * Specify the class directly as which it should be loaded.");
       out.println(
@@ -273,20 +242,21 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
               + "to get the children");
       out.println("     * from your superclass.");
       out.println("     *");
-      out.println("     * @param node from which the children are loaded.");
+      out.println("     * @param node from which the children are iterated.");
       out.println("     * @param nodeType as which the node should be interpreted.");
-      out.println("     * @return the children.");
+      out.println("     * @param action called for each child.");
       out.println("     */");
       out.println(
-          "    public static List<Node> unsafeGetChildrenDirect(Node node, "
-              + "Class<? extends Node> nodeType) {");
-      out.println("        Function<Node, List<Node>> collector = COLLECTORS.get(nodeType);");
-      out.println("            if (collector == null) {");
+          "    public static void unsafeForEachChildDirect(Node node, "
+              + "Class<? extends Node> nodeType, Consumer<Node> action) {");
       out.println(
-          "                throw new IllegalArgumentException(\"Node type \" + nodeType + \" "
+          "        BiConsumer<Node, Consumer<Node>> collector = COLLECTORS.get(nodeType);");
+      out.println("        if (collector == null) {");
+      out.println(
+          "            throw new IllegalArgumentException(\"Node type \" + nodeType + \" "
               + "not supported\");");
-      out.println("            }");
-      out.println("        return collector.apply(node);");
+      out.println("        }");
+      out.println("        collector.accept(node, action);");
       out.println("    }");
       out.println("}");
     }
