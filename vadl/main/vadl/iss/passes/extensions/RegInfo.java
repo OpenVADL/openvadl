@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -85,9 +84,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      */
     TCG_SCALAR,
     /**
-     * Register must be accessed through helper/cpu-state code.
+     * Register is stored as a CPU-state byte array for helper access and future gvec offsets.
      */
-    HELPER_ONLY
+    CPU_VECTOR
   }
 
   /**
@@ -137,14 +136,17 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   /**
-   * Checks if this register is handled as a generic vector.
-   * A register will be handled as generic vector if its inner type
-   * does not fit into the target size (max 64 bit), or if it has vector-style accesses.
-   *
-   * @return true if register is a generic vector
+   * Returns whether this register is stored as a CPU-state byte array for helper and vector paths.
    */
-  public boolean isGVec() {
-    return execClass == ExecClass.HELPER_ONLY;
+  public boolean isCpuVector() {
+    return execClass == ExecClass.CPU_VECTOR;
+  }
+
+  /**
+   * Returns whether this register has the minimum storage metadata needed for future gvec offsets.
+   */
+  public boolean isGvecCapable() {
+    return isCpuVector() && reg().totalWidth() % 8 == 0 && cpuVectorAlignmentBytes() >= 16;
   }
 
   /**
@@ -195,7 +197,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
    * Returns whether this register is stored as an array in the CPU state.
    */
   public boolean hasCpuStateArrayStorage() {
-    return isGVec() || reg().maxNumberOfAccessIndices() > 0;
+    return isCpuVector() || reg().maxNumberOfAccessIndices() > 0;
   }
 
   /**
@@ -224,17 +226,38 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
    * TCG variable, otherwise there would be an overflow when QEMU synchronizes the
    * TCG variables with the CPU state object.
    *
-   * <p>However, if the register is a generic vector, there is no corresponding TCG variable
+   * <p>However, if the register is a CPU vector, there is no corresponding TCG variable
    * and so is not synchronization involved, which means the above constraint does not apply
    * to them.
    *
-   * <p>Furthermore, generic vector registers are always rendered as byte arrays (uint8_t)
+   * <p>Furthermore, CPU vector registers are always rendered as byte arrays (uint8_t)
    * in the CPU state object.
    *
    * @return the CPU state type width in bits
    */
   public int cpuStateTypeWidth() {
-    return isGVec() ? 8 : config.targetSize().width;
+    return isCpuVector() ? 8 : config.targetSize().width;
+  }
+
+  /**
+   * Returns the CPU-state field alignment in bytes for CPU-vector storage.
+   */
+  public int cpuVectorAlignmentBytes() {
+    return 16;
+  }
+
+  /**
+   * Returns the C field attribute used for CPU-vector storage alignment.
+   */
+  public String cpuStateAlignment() {
+    return isCpuVector() ? " QEMU_ALIGNED(" + cpuVectorAlignmentBytes() + ")" : "";
+  }
+
+  /**
+   * Returns the name of the future gvec offset helper for this register.
+   */
+  public String gvecOffsetHelperName() {
+    return "ofs_" + nameLower();
   }
 
   protected String cpuStateName() {
@@ -261,9 +284,11 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("index_dims", dims);
       renderObj.put("value_width", resultType.bitWidth());
       renderObj.put("cpu_state_type_width", cpuStateTypeWidth());
+      renderObj.put("cpu_state_alignment", cpuStateAlignment());
       renderObj.put("names", names());
       renderObj.put("is_tcg", isTcgScalar());
-      renderObj.put("is_gvec", isGVec());
+      renderObj.put("is_cpu_vector", isCpuVector());
+      renderObj.put("is_gvec_capable", isGvecCapable());
       renderObj.put("is_tb_state", isTbState());
       renderObj.put("tb_state_parts", tbStateParts());
       renderObj.put("exec_class", execClass().name());
@@ -277,6 +302,11 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("c_array_def", renderCArrayDef());
       renderObj.put("c_array_index", cArrayIndex("d"));
       renderObj.put("c_reg_name_array_def", renderCRegNameArrayDef());
+      renderObj.put("gvec_offset_helper_name", gvecOffsetHelperName());
+      renderObj.put("gvec_offset_dims", renderGvecOffsetDims());
+      renderObj.put("gvec_offset_params", renderGvecOffsetParams());
+      renderObj.put("gvec_offset_args", renderGvecOffsetArgs());
+      renderObj.put("gvec_offset_expr", renderGvecOffsetExpr());
     }
     return renderObj;
   }
@@ -314,10 +344,9 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   private String renderCArrayDef() {
     var sb = new StringBuilder();
 
-    if (isGVec()) {
-      // if the register is a gvec, we will use a single-dimensional array
-      // for simplicity when accessing it. The array is a byte array (uint8_t),
-      // so we must adjust the element number accordingly.
+    if (isCpuVector()) {
+      // CPU-vector registers use one flattened byte array in CPU state. Helper accessors and
+      // future gvec offset helpers use explicit byte offsets into this storage.
       var elementSize = 8;
       var numElements = reg().totalWidth() / elementSize;
       sb.append("[").append(numElements).append("]");
@@ -361,6 +390,44 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         })
         .collect(joining(", "));
     return args;
+  }
+
+  private List<Map<String, Object>> renderGvecOffsetDims() {
+    return reg().indexDimensions().stream()
+        .limit(1)
+        .map(d -> Map.of(
+            "size", (Object) d.size(),
+            "index_ctype", CppTypeMap.getCppTypeNameByVadlType(
+                Objects.requireNonNull(d.indexType().fittingCppType())),
+            "arg_name", "d" + d.index()
+        ))
+        .toList();
+  }
+
+  private String renderGvecOffsetParams() {
+    var args = renderGvecOffsetDims().stream()
+        .map(d -> d.get("index_ctype") + " " + d.get("arg_name"))
+        .collect(joining(", "));
+    return args.isEmpty() ? "" : ", " + args;
+  }
+
+  private String renderGvecOffsetArgs() {
+    var args = renderGvecOffsetDims().stream()
+        .map(d -> Objects.requireNonNull(d.get("arg_name")).toString())
+        .collect(joining(", "));
+    return args.isEmpty() ? "" : ", " + args;
+  }
+
+  private String renderGvecOffsetExpr() {
+    var targetUpper = config.targetName().toUpperCase();
+    var base = "offsetof(CPU" + targetUpper + "State, " + nameLower() + ")";
+    var dims = renderGvecOffsetDims();
+    if (dims.isEmpty()) {
+      return base;
+    }
+    var strideBytes = reg().resultType(1).bitWidth() / 8;
+    return base + " + ((uint32_t) " + dims.getFirst().get("arg_name") + ") * "
+        + strideBytes + "u";
   }
 
   /**
@@ -415,7 +482,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
   /// Determines backend execution class for a register tensor.
   ///
-  /// A register is considered a gvec if:
+  /// A register uses CPU-vector storage if:
   /// - Any single element exceeds 64 bits (can't fit in TCG scalar types)
   /// - It has vector-style accesses (accessing multiple elements at once)
   /// - The total register width exceeds 64 bits AND it's not a register file with
@@ -444,7 +511,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     //    If so, even scalar accesses can't use TCG variables
     int fullyIndexedWidth = reg.resultType(reg.maxNumberOfAccessIndices()).bitWidth();
     if (fullyIndexedWidth > 64) {
-      return ExecClass.HELPER_ONLY;
+      return ExecClass.CPU_VECTOR;
     }
 
     // TODO: We should propably do proper analysis if the register is used
@@ -452,10 +519,10 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     // 2. Check if it is more than 2 dimensions.
     //    If so, it is typically used as vector registers within loops.
     if (reg.dimensions().size() > 2) {
-      return ExecClass.HELPER_ONLY;
+      return ExecClass.CPU_VECTOR;
     }
 
-    // 3. If we have vector-style accesses, use gvec
+    // 3. If we have vector-style accesses, use CPU-vector storage.
     //    Otherwise, all accesses are fully indexed (scalar accesses)
     //    Even if total width > 64 bits, we can use separate TCG variables
     //    for each element (like GPR[32] where each register is separate)
@@ -463,7 +530,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         .anyMatch(read -> isVectorAccess(reg, read.indices().size()))
         || writes.stream()
         .anyMatch(write -> isVectorAccess(reg, write.indices().size()));
-    return hasVectorStyleAccess ? ExecClass.HELPER_ONLY : ExecClass.TCG_SCALAR;
+    return hasVectorStyleAccess ? ExecClass.CPU_VECTOR : ExecClass.TCG_SCALAR;
   }
 
   /**
@@ -508,7 +575,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
    *   from the effective base-register call.</li>
    *   <li>Dynamic chunk helpers such as
    *   {@code uint64_t cpu_get_z_chunk(CPUState *env, uint32_t i0, uint32_t bit_offset,
-   *   uint32_t bit_width)} are emitted by dedicated helper-only chunk generation and are not
+   *   uint32_t bit_width)} are emitted by dedicated CPU-vector chunk generation and are not
    *   represented by these descriptors.</li>
    *   <li>TCG chunk accesses are also not represented as standalone descriptors: they are emitted
    *   inline in {@code trans_*} through explicit extract/deposit operations using the
@@ -809,15 +876,15 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      * Generates the C function body for this descriptor.
      */
     private String body() {
-      if (owner.isGVec()) {
-        return gVecBody();
+      if (owner.isCpuVector()) {
+        return cpuVectorBody();
       } else {
         return normalBody();
       }
     }
 
     /**
-     * Generates function body for normal (non-gvec) register access.
+     * Generates function body for scalar CPU-state register access.
      *
      * @return the function body code
      */
@@ -860,12 +927,12 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     }
 
     /**
-     * Generates function body for generic vector register access.
+     * Generates function body for CPU-vector byte-array register access.
      *
      * @return the function body code
      */
     @SuppressWarnings("MethodName")
-    private String gVecBody() {
+    private String cpuVectorBody() {
 
       // precompute strides (row-major)
       int ndims = dims.size();

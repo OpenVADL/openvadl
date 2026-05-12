@@ -174,8 +174,8 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     if (descriptor.elementWidth() <= configuration().targetSize().width) {
       return true;
     }
-    if (regInfo(node.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY) {
-      // Helper-only wide accesses are emitted via helper/cpu paths and do not require
+    if (regInfo(node.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR) {
+      // CPU-vector wide accesses are emitted via helper/cpu paths and do not require
       // scalar base-accessor signatures.
       return false;
     }
@@ -194,8 +194,8 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     if (descriptor.elementWidth() <= configuration().targetSize().width) {
       return true;
     }
-    if (regInfo(node.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY) {
-      // Helper-only wide accesses are emitted via helper/cpu paths and do not require
+    if (regInfo(node.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR) {
+      // CPU-vector wide accesses are emitted via helper/cpu paths and do not require
       // scalar base-accessor signatures.
       return false;
     }

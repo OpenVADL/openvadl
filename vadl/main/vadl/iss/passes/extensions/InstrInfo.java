@@ -85,11 +85,11 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   }
 
   private ExecStrategy computeFallbackExecStrategy() {
-    var hasHelperOnlyReads = instr().behavior().getNodes(IssReadRegNode.class)
-        .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
-    var hasHelperOnlyWrites = instr().behavior().getNodes(IssWriteRegNode.class)
-        .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
-    return hasHelperOnlyReads || hasHelperOnlyWrites
+    var hasCpuVectorReads = instr().behavior().getNodes(IssReadRegNode.class)
+        .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR);
+    var hasCpuVectorWrites = instr().behavior().getNodes(IssWriteRegNode.class)
+        .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR);
+    return hasCpuVectorReads || hasCpuVectorWrites
         ? ExecStrategy.HELPER_CALL
         : ExecStrategy.DIRECT_TCG;
   }

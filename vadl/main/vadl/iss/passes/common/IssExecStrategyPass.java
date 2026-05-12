@@ -59,17 +59,17 @@ public class IssExecStrategyPass extends AbstractIssPass {
 
     var isa = viam.isa().get();
     isa.ownInstructions().forEach(instr -> {
-      var hasHelperOnlyReads = instr.behavior().getNodes(IssReadRegNode.class)
-          .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
-      var hasHelperOnlyWrites = instr.behavior().getNodes(IssWriteRegNode.class)
-          .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.HELPER_ONLY);
+      var hasCpuVectorReads = instr.behavior().getNodes(IssReadRegNode.class)
+          .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR);
+      var hasCpuVectorWrites = instr.behavior().getNodes(IssWriteRegNode.class)
+          .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR);
 
       // TODO: Eventually this must be supported by TCG as well
       var anyTensorExpr = instr.behavior().getNodes(ForallNode.class).findAny().isPresent()
           || instr.behavior().getNodes(TensorNode.class).findAny().isPresent()
           || instr.behavior().getNodes(FoldNode.class).findAny().isPresent();
 
-      var strategy = hasHelperOnlyReads || hasHelperOnlyWrites || anyTensorExpr
+      var strategy = hasCpuVectorReads || hasCpuVectorWrites || anyTensorExpr
           ? InstrInfo.ExecStrategy.HELPER_CALL
           : InstrInfo.ExecStrategy.DIRECT_TCG;
 

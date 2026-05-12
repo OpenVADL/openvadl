@@ -240,7 +240,7 @@ class IssRegisterAccessLowering {
     var simpleAliasAccessor = semantics.aliasSlice() == null
         && aliasIndices.size() == baseDims;
     var helperExpansionAccessor = regInfo(semantics.baseTensor()).execClass()
-        == RegInfo.ExecClass.HELPER_ONLY
+        == RegInfo.ExecClass.CPU_VECTOR
         && semantics.aliasSlice() == null
         && aliasIndices.size() > baseDims
         && read.type().asDataType().bitWidth() <= 64;

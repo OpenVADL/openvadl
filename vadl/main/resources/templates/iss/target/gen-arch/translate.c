@@ -84,6 +84,15 @@ static target_ulong next_insn(DisasContext *ctx)
     return translator_ld[(${insn_width.short})]_swap(ctx->env, &ctx->base, pc_next, swap_insn(ctx));
 }
 
+[# th:each="reg : ${register_tensors}" th:if="${reg.is_gvec_capable}"]
+static inline uint32_t [(${reg.gvec_offset_helper_name})](DisasContext *ctx[(${reg.gvec_offset_params})])
+{   [# th:each="dim : ${reg.gvec_offset_dims}"]
+    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
+    (void) ctx;
+    return [(${reg.gvec_offset_expr})];
+}
+[/]
+
 [# th:each="reg : ${register_tensors}" th:if="${reg.is_tcg}"]
 static TCGv get_[(${reg.name_lower})](DisasContext *ctx [(${reg.getter_params})])
 {   [# th:each="dim : ${reg.index_dims}"]

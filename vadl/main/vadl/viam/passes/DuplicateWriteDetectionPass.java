@@ -156,16 +156,16 @@ class DuplicateWriteDetector {
   }
 
   private boolean skipCheck() {
-    var hasHelperOnlyRegAccess = behavior.getNodes(ReadResourceNode.class).anyMatch(n ->
+    var hasCpuVectorRegAccess = behavior.getNodes(ReadResourceNode.class).anyMatch(n ->
         n.resourceDefinition() instanceof RegisterTensor reg
             && reg.hasExtension(RegInfo.class)
-            && reg.expectExtension(RegInfo.class).execClass() == RegInfo.ExecClass.HELPER_ONLY
+            && reg.expectExtension(RegInfo.class).execClass() == RegInfo.ExecClass.CPU_VECTOR
     ) || behavior.getNodes(WriteRegTensorNode.class).anyMatch(n ->
         n.regTensor().hasExtension(RegInfo.class)
             && n.regTensor().expectExtension(RegInfo.class).execClass()
-            == RegInfo.ExecClass.HELPER_ONLY
+            == RegInfo.ExecClass.CPU_VECTOR
     );
-    if (hasHelperOnlyRegAccess) {
+    if (hasCpuVectorRegAccess) {
       return true;
     }
 
