@@ -114,6 +114,13 @@ With that you can run:
 
 Which will create an executable at: `vadl-cli/build/native/nativeCompile/openvadl`
 
+Alternatively, you can also create a native image with the [GC disabled](https://www.graalvm.org/latest/reference-manual/native-image/optimizations-and-performance/MemoryManagement/)
+which produces the binary in the same location. Only use this if you know what you are doing.
+
+```bash
+./gradlew nativeEpsilonCompile
+```
+
 ### Run all tests
 
 To run all tests you need to have docker running on your system.

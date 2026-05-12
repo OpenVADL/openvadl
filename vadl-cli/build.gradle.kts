@@ -25,7 +25,7 @@ application {
 
 graalvmNative {
     binaries {
-        named("main") {
+        fun org.graalvm.buildtools.gradle.dsl.NativeImageOptions.applyCommonConfig(gc: String) {
             resources {
                 autodetection {
                     enabled = true
@@ -36,14 +36,26 @@ graalvmNative {
             mainClass.set(application.mainClass)
             buildArgs.addAll(
                 "-O2",
-                // This is different from the GC as for graalvm builds, which is mainly because this is the only one that
-                // also works outside Linux.
-                "--gc=serial",
+                "--gc=$gc",
                 "-R:MinHeapSize=4g",
                 "-R:MaxNewSize=2g",
             )
             buildArgs.add("--enable-url-protocols=https")
             buildArgs.add("--enable-native-access=ALL-UNNAMED")
+        }
+
+        named("main") {
+            // The serial GC is different from the GC as for graalvm builds, which is mainly because this is the
+            // only one that also works outside Linux.
+            applyCommonConfig("serial")
+        }
+        create("epsilon") {
+            // Epsilon is a no-op GC: memory is never reclaimed. Use it for short-lived runs where GC overhead is
+            // undesirable. Produced via the `nativeEpsilonCompile` task.
+            // The plugin only auto-wires the classpath for the `main` and `test` binaries, so we have to wire the
+            // main source set's runtime classpath ourselves.
+            classpath.from(sourceSets["main"].runtimeClasspath)
+            applyCommonConfig("epsilon")
         }
     }
 }
