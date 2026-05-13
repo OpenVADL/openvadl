@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -64,8 +64,7 @@ public class TableGenInstAliasRenderer {
 
   private static String generateAssembly(PseudoInstruction pseudoInstruction, Assembly assembly) {
     var entryPoint =
-        ensurePresent(
-            assembly.function().behavior().getNodes(ReturnNode.class).toList().stream().findFirst(),
+        ensurePresent(assembly.function().behavior().getNodes(ReturnNode.class).findFirst(),
             "must exist");
 
     StringWriter result = new StringWriter();

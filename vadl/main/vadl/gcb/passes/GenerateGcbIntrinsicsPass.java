@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -105,8 +105,8 @@ public class GenerateGcbIntrinsicsPass extends Pass {
 
       var isNoMem = isNoMem(snapshot);
       var speculatable = speculatable(snapshot);
-      var readsMem = !snapshot.getNodes(ReadMemNode.class).toList().isEmpty();
-      var writesMem = !snapshot.getNodes(WriteMemNode.class).toList().isEmpty();
+      var readsMem = snapshot.getNodes(ReadMemNode.class).findAny().isPresent();
+      var writesMem = snapshot.getNodes(WriteMemNode.class).findAny().isPresent();
 
       var attributes = new ArrayList<InstructionIntrinsicAttributesCtx.Attribute>();
       if (isNoMem) {
@@ -152,8 +152,8 @@ public class GenerateGcbIntrinsicsPass extends Pass {
   }
 
   private boolean isMem(Graph snapshot) {
-    return !snapshot.getNodes(WriteMemNode.class).toList().isEmpty()
-        || !snapshot.getNodes(ReadMemNode.class).toList().isEmpty();
+    return snapshot.getNodes(WriteMemNode.class).findAny().isPresent()
+        || snapshot.getNodes(ReadMemNode.class).findAny().isPresent();
   }
 
   private boolean isNoMem(Graph snapshot) {
@@ -171,7 +171,7 @@ public class GenerateGcbIntrinsicsPass extends Pass {
    * x) No division-by-zero traps
    */
   private boolean speculatable(Graph snapshot) {
-    return isNoMem(snapshot) && snapshot.getNodes(ProcCallNode.class).toList().isEmpty();
+    return isNoMem(snapshot) && snapshot.getNodes(ProcCallNode.class).findAny().isEmpty();
   }
 
   private boolean hasValidInputOperands(List<GcbInstructionOperand> operands) {

@@ -494,8 +494,8 @@ public abstract class LlvmInstructionLoweringStrategy {
       We don't want that!
      */
 
-    return graph.getNodes(WriteResourceNode.class).toList().size() == 1
-        && graph.getNodes(ReadResourceNode.class).toList().size() == 1
+    return graph.getNodes(WriteResourceNode.class).limit(2).count() == 1
+        && graph.getNodes(ReadResourceNode.class).limit(2).count() == 1
         && graph.getNodes(WriteResourceNode.class)
         .anyMatch(writeResourceNode -> writeResourceNode.value() instanceof ReadResourceNode);
   }
@@ -538,7 +538,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * If there are any {@link SelectNode} in the graph.
    */
   private boolean hasSelectNodes(Graph graph) {
-    return graph.getNodes(SelectNode.class).toList().size() == 1;
+    return graph.getNodes(SelectNode.class).limit(2).count() == 1;
   }
 
   /**
@@ -572,21 +572,21 @@ public abstract class LlvmInstructionLoweringStrategy {
    * If the {@link Graph} it has nodes which writes to memory then we cannot lower it.
    */
   protected boolean rejectWhenWritingToMemory(Graph graph) {
-    return !graph.getNodes(WriteMemNode.class).toList().isEmpty();
+    return graph.getNodes(WriteMemNode.class).findAny().isPresent();
   }
 
   /**
    * If the {@link Graph} it has nodes which read from memory then we cannot lower it.
    */
   protected boolean rejectWhenReadingFromMemory(Graph graph) {
-    return !graph.getNodes(ReadMemNode.class).toList().isEmpty();
+    return graph.getNodes(ReadMemNode.class).findAny().isPresent();
   }
 
   /**
    * If the {@link Graph} it has multiple writes then we cannot lower it.
    */
   protected boolean hasMultipleOutputs(Graph graph) {
-    return graph.getNodes(WriteResourceNode.class).toList().size() > 1;
+    return graph.getNodes(WriteResourceNode.class).limit(2).count() > 1;
   }
 
   /**
@@ -599,7 +599,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   protected boolean hasUnlowerableSDNode(Graph graph) {
-    return !graph.getNodes(LlvmUnlowerableSD.class).toList().isEmpty();
+    return graph.getNodes(LlvmUnlowerableSD.class).findAny().isPresent();
   }
 
   /**

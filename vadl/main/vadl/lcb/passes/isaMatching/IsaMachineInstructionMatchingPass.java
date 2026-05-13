@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -425,7 +425,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         if (originalGraph.getNodes(ReadsRegisterTensor.class).anyMatch(x -> x.registerTensor()
             .hasAnnotation(StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class))) {
 
-          return originalGraph.getNodes(TruncateNode.class).toList().isEmpty();
+          return originalGraph.getNodes(TruncateNode.class).findAny().isEmpty();
         }
       }
     }
@@ -583,7 +583,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean findWriteMem(UninlinedGraph graph) {
-    if (graph.getNodes(WriteMemNode.class).toList().size() != 1) {
+    if (graph.getNodes(WriteMemNode.class).limit(2).count() != 1) {
       return false;
     }
 
@@ -655,7 +655,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
     return matched.isPresent()
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth))
-        && behavior.getNodes(SliceNode.class).toList().isEmpty() // no slices to exclude `ADDXUXTB`
+        && behavior.getNodes(SliceNode.class).findAny().isEmpty() // no slices to exclude `ADDXUXTB`
         && behavior.getNodes(BuiltInCall.class).count() == 1;
   }
 
@@ -682,11 +682,12 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
             .findFirst();
 
     // only one read is allowed
-    var registerReads =
-        behavior.getNodes(ReadsRegisterTensor.class).filter(HasRegisterTensor::hasRegisterFile)
-            .toList();
+    var registerReads = behavior.getNodes(ReadsRegisterTensor.class)
+        .filter(HasRegisterTensor::hasRegisterFile)
+        .limit(2)
+        .count();
 
-    return registerReads.size() == 1 && matched.isPresent()
+    return registerReads == 1 && matched.isPresent()
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
@@ -702,12 +703,12 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   private boolean findBranchWithConditionalWithoutStatusRegisters(UninlinedGraph behavior,
                                                                   BuiltInTable.BuiltIn builtin) {
     var base = findBranchWithConditional(behavior, builtin);
-    var statusRegisters = behavior.getNodes(ReadsRegisterTensor.class)
-        .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class)).toList();
-
     return base
-        && statusRegisters.isEmpty()
-        && behavior.getNodes(ProcCallNode.class).toList().isEmpty();
+        && behavior.getNodes(ReadsRegisterTensor.class)
+        .filter(x -> x.registerTensor().hasAnnotation(StatusRegisterAnnotation.class))
+        .findAny()
+        .isEmpty()
+        && behavior.getNodes(ProcCallNode.class).findAny().isEmpty();
   }
 
   private boolean findBranchWithConditionalWithStatusRegisters(UninlinedGraph behavior,
