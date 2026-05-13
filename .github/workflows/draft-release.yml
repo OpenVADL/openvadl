@@ -59,7 +59,7 @@ jobs:
       - name: Build Native Executable
         run: |
           VERSIONING_GIT_TAG=v${{ needs.update-draft-release.outputs.version }} ./gradlew nativeCompile
-          FULLNAME=openvadl-${{ needs.update-draft-release.outputs.version }}-${{ matrix.platform }}-${{ matrix.architecture }}
+          FULLNAME=openvadl-${{ needs.update-draft-release.outputs.version }}-native-${{ matrix.platform }}-${{ matrix.architecture }}
           mkdir ${FULLNAME}
           mv vadl-cli/build/native/nativeCompile/openvadl ${FULLNAME}/openvadl
           tar -czvf ${FULLNAME}.tar.gz ${FULLNAME}
@@ -106,7 +106,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # This builds and uploads jlink bundles to the job as artifacts.
-  # Note that this doesn't upload it to the draft release.
   build-and-upload-jlink:
     needs: update-draft-release
     runs-on: self-hosted-x64 # container feature is not supported on self-hosted arm64
@@ -120,6 +119,25 @@ jobs:
       - name: Build jlink Images for All Platforms
         run: |
           ./gradlew vadl-cli:jlink -PjlinkAllPlatforms
+
+      - name: Package jlink Images
+        run: |
+          VERSION=${{ needs.update-draft-release.outputs.version }}
+          for platform in linux-arm64 linux-x64 macos-arm64 win-x64 win-arm64; do
+            dir=$(ls -d vadl-cli/build/image/*-${platform} 2>/dev/null)
+            if [ -n "$dir" ]; then
+              tar -czvf openvadl-${VERSION}-jvm-${platform}.tar.gz -C vadl-cli/build/image $(basename ${dir})
+            fi
+          done
+
+      - name: Upload jlink Images to Draft Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: openvadl-${{ needs.update-draft-release.outputs.version }}-jvm-*.tar.gz
+          tag_name: v${{ needs.update-draft-release.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload linux-arm64 Artifact
         uses: actions/upload-artifact@v4
