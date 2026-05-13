@@ -245,7 +245,7 @@ class MacroExpander
 
   @Override
   public Expr visit(IntegerLiteral expr) {
-    return new IntegerLiteral(expr.token, copyLoc(expr.loc));
+    return expr.copyWithLocation(copyLoc(expr.location()));
   }
 
   @Override
@@ -255,7 +255,7 @@ class MacroExpander
 
   @Override
   public Expr visit(BinaryLiteral expr) {
-    return new BinaryLiteral(expr.token, copyLoc(expr.loc));
+    return expr.copyWithLocation(copyLoc(expr.loc));
   }
 
   @Override
@@ -265,7 +265,7 @@ class MacroExpander
 
   @Override
   public Expr visit(StringLiteral expr) {
-    return new StringLiteral(expr.token, copyLoc(expr.loc));
+    return expr.copyWithLocation(copyLoc(expr.loc));
   }
 
   @Override
@@ -474,7 +474,9 @@ class MacroExpander
       }
     }
 
-    return new StringLiteral("\"" + nameBuilder + "\"", copyLoc(expr.location()));
+    var name = nameBuilder.toString();
+    var token = "\"%s\"".formatted(name);
+    return new StringLiteral(token, name, copyLoc(expr.location()));
   }
 
   @Override

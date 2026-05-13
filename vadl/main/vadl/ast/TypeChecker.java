@@ -1803,8 +1803,7 @@ public class TypeChecker
       }
 
       // if value is not set, we use the last value + 1.
-      entry.value =
-          new IntegerLiteral(String.valueOf(nextVal), SourceLocation.INVALID_SOURCE_LOCATION);
+      entry.value = new IntegerLiteral(nextVal, SourceLocation.INVALID_SOURCE_LOCATION);
       nextVal++;
     }
 

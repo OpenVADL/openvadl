@@ -152,7 +152,13 @@ final class LetStatement extends Statement {
    * @return the index/offset of the name provided.
    */
   int getIndexOf(String name) {
-    return identifiers().stream().map(i -> i.name).toList().indexOf(name);
+    for (var idx = 0; idx < identifiers.size(); idx++) {
+      if (((Identifier)identifiers.get(idx)).name.equals(name)) {
+        return idx;
+      }
+    }
+
+    return -1;
   }
 
   /**

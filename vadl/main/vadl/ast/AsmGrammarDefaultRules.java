@@ -169,12 +169,12 @@ public class AsmGrammarDefaultRules {
             new Parameter(
                 new Identifier("x", loc),
                 new TypeLiteral(new Identifier("SInt", loc),
-                    List.of(new IntegerLiteral("64", loc)),
+                    List.of(new IntegerLiteral(64, loc)),
                     loc)
             )
         )),
         new TypeLiteral(new Identifier("SInt", loc),
-            List.of(new IntegerLiteral("64", loc)),
+            List.of(new IntegerLiteral(64, loc)),
             loc),
         new UnaryExpr(new UnOp(UnaryOperator.NEGATIVE, loc),
             new Identifier("x", loc)),
