@@ -29,7 +29,6 @@ import vadl.iss.passes.common.IssBitfieldWriteLoweringPass;
 import vadl.iss.passes.common.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.common.IssCommonExprSavePass;
 import vadl.iss.passes.common.IssConfigurationPass;
-import vadl.iss.passes.common.IssExecStrategyPass;
 import vadl.iss.passes.common.IssExtractOptimizationPass;
 import vadl.iss.passes.common.IssGdbInfoExtractionPass;
 import vadl.iss.passes.common.IssInfoRetrievalPass;
@@ -42,6 +41,7 @@ import vadl.iss.passes.common.IssRegisterAccessLoweringPass;
 import vadl.iss.passes.common.IssScheduleIndirectJumpsPass;
 import vadl.iss.passes.common.IssTensorAssignmentToForallPass;
 import vadl.iss.passes.common.opDecomposition.IssOpDecompositionPass;
+import vadl.iss.passes.common.planning.IssExecStrategyPass;
 import vadl.iss.passes.common.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.helper.IssCFunctionExtractionPass;
 import vadl.iss.passes.scalar.IssHardcodedTcgAddOnPass;
@@ -118,10 +118,10 @@ public final class IssPassOrder {
         .add(new IssApplyMemoryEndiannessPass(config))
         .add(new IssMemoryDetectionPass(config))
         .add(new IssRegisterAccessLoweringPass(config))
-        .add(new IssExecStrategyPass(config))
         .add(new IssBitfieldWriteLoweringPass(config))
         .add(new IssTensorAssignmentToForallPass(config))
         .add(new CanonicalizationPass(config))
+        .add(new IssExecStrategyPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))

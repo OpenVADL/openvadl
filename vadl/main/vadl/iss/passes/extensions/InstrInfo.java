@@ -57,6 +57,9 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   @Nullable
   private ExecStrategy execStrategy = null;
 
+  @Nullable
+  private InstrExecPlan executionPlan = null;
+
   List<Function> extractedFunctions = new ArrayList<>();
 
   /**
@@ -84,7 +87,36 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
     this.execStrategy = execStrategy;
   }
 
+  /**
+   * Returns the execution plan computed for this instruction, if any.
+   */
+  public @Nullable InstrExecPlan executionPlan() {
+    return executionPlan;
+  }
+
+  /**
+   * Stores the execution plan computed for this instruction.
+   */
+  public void setExecutionPlan(InstrExecPlan executionPlan) {
+    this.executionPlan = executionPlan;
+    this.execStrategy = mapExecutionPlanToExecStrategy(executionPlan);
+  }
+
+  /**
+   * Returns the selected direct-gvec plan for this instruction, if any.
+   */
+  public @Nullable VectorTensorPlan directGvecPlan() {
+    if (executionPlan == null) {
+      return null;
+    }
+    var evaluation = executionPlan.evaluation(InstrExecPlan.StrategyKind.DIRECT_GVEC);
+    return evaluation == null ? null : evaluation.planAs(VectorTensorPlan.class);
+  }
+
   private ExecStrategy computeFallbackExecStrategy() {
+    if (executionPlan != null) {
+      return mapExecutionPlanToExecStrategy(executionPlan);
+    }
     var hasCpuVectorReads = instr().behavior().getNodes(IssReadRegNode.class)
         .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR);
     var hasCpuVectorWrites = instr().behavior().getNodes(IssWriteRegNode.class)
@@ -92,6 +124,12 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
     return hasCpuVectorReads || hasCpuVectorWrites
         ? ExecStrategy.HELPER_CALL
         : ExecStrategy.DIRECT_TCG;
+  }
+
+  private ExecStrategy mapExecutionPlanToExecStrategy(InstrExecPlan executionPlan) {
+    return executionPlan.selectedStrategy() == InstrExecPlan.StrategyKind.TCG_SCALAR
+        ? ExecStrategy.DIRECT_TCG
+        : ExecStrategy.HELPER_CALL;
   }
 
   /**

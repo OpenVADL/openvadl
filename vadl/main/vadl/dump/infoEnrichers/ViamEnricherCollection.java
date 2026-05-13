@@ -29,6 +29,8 @@ import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
+import vadl.iss.passes.extensions.InstrExecPlan;
+import vadl.iss.passes.extensions.InstrInfo;
 import vadl.utils.SourceLocation;
 import vadl.viam.DefProp;
 import vadl.viam.Encoding;
@@ -295,6 +297,36 @@ public class ViamEnricherCollection {
         entity.addInfo(info);
       });
 
+  public static InfoEnricher VECTOR_TCG_PLAN_SUPPLIER_TAGS =
+      forType(DefinitionEntity.class, (entity, passResult) -> {
+        if (!(entity.origin() instanceof Instruction instruction)) {
+          return;
+        }
+
+        var info = instruction.extension(InstrInfo.class);
+        if (info == null || info.executionPlan() == null) {
+          return;
+        }
+
+        var executionPlan = info.executionPlan();
+        entity.addInfo(Info.Tag.of("SelectedExecutionStrategy",
+            executionPlan.selectedStrategy().name()));
+
+        var directGvec = executionPlan.evaluation(
+            InstrExecPlan.StrategyKind.DIRECT_GVEC);
+        if (directGvec == null) {
+          return;
+        }
+
+        entity.addInfo(Info.Tag.of("DirectGvecStatus", directGvec.status().name()));
+        entity.addInfo(Info.Tag.of("DirectGvecIssues",
+            directGvec.issues().isEmpty()
+                ? "-"
+                : directGvec.issues().stream()
+                  .map(issue -> issue.code())
+                  .collect(Collectors.joining(", "))));
+      });
+
 
   public static InfoEnricher BEHAVIOR_NO_LOCATION_EXPANDABLE =
       forType(DefinitionEntity.class, (entity, passResult) -> {
@@ -405,6 +437,7 @@ public class ViamEnricherCollection {
       VERIFY_SUPPLIER_EXPANDABLE,
       SOURCE_CODE_SUPPLIER_EXPANDABLE,
       RESOURCE_ACCESS_SUPPLIER_EXPANDABLE,
+      VECTOR_TCG_PLAN_SUPPLIER_TAGS,
       BEHAVIOR_NO_LOCATION_EXPANDABLE,
       STAGE_ORDER_SUPPLIER,
       OPERATION_INSTRUCTIONS_SUPPLIER_EXPANDABLE,
