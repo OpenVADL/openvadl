@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
@@ -418,12 +419,12 @@ public class AnnotationTable {
    */
   static Map<AnnotationGroupProvider, List<Annotation>> groupings(
       Definition definition) {
-    return groupings(definition.annotations.stream().map(d -> d.annotation).toList());
+    return groupings(definition.annotations.stream().map(d -> d.annotation));
   }
 
   private static Map<AnnotationGroupProvider, List<Annotation>> groupings(
-      List<Annotation> annotations) {
-    return annotations.stream().collect(Collectors.groupingBy(a -> a.groupProvider));
+      Stream<Annotation> annotations) {
+    return annotations.collect(Collectors.groupingBy(a -> a.groupProvider));
   }
 
   /**
