@@ -77,9 +77,8 @@ class AstUtils {
     }
 
     String finalOperatorSymbol = symbol;
-    var builtIns = operatorLookupTable.getOrDefault(finalOperatorSymbol, List.of()).stream()
-        .filter(b -> b.signature().argTypeClasses().size() == argTypes.size())
-        .toList();
+    var builtIns = operatorLookupTable.getOrDefault(finalOperatorSymbol, List.of());
+    builtIns.removeIf(b -> b.signature().argTypeClasses().size() != argTypes.size());
 
     // Sometimes there are a signed and unsigned version of builtin operation
     return switch (builtIns.size()) {
