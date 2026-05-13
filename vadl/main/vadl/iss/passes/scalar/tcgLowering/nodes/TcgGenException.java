@@ -92,8 +92,6 @@ public class TcgGenException extends TcgNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    args = args.stream().map(e ->
-            visitor.apply(this, e, TcgVRefNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    args = rewriteNodeList(args, visitor, TcgVRefNode.class);
   }
 }

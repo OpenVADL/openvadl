@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -66,9 +65,9 @@ public class RtlSelectByInstructionNode extends ExpressionNode {
    * a list of values, which the output of this node is selected from.
    * The instructions and values lists need to have the same length.
    *
-   * @param type result type
+   * @param type         result type
    * @param instructions list of sets of instructions
-   * @param values list of values for the result
+   * @param values       list of values for the result
    */
   public RtlSelectByInstructionNode(Type type, List<Set<Instruction>> instructions,
                                     NodeList<ExpressionNode> values) {
@@ -79,10 +78,10 @@ public class RtlSelectByInstructionNode extends ExpressionNode {
    * See {@link RtlSelectByInstructionNode#RtlSelectByInstructionNode(Type, List, NodeList)}.
    * The selection input supplies an integer that addresses the value to choose.
    *
-   * @param type result type
+   * @param type         result type
    * @param instructions list of sets of instructions
-   * @param values list of values for the result
-   * @param selection selection input
+   * @param values       list of values for the result
+   * @param selection    selection input
    */
   public RtlSelectByInstructionNode(Type type, List<Set<Instruction>> instructions,
                                     NodeList<ExpressionNode> values,
@@ -144,7 +143,7 @@ public class RtlSelectByInstructionNode extends ExpressionNode {
    * the given value, if the instruction matches.
    *
    * @param instruction instruction
-   * @param value value
+   * @param value       value
    */
   public void add(Instruction instruction, ExpressionNode value) {
     for (int i = 0; i < instructions.size(); i++) {
@@ -262,9 +261,7 @@ public class RtlSelectByInstructionNode extends ExpressionNode {
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     selection = visitor.applyNullable(this, selection, ExpressionNode.class);
-    values = values.stream()
-        .map((e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    values = rewriteNodeList(values, visitor, ExpressionNode.class);
   }
 
   @Override

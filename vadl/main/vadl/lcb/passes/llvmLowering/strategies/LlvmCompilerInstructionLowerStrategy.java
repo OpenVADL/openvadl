@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -61,7 +61,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
     var mayStore = false;
     var isBranch = false;
 
-    if (compilerInstruction.behavior().getNodes(InstrCallNode.class).toList().size() > 1) {
+    if (compilerInstruction.behavior().getNodes(InstrCallNode.class).limit(2).count() > 1) {
       DeferredDiagnosticStore.add(
           Diagnostic.warning(
               "Cannot generate instruction selectors for pseudo instruction with multiple "

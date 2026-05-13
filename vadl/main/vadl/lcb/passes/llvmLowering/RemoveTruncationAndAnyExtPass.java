@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -58,8 +58,8 @@ public class RemoveTruncationAndAnyExtPass extends Pass {
             .filter(x -> !x.builtIn().hasSameBitWidth())
             .toList();
 
-        if (!behavior.getNodes(SignExtendNode.class).toList().isEmpty()
-            || !behavior.getNodes(ZeroExtendNode.class).toList().isEmpty()) {
+        if (behavior.getNodes(SignExtendNode.class).findAny().isPresent()
+            || behavior.getNodes(ZeroExtendNode.class).findAny().isPresent()) {
           continue;
         }
 

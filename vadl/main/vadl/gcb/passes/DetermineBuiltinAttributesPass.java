@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -104,8 +104,8 @@ public class DetermineBuiltinAttributesPass extends Pass {
   }
 
   private boolean isMem(Graph snapshot) {
-    return !snapshot.getNodes(WriteMemNode.class).toList().isEmpty()
-        || !snapshot.getNodes(ReadMemNode.class).toList().isEmpty();
+    return snapshot.getNodes(WriteMemNode.class).findAny().isPresent()
+        || snapshot.getNodes(ReadMemNode.class).findAny().isPresent();
   }
 
   private boolean isNoMem(Graph snapshot) {
@@ -113,7 +113,7 @@ public class DetermineBuiltinAttributesPass extends Pass {
   }
 
   private boolean willReturn(Graph snapshot) {
-    return !snapshot.getNodes(WritesRegisterTensor.class).toList().isEmpty();
+    return snapshot.getNodes(WritesRegisterTensor.class).findAny().isPresent();
   }
 
   /**
@@ -127,6 +127,6 @@ public class DetermineBuiltinAttributesPass extends Pass {
    * x) No division-by-zero traps
    */
   private boolean speculatable(Graph snapshot) {
-    return isNoMem(snapshot) && snapshot.getNodes(ProcCallNode.class).toList().isEmpty();
+    return isNoMem(snapshot) && snapshot.getNodes(ProcCallNode.class).findAny().isEmpty();
   }
 }

@@ -372,6 +372,44 @@ public abstract class Node implements WithLocation {
   }
 
   /**
+   * Rewrites a node list with copy-on-write semantics.
+   *
+   * <p>The original list instance is returned unchanged if all rewritten nodes are identical to
+   * their previous values and this node is already initialized. Uninitialized nodes must detach
+   * shared {@link NodeList} instances because shallow copies commonly reuse the original list
+   * object.</p>
+   */
+  protected final <T extends Node> NodeList<T> rewriteNodeList(
+      NodeList<T> nodes,
+      GraphVisitor.Applier<Node> visitor,
+      Class<T> clazz) {
+    NodeList<T> rewritten = null;
+
+    for (int i = 0; i < nodes.size(); i++) {
+      var oldNode = nodes.get(i);
+      var newNode = visitor.apply(this, oldNode, clazz);
+
+      if (rewritten == null) {
+        if (newNode == oldNode) {
+          continue;
+        }
+
+        rewritten = new NodeList<>(nodes.size());
+        for (int j = 0; j < i; j++) {
+          rewritten.add(nodes.get(j));
+        }
+      }
+
+      rewritten.add(newNode);
+    }
+
+    if (rewritten == null) {
+      return isUninitialized() ? new NodeList<>(nodes) : nodes;
+    }
+    return rewritten;
+  }
+
+  /**
    * Applies the visitor's output on each successor of this node.
    * If the new successor node differs from the old one, this method will automatically handle
    * the usage transfer.
@@ -837,9 +875,15 @@ public abstract class Node implements WithLocation {
   }
 
   private void verifyAllEdges() {
-    inputs().forEach(this::verifyInput);
-    usages().forEach(this::verifyUsage);
-    successors().forEach(this::verifySuccessor);
+    for (var input : inputList()) {
+      verifyInput(input);
+    }
+    for (var usage : usages) {
+      verifyUsage(usage);
+    }
+    for (var successor : successorList()) {
+      verifySuccessor(successor);
+    }
     verifyPredecessor();
   }
 

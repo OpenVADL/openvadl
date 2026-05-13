@@ -19,7 +19,6 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
@@ -100,8 +99,7 @@ public abstract class TcgOpNode extends TcgNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    destinations = destinations.stream().map((e) -> visitor.apply(this, e, TcgVRefNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    destinations = rewriteNodeList(destinations, visitor, TcgVRefNode.class);
   }
 
   @Override

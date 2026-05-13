@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,6 @@ package vadl.viam.graph.dependency;
 import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
@@ -144,8 +143,7 @@ public abstract class WriteResourceNode extends SideEffectNode {
   public void applyOnInputsUnsafe(
       vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    indices = indices.stream().map((e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    indices = rewriteNodeList(indices, visitor, ExpressionNode.class);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
 

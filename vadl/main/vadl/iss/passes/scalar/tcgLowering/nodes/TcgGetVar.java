@@ -249,8 +249,7 @@ public abstract sealed class TcgGetVar extends TcgOpNode {
     protected void applyOnInputsUnsafe(
         vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
       super.applyOnInputsUnsafe(visitor);
-      indices = indices.stream().map((e) -> visitor.apply(this, e, ExpressionNode.class))
-          .collect(Collectors.toCollection(NodeList::new));
+      indices = rewriteNodeList(indices, visitor, ExpressionNode.class);
     }
   }
 }

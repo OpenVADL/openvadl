@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
@@ -194,8 +193,8 @@ public interface IsaMatchingUtils {
 
     return !matched.isEmpty()
         && ((TupleType) ((BuiltInCall) matched.getFirst()).type()).first().equals(ty)
-        && behavior.getNodes(Set.of(IfNode.class, SliceNode.class)).toList().isEmpty()
-        && behavior.getNodes(BuiltInCall.class).toList().size() == 1
+        && behavior.getNodes(Set.of(IfNode.class, SliceNode.class)).findAny().isEmpty()
+        && behavior.getNodes(BuiltInCall.class).limit(2).count() == 1
         && noPcAccess(behavior)
         && hasNegative
         && hasOverflow

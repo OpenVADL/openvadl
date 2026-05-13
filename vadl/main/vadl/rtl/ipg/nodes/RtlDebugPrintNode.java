@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,7 @@ package vadl.rtl.ipg.nodes;
 
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -47,9 +45,9 @@ public class RtlDebugPrintNode extends SideEffectNode implements RtlConditionalN
   /**
    * Create new debug print node.
    *
-   * @param condition print only when this is true
+   * @param condition    print only when this is true
    * @param formatString string with <code>%[a-z]</code> as placeholders
-   * @param values values to replace the placeholders with
+   * @param values       values to replace the placeholders with
    */
   public RtlDebugPrintNode(@Nullable ExpressionNode condition, String formatString,
                            NodeList<ExpressionNode> values) {
@@ -73,9 +71,7 @@ public class RtlDebugPrintNode extends SideEffectNode implements RtlConditionalN
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    values = values.stream()
-        .map((e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    values = rewriteNodeList(values, visitor, ExpressionNode.class);
   }
 
   @Override

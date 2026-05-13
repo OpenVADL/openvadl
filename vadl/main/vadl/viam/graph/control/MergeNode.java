@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -83,9 +83,7 @@ public class MergeNode extends AbstractBeginNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    branchEnds = branchEnds.stream()
-        .map(e -> visitor.apply(this, e, BranchEndNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    branchEnds = rewriteNodeList(branchEnds, visitor, BranchEndNode.class);
   }
 
   @Override

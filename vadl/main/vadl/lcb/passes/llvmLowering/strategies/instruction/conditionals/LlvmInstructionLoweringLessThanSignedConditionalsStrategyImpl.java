@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,6 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.types.BuiltInTable;
-import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
@@ -111,8 +110,7 @@ public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
       if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
         // Change condition code
         var setcc = ensurePresent(
-            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
-                .findFirst(),
+            outputPattern.selector().getNodes(LlvmSetccSD.class).findFirst(),
             () -> Diagnostic.error("No setcc node was found", pattern.selector()
                 .sourceLocation()));
         // Only RR and not RI should be replaced here.
@@ -175,8 +173,7 @@ public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
       if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
         // Change condition code
         var setcc = ensurePresent(
-            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
-                .findFirst(),
+            outputPattern.selector().getNodes(LlvmSetccSD.class).findFirst(),
             () -> Diagnostic.error("No setcc node was found", pattern.selector()
                 .sourceLocation()));
         // Only RR and not RI should be replaced here.
@@ -229,8 +226,7 @@ public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
       if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
         // Change condition code
         var setcc = ensurePresent(
-            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
-                .findFirst(),
+            outputPattern.selector().getNodes(LlvmSetccSD.class).findFirst(),
             () -> Diagnostic.error("No setcc node was found", pattern.selector()
                 .sourceLocation()));
         // Only RR and not RI should be replaced here.
@@ -279,8 +275,7 @@ public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
       if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
         // Change condition code
         var setcc = ensurePresent(
-            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
-                .findFirst(),
+            outputPattern.selector().getNodes(LlvmSetccSD.class).findFirst(),
             () -> Diagnostic.error("No setcc node was found", pattern.selector()
                 .sourceLocation()));
         // Only RR and not RI should be replaced here.

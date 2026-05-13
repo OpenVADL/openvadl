@@ -17,7 +17,6 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -256,9 +255,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   @Override
   public void applyOnInputsUnsafe(vadl.viam.graph.GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    accessorIndices = accessorIndices.stream()
-        .map(e -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    accessorIndices = rewriteNodeList(accessorIndices, visitor, ExpressionNode.class);
     bitOffset = visitor.apply(this, bitOffset, ExpressionNode.class);
     bitWidth = visitor.apply(this, bitWidth, ExpressionNode.class);
   }

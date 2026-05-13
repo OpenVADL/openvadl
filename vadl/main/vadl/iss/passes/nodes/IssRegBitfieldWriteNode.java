@@ -17,7 +17,6 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -130,9 +129,7 @@ public class IssRegBitfieldWriteNode extends SideEffectNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    indices = indices.stream()
-        .map(e -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    indices = rewriteNodeList(indices, visitor, ExpressionNode.class);
     value = visitor.apply(this, value, ExpressionNode.class);
     bitOffset = visitor.apply(this, bitOffset, ExpressionNode.class);
     bitWidth = visitor.apply(this, bitWidth, ExpressionNode.class);

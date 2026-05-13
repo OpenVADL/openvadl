@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -121,7 +120,7 @@ public class Graph {
    * @return iterable of all nodes of type clazz
    */
   public final <T> Stream<T> getNodes(Class<T> clazz) {
-    return getNodes().filter(clazz::isInstance).map(clazz::cast);
+    return Streams.stream(new NodeIter.TypedSnapshotIter<>(this, clazz));
   }
 
   /**
@@ -132,8 +131,7 @@ public class Graph {
    * @return iterable of all nodes with one of the given types.
    */
   public final Stream<Node> getNodes(Set<Class<?>> clazz) {
-    return getNodes().filter(Objects::nonNull)
-        .filter(x -> clazz.stream().anyMatch(y -> y.isInstance(x)));
+    return Streams.stream(new NodeIter.MultiTypeSnapshotIter(this, clazz));
   }
 
   /**
