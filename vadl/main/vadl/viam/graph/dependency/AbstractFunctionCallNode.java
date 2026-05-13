@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,6 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
@@ -65,8 +64,6 @@ public abstract class AbstractFunctionCallNode extends ExpressionNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    args = args.stream()
-        .map((e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    args = rewriteNodeList(args, visitor, ExpressionNode.class);
   }
 }

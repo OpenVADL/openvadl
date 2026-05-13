@@ -132,7 +132,6 @@ public class TcgHelperCall extends TcgNode {
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     result = visitor.applyNullable(this, result, TcgVRefNode.class);
-    args = args.stream().map((e) -> visitor.apply(this, e, DependencyNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    args = rewriteNodeList(args, visitor, DependencyNode.class);
   }
 }

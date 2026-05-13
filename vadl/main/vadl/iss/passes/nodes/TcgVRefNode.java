@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,6 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
@@ -101,7 +100,6 @@ public class TcgVRefNode extends DependencyNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    indices = indices.stream().map((e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    indices = rewriteNodeList(indices, visitor, ExpressionNode.class);
   }
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,6 @@ package vadl.viam.graph.control;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphVisitor;
@@ -78,9 +77,7 @@ public abstract class ControlSplitNode extends ControlNode {
   @Override
   protected void applyOnSuccessorsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnSuccessorsUnsafe(visitor);
-    branches = branches.stream().map(e ->
-            visitor.apply(this, e, BranchBeginNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    branches = rewriteNodeList(branches, visitor, BranchBeginNode.class);
   }
 
   public void clearPredecessor() {

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -105,11 +105,8 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
 
       String stmt;
       if (fieldType.toString().startsWith(NODELIST)) {
-        // if the field is a nodelist, we implement it as stream
-        stmt =
-            ("%s = %s.stream().map((e) -> %s.apply(this, e%s))"
-                + ".collect(Collectors.toCollection(NodeList::new));")
-                .formatted(fieldName, fieldName, paramNames.get(0), typeOverload);
+        stmt = "%s = rewriteNodeList(%s, %s%s);".formatted(
+            fieldName, fieldName, paramNames.get(0), typeOverload);
       } else {
         var applyMethod = fieldIsNullable ? "applyNullable" : "apply";
 

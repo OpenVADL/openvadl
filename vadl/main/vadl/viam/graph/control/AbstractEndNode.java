@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,6 @@
 package vadl.viam.graph.control;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
@@ -71,9 +70,7 @@ public abstract class AbstractEndNode extends ControlNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    sideEffects = sideEffects.stream()
-        .map(e -> visitor.apply(this, e, SideEffectNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    sideEffects = rewriteNodeList(sideEffects, visitor, SideEffectNode.class);
   }
 
   /**
