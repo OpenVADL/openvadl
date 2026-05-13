@@ -302,7 +302,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   Optional<vadl.viam.Definition> fetch(FormatField field) {
     // FIXME: Try to evaluate the format if it hasn't been seen before.
     var result = Optional.ofNullable(formatFieldCache.get(field));
-    result.ifPresent(f -> f.setSourceLocationIfNotSet(field.location()));
     return result;
   }
 
@@ -315,7 +314,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   Optional<vadl.viam.Parameter> fetch(Parameter parameter) {
     // FIXME: Try to evaluate the format if it hasn't been seen before.
     var result = Optional.ofNullable(parameterCache.get(parameter));
-    result.ifPresent(f -> f.setSourceLocationIfNotSet(parameter.location()));
     return result;
   }
 
@@ -1323,7 +1321,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var behavior = new BehaviorLowering(this).getFunctionGraph(encode.expr, ident.toString());
     var field = (Format.Field) requireNonNull(formatFieldCache.get(encode.target()));
     var encoding = new Format.FieldEncoding(ident, field, behavior);
-    encoding.setSourceLocation(encode.location());
 
     checkNoResourceAccesses(behavior, "field access encoding");
     checkLeafNodes(behavior, (n) -> {

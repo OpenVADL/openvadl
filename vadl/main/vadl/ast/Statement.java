@@ -153,7 +153,7 @@ final class LetStatement extends Statement {
    */
   int getIndexOf(String name) {
     for (var idx = 0; idx < identifiers.size(); idx++) {
-      if (((Identifier)identifiers.get(idx)).name.equals(name)) {
+      if (((Identifier) identifiers.get(idx)).name.equals(name)) {
         return idx;
       }
     }

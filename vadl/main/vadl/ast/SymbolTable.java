@@ -762,7 +762,11 @@ class SymbolTable {
       // This isn't a identifyableNode so we need to add custom handling here.
       currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
 
-      definition.forEachChild(c -> { if (c != definition.stringLiteral) travel(c); });
+      definition.forEachChild(c -> {
+        if (c != definition.stringLiteral) {
+          travel(c);
+        }
+      });
 
       afterTravelWithoutScope(definition);
       return null;
@@ -1310,7 +1314,11 @@ class SymbolTable {
       }
 
       // All other children have the default handling
-      definition.forEachChild(c -> { if (c != definition.attribute) travel(c); });
+      definition.forEachChild(c -> {
+        if (c != definition.attribute) {
+          travel(c);
+        }
+      });
 
       afterTravel(definition);
       return null;
@@ -1353,7 +1361,11 @@ class SymbolTable {
       // Resolve all other children like always
       // FIXME: At the moment id isn't even a child but I'm not sure if it should be so check in
       // later once we know it.
-      definition.forEachChild(c -> { if (c != definition.id) travel(c); });
+      definition.forEachChild(c -> {
+        if (c != definition.id) {
+          travel(c);
+        }
+      });
 
 
       afterTravel(definition);

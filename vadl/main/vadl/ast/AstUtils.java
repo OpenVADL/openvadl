@@ -135,9 +135,7 @@ class AstUtils {
   static int argumentCount(List<CallIndexExpr.Arguments> argGroups) {
     int cnt = 0;
     for (var args : argGroups) {
-      for (var arg: args.values) {
-        cnt++;
-      }
+      cnt += args.values.size();
     }
     return cnt;
   }

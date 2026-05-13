@@ -35,7 +35,7 @@ public class InterleavedTimingRecorder {
    * A pass timing of a single pass.
    */
   public static class PassTiming {
-    final private String description;
+    private final String description;
     private long durationNS;
 
     public String description() {
@@ -65,7 +65,9 @@ public class InterleavedTimingRecorder {
   private void addTiming(String description, long durationNS) {
     passTimings.compute(description,
         (key, existingTiming) -> {
-          if (existingTiming == null) return new PassTiming(description, durationNS);
+          if (existingTiming == null) {
+            return new PassTiming(description, durationNS);
+          }
           existingTiming.durationNS += durationNS;
           return existingTiming;
         }
