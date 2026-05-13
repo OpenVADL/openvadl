@@ -36,16 +36,7 @@ on:
         type: string
 
 jobs:
-  timestamp:
-    runs-on:  ${{ inputs.runner }}
-    outputs:
-      value: ${{ steps.ts.outputs.value }}
-    steps:
-      - id: ts
-        run: echo "value=$(date -u +%Y-%m-%dT%H-%M-%SZ)" >> "$GITHUB_OUTPUT"
-
   benchmark:
-    needs: timestamp
     runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +60,7 @@ jobs:
         env:
           isCI: true
       - name: Set artifact filename
-        run: printf 'ARTIFACT_NAME=%s_%s.csv\n' "${{ needs.timestamp.outputs.value }}" "${{ github.sha }}" >> "$GITHUB_ENV"
+        run: printf 'ARTIFACT_NAME=%s_%s.csv\n' "$(date -u +%Y-%m-%dT%H-%M-%SZ)" "${{ github.sha }}" >> "$GITHUB_ENV"
       - name: Prepare artifact
         run: cp "${{ inputs.artifact-source }}" "${{ github.workspace }}/${ARTIFACT_NAME}"
       - name: Checkout target repository
