@@ -18,6 +18,7 @@ package vadl.ast;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BuiltInTable;
@@ -123,8 +124,22 @@ class AstUtils {
     };
   }
 
-  static List<Expr> flatArguments(List<CallIndexExpr.Arguments> args) {
-    return args.stream().flatMap(a -> a.values.stream()).collect(Collectors.toList());
+  static List<Expr> flatArguments(List<CallIndexExpr.Arguments> argGroups) {
+    return argGroups.stream().flatMap(a -> a.values.stream()).collect(Collectors.toList());
+  }
+
+  static void forEachArgument(List<CallIndexExpr.Arguments> argGroups, Consumer<Expr> consumer) {
+    argGroups.forEach(a -> a.values.forEach(consumer));
+  }
+
+  static int argumentCount(List<CallIndexExpr.Arguments> argGroups) {
+    int cnt = 0;
+    for (var args : argGroups) {
+      for (var arg: args.values) {
+        cnt++;
+      }
+    }
+    return cnt;
   }
 
 }

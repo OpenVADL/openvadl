@@ -1426,8 +1426,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return visitStageCall(expr, stageDefinition);
     }
 
-    List<Expr> argExprs = AstUtils.flatArguments(expr.args());
-    var args = argExprs.stream().map(this::fetch).toList();
+    var argGroups = expr.args();
+    final var args = new NodeList<ExpressionNode>(AstUtils.argumentCount(argGroups));
+    AstUtils.forEachArgument(argGroups, arg -> args.add(this.fetch(arg)));
     var typeBeforeSlice = getViamType(expr.typeBeforeSlice());
 
     ExpressionNode exprBeforeSlice;
@@ -1435,21 +1436,21 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Builtin Call
     if (expr.computedBuiltIn != null) {
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
-        exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
+        exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, args,
             typeBeforeSlice);
       } else {
-        exprBeforeSlice = new BuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
+        exprBeforeSlice = new BuiltInCall(expr.computedBuiltIn, args,
             typeBeforeSlice);
       }
     } else {
       exprBeforeSlice = switch (expr.computedTarget()) {
         case FunctionDefinition funcDef -> new FuncCallNode(
             (Function) viamLowering.fetch(funcDef).orElseThrow(),
-            new NodeList<>(args), typeBeforeSlice);
+            args, typeBeforeSlice);
 
         case RelocationDefinition funcDef -> new FuncCallNode(
             (Function) viamLowering.fetch(funcDef).orElseThrow(),
-            new NodeList<>(args), typeBeforeSlice);
+            args, typeBeforeSlice);
 
         case RegisterDefinition regDef -> readTensorResourceConcatinated(
             (RegisterResource) viamLowering.fetch(regDef).orElseThrow(), args,
@@ -1462,14 +1463,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             case REGISTER -> (ArtificialResource) lowered;
             case PROGRAM_COUNTER -> ((Counter) lowered).registerTensor();
           };
-          args = switch (aliasDef.kind) {
+          var aliasArgs = (NodeList<ExpressionNode>) switch (aliasDef.kind) {
             case REGISTER -> args;
             case PROGRAM_COUNTER -> Stream.concat(
                 ((Counter) lowered).indices().stream().map(ConstantNode::new),
                 args.stream()
             ).toList();
           };
-          yield readTensorResourceConcatinated(resource, args, (DataType) typeBeforeSlice);
+          yield readTensorResourceConcatinated(resource, aliasArgs, (DataType) typeBeforeSlice);
         }
 
         case MemoryDefinition memDef -> {
@@ -1747,8 +1748,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       throw new IllegalStateException("Unexpected target: " + statement);
     }
 
-    var argExprs = AstUtils.flatArguments(argGroups).stream().map(this::fetch)
-        .collect(Collectors.toCollection(NodeList::new));
+
+    var argExprs = new NodeList<ExpressionNode>(AstUtils.argumentCount(argGroups));
+    AstUtils.forEachArgument(argGroups, arg -> argExprs.add(this.fetch(arg)));
     var viamTargetDef = viamLowering.fetch(targetDef).orElseThrow();
 
     var dynamicIndex = dynamicIndexExpr.get();
