@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,13 +16,73 @@
 
 package vadl.viam.graph;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A iterator that is used to iterate over nodes in a graph.
  */
 public interface NodeIter<T> extends Iterator<T> {
+
+  /**
+   * Base implementation for iterating over a graph snapshot while optionally filtering nodes.
+   */
+  abstract class AbstractSnapshotIter<T> implements NodeIter<T> {
+
+    private final int sizeAtCreation;
+    protected int currentIndex;
+    protected final Graph graph;
+    private @Nullable T nextNode;
+    private boolean nextNodeReady;
+
+    protected AbstractSnapshotIter(Graph graph) {
+      this.graph = graph;
+      this.sizeAtCreation = graph.nodes.size();
+    }
+
+    protected abstract @Nullable T tryConvert(Node node);
+
+    @Override
+    public boolean hasNext() {
+      if (nextNodeReady) {
+        return true;
+      }
+
+      while (currentIndex < sizeAtCreation) {
+        Node node = graph.nodes.get(currentIndex);
+        currentIndex++;
+
+        if (node == null) {
+          continue;
+        }
+
+        var converted = tryConvert(node);
+        if (converted != null) {
+          nextNode = converted;
+          nextNodeReady = true;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    @Override
+    public T next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException("No more nodes available");
+      }
+
+      nextNodeReady = false;
+      var result = nextNode;
+      nextNode = null;
+      return requireNonNull(result);
+    }
+  }
 
   /**
    * This iterator iterates over a snapshot of the graph.
@@ -32,33 +92,56 @@ public interface NodeIter<T> extends Iterator<T> {
    * However, if nodes are getting deleted during the iteration and were not yet iterated,
    * they will never be iterated.
    */
-  class SnapshotIter implements NodeIter<Node> {
-
-    private final int sizeAtCreation;
-    protected int currentIndex;
-    protected final Graph graph;
+  class SnapshotIter extends AbstractSnapshotIter<Node> {
 
     public SnapshotIter(Graph graph) {
-      this.graph = graph;
-      sizeAtCreation = graph.nodes.size();
+      super(graph);
     }
 
     @Override
-    public boolean hasNext() {
-      while (currentIndex < sizeAtCreation && graph.nodes.get(currentIndex) == null) {
-        currentIndex++;  // Skip null entries
-      }
-      return currentIndex < sizeAtCreation;
-    }
-
-    @Override
-    public Node next() {
-      if (currentIndex >= sizeAtCreation) {
-        throw new NoSuchElementException("No more nodes available");
-      }
-      Node node = graph.nodes.get(currentIndex);
-      currentIndex++;  // Move to the next index for future calls
+    protected Node tryConvert(Node node) {
       return node;
+    }
+  }
+
+  /**
+   * This iterator iterates over nodes of a specific type in a graph snapshot.
+   */
+  class TypedSnapshotIter<T> extends AbstractSnapshotIter<T> {
+
+    private final Class<T> clazz;
+
+    public TypedSnapshotIter(Graph graph, Class<T> clazz) {
+      super(graph);
+      this.clazz = clazz;
+    }
+
+    @Override
+    protected @Nullable T tryConvert(Node node) {
+      return clazz.isInstance(node) ? clazz.cast(node) : null;
+    }
+  }
+
+  /**
+   * This iterator iterates over nodes matching any of the provided types in a graph snapshot.
+   */
+  class MultiTypeSnapshotIter extends AbstractSnapshotIter<Node> {
+
+    private final Set<Class<?>> classes;
+
+    public MultiTypeSnapshotIter(Graph graph, Set<Class<?>> classes) {
+      super(graph);
+      this.classes = classes;
+    }
+
+    @Override
+    protected @Nullable Node tryConvert(Node node) {
+      for (var clazz : classes) {
+        if (clazz.isInstance(node)) {
+          return node;
+        }
+      }
+      return null;
     }
   }
 }
