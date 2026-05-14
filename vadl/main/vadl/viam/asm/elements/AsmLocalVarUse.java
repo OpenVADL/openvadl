@@ -28,8 +28,8 @@ public record AsmLocalVarUse(@Nullable AsmAssignTo assignToElement,
                              AsmType asmType)
     implements AsmGrammarElement, HasAssignTo {
   @Override
-  public AsmGrammarElement copyWithoutAssignTo() {
-    return new AsmLocalVarUse(null, invokedLocalVar, invokedLocalVarType, asmType);
+  public AsmGrammarElement copyAndOverwriteAssignTo(AsmAssignTo assignToElement) {
+    return new AsmLocalVarUse(assignToElement, invokedLocalVar, invokedLocalVarType, asmType);
   }
 
   @Override

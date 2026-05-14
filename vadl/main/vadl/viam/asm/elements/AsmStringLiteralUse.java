@@ -26,8 +26,8 @@ public record AsmStringLiteralUse(@Nullable AsmAssignTo assignToElement,
                                   String value, AsmType asmType)
     implements AsmGrammarElement, HasAssignTo {
   @Override
-  public AsmGrammarElement copyWithoutAssignTo() {
-    return new AsmStringLiteralUse(null, value, asmType);
+  public AsmGrammarElement copyAndOverwriteAssignTo(AsmAssignTo assignToElement) {
+    return new AsmStringLiteralUse(assignToElement, value, asmType);
   }
 
   @Override

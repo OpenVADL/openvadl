@@ -31,8 +31,8 @@ public record AsmFunctionInvocation(@Nullable AsmAssignTo assignToElement,
     implements AsmGrammarElement, HasAssignTo {
 
   @Override
-  public AsmGrammarElement copyWithoutAssignTo() {
-    return new AsmFunctionInvocation(null, function, parameters, asmType);
+  public AsmGrammarElement copyAndOverwriteAssignTo(AsmAssignTo assignToElement) {
+    return new AsmFunctionInvocation(assignToElement, function, parameters, asmType);
   }
 
   @Override

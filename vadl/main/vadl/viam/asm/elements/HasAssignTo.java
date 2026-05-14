@@ -26,7 +26,7 @@ public interface HasAssignTo {
   @Nullable
   AsmAssignTo assignToElement();
 
-  AsmGrammarElement copyWithoutAssignTo();
+  AsmGrammarElement copyAndOverwriteAssignTo(AsmAssignTo newAssignTo);
 
   AsmType getAsmType();
 }
