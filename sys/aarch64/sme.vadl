@@ -76,7 +76,7 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
             forall way : SIntW in 0 .. $way - 1 fold + with
               let rowway = row * $way + way in
               let colway = col * $way + way in
-                if msk1(rowway << $SizeShift($size)) = 1 && msk2(colway << $SizeShift($size) = 1)
+                if msk1(rowway << $SizeShift($size)) = 1 && msk2(colway << $SizeShift($size)) = 1
                   then VADL::$i.funct(src1(rowway) , src2(colway)) as $ExtType($i.funct ; $size)
                   else 0
             in AsId (ZH, $size)(areg)(aoff) := sum
