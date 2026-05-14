@@ -3825,30 +3825,18 @@ public class TypeChecker
 
   @Override
   public Void visit(CallIndexExpr expr) {
-    // try to find target symbol in symbol table.
-    // as identifiers only store AstSymbol origins, and the call expr might refer to a
-    // BuiltInSymbol, we must do a separate request to the symbol table an can't rely on the
-    // expression's identifier target.
-    var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () -> {
-      var suggestions = Levenshtein.suggestions(expr.target.path().pathToString(),
-          expr.symbolTable().allSymbolNames());
-
-      return error("Unknown call target", expr.target)
-          .locationNote(expr.target, "Nothing found that can be called with this name.")
-          .suggestions(suggestions);
-    });
-
+    var target = expr.target.path().target();
 
     // A hack for stage definitions since they don't fit into our typesystem
-    if (targetSymbol instanceof SymbolTable.AstSymbol astSymbol
-        && astSymbol.origin() instanceof StageDefinition stageDef) {
+    if (target instanceof StageDefinition stageDef) {
       processStageCall(expr, stageDef);
       return null;
     }
 
-    switch (targetSymbol) {
-      case SymbolTable.AstSymbol astSymbol -> processCallOfTarget(expr, astSymbol.origin());
-      case SymbolTable.BuiltInSymbol ignored -> processCallOfBuiltIn(expr);
+    if (target != null) {
+      processCallOfTarget(expr, target);
+    } else {
+      processCallOfBuiltIn(expr);
     }
 
     var slices = expr.slices();

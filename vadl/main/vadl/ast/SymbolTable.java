@@ -28,10 +28,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
-import vadl.error.DiagnosticBuilder;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
@@ -42,10 +41,33 @@ import vadl.utils.WithLocation;
 class SymbolTable {
   @Nullable
   SymbolTable parent;
-  final Map<String, Symbol> symbols = new HashMap<>();
-  final Map<String, AstSymbol> macroSymbols = new HashMap<>();
+
+  final Map<String, Node> symbols = new HashMap<>();
+  final Map<String, Node> macroSymbols = new HashMap<>();
   // the errors list is the same obj as the parent's error list
   List<Diagnostic> errors;
+
+  /**
+   * Load all builtin function names into the scope so that the names are reserved and can be used
+   * (in some contextes). However, we don't store any useful informations with them and the next
+   * passes (the type-checker) needs to know on it's own how to deal with them.
+   */
+  static HashSet<String> builtinNames;
+
+  static {
+    builtinNames = BuiltInTable.builtIns()
+        .map(BuiltInTable.BuiltIn::name)
+        .collect(Collectors.toCollection(HashSet::new));
+
+    // Add pseudo buildins
+    builtinNames.add("VADL::mod");
+    builtinNames.add("VADL::div");
+    builtinNames.add("start");
+    builtinNames.add("executable");
+    builtinNames.add("halt");
+    // TODO: Remove this once migration of decimal to sdec is done for all specs #409
+    builtinNames.add("decimal");
+  }
 
   public SymbolTable() {
     parent = null;
@@ -55,35 +77,6 @@ class SymbolTable {
   private SymbolTable(SymbolTable parent, List<Diagnostic> errors) {
     this.parent = parent;
     this.errors = errors;
-  }
-
-  sealed interface Symbol {
-  }
-
-  record AstSymbol(Node origin) implements Symbol {
-  }
-
-  record BuiltInSymbol() implements Symbol {
-  }
-
-  /**
-   * Load all builtin function names into the scope so that the names are reserved and can be used
-   * (in some contextes). However, we don't store any useful informations with them and the next
-   * passes (the type-checker) needs to know on it's own how to deal with them.
-   */
-  void loadBuiltins() {
-    // Load all "real" builtins
-    BuiltInTable.builtIns().map(BuiltInTable.BuiltIn::name)
-        .forEach(name -> symbols.put(name, new BuiltInSymbol()));
-
-    // Add pseudo buildins
-    symbols.put("VADL::mod", new BuiltInSymbol());
-    symbols.put("VADL::div", new BuiltInSymbol());
-    symbols.put("start", new BuiltInSymbol());
-    symbols.put("executable", new BuiltInSymbol());
-    symbols.put("halt", new BuiltInSymbol());
-    // TODO: Remove this once migration of decimal to sdec is done for all specs #409
-    symbols.put("decimal", new BuiltInSymbol());
   }
 
   /**
@@ -139,184 +132,221 @@ class SymbolTable {
     return parent;
   }
 
+  /**
+   * Check if the identifier resolves to a builtin.
+   *
+   * @param isId to be resolved
+   * @return true if the identifier resolves to a builtin, false otherwise
+   */
+  boolean isBuiltin(IsId isId) {
+    var name = isId.pathToString();
+    return builtinNames.contains(name);
+  }
 
+  /**
+   * Define a symbol or macro symbol from a user definition.
+   *
+   * @param name   of the new symbol.
+   * @param origin of the symbol definition.
+   */
   void defineSymbol(String name, Node origin) {
     if (origin instanceof ModelDefinition || origin instanceof ModelTypeDefinition
         || origin instanceof RecordTypeDefinition) {
       verifyMacroAvailable(name, origin);
-      macroSymbols.put(name, new AstSymbol(origin));
+      macroSymbols.put(name, origin);
     } else {
       verifyAvailable(name, origin);
-      symbols.put(name, new AstSymbol(origin));
+      symbols.put(name, origin);
     }
   }
 
+  /**
+   * A wrapper for {@link #defineSymbol(String, Node)} for {@link IdentifiableNode}.
+   *
+   * @param origin to be added to the scope, name will be automatically infered.
+   */
   <T extends Node & IdentifiableNode> void defineSymbol(T origin) {
     var name = origin.identifier().name;
     defineSymbol(name, origin);
   }
 
+  /**
+   * A wrapper for {@link #defineSymbol(String, Node)} for {@link ModelDefinition}.
+   *
+   * @param modelDefinition to be added to the scope, name will be automatically infered.
+   */
   void addModelDefinition(ModelDefinition modelDefinition) {
     // Note: We cannot use .identifier here because the identifier might not be initialized with
     // macros that generate macros.
     defineSymbol(modelDefinition.toMacro().name().name, modelDefinition);
   }
 
+  /**
+   * Internal use only.
+   * Finds a symbol in the current scope.
+   *
+   * @param name of the symbol to resolve
+   * @return the symbol if found, null otherwise
+   */
   @Nullable
-  private Symbol resolveSymbol(String name) {
+  private Node resolveName(String name) {
     var symbol = symbols.get(name);
-
     if (symbol != null) {
       return symbol;
     }
 
     if (parent != null) {
-      return parent.resolveSymbol(name);
+      return parent.resolveName(name);
     }
 
     return null;
   }
 
+  /**
+   * Internal use only.
+   * Finds a symbol in the current scope by path
+   *
+   * @param path to the symbol to resolve
+   * @return the symbol if found, null otherwise
+   */
   @Nullable
-  private Symbol resolveBuiltinSymbol(String name) {
-    var root = this;
-    while (root.parent != null) {
-      root = root.parent;
-    }
-
-    // FIXME: I don't think the namespace prefix should be in here
-    var symbol = root.resolveSymbol(name);
-    if (symbol == null) {
-      symbol = root.resolveSymbol("VADL::" + name);
-    }
-
-    if (symbol instanceof BuiltInSymbol) {
-      return symbol;
-    }
-    return null;
-  }
-
-  @Nullable
-  private Symbol resolveSymbolPath(List<String> path) {
-    // The vadl namespace is a pseudo namespace and points to the root and its buitlin functions
-    if (path.size() == 2 && path.get(0).equalsIgnoreCase("vadl")) {
-      return resolveBuiltinSymbol(path.get(1));
-    }
-
+  private Node resolvePath(List<String> path) {
     if (path.size() == 1) {
       return symbols.get(path.get(0));
     }
 
-    var namespace = (AstSymbol) resolveSymbol(path.get(0));
+    var namespace = resolveName(path.get(0));
     if (namespace == null) {
       return null;
     }
 
-    return namespace.origin.symbolTable().resolveSymbolPath(path.subList(1, path.size()));
+    return namespace.symbolTable().resolvePath(path.subList(1, path.size()));
   }
 
+  /**
+   * Internal use only.
+   * Finds an Identifier or IdentifierPath in the current scope or by path
+   *
+   * @param id to resolve
+   * @return the symbol if found, null otherwise
+   */
   @Nullable
-  private Symbol resolve(Identifier ident) {
-    var symbol = resolveSymbol(ident.name);
-    if (symbol instanceof AstSymbol(Node origin)) {
-      ident.target = origin;
-    }
-    return symbol;
-  }
-
-  @Nullable
-  private Symbol resolve(IdentifierPath path) {
-    var symbol = resolveSymbolPath(path.pathToSegments());
-    if (symbol instanceof AstSymbol(Node origin)) {
-      path.target = origin;
-    }
-    return symbol;
-  }
-
-  @Nullable
-  private Symbol resolve(IsId id) {
+  private Node find(IsId id) {
     return switch (id) {
-      case Identifier ident -> resolve(ident);
-      case IdentifierPath path -> resolve(path);
+      case Identifier ident -> {
+        var symbol = resolveName(ident.name);
+        if (symbol != null) {
+          ident.target = symbol;
+        }
+        yield symbol;
+      }
+      case IdentifierPath path -> {
+        var symbol = resolvePath(path.pathToSegments());
+        if (symbol != null) {
+          path.target = symbol;
+        }
+        yield symbol;
+      }
       default -> throw new IllegalArgumentException("Illegal identifier type: " + id.getClass());
     };
   }
 
+  /**
+   * Internal use only.
+   * Finds a macro symbol by name in the current scope or by path
+   *
+   * @param name to resolve
+   * @return the origin if it could be found, null otherwise
+   */
   @Nullable
-  private Node resolveMacroSymbol(String name) {
+  private Node resolveMacroName(String name) {
     var symbol = macroSymbols.get(name);
     if (symbol == null && parent != null) {
-      return parent.resolveMacroSymbol(name);
+      return parent.resolveMacroName(name);
     }
 
     if (symbol == null) {
       return null;
     }
 
-    return symbol.origin;
-  }
-
-  @Nullable
-  Macro getMacro(String name) {
-    var origin = resolveMacroSymbol(name);
-    if (origin instanceof ModelDefinition macro) {
-      return macro.toMacro();
-    }
-
-    return null;
-  }
-
-
-  <T extends Node> @Nullable T findAs(IsId usage, Class<T> type) {
-    var symbol = resolve(usage);
-    return switch (symbol) {
-      case null -> null;
-      case AstSymbol astSymbol ->
-          type.isInstance(astSymbol.origin) ? type.cast(astSymbol.origin) : null;
-      case BuiltInSymbol ignored -> null;
-    };
+    return symbol;
   }
 
   /**
-   * This will add an error to {@link #errors} if the identifier couldn't be resolved
-   * to a node of the given type.
-   * In this case it will return null, so the user must check the result before continuing.
+   * Finds a macro symbol by name in the current scope.
+   *
+   * @param usage the identifier that should be resolved
+   * @param type  of the node to be resolved
+   * @return the origin if it could be found, null otherwise
+   */
+  public <T extends Node> @Nullable T findAs(IsId usage, Class<T> type) {
+    var symbol = find(usage);
+    return type.isInstance(symbol) ? type.cast(symbol) : null;
+  }
+
+  ;
+
+
+  /**
+   * Finds a macro symbol by name in the current scope or by name.
+   *
+   * @param name of the macro, syntax type or record type.
+   * @param type of to be searched
+   * @return the found origin or null
+   */
+  @Nullable
+  public <T extends Node> T findMacroAs(String name, Class<T> type) {
+    var origin = resolveMacroName(name);
+    return type.isInstance(origin) ? type.cast(origin) : null;
+  }
+
+  /**
+   * Short cut to get the macro of a modeldefinition.
+   *
+   * @param name to be resolved.
+   * @return the Macro if it exists otherwise null.
+   */
+  @Nullable
+  Macro getMacro(String name) {
+    var model = findMacroAs(name, ModelDefinition.class);
+    if (model == null) {
+      return null;
+    }
+    return model.toMacro();
+  }
+
+  /**
+   * Resolve the provided identifier or report an error.
    *
    * @param usage the identifier that should be resolved
    * @param type  the type that the resolved node must have
    * @return the resolved node, or null if it could not be resolved with the given type
    */
-  // FIXME: I don't like how it's called require but still returns null
   <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
     var origin = findAs(usage, type);
     if (origin != null) {
       return origin;
     }
 
+    // FIXME: Add a custom message if the object was found but not the specified type.
     var suggestions = Levenshtein.suggestions(usage.pathToString(), allSymbolNamesOf(type));
     reportUnkownError(Node.nodeNameFor(type), usage.pathToString(), usage, suggestions);
     return null;
   }
 
   /**
-   * Finds the symbol for a given {@link IsId} and throws the error provided by the error
-   * builder if the symbol was not found.
+   * Resolve the provided identifier or report an error.
+   *
+   * @param usage to be resolved.
    */
-  Symbol requireSymbol(IsId name, Supplier<DiagnosticBuilder> errorBuilder) {
-    var symbol = resolve(name);
-    if (symbol == null) {
-      throw errorBuilder.get().build();
+  void requireAny(IsId usage) {
+    var origin = find(usage);
+    if (origin != null || isBuiltin(usage)) {
+      return;
     }
-    return symbol;
-  }
 
-  /**
-   * This allows the {@link Parser} to find an ISA during parsing.
-   * This is only possible for ISA definitions and only used by the parser.
-   */
-  @Nullable
-  InstructionSetDefinition requireIsaDef(IsId usage) {
-    return requireAs(usage, InstructionSetDefinition.class);
+    var suggestions = Levenshtein.suggestions(usage.pathToString(), allSymbolNames());
+    reportUnkownError("Symbol", usage.pathToString(), usage, suggestions);
   }
 
   /**
@@ -353,7 +383,7 @@ class SymbolTable {
    * @return the syntax type it refers to
    */
   SyntaxType requireSyntaxType(Identifier identifier) {
-    var symbol = resolveMacroSymbol(identifier.name);
+    var symbol = resolveMacroName(identifier.name);
     if (symbol instanceof RecordTypeDefinition recordType) {
       return recordType.recordType;
     } else if (symbol instanceof ModelTypeDefinition modelType) {
@@ -367,16 +397,29 @@ class SymbolTable {
   }
 
   /**
+   * Internal use only.
+   */
+  private void collectAllSymbolNamesOf(Set<String> collector, Class<? extends Node>... classes) {
+    symbols.entrySet().stream()
+        .filter(entry -> entry.getValue() != null
+            && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(entry.getValue())))
+        .map(Map.Entry::getKey)
+        .forEach(collector::add);
+
+    if (parent != null) {
+      parent.collectAllSymbolNamesOf(collector, classes);
+    }
+  }
+
+  /**
    * Returns all symbol names in scope.
    *
    * @return the set of all available names.
    */
   Set<String> allSymbolNames() {
-    var names = new HashSet<>(symbols.keySet());
-    if (parent != null) {
-      names.addAll(parent.allSymbolNames());
-    }
-    return names;
+    var symbols = new HashSet<>(builtinNames);
+    collectAllSymbolNamesOf(symbols, Node.class);
+    return symbols;
   }
 
   /**
@@ -387,17 +430,9 @@ class SymbolTable {
    */
   @SafeVarargs
   final Set<String> allSymbolNamesOf(Class<? extends Node>... classes) {
-    var matchingNames = symbols.entrySet().stream()
-        .filter(entry -> entry.getValue() instanceof AstSymbol astSymbol
-            && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(astSymbol.origin)))
-        .map(Map.Entry::getKey)
-        .toList();
-
-    var names = new HashSet<>(matchingNames);
-    if (parent != null) {
-      names.addAll(parent.allSymbolNamesOf(classes));
-    }
-    return names;
+    var symbols = new HashSet<String>();
+    collectAllSymbolNamesOf(symbols, classes);
+    return symbols;
   }
 
   /**
@@ -410,7 +445,7 @@ class SymbolTable {
   final Set<String> allMacroSymbolNamesOf(Class<? extends Node>... classes) {
     var matchingNames = macroSymbols.entrySet().stream()
         .filter(entry -> Arrays.stream(classes)
-            .anyMatch(klass -> klass.isInstance(entry.getValue().origin)))
+            .anyMatch(klass -> klass.isInstance(entry.getValue())))
         .map(Map.Entry::getKey)
         .toList();
 
@@ -431,17 +466,14 @@ class SymbolTable {
     for (var entry : other.symbols.entrySet()) {
       var name = entry.getKey();
       var symbol = entry.getValue();
-      switch (symbol) {
-        case AstSymbol astSymbol -> defineSymbol(name, astSymbol.origin);
-        case BuiltInSymbol ignored -> { /* do nothing, already defined */ }
-      }
+      defineSymbol(name, symbol);
     }
     // add macro symbols to this symbol table.
     // #defineSymbol will correctly assign symbol to macroSymbols
     for (var entry : other.macroSymbols.entrySet()) {
       var name = entry.getKey();
-      AstSymbol symbol = entry.getValue();
-      defineSymbol(name, symbol.origin);
+      var symbol = entry.getValue();
+      defineSymbol(name, symbol);
     }
   }
 
@@ -469,8 +501,7 @@ class SymbolTable {
     }
 
     var otherSymbol = symbols.get(name);
-    if (otherSymbol instanceof AstSymbol astSymbol
-        && astSymbol.origin == origin) {
+    if (otherSymbol == origin) {
       // if the other origin is the same node, the "redefinition" is ok.
       // this can happen when we have a diamond pattern like isa0 -> abi -> superisa
       // and isa0 -> superisa.
@@ -483,12 +514,8 @@ class SymbolTable {
         .locationDescription(originLoc, "Second definition here.")
         .note("All symbols must have a unique name.");
 
-
-    if (otherSymbol instanceof BuiltInSymbol) {
-      error.description("`%s` is a builtin and cannot be used as a name", name);
-    } else if (otherSymbol instanceof AstSymbol astSymbol) {
-      var other = astSymbol.origin;
-      var otherLoc = getIdentifierLocation(other);
+    if (otherSymbol != null) {
+      var otherLoc = getIdentifierLocation(otherSymbol);
       error.locationDescription(otherLoc, "First defined here.");
     }
 
@@ -500,7 +527,7 @@ class SymbolTable {
       return;
     }
 
-    var other = macroSymbols.get(name).origin();
+    var other = macroSymbols.get(name);
     if (other == origin) {
       // if the other origin is the same node, the "redefinition" is ok.
       // this can happen when we have a diamond pattern like isa0 -> abi -> superisa
@@ -528,8 +555,7 @@ class SymbolTable {
         );
 
     if (suggestions != null && !suggestions.isEmpty()) {
-      diagnostic =
-          diagnostic.suggestions(suggestions);
+      diagnostic = diagnostic.suggestions(suggestions);
     }
 
     errors.add(diagnostic.build());
@@ -905,27 +931,13 @@ class SymbolTable {
 
     @Override
     public Void visit(Identifier expr) {
-      var symbol = expr.symbolTable().resolve(expr);
-      if (symbol == null) {
-        var suggestions =
-            Levenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
-
-        expr.symbolTable()
-            .reportUnkownError("Symbol", expr.pathToString(), expr.location(), suggestions);
-      }
+      expr.symbolTable().requireAny(expr);
       return null;
     }
 
     @Override
     public Void visit(IdentifierPath expr) {
-      var symbol = expr.symbolTable().resolve(expr);
-      if (symbol == null) {
-        var suggestions =
-            Levenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
-
-        expr.symbolTable()
-            .reportUnkownError("Symbol", expr.pathToString(), expr.location(), suggestions);
-      }
+      expr.symbolTable().requireAny(expr);
       return null;
     }
 
@@ -962,7 +974,7 @@ class SymbolTable {
       try {
         definition.annotation.resolveName(definition, this);
       } catch (Diagnostic d) {
-        requireNonNull(definition.symbolTable).errors.add(d);
+        definition.symbolTable().errors.add(d);
       }
       return null;
     }
@@ -976,7 +988,7 @@ class SymbolTable {
       // Because the typechecker does the real resolution, checking and error reporting here, but
       // it is nice for the lsp to already have some resolution if we can get to it easily.
       if (expr.symbolTable().findAs(expr.baseType, Definition.class) != null) {
-        requireNonNull(expr.symbolTable).resolve(expr.baseType);
+        expr.symbolTable().find(expr.baseType);
       }
 
       expr.sizeIndices.forEach(index -> index.accept(this));
@@ -1265,16 +1277,7 @@ class SymbolTable {
       beforeTravel(definition);
 
       var relocation = definition.relocation;
-      var symbol = definition.symbolTable().resolve(relocation);
-      if (symbol == null) {
-        var suggestions = Levenshtein.suggestions(
-            relocation.name,
-            definition.symbolTable().allSymbolNames());
-
-        definition.symbolTable()
-            .reportUnkownError("Relocation", relocation.pathToString(), relocation, suggestions);
-      }
-
+      definition.symbolTable().requireAs(relocation, RelocationDefinition.class);
       definition.forEachChild(this::travel);
       afterTravel(definition);
       return null;
@@ -1345,7 +1348,7 @@ class SymbolTable {
 
       // Id needs special treatment
       if (definition.id != null) {
-        var idSymbol = definition.symbolTable().resolve(definition.id);
+        var idSymbol = definition.symbolTable().find(definition.id);
         if (idSymbol == null) {
           var suggestions = Levenshtein.suggestions(
               definition.id.name,

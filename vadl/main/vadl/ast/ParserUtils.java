@@ -686,6 +686,7 @@ class ParserUtils {
    * @return returns the original isaDefs with the Assemblies expanded.
    */
   static List<Definition> expandAssemblyDefinitionsInIsa(List<Definition> isaDefs) {
+    // FIXME: We could modify the list inplace here for performance
     return isaDefs.stream()
         .flatMap(def -> {
           if (def instanceof AssemblyDefinition assembly) {

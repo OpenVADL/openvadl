@@ -1468,7 +1468,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             case PROGRAM_COUNTER -> Stream.concat(
                 ((Counter) lowered).indices().stream().map(ConstantNode::new),
                 args.stream()
-            ).toList();
+            ).collect(Collectors.toCollection(NodeList::new));
           };
           yield readTensorResourceConcatinated(resource, aliasArgs, (DataType) typeBeforeSlice);
         }

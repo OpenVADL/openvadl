@@ -42,7 +42,6 @@ COMPILER vadl
 
   {
     ast.rootSymbolTable = new SymbolTable();
-    ast.rootSymbolTable.loadBuiltins();
   }
 
   SourceLocation lastTokenLoc() {
@@ -436,7 +435,7 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
         identifierOrPlaceholder<out isa>                        (. extending.add(isa); .)
       }
     ]                                                           (. extending.forEach(e -> {
-                                                                      var extendingIsa = macroTable.requireIsaDef(e);
+                                                                      var extendingIsa = macroTable.requireAs(e, InstructionSetDefinition.class);
                                                                       if (extendingIsa != null)
                                                                           readMacroSymbols(macroTable, extendingIsa);
                                                                     }); .)
