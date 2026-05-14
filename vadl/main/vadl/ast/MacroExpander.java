@@ -215,7 +215,7 @@ class MacroExpander
       result.add(new AssemblyDefinition(
           new ArrayList<>(List.of(identifier)),
           expandExpr(definition.expr),
-          copyLoc(definition.loc)
+          definition.loc
       ));
     }
     return result;

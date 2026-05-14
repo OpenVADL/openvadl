@@ -32,6 +32,7 @@ import vadl.utils.VirtualFileSystem;
 import vadl.error.Diagnostic;
 import static vadl.error.Diagnostic.error;
 
+@SuppressWarnings("NonApiType") // We know what we are doing, the implementation matters sometimes.
 public class Parser {
 
   /**
