@@ -1,0 +1,122 @@
+import sve::AArch64SVEandSME
+
+instruction set architecture AArch64SME extending AArch64SVEandSME = {
+
+  constant SVL          = VL << 3         // streaming vector length in bytes
+  constant NumElementsQ = VL >> 7         // number of quad sized elements in a vector register
+
+  using BitsZQ = Bits<NumElementsQ><128>  // quad vector register file
+  using SIntS = SIntW
+  using SIntD = SIntX
+  using UIntS = UIntW
+  using UIntD = UIntX
+
+  register       ZA  : BitsZ <NumElementsB>           //        array register file
+
+//alias register ZHB : BitsZB<NumElementsB>< 1> = ZA  // byte   array register file
+//alias register ZHH : BitsZH<NumElementsH>< 2> = ZA  // half   array register file
+//alias register ZHS : BitsZS<NumElementsS>< 4> = ZA  // single array register file
+//alias register ZHD : BitsZD<NumElementsD>< 8> = ZA  // double array register file
+//alias register ZHQ : BitsZQ<NumElementsQ><16> = ZA  // quad   array register file
+
+  alias register ZHB : BitsZB<NumElementsB> = ZA  // byte   array register file
+  alias register ZHH : BitsZH<NumElementsB> = ZA  // half   array register file
+  alias register ZHS : BitsZS<NumElementsB> = ZA  // single array register file
+  alias register ZHD : BitsZD<NumElementsB> = ZA  // double array register file
+  alias register ZHQ : BitsZQ<NumElementsB> = ZA  // quad   array register file
+
+// SME integer outer product models ********************************************
+
+  format SMEIntOutProductFormatS: Instr =  // SME 32 bit integer outer product format
+    { op       [31..25]      : Bits7       // opcode
+    , opc      [24..21,4..2] : Bits7       // opcode second part
+    , zm       [20..16]      : Index       // 2nd source vector register
+    , pm       [15..13]      : Bits3       // 2nd predicate register
+    , pn       [12..10]      : Bits3       // 1st predicate register
+    , zn       [9..5]        : Index       // 1st source vector register
+    , zada     [1..0]        : Bits2       // ZA array accumulator register
+    }
+
+  format SMEIntOutProductFormatD: Instr =  // SME 64 bit integer outer product format
+    { op       [31..25]      : Bits7       // opcode
+    , opc      [24..21,4..3] : Bits6       // opcode second part
+    , zm       [20..16]      : Index       // 2nd source vector register
+    , pm       [15..13]      : Bits3       // 2nd predicate register
+    , pn       [12..10]      : Bits3       // 1st predicate register
+    , zn       [9..5]        : Index       // 1st source vector register
+    , zada     [2..0]        : Bits3       // ZA array accumulator register
+    }
+
+  model SizeShift (size: Id) : Int = {
+    match: Int ($size = S => 2 ; _ => 2)
+  }
+
+  model ZAda (size: Id) : Ex = {
+    match: Ex ($size = S => (register(zada), '.s, ') ; _ => (register(zada), '.d, '))
+  }
+
+  model ZRegB (nm: Id) : Ex = { (register($nm), '.b, ') }
+  model ZRegH (nm: Id) : Ex = { (register($nm), '.h, ') }
+
+  model ExtType (mul: Id, size: Id) : Id = {
+    match: Id ($mul = umull => AsId (UInt, $size) ; _ => AsId (SInt, $size))
+  }
+
+  model SMEIntOutProdInstr (i: InstrWithFunct, size: Id, way: Int, zreg: (Id)->Ex): IsaDefs = {
+    instruction $i.id: AsId (SMEIntOutProductFormat, $size) =
+      let src1 = ZB(zn) in
+      let src2 = ZB(zm) in
+      let msk1 =  P(pn) in
+      let msk2 =  P(pm) in
+      forall row : SIntW in 0 .. AsId (NumElements, $size) - 1 do
+        forall col : SIntW in 0 .. AsId (NumElements, $size) - 1 do
+          let areg = row << $SizeShift($size) + zada in
+          let aoff = col in
+          let sum = AsId (ZH, $size)(areg)(aoff) + 
+            forall way : SIntW in 0 .. $way - 1 fold + with
+              let rowway = row * $way + way in
+              let colway = col * $way + way in
+                if msk1(rowway << $SizeShift($size)) = 1 && msk2(colway << $SizeShift($size) = 1)
+                  then VADL::$i.funct(src1(rowway) , src2(colway)) as $ExtType($i.funct ; $size)
+                  else 0
+            in AsId (ZH, $size)(areg)(aoff) := sum
+    encoding $i.id = { op = 0b101'0000, opc = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', $ZAda($size), register(pn), '/m, ', register(pm), '/m, ', $zreg(zn), $zreg(zm))
+    }
+
+  model SMEIntOutProd2WayInstr (i: InstrWithFunct): IsaDefs = {
+    $SMEIntOutProdInstr ($i ; S ; 2 ; ZRegH)
+    }
+
+  model SMEIntOutProd4WaySInstr (i: InstrWithFunct): IsaDefs = {
+    $SMEIntOutProdInstr ($i ; S ; 4 ; ZRegB)
+    }
+
+  model SMEIntOutProd4WayDInstr (i: InstrWithFunct): IsaDefs = {
+    $SMEIntOutProdInstr ($i ; D ; 4 ; ZRegH)
+    }
+
+// sme instructions ************************************************************
+
+  $SMEIntOutProd4WaySInstr (                     (SMESMOPA4S    ; "smopa" ; 0b0100'000       ; smull    ))
+  $SMEIntOutProd4WaySInstr (                     (SMESUMOPA4S   ; "sumopa"; 0b0101'000       ; sumull   ))
+  $SMEIntOutProd4WaySInstr (                     (SMEUMOPA4S    ; "umopa" ; 0b1101'000       ; umull    ))
+
+  }
+
+
+instruction set architecture AArch64SME2 extending AArch64SME = {
+
+  $SMEIntOutProd2WayInstr  (                     (SMESMOPA2     ; "smopa" ; 0b0100'110       ; smull    ))
+  $SMEIntOutProd2WayInstr  (                     (SMEUMOPA2     ; "umopa" ; 0b1100'010       ; umull    ))
+
+  }
+
+instruction set architecture AArch64SME_I16I64 extending AArch64SME2 = {
+
+  $SMEIntOutProd4WayDInstr (                     (SMESMOPA4D    ; "smopa" ; 0b0110'00        ; smull    ))
+  $SMEIntOutProd4WayDInstr (                     (SMESUMOPA4D   ; "sumopa"; 0b0111'00        ; sumull   ))
+  $SMEIntOutProd4WayDInstr (                     (SMEUMOPA4D    ; "umopa" ; 0b1111'00        ; umull    ))
+
+  }
+
