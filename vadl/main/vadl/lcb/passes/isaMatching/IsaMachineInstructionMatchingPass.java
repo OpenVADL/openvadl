@@ -89,6 +89,7 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.RegisterResource;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
@@ -108,6 +109,7 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -351,6 +353,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (findLoadMem(behavior)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE, ty));
+      } else if (findBlr(behavior, pc)) {
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BLR, ty));
       } else if (findJalr(behavior, pc)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JALR, ty));
       } else if (findJal(behavior, pc)) {
@@ -860,6 +864,30 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     }
 
     return true;
+  }
+
+  /**
+   * Match indirect branch-and-link without immediate (aarch64-style BLR) when
+   * {@link Instruction} writes PC, writes a register file (the link register), has no
+   * immediate operand, and the PC's assigned value is a direct register-file read.
+   */
+  private boolean findBlr(UninlinedGraph behavior, Counter pcRegister) {
+    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
+        .filter(x -> x.regTensor().equals(pcRegister.registerTensor())).toList();
+    var writesRegFile = behavior.getNodes(WritesRegisterTensor.class)
+        .filter(w -> !w.registerTensor().equals(pcRegister.registerTensor())).toList();
+
+    if (writesPc.size() != 1 || writesRegFile.size() != 1) {
+      return false;
+    }
+
+    if (behavior.getNodes(FieldAccessRefNode.class).findAny().isPresent()) {
+      return false;
+    }
+
+    var pcValue = writesPc.get(0).value();
+    var writesPcWithRegFile = pcValue instanceof ReadsRegisterTensor;
+    return writesPcWithRegFile;
   }
 
   /**
