@@ -16,7 +16,10 @@
 
 package vadl.viam;
 
+import java.util.List;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
+import vadl.utils.Either;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -62,9 +65,26 @@ public class PseudoInstruction extends CompilerInstruction implements PrintableI
   }
 
   @Override
-  public int bitWidth() {
-    return this.behavior().getNodes(InstrCallNode.class).map(n -> n.target().bitWidth())
-        .reduce(0, Integer::sum);
+  public List<Format> formats() {
+    return this.behavior().getNodes(InstrCallNode.class).map(n -> n.target().format()).toList();
+  }
+
+  @Override
+  @Nullable
+  public Either<Format.Field, Format.FieldAccess> getFieldOrAccess(String operandName) {
+
+    // First get field or fieldAccess which operand is assigned to
+    var pair = this.behavior().getNodes(InstrCallNode.class)
+        .flatMap(InstrCallNode::getZippedArgumentsWithParameters).filter(p -> {
+          var arg = p.right();
+          return arg instanceof FuncParamNode paramNode && paramNode.parameter().simpleName()
+              .equals(operandName);
+        }).findFirst().orElse(null);
+
+    if (pair != null) {
+      return pair.left();
+    }
+    return null;
   }
 
   @Override

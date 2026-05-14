@@ -17,6 +17,9 @@
 package vadl.viam;
 
 
+import java.util.List;
+import javax.annotation.Nullable;
+import vadl.utils.Either;
 import vadl.utils.WithLocation;
 import vadl.viam.graph.Graph;
 
@@ -40,9 +43,26 @@ public interface PrintableInstruction extends WithLocation {
   Assembly assembly();
 
   /**
+   * Get the format of an instruction. If the instruction is a {@link PseudoInstruction} get
+   * all formats of the instruction the machine instruction is expanded to.
+   */
+  List<Format> formats();
+
+  /**
+   * Find the {@link Format.Field} or {@link Format.FieldAccess} of the instruction
+   * which is named like the passed operand.
+   */
+  @Nullable
+  Either<Format.Field, Format.FieldAccess> getFieldOrAccess(String operandName);
+
+  /**
    * Total bitwidth of the instruction.
    * Format bitwidth of {@link Instruction} or sum of bitwidth expanded instructions
    * in the case of {@link PseudoInstruction}.
    */
-  int bitWidth();
+  default int bitWidth() {
+    return formats().stream().map(f -> f.type().bitWidth()).reduce(0, Integer::sum);
+  }
+
+  ;
 }

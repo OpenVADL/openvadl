@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import vadl.utils.Either;
 import vadl.viam.Format.FieldAccess;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -89,8 +90,24 @@ public class Instruction extends Definition implements DefProp.WithBehavior, Pri
   }
 
   @Override
-  public int bitWidth() {
-    return this.encoding.format().type().bitWidth();
+  public List<Format> formats() {
+    return List.of(format());
+  }
+
+  @Override
+  @Nullable
+  public Either<Format.Field, FieldAccess> getFieldOrAccess(String operandName) {
+    for (Format.Field field : format().fields()) {
+      if (field.identifier.simpleName().equals(operandName)) {
+        return new Either<>(field, null);
+      }
+    }
+    for (var fieldAccess : format().fieldAccesses()) {
+      if (fieldAccess.simpleName().equals(operandName)) {
+        return new Either<>(null, fieldAccess);
+      }
+    }
+    return null;
   }
 
   public Encoding encoding() {
