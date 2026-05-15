@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,6 @@ package vadl.lcb.passes.operands;
 import java.util.List;
 import java.util.Objects;
 import vadl.gcb.passes.operands.ReferencesFormatField;
-import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
@@ -33,7 +32,6 @@ import vadl.viam.Format;
  */
 public class TableGenInstructionImmediateOperand extends GcbInstructionImmediateOperand
     implements ReferencesFormatField, ReferencesImmediateOperand {
-  private final TableGenImmediateRecord immediateOperand;
 
   /**
    * Constructor.
@@ -46,13 +44,7 @@ public class TableGenInstructionImmediateOperand extends GcbInstructionImmediate
    * Constructor.
    */
   public TableGenInstructionImmediateOperand(String variableName, LlvmFieldAccessRefNode node) {
-    super(node, node.immediateOperand().fullname(), variableName);
-    this.immediateOperand = node.immediateOperand();
-  }
-
-  @Override
-  public TableGenImmediateRecord immediateOperand() {
-    return immediateOperand;
+    super(node, node.immediateOperand(), node.immediateOperand().fullname(), variableName);
   }
 
   @Override
@@ -63,20 +55,20 @@ public class TableGenInstructionImmediateOperand extends GcbInstructionImmediate
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!immediateOperand.equals(((TableGenInstructionImmediateOperand) o).immediateOperand)) {
+    if (!immediateOperand().equals(((TableGenInstructionImmediateOperand) o).immediateOperand())) {
       return false;
     }
     TableGenInstructionImmediateOperand that = (TableGenInstructionImmediateOperand) o;
-    return Objects.equals(immediateOperand, that.immediateOperand);
+    return Objects.equals(immediateOperand(), that.immediateOperand());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), immediateOperand);
+    return Objects.hash(super.hashCode(), immediateOperand());
   }
 
   @Override
   public List<Format.Field> formatFields() {
-    return immediateOperand.fieldAccessRef().fieldRefs();
+    return immediateOperand().fieldAccessRef().fieldRefs();
   }
 }

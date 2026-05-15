@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,8 @@
 
 package vadl.gcb.passes.operands.model;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.viam.Format;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
@@ -24,6 +26,8 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
  */
 public class GcbInstructionImmediateOperand extends GcbDefaultInstructionOperand {
   private final Format.FieldAccess fieldAccess;
+  @LazyInit
+  private TableGenImmediateRecord immediateOperand;
 
   /**
    * Constructor.
@@ -36,12 +40,19 @@ public class GcbInstructionImmediateOperand extends GcbDefaultInstructionOperand
   /**
    * Constructor.
    */
-  public GcbInstructionImmediateOperand(FieldAccessRefNode origin, String type, String name) {
+  public GcbInstructionImmediateOperand(FieldAccessRefNode origin,
+                                        TableGenImmediateRecord immediateOperand, String type,
+                                        String name) {
     super(origin, type, name);
     this.fieldAccess = origin.fieldAccess();
+    this.immediateOperand = immediateOperand;
   }
 
   public Format.FieldAccess fieldAccess() {
     return fieldAccess;
+  }
+
+  public TableGenImmediateRecord immediateOperand() {
+    return immediateOperand;
   }
 }
