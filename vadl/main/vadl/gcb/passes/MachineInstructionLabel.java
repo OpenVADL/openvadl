@@ -101,8 +101,33 @@ public enum MachineInstructionLabel {
   /*
   CONDITIONAL MOVE
    */
-  CSEL_EQ_I32,
+  CSEL_EQ_I32, // equal
   CSEL_EQ_I64,
-  CSEL_NEQ_I32,
-  CSEL_NEQ_I64
+
+  CSEL_NEQ_I32, // not-equal
+  CSEL_NEQ_I64,
+
+  CSEL_SLTH_I32, // signed less than
+  CSEL_SLTH_I64,
+
+  CSEL_SGTH_I32, // signed greater than
+  CSEL_SGTH_I64,
+
+  CSEL_SLEQ_I32, // signed less equal
+  CSEL_SLEQ_I64,
+
+  CSEL_SGEQ_I32, // signed greater equal
+  CSEL_SGEQ_I64,
+
+  CSEL_ULTH_I32, // unsigned less than
+  CSEL_ULTH_I64,
+
+  CSEL_UGTH_I32, // unsigned greater than
+  CSEL_UGTH_I64,
+
+  CSEL_ULEQ_I32, // unsigned less equal
+  CSEL_ULEQ_I64,
+
+  CSEL_UGEQ_I32, // unsigned greater equal
+  CSEL_UGEQ_I64,
 }

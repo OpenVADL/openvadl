@@ -229,24 +229,54 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         new Query.Builder().machineInstructionLabel(
                 MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER)
             .build())));
-    map.put("CSEL_EQ",
-        getFirstNameOrEmpty(database.run(
-            new Query.Builder().machineInstructionLabel(
-                    stackPointerType == ValueType.I32
-                        ? MachineInstructionLabel.CSEL_EQ_I32 :
-                        MachineInstructionLabel.CSEL_EQ_I64)
-                .build())));
-    map.put("CSEL_NEQ", getFirstNameOrEmpty(database.run(
-        new Query.Builder().machineInstructionLabel(
-                stackPointerType == ValueType.I32
-                    ? MachineInstructionLabel.CSEL_NEQ_I32 :
-                    MachineInstructionLabel.CSEL_NEQ_I64)
-            .build())));
+    map.put("CSEL_SGEQ", getCselInstructionNameOrEmpty(database, stackPointerType, 
+          MachineInstructionLabel.CSEL_SGEQ_I32, 
+          MachineInstructionLabel.CSEL_SGEQ_I64));
+    map.put("CSEL_UGEQ", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_UGEQ_I32,
+          MachineInstructionLabel.CSEL_UGEQ_I64));
+    map.put("CSEL_SLEQ", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_SLEQ_I32,
+          MachineInstructionLabel.CSEL_SLEQ_I64));
+    map.put("CSEL_ULEQ", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_ULEQ_I32,
+          MachineInstructionLabel.CSEL_ULEQ_I64));
+    map.put("CSEL_SLTH", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_SLTH_I32,
+          MachineInstructionLabel.CSEL_SLTH_I64));
+    map.put("CSEL_ULTH", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_ULTH_I32,
+          MachineInstructionLabel.CSEL_ULTH_I64));
+    map.put("CSEL_SGTH", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_SGTH_I32,
+          MachineInstructionLabel.CSEL_SGTH_I64));
+    map.put("CSEL_UGTH", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_UGTH_I32,
+          MachineInstructionLabel.CSEL_UGTH_I64));
+    map.put("CSEL_EQ", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_EQ_I32,
+          MachineInstructionLabel.CSEL_EQ_I64));
+    map.put("CSEL_NEQ", getCselInstructionNameOrEmpty(database, stackPointerType,
+          MachineInstructionLabel.CSEL_NEQ_I32,
+          MachineInstructionLabel.CSEL_NEQ_I64));
     map.put("requiresTruncation", requiresTruncation.isPresent());
     map.put("truncation", truncation);
     map.put("zeroOutputInputIntrinsics",
         zeroOutputInputIntrinsics(intrinsicOutput, tableGenMachineRecords));
     return map;
+  }
+
+  private String getCselInstructionNameOrEmpty(
+      Database database, 
+      ValueType stackPointerType, 
+      MachineInstructionLabel label32, 
+      MachineInstructionLabel label64) {
+    return getFirstNameOrEmpty(database.run(
+        new Query.Builder().machineInstructionLabel(
+                stackPointerType == ValueType.I32
+                    ? label32 
+                    : label64)
+            .build()));
   }
 
   private List<ZeroOutputInputIntrinsic> zeroOutputInputIntrinsics(
@@ -332,7 +362,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
       return "MVT::i32";
     }
   }
-
+  
   private String getFirstNameOrEmpty(QueryResult result) {
     return result.machineInstructions().stream().map(x -> x.identifier().simpleName()).findFirst()
         .orElse("");
