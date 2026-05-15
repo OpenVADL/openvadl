@@ -1506,6 +1506,13 @@ class MacroExpander
         }
       }
     }
+
+    // Need to copy the arguments becuase otherwise all usages will point to the same
+    //  instance, but depending on their usage, they can have different names etc.
+    if (AstUtils.isFullyExpanded(arg)) {
+      arg = expandNode(arg);
+    }
+
     return arg;
   }
 

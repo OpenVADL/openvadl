@@ -669,11 +669,6 @@ class ParserUtils {
   static Node expandNode(Parser parser, Node node) {
     var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, List.of());
     var expanded = macroExpander.expandNode(node, parser.ast);
-    if (parser.macroContext.isEmpty()) {
-      // TODO This is necessary to completely copy all nodes to not cause issues
-      //  in symbol collection - find out why
-      return macroExpander.expandNode(expanded, parser.ast);
-    }
     return expanded;
   }
 

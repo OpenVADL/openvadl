@@ -18,6 +18,7 @@ package vadl.ast;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -140,4 +141,24 @@ class AstUtils {
     return cnt;
   }
 
+  static boolean isFullyExpanded(Node node) {
+    if (node instanceof ModelDefinition
+        || node instanceof PlaceholderNode
+        || node instanceof PlaceholderDefinition
+        || node instanceof PlaceholderStatement
+        || node instanceof PlaceholderExpr
+        || node instanceof AsIdExpr
+        || node instanceof AsStrExpr) {
+      return false;
+    }
+
+    AtomicBoolean areChildrenExpanded = new AtomicBoolean(true);
+    node.forEachChild(child -> {
+      if (!isFullyExpanded(child)) {
+        areChildrenExpanded.set(false);
+      }
+    });
+    return areChildrenExpanded.get();
+
+  }
 }
