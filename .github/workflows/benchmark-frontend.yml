@@ -6,8 +6,11 @@ on:
     branches:
       - master
     paths:
-      - 'vadl/main/vadl/ast/**'
       - 'sys/**'
+      - 'vadl/main/vadl/ast/**'
+      - 'vadl/main/vadl/error/**'
+      - 'vadl/main/vadl/types/**'
+      - 'vadl/main/vadl/utils/**'
 
 permissions:
   contents: read
