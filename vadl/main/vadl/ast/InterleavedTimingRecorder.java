@@ -17,9 +17,9 @@
 package vadl.ast;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.SequencedMap;
 import java.util.function.Supplier;
 
 /**
@@ -35,7 +35,7 @@ public class InterleavedTimingRecorder {
    * A pass timing of a single pass.
    */
   public static class PassTiming {
-    private String description;
+    private final String description;
     private long durationNS;
 
     public String description() {
@@ -52,27 +52,31 @@ public class InterleavedTimingRecorder {
     }
   }
 
-  public List<PassTiming> passTimings = new ArrayList<>();
+  public SequencedMap<String, PassTiming> passTimings = new LinkedHashMap<>();
 
   private Deque<String> activeStack = new ArrayDeque<>();
 
   private long activeStartTimeNS;
 
   private void addTiming(PassTiming passTiming) {
-    var existing = passTimings.stream()
-        .filter(timing -> timing.description.equals(passTiming.description))
-        .findFirst();
+    addTiming(passTiming.description, passTiming.durationNS);
+  }
 
-    existing.ifPresentOrElse(timing -> {
-      timing.durationNS += passTiming.durationNS;
-    }, () -> {
-      passTimings.add(passTiming);
-    });
+  private void addTiming(String description, long durationNS) {
+    passTimings.compute(description,
+        (key, existingTiming) -> {
+          if (existingTiming == null) {
+            return new PassTiming(description, durationNS);
+          }
+          existingTiming.durationNS += durationNS;
+          return existingTiming;
+        }
+    );
   }
 
   private void startRecording(String name) {
     // Add dummy timing to keep the order
-    addTiming(new PassTiming(name, 0));
+    addTiming(name, 0);
 
     activeStack.push(name);
     continueRecording();
@@ -94,7 +98,7 @@ public class InterleavedTimingRecorder {
     var name = activeStack.getFirst();
     var consumedTimeNS = System.nanoTime() - activeStartTimeNS;
     activeStartTimeNS = -1;
-    addTiming(new PassTiming(name, consumedTimeNS));
+    addTiming(name, consumedTimeNS);
   }
 
   private void endRecording() {
@@ -147,7 +151,7 @@ public class InterleavedTimingRecorder {
   }
 
   public void importAllTimings(InterleavedTimingRecorder other) {
-    other.passTimings.forEach(this::addTiming);
+    other.passTimings.values().forEach(this::addTiming);
   }
 
 }

@@ -266,20 +266,20 @@ public abstract class BaseCommand implements Callable<Integer> {
     var ast = parseToAst();
     printSpecStats(ast, new DiskVirtualFileSystem());
     printSpecStatsCsv(ast, new DiskVirtualFileSystem());
-    ast.timingRecorder.passTimings.forEach(
+    ast.timingRecorder.passTimings.sequencedValues().forEach(
         t -> timings.add(new Timing(t.description(), t.durationNS())));
     ast.timingRecorder.passTimings.clear();
     dumpExpaned(ast);
     dumpUntyped(ast);
 
     TypeChecker.verify(ast);
-    ast.timingRecorder.passTimings.forEach(
+    ast.timingRecorder.passTimings.sequencedValues().forEach(
         t -> timings.add(new Timing(t.description(), t.durationNS())));
     ast.timingRecorder.passTimings.clear();
     dumpTyped(ast);
 
     var spec = ViamLowering.generate(ast);
-    ast.timingRecorder.passTimings.forEach(
+    ast.timingRecorder.passTimings.sequencedValues().forEach(
         t -> timings.add(new Timing(t.description(), t.durationNS())));
 
     return spec;

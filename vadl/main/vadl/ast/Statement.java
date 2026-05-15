@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.types.TupleType;
@@ -151,7 +152,13 @@ final class LetStatement extends Statement {
    * @return the index/offset of the name provided.
    */
   int getIndexOf(String name) {
-    return identifiers().stream().map(i -> i.name).toList().indexOf(name);
+    for (var idx = 0; idx < identifiers.size(); idx++) {
+      if (((Identifier) identifiers.get(idx)).name.equals(name)) {
+        return idx;
+      }
+    }
+
+    return -1;
   }
 
   /**
@@ -618,16 +625,18 @@ final class MatchStatement extends Statement {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
-    var childNodes = new ArrayList<Node>();
-    childNodes.add(candidate);
-    cases.forEach(c -> {
-      childNodes.addAll(c.patterns);
-      childNodes.add(c.result);
-    });
-    childNodes.add(defaultResult);
-    return childNodes.stream().filter(Objects::nonNull).toList();
+    action.accept(candidate);
+    for (var c : cases) {
+      c.patterns.forEach(p -> action.accept(p));
+      if (c.result != null) {
+        action.accept(c.result);
+      }
+    }
+    if (defaultResult != null) {
+      action.accept(defaultResult);
+    }
   }
 
   @Override

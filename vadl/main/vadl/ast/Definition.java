@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -658,10 +659,11 @@ class EncodingFormatField extends FormatField {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // This has to be hardcoded here because for this format field it's a child but for some it's
     // the identfiyable name.
-    return List.of((Node) identifier, expr);
+    action.accept((Node) identifier);
+    action.accept(expr);
   }
 
   @Override
@@ -725,10 +727,11 @@ class PredicateFormatField extends FormatField {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // This has to be hardcoded here because for this format field it's a child but for some it's
     // the identfiyable name.
-    return List.of((Node) identifier, expr);
+    action.accept((Node) identifier);
+    action.accept(expr);
   }
 
   @Override
@@ -1493,10 +1496,10 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
   }
 
   @Override
-  public List<Node> children() {
+  public void forEachChild(Consumer<Node> action) {
     // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
-    return NodeChildrenRegistry.unsafeGetChildrenDirect(this,
-        (Class<? extends Node>) getClass().getSuperclass());
+    NodeChildrenRegistry.unsafeForEachChildDirect(this,
+        (Class<? extends Node>) getClass().getSuperclass(), action);
   }
 
   @Override
@@ -3589,10 +3592,10 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
   }
 
   @Override
-  public List<Node> children() {
+  public void forEachChild(Consumer<Node> action) {
     // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
-    return NodeChildrenRegistry.unsafeGetChildrenDirect(this,
-        (Class<? extends Node>) getClass().getSuperclass());
+    NodeChildrenRegistry.unsafeForEachChildDirect(this,
+        (Class<? extends Node>) getClass().getSuperclass(), action);
   }
 
   @Override
@@ -5500,12 +5503,15 @@ class AsmGrammarAlternativesDefinition extends Definition {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
-    return alternatives.stream()
-        .flatMap(l -> l.stream().map(a -> (Node) a))
-        .filter(Objects::nonNull)
-        .toList();
+    for (var l : alternatives) {
+      for (var a : l) {
+        if (a != null) {
+          action.accept((Node) a);
+        }
+      }
+    }
   }
 
   @Override

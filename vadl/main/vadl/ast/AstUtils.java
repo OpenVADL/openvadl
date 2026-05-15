@@ -18,6 +18,8 @@ package vadl.ast;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BuiltInTable;
@@ -77,9 +79,8 @@ class AstUtils {
     }
 
     String finalOperatorSymbol = symbol;
-    var builtIns = operatorLookupTable.getOrDefault(finalOperatorSymbol, List.of()).stream()
-        .filter(b -> b.signature().argTypeClasses().size() == argTypes.size())
-        .toList();
+    var builtIns = operatorLookupTable.getOrDefault(finalOperatorSymbol, List.of());
+    builtIns.removeIf(b -> b.signature().argTypeClasses().size() != argTypes.size());
 
     // Sometimes there are a signed and unsigned version of builtin operation
     return switch (builtIns.size()) {
@@ -124,8 +125,40 @@ class AstUtils {
     };
   }
 
-  static List<Expr> flatArguments(List<CallIndexExpr.Arguments> args) {
-    return args.stream().flatMap(a -> a.values.stream()).collect(Collectors.toList());
+  static List<Expr> flatArguments(List<CallIndexExpr.Arguments> argGroups) {
+    return argGroups.stream().flatMap(a -> a.values.stream()).collect(Collectors.toList());
   }
 
+  static void forEachArgument(List<CallIndexExpr.Arguments> argGroups, Consumer<Expr> consumer) {
+    argGroups.forEach(a -> a.values.forEach(consumer));
+  }
+
+  static int argumentCount(List<CallIndexExpr.Arguments> argGroups) {
+    int cnt = 0;
+    for (var args : argGroups) {
+      cnt += args.values.size();
+    }
+    return cnt;
+  }
+
+  static boolean isFullyExpanded(Node node) {
+    if (node instanceof ModelDefinition
+        || node instanceof PlaceholderNode
+        || node instanceof PlaceholderDefinition
+        || node instanceof PlaceholderStatement
+        || node instanceof PlaceholderExpr
+        || node instanceof AsIdExpr
+        || node instanceof AsStrExpr) {
+      return false;
+    }
+
+    AtomicBoolean areChildrenExpanded = new AtomicBoolean(true);
+    node.forEachChild(child -> {
+      if (!isFullyExpanded(child)) {
+        areChildrenExpanded.set(false);
+      }
+    });
+    return areChildrenExpanded.get();
+
+  }
 }

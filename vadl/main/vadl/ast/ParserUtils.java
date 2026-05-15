@@ -25,12 +25,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -669,11 +669,6 @@ class ParserUtils {
   static Node expandNode(Parser parser, Node node) {
     var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, List.of());
     var expanded = macroExpander.expandNode(node, parser.ast);
-    if (parser.macroContext.isEmpty()) {
-      // TODO This is necessary to completely copy all nodes to not cause issues
-      //  in symbol collection - find out why
-      return macroExpander.expandNode(expanded, parser.ast);
-    }
     return expanded;
   }
 
@@ -681,20 +676,26 @@ class ParserUtils {
    * Assembly definitions can be written with multiple identifiers to be bound to multiple
    * (pseudo) instructions. However, for correct further processing they need to be expanded into
    * multiple definitions.
+   * The input requires a linked list because otherwise performance would degredate.
    *
    * @param isaDefs to be expanded.
    * @return returns the original isaDefs with the Assemblies expanded.
    */
-  static List<Definition> expandAssemblyDefinitionsInIsa(List<Definition> isaDefs) {
-    return isaDefs.stream()
-        .flatMap(def -> {
-          if (def instanceof AssemblyDefinition assembly) {
-            return new MacroExpander(Map.of(), Map.of(), def.location().fullExpandedFromStack())
-                .expandAssemblies(assembly).stream();
-          }
-          return Stream.of(def);
-        })
-        .collect(Collectors.toCollection(ArrayList::new));
+  @SuppressWarnings("NonApiType")
+  static LinkedList<Definition> expandAssemblyDefinitionsInIsa(LinkedList<Definition> isaDefs) {
+    for (var iter = isaDefs.listIterator(); iter.hasNext(); ) {
+      var def = iter.next();
+      if (!(def instanceof AssemblyDefinition assembly) || assembly.identifiers.size() == 1) {
+        continue;
+      }
+
+      var expanded = new MacroExpander(Map.of(), Map.of(), def.location().fullExpandedFromStack())
+          .expandAssemblies(assembly);
+      iter.set(expanded.getFirst());
+      expanded.subList(1, expanded.size()).forEach(iter::add);
+    }
+
+    return isaDefs;
   }
 
   /**

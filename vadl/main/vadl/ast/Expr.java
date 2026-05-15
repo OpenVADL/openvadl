@@ -22,6 +22,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
@@ -576,6 +577,25 @@ class IntegerLiteral extends Expr {
     this.loc = loc;
   }
 
+  // An alternative constructor for when the number is already known.
+  // Mostly used for macro expanding.
+  private IntegerLiteral(String token, BigInteger number, SourceLocation loc) {
+    this.token = token;
+    this.number = number;
+    this.loc = loc;
+  }
+
+  // An internal constructor for when we want to create an integer literal synthetically
+  public IntegerLiteral(int number, SourceLocation loc) {
+    this.token = Integer.toString(number);
+    this.number = BigInteger.valueOf(number);
+    this.loc = loc;
+  }
+
+  public IntegerLiteral copyWithLocation(SourceLocation location) {
+    return new IntegerLiteral(this.token, this.number, location);
+  }
+
   @Override
   public SourceLocation location() {
     return loc;
@@ -684,6 +704,17 @@ class BinaryLiteral extends Expr {
     } else {
       throw new IllegalArgumentException("No conversion implemented for binary literal " + token);
     }
+  }
+
+  private BinaryLiteral(String token, BigInteger number, int bitWidth, SourceLocation location) {
+    this.token = token;
+    this.loc = location;
+    this.number = number;
+    this.bitWidth = bitWidth;
+  }
+
+  public BinaryLiteral copyWithLocation(SourceLocation location) {
+    return new BinaryLiteral(this.token, this.number, this.bitWidth, location);
   }
 
   @Override
@@ -803,17 +834,20 @@ class StringLiteral extends Expr {
     this.loc = loc;
   }
 
-  public StringLiteral(Identifier fromId, SourceLocation loc) {
-    // TODO More robust string escaping - only used for prettifying expanded AsStr code
-    this.token = '"' + fromId.name.replaceAll("\"", "\\\"") + '"';
-    this.value = fromId.name;
+  public StringLiteral(String value) {
+    this.token = '"' + value + '"';
+    this.value = value;
+    this.loc = SourceLocation.INVALID_SOURCE_LOCATION;
+  }
+
+  public StringLiteral(String token, String value, SourceLocation loc) {
+    this.token = token;
+    this.value = value;
     this.loc = loc;
   }
 
-  public StringLiteral(String token) {
-    this.token = '"' + token + '"';
-    this.value = token;
-    this.loc = SourceLocation.INVALID_SOURCE_LOCATION;
+  public StringLiteral copyWithLocation(SourceLocation location) {
+    return new StringLiteral(this.token, this.value, location);
   }
 
   @Override
@@ -1402,18 +1436,15 @@ final class TypeLiteral extends Expr {
     } else if (type.getClass() == BitsType.class) {
       var bitsType = (BitsType) type;
       this.baseType = new Identifier("Bits", SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices =
-          List.of(new IntegerLiteral(Integer.toString(bitsType.bitWidth()), loc));
+      this.sizeIndices = List.of(new IntegerLiteral(bitsType.bitWidth(), loc));
     } else if (type.getClass() == UIntType.class) {
       var uintType = (UIntType) type;
       this.baseType = new Identifier("UInt", SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices =
-          List.of(new IntegerLiteral(Integer.toString(uintType.bitWidth()), loc));
+      this.sizeIndices = List.of(new IntegerLiteral(uintType.bitWidth(), loc));
     } else if (type.getClass() == SIntType.class) {
       var sintType = (SIntType) type;
       this.baseType = new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices =
-          List.of(new IntegerLiteral(Integer.toString(sintType.bitWidth()), loc));
+      this.sizeIndices = List.of(new IntegerLiteral(sintType.bitWidth(), loc));
     } else if (type.getClass() == FormatType.class) {
       var formatType = (FormatType) type;
       this.baseType = new Identifier(formatType.format.identifier().name,
@@ -1422,9 +1453,10 @@ final class TypeLiteral extends Expr {
     } else if (type instanceof TensorType tensortype) {
       var innerLiteral = new TypeLiteral(tensortype.innerType(), loc);
       this.baseType = innerLiteral.baseType;
-      var indices = new ArrayList<Expr>();
+      var indices =
+          new ArrayList<Expr>(tensortype.indexDims().size() + innerLiteral.sizeIndices.size());
       for (var i : tensortype.indexDims()) {
-        indices.add(new IntegerLiteral(Integer.toString(i), loc));
+        indices.add(new IntegerLiteral(i, loc));
       }
       indices.addAll(innerLiteral.sizeIndices);
       this.sizeIndices = indices;
@@ -1804,13 +1836,13 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
         return argsIndices.isEmpty() ? List.of() : List.of(argsIndices.getFirst());
       } else if (type instanceof TensorType tensorType
           && computedTarget() instanceof RegisterDefinition) {
-        return new ArrayList<>(argsIndices.subList(0,
-            Math.min(argsIndices.size(), tensorType.indexDims().size())));
+        return argsIndices.subList(0,
+            Math.min(argsIndices.size(), tensorType.indexDims().size()));
       } else if (type instanceof TensorType tensorType
           && computedTarget() instanceof AliasDefinition aliasTarget
           && aliasTarget.kind == AliasDefinition.AliasKind.REGISTER) {
-        return new ArrayList<>(argsIndices.subList(0,
-            Math.min(argsIndices.size(), tensorType.indexDims().size())));
+        return argsIndices.subList(0,
+            Math.min(argsIndices.size(), tensorType.indexDims().size()));
       }
     }
     return List.of();
@@ -1825,16 +1857,15 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
-    List<Node> childNodes = new ArrayList<>();
     if (target != null) {
-      childNodes.add((Node) target);
+      action.accept((Node) target);
     }
     for (var a : argsIndices) {
       for (var v : a.values) {
         if (v != null) {
-          childNodes.add(v);
+          action.accept(v);
         }
       }
     }
@@ -1842,12 +1873,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
       for (var a : subCall.argsIndices) {
         for (var v : a.values) {
           if (v != null) {
-            childNodes.add(v);
+            action.accept(v);
           }
         }
       }
     }
-    return childNodes;
   }
 
   void replaceArgsFor(int index, List<Expr> newArgs) {
@@ -2312,16 +2342,18 @@ class MatchExpr extends Expr {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
-    var childNodes = new ArrayList<Node>();
-    childNodes.add(candidate);
-    cases.forEach(c -> {
-      childNodes.addAll(c.patterns);
-      childNodes.add(c.result);
-    });
-    childNodes.add(defaultResult);
-    return childNodes.stream().filter(Objects::nonNull).toList();
+    action.accept(candidate);
+    for (var c : cases) {
+      c.patterns.forEach(p -> action.accept(p));
+      if (c.result != null) {
+        action.accept(c.result);
+      }
+    }
+    if (defaultResult != null) {
+      action.accept(defaultResult);
+    }
   }
 
   @Override
@@ -2822,8 +2854,8 @@ final class ExpandedAliasDefSequenceCallExpr extends ExpandedSequenceCallExpr {
   }
 
   @Override
-  List<Node> children() {
+  void forEachChild(Consumer<Node> action) {
     // Remove this method when #293 is fixed.
-    return List.of(target);
+    action.accept(target);
   }
 }

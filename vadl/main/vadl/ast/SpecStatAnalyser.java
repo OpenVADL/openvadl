@@ -133,7 +133,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
    */
   private void addModelNodes(SymbolTable table) {
     table.macroSymbols.values().forEach(symbol -> {
-      var node = symbol.origin();
+      var node = symbol;
       ifNewUnexpanded(node, () -> {
         if (node instanceof ModelDefinition) {
           modelDefinitions++;

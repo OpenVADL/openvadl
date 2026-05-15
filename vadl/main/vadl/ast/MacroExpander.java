@@ -215,7 +215,7 @@ class MacroExpander
       result.add(new AssemblyDefinition(
           new ArrayList<>(List.of(identifier)),
           expandExpr(definition.expr),
-          copyLoc(definition.loc)
+          definition.loc
       ));
     }
     return result;
@@ -245,7 +245,7 @@ class MacroExpander
 
   @Override
   public Expr visit(IntegerLiteral expr) {
-    return new IntegerLiteral(expr.token, copyLoc(expr.loc));
+    return expr.copyWithLocation(copyLoc(expr.location()));
   }
 
   @Override
@@ -255,7 +255,7 @@ class MacroExpander
 
   @Override
   public Expr visit(BinaryLiteral expr) {
-    return new BinaryLiteral(expr.token, copyLoc(expr.loc));
+    return expr.copyWithLocation(copyLoc(expr.loc));
   }
 
   @Override
@@ -265,7 +265,7 @@ class MacroExpander
 
   @Override
   public Expr visit(StringLiteral expr) {
-    return new StringLiteral(expr.token, copyLoc(expr.loc));
+    return expr.copyWithLocation(copyLoc(expr.loc));
   }
 
   @Override
@@ -474,7 +474,9 @@ class MacroExpander
       }
     }
 
-    return new StringLiteral("\"" + nameBuilder + "\"", copyLoc(expr.location()));
+    var name = nameBuilder.toString();
+    var token = "\"%s\"".formatted(name);
+    return new StringLiteral(token, name, copyLoc(expr.location()));
   }
 
   @Override
@@ -1504,6 +1506,13 @@ class MacroExpander
         }
       }
     }
+
+    // Need to copy the arguments becuase otherwise all usages will point to the same
+    //  instance, but depending on their usage, they can have different names etc.
+    if (AstUtils.isFullyExpanded(arg)) {
+      arg = expandNode(arg);
+    }
+
     return arg;
   }
 

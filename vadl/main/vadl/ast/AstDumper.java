@@ -42,6 +42,24 @@ public class AstDumper extends RecursiveAstVisitor {
     return builder.toString();
   }
 
+  static <T extends Definition> String debugNode(T node) {
+    var dumper = new AstDumper();
+    node.accept(dumper);
+    return dumper.builder.toString();
+  }
+
+  static <T extends Expr> String debugNode(T node) {
+    var dumper = new AstDumper();
+    node.accept(dumper);
+    return dumper.builder.toString();
+  }
+
+  static <T extends Statement> String debuNode(T node) {
+    var dumper = new AstDumper();
+    node.accept(dumper);
+    return dumper.builder.toString();
+  }
+
   private String indentString() {
     var indentBy = 2;
     var indentCharacters = ". : ' | ";

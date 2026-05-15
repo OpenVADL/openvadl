@@ -241,6 +241,10 @@ public class TypeChecker
   }
 
   private void verifyAnnotations(Definition def) {
+    if (def.annotations.isEmpty()) {
+      return;
+    }
+
     // NOTE: This could have been done in the symbol resolver
     // Disallow the same annotation multiple times
     Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
@@ -1803,8 +1807,7 @@ public class TypeChecker
       }
 
       // if value is not set, we use the last value + 1.
-      entry.value =
-          new IntegerLiteral(String.valueOf(nextVal), SourceLocation.INVALID_SOURCE_LOCATION);
+      entry.value = new IntegerLiteral(nextVal, SourceLocation.INVALID_SOURCE_LOCATION);
       nextVal++;
     }
 
@@ -2892,16 +2895,12 @@ public class TypeChecker
   private void visitIdentifiable(Expr expr) {
     Node origin;
     String innerName;
-    String fullName;
-
+    IsId isId = (IsId) expr;
+    origin = isId.target();
     if (expr instanceof Identifier identifier) {
-      origin = identifier.target();
       innerName = identifier.name;
-      fullName = identifier.name;
     } else if (expr instanceof IdentifierPath path) {
-      origin = path.target();
       innerName = path.lastSegmentName();
-      fullName = path.pathToString();
     } else {
       throw new IllegalStateException("Unknown identifyable: " + expr.getClass().getSimpleName());
     }
@@ -3031,6 +3030,7 @@ public class TypeChecker
       // We might be here from a call expr and it might be necessary to handle the call for another
       // definition.
 
+      var fullName = isId.pathToString();
       throw addErrorAndStopChecking(error("Invalid Expression", expr)
           .locationDescription(expr,
               "The name '%s' points to a `%s` which cannot be used as an expression.", fullName,
@@ -3050,6 +3050,7 @@ public class TypeChecker
       return;
     }
 
+    var fullName = isId.pathToString();
     throw new IllegalStateException(
         "Cannot find symbol `%s` found at: %s (The symbol resolver should already have caught that)"
             .formatted(fullName, expr.location().toConciseString()));
@@ -3824,30 +3825,18 @@ public class TypeChecker
 
   @Override
   public Void visit(CallIndexExpr expr) {
-    // try to find target symbol in symbol table.
-    // as identifiers only store AstSymbol origins, and the call expr might refer to a
-    // BuiltInSymbol, we must do a separate request to the symbol table an can't rely on the
-    // expression's identifier target.
-    var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () -> {
-      var suggestions = Levenshtein.suggestions(expr.target.path().pathToString(),
-          expr.symbolTable().allSymbolNames());
-
-      return error("Unknown call target", expr.target)
-          .locationNote(expr.target, "Nothing found that can be called with this name.")
-          .suggestions(suggestions);
-    });
-
+    var target = expr.target.path().target();
 
     // A hack for stage definitions since they don't fit into our typesystem
-    if (targetSymbol instanceof SymbolTable.AstSymbol astSymbol
-        && astSymbol.origin() instanceof StageDefinition stageDef) {
+    if (target instanceof StageDefinition stageDef) {
       processStageCall(expr, stageDef);
       return null;
     }
 
-    switch (targetSymbol) {
-      case SymbolTable.AstSymbol astSymbol -> processCallOfTarget(expr, astSymbol.origin());
-      case SymbolTable.BuiltInSymbol ignored -> processCallOfBuiltIn(expr);
+    if (target != null) {
+      processCallOfTarget(expr, target);
+    } else {
+      processCallOfBuiltIn(expr);
     }
 
     var slices = expr.slices();
@@ -3936,25 +3925,25 @@ public class TypeChecker
     }
 
     var argGroups = expr.args();
-    var argExprs = AstUtils.flatArguments(argGroups);
+    var argCount = AstUtils.argumentCount(argGroups);
 
-    for (var argExpr : argExprs) {
+    AstUtils.forEachArgument(argGroups, argExpr -> {
       if (argExpr instanceof RangeExpr) {
         addErrorAndStopChecking(error("Invalid argument", argExpr)
             .locationNote(argExpr, "Expected argument value but got a range expression.")
             .build());
       }
-    }
+    });
 
     var type = typedNode.type();
     if (type instanceof ConcreteRelationType relType && relType.argTypes().isEmpty()) {
       // if a relation type expects no arguments, no argument group is considered
       expr.typeBeforeSlice = relType.resultType();
     } else if (type instanceof ConcreteRelationType relType) {
-      if (relType.argTypes().size() != argExprs.size()) {
+      if (relType.argTypes().size() != argCount) {
         addErrorAndStopChecking(error("Invalid number of arguments", expr)
             .locationNote(expr, "Expected %s arguments but got %s.", relType.argTypes().size(),
-                argExprs.size()).build());
+                argCount).build());
       }
 
       if (argGroups.size() != 1) {
