@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
@@ -124,7 +124,7 @@ final class BlockStatement extends Statement {
 }
 
 /**
- * If multiple identifiers are provided, they are used to unpack a tuple.
+ * If multiple identifiers are provided, they are used to unpack fields of a struct.
  */
 final class LetStatement extends Statement {
   List<IsId> identifiers;
@@ -147,18 +147,31 @@ final class LetStatement extends Statement {
   }
 
   /**
-   * Returns the index of one of the variables the statement defines.
+   * Translates the outer name of the let statement to the inner name of the value expression.
+   * E.g.:
    *
-   * @return the index/offset of the name provided.
+   * <pre>
+   *   let next, status = VADL::adds(PC, 4 as Bits<32>) in
+   *       ...
+   * </pre>
+   * this method will translate "next" to "result" and "status" to "status".
+   *
+   * @param name the bound name of the let statement.
+   * @return the name of the value expression.
    */
-  int getIndexOf(String name) {
-    for (var idx = 0; idx < identifiers.size(); idx++) {
-      if (((Identifier) identifiers.get(idx)).name.equals(name)) {
-        return idx;
-      }
+  String mapName(String name) {
+    var valType = valueExpr.type;
+    if (!(valType instanceof StructType struct)) {
+      throw new IllegalStateException("Expected StructType but got " + valType);
     }
 
-    return -1;
+    final List<String> fields = struct.fieldNames();
+    for (var i = 0; i < identifiers.size(); i++) {
+      if (name.equals(identifiers().get(i).name)) {
+        return fields.get(i);
+      }
+    }
+    throw new IllegalStateException("Let statement does not have a name `%s`.".formatted(name));
   }
 
   /**
@@ -172,11 +185,11 @@ final class LetStatement extends Statement {
       return Objects.requireNonNull(valType);
     }
 
-    if (!(valType instanceof TupleType valTuple)) {
-      throw new IllegalStateException("Expected TupleType but got " + valType);
+    if (!(valType instanceof StructType valStruct)) {
+      throw new IllegalStateException("Expected StructType but got " + valType);
     }
 
-    return Objects.requireNonNull(valTuple.get(getIndexOf(name)));
+    return Objects.requireNonNull(valStruct.fields().get(mapName(name)));
   }
 
   @Override

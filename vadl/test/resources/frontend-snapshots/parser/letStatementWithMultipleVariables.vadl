@@ -41,7 +41,7 @@ instruction set architecture ISA = {
 //    . : ' LetStatement
 //    . : ' | Identifier name: "next" type: Bits<32>
 //    . : ' | Identifier name: "status" type: Status
-//    . : ' | CallIndexExpr type: Tuple<Bits<32>, Status>
+//    . : ' | CallIndexExpr type: Struct<result: Bits<32>, status: Status>
 //    . : ' | . IdentifierPath name: "VADL::adds" type: null
 //    . : ' | . ArgsIndices
 //    . : ' | . : Identifier name: "PC" type: Bits<32>

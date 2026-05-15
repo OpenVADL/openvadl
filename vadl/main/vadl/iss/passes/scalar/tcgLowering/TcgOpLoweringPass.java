@@ -17,6 +17,8 @@
 package vadl.iss.passes.tcgLowering;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
+import static vadl.types.BuiltInTable.BUILTIN_STATUS;
 import static vadl.utils.GraphUtils.getSingleNode;
 import static vadl.utils.GraphUtils.intU;
 
@@ -122,9 +124,9 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.StageEffectNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -844,17 +846,29 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Handles the {@link TupleGetFieldNode}. Currently not implemented.
+   * Handles the {@link StructGetFieldNode}.
    *
    * @param toHandle The node to handle.
-   * @throws UnsupportedOperationException Always thrown.
    */
   @Handler
-  void handle(TupleGetFieldNode toHandle) {
+  void handle(StructGetFieldNode toHandle) {
     var dest = singleDestOf(toHandle);
+
+    if (!(toHandle.expression() instanceof BuiltInCall)) {
+      throw toHandle.error("Expected expression to be a BuiltInCall, but got %s",
+          toHandle.expression());
+    }
+
+    var idx = switch (toHandle.field()) {
+      case BUILTIN_RESULT -> 0;
+      case BUILTIN_STATUS -> 1;
+      default -> throw toHandle.error("Unexpected field index %s", toHandle.field());
+    };
+
     var srcs = allDestOf(toHandle.expression());
-    toHandle.ensure(toHandle.index() < srcs.size(), "Get tuple index out of bounds.");
-    var src = srcs.get(toHandle.index());
+
+    toHandle.ensure(idx < srcs.size(), "Get field index out of bounds.");
+    var src = srcs.get(idx);
 
     if (dest.equals(src)) {
       // if dest equals src, we don't emit move

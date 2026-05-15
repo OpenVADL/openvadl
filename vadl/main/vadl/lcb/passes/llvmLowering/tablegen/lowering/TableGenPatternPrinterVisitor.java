@@ -67,8 +67,8 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -413,7 +413,7 @@ public class TableGenPatternPrinterVisitor
   }
 
   @Override
-  public void visit(TupleGetFieldNode tupleGetFieldNode) {
+  public void visit(StructGetFieldNode structGetFieldNode) {
     throw new RuntimeException("not implemented");
   }
 

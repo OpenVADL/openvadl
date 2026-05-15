@@ -62,8 +62,8 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -424,14 +424,17 @@ class OpDecomposer {
     var argWidth = arg1.type().asDataType().bitWidth();
 
     var targetType = Type.bits(argWidth);
-    var tupleType = Type.tuple(targetType, targetType);
+    var structType = Type.struct(
+        "low", targetType,
+        "high", targetType
+    );
 
     var slice = sliceNode.bitSlice();
 
-    var mul2 = behavior.add(new IssMul2Node(arg1, arg2, kind, tupleType));
+    var mul2 = behavior.add(new IssMul2Node(arg1, arg2, kind, structType));
     // lower and upper half in target type size (not final expected size yet)
-    var lowerHalf = behavior.add(new TupleGetFieldNode(0, mul2, targetType));
-    var upperHalf = behavior.add(new TupleGetFieldNode(1, mul2, targetType));
+    var lowerHalf = behavior.add(new StructGetFieldNode("low", mul2, targetType));
+    var upperHalf = behavior.add(new StructGetFieldNode("high", mul2, targetType));
 
     // lower half sub slice [targetSize - 1 ... lsb]
     var lhMsb = targetSize.width - 1;

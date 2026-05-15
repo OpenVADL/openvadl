@@ -25,7 +25,7 @@ import vadl.types.BuiltInTable;
 import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 class InstructionRegisterEliminationPassTest extends AbstractLcbTest {
@@ -93,7 +93,7 @@ class InstructionRegisterEliminationPassTest extends AbstractLcbTest {
     Assertions.assertThat(temp).isPresent();
     Assertions.assertThat(temp.get().getNodes(ReadRegTensorNode.class)
         .filter(x -> x.regTensor().identifier.simpleName().equals("NZCV_N"))).isEmpty();
-    Assertions.assertThat(temp.get().getNodes(TupleGetFieldNode.class)).isEmpty();
+    Assertions.assertThat(temp.get().getNodes(StructGetFieldNode.class)).isEmpty();
     Assertions.assertThat(
             temp.get().getNodes(BuiltInCall.class).filter(x -> x.builtIn().isStatusBuiltin()))
         .isEmpty();

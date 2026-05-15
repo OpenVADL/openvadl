@@ -31,7 +31,7 @@ import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.SIntType;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.SourceLocation;
@@ -2030,13 +2030,6 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     @Nullable
     Constant.BitSlice computedBitSlice;
 
-    /**
-     * If the subcall is status access, this field tells which index in the status type the
-     * field is.
-     */
-    @Nullable
-    public Integer computedStatusIndex;
-
     SubCall(IdentifierOrPlaceholder id, List<Arguments> argsIndices) {
       this.id = id;
       this.argsIndices = argsIndices;
@@ -2169,16 +2162,34 @@ class LetExpr extends Expr {
   }
 
   /**
-   * Returns the index of one of the variables the statement defines.
+   * Translates the outer name of the let expression to the inner name of the value expression.
+   * E.g.:
    *
-   * @return the type of the name provided.
+   * <pre>
+   *   let next, status = VADL::adds(PC, 4 as Bits<32>) in
+   *       ...
+   * </pre>
+   * this method will translate "next" to "result" and "status" to "status".
+   *
+   * @param name the bound name of the let expression.
+   * @return the name of the value expression.
    */
-  int getIndexOf(String name) {
-    return identifiers().stream().map(i -> i.name).toList().indexOf(name);
+  String mapName(String name) {
+    var valType = valueExpr.type;
+    if (!(valType instanceof StructType struct)) {
+      throw new IllegalStateException("Expected StructType but got " + valType);
+    }
+    final List<String> fields = struct.fieldNames();
+    for (var i = 0; i < identifiers.size(); i++) {
+      if (name.equals(identifiers().get(i).name)) {
+        return fields.get(i);
+      }
+    }
+    throw new IllegalStateException("Let expression does not have a name `%s`.".formatted(name));
   }
 
   /**
-   * Returns the type of one of the variables the statement defines.
+   * Returns the type of one of the variables the expression defines.
    *
    * @return the type of the name provided.
    */
@@ -2188,11 +2199,11 @@ class LetExpr extends Expr {
       return requireNonNull(valType);
     }
 
-    if (!(valType instanceof TupleType valTuple)) {
-      throw new IllegalStateException("Expected TupleType but got " + valType);
+    if (!(valType instanceof StructType valStruct)) {
+      throw new IllegalStateException("Expected StructType but got " + valType);
     }
 
-    return requireNonNull(valTuple.get(getIndexOf(name)));
+    return requireNonNull(valStruct.get(mapName(name)));
   }
 
   @Override

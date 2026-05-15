@@ -17,9 +17,10 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -27,45 +28,49 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**
- * Represents a let expression in the VADL Specification.
+ * Extracts a field from a struct.
  *
  * <p>It stores the identifier as well as the label (once implemented)
  * to allow generating code with meaningful variable names.
  */
-public class TupleGetFieldNode extends ExpressionNode {
+public class StructGetFieldNode extends ExpressionNode {
 
   @DataValue
-  private int index;
+  private final String field;
 
   @Input
   private ExpressionNode expression;
 
   /**
-   * Constructs TupleGetFieldNode.
+   * Constructs StructGetFieldNode.
    *
-   * @param index      the index to get
-   * @param expression the value that returns a tuple
+   * @param field      the field to get
+   * @param expression the value that returns a struct
    */
-  public TupleGetFieldNode(int index, ExpressionNode expression, Type type) {
+  public StructGetFieldNode(String field, ExpressionNode expression, Type type) {
     super(type);
     this.expression = expression;
-    this.index = index;
+    this.field = field;
   }
 
   @Override
   public void verifyState() {
     super.verifyState();
-    ensure(index >= 0, "Index is negative.");
-    ensure(expression.type() instanceof TupleType, "The expression result not in tuple, but in %s",
-        expression.type());
-    ensure(index < ((TupleType) expression.type()).size(),
-        "The index of is out of bound. i: %s, tuple: %s", index, expression.type());
-    ensure(((TupleType) expression.type()).get(index).isTrivialCastTo(type()),
+
+    ensure(StringUtils.isNotBlank(field), "Field is blank");
+
+    if (!(expression.type() instanceof StructType structType)) {
+      fail("The expression is not a struct, but %s", expression.type());
+      return;
+    }
+
+    ensure(structType.get(field) != null, "The field %s does not exist in the struct.", field);
+    ensure(structType.get(field).isTrivialCastTo(type()),
         "The node's type does not match the type retrieved from the expression.");
   }
 
-  public int index() {
-    return index;
+  public String field() {
+    return field;
   }
 
   public ExpressionNode expression() {
@@ -75,7 +80,7 @@ public class TupleGetFieldNode extends ExpressionNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(index);
+    collection.add(field);
   }
 
   @Override
@@ -92,12 +97,12 @@ public class TupleGetFieldNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new TupleGetFieldNode(index, (ExpressionNode) expression.copy(), type());
+    return new StructGetFieldNode(field, expression.copy(), type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new TupleGetFieldNode(index, expression, type());
+    return new StructGetFieldNode(field, expression, type());
   }
 
   @Override

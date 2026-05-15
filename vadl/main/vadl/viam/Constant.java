@@ -17,6 +17,12 @@
 package vadl.viam;
 
 import static vadl.error.Diagnostic.warning;
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
+import static vadl.types.BuiltInTable.BUILTIN_STATUS;
+import static vadl.types.StatusType.CARRY;
+import static vadl.types.StatusType.NEGATIVE;
+import static vadl.types.StatusType.OVERFLOW;
+import static vadl.types.StatusType.ZERO;
 import static vadl.utils.BigIntUtils.mask;
 import static vadl.utils.BigIntUtils.twosComplement;
 
@@ -26,8 +32,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IntSummaryStatistics;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.SequencedMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -39,7 +48,7 @@ import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
@@ -69,11 +78,6 @@ public abstract class Constant {
   public Constant.Value asVal() {
     ensure(this instanceof Value, "Constant is not a value");
     return (Constant.Value) this;
-  }
-
-  public Constant.Tuple asTuple() {
-    ensure(this instanceof Tuple, "Constant is not a tuple");
-    return (Constant.Tuple) this;
   }
 
   public Constant.Str asString() {
@@ -294,9 +298,9 @@ public abstract class Constant {
     /**
      * Returns the addition of this and other together with the status.
      *
-     * @return a tuple constant of form {@code ( result, ( z, c, o, n ) )}
+     * @return a struct constant of form {@code ( result, ( z, c, o, n ) )}
      */
-    public Constant.Tuple add(Constant.Value other, boolean withCarrySet) {
+    public Struct add(Constant.Value other, boolean withCarrySet) {
       ensure(type() instanceof BitsType, "Invalid type for addition");
       ensure(type().isTrivialCastTo(other.type()), "Types don't match, %s vs %s", type(),
           other.type());
@@ -323,10 +327,11 @@ public abstract class Constant {
       var isOverflow = this.isSignBit() == other.isSignBit() && (this.isSignBit() != isNegative);
 
 
-      return new Constant.Tuple(
-          Constant.Value.fromTwosComplement(truncated, type()),
-          Constant.Tuple.status(isNegative, isZero, isCarry, isOverflow)
-      );
+      var fields = new LinkedHashMap<String, Constant>();
+      fields.put(BUILTIN_RESULT, Constant.Value.fromTwosComplement(truncated, type()));
+      fields.put(BUILTIN_STATUS, Struct.status(isNegative, isZero, isCarry, isOverflow));
+
+      return new Struct(fields);
     }
 
     /**
@@ -351,10 +356,10 @@ public abstract class Constant {
      * flag is set before every subtract operation where a borrow is not required.</p>
      *
      * @param b the value to subtract from this value
-     * @return a tuple constant representing the result of the subtraction (including status)
+     * @return a struct constant representing the result of the subtraction (including status)
      * @see <a href="https://arc.net/l/quote/fmdsnowl">Wikipedia carry vs. borrow flag</a>
      */
-    public Constant.Tuple subtract(Constant.Value b, SubMode mode, boolean withCarryBorrowSet) {
+    public Struct subtract(Constant.Value b, SubMode mode, boolean withCarryBorrowSet) {
       ensure(type() instanceof BitsType, "Invalid type for subtraction");
       ensure(type().isTrivialCastTo(b.type()), "Types don't match, %s vs %s", type(), b.type());
 
@@ -374,7 +379,7 @@ public abstract class Constant {
       var result = this.add(notB, c);
 
       // swap the carry flag by inverse of addition open-vadl#76
-      var resStatus = result.get(1, Constant.Tuple.Status.class);
+      var resStatus = result.get(BUILTIN_STATUS, Struct.Status.class);
       var carry = resStatus.carry();
 
       if (mode == SubMode.X86_LIKE) {
@@ -386,22 +391,26 @@ public abstract class Constant {
 
       var overflow = resStatus.overflow();
 
-      var status = new Constant.Tuple.Status(
+      var status = new Struct.Status(
           resStatus.negative(),
           resStatus.zero(),
           carry,
           overflow
       );
 
-      return new Constant.Tuple(result.get(0), status);
+      var fields = new LinkedHashMap<String, Constant>();
+      fields.put(BUILTIN_RESULT, result.get(BUILTIN_RESULT));
+      fields.put(BUILTIN_STATUS, status);
+
+      return new Struct(fields);
     }
 
     /**
-     * This utility subtraction will discard the status tuple.
+     * This utility subtraction will discard the status field.
      */
     private Constant.Value subtract(Constant.Value other) {
       return subtract(other, SubMode.X86_LIKE, false)
-          .firstValue();
+          .get(BUILTIN_RESULT, Value.class);
     }
 
     /**
@@ -1295,80 +1304,76 @@ public abstract class Constant {
   }
 
   /**
-   * Represents a tuple constant containing other constants.
+   * Represents a sturct constant containing other constants.
    */
-  public static class Tuple extends Constant {
-    private final List<Constant> values;
+  public static class Struct extends Constant {
+    private final Map<String, Constant> values;
 
 
     /**
-     * Creates a Tuple constant with the given values and type.
+     * Creates a struct constant with the given fields and type.
      *
-     * @param values The list of Constant values contained in the Tuple.
-     * @param type   The TupleType of the Tuple constant.
+     * @param values The list of Constant values contained in the struct.
+     * @param type   The StructType of the Struct constant.
      */
-    public Tuple(List<Constant> values, TupleType type) {
+    public Struct(Map<String, Constant> values, StructType type) {
       super(type);
       this.values = values;
     }
 
     /**
-     * Creates a Tuple constant with the given values.
-     * The type of the tuple gets automatically inferred.
+     * Creates a Struct constant with the given fields.
+     * The type of the struct gets automatically inferred.
      *
-     * @param values The list of Constant values contained in the Tuple.
+     * @param values The list of Constant fields contained in the Struct.
      */
-    public Tuple(List<Constant> values) {
-      this(values,
-          TupleType.tuple(
-              values.stream()
-                  .map(e -> e.type)
-                  .toArray(Type[]::new)
-          )
-      );
+    public Struct(Map<String, Constant> values) {
+      this(values, Type.struct(fieldTypes(values)));
+    }
+
+    private static Map<String, Type> fieldTypes(Map<String, Constant> values) {
+      final Map<String, Type> types = new LinkedHashMap<>();
+      for (var entry : values.entrySet()) {
+        types.put(entry.getKey(), entry.getValue().type());
+      }
+      return types;
     }
 
     /**
-     * Creates a Tuple constant with the given values.
+     * Constructs a struct constant representing a status struct.
      */
-    public Tuple(Constant... values) {
-      this(List.of(values));
+    public static Struct.Status status(boolean negative, boolean zero, boolean carry,
+                                       boolean overflow) {
+      return new Struct.Status(negative, zero, carry, overflow);
     }
 
-    /**
-     * Constructs a tuple constant representing a status tuple.
-     */
-    public static Tuple.Status status(boolean negative, boolean zero, boolean carry,
-                                      boolean overflow) {
-      return new Tuple.Status(negative, zero, carry, overflow);
-    }
-
-    public List<Constant> values() {
+    public Map<String, Constant> values() {
       return values;
     }
 
     /**
-     * Retrieves the Constant value at the specified index.
+     * Retrieves the Constant value at the specified name.
      *
-     * @param index The index of the Constant value to retrieve.
-     * @return The Constant value at the specified index.
+     * @param name The name of the Constant value to retrieve.
+     * @return The Constant value at the specified name.
      */
-    public Constant get(int index) {
-      return values.get(index);
+    public Constant get(String name) {
+      return Objects.requireNonNull(values.get(name),
+          "Struct does not contain a value with name %s".formatted(name));
     }
 
+
     /**
-     * Retrieves the constant value at the specified index and casts it to the given type.
+     * Retrieves the constant value at the specified name and casts it to the given type.
      *
-     * @param index               The index of the constant value to retrieve.
+     * @param name                The name of the constant value to retrieve.
      * @param typeOfConstantClass The class type to cast the constant value to.
      * @param <T>                 The generic type parameter representing the class type.
-     * @return The constant value at the specified index, casted to the given type.
-     * @throws ViamError if the constant value at the specified
-     *                   index is not of the given type.
+     * @return The constant value at the specified name, cast to the given type.
+     * @throws ViamError if the constant value at the specified name is not of the given type.
      */
-    public <T extends Constant> T get(int index, Class<T> typeOfConstantClass) {
-      var val = values.get(index);
+    public <T extends Constant> T get(String name, Class<T> typeOfConstantClass) {
+      var val = get(name);
       ensure(typeOfConstantClass.isInstance(val), "Expected constant of type %s but got %s",
           typeOfConstantClass, val);
       //noinspection unchecked
@@ -1376,12 +1381,13 @@ public abstract class Constant {
     }
 
     /**
-     * Retrieves the first constant value in the tuple.
+     * Whether the struct contains a value with the given name.
+     *
+     * @param name the field name
+     * @return true if the struct contains a value with the given name, false otherwise.
      */
-    public Constant.Value firstValue() {
-      var val = values.stream().filter(e -> e instanceof Value).findFirst();
-      ensure(val.isPresent(), "No constant value found in tuple");
-      return (Constant.Value) val.get();
+    public boolean has(String name) {
+      return values.containsKey(name);
     }
 
     public int size() {
@@ -1390,7 +1396,19 @@ public abstract class Constant {
 
     @Override
     public String toString() {
-      return "(" + values.stream().map(Constant::toString).collect(Collectors.joining(", ")) + ")";
+      final var sb = new StringBuilder("(");
+
+      boolean first = true;
+      for (var entry : values.entrySet()) {
+        sb
+            .append(first ? "" : ", ")
+            .append(entry.getKey()).append(": ")
+            .append(entry.getValue());
+        first = false;
+      }
+
+      sb.append(")");
+      return sb.toString();
     }
 
     @Override
@@ -1405,8 +1423,8 @@ public abstract class Constant {
         return false;
       }
 
-      Tuple tuple = (Tuple) o;
-      return values.equals(tuple.values);
+      Struct struct = (Struct) o;
+      return values.equals(struct.values);
     }
 
     @Override
@@ -1417,19 +1435,20 @@ public abstract class Constant {
     }
 
     /**
-     * The constant of a status tuple containing the NZCV values (negative, zero, carry, overflow).
+     * The constant of a status struct containing the NZCV values (negative, zero, carry, overflow).
      */
-    public static class Status extends Tuple {
+    public static class Status extends Struct {
 
       /**
        * Constructs a status constant by Java boolean value.
        */
       public Status(boolean negative, boolean zero, boolean carry, boolean overflow) {
-        super(
-            List.of(Constant.Value.of(negative), Constant.Value.of(zero), Constant.Value.of(carry),
-                Constant.Value.of(overflow)
-            ), Type.status()
-        );
+        super(fields(
+            Constant.Value.of(negative),
+            Constant.Value.of(zero),
+            Constant.Value.of(carry),
+            Constant.Value.of(overflow)
+        ), Type.status());
       }
 
       /**
@@ -1439,26 +1458,40 @@ public abstract class Constant {
       public Status(Constant.Value negative, Constant.Value zero, Constant.Value carry,
                     Constant.Value overflow
       ) {
-        super(negative, zero, carry, overflow);
+        super(fields(negative, zero, carry, overflow), Type.status());
 
-        ensure(values().stream().allMatch(e -> e.type() == Type.bool()),
-            "A status' values must all be bools");
+        ensure(negative.type() instanceof BoolType, "Negative field must be a boolean constant");
+        ensure(zero.type() instanceof BoolType, "Zero field must be a boolean constant");
+        ensure(carry.type() instanceof BoolType, "Carry field must be a boolean constant");
+        ensure(overflow.type() instanceof BoolType, "Overflow field must be a boolean constant");
+      }
+
+      private static SequencedMap<String, Constant> fields(Constant.Value negative,
+                                                           Constant.Value zero,
+                                                           Constant.Value carry,
+                                                           Constant.Value overflow) {
+        var fields = new LinkedHashMap<String, Constant>();
+        fields.put(NEGATIVE, negative);
+        fields.put(ZERO, zero);
+        fields.put(CARRY, carry);
+        fields.put(OVERFLOW, overflow);
+        return fields;
       }
 
       public Constant.Value negative() {
-        return get(0, Value.class);
+        return get(NEGATIVE, Value.class);
       }
 
       public Constant.Value zero() {
-        return get(1, Value.class);
+        return get(ZERO, Value.class);
       }
 
       public Constant.Value carry() {
-        return get(2, Value.class);
+        return get(CARRY, Value.class);
       }
 
       public Constant.Value overflow() {
-        return get(3, Value.class);
+        return get(OVERFLOW, Value.class);
       }
 
     }
@@ -1486,4 +1519,3 @@ public abstract class Constant {
     }
   }
 }
-

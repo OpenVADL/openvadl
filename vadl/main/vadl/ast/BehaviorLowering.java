@@ -48,6 +48,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
+import vadl.types.StatusType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
@@ -108,9 +109,9 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.StageEffectNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -781,7 +782,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
 
-
   /// This utility function can be used to fill in missing indexes of a tensor.
   ///
   /// It basically returns a permutation of all possible indices for the dimensions provided.
@@ -1067,19 +1067,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Let statement and expression
     if (computedTarget instanceof LetStatement letStatement) {
       var expression = fetch(letStatement.valueExpr);
-      var index = letStatement.getIndexOf(innerName);
       if (letStatement.identifiers.size() > 1) {
-        expression = new TupleGetFieldNode(index, expression,
+        expression = new StructGetFieldNode(letStatement.mapName(innerName), expression,
             getViamType(letStatement.getTypeOf(innerName)));
       }
       return new LetNode(new LetNode.Name(innerName, letStatement.location()), expression);
     }
     if (computedTarget instanceof LetExpr letExpr) {
       var expression = fetch(letExpr.valueExpr);
-      var index = letExpr.getIndexOf(innerName);
       if (letExpr.identifiers.size() > 1) {
         expression =
-            new TupleGetFieldNode(index, expression, getViamType(letExpr.getTypeOf(innerName)));
+            new StructGetFieldNode(letExpr.mapName(innerName), expression,
+                getViamType(letExpr.getTypeOf(innerName)));
       }
       return new LetNode(new LetNode.Name(innerName, letExpr.location()), expression);
     }
@@ -1173,7 +1172,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var type = expr.type().equals(Type.string()) ? expr.type() :
         Type.bits(expr.expressions.get(0).type().asDataType()
-            .bitWidth() + expr.expressions.get(1).type().asDataType().bitWidth());
+                  .bitWidth() + expr.expressions.get(1).type().asDataType().bitWidth());
 
     var call = new BuiltInCall(concatBuiltin,
         new NodeList<>(expr.expressions.get(0).accept(this),
@@ -1183,7 +1182,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     for (int i = 2; i < expr.expressions.size(); i++) {
       type = expr.type().equals(Type.string()) ? expr.type() :
           Type.bits(type.asDataType().bitWidth()
-              + expr.expressions.get(i).type().asDataType().bitWidth());
+                    + expr.expressions.get(i).type().asDataType().bitWidth());
       call = new BuiltInCall(concatBuiltin,
           new NodeList<>(call,
               expr.expressions.get(i).accept(this)),
@@ -1284,9 +1283,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                 (DataType) getViamType(requireNonNull(subCall.formatFieldType)));
         resultExpr =
             visitSliceIndexCall(slice, subCall.formatFieldType, subCall.argsIndices);
-      } else if (subCall.computedStatusIndex != null) {
-        var indexing =
-            new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
+      } else if (exprBeforeSubcall.type() instanceof StatusType) {
+        var indexing = new StructGetFieldNode(subCall.identifier().name, resultExpr, Type.bool());
         resultExpr = visitSliceIndexCall(indexing, Type.bool(), subCall.argsIndices);
       } else if (exprBeforeSubcall.type() == MicroArchitectureType.instruction()) {
         // There is weired way to call functions on instructions
@@ -1413,7 +1411,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             .filter(o -> o.identifier().name.equals(subcall.identifier().name))
             .findFirst()
             .get()
-        ).get();
+    ).get();
     return new ReadStageOutputNode(output);
   }
 
@@ -1811,10 +1809,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   /**
    * Method that prepares the value so that it can be used for a dynamic write of a resource.
    *
-   * @param value       value that is being written (right side of assignment)
-   * @param entireRead  resource value before value is written
-   * @param index       the dynamic expression of the index.
-   * @return            that incorporates the written value into the resource.
+   * @param value      value that is being written (right side of assignment)
+   * @param entireRead resource value before value is written
+   * @param index      the dynamic expression of the index.
+   * @return that incorporates the written value into the resource.
    */
   private ExpressionNode dynamicIndexWriteValue(ExpressionNode value, ReadResourceNode entireRead,
                                                 @Nullable ExpressionNode index) {

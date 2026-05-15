@@ -16,6 +16,7 @@
 
 package vadl.gcb.passes;
 
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -192,7 +193,7 @@ public interface IsaMatchingUtils {
         )));
 
     return !matched.isEmpty()
-        && ((TupleType) ((BuiltInCall) matched.getFirst()).type()).first().equals(ty)
+        && ((StructType) ((BuiltInCall) matched.getFirst()).type()).get(BUILTIN_RESULT).equals(ty)
         && behavior.getNodes(Set.of(IfNode.class, SliceNode.class)).findAny().isEmpty()
         && behavior.getNodes(BuiltInCall.class).limit(2).count() == 1
         && noPcAccess(behavior)

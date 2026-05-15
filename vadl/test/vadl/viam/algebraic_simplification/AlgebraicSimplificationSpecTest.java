@@ -26,7 +26,7 @@ import vadl.AbstractTest;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.statusBuiltInInlinePass.StatusBuiltInInlinePass;
 import vadl.viam.passes.verification.ViamVerificationPass;
@@ -54,7 +54,7 @@ public class AlgebraicSimplificationSpecTest extends AbstractTest {
         .flatMap(x -> x.ownInstructions().stream())
         .map(f -> DynamicTest.dynamicTest("Check " + f.simpleName(), () -> {
           assertTrue(f.behavior().getNodes(BuiltInCall.class).findAny().isEmpty());
-          assertTrue(f.behavior().getNodes(TupleGetFieldNode.class).findAny().isEmpty());
+          assertTrue(f.behavior().getNodes(StructGetFieldNode.class).findAny().isEmpty());
         }));
   }
 }

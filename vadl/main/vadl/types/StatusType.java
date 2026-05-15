@@ -19,7 +19,7 @@ package vadl.types;
 /**
  * A class that represents the VADL status type.
  *
- * <p>It is actually a tuple of size four with bool elements.
+ * <p>It is actually a struct of with four boolean fields.
  * These four elements represent status flags:
  * <li>negative</li>
  * <li>zero</li>
@@ -27,25 +27,20 @@ package vadl.types;
  * <li>overflow</li>
  * in that order.
  */
-public class StatusType extends TupleType {
+public class StatusType extends StructType {
+
+  public static final String NEGATIVE = "negative";
+  public static final String ZERO = "zero";
+  public static final String CARRY = "carry";
+  public static final String OVERFLOW = "overflow";
 
   protected StatusType() {
-    super(Type.bool(), Type.bool(), Type.bool(), Type.bool());
-  }
-
-  @Override
-  public DataType last() {
-    return Type.bool();
-  }
-
-  @Override
-  public DataType first() {
-    return Type.bool();
-  }
-
-  @Override
-  public DataType get(int i) {
-    return (DataType) super.get(i);
+    super(Type.struct(
+        NEGATIVE, Type.bool(),
+        ZERO, Type.bool(),
+        CARRY, Type.bool(),
+        OVERFLOW, Type.bool()
+    ).fields());
   }
 
   @Override
