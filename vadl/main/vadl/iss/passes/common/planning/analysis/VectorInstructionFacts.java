@@ -1,0 +1,196 @@
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.iss.passes.common.planning.analysis;
+
+import java.util.List;
+import javax.annotation.Nullable;
+import vadl.iss.passes.extensions.RegInfo;
+import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
+import vadl.viam.Instruction;
+import vadl.viam.RegisterTensor;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ExpressionNode;
+
+/**
+ * Reusable vector facts extracted from one instruction.
+ */
+public record VectorInstructionFacts(
+    Instruction instruction,
+    LoopFacts loop,
+    EffectFacts effects,
+    @Nullable VectorCandidate candidate,
+    @Nullable WriteAccessFacts write,
+    @Nullable OperationFacts operation,
+    List<OperandAccessFacts> operands
+) {
+
+  public VectorInstructionFacts {
+    operands = List.copyOf(operands);
+  }
+
+  /**
+   * Loop-shape facts extracted from the instruction body.
+   */
+  public record LoopFacts(
+      int forallCount,
+      boolean hasSingleForallRegisterWriteBody
+  ) {
+  }
+
+  /**
+   * Side-effect facts extracted from the instruction body.
+   */
+  public record EffectFacts(
+      int sideEffectCount
+  ) {
+  }
+
+  /**
+   * Write-side facts derived from the lowered destination access.
+   */
+  public record WriteAccessFacts(
+      IssWriteRegNode write,
+      AccessBaseKind baseKind,
+      AccessWindowKind windowKind,
+      boolean elementShapeMatches,
+      boolean conditional,
+      StorageFacts storage,
+      BindingFacts binding,
+      LayoutFacts layout,
+      SizeFacts size,
+      OverlapFacts overlap
+  ) {
+
+    public boolean usesSupportedWindowKind() {
+      return windowKind == AccessWindowKind.CHUNK || windowKind == AccessWindowKind.FULL;
+    }
+  }
+
+  /**
+   * Operation-shape facts derived from the vector body value expression.
+   */
+  public record OperationFacts(
+      boolean valueIsBuiltInCall,
+      @Nullable BuiltInCall binaryOperation,
+      @Nullable OperationKind operationKind
+  ) {
+  }
+
+  /**
+   * Operand-side facts derived from one vector operation argument.
+   */
+  public record OperandAccessFacts(
+      ExpressionNode expression,
+      @Nullable IssReadRegNode read,
+      AccessBaseKind baseKind,
+      AccessWindowKind windowKind,
+      boolean elementShapeMatches,
+      @Nullable StorageFacts storage,
+      boolean widthMatches,
+      @Nullable BindingFacts binding
+  ) {
+
+    public boolean usesSupportedWindowKind() {
+      return windowKind == AccessWindowKind.CHUNK || windowKind == AccessWindowKind.FULL;
+    }
+  }
+
+  /**
+   * Neutralized base-access classification for lowered register accesses.
+   */
+  public enum AccessBaseKind {
+    BASE,
+    ALIAS,
+    OTHER
+  }
+
+  /**
+   * Neutralized window classification for lowered register accesses.
+   */
+  public enum AccessWindowKind {
+    CHUNK,
+    FULL,
+    OTHER
+  }
+
+  /**
+   * Neutralized classification of storage properties relevant to later evaluators.
+   */
+  public record StorageFacts(
+      RegInfo.ExecClass execClass,
+      boolean envOffsetAddressable,
+      boolean byteAddressable,
+      int alignmentBytes
+  ) {
+  }
+
+  /**
+   * Neutralized binding facts for vector register selections.
+   */
+  public record BindingFacts(
+      RegisterTensor registerTensor,
+      List<ExpressionNode> accessorIndices
+  ) {
+    public BindingFacts {
+      accessorIndices = List.copyOf(accessorIndices);
+    }
+  }
+
+  /**
+   * Neutralized layout facts derived from the selected vector view.
+   */
+  public record LayoutFacts(
+      boolean contiguousElements,
+      boolean fullRegisterRange,
+      boolean paddingPreserved
+  ) {
+  }
+
+  /**
+   * Neutralized size facts derived from the selected vector view.
+   */
+  public record SizeFacts(
+      int elementBits,
+      int laneCount,
+      int oprszBytes,
+      int maxszBytes
+  ) {
+  }
+
+  /**
+   * Neutralized overlap proof available from the extracted vector shape.
+   */
+  public enum OverlapFacts {
+    NOT_ANALYZED,
+    EXACT_OR_DISJOINT_ONLY,
+    PARTIAL_POSSIBLE
+  }
+
+  /**
+   * Neutralized vector-operation classification.
+   */
+  public enum OperationKind {
+    ADD,
+    SUB,
+    AND,
+    OR,
+    XOR,
+    MUL,
+    OTHER
+  }
+}

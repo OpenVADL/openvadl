@@ -1,0 +1,172 @@
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.iss.passes;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static vadl.TestUtils.findDefinitionByNameIn;
+import static vadl.iss.passes.TcgPassUtils.instrInfo;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import vadl.AbstractTest;
+import vadl.configuration.DumpMode;
+import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.common.planning.IssExecStrategyPass;
+import vadl.iss.passes.extensions.InstrExecPlan;
+import vadl.iss.passes.extensions.InstrExecPlan.StrategyEvaluation;
+import vadl.iss.passes.extensions.InstrExecPlan.StrategyKind;
+import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.extensions.VectorTensorPlan;
+import vadl.iss.passes.extensions.VectorTensorPlan.OperandKind;
+import vadl.iss.passes.extensions.VectorTensorPlan.OverlapPolicy;
+import vadl.iss.passes.extensions.VectorTensorPlan.VectorOp;
+import vadl.pass.PassOrders;
+import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.viam.Instruction;
+import vadl.viam.Specification;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ParamNode;
+
+public class IssVectorTcgAnalysisPassTest extends AbstractTest {
+
+  @Test
+  void recognizesRv64vVaddVv()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/risc-v/rv64v.vadl");
+    var instr = findInstruction(viam, "RV64IMV::VADD_VV");
+    var executionPlan = executionPlan(instr);
+    var evaluation = strategyEvaluation(executionPlan, StrategyKind.DIRECT_GVEC);
+    var plan = vectorPlan(evaluation);
+
+    assertTrue(evaluation.isViable(), evaluation::toString);
+    assertEquals(StrategyKind.DIRECT_GVEC, executionPlan.selectedStrategy());
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(32, plan.elementBits());
+    assertEquals(32, plan.laneCount());
+    assertEquals(128, plan.opBytes());
+    assertNotNull(plan.shape());
+    assertEquals(128, plan.shape().maxszBytes());
+    assertTrue(plan.shape().fullRange());
+    assertTrue(plan.shape().contiguousLayout());
+    assertTrue(plan.shape().paddingPreserved());
+    assertEquals(OverlapPolicy.NO_PARTIAL_OVERLAP, plan.overlapPolicy());
+    assertNotNull(plan.destination());
+    assertEquals(List.of("vd"), bindingParamNames(plan.destination().accessorIndices()));
+    assertEquals(2, plan.operands().size());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertNotNull(plan.operands().get(0).registerBinding());
+    assertNotNull(plan.operands().get(1).registerBinding());
+    assertEquals(List.of("vs2"),
+        bindingParamNames(plan.operands().get(0).registerBinding().accessorIndices()));
+    assertEquals(List.of("vs1"),
+        bindingParamNames(plan.operands().get(1).registerBinding().accessorIndices()));
+    assertEquals(InstrInfo.ExecStrategy.HELPER_CALL, instrInfo(instr).execStrategy());
+  }
+
+  @Test
+  void recognizesRv64vVsubVv()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/risc-v/rv64v.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "RV64IMV::VSUB_VV"));
+    var evaluation = strategyEvaluation(executionPlan, StrategyKind.DIRECT_GVEC);
+    var plan = vectorPlan(evaluation);
+
+    assertTrue(evaluation.isViable(), evaluation::toString);
+    assertEquals(VectorOp.SUB, plan.op());
+    assertEquals(32, plan.elementBits());
+    assertEquals(32, plan.laneCount());
+  }
+
+  @Test
+  void keepsVectorScalarInstructionOnFallbackPlan()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/risc-v/rv64v.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "RV64IMV::VADD_VX"));
+    var evaluation = strategyEvaluation(executionPlan, StrategyKind.DIRECT_GVEC);
+
+    assertEquals(StrategyKind.HELPER_CALL, executionPlan.selectedStrategy());
+    assertTrue(!evaluation.isViable(), evaluation::toString);
+    assertTrue(evaluation.hasIssue("OPERAND_NOT_VECTOR_READ"), evaluation::toString);
+  }
+
+  @Test
+  void keepsAliasVectorInstructionOnFallbackPlan()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_DO_VV"));
+    var evaluation = strategyEvaluation(executionPlan, StrategyKind.DIRECT_GVEC);
+
+    assertEquals(StrategyKind.HELPER_CALL, executionPlan.selectedStrategy());
+    assertTrue(!evaluation.isViable(), evaluation::toString);
+    assertTrue(evaluation.hasIssue("READ_NOT_BASE_ELEMENT"), evaluation::toString);
+  }
+
+  @Test
+  void keepsScalarInstructionOnTcgScalarStrategy()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/risc-v/rv64v.vadl");
+    var instr = findInstruction(viam, "RV64IMV::VSETVLI");
+    var executionPlan = executionPlan(instr);
+    var scalarEvaluation = strategyEvaluation(executionPlan, StrategyKind.TCG_SCALAR);
+
+    assertEquals(StrategyKind.TCG_SCALAR, executionPlan.selectedStrategy());
+    assertTrue(scalarEvaluation.isViable(), scalarEvaluation::toString);
+    assertEquals(InstrInfo.ExecStrategy.DIRECT_TCG, instrInfo(instr).execStrategy());
+  }
+
+  private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
+    var config =
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+    return setupPassManagerAndRunSpec(specPath,
+        PassOrders.iss(config).untilFirst(IssExecStrategyPass.class)
+    ).specification();
+  }
+
+  private Instruction findInstruction(Specification viam, String name) {
+    return findDefinitionByNameIn(name, viam, Instruction.class);
+  }
+
+  private InstrExecPlan executionPlan(Instruction instr) {
+    var plan = instrInfo(instr).executionPlan();
+    return plan == null ? fail("Expected execution plan for " + instr.simpleName()) : plan;
+  }
+
+  private StrategyEvaluation strategyEvaluation(InstrExecPlan executionPlan,
+                                                StrategyKind strategyKind) {
+    var evaluation = executionPlan.evaluation(strategyKind);
+    return evaluation == null ? fail("Expected evaluation for strategy " + strategyKind) :
+        evaluation;
+  }
+
+  private VectorTensorPlan vectorPlan(StrategyEvaluation evaluation) {
+    var plan = evaluation.planAs(VectorTensorPlan.class);
+    return plan == null ? fail("Expected VectorTensorPlan payload") : plan;
+  }
+
+  private List<String> bindingParamNames(List<ExpressionNode> indices) {
+    return indices.stream()
+        .map(index -> assertInstanceOf(ParamNode.class, index).definition().simpleName())
+        .toList();
+  }
+}
