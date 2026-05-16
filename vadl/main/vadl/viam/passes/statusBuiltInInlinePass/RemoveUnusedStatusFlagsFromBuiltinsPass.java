@@ -16,6 +16,8 @@
 
 package vadl.viam.passes.statusBuiltInInlinePass;
 
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
+import static vadl.types.BuiltInTable.BUILTIN_STATUS;
 import static vadl.utils.GraphUtils.getUsagesByUnrollingLets;
 import static vadl.utils.GraphUtils.not;
 import static vadl.utils.GraphUtils.zeroExtend;
@@ -36,7 +38,7 @@ import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 
 /**
  * Removes the status builtin when only the result is used and not the flags.
@@ -66,16 +68,16 @@ public class RemoveUnusedStatusFlagsFromBuiltinsPass extends Pass {
         .flatMap(behavior -> behavior.getNodes(BuiltInCall.class))
         .filter(builtInCall -> builtInCall.builtIn().isStatusBuiltin())
         .forEach(builtInCall -> {
-          var tupleGets = getUsagesByUnrollingLets(builtInCall)
-              .filter(TupleGetFieldNode.class::isInstance)
-              .map(TupleGetFieldNode.class::cast)
+          var fieldGets = getUsagesByUnrollingLets(builtInCall)
+              .filter(StructGetFieldNode.class::isInstance)
+              .map(StructGetFieldNode.class::cast)
               .toList();
 
-          TupleGetFieldNode resultUser = null;
-          for (var node : tupleGets) {
-            switch (node.index()) {
-              case 0 -> resultUser = node;
-              case 1 -> {
+          StructGetFieldNode resultUser = null;
+          for (var node : fieldGets) {
+            switch (node.field()) {
+              case BUILTIN_RESULT -> resultUser = node;
+              case BUILTIN_STATUS -> {
                 // If the flags are accessed then we can stop iterating because we cannot inline
                 // the result.
                 return;

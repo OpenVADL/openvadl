@@ -56,9 +56,9 @@ import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -328,7 +328,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface AllExpressions
       extends TypeCasts, Constant, FuncCall, BuiltIns, Slice, LetNode, Select, FuncParam, ForallIdx,
-      TupleAccess, Label {
+      FieldAccess, Label {
 
   }
 
@@ -449,10 +449,10 @@ public interface CDefaultMixins {
   }
 
   @SuppressWarnings("MissingJavadocType")
-  interface TupleAccess {
+  interface FieldAccess {
     @Handler
-    default void handle(CGenContext<Node> ctx, TupleGetFieldNode toHandle) {
-      throw new UnsupportedOperationException("Type TupleGetFieldNode not yet implemented");
+    default void handle(CGenContext<Node> ctx, StructGetFieldNode toHandle) {
+      throw new UnsupportedOperationException("Type StructGetFieldNode not yet implemented");
     }
   }
 

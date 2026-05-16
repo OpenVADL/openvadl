@@ -18,16 +18,23 @@ package vadl.viam.passes.statusBuiltInInlinePass;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
+import static vadl.types.BuiltInTable.BUILTIN_STATUS;
+import static vadl.types.StatusType.CARRY;
+import static vadl.types.StatusType.NEGATIVE;
+import static vadl.types.StatusType.OVERFLOW;
+import static vadl.types.StatusType.ZERO;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.types.BuiltInTable;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.Graph;
@@ -36,7 +43,7 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
 
@@ -67,12 +74,14 @@ abstract class StatusBuiltinInlineTest {
 
     return Stream.of(
         new Test(
-            buildFuncGraph(name + "__" + "result", builtInCall.copy(), -1), result),
+            buildFuncGraph(name + "__" + "result", builtInCall.copy(), null), result),
         new Test(
-            buildFuncGraph(name + "__" + "negative", builtInCall.copy(), 0), boolToBit(negative)),
-        new Test(buildFuncGraph(name + "__" + "zero", builtInCall.copy(), 1), boolToBit(zero)),
-        new Test(buildFuncGraph(name + "__" + "carry", builtInCall.copy(), 2), boolToBit(carry)),
-        new Test(buildFuncGraph(name + "__" + "overflow", builtInCall.copy(), 3),
+            buildFuncGraph(name + "__" + "negative", builtInCall.copy(), NEGATIVE),
+            boolToBit(negative)),
+        new Test(buildFuncGraph(name + "__" + "zero", builtInCall.copy(), ZERO), boolToBit(zero)),
+        new Test(buildFuncGraph(name + "__" + "carry", builtInCall.copy(), CARRY),
+            boolToBit(carry)),
+        new Test(buildFuncGraph(name + "__" + "overflow", builtInCall.copy(), OVERFLOW),
             boolToBit(overflow))
     );
   }
@@ -120,24 +129,24 @@ abstract class StatusBuiltinInlineTest {
         "Result type size does not match expected size");
   }
 
-  private Graph buildFuncGraph(String name, ExpressionNode call, int statusIndex) {
-    // check if we access exercise or status tuple
-    var outerIndex = statusIndex == -1 ? 0 : 1;
-    // get type of accessed tuple entry
-    var outerType = ((TupleType) call.type()).get(outerIndex);
-    // construct tuple getter
-    var getter = new TupleGetFieldNode(
-        outerIndex,
+  private Graph buildFuncGraph(String name, ExpressionNode call, @Nullable String statusField) {
+    // check if we access the result or status value
+    var builtInField = statusField == null ? BUILTIN_RESULT : BUILTIN_STATUS;
+    // get type of accessed struct entry
+    var outerType = ((StructType) call.type()).get(builtInField);
+    // construct struct getter
+    var getter = new StructGetFieldNode(
+        builtInField,
         call,
         outerType
     );
 
-    if (statusIndex != -1) {
-      // if we access a status value, we have to access the returned tuple
-      getter = new TupleGetFieldNode(
-          statusIndex,
+    if (statusField != null) {
+      // if we access a status value, we have to access the returned struct
+      getter = new StructGetFieldNode(
+          statusField,
           getter,
-          outerType
+          ((StructType) outerType).get(statusField)
       );
     }
 

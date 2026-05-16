@@ -665,9 +665,9 @@ public class GraphUtils {
     return Constant.Value.of(val);
   }
 
-  public static Constant.Tuple.Status status(boolean negative, boolean zero, boolean carry,
-                                             boolean overflow) {
-    return new Constant.Tuple.Status(negative, zero, carry, overflow);
+  public static Constant.Struct.Status status(boolean negative, boolean zero, boolean carry,
+                                              boolean overflow) {
+    return new Constant.Struct.Status(negative, zero, carry, overflow);
   }
 
 

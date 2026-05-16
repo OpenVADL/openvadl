@@ -16,9 +16,11 @@
 
 package vadl.viam.passes.algebraic_simplication.rules;
 
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
+
 import java.util.Optional;
 import vadl.types.DataType;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -36,12 +38,13 @@ public interface AlgebraicSimplificationRule {
 
   /**
    * Get the type of the given {@code node} when it has a {@link DataType}.
-   * When the {@code node} has a {@link TupleType} then return the type of the first
+   * When the {@code node} has a {@link StructType} then return the type of the first
    * child.
    */
   default Optional<DataType> getType(ExpressionNode node) {
-    if (node.type() instanceof TupleType tupleType && tupleType.first().isDataType()) {
-      return Optional.ofNullable(tupleType.first().asDataType());
+    if (node.type() instanceof StructType structType
+        && structType.contains(BUILTIN_RESULT) && structType.get(BUILTIN_RESULT).isDataType()) {
+      return Optional.ofNullable(structType.get(BUILTIN_RESULT).asDataType());
     }
 
     if (node.type().isDataType()) {

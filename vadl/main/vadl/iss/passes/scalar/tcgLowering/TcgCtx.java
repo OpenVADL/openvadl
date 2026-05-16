@@ -31,7 +31,7 @@ import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.utils.Triple;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
@@ -285,8 +285,8 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     }
 
     private List<TcgVRefNode> createTempExprVar(ExpressionNode expr) {
-      // determine number of return values from tuple
-      var numberOfResults = expr.type() instanceof TupleType tupleType ? tupleType.size() : 1;
+      // determine number of return values from the struct
+      var numberOfResults = expr.type() instanceof StructType structType ? structType.size() : 1;
 
       return IntStream.range(0, numberOfResults).boxed()
           .map(i -> toNode(

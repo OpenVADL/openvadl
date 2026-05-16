@@ -85,9 +85,9 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.StageEffectNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -561,7 +561,7 @@ public class AsmGrammarRuleGenerator {
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
-  public void handle(AsmRuleContext ctx, TupleGetFieldNode node) {
+  public void handle(AsmRuleContext ctx, StructGetFieldNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 

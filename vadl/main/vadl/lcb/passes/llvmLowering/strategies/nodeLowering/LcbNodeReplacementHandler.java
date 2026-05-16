@@ -100,9 +100,9 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -264,7 +264,7 @@ public class LcbNodeReplacementHandler {
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
-  public void handle(TupleGetFieldNode node) {
+  public void handle(StructGetFieldNode node) {
     Objects.requireNonNull(node.graph()).add(new LlvmUnlowerableSD());
     LcbNodeReplacementHandlerDispatcher.dispatch(this, node.expression());
   }

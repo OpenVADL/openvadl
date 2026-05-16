@@ -78,8 +78,8 @@ import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -646,7 +646,7 @@ class PseudoNodeOperandCollector {
 
 
   @Handler
-  protected void handle(TupleGetFieldNode node) {
+  protected void handle(StructGetFieldNode node) {
     PseudoNodeOperandCollectorDispatcher.dispatch(this, node.expression());
   }
 

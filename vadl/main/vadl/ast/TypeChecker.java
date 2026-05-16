@@ -55,7 +55,7 @@ import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
 import vadl.types.StringType;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.types.asmTypes.AsmType;
@@ -3762,7 +3762,6 @@ public class TypeChecker
               .build());
         }
         var fieldType = Type.bool();
-        subCall.computedStatusIndex = allowedStatusfields.indexOf(fieldName);
         visitSliceIndexCall(expr, fieldType, subCall.argsIndices);
         type = expr.type;
       } else if (type instanceof InstructionType) {
@@ -4085,23 +4084,24 @@ public class TypeChecker
     var valType = check(expr.valueExpr);
 
     if (expr.identifiers.size() > 1) {
-      if (!(valType instanceof TupleType valTupleType)) {
-        var loc = expr.identifiers().get(0).loc.join(expr.valueExpr.location());
+      if (!(valType instanceof StructType valStructType)) {
+        var loc = expr.identifiers().getFirst().loc.join(expr.valueExpr.location());
         throw addErrorAndStopChecking(error("Type Mismatch", loc)
-            .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
+            .description("Field unpacking only works on structs but the type was `%s`", valType)
             .build());
       }
 
-      if (expr.identifiers.size() != valTupleType.size()) {
-        var loc = expr.identifiers().get(0).loc.join(expr.valueExpr.location());
-        addErrorAndStopChecking(error("Invalid Tuple Unpacking", loc)
-            .description("Cannot unpack %d values form a `%s`.", expr.identifiers.size(),
+      if (expr.identifiers.size() != valStructType.size()) {
+        var loc = expr.identifiers().getFirst().loc.join(expr.valueExpr.location());
+        throw addErrorAndStopChecking(error("Invalid Field Unpacking", loc)
+            .description("Cannot unpack %d values from a `%s`.", expr.identifiers.size(),
                 valType)
             .build());
       }
 
+      var valTypes = valStructType.types();
       for (int i = 0; i < expr.identifiers.size(); i++) {
-        expr.identifiers().get(i).type = valTupleType.get(i);
+        expr.identifiers().get(i).type = valTypes.get(i);
       }
     } else {
       expr.identifiers().getFirst().type = valType;
@@ -4365,23 +4365,24 @@ public class TypeChecker
     var valType = check(statement.valueExpr);
 
     if (statement.identifiers.size() > 1) {
-      if (!(valType instanceof TupleType valTupleType)) {
-        var loc = statement.identifiers().get(0).loc.join(statement.valueExpr.location());
+      if (!(valType instanceof StructType valStructType)) {
+        var loc = statement.identifiers().getFirst().loc.join(statement.valueExpr.location());
         throw addErrorAndStopChecking(error("Type Mismatch", loc)
-            .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
+            .description("Field unpacking only works on structs but the type was `%s`", valType)
             .build());
       }
 
-      if (statement.identifiers.size() != valTupleType.size()) {
-        var loc = statement.identifiers().get(0).loc.join(statement.valueExpr.location());
-        addErrorAndStopChecking(error("Invalid Tuple Unpacking", loc)
-            .description("Cannot unpack %d values form a `%s`.", statement.identifiers.size(),
+      if (statement.identifiers.size() != valStructType.size()) {
+        var loc = statement.identifiers().getFirst().loc.join(statement.valueExpr.location());
+        throw addErrorAndStopChecking(error("Invalid Field Unpacking", loc)
+            .description("Cannot unpack %d values from a `%s`.", statement.identifiers.size(),
                 valType)
             .build());
       }
 
+      var valTypes = valStructType.types();
       for (int i = 0; i < statement.identifiers.size(); i++) {
-        statement.identifiers().get(i).type = valTupleType.get(i);
+        statement.identifiers().get(i).type = valTypes.get(i);
       }
     } else {
       statement.identifiers().getFirst().type = valType;

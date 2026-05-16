@@ -18,12 +18,12 @@ package vadl.iss.passes.common.opDecomposition.nodes;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.types.TupleType;
+import vadl.types.StructType;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * The ISS Mul2 node represents a long multiplication that returns a tuple of two integers.
+ * The ISS Mul2 node represents a long multiplication that returns a struct of two integers.
  * The first one holds the lower half of the multiplication, while the second one is the upper
  * half.
  * We need this as long multiplication tends to exceed the maximum supported result size of
@@ -36,7 +36,7 @@ public class IssMul2Node extends IssBinaryNode {
 
 
   public IssMul2Node(ExpressionNode arg1, ExpressionNode arg2, IssMulKind kind,
-                     TupleType resultType) {
+                     StructType resultType) {
     super(arg1, arg2, resultType);
     this.kind = kind;
   }
@@ -46,8 +46,8 @@ public class IssMul2Node extends IssBinaryNode {
   }
 
   @Override
-  public TupleType type() {
-    return (TupleType) super.type();
+  public StructType type() {
+    return (StructType) super.type();
   }
 
   @Override

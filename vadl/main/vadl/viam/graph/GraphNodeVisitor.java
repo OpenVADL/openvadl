@@ -37,8 +37,8 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -182,9 +182,9 @@ public interface GraphNodeVisitor {
   void visit(SideEffectNode sideEffectNode);
 
   /**
-   * Visit {@link TupleGetFieldNode}.
+   * Visit {@link StructGetFieldNode}.
    */
-  void visit(TupleGetFieldNode tupleGetFieldNode);
+  void visit(StructGetFieldNode structGetFieldNode);
 
   /**
    * Visit {@link ReadArtificialResNode}.

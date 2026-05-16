@@ -16,9 +16,10 @@
 
 package vadl.types;
 
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -143,18 +144,48 @@ public abstract class Type {
     return bitSliceType;
   }
 
-  private static final HashMap<Integer, TupleType> tupleTypes = new HashMap<>();
+  private static final HashMap<Set<Map.Entry<String, Type>>, StructType> structTypes =
+      new HashMap<>();
 
   /**
-   * Retrieves the tuple type with the specified subtypes.
+   * Retrieves the struct type with the specified subtypes.
    *
-   * @param types the subtypes of the tuple
-   * @return the tuple type with the specified subtypes
+   * @param types the subtypes of the struct
+   * @return the struct type with the specified subtypes
    */
-  public static TupleType tuple(Type... types) {
-    var hashCode = Arrays.hashCode(types);
-    return tupleTypes
-        .computeIfAbsent(hashCode, k -> new TupleType(types));
+  public static StructType struct(Map<String, Type> types) {
+    return structTypes
+        .computeIfAbsent(types.entrySet(), k -> new StructType(types));
+  }
+
+  /**
+   * Retrieves the struct type with the specified subtypes.
+   *
+   * @return the struct type with the specified subtypes
+   */
+  public static StructType struct(String field1, Type type1,
+                                  String field2, Type type2) {
+    var fields = new LinkedHashMap<String, Type>();
+    fields.put(field1, type1);
+    fields.put(field2, type2);
+    return struct(fields);
+  }
+
+  /**
+   * Retrieves the struct type with the specified subtypes.
+   *
+   * @return the struct type with the specified subtypes
+   */
+  public static StructType struct(String field1, Type type1,
+                                  String field2, Type type2,
+                                  String field3, Type type3,
+                                  String field4, Type type4) {
+    var fields = new LinkedHashMap<String, Type>();
+    fields.put(field1, type1);
+    fields.put(field2, type2);
+    fields.put(field3, type3);
+    fields.put(field4, type4);
+    return struct(fields);
   }
 
   private static @Nullable StatusType statusType = null;

@@ -64,9 +64,9 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -700,8 +700,8 @@ class Decomposer
   }
 
   @Handler
-  void handle(Request rq, TupleGetFieldNode toHandle) {
-    throw new UnsupportedOperationException("Type TupleGetFieldNode not yet implemented");
+  void handle(Request rq, StructGetFieldNode toHandle) {
+    throw new UnsupportedOperationException("Type StructGetFieldNode not yet implemented");
   }
 
   @Handler

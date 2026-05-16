@@ -18,6 +18,7 @@ package vadl.iss.passes.common.opDecomposition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
 import static vadl.utils.GraphUtils.bits;
 import static vadl.utils.GraphUtils.slice;
 
@@ -409,7 +410,7 @@ public class IssOpDecompositionPassTest {
       }
       var b = evalToConstant(call.arg(1));
       if (call.builtIn() == BuiltInTable.ADD) {
-        return a.add(b, false).get(0, vadl.viam.Constant.Value.class);
+        return a.add(b, false).get(BUILTIN_RESULT, vadl.viam.Constant.Value.class);
       }
       if (call.builtIn() == BuiltInTable.AND) {
         return a.and(b);

@@ -74,9 +74,9 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -885,8 +885,8 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
     }
 
     @Handler
-    void handle(NodeAttrContext ctx, TupleGetFieldNode node) {
-      ctx.put("index", Integer.toString(node.index()));
+    void handle(NodeAttrContext ctx, StructGetFieldNode node) {
+      ctx.put("field", node.field());
     }
 
     @Handler

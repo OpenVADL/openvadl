@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
+import static vadl.types.BuiltInTable.BUILTIN_STATUS;
 import static vadl.utils.BigIntUtils.mask;
 import static vadl.viam.helper.TestGraphUtils.bits;
 import static vadl.viam.helper.TestGraphUtils.bool;
@@ -166,7 +168,7 @@ public class ConstantTests {
   @ParameterizedTest
   @MethodSource("testAddSources")
   void constantAddition_shouldYieldCorrectValue(Constant.Value a, Constant.Value b, long result,
-                                                Constant.Tuple.Status status) {
+                                                Constant.Struct.Status status) {
     var actual = a.add(b, false);
     testResultAndStatus(actual, result, status);
   }
@@ -199,7 +201,7 @@ public class ConstantTests {
   @MethodSource("testAddWithCarrySources")
   void constantAddition_withCarry_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
                                                           long result,
-                                                          Constant.Tuple.Status status) {
+                                                          Constant.Struct.Status status) {
     var actual = a.add(b, true);
     testResultAndStatus(actual, result, status);
   }
@@ -233,7 +235,7 @@ public class ConstantTests {
   void constantSubtraction_withX86ModeAndNoCarry_shouldYieldCorrectValue(Constant.Value a,
                                                                          Constant.Value b,
                                                                          long result,
-                                                                         Constant.Tuple.Status status) {
+                                                                         Constant.Struct.Status status) {
     var actual = a.subtract(b, Constant.Value.SubMode.X86_LIKE, false);
     testResultAndStatus(actual, result, status);
   }
@@ -289,7 +291,7 @@ public class ConstantTests {
   void constantSubtraction_withX86ModeAndCarrySet_shouldYieldCorrectValue(Constant.Value a,
                                                                           Constant.Value b,
                                                                           long result,
-                                                                          Constant.Tuple.Status status) {
+                                                                          Constant.Struct.Status status) {
     var actual = a.subtract(b, Constant.Value.SubMode.X86_LIKE, true);
     testResultAndStatus(actual, result, status);
   }
@@ -328,7 +330,7 @@ public class ConstantTests {
   void constantSubtraction_withArmModeAndNoCarrySet_shouldYieldCorrectValue(Constant.Value a,
                                                                             Constant.Value b,
                                                                             long result,
-                                                                            Constant.Tuple.Status status) {
+                                                                            Constant.Struct.Status status) {
     var actual = a.subtract(b, Constant.Value.SubMode.ARM_LIKE, false);
     testResultAndStatus(actual, result, status);
   }
@@ -367,7 +369,7 @@ public class ConstantTests {
   void constantSubtraction_withArmModeAndCarrySet_shouldYieldCorrectValue(Constant.Value a,
                                                                           Constant.Value b,
                                                                           long result,
-                                                                          Constant.Tuple.Status status) {
+                                                                          Constant.Struct.Status status) {
     var actual = a.subtract(b, Constant.Value.SubMode.ARM_LIKE, true);
     testResultAndStatus(actual, result, status);
   }
@@ -518,7 +520,7 @@ public class ConstantTests {
   @ParameterizedTest
   @MethodSource("minTestSource")
   void constantMin_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
-                                              Constant.Value expected) {
+                                           Constant.Value expected) {
     var actual = a.min(b, a.type().isSigned());
     assertEquals(expected, actual);
   }
@@ -792,13 +794,13 @@ public class ConstantTests {
 
   // Helper functions
 
-  private void testResultAndStatus(Constant.Tuple actual, long result,
-                                   Constant.Tuple.Status expectedStatus) {
-    var res = actual.get(0, Constant.Value.class);
+  private void testResultAndStatus(Constant.Struct actual, long result,
+                                   Constant.Struct.Status expectedStatus) {
+    var res = actual.get(BUILTIN_RESULT, Constant.Value.class);
 
     assertEquals(result, res.integer().longValue(), "Wrong result value");
     // test status
-    var status = actual.get(1, Constant.Tuple.Status.class);
+    var status = actual.get(BUILTIN_STATUS, Constant.Struct.Status.class);
     assertEquals(expectedStatus.negative().bool(),
         status.negative().integer().equals(BigInteger.ONE),
         "Wrong negative flag");

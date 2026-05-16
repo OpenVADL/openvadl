@@ -84,9 +84,9 @@ import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 import vadl.viam.graph.dependency.TensorNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -275,8 +275,8 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   /* Nodes that require manipulation */
 
   @Handler
-  void handle(TupleGetFieldNode toHandle) {
-    throwNotAllowed(toHandle, "Tuple GetFieldNode");
+  void handle(StructGetFieldNode toHandle) {
+    throwNotAllowed(toHandle, "StructGetFieldNode");
   }
 
   @Handler

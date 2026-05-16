@@ -17,6 +17,12 @@
 package vadl.viam.passes.statusBuiltInInlinePass;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.types.BuiltInTable.BUILTIN_RESULT;
+import static vadl.types.BuiltInTable.BUILTIN_STATUS;
+import static vadl.types.StatusType.CARRY;
+import static vadl.types.StatusType.NEGATIVE;
+import static vadl.types.StatusType.OVERFLOW;
+import static vadl.types.StatusType.ZERO;
 import static vadl.utils.GraphUtils.equ;
 import static vadl.utils.GraphUtils.getUsagesByUnrollingLets;
 import static vadl.utils.GraphUtils.testSignBit;
@@ -33,7 +39,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 
 /**
  * The inliner is responsible
@@ -56,11 +62,11 @@ abstract class Inliner {
   Graph graph;
 
   @Nullable
-  private TupleGetFieldNode resultUser;
-  private final List<TupleGetFieldNode> zeroUsers = new ArrayList<>();
-  private final List<TupleGetFieldNode> carryUsers = new ArrayList<>();
-  private final List<TupleGetFieldNode> overflowUsers = new ArrayList<>();
-  private final List<TupleGetFieldNode> negativeUsers = new ArrayList<>();
+  private StructGetFieldNode resultUser;
+  private final List<StructGetFieldNode> zeroUsers = new ArrayList<>();
+  private final List<StructGetFieldNode> carryUsers = new ArrayList<>();
+  private final List<StructGetFieldNode> overflowUsers = new ArrayList<>();
+  private final List<StructGetFieldNode> negativeUsers = new ArrayList<>();
 
   @Nullable
   private ExpressionNode resultNode;
@@ -87,13 +93,13 @@ abstract class Inliner {
     inlineAll(negativeUsers, this::getNegative);
   }
 
-  private void inline(@Nullable TupleGetFieldNode user, Supplier<ExpressionNode> creator) {
+  private void inline(@Nullable StructGetFieldNode user, Supplier<ExpressionNode> creator) {
     if (user != null) {
       user.replaceAndDelete(creator.get());
     }
   }
 
-  private void inlineAll(List<TupleGetFieldNode> users, Supplier<ExpressionNode> creator) {
+  private void inlineAll(List<StructGetFieldNode> users, Supplier<ExpressionNode> creator) {
     if (users.isEmpty()) {
       return;
     }
@@ -179,19 +185,19 @@ abstract class Inliner {
 
   private void initUsers(BuiltInCall builtInCall) {
 
-    // from a given node that represents the status tuple, we get all users of the status fields
+    // from a given node that represents the status struct, we get all users of the status fields
     // and assign them to the class' fields.
     Consumer<ExpressionNode> initStatusUsers = (ExpressionNode node) -> {
       getUsagesByUnrollingLets(node).forEach(usage -> {
-        if (usage instanceof TupleGetFieldNode getField) {
-          switch (getField.index()) {
-            case 0 -> negativeUsers.add(getField);
-            case 1 -> zeroUsers.add(getField);
-            case 2 -> carryUsers.add(getField);
-            case 3 -> overflowUsers.add(getField);
-            default -> throw new ViamGraphError("User of status tuple accesses non existing index.")
+        if (usage instanceof StructGetFieldNode getField) {
+          switch (getField.field()) {
+            case NEGATIVE -> negativeUsers.add(getField);
+            case ZERO -> zeroUsers.add(getField);
+            case CARRY -> carryUsers.add(getField);
+            case OVERFLOW -> overflowUsers.add(getField);
+            default -> throw new ViamGraphError("User of status accesses non existing field.")
                 .addContext(getField)
-                .addContext("status tuple", node);
+                .addContext("status", node);
           }
         }
       });
@@ -199,13 +205,13 @@ abstract class Inliner {
 
 
     getUsagesByUnrollingLets(builtInCall)
-        .filter(TupleGetFieldNode.class::isInstance)
-        .map(TupleGetFieldNode.class::cast)
+        .filter(StructGetFieldNode.class::isInstance)
+        .map(StructGetFieldNode.class::cast)
         .forEach(node -> {
-          switch (node.index()) {
-            case 0 -> resultUser = node;
-            case 1 -> initStatusUsers.accept(node);
-            default -> throw new ViamGraphError("User accesses non existing index.")
+          switch (node.field()) {
+            case BUILTIN_RESULT -> resultUser = node;
+            case BUILTIN_STATUS -> initStatusUsers.accept(node);
+            default -> throw new ViamGraphError("User accesses non existing field.")
                 .addContext(node)
                 .addContext("built-in call", builtInCall);
           }

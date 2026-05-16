@@ -69,7 +69,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
         
         template <typename T> class RuleParsingResult {
         private:
-            std::optional<std::tuple<SMLoc, std::string>> Error;
+            std::optional<std::struct<SMLoc, std::string>> Error;
             std::optional<ParsedValue<T>> Parsed;
         
         public:
@@ -78,13 +78,13 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
             RuleParsingResult(ParsedValue<T> Parsed) : Parsed(Parsed), Success(true) {
             }
         
-            RuleParsingResult(std::tuple<SMLoc, std::string> Error) : Error(Error), Success(false) {
+            RuleParsingResult(std::struct<SMLoc, std::string> Error) : Error(Error), Success(false) {
             }
         
             RuleParsingResult(SMLoc Location, Twine Msg) : Error(std::make_tuple (Location, Msg.str())), Success(false) {
             }
         
-            std::tuple<SMLoc, std::string> getError() {
+            std::struct<SMLoc, std::string> getError() {
             return Error.value();
             }
         
