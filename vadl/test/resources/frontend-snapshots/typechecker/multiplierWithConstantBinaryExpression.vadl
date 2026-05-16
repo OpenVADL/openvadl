@@ -53,9 +53,6 @@ instruction set architecture Test = {
 //    . : ' | ArgsIndices
 //    . : ' | . CastExpr type: Bits<3>
 //    . : ' | . : IntegerLiteral literal: 7 (7) type: Const<7>
-//    . : ' | . : TypeLiteral type: Bits<3>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 3 (3) type: null
 //    . : ' CallIndexExpr type: Bits<64>
 //    . : ' | SymbolExpr type: null
 //    . : ' | . Identifier name: "MEM" type: null
@@ -63,26 +60,17 @@ instruction set architecture Test = {
 //    . : ' | . : IntegerLiteral literal: 1 (1) type: Const<1>
 //    . : ' | . : CastExpr type: UInt<2>
 //    . : ' | . : ' IntegerLiteral literal: 3 (3) type: Const<3>
-//    . : ' | . : ' TypeLiteral type: UInt<2>
-//    . : ' | . : ' | Identifier name: "UInt" type: null
-//    . : ' | . : ' | IntegerLiteral literal: 2 (2) type: null
 //    . : ' | ArgsIndices
 //    . : ' | . CallIndexExpr type: Bits<64>
 //    . : ' | . : Identifier name: "Reg" type: null
 //    . : ' | . : ArgsIndices
 //    . : ' | . : ' CastExpr type: Bits<3>
 //    . : ' | . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . : ' | TypeLiteral type: Bits<3>
-//    . : ' | . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . : ' | . IntegerLiteral literal: 3 (3) type: null
 //    . EncodingDefinition
 //    . : Identifier name: "t" type: null
 //    . : Identifier name: "op" type: null
 //    . : CastExpr type: Bits<4>
 //    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' TypeLiteral type: Bits<4>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 4 (4) type: null
 //    . AssemblyDefinition
 //    . : GroupedExpr type: String
 //    . : ' StringLiteral literal: "load" ("load") type: String

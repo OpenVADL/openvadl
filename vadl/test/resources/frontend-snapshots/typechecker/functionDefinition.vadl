@@ -22,9 +22,6 @@ function addOne(n: SInt<8>) -> SInt<8> = n + 1
 //    . : Identifier name: "n" type: SInt<8>
 //    . : CastExpr type: SInt<8>
 //    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' TypeLiteral type: SInt<8>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 8 (8) type: null
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

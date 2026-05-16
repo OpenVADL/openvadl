@@ -54,27 +54,15 @@ instruction set architecture TEST = {
 //    . : Identifier name: "a" type: null
 //    . : CastExpr type: Bits<8>
 //    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' TypeLiteral type: Bits<8>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 8 (8) type: null
 //    . : Identifier name: "b" type: null
 //    . : CastExpr type: Bits<8>
 //    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' TypeLiteral type: Bits<8>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 8 (8) type: null
 //    . : Identifier name: "c" type: null
 //    . : CastExpr type: Bits<8>
 //    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
-//    . : ' TypeLiteral type: Bits<8>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 8 (8) type: null
 //    . : Identifier name: "d" type: null
 //    . : CastExpr type: Bits<8>
 //    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' TypeLiteral type: Bits<8>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 8 (8) type: null
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "" ("") type: String
 //

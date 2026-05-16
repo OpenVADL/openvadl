@@ -22,21 +22,12 @@ enumeration $echo(Color): Bits<8> = {
 //    . Identifier name: "RED" type: null
 //    . CastExpr type: Bits<8>
 //    . : IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : TypeLiteral type: Bits<8>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 8 (8) type: null
 //    . Identifier name: "GREEN" type: null
 //    . CastExpr type: Bits<8>
 //    . : IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : TypeLiteral type: Bits<8>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 8 (8) type: null
 //    . Identifier name: "BLUE" type: null
 //    . CastExpr type: Bits<8>
 //    . : IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : TypeLiteral type: Bits<8>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 8 (8) type: null
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

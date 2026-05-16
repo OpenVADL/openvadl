@@ -57,9 +57,6 @@ instruction set architecture TEST = {
 //    . : Identifier name: "a" type: null
 //    . : CastExpr type: Bits<4>
 //    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' TypeLiteral type: Bits<4>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 4 (4) type: null
 //    . PseudoInstructionDefinition name: "abc"
 //    . : Parameter name: "arg"
 //    . : ' TypeLiteral type: Bits<4>

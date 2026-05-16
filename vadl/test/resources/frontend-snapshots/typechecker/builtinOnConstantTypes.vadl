@@ -101,9 +101,6 @@ constant z = VADL::umax(a, b)         // 51
 //    . : ' Identifier name: "b" type: Const<42>
 //    . : ' CastExpr type: UInt<2>
 //    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' | TypeLiteral type: UInt<2>
-//    . : ' | . Identifier name: "UInt" type: null
-//    . : ' | . IntegerLiteral literal: 2 (2) type: null
 //    ConstantDefinition name: "o" evaluatedValue: 10
 //    . CallIndexExpr type: Const<10>
 //    . : IdentifierPath name: "VADL::lsr" type: null
@@ -111,9 +108,6 @@ constant z = VADL::umax(a, b)         // 51
 //    . : ' Identifier name: "b" type: Const<42>
 //    . : ' CastExpr type: UInt<2>
 //    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' | TypeLiteral type: UInt<2>
-//    . : ' | . Identifier name: "UInt" type: null
-//    . : ' | . IntegerLiteral literal: 2 (2) type: null
 //    ConstantDefinition name: "p" evaluatedValue: 93
 //    . CallIndexExpr type: Const<93>
 //    . : IdentifierPath name: "VADL::add" type: null
