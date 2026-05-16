@@ -187,7 +187,7 @@ class MacroExpander
         }
         yield new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
       }
-      case EncodingDefinition.EncsNode encs -> resolveEncs(encs);
+      case EncodingDefinition.EncsNode encs -> expandEncs(encs);
       case PlaceholderNode placeholderNode -> expand(placeholderNode);
       case MacroInstanceNode macroInstanceNode -> expand(macroInstanceNode);
       case MacroMatchNode macroMatchNode -> expand(macroMatchNode);
@@ -692,7 +692,7 @@ class MacroExpander
   public Definition visit(EncodingDefinition definition) {
     return new EncodingDefinition(
         expandExpr(definition.instrIdentifier),
-        resolveEncs(definition.encodings),
+        expandEncs(definition.encodings),
         copyLoc(definition.loc)
     );
   }
@@ -1415,22 +1415,22 @@ class MacroExpander
     return arguments;
   }
 
-  private EncodingDefinition.EncsNode resolveEncs(EncodingDefinition.EncsNode encs) {
+  private EncodingDefinition.EncsNode expandEncs(EncodingDefinition.EncsNode encs) {
     var encodings = new ArrayList<IsEncs>(encs.items.size());
     for (var enc : encs.items) {
-      encodings.addAll(resolveEnc(enc));
+      encodings.addAll(expandEnc(enc));
     }
-    return new EncodingDefinition.EncsNode(encodings, encs.loc);
+    return new EncodingDefinition.EncsNode(encodings, copyLoc(encs.loc));
   }
 
-  private List<IsEncs> resolveEnc(IsEncs encoding) {
+  private List<IsEncs> expandEnc(IsEncs encoding) {
     if (encoding instanceof EncodingDefinition.EncodingField encodingField) {
-      return List.of(new EncodingDefinition.EncodingField(encodingField.field,
+      return List.of(new EncodingDefinition.EncodingField(expandExpr(encodingField.field),
           expandExpr(encodingField.value)));
     } else if (encoding instanceof EncodingDefinition.EncsNode encodings) {
       var encs = new ArrayList<IsEncs>(encodings.items.size());
       for (IsEncs enc : encodings.items) {
-        encs.addAll(resolveEnc(enc));
+        encs.addAll(expandEnc(enc));
       }
       return encs;
     } else if (encoding instanceof PlaceholderNode placeholder) {
