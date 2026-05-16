@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -43,6 +44,8 @@ import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
 import vadl.viam.asm.elements.AsmAssignToAttribute;
 import vadl.viam.asm.elements.AsmFunctionInvocation;
+import vadl.viam.asm.elements.AsmGrammarElement;
+import vadl.viam.asm.elements.AsmLocalVarDefinition;
 import vadl.viam.asm.elements.AsmRuleInvocation;
 import vadl.viam.asm.elements.AsmStringLiteralUse;
 import vadl.viam.asm.elements.HasAssignTo;
@@ -240,6 +243,7 @@ public class AsmGrammarRuleGenerator {
 
     if (node.builtIn() == BuiltInTable.INTEGRAL) {
       // Integral is a field used as register index, but printed as immediate not as register
+      // do an Integer to @register cast element
     }
 
   }
@@ -284,39 +288,16 @@ public class AsmGrammarRuleGenerator {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ReturnNode node) {
-
     addMnemonic(ctx);
 
     AsmGrammarRuleGeneratorDispatcher.dispatch(this, ctx, node.value());
 
-    AsmType ruleType;
-
-    // TODO: only use relevant elements in this check for now all elements are relevant
-    //       (e.g. semantic predicates are not supported yet)
-    var elements = ctx.getElements();
-    if (elements.size() > 1) {
-
-      var subtypeMap = elements.stream()
-          .filter(e -> e instanceof HasAssignTo assignTo
-              && assignTo.assignToElement() != null
-              && assignTo.assignToElement() instanceof AsmAssignToAttribute)
-          .map(e -> (HasAssignTo) e)
-          .collect(
-              java.util.stream.Collectors.toMap(
-                  e -> requireNonNull(e.assignToElement()).getAssignToName(),
-                  HasAssignTo::getAsmType
-              )
-          );
-      ruleType = new GroupAsmType(subtypeMap);
-    } else {
-      ruleType = elements.getFirst().getAsmType();
-    }
+    var instructionAlternative =
+        createInstructionAlternative(null, ctx.getElements(), ctx.firstTokens);
 
     ctx.builtRule = new AsmNonTerminalRule(instruction.identifier(),
-        new AsmAlternatives(List.of(
-            new AsmAlternative(null, ctx.firstTokens, ruleType,
-                false, elements)
-        ), ruleType), InstructionAsmType.instance(),
+        new AsmAlternatives(List.of(instructionAlternative), instructionAlternative.asmType()),
+        InstructionAsmType.instance(),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
   }
@@ -327,8 +308,8 @@ public class AsmGrammarRuleGenerator {
             && builtInCall.builtIn() == BuiltInTable.MNEMONIC)) {
       addMnemonicConstantFunction(ctx);
     } else {
-      addStringElement(ctx, instruction.identifier().simpleName());
       addMnemonicConstantFunction(ctx);
+      addStringElement(ctx, instruction.identifier().simpleName());
     }
   }
 
@@ -349,6 +330,36 @@ public class AsmGrammarRuleGenerator {
         new AsmAssignToAttribute("mnemonic", false),
         instructionNameConstantFunction, List.of(), OperandAsmType.instance());
     ctx.addElementWithTokens(elem, Set.of());
+  }
+
+  /**
+   * Build an {@link AsmAlternative} with a {@link GroupAsmType} according to the passed elements.
+   */
+  public static AsmAlternative createInstructionAlternative(@Nullable Function semanticPredicate,
+                                                            List<AsmGrammarElement> elements,
+                                                            Set<AsmToken> firstTokens) {
+    AsmType ruleType;
+    var relevantElements = elements.stream()
+        .filter(e -> !(e instanceof AsmLocalVarDefinition)).toList();
+
+    if (relevantElements.size() > 1) {
+      var subtypeMap = relevantElements.stream()
+          .filter(e -> e instanceof HasAssignTo assignTo
+              && assignTo.assignToElement() != null
+              && assignTo.assignToElement() instanceof AsmAssignToAttribute)
+          .map(e -> (HasAssignTo) e)
+          .collect(
+              java.util.stream.Collectors.toMap(
+                  e -> requireNonNull(e.assignToElement()).getAssignToName(),
+                  HasAssignTo::getAsmType
+              )
+          );
+      ruleType = new GroupAsmType(subtypeMap);
+    } else {
+      ruleType = relevantElements.getFirst().getAsmType();
+    }
+
+    return new AsmAlternative(semanticPredicate, firstTokens, ruleType, false, elements);
   }
 
   @Handler
