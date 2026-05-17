@@ -207,28 +207,26 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                     ? MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32 :
                     MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64)
             .build())));
-    map.put("B_LT", getFirstNameOrEmpty(database.run(
-        new Query.Builder().machineInstructionLabel(
-                MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER)
-            .build())));
-    map.put("B_EQ", getFirstNameOrEmpty(database.run(
-        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.BEQ_BY_STATUS_REGISTER)
-            .build())));
-    map.put("B_NEQ", getFirstNameOrEmpty(database.run(
-        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER)
-            .build())));
-    map.put("B_LE", getFirstNameOrEmpty(database.run(
-        new Query.Builder().machineInstructionLabel(
-                MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER)
-            .build())));
-    map.put("B_GT", getFirstNameOrEmpty(database.run(
-        new Query.Builder().machineInstructionLabel(
-                MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER)
-            .build())));
-    map.put("B_GE", getFirstNameOrEmpty(database.run(
-        new Query.Builder().machineInstructionLabel(
-                MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER)
-            .build())));
+    map.put("B_ULT", getBranchInstructionNameOrEmpty(database, 
+          MachineInstructionLabel.BULTH_BY_STATUS_REGISTER));
+    map.put("B_LT", getBranchInstructionNameOrEmpty(database, 
+          MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER));
+    map.put("B_EQ", getBranchInstructionNameOrEmpty(database,
+          MachineInstructionLabel.BEQ_BY_STATUS_REGISTER));
+    map.put("B_NEQ", getBranchInstructionNameOrEmpty(database,
+          MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER));
+    map.put("B_ULE", getBranchInstructionNameOrEmpty(database,
+          MachineInstructionLabel.BULEQ_BY_STATUS_REGISTER));
+    map.put("B_LE", getBranchInstructionNameOrEmpty(database,
+          MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER));
+    map.put("B_UGT", getBranchInstructionNameOrEmpty(database,
+          MachineInstructionLabel.BUGTH_BY_STATUS_REGISTER));
+    map.put("B_GT", getBranchInstructionNameOrEmpty(database,
+          MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER));
+    map.put("B_UGE", getBranchInstructionNameOrEmpty(database,
+          MachineInstructionLabel.BUGEQ_BY_STATUS_REGISTER));
+    map.put("B_GE", getBranchInstructionNameOrEmpty(database,
+          MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER));
     map.put("CSEL_SGEQ", getCselInstructionNameOrEmpty(database, stackPointerType, 
           MachineInstructionLabel.CSEL_SGEQ_I32, 
           MachineInstructionLabel.CSEL_SGEQ_I64));
@@ -264,6 +262,13 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("zeroOutputInputIntrinsics",
         zeroOutputInputIntrinsics(intrinsicOutput, tableGenMachineRecords));
     return map;
+  }
+
+  private String getBranchInstructionNameOrEmpty(
+      Database database, 
+      MachineInstructionLabel label) {
+    return getFirstNameOrEmpty(database.run(
+          new Query.Builder().machineInstructionLabel(label).build()));
   }
 
   private String getCselInstructionNameOrEmpty(
