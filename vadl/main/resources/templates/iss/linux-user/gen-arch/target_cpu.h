@@ -1,11 +1,11 @@
 #ifndef [(${gen_arch_upper})]_TARGET_CPU_H
 #define [(${gen_arch_upper})]_TARGET_CPU_H
 
-//TODO: check for correct interpolattions for regs & values
+//TODO: check for correct interpolations for regs & values
 enum {
-    [(${gen_arch_upper})]_REG_RA  = [(${config.raReg})],
+    [(${gen_arch_upper})]_REG_RA  = 1,
     [(${gen_arch_upper})]_REG_SP  = [(${config.spReg})],
-    [(${gen_arch_upper})]_REG_TP  = [(${config.tpReg})],
+    [(${gen_arch_upper})]_REG_TP  = 4,
 
     [# th:each="arg, stat : ${config.args}"]
     [(${gen_arch_upper})]_REG_ARG[(${stat.index})] = [(${arg})],

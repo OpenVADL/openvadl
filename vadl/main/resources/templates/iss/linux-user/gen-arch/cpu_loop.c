@@ -51,27 +51,17 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
         case EXCP_ATOMIC:
             cpu_exec_step_atomic(cs);
             break;
-        [# th:if="${not #strings.isEmpty(config.excCauseVar)}"]
         case [(${gen_arch_upper})]_EXCP_[(${config.syscallException})]:
             cause = env->[(${config.excCauseVar})];
             switch (cause) {
             case [(${gen_arch_upper})]_EXC_[(${config.syscallInstr})]:
                 env->[(${pc_reg.name_lower})] += [(${config.insn_width_bytes})];
-                [# th:if="${config.hasIcacheFlush}"]
-                if (env->[(${config.mainRegisterFile})][ [(${config.sysReg})] ] == TARGET_NR_[(${gen_arch_lower})]_flush_icache) {
-                    /* no-op in QEMU; TB invalidation is automatic */
-                    ret = 0;
-                } else {
-                [/]
                     ret = do_syscall(env,
                                       env->[(${config.mainRegisterFile})][ [(${config.sysReg})] ],
                                       [# th:each="arg : ${config.args}"]
                                       env->[(${config.mainRegisterFile})][ [(${arg})] ],
                                       [/]
                                       0, 0);
-                [# th:if="${config.hasIcacheFlush}"]
-                }
-                [/]
                 if (ret == -QEMU_ERESTARTSYS) {
                     env->[(${pc_reg.name_lower})] -= [(${config.insn_width_bytes})];
                 } else if (ret != -QEMU_ESIGRETURN) {
@@ -81,10 +71,10 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
                 }
                 break;
 
-            case [(${gen_arch_upper})]_EXC_[(${config.illegalInstrExcName})]:
+            case [(${gen_arch_upper})]_EXC_[(${config.illegalInstrExc})]:
                 force_sig_fault(TARGET_SIGILL, TARGET_ILL_ILLOPC, env->[(${pc_reg.name_lower})]);
                 break;
-            case [(${gen_arch_upper})]_EXC_[(${config.breakpointExcName})]:
+            case [(${gen_arch_upper})]_EXC_[(${config.breakpointExc})]:
             case EXCP_DEBUG:
             gdbstep:
                 force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
@@ -101,44 +91,6 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
                      trapnr);
             exit(EXIT_FAILURE);
         }
-        [/]
-        [# th:if="${#strings.isEmpty(config.excCauseVar)}"]
-        case [(${gen_arch_upper})]_EXC_[(${config.syscallInstr})]:
-        env->[(${pc_reg.name_lower})] += [(${config.insn_width_bytes})];
-        [# th:if="${config.hasIcacheFlush}"]
-        if (env->[(${config.mainRegisterFile})][ [(${config.sysReg})] ] == TARGET_NR_[(${gen_arch_lower})]_flush_icache) {
-            /* no-op in QEMU; TB invalidation is automatic */
-            ret = 0;
-        } else {
-        [/]
-            ret = do_syscall(env,
-                              env->[(${config.mainRegisterFile})][ [(${config.sysReg})] ],
-                              [# th:each="arg : ${config.args}"]
-                              env->[(${config.mainRegisterFile})][ [(${arg})] ],
-                              [/]
-                              0, 0);
-        [# th:if="${config.hasIcacheFlush}"]
-        }
-        [/]
-        if (ret == -QEMU_ERESTARTSYS) {
-            env->[(${pc_reg.name_lower})] -= [(${config.insn_width_bytes})];
-        } else if (ret != -QEMU_ESIGRETURN) {
-            env->[(${config.mainRegisterFile})][ [(${config.retReg})] ] = ret;                }
-        if (cs->singlestep_enabled) {
-            goto gdbstep;
-        }
-        break;
-
-        case [(${gen_arch_upper})]_EXC_[(${config.illegalInstrExcName})]:
-            force_sig_fault(TARGET_SIGILL, TARGET_ILL_ILLOPC, env->[(${pc_reg.name_lower})]);
-            break;
-        case [(${gen_arch_upper})]_EXC_[(${config.breakpointExcName})]:
-        case EXCP_DEBUG:
-        gdbstep:
-            force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
-        break;
-        [/]
-
         process_pending_signals(env);
     }
 }
@@ -149,8 +101,8 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     TaskState *ts = get_task_state(cpu);
     struct image_info *info = ts->info;
 
-    env->[(${pc_reg.name_lower})] = regs->[(${config.initialPc})];
-    env->[(${config.mainRegisterFile})][ [(${config.spReg})] ] = regs->[(${config.initalSp})];
+    env->[(${pc_reg.name_lower})] = regs->[(${pc_reg.name_lower})];
+    env->[(${config.mainRegisterFile})][ [(${config.spReg})] ] = regs->[(${config.spRegName})];
 
     ts->stack_base = info->start_stack;
 }

@@ -22,6 +22,8 @@ import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.UserModeEmulation;
 
@@ -61,39 +63,38 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
     UserModeEmulation ume = specification.userModeEmulation()
         .orElseThrow(() -> new IllegalStateException("No UserModeEmulation defined"));
 
+    Abi abi = ume.abi();
+    RegisterTensor mainRegFile = (RegisterTensor) abi.stackPointer().registerFile();
+
+    Map<String, Integer> excIds = Map.of(
+        "RV64UME_EXC_ILLEGAL_INSTR", 2,
+        "RV64UME_EXC_ECALL", 11,
+        "RV64UME_EXC_BREAKPOINT", 3
+    );
+
     vars.put("config", Map.ofEntries(
-        Map.entry("sysReg", ume.getSysReg().index()),
-        Map.entry("retReg", ume.getRetReg().index()),
-        Map.entry("spReg", ume.getSpReg().index()),
-        Map.entry("raReg", ume.getRaReg().index()),
-        Map.entry("tpReg", ume.getTpReg().index()),
-        Map.entry("args", ume.getArgs().stream()
+        Map.entry("sysReg", abi.stackPointer()),
+        Map.entry("retReg", abi.returnRegisters().get(0).get(0).addr()),
+        Map.entry("spReg", abi.stackPointer().addr()),
+        Map.entry("spRegName", abi.stackPointer().render()),
+        Map.entry("args", ume.args().stream()
             .map(RegisterUtils.Register::index)
             .toList()),
-        Map.entry("excIds", ume.getExcIds()),
-        Map.entry("syscallInstr", ume.getSyscallInstr().simpleName()),
-        Map.entry("syscallException", ume.getSyscallException().simpleName()),
-        Map.entry("breakpointExcName", ume.getBreakpointExcName().simpleName()),
-        Map.entry("illegalInstrExcName", ume.getIllegalInstrExcName().simpleName()),
-        Map.entry("initialPc", ume.getInitialPc().simpleName()),
-        Map.entry("initialSp", ume.getInitialSp().simpleName()),
-        Map.entry("excCauseVar", ume.getExcCauseVar() != null
-            ? ume.getExcCauseVar().simpleName()
-            : ""),
-        Map.entry("hasIcacheFlush", ume.hasIcacheFlush()),
-        Map.entry("insn_width_bytes", ume.getInsnWidthBytes()),
-        Map.entry("stack_align_mask", ume.getStackAlignMask()),
-        Map.entry("sigtrampLoadSyscallInstr", ume.getSigtrampLoadSyscallInstr()),
-        Map.entry("sigtrampTrapInstr", ume.getSigtrampTrapInstr()),
-        Map.entry("mainRegisterFile", ume.getMainRegisterFile().simpleName().toLowerCase()),
-        Map.entry("mainRegFileSize", ume.getMainRegisterFile().outermostDim().size()),
-        Map.entry("signalStateTensors", ume.getSignalStateTensors().stream()
-            .map(t -> Map.of(
-                "name_lower", t.simpleName().toLowerCase(),
-                "size", t.outermostDim().size()
-            ))
-            .toList())
-        ));
+        Map.entry("excIds", excIds),
+        Map.entry("syscallInstr", ume.syscallInstr().simpleName()),
+        Map.entry("syscallException", ume.syscallException().simpleName()),
+        Map.entry(
+            "breakpointExc",
+            ume.breakpointExc() != null ? ume.breakpointExc().simpleName() : ""
+        ),
+        Map.entry(
+            "IllegalInstrExc",
+            ume.illegalInstrExc() != null ? ume.illegalInstrExc().simpleName() : ""
+        ),
+        Map.entry("insn_width_bytes", ume.syscallInstr().format().type().bitWidth() / 8),
+        Map.entry("mainRegisterFile", mainRegFile.simpleName().toLowerCase()),
+        Map.entry("mainRegFileSize", mainRegFile.outermostDim().size())
+    ));
 
     return vars;
   }
