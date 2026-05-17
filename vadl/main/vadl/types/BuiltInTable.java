@@ -19,7 +19,6 @@ package vadl.types;
 import static org.slf4j.LoggerFactory.getLogger;
 import static vadl.types.Type.constructDataType;
 
-import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
 import java.util.Collections;
@@ -1627,28 +1626,30 @@ public class BuiltInTable {
       // to a constructed type of the parameter type, we return false.
       // otherwise true.
       // overrides should further constraint the properties of the given types.
-      return Streams.zip(argTypes.stream(), argTypeClasses.stream(),
-          (argType, argTypeClass) -> {
-            if (argType.getClass() == argTypeClass) {
-              // if the class is the same, we know that the argument type is correct
-              return true;
+      for (int i = 0; i < argTypes.size(); i++) {
+        var argType = argTypes.get(i);
+        var argTypeClass = argTypeClasses.get(i);
+        if (argType.getClass() == argTypeClass) {
+          // if the class is the same, we know that the argument type is correct
+          continue;
+        }
+        if (argType instanceof DataType argDataType) {
+          // if the concrete type is a data type we try to construct a data type
+          // with the same bit width from the built-ins argument type class.
+          // if this fails, we know that the type can't be correct.
+          var constructedType = constructDataType(argTypeClass, argDataType.bitWidth());
+          if (constructedType != null) {
+            // check that the argument type can be trivially cast to the constructed type
+            if (argDataType.isTrivialCastTo(argDataType)) {
+              continue;
             }
-            if (argType instanceof DataType argDataType) {
-              // if the concrete type is a data type we try to construct a data type
-              // with the same bit width from the built-ins argument type class.
-              // if this fails, we know that the type can't be correct.
-              var constructedType = constructDataType(argTypeClass, argDataType.bitWidth());
-              if (constructedType != null) {
-                // check that the argument type can be trivially cast to the constructed type
-                return argDataType.isTrivialCastTo(argDataType);
-              }
-              return false;
-            }
-            // if the concrete type is not a data type, we know that the given type is wrong
-            // as there is no way of trivially casting the argument type to the parameter type
-            return false;
           }
-      ).allMatch(p -> p);
+        }
+        // if the concrete type is not a data type, we know that the given type is wrong
+        // as there is no way of trivially casting the argument type to the parameter type
+        return false;
+      }
+      return true;
     }
 
     /**

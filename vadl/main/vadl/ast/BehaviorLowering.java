@@ -445,7 +445,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @SuppressWarnings("Indentation")
   Procedure getRegisterAliasWriteProc(AliasDefinition definition,
                                       List<RegisterTensor.Dimension> dimensions) {
-    final var graph = new Graph("%s Write Procedure".formatted(String.join("::", definition.viamId)));
+    final var graph =
+        new Graph("%s Write Procedure".formatted(String.join("::", definition.viamId)));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 

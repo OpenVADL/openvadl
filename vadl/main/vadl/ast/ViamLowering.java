@@ -1028,7 +1028,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(CounterDefinition definition) {
-    var identifier = new vadl.viam.Identifier(definition.viamId, definition.identifier().location());
+    var identifier =
+        new vadl.viam.Identifier(definition.viamId, definition.identifier().location());
 
     var resultType = (DataType) getViamType(requireNonNull(definition.typeLiteral.type));
 
@@ -1203,7 +1204,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .filter(f -> f instanceof DerivedFormatField)
         .map(f -> (DerivedFormatField) f)
         .map(derivedField -> {
-          var identifier = new vadl.viam.Identifier(derivedField.viamId, derivedField.identifier().loc);
+          var identifier =
+              new vadl.viam.Identifier(derivedField.viamId, derivedField.identifier().loc);
           var access = getFieldAccessFunction(derivedField);
 
           var field = new Format.FieldAccess(identifier, access, null);
@@ -1260,7 +1262,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   private Function getFieldAccessFunction(DerivedFormatField derivedField) {
-    var accessIdentifier = new vadl.viam.Identifier(append(derivedField.viamId, "decode"), derivedField.identifier.location());
+    var accessIdentifier = new vadl.viam.Identifier(append(derivedField.viamId, "decode"),
+        derivedField.identifier.location());
     var accessGraph =
         new BehaviorLowering(this).getFunctionGraph(derivedField.expr, accessIdentifier.name());
     var access =
@@ -1291,7 +1294,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var lowered = (Format.FieldAccess) requireNonNull(formatFieldCache.get(derivedField));
     var fieldIdent = lowered.identifier;
 
-    var predIdent = new vadl.viam.Identifier(append(List.of(fieldIdent.parts()), "predicate"), derivedField.identifier.location());
+    var predIdent = new vadl.viam.Identifier(append(List.of(fieldIdent.parts()), "predicate"),
+        derivedField.identifier.location());
     var predName = predIdent.name();
     var behavior = new BehaviorLowering(this).getFunctionGraph(predField.expr, predName);
     checkNoResourceAccesses(behavior, "field access predicate");
