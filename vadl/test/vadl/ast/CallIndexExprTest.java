@@ -19,6 +19,7 @@ package vadl.ast;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
+import java.util.Arrays;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -129,7 +130,7 @@ public class CallIndexExprTest {
     var spec = Frontend.compileToViam(wrapProg(prog));
     ViamVerifier.verifyAllIn(spec);
     var testFuncs = ViamUtils.findDefinitionsByFilter(spec,
-            d -> d instanceof Function && d.simpleName().startsWith("T"))
+            d -> d instanceof Function && Arrays.asList(d.identifier.parts()).contains("T"))
         .stream().toList();
     assertThat(testFuncs).size().isEqualTo(1);
   }

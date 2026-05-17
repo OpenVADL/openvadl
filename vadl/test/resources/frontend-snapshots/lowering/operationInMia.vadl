@@ -73,7 +73,7 @@ micro architecture MIA implements ISA = {
 //    . : ' | Inputs: PC
 //    . : ' | Outputs: PC
 //    . : ' | Encoding: encoding
-//    . : ' | Assembly: ISA::Branch::assembly
+//    . : ' | Assembly: assembly
 //    . : ' | Behavior Graph:
 //    . : ' | . n0 ReadsRegisterTensor  in: ()      succ: ()     type: b32   reg: PC
 //    . : ' | . n1 FieldRef             in: ()      succ: ()     type: i24   field: offset   format: B_Type
@@ -84,10 +84,10 @@ micro architecture MIA implements ISA = {
 //    . : ' | . n6 WritesRegisterTensor in: (n5)    succ: ()     reg: PC
 //    . : ' | . n7 InstrEnd             in: (n6)    succ: ()     effects: 1
 //    . : ' | . n8 Start                in: ()      succ: (n7)   next: set
-//    . : ' | Assembly name: "ISA::Branch::assembly"
-//    . : ' | . Function: ISA::Branch::assembly::func
+//    . : ' | Assembly name: "assembly"
+//    . : ' | . Function: func
 //    . : ' | . FieldAccesses: []
-//    . : ' | . Function name: "ISA::Branch::assembly::func"
+//    . : ' | . Function name: "func"
 //    . : ' | . : Type: ()->String
 //    . : ' | . : Signature: () -> String
 //    . : ' | . : Parameters: []

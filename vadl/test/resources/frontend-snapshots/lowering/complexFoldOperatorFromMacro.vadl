@@ -65,7 +65,7 @@ instruction set architecture ISA = {
 //    . : ' Inputs: X
 //    . : ' Outputs: X
 //    . : ' Encoding: encoding
-//    . : ' Assembly: ISA::ADD::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b4    const: 0x0: Bits<4>
 //    . : ' | n1 ForIdx               in: ()      succ: ()     type: b4    from: 0   to: 3
@@ -74,10 +74,10 @@ instruction set architecture ISA = {
 //    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
 //    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
 //    . : ' | n6 Start                in: ()      succ: (n5)   next: set
-//    . : ' Assembly name: "ISA::ADD::assembly"
-//    . : ' | Function: ISA::ADD::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "ISA::ADD::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []
