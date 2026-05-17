@@ -19,6 +19,7 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -1572,10 +1573,11 @@ final class IdentifierPath extends Expr implements IsId {
 
   //  @Override
   public List<String> pathToSegments() {
-    return this.segments.stream()
-        .map(id -> (Identifier) id)
-        .map(id -> id.name)
-        .toList();
+    var result = new ArrayList<String>();
+    for (var segment : segments) {
+      result.add(((Identifier) segment).name);
+    }
+    return result;
   }
 
   @Override
