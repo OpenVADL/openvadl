@@ -2007,4 +2007,51 @@ In addition, several behavioral aspects of the cache can be specified, such as w
 
 \lbl{tut_ume_definition}
 
-The \ac{UserModeEmulation} definition determines how a VADL specification maps to QEMU's Linux user-mode emulation (UME). 
+The \ac{UserModeEmulation} definition determines how a specification from a VADL file maps to QEMU's Linux user mode emulation (UME). 
+The UME is used to run Linux ELF binaries without having to emulate the full machine. 
+To achieve this it needs to intercept system calls (syscalls) based on the syscall instruction of the architecture given by the VADL file. 
+The associated register conventions (the \ac{ABI}) need to be mapped to determine the system call number, its arguments, and where to
+place the return value.
+
+\listing{user_mode_emulation, User Mode Emulation Definition}
+~~~{.vadl}
+user mode emulation UME for RV64 with ABI = {
+  
+}
+~~~
+\endlisting
+
+A \ac{UME} section starts with the keyword `user mode emulation` followed by a unique identifier.
+Some elements inside of the \ac{UME} section rely on previously defined \ac{ISA} elements, so it needs to be referenced
+using the `for` keyword after the identifier.
+Definitions from the referenced \ac{RV64} are now available for use inside the \ac{UME} section.
+The `with` keyword binds the \ac{ABI} to the section. 
+
+### Exception Definition 
+
+Varying exceptions are defined in the VADL like:
+
+\listing{user_mode_emulation_exc, User Mode Emulation Definition Exceptions}
+~~~{.vadl}
+user mode emulation UME for RV64 with ABI = {
+  
+}
+~~~
+\endlisting
+
+It is also possible to select the desired OS in the .vadl file (e.g. Linux or BSD). In order for this to work, custom VADL annotations 
+and tokens are added to the .ATG file. 
+
+Templates are generated based on a RISCV implementation from QEMU's linux-user section, that has been interpolated using Thymeleaf to be viable for 
+any architecture specified in the VADL. 
+
+The cpu_loop intercepts the specific syscall instruction and dispatches to the syscall translator. 
+
+Syscalls are translated by utilizing QEMU's integrated do_syscall() function that maps guest syscall numbers to host syscall numbers and 
+writes the return value back into the guest's return register.
+
+The mechanics of how unix signals are handed to a guest process are handled in signal.c, which makes sure that the host signal gets intercepted, a signal frame
+gets set up on the guest stack and the guest PC gets returned to the registered signal handler of the guest whenever a guest program triggers a signal - for example
+by accessing an invalid address (SIGSEV). 
+
+Additional testing infrastructure ensures that the UME works as intended. 
