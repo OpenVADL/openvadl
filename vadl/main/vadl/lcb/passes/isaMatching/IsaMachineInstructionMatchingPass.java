@@ -436,145 +436,115 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     return new Result(labels, flipIsaMatching(labels));
   }
 
-  private boolean comparesRegisterWithConstant(
-      BuiltInCall bc,
+  private Function<BuiltInCall, Boolean> comparesRegisterWithConstantFn(
       BuiltIn cond,
       Class<? extends StatusRegisterAnnotation> annotation,
       Constant constant) {
-    return bc.builtIn() == cond
-      && bc.arg(0) instanceof ReadsRegisterTensor r1 
-      && bc.arg(1) instanceof ConstantNode c2
-      && r1.registerResource().hasAnnotation(annotation)
-      && c2.constant().equals(constant);
+    return (bc) -> {
+      return bc.builtIn() == cond
+        && bc.arg(0) instanceof ReadsRegisterTensor r1 
+        && bc.arg(1) instanceof ConstantNode c2
+        && r1.registerResource().hasAnnotation(annotation)
+        && c2.constant().equals(constant);
+    };
+  }
+
+  private Function<BuiltInCall, Boolean> comparesStatusRegistersFn(
+      BuiltIn cond,
+      Class<? extends StatusRegisterAnnotation> reg1, 
+      Class<? extends StatusRegisterAnnotation> reg2) {
+    return (bc) -> {
+      return bc.builtIn() == cond
+        && this.hasAllAnnotations(bc.arguments(), Set.of(reg1, reg2));
+    };
+  }
+
+  private Function<BuiltInCall, Boolean> csel_NzcvN_Equals_NzcvV_Fn() {
+    return this.comparesStatusRegistersFn(EQU,
+          StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class);
+  }
+
+  private Function<BuiltInCall, Boolean> csel_NzcvN_NotEquals_NzcvV_Fn() {
+    return this.comparesStatusRegistersFn(NEQ,
+          StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class);
+  }
+
+  private Function<BuiltInCall, Boolean> csel_NzcvZ_Equals_Zero_Fn() {
+    return this.comparesRegisterWithConstantFn(EQU,
+          StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class, 
+          Constant.Value.zero(DataType.bits(1)));
+  }
+
+  private Function<BuiltInCall, Boolean> csel_NzcvZ_Equals_One_Fn() {
+    return this.comparesRegisterWithConstantFn(EQU,
+          StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class, 
+          Constant.Value.one(DataType.bits(1)));
+  }
+
+  private Function<BuiltInCall, Boolean> csel_NzcvC_Equals_Zero_Fn() {
+    return this.comparesRegisterWithConstantFn(EQU,
+          StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class, 
+          Constant.Value.zero(DataType.bits(1)));
+  }
+
+  private Function<BuiltInCall, Boolean> csel_NzcvC_Equals_One_Fn() {
+    return this.comparesRegisterWithConstantFn(EQU,
+          StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class, 
+          Constant.Value.one(DataType.bits(1)));
   }
 
   private boolean findCSEL_EQ(Graph originalGraph, SIntType ty) {
-    // NZCV_Z = 1
-    Function<BuiltInCall, Boolean> condition = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU,
-            StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class, 
-            Constant.Value.one(DataType.bits(1)));
-    };
-    return findCSEL_UnaryCondition(originalGraph, ty, condition);
+    return findCSEL_UnaryCondition(originalGraph, ty, this.csel_NzcvZ_Equals_One_Fn());
   }
 
   private boolean findCSEL_NEQ(Graph originalGraph, SIntType ty) {
-    // NZCV_Z = 0
-    Function<BuiltInCall, Boolean> condition = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU,
-            StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class,
-            Constant.Value.zero(DataType.bits(1)));
-    };
-    return findCSEL_UnaryCondition(originalGraph, ty, condition);
+    return findCSEL_UnaryCondition(originalGraph, ty, this.csel_NzcvZ_Equals_Zero_Fn());
   }
 
   private boolean findCSEL_SLTH(Graph originalGraph, SIntType ty) {
-    // NZCV_N != NZCV_V
-    Function<BuiltInCall, Boolean> condition = (bc) -> {
-      return bc.builtIn() == NEQ
-        && this.hasAllAnnotations(bc.arguments(), Set.of(
-              StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
-              StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
-    };
-    return findCSEL_UnaryCondition(originalGraph, ty, condition);
+    return findCSEL_UnaryCondition(originalGraph, ty, this.csel_NzcvN_NotEquals_NzcvV_Fn());
   }
 
   private boolean findCSEL_SGEQ(Graph originalGraph, SIntType ty) {
-    // NZCV_N = NZCV_V
-    Function<BuiltInCall, Boolean> condition = (bc) -> {
-      return bc.builtIn() == EQU
-        && this.hasAllAnnotations(bc.arguments(), Set.of(
-              StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
-              StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
-    };
-    return findCSEL_UnaryCondition(originalGraph, ty, condition);
+    return findCSEL_UnaryCondition(originalGraph, ty, this.csel_NzcvN_Equals_NzcvV_Fn());
   }
 
   private boolean findCSEL_UGEQ(Graph originalGraph, SIntType ty) {
-    // NZCV_C = 1
-    Function<BuiltInCall, Boolean> condition = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU,
-             StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class,
-             Constant.Value.one(DataType.bits(1)));
-    };
-    return findCSEL_UnaryCondition(originalGraph, ty, condition);
+    return findCSEL_UnaryCondition(originalGraph, ty, this.csel_NzcvC_Equals_One_Fn());
   }
 
   private boolean findCSEL_ULTH(Graph originalGraph, SIntType ty) {
-    // NZCV_C = 0
-    Function<BuiltInCall, Boolean> condition = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU,
-             StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class,
-             Constant.Value.zero(DataType.bits(1)));
-    };
-    return findCSEL_UnaryCondition(originalGraph, ty, condition);
+    return findCSEL_UnaryCondition(originalGraph, ty, this.csel_NzcvC_Equals_Zero_Fn());
   }
 
   private boolean findCSEL_SLEQ(Graph originalGraph, SIntType ty) {
-    // NZCV_N != NZCV_V
-    Function<BuiltInCall, Boolean> condition1 = (bc) -> {
-      return bc.builtIn() == NEQ
-        && this.hasAllAnnotations(bc.arguments(), Set.of(
-              StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
-              StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class));
-    };
-    // NZCV_Z = 1
-    Function<BuiltInCall, Boolean> condition2 = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU,
-            StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class,
-           Constant.Value.one(DataType.bits(1)));
-    };
-    return findCSEL_BinaryCondition(originalGraph, ty, OR, condition1, condition2);
+    return findCSEL_BinaryCondition(originalGraph, ty, 
+        OR, 
+        this.csel_NzcvN_NotEquals_NzcvV_Fn(), 
+        this.csel_NzcvZ_Equals_One_Fn());
   }
 
   private boolean findCSEL_SGTH(Graph originalGraph, SIntType ty) {
-    // NZCV_N = NZCV_V
-    Function<BuiltInCall, Boolean> condition1 = (bc) -> {
-      return bc.builtIn() == EQU
-        && this.hasAllAnnotations(bc.arguments(), Set.of(
-              StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
-              StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class
-              ));
-    };
-    // NZCV_Z = 0
-    Function<BuiltInCall, Boolean> condition2 = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU, 
-            StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class,
-           Constant.Value.zero(DataType.bits(1)));
-    };
-    return findCSEL_BinaryCondition(originalGraph, ty, AND, condition1, condition2);
+    return findCSEL_BinaryCondition(originalGraph, ty, 
+        AND, 
+        this.csel_NzcvN_Equals_NzcvV_Fn(), 
+        this.csel_NzcvZ_Equals_Zero_Fn());
   }
 
   private boolean findCSEL_UGTH(Graph originalGraph, SIntType ty) {
-    // NZCV_C = 1
-    Function<BuiltInCall, Boolean> condition1 = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU,
-            StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class,
-           Constant.Value.one(DataType.bits(1)));
-    };
-    // NZCV_Z = 0
-    Function<BuiltInCall, Boolean> condition2 = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU, 
-            StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class,
-           Constant.Value.zero(DataType.bits(1)));
-    };
-    return findCSEL_BinaryCondition(originalGraph, ty, AND, condition1, condition2);
+    return findCSEL_BinaryCondition(originalGraph, ty, 
+        AND, 
+        this.csel_NzcvC_Equals_One_Fn(), 
+        this.csel_NzcvZ_Equals_Zero_Fn());
   }
 
   private boolean findCSEL_ULEQ(Graph originalGraph, SIntType ty) {
-    // NZCV_C = 0
-    Function<BuiltInCall, Boolean> condition1 = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU,
-            StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class,
-           Constant.Value.zero(DataType.bits(1)));
-    };
-    // NZCV_Z = 1
-    Function<BuiltInCall, Boolean> condition2 = (bc) -> {
-      return this.comparesRegisterWithConstant(bc, EQU,
-            StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class,
-           Constant.Value.one(DataType.bits(1)));
-    };
-    return findCSEL_BinaryCondition(originalGraph, ty, OR, condition1, condition2);
+    return findCSEL_BinaryCondition(originalGraph, ty, 
+        OR, 
+        this.csel_NzcvC_Equals_Zero_Fn(), 
+        this.csel_NzcvZ_Equals_One_Fn());
   }
 
   private boolean findCSEL_BinaryCondition(
