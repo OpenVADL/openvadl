@@ -22,8 +22,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.types.BuiltInTable;
@@ -1555,10 +1555,11 @@ final class IdentifierPath extends Expr implements IsId {
 
   @Override
   public String pathToString() {
-    return this.segments.stream()
-        .map(id -> (Identifier) id)
-        .map(id -> id.name)
-        .collect(Collectors.joining("::"));
+    var builder = new StringJoiner("::");
+    for (var segment : segments) {
+      builder.add(((Identifier) segment).name);
+    }
+    return builder.toString();
   }
 
   @Nullable
