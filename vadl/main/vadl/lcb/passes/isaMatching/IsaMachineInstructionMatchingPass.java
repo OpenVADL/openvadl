@@ -475,92 +475,98 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     };
   }
 
-  private Function<BuiltInCall, Boolean> condition_NzcvN_Equals_NzcvV_Fn() {
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_NegativeEqualsOverflow() {
     return this.comparesStatusRegistersFn(EQU,
           StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
           StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class);
   }
 
-  private Function<BuiltInCall, Boolean> condition_NzcvN_NotEquals_NzcvV_Fn() {
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_NegativeNotEqualsOverflow() {
     return this.comparesStatusRegistersFn(NEQ,
           StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
           StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class);
   }
 
-  private Function<BuiltInCall, Boolean> condition_NzcvZ_Equals_Zero_Fn() {
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_ZeroStatusRegisterIsZero() {
     return this.comparesRegisterWithConstantFn(EQU,
           StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class, 
           Constant.Value.zero(DataType.bits(1)));
   }
 
-  private Function<BuiltInCall, Boolean> condition_NzcvZ_Equals_One_Fn() {
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_ZeroStatusRegisterIsOne() {
     return this.comparesRegisterWithConstantFn(EQU,
           StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class, 
           Constant.Value.one(DataType.bits(1)));
   }
 
-  private Function<BuiltInCall, Boolean> condition_NzcvC_Equals_Zero_Fn() {
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_CarryStatusRegisterIsZero() {
     return this.comparesRegisterWithConstantFn(EQU,
           StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class, 
           Constant.Value.zero(DataType.bits(1)));
   }
 
-  private Function<BuiltInCall, Boolean> condition_NzcvC_Equals_One_Fn() {
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_CarryStatusRegisterIsOne() {
     return this.comparesRegisterWithConstantFn(EQU,
           StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class, 
           Constant.Value.one(DataType.bits(1)));
   }
 
   private boolean findCSEL_EQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, this.condition_NzcvZ_Equals_One_Fn());
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_ZeroStatusRegisterIsOne());
   }
 
   private boolean findCSEL_NEQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, this.condition_NzcvZ_Equals_Zero_Fn());
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_ZeroStatusRegisterIsZero());
   }
 
   private boolean findCSEL_SLTH(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, this.condition_NzcvN_NotEquals_NzcvV_Fn());
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_NegativeNotEqualsOverflow());
   }
 
   private boolean findCSEL_SGEQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, this.condition_NzcvN_Equals_NzcvV_Fn());
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_NegativeEqualsOverflow());
   }
 
   private boolean findCSEL_UGEQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, this.condition_NzcvC_Equals_One_Fn());
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_CarryStatusRegisterIsOne());
   }
 
   private boolean findCSEL_ULTH(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, this.condition_NzcvC_Equals_Zero_Fn());
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_CarryStatusRegisterIsZero());
   }
 
   private boolean findCSEL_SLEQ(Graph originalGraph, SIntType ty) {
     return findCSEL_BinaryCondition(originalGraph, ty, 
         OR, 
-        this.condition_NzcvN_NotEquals_NzcvV_Fn(), 
-        this.condition_NzcvZ_Equals_One_Fn());
+        this.compareStatusRegisters_NegativeNotEqualsOverflow(), 
+        this.compareStatusRegisters_ZeroStatusRegisterIsOne());
   }
 
   private boolean findCSEL_SGTH(Graph originalGraph, SIntType ty) {
     return findCSEL_BinaryCondition(originalGraph, ty, 
         AND, 
-        this.condition_NzcvN_Equals_NzcvV_Fn(), 
-        this.condition_NzcvZ_Equals_Zero_Fn());
+        this.compareStatusRegisters_NegativeEqualsOverflow(), 
+        this.compareStatusRegisters_ZeroStatusRegisterIsZero());
   }
 
   private boolean findCSEL_UGTH(Graph originalGraph, SIntType ty) {
     return findCSEL_BinaryCondition(originalGraph, ty, 
         AND, 
-        this.condition_NzcvC_Equals_One_Fn(), 
-        this.condition_NzcvZ_Equals_Zero_Fn());
+        this.compareStatusRegisters_CarryStatusRegisterIsOne(), 
+        this.compareStatusRegisters_ZeroStatusRegisterIsZero());
   }
 
   private boolean findCSEL_ULEQ(Graph originalGraph, SIntType ty) {
     return findCSEL_BinaryCondition(originalGraph, ty, 
         OR, 
-        this.condition_NzcvC_Equals_Zero_Fn(), 
-        this.condition_NzcvZ_Equals_One_Fn());
+        this.compareStatusRegisters_CarryStatusRegisterIsZero(), 
+        this.compareStatusRegisters_ZeroStatusRegisterIsOne());
   }
 
   private boolean findCSEL_BinaryCondition(
@@ -933,37 +939,43 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    */
   private boolean checkConditionsForBase(BuiltInTable.BuiltIn base, UninlinedGraph behavior) {
     if (base == EQU) {
-      return this.checkConditionsForBaseUnary(behavior, this.condition_NzcvZ_Equals_One_Fn());
+      return this.checkConditionsForBaseUnary(behavior, 
+          this.compareStatusRegisters_ZeroStatusRegisterIsOne());
     } else if (base == NEQ) {
-      return this.checkConditionsForBaseUnary(behavior, this.condition_NzcvZ_Equals_Zero_Fn());
+      return this.checkConditionsForBaseUnary(behavior, 
+          this.compareStatusRegisters_ZeroStatusRegisterIsZero());
     } else if (base == SGEQ) {
-      return this.checkConditionsForBaseUnary(behavior, this.condition_NzcvN_Equals_NzcvV_Fn());
+      return this.checkConditionsForBaseUnary(behavior, 
+          this.compareStatusRegisters_NegativeEqualsOverflow());
     } else if (base == SLTH) {
-      return this.checkConditionsForBaseUnary(behavior, this.condition_NzcvN_NotEquals_NzcvV_Fn());
+      return this.checkConditionsForBaseUnary(behavior, 
+          this.compareStatusRegisters_NegativeNotEqualsOverflow());
     } else if (base == SGTH) {
       return this.checkConditionsForBaseBinary(behavior, 
           AND,
-          this.condition_NzcvZ_Equals_Zero_Fn(),
-          this.condition_NzcvN_Equals_NzcvV_Fn());
+          this.compareStatusRegisters_ZeroStatusRegisterIsZero(),
+          this.compareStatusRegisters_NegativeEqualsOverflow());
     } else if (base == SLEQ) {
       return this.checkConditionsForBaseBinary(behavior, 
           OR,
-          this.condition_NzcvZ_Equals_One_Fn(),
-          this.condition_NzcvN_NotEquals_NzcvV_Fn());
+          this.compareStatusRegisters_ZeroStatusRegisterIsOne(),
+          this.compareStatusRegisters_NegativeNotEqualsOverflow());
     } else if (base == ULEQ) {
       return this.checkConditionsForBaseBinary(behavior, 
           OR,
-        this.condition_NzcvC_Equals_Zero_Fn(), 
-        this.condition_NzcvZ_Equals_One_Fn());
+        this.compareStatusRegisters_CarryStatusRegisterIsZero(), 
+        this.compareStatusRegisters_ZeroStatusRegisterIsOne());
     } else if (base == ULTH) {
-      return this.checkConditionsForBaseUnary(behavior, this.condition_NzcvC_Equals_Zero_Fn());
+      return this.checkConditionsForBaseUnary(behavior, 
+          this.compareStatusRegisters_CarryStatusRegisterIsZero());
     } else if (base == UGEQ) {
-      return this.checkConditionsForBaseUnary(behavior, this.condition_NzcvC_Equals_One_Fn());
+      return this.checkConditionsForBaseUnary(behavior, 
+          this.compareStatusRegisters_CarryStatusRegisterIsOne());
     } else if (base == UGTH) {
       return this.checkConditionsForBaseBinary(behavior, 
           AND, 
-          this.condition_NzcvC_Equals_One_Fn(), 
-          this.condition_NzcvZ_Equals_Zero_Fn());
+          this.compareStatusRegisters_CarryStatusRegisterIsOne(), 
+          this.compareStatusRegisters_ZeroStatusRegisterIsZero());
     }
 
     // Default
