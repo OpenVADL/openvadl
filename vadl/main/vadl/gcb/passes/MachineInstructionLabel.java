@@ -26,6 +26,7 @@ import vadl.viam.Instruction;
  * How do I read this?
  * You can say the following: An {@link Instruction} with the semantics of summing two unsigned
  * 32bit registers will get the {@link MachineInstructionLabel#ADD_32} assigned.
+ * Instructions can only be classified with a single label.
  */
 public enum MachineInstructionLabel {
   /*
@@ -53,32 +54,33 @@ public enum MachineInstructionLabel {
   ADDI_32,
   ADDI_64,
   /*
-   Instructions, which 'and' (using only the vadl-builtins AND/ANDS) two registers, or a register
-   and an immediate, and do not access the Program-Counter in any way.
+   Instructions, which 'and'  two registers, or a register and an immediate 
+   (using only the vadl-builtins AND/ANDS), and do not access the Program-Counter in any way.
   */
   AND,
   /*
-   Instructions, which 'or' / 'xor' (using only the vadl-builtins OR/ORS; XOR/XORS) two registers 
+   Instructions, which 'or' / 'xor' two registers (using only the vadl-builtins OR/ORS; XOR/XORS)
    and do not access the Program-Counter in any way.
   */
   OR,
   XOR,
   /*
-   Instructions, which 'or' / 'xor' (using only the vadl-builtins OR/ORS ; XOR/XORS) a register
-   and an immediate and do not access the Program-Counter in any way.
+   Instructions, which 'or' / 'xor'  a register and an immediate 
+   (using only the vadl-builtins OR/ORS ; XOR/XORS) and do not access the Program-Counter 
+   in any way.
   */
   ORI,
   XORI,
   /*
-   Instructions, which subtract (use only the vadl-builtins SUB for 'SUB' ; SUBB/SUBSB for 'SUBB' ;
-   SUBC/SUBSC for 'SUBC') on two registers, or a register and an immediate, 
+   Instructions, which subtract  on two registers, or a register and an immediate, 
+   (use only the vadl-builtins SUB for 'SUB' ; SUBB/SUBSB for 'SUBB' ; SUBC/SUBSC for 'SUBC')
    and do not access the Program-Counter in any way.
   */
   SUB,
   SUBB,
   SUBC,
   /*
-   Instructions, which subtract (using only the vadl-builtin 'SUBSC') two registers 
+   Instructions, which subtract two registers (using only the vadl-builtin 'SUBSC')
    and set the Carry-, Negative-, Overflow- and Zero-Status-Registers in the process. Furthermore,
    the instructions do not access the Program-Counter in any way.
   */
@@ -121,8 +123,8 @@ public enum MachineInstructionLabel {
    */
   SLLI,
   /*
-   Instructions, right-shift a register with another register (using the vadl-builtin LSR/LSRS) 
-   and do not access the Program-Counter in any way.
+   Instructions, which right-shift a register with another register
+   (using the vadl-builtin LSR/LSRS) and do not access the Program-Counter in any way.
    */
   SRL,
   ROTL, // currently unused
