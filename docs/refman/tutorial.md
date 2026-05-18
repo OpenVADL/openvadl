@@ -2016,7 +2016,7 @@ place the return value.
 \listing{user_mode_emulation, User Mode Emulation Definition}
 ~~~{.vadl}
 [os : linux] 
-user mode emulation UME from RV64IM with ABI = {
+user mode emulation UME for RV64IM with ABI = {
 syscall instruction = ECALL
 
 syscall number = a7
