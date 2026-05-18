@@ -94,6 +94,7 @@ public enum MachineInstructionLabel {
   UNCONDITIONAL JUMPS
    */
   JALR, //  unconditional indirect jump without immediate. With linking register.
+  BLR, //  unconditional indirect jump without immediate. With linking register (aarch64-style).
   JAL, // the difference between JAL and J is that JAL also writes a linking register.
   J, // unconditional jump with no linking register.
   JR, //  unconditional indirect jump without immediate. No linking register.
