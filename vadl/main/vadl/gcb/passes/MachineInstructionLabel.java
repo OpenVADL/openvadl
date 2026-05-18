@@ -211,6 +211,10 @@ public enum MachineInstructionLabel {
    */
   JALR,
   /*
+   Instructions, which write a register-file to the Program-Counter and do not use any immediates.
+   */
+  BLR,
+  /*
    Instructions, which modify the Program-Counter with an operation (ADD/ADDS/SUB) involving the PC
    and write to a register(-file).
    */
