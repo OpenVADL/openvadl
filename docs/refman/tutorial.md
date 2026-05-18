@@ -2015,8 +2015,14 @@ place the return value.
 
 \listing{user_mode_emulation, User Mode Emulation Definition}
 ~~~{.vadl}
-user mode emulation UME for RV64 with ABI = {
-  
+[os : linux] 
+user mode emulation UME from RV64IM with ABI = {
+syscall instruction = ECALL
+
+syscall number = a7
+syscall argument = a{0..5}
+syscall return = a0
+
 }
 ~~~
 \endlisting
@@ -2026,6 +2032,26 @@ Some elements inside of the \ac{UME} section rely on previously defined \ac{ISA}
 using the `for` keyword after the identifier.
 Definitions from the referenced \ac{RV64} are now available for use inside the \ac{UME} section.
 The `with` keyword binds the \ac{ABI} to the section. 
+
+
+In the example in listing \r{user_mode_emulation}, the \ac{UME} section uses `ECALL` from the \ac{RV64IM} and the register aliases `a7`, `a0`
+from the \ac{ABI} `ABI`. These aliases represent X(17) and X(10), respectively. 
+The annotation `[os : linux]` selects for which target operating system system 
+calls are forwarded and which syscall number table should be used. 
+
+The `syscall instruction` declaration determines the \ac{ISA} instruction that triggers a 
+syscall. The syscall keyword is currently specific to the \ac{UME} section. 
+
+The `syscall number` declaration names the register that holds the syscall number 
+when the syscall instruction is executed. 
+
+The `syscall argument` declaration names the registers that hold the syscall 
+arguments. 
+The syscall argument convention utilizes six registers, instead of eight, compared to the function 
+argument convention in the \ac{ABI} (`function argument = a{0..7}`).
+
+The `syscall return` declaration determines into which register the host operating system will write the return value of the forwarded syscall. This differs with the function return convention in the \ac{ABI} because it is a single register instead of spanning across two  (`return value = a{0..1}`).
+
 
 ### Exception Definition 
 
@@ -2039,19 +2065,4 @@ user mode emulation UME for RV64 with ABI = {
 ~~~
 \endlisting
 
-It is also possible to select the desired OS in the .vadl file (e.g. Linux or BSD). In order for this to work, custom VADL annotations 
-and tokens are added to the .ATG file. 
-
-Templates are generated based on a RISCV implementation from QEMU's linux-user section, that has been interpolated using Thymeleaf to be viable for 
-any architecture specified in the VADL. 
-
-The cpu_loop intercepts the specific syscall instruction and dispatches to the syscall translator. 
-
-Syscalls are translated by utilizing QEMU's integrated do_syscall() function that maps guest syscall numbers to host syscall numbers and 
-writes the return value back into the guest's return register.
-
-The mechanics of how unix signals are handed to a guest process are handled in signal.c, which makes sure that the host signal gets intercepted, a signal frame
-gets set up on the guest stack and the guest PC gets returned to the registered signal handler of the guest whenever a guest program triggers a signal - for example
-by accessing an invalid address (SIGSEV). 
-
-Additional testing infrastructure ensures that the UME works as intended. 
+It is also possible to select the desired OS in the .vadl file (e.g. Linux or BSD). 
