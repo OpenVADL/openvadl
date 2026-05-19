@@ -40,9 +40,10 @@ public class HazardAnalysis extends DefinitionExtension<Resource> {
    * @param effect stage the read takes effect
    * @param condition stage, in which the condition is known
    * @param address stage, in which the address is known
+   * @param forwarding MiA spec enables forwarding to this read
    */
   public record ReadAnalysis(ReadResourceNode node, Stage effect, Stage condition,
-                             @Nullable Stage address) {
+                             @Nullable Stage address, boolean forwarding) {
   }
 
   /**
