@@ -98,7 +98,22 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
     $SMEIntOutProdInstr ($i ; D ; 4 ; ZRegH)
     }
 
+  model SMEImmToSysRegOffInstr (i: InstrWithFunct, off: Int): IsaDefs = {
+    instruction AsId ($i.id, $i.funct) : MoveImmSystemRegFormat = {}
+    encoding    AsId ($i.id, $i.funct) = { op = 0b1'1010'1010'0000'0100, op12 = 0b011'011, crm = $i.opcode + $off, rt = 0b1'1111 }
+    assembly    AsId ($i.id, $i.funct) = ( $i.mnemo, ' ', AsStr($i.funct), ', #', udec(crm))
+    }
+
+  model SMEImmToSysRegInstr (i: InstrWithFunct): IsaDefs = {
+    $SMEImmToSysRegOffInstr((AsId ($i.id, STOP ); $i.mnemo ; $i.opcode ; $i.funct); 0)
+    $SMEImmToSysRegOffInstr((AsId ($i.id, START); $i.mnemo ; $i.opcode ; $i.funct); 1)
+    }
+
 // sme instructions ************************************************************
+
+  $SMEImmToSysRegInstr     (                     (SMEMSR        ; "msr"   ; 0b0010           ; svcrsm   ))
+  $SMEImmToSysRegInstr     (                     (SMEMSR        ; "msr"   ; 0b0100           ; svcrza   ))
+  $SMEImmToSysRegInstr     (                     (SMEMSR        ; "msr"   ; 0b0110           ; svcrsmza ))
 
   $SMEIntOutProd4WaySInstr (                     (SMESMOPA4S    ; "smopa" ; 0b0100'000       ; smull    ))
   $SMEIntOutProd4WaySInstr (                     (SMESUMOPA4S   ; "sumopa"; 0b0101'000       ; sumull   ))
