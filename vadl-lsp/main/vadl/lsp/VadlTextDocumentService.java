@@ -62,14 +62,6 @@ import vadl.utils.SourceLocation;
  * Handles document-related features of the language server.
  */
 public class VadlTextDocumentService implements TextDocumentService {
-  /**
-   * How many milliseconds to wait before providing diagnostics for the latest change. If a new
-   * document version is pushed by the client within this time, the now outdated version will not
-   * receive diagnostics. This is intended to avoid showing transitory diagnostics while the
-   * developer is typing.
-   */
-  private static final int DIAGNOSTICS_DELAY_MS = 500;
-
   private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
 
   private final VadlLanguageServer server;
@@ -214,7 +206,7 @@ public class VadlTextDocumentService implements TextDocumentService {
   }
 
   /**
-   * Manages diagnostic publishing for a given document, incl. debouncing, version checking, and
+   * Manages diagnostic publishing for a given document, incl. version checking, and
    * updating dependent documents.
    *
    * @param document  Must be contained in {@code snapshots}
@@ -229,22 +221,6 @@ public class VadlTextDocumentService implements TextDocumentService {
     }
 
     var unused = server.executor().submit(() -> {
-      try {
-        // TODO Consider to instead delay for remaining time *after* generating diagnostics, to have
-        //  more accurate delay timing
-        Thread.sleep(DIAGNOSTICS_DELAY_MS);
-      } catch (InterruptedException e) {
-        return;
-      }
-      if (!documentVersionIsCurrent(document)) {
-        log.debug(
-            "ABORT publishDiagnostics (before): outdated version {} of document {}",
-            document.version,
-            document.uri
-        );
-        return;
-      }
-
       publishDiagnosticsForOneDocument(document, snapshots);
 
       // Update diagnostics for all dependent documents
@@ -309,7 +285,7 @@ public class VadlTextDocumentService implements TextDocumentService {
 
       if (!documentVersionIsCurrent(document)) {
         log.debug(
-            "ABORT publishDiagnostics (after): outdated version {} of document {}",
+            "ABORT publishDiagnostics: outdated version {} of document {}",
             document.version,
             document.uri
         );
