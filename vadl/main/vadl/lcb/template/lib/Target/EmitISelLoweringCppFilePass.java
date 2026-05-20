@@ -152,12 +152,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var stackPointerType =
         ValueType.from(abi.stackPointer().registerFile().resultType()).get();
 
-    var generatedTableGenRegisterOutput =
-        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
-            GenerateTableGenRegistersPass.class));
-
-    var requiresTruncation = requiresTruncation(generatedTableGenRegisterOutput);
-    var truncation = truncation(requiresTruncation, generatedTableGenRegisterOutput);
     var intrinsicOutput =
         (GenerateGcbIntrinsicsPass.Output) passResults
             .lastResultOf(
@@ -242,8 +236,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                     ? MachineInstructionLabel.CSEL_NEQ_I32 :
                     MachineInstructionLabel.CSEL_NEQ_I64)
             .build())));
-    map.put("requiresTruncation", requiresTruncation.isPresent());
-    map.put("truncation", truncation);
     map.put("zeroOutputInputIntrinsics",
         zeroOutputInputIntrinsics(intrinsicOutput, tableGenMachineRecords));
     return map;
@@ -268,61 +260,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         .map(intrinsic -> new ZeroOutputInputIntrinsic(intrinsic.intrinsicName(),
             intrinsic.instruction().simpleName()))
         .toList();
-  }
-
-  /**
-   * We require truncation when the alias is smaller than the reference.
-   * This will not work if we have many different register files!
-   */
-  private Optional<TableGenAliasRegisterClass> requiresTruncation(
-      GenerateTableGenRegistersPass.Output generatedTableGenRegisterOutput) {
-    for (var aliasRegisterClass : generatedTableGenRegisterOutput.aliasRegisterClasses()) {
-      var aliasTy = aliasRegisterClass.regTypes().getFirst().getBitwidth();
-      var origTy = aliasRegisterClass.underlyingRegisterFile().resultType().bitWidth();
-
-      if (aliasTy < origTy) {
-        return Optional.of(aliasRegisterClass);
-      }
-    }
-
-    return Optional.empty();
-  }
-
-  @Nullable
-  private TruncationCustomization truncation(
-      Optional<TableGenAliasRegisterClass> requiresTruncation,
-      GenerateTableGenRegistersPass.Output generatedTableGenRegisterOutput) {
-    // Early stop, no truncation
-    if (requiresTruncation.isEmpty()) {
-      return null;
-    }
-
-    var alias = requiresTruncation.get();
-    var origRegFile = alias.underlyingRegisterFile();
-    var orig = generatedTableGenRegisterOutput.registerClasses().stream()
-        .filter(x -> x.registerFileRef() == origRegFile)
-        .findFirst()
-        .get();
-
-    // We need to find the index for the sub register index;
-    var aliasRegister = alias.registers().get(0);
-    var origRegister = orig.registers().get(0);
-
-    String subRegIndex = "";
-    for (int i = 0; i < origRegister.subRegIndices().size(); i++) {
-      var subRegister = origRegister.subRegs().get(i);
-      // We don't compare that the registers directly because we don't know the order.
-      // But checking the class is good enough.
-      if (aliasRegister.compilerRegister().registerFile() == subRegister.registerFile()) {
-        subRegIndex = origRegister.subRegIndices().get(i).name();
-      }
-    }
-
-    return new TruncationCustomization(
-        orig.regTypes().getFirst(),
-        alias.regTypes().getFirst(),
-        subRegIndex
-    );
   }
 
   private String branchTypes(ValueType stackPointerType) {

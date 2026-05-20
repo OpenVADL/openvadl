@@ -70,9 +70,6 @@ void [(${namespace})]TargetLowering::anchor() {}
     [#th:block th:if="${!mergedCmpAndBranch}"]
     setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
     [/th:block]
-    [#th:block th:if="${requiresTruncation}"]
-    setOperationAction(ISD::TRUNCATE, MVT::[(${truncation.dest})], Custom);
-    [/th:block]
     setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
 
     setBooleanContents(ZeroOrOneBooleanContent);
@@ -190,25 +187,6 @@ static SDValue lowerSelect2(SDValue Op, SelectionDAG &DAG)
 
 [/th:block]
 
-[#th:block th:if="${requiresTruncation}"]
-static SDValue lowerTruncate(SDValue Op, SelectionDAG &DAG)
-{
-  SDLoc DL(Op);
-
-  SDValue Src = Op.getOperand(0);
-  EVT SrcVT = Src.getValueType();
-  EVT DstVT = Op.getValueType();
-
-  if (SrcVT == MVT::[(${truncation.src})] && DstVT == MVT::[(${truncation.dest})]) {
-    unsigned SubIdx = llvm::[(${truncation.subIdx})];
-    return DAG.getTargetExtractSubreg(SubIdx, DL, DstVT, Src);
-  }
-
-  return SDValue();
-}
-
-[/th:block]
-
 SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
 {
     switch (Op.getOpcode())
@@ -240,10 +218,6 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
     [#th:block th:if="${!mergedCmpAndBranch}"]
     case ISD::SELECT:
       return lowerSelect(Op, DAG);
-    [/th:block]
-    [#th:block th:if="${requiresTruncation}"]
-    case ISD::TRUNCATE:
-          return lowerTruncate(Op, DAG);
     [/th:block]
     case ISD::INTRINSIC_VOID: {
       SDLoc DL(Op);
