@@ -292,26 +292,42 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
               ensurePresent(i.behavior().getNodes(WritesRegisterTensor.class)
                       .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
-                  "There must be destination register").registerTensor();
+                  "There must be destination register").registerResource();
 
+          var destRegisterFileInner = destRegisterFile instanceof ArtificialResource ar
+              ? ar.innerResourceRef()
+              : destRegisterFile;
+
+          // search for register files, which have the same base
+          // register file (or reference this one), and are of the same
+          // size
           var destAliases = viam.isa().get().artificialResources()
               .stream()
-              .filter(x -> x.aliasSlice() == null)
               .filter(ArtificialResource::isRegisterFile)
-              .filter(x -> x.innerResourceRef() == destRegisterFile)
+              .filter(x -> 
+                  x != destRegisterFile
+                  && x.innerResourceRef() == destRegisterFileInner 
+                  && x.type().asDataType().bitWidth() 
+                      == destRegisterFile.type().asDataType().bitWidth())
               .toList();
 
           var srcRegisterFile =
               ensurePresent(i.behavior().getNodes(ReadsRegisterTensor.class)
                       .filter(HasRegisterTensor::hasRegisterFile)
                       .findFirst(),
-                  "There must be source register").registerTensor();
+                  "There must be source register").registerResource();
+
+          var srcRegisterFileInner = srcRegisterFile instanceof ArtificialResource ar
+              ? ar.innerResourceRef()
+              : srcRegisterFile;
 
           var srcAliases = viam.isa().get().artificialResources()
               .stream()
-              .filter(x -> x.aliasSlice() == null)
               .filter(ArtificialResource::isRegisterFile)
-              .filter(x -> x.innerResourceRef() == destRegisterFile)
+              .filter(x -> x != srcRegisterFile 
+                  && x.innerResourceRef() == srcRegisterFileInner 
+                  && x.type().asDataType().bitWidth() 
+                    == srcRegisterFile.type().asDataType().bitWidth())
               .toList();
 
           List<RegisterResource> srcResult = new ArrayList<>(srcAliases);
