@@ -17,7 +17,6 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
@@ -81,8 +80,7 @@ public class OperationForAllNode extends ExpressionNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    indices = indices.stream().map((e) -> visitor.apply(this, e, Index.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    indices = rewriteNodeList(indices, visitor, Index.class);
     body = visitor.apply(this, body, ExpressionNode.class);
   }
 

@@ -803,8 +803,8 @@ public class TypeChecker
       } else {
 
         // Static sanity check if the instructions from both pseudo formats even overlap
-        var overlap = new HashSet<>(left.format().instructions());
-        overlap.retainAll(right.format().instructions());
+        var overlap = new HashSet<>(left.instructions());
+        overlap.retainAll(right.instructions());
 
         if (overlap.isEmpty()) {
           DeferredDiagnosticStore.add(
@@ -1260,12 +1260,6 @@ public class TypeChecker
           .build());
     }
 
-    return null;
-  }
-
-  @Override
-  public Void visit(PseudoFormat pseudoFormat) {
-    // Do nothing, this is just a pseudo definition, which is checked during construction.
     return null;
   }
 
@@ -3038,8 +3032,12 @@ public class TypeChecker
       return;
     }
 
-    if (origin instanceof PseudoFormat pseudoFormat) {
-      expr.type = pseudoFormat.type();
+    if (origin instanceof ForallThenExpr forallThenExpr) {
+      expr.type = forallThenExpr.indices.stream()
+          .filter(index -> index.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow()
+          .identifier().type();
       return;
     }
 
@@ -3834,13 +3832,8 @@ public class TypeChecker
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
       } else if (type instanceof PseudoFormatType pseudoFormatType) {
-        check(pseudoFormatType.format());
-
-        var fieldType = pseudoFormatType.format().getFieldType(fieldName);
-        if (fieldType == null) {
-          var formatName = pseudoFormatType.format().name();
-          var formatFieldNames = pseudoFormatType.format().fields().stream()
-              .map(PseudoFormat.FormatField::name).toList();
+        if (!pseudoFormatType.contains(fieldName)) {
+          var formatFieldNames = pseudoFormatType.fieldNames();
           var suggestions = Levenshtein.suggestions(fieldName, formatFieldNames);
           if (suggestions.isEmpty()) {
             suggestions = formatFieldNames.stream().limit(3).toList();
@@ -3848,12 +3841,12 @@ public class TypeChecker
 
           addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
               .description("Intersection format `%s` doesn't have any field with this name",
-                  formatName)
+                  pseudoFormatType.name())
               .suggestions(suggestions)
               .build());
         }
 
-        subCall.formatFieldType = fieldType;
+        subCall.formatFieldType = pseudoFormatType.get(fieldName);
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
       } else if (type instanceof StatusType) {
@@ -4015,7 +4008,8 @@ public class TypeChecker
     // if the target is not a typed node, we just assume that it is some expression
     // that can be sliced.
     // if it is a let expr, we must also only check the target
-    if (!(callTarget instanceof TypedNode typedNode) || callTarget instanceof LetExpr) {
+    if (!(callTarget instanceof TypedNode typedNode) || callTarget instanceof LetExpr
+        || callTarget instanceof ForallThenExpr) {
       expr.typeBeforeSlice = check((Expr) expr.target);
       return;
     }
@@ -4401,17 +4395,7 @@ public class TypeChecker
               .build());
     }
 
-    final PseudoFormat pseudoFormat = i.symbolTable().findAs(i.id, PseudoFormat.class);
-    requireNonNull(pseudoFormat);
-
-    if (ops.isEmpty()) {
-      // empty operation sets are fine, the expression is trivially true
-      i.identifier().type = pseudoFormat.type();
-      return;
-    }
-
-    ops.values().forEach(pseudoFormat::add);
-    i.identifier().type = pseudoFormat.type();
+    i.identifier().type = PseudoFormatType.of(ops.values());
   }
 
   @Override

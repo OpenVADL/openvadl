@@ -267,15 +267,6 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(PseudoFormat pseudoFormat) {
-    beforeTravel(pseudoFormat);
-    pseudoFormat.operations().forEach(this::travel);
-    pseudoFormat.formats().forEach(this::travel);
-    afterTravel(pseudoFormat);
-    return null;
-  }
-
-  @Override
   public Void visit(DerivedFormatField definition) {
     beforeTravel(definition);
     definition.forEachChild(this::travel);
