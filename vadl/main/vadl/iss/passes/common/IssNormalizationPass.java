@@ -73,7 +73,6 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
@@ -876,10 +875,5 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   @Handler
   void handle(OperationForAllNode.Index toHandle) {
     // do nothing
-  }
-
-  @Handler
-  void handle(GetFieldNode toHandle) {
-    throw new UnsupportedOperationException("Type GetFieldNode not yet implemented");
   }
 }

@@ -154,8 +154,6 @@ interface DefinitionVisitor<R> {
 
   R visit(FormatDefinition definition);
 
-  R visit(PseudoFormat pseudoFormat);
-
   R visit(DerivedFormatField definition);
 
   R visit(RangeFormatField definition);

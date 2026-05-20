@@ -208,6 +208,7 @@ public class Ungrouper
 
   @Override
   public Expr visit(ForallThenExpr expr) {
+    expr.thenExpr = expr.thenExpr.accept(this);
     return expr;
   }
 
@@ -253,14 +254,6 @@ public class Ungrouper
     for (var f : definition.fields) {
       f.accept(this);
     }
-    return null;
-  }
-
-  @Override
-  public Void visit(PseudoFormat definition) {
-    ungroupAnnotations(definition);
-    definition.operations().forEach(f -> f.accept(this));
-    definition.formats().forEach(f -> f.accept(this));
     return null;
   }
 

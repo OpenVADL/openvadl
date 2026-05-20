@@ -916,7 +916,7 @@ class SymbolTable {
       var childTable = currentSymbols().createChild();
       expr.symbolTable = childTable;
       expr.indices.forEach(index -> {
-        childTable.defineSymbol(index.identifier().name, new PseudoFormat(index.identifier()));
+        childTable.defineSymbol(index.identifier().name, expr);
         index.symbolTable = childTable;
         index.identifier().symbolTable = childTable;
 

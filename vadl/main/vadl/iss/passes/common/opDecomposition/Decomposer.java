@@ -52,7 +52,6 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
@@ -838,11 +837,6 @@ class Decomposer
   void handle(Request rq, OperationForAllNode.Index toHandle) {
     // Nothing to decompose
     rq.result = toHandle;
-  }
-
-  @Handler
-  void handle(Request rq, GetFieldNode toHandle) {
-    throw new UnsupportedOperationException("Type GetFieldNode not yet implemented");
   }
 
   private IssReadRegNode.AccessKind readAccessKind(ReadRegTensorNode read) {

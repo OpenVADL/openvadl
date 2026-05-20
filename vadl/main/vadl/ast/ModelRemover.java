@@ -51,11 +51,6 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
-  public Definition visit(PseudoFormat pseudoFormat) {
-    return pseudoFormat;
-  }
-
-  @Override
   public Definition visit(DerivedFormatField definition) {
     return definition;
   }

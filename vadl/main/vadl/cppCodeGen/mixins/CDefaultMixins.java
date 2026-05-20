@@ -52,7 +52,6 @@ import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -455,14 +454,6 @@ public interface CDefaultMixins {
     @Handler
     default void handle(CGenContext<Node> ctx, StructGetFieldNode toHandle) {
       throw new UnsupportedOperationException("Type StructGetFieldNode not yet implemented");
-    }
-  }
-
-  @SuppressWarnings("MissingJavadocType")
-  interface FieldAccess {
-    @Handler
-    default void handle(CGenContext<Node> ctx, GetFieldNode toHandle) {
-      throw new UnsupportedOperationException("Type GetFieldNode not yet implemented");
     }
   }
 

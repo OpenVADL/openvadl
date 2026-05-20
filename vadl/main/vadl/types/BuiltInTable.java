@@ -659,7 +659,7 @@ public class BuiltInTable {
           .build();
 
   /**
-   * {@code function opequ ( a : PseudoFormat, b : PseudoFormat ) -> Bool // <=> a = b }
+   * {@code function opequ ( a : PseudoFormatType, b : PseudoFormatType ) -> Bool // <=> a = b }
    */
   public static final BuiltIn OP_EQU =
       func("VADL::opequ", "=",
@@ -670,7 +670,7 @@ public class BuiltInTable {
 
 
   /**
-   * {@code function opneq ( a : PseudoFormat, b : PseudoFormat ) -> Bool // <=> a != b }
+   * {@code function opneq ( a : PseudoFormatType, b : PseudoFormatType ) -> Bool // <=> a != b }
    */
   public static final BuiltIn OP_NEQ =
       func("VADL::opneq", "!=",

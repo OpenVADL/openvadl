@@ -67,7 +67,6 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.GetFieldNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
@@ -739,10 +738,5 @@ class PseudoNodeOperandCollector {
   @Handler
   protected void handle(ReadSignalNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
-  }
-
-  @Handler
-  protected void handle(GetFieldNode node) {
-    PseudoNodeOperandCollectorDispatcher.dispatch(this, node.expression());
   }
 }
