@@ -203,6 +203,7 @@ public class Ungrouper
 
   @Override
   public Expr visit(ExistsInThenExpr expr) {
+    expr.thenExpr = expr.thenExpr.accept(this);
     return expr;
   }
 

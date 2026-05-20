@@ -781,18 +781,18 @@ public class TypeChecker
     }
 
     if (args.size() == 2 && BuiltInTable.operationEqualityPredicates.contains(builtIn)) {
-      // Special case for equality over bound variables of the forall..then expression
+      // Special case for equality over bound variables of the forall and exists then expression
       final Expr l = args.getFirst();
       final Expr r = args.getLast();
 
-      if (!(l.type() instanceof PseudoFormatType left)) {
+      if (!(l.type() instanceof PseudoFormatType)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location, "Expected an intersection format here but the left side "
                 + "was an `%s`", l.type())
             .build());
 
-      } else if (!(r.type() instanceof PseudoFormatType right)) {
+      } else if (!(r.type() instanceof PseudoFormatType)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location,
@@ -801,20 +801,6 @@ public class TypeChecker
             .build());
 
       } else {
-
-        // Static sanity check if the instructions from both pseudo formats even overlap
-        var overlap = new HashSet<>(left.instructions());
-        overlap.retainAll(right.instructions());
-
-        if (overlap.isEmpty()) {
-          DeferredDiagnosticStore.add(
-              warning("This expression is always `%s`".formatted(builtIn == BuiltInTable.OP_NEQ),
-                  location)
-                  .description("The sets of instructions bound by `%s` and `%s` do not overlap",
-                      ((Identifier) l).name, ((Identifier) r).name)
-                  .build());
-        }
-
         return new BuiltInCheckResult(Type.bool(), args);
       }
     }
@@ -3041,6 +3027,15 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof ExistsInThenExpr existsInThenExpr) {
+      expr.type = existsInThenExpr.indices.stream()
+          .filter(index -> index.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow()
+          .identifier().type();
+      return;
+    }
+
     if (origin instanceof ForallExpr forallExpr) {
       // No need to check because this can only be the case if we are inside the for statement.
       expr.type =
@@ -4009,7 +4004,7 @@ public class TypeChecker
     // that can be sliced.
     // if it is a let expr, we must also only check the target
     if (!(callTarget instanceof TypedNode typedNode) || callTarget instanceof LetExpr
-        || callTarget instanceof ForallThenExpr) {
+        || callTarget instanceof ForallThenExpr || callTarget instanceof ExistsInThenExpr) {
       expr.typeBeforeSlice = check((Expr) expr.target);
       return;
     }
@@ -4350,7 +4345,28 @@ public class TypeChecker
 
   @Override
   public Void visit(ExistsInThenExpr expr) {
-    throw addErrorAndStopChecking(unimplementedError(expr));
+
+    expr.type = Type.bool();
+
+    var annotation = getContextNode(AnnotationDefinition.class);
+    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
+      final var diagnostic = error("Invalid `exists-then` expression", expr)
+          .description("The exists-then expression is only permissible for annotations on "
+              + "the `group` definition.");
+      addErrorAndContinueChecking(diagnostic.build());
+      return null;
+    }
+
+    expr.indices.forEach(i -> checkGroupQuantifiers(i.identifier(), i.operations));
+    checkWith(expr.thenExpr, Type.bool());
+    if (expr.thenExpr.type() != Type.bool()) {
+      addErrorAndContinueChecking(error("Type Mismatch", expr.thenExpr)
+          .locationDescription(expr.thenExpr,
+              "Expected an expression of type `Bool`, but got `%s`", expr.thenExpr.type())
+          .build());
+    }
+
+    return null;
   }
 
   @Override
@@ -4367,7 +4383,7 @@ public class TypeChecker
       return null;
     }
 
-    expr.indices.forEach(this::checkForAllThenIndex);
+    expr.indices.forEach(i -> checkGroupQuantifiers(i.identifier(), i.operations));
     checkWith(expr.thenExpr, Type.bool());
     if (expr.thenExpr.type() != Type.bool()) {
       addErrorAndContinueChecking(error("Type Mismatch", expr.thenExpr)
@@ -4379,10 +4395,10 @@ public class TypeChecker
     return null;
   }
 
-  private void checkForAllThenIndex(ForallThenExpr.Index i) {
+  private void checkGroupQuantifiers(Identifier identifier, List<IsId> operations) {
 
     final Map<IsId, OperationDefinition> ops = new LinkedHashMap<>();
-    for (IsId o : i.operations) {
+    for (IsId o : operations) {
       if (o.target() instanceof OperationDefinition op) {
         ops.put(o, op);
         continue;
@@ -4395,7 +4411,7 @@ public class TypeChecker
               .build());
     }
 
-    i.identifier().type = PseudoFormatType.of(ops.values());
+    identifier.type = PseudoFormatType.of(ops.values());
   }
 
   @Override

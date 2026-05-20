@@ -2504,13 +2504,14 @@ class ExistsInExpr extends Expr {
 }
 
 class ExistsInThenExpr extends Expr {
-  List<Condition> conditions;
+  @Child
+  List<ExistsInThenExpr.Index> indices;
   @Child
   Expr thenExpr;
   SourceLocation loc;
 
-  ExistsInThenExpr(List<Condition> conditions, Expr thenExpr, SourceLocation loc) {
-    this.conditions = conditions;
+  ExistsInThenExpr(List<ExistsInThenExpr.Index> indices, Expr thenExpr, SourceLocation loc) {
+    this.indices = indices;
     this.thenExpr = thenExpr;
     this.loc = loc;
   }
@@ -2529,22 +2530,12 @@ class ExistsInThenExpr extends Expr {
   void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("exists ");
     var isFirst = true;
-    for (Condition condition : conditions) {
+    for (ExistsInThenExpr.Index index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }
       isFirst = false;
-      condition.id.prettyPrint(0, builder);
-      builder.append(" in {");
-      var isFirstOp = true;
-      for (IsId operation : condition.operations) {
-        if (!isFirstOp) {
-          builder.append(", ");
-        }
-        isFirstOp = false;
-        operation.prettyPrint(0, builder);
-      }
-      builder.append("}");
+      index.prettyPrint(indent, builder);
     }
     if (isBlockLayout(thenExpr)) {
       builder.append(" then\n");
@@ -2570,16 +2561,75 @@ class ExistsInThenExpr extends Expr {
       return false;
     }
     ExistsInThenExpr that = (ExistsInThenExpr) o;
-    return Objects.equals(conditions, that.conditions)
+    return Objects.equals(indices, that.indices)
         && Objects.equals(thenExpr, that.thenExpr);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(conditions, thenExpr);
+    return Objects.hash(indices, thenExpr);
   }
 
-  record Condition(IsId id, List<IsId> operations) {
+  static final class Index extends Node implements IdentifiableNode {
+    IsId id;
+    @Child
+    List<IsId> operations;
+
+    public Index(IsId id, List<IsId> operations) {
+      this.id = id;
+      this.operations = operations;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return (Identifier) id;
+    }
+
+    @Override
+    public SourceLocation location() {
+      var loc = id.location();
+      if (!operations.isEmpty()) {
+        loc = loc.join(operations.get(operations.size() - 1).location());
+      }
+      return loc;
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      id.prettyPrint(0, builder);
+      builder.append(" in {");
+      var isFirstOp = true;
+      for (IsId operation : operations) {
+        if (!isFirstOp) {
+          builder.append(", ");
+        }
+        isFirstOp = false;
+        operation.prettyPrint(0, builder);
+      }
+      builder.append("}");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Index index = (Index) o;
+      return id.equals(index.id) && operations.equals(index.operations);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = id.hashCode();
+      result = 31 * result + operations.hashCode();
+      return result;
+    }
   }
 }
 

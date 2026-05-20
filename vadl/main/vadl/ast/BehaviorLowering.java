@@ -100,6 +100,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
+import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
@@ -1136,6 +1137,21 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new OperationForAllNode.Index(getViamType(format), ops);
     }
 
+    if (computedTarget instanceof ExistsInThenExpr existsInThenExpr) {
+      final var index = existsInThenExpr.indices.stream()
+          .filter(idx -> idx.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow();
+      final var format = (PseudoFormatType) index.identifier().type();
+
+      final List<Operation> ops = format.operations().stream()
+          .map(viamLowering::fetch)
+          .filter(Optional::isPresent).map(Optional::get)
+          .map(Operation.class::cast)
+          .toList();
+      return new OperationForAllNode.Index(getViamType(format), ops);
+    }
+
     // Function call without arguments (and no parenthesis)
     if (computedTarget instanceof FunctionDefinition functionDefinition) {
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
@@ -1650,8 +1666,22 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(ExistsInThenExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+
+    final List<OperationForAllNode.Index> indices = new ArrayList<>();
+    for (ExistsInThenExpr.Index idx : expr.indices) {
+      final var format = (PseudoFormatType) idx.identifier().type();
+      final List<Operation> ops = format.operations().stream()
+          .map(viamLowering::fetch)
+          .filter(Optional::isPresent).map(Optional::get)
+          .map(Operation.class::cast)
+          .toList();
+      final var idxNode = new OperationForAllNode.Index(getViamType(format), ops);
+      indices.add(idxNode);
+    }
+
+    var body = fetch(expr.thenExpr);
+    var type = getViamType(expr.type());
+    return new OperationExistsNode(type, indices, body);
   }
 
   @Override

@@ -55,6 +55,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
+import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -838,6 +839,17 @@ class Decomposer
     // Nothing to decompose
     rq.result = toHandle;
   }
+
+  @Handler
+  void handle(Request rq, OperationExistsNode toHandle) {
+    final var indices = toHandle.indices().stream()
+        .map(i -> request(i, rq.slice))
+        .map(OperationForAllNode.Index.class::cast)
+        .toList();
+    final var body = request(toHandle.body(), rq.slice);
+    rq.result = new OperationExistsNode(toHandle.type(), indices, body);
+  }
+
 
   private IssReadRegNode.AccessKind readAccessKind(ReadRegTensorNode read) {
     if (read instanceof IssReadRegNode issRead) {

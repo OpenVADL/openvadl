@@ -91,6 +91,7 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
+import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -1150,6 +1151,11 @@ class InstructionFieldExpansionCodeGenerator implements CDefaultMixins.AllExpres
   }
 
   @Handler
+  protected void handle(CGenContext<Node> ctx, OperationExistsNode toHandle) {
+    throwNotAllowed(toHandle, "exists then node");
+  }
+
+  @Handler
   protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
     throwNotAllowed(toHandle, "field ref node");
   }
@@ -1282,6 +1288,11 @@ class InstructionFieldAccessExpansionCodeGeneratorForImmediateCase
   @Handler
   protected void handle(CGenContext<Node> ctx, OperationForAllNode toHandle) {
     throwNotAllowed(toHandle, "forall then node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, OperationExistsNode toHandle) {
+    throwNotAllowed(toHandle, "exists then node");
   }
 
   @Handler
@@ -1421,6 +1432,11 @@ class InstructionFieldAccessExpansionCodeGeneratorForLabelCase
   @Handler
   protected void handle(CGenContext<Node> ctx, OperationForAllNode toHandle) {
     throwNotAllowed(toHandle, "forall then node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, OperationExistsNode toHandle) {
+    throwNotAllowed(toHandle, "exists then node");
   }
 
   @Handler
