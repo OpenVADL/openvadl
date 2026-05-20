@@ -160,13 +160,6 @@ model-type SVEWhileStatModel = (WhileRec, Id) -> Stat
 
 //  Reported Diagnostics:
 //
-//  error: The macro `SVEWhileCondInstr` expects 4 arguments but 1 were provided.
-//       ╭── test/resources/frontend-snapshots/macro/invalidHigherOrderModelWrongArgumentCount.vadl:147:5
-//       │
-//   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
-//       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//       │
-//
 //  error: SyntaxType Mismatch
 //       ╭── test/resources/frontend-snapshots/macro/invalidHigherOrderModelWrongArgumentCount.vadl:142:148
 //       │
@@ -188,6 +181,13 @@ model-type SVEWhileStatModel = (WhileRec, Id) -> Stat
 //       │
 //   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
 //       │                                      ^ The parser expected `)` here.
+//       │
+//
+//  error: The macro `SVEWhileCondInstr` expects 4 arguments but 1 were provided.
+//       ╭── test/resources/frontend-snapshots/macro/invalidHigherOrderModelWrongArgumentCount.vadl:147:5
+//       │
+//   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
+//       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //       │
 //
 //

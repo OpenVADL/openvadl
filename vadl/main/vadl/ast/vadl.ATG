@@ -74,6 +74,7 @@ TOKENS
   decLit = digit {digit | "'"}.
   embeddedSource = "-<{" {validSourceCharacters} "}>-".
 
+  // NOTE: Keep in sync with {@link ParserUtils::identifierPattern}
   identifierToken = letter {letter | digit | "_"}.
   string =
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
@@ -333,10 +334,8 @@ ISA section (#instructionsetDefinition). It is also possible to define macros (#
     SYNC
     topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def); .)
     | macroDefinition<out ModelDefinition def> (. addDef(ast.definitions, def);
-                                                  if (!hasErrors()) {
-                                                    //SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def);
-                                                    macroTable.addModelDefinition(def);
-                                                  }
+                                                 //SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def);
+                                                 macroTable.addModelDefinition(def);
                                                .)
   }SYNC.
 
@@ -442,7 +441,7 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
                                                                     }); .)
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out LinkedList<Definition> definitions.>       (. macroTable = macroTable.pop(); .)
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, ParserUtils.expandAssemblyDefinitionsInIsa(definitions), startLocation.join(lastTokenLoc()));
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, ParserUtils.expandAssemblyDefinitionsInIsa(this, definitions), startLocation.join(lastTokenLoc()));
                                                                    macroTable.defineSymbol(isaDef); .)
   .
 

@@ -1,0 +1,46 @@
+constant AsId("") = 3
+constant AsId("6nine") = 3
+constant AsId("function") = 2
+constant AsId("7") = 2
+constant AsId("_") = 2
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Identifier: ``
+//       ╭── test/resources/frontend-snapshots/parser/invalidIdentifiers.vadl:1:10
+//       │
+//     1 │ constant AsId("") = 3
+//       │          ^^^^^^^^ note: Identifiers cannot be empty.
+//       │
+//
+//  error: Invalid Identifier: `6nine`
+//       ╭── test/resources/frontend-snapshots/parser/invalidIdentifiers.vadl:2:10
+//       │
+//     2 │ constant AsId("6nine") = 3
+//       │          ^^^^^^^^^^^^^ note: Identifiers must start with a character, followed by characters, numbers and or underscore, but `6nine` doesn't.
+//       │
+//
+//  error: Invalid Identifier: `function`
+//       ╭── test/resources/frontend-snapshots/parser/invalidIdentifiers.vadl:3:10
+//       │
+//     3 │ constant AsId("function") = 2
+//       │          ^^^^^^^^^^^^^^^^ note: This expands to `function` which clashes with a keyword.
+//       │
+//
+//  error: Invalid Identifier: `7`
+//       ╭── test/resources/frontend-snapshots/parser/invalidIdentifiers.vadl:4:10
+//       │
+//     4 │ constant AsId("7") = 2
+//       │          ^^^^^^^^^ note: Identifiers must start with a character, followed by characters, numbers and or underscore, but `7` doesn't.
+//       │
+//
+//  error: Invalid Identifier: `_`
+//       ╭── test/resources/frontend-snapshots/parser/invalidIdentifiers.vadl:5:10
+//       │
+//     5 │ constant AsId("_") = 2
+//       │          ^^^^^^^^^ note: Identifiers must start with a character, followed by characters, numbers and or underscore, but `_` doesn't.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

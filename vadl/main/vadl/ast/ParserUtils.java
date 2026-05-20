@@ -410,6 +410,9 @@ class ParserUtils {
     return ID_TOKENS[token.kind];
   }
 
+  /**
+   * NOTE: Keep in sync with the grammar of the parser.
+   */
   private static final Pattern identifierPattern = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
 
   /**
@@ -425,12 +428,18 @@ class ParserUtils {
     }
 
     // Only some keywords are allowed as tokens.
-    var tokenId = Scanner.literals.get(text);
-    if (tokenId != null && !ID_TOKENS[tokenId]) {
-      return false;
-    }
+    return !isKeyword(text);
+  }
 
-    return true;
+  /**
+   * Checks whether a string is a keyword.
+   *
+   * @param text to be checked.
+   * @return whether it is a keyword.
+   */
+  static boolean isKeyword(String text) {
+    var token = Scanner.literals.get(text);
+    return token != null && !ID_TOKENS[token];
   }
 
   /**
@@ -669,6 +678,7 @@ class ParserUtils {
   static Node expandNode(Parser parser, Node node) {
     var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, List.of());
     var expanded = macroExpander.expandNode(node, parser.ast);
+    parser.diagnostics.addAll(macroExpander.errors);
     return expanded;
   }
 
@@ -682,15 +692,17 @@ class ParserUtils {
    * @return returns the original isaDefs with the Assemblies expanded.
    */
   @SuppressWarnings("NonApiType")
-  static LinkedList<Definition> expandAssemblyDefinitionsInIsa(LinkedList<Definition> isaDefs) {
+  static LinkedList<Definition> expandAssemblyDefinitionsInIsa(Parser parser,
+                                                               LinkedList<Definition> isaDefs) {
     for (var iter = isaDefs.listIterator(); iter.hasNext(); ) {
       var def = iter.next();
       if (!(def instanceof AssemblyDefinition assembly) || assembly.identifiers.size() == 1) {
         continue;
       }
 
-      var expanded = new MacroExpander(Map.of(), Map.of(), def.location().fullExpandedFromStack())
-          .expandAssemblies(assembly);
+      var expander = new MacroExpander(Map.of(), Map.of(), def.location().fullExpandedFromStack());
+      var expanded = expander.expandAssemblies(assembly);
+      parser.diagnostics.addAll(expander.errors);
       iter.set(expanded.getFirst());
       expanded.subList(1, expanded.size()).forEach(iter::add);
     }
