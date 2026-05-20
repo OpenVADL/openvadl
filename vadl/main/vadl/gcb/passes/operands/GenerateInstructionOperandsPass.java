@@ -70,6 +70,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
+import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -686,6 +687,12 @@ class PseudoNodeOperandCollector {
   protected void handle(OperationForAllNode.Index node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
+
+  @Handler
+  protected void handle(OperationExistsNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
 
   @Handler
   protected void handle(LetNode node) {
