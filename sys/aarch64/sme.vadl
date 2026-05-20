@@ -1,4 +1,6 @@
-import sve::AArch64SVEandSME
+model VLength () : Id = {VL128}         // default vector length is 128
+
+import sve::AArch64SVEandSME with (AsStr("VLength=", $VLength))
 
 instruction set architecture AArch64SME extending AArch64SVEandSME = {
 
