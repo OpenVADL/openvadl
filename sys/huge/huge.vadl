@@ -1,0 +1,165 @@
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// huge instruction set specification for stress tests of the OpenVADL tool chain
+
+instruction set architecture HUGE = {
+
+  using Index    = Bits<5>              // register file index for 32 registers
+  using IndexC   = Bits<4>              // register file index for the lower 16 registers
+  using Shift    = Bits<6>              // size for shift amounts
+  using BitsB    = Bits<8>              // memory size / byte operations
+  using BitsH    = Bits<16>             // half word size (16 bit)
+  using BitsW    = Bits<32>             // full word size (32 bit)
+  using BitsD    = Bits<64>             // double word size
+  using SIntD    = SInt<64>             // double word size
+  using Addrs    = BitsD                // address has double word size
+  using Instr    = BitsD                // instructions have double word size
+
+  memory MEM : Addrs  -> BitsB          // byte addressed memory
+
+  program counter PC : Addrs            // program counter TODO alias R(15)
+
+  [zero: R(0)]                          // register with index 0 always is 0
+  register R : Index -> BitsD           // general purpose register file
+
+  [overwrite source: sign]              // RB is sign extended on write
+  alias register RB = R(*)( 7..0)       // byte   register file
+  [overwrite source: sign]              // RH is sign extended on write
+  alias register RH = R(*)(15..0)       // half   register file
+  [overwrite source: sign]              // RW is sign extended on write
+  alias register RW = R(*)(31..0)       // word   register file
+  alias register RD = R                 // double register file
+
+  // instruction: instruction id, assembly name,  id, opcode
+  record InstrRec (id : Id, name : Str, op : Id, opcode : Ex)
+
+  // condition: CondCode id, assembly extension string, condition expression
+  record CondRec  (condId : Id, condSize : Id, condStr : Str, condEx : Ex)
+
+  // shifted operands: shift identifier, encodings, shift expression, assembly elements
+  record ShiftRec (sftId : Id, sftEx : Ex, encs : Encs, asms : Ex)
+
+  enumeration OpSize : Bits<2> =        // instruction operation size
+    { B                                 // Byte
+    , H                                 // Half
+    , W                                 // Word
+    , D                                 // Double
+    }
+
+  enumeration Condition : Bits<3> =     // condition code encodings
+    { EQ                                // EQual
+    , NE                                // Not Equal
+    , SLT                               // Signed Less Than
+    , SLE                               // Signed Less than or Equal
+    , ULT                               // Unsigned Less Than
+    , ULE                               // Unsigned Less than or Equal
+    , AL                                // Always
+    , IL                                // ILligal
+    }
+
+  enumeration OpShift : Bits<2> =       // operation with shifted operand
+    { Add                               // Addition
+    , Sub                               // Subtraction
+    , And                               // bitwise And
+    , Or                                // bitwise Or
+    }
+
+  format ArithmeticRegFormat : Instr =  // arithmetic register +-&| shifted register format
+    { opsize   : Bits<2>                // operation size
+    , cond     : Bits<3>                // condition
+    , ccsz     : Bits<2>                // condition size
+    , cregl    : IndexC                 // condition register left
+    , cregr    : IndexC                 // condition register right
+    , op       : Bits<7>                // opcode
+    , regd     : Index                  // destination  register
+    , regl     : Index                  // left  source register
+    , regr     : Index                  // right source register
+    , regs     : Index                  // shift source register
+    , opShift  : Bits<2>                // operation with shifted register
+    , funct    : Bits<14>               // function code
+    , shift    : Shift                  // shift amount
+    }
+
+  format ArithmeticImmFormat : Instr =  // arithmetic immediate shifted format
+    { opsize   : Bits<2>                // operation size
+    , cond     : Bits<3>                // condition
+    , ccsz     : Bits<2>                // condition size
+    , cregl    : IndexC                 // condition register left
+    , cregr    : IndexC                 // condition register right
+    , op       : Bits<5>                // opcode
+    , immShift : Bits<2>                // shift kind for immediate value
+    , regd     : Index                  // destination  register
+    , regl     : Index                  // left  source register
+    , imm      : BitsW                  // immediate value
+    , imm0     = imm as SIntD           // sign extended immediate value
+    , imm1     = imm as SIntD << 16     // sign extended shifted immediate value
+    , imm2     = imm as SIntD << 32     // sign extended shifted immediate value
+    , imm3     = imm as SIntD << 48     // sign extended shifted immediate value
+    }
+
+  model-type InstrModel = (Id, Str, CondRec, InstrRec, ShiftRec) -> IsaDefs
+
+  model ArithmeticRegInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
+    instruction AsId ($i.id, $size, $sft.sftId, $c.condStr) : ArithmeticRegFormat =
+      if ($c.condEx) then
+        AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $sft.sftEx)
+    encoding AsId ($i.id, $size, $sft.sftId, $c.condStr) = {
+      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
+      op = 0, funct = $i.opcode, $sft.encs
+      }
+    assembly AsId ($i.id, $size, $sft.sftId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
+      register(regd), ',', register(regl), ',', register(regr), $sft.asms)
+    }
+
+  model ArithShiftInstr (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
+    $m ($size ; $sizeStr ; $c ; $i ; (Zero   ; (AsId(R, $size)(regr)) ;               regs= 0, shift = 0, opShift = OpShift::Add ;  ""                                     ))
+    $m ($size ; $sizeStr ; $c ; $i ; (Add    ; (AsId(R, $size)(regr) + AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Add ; ("+", register(regs)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sub    ; (AsId(R, $size)(regr) - AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Sub ; ("-", register(regs)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (And    ; (AsId(R, $size)(regr) & AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::And ; ("&", register(regs)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (Or     ; (AsId(R, $size)(regr) | AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Or  ; ("|", register(regs)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (AddSft ; (AsId(R, $size)(regr) + AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Add ; ("+", register(regs), "<<", udec(shift))))
+    $m ($size ; $sizeStr ; $c ; $i ; (SubSft ; (AsId(R, $size)(regr) - AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Sub ; ("-", register(regs), "<<", udec(shift))))
+    $m ($size ; $sizeStr ; $c ; $i ; (AndSft ; (AsId(R, $size)(regr) & AsId(R, $size)(regs) << shift)   ; opShift = OpShift::And ; ("&", register(regs), "<<", udec(shift))))
+    $m ($size ; $sizeStr ; $c ; $i ; (OrSft  ; (AsId(R, $size)(regr) | AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Or  ; ("|", register(regs), "<<", udec(shift))))
+    }
+
+  model ArithCondInstr (m: InstrModel, size: Id, sizeStr: Str, i : InstrRec) : IsaDefs = {
+    $ArithShiftInstr ($m ;$size ; $sizeStr ; (EQ ; B ; "beq" ; RB(cregl)  = RB(cregr)) ; $i)
+    $ArithShiftInstr ($m ;$size ; $sizeStr ; (EQ ; H ; "heq" ; RH(cregl)  = RH(cregr)) ; $i)
+    $ArithShiftInstr ($m ;$size ; $sizeStr ; (EQ ; W ; "weq" ; RW(cregl)  = RW(cregr)) ; $i)
+    $ArithShiftInstr ($m ;$size ; $sizeStr ; (EQ ; D ; "deq" ; RD(cregl)  = RD(cregr)) ; $i)
+    $ArithShiftInstr ($m ;$size ; $sizeStr ; (NE ; B ; "bne" ; RB(cregl) != RB(cregr)) ; $i)
+    $ArithShiftInstr ($m ;$size ; $sizeStr ; (NE ; H ; "hne" ; RH(cregl) != RH(cregr)) ; $i)
+    $ArithShiftInstr ($m ;$size ; $sizeStr ; (NE ; W ; "wne" ; RW(cregl) != RW(cregr)) ; $i)
+    $ArithShiftInstr ($m ;$size ; $sizeStr ; (NE ; D ; "dne" ; RD(cregl) != RD(cregr)) ; $i)
+    }
+
+  model ArithSizeInstr (m: InstrModel, i : InstrRec) : IsaDefs = {
+    $ArithCondInstr ($m ; B ; "b" ; $i )
+    $ArithCondInstr ($m ; H ; "h" ; $i )
+    $ArithCondInstr ($m ; W ; "w" ; $i )
+    $ArithCondInstr ($m ; D ; "d" ; $i )
+  }
+
+  model SizeCondInstr (m: InstrModel, i : InstrRec) : IsaDefs = {
+    $ArithSizeInstr ($m ; $i )
+  }
+
+// arithmetic register instructions ********************************************
+
+  $SizeCondInstr    (ArithmeticRegInstr ;  (ADD     ; "add"   ; add    ; 0b00'0000'0000'0000) )
+  $SizeCondInstr    (ArithmeticRegInstr ;  (SUB     ; "sub"   ; sub    ; 0b00'0000'0000'0001) )
+  }
