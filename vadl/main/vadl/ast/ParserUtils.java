@@ -427,8 +427,14 @@ class ParserUtils {
       return false;
     }
 
+
     // Only some keywords are allowed as tokens.
-    return !isKeyword(text);
+    var tokenId = Scanner.literals.get(text);
+    if (tokenId != null && !ID_TOKENS[tokenId]) {
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -438,8 +444,7 @@ class ParserUtils {
    * @return whether it is a keyword.
    */
   static boolean isKeyword(String text) {
-    var token = Scanner.literals.get(text);
-    return token != null && !ID_TOKENS[token];
+    return Scanner.literals.containsKey(text);
   }
 
   /**
