@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
-import vadl.error.DiagnosticList;
 import vadl.utils.RopeList;
 import vadl.utils.SourceLocation;
 
@@ -71,9 +70,9 @@ class MacroExpander
    */
   private Expr expandExprRaw(Expr expr) {
     var result = expr.accept(this);
-    if (!errors.isEmpty()) {
-      throw new DiagnosticList(errors);
-    }
+    //if (!errors.isEmpty()) {
+    // throw new DiagnosticList(errors);
+    //}
     if (result instanceof BinaryExpr binaryExpr && !binaryExpr.hasBeenReordered) {
       return ParserUtils.reorderBinaryExpr(binaryExpr);
     }
@@ -96,9 +95,6 @@ class MacroExpander
   @SuppressWarnings("unchecked")
   private <T extends Statement> T expandStatement(T statement) {
     var result = statement.accept(this);
-    if (!errors.isEmpty()) {
-      throw new DiagnosticList(errors);
-    }
     return (T) result;
   }
 
@@ -127,9 +123,6 @@ class MacroExpander
   private <T extends Definition> T expandDefinition(T def) {
     var result = def.accept(this)
         .withAnnotations(expandAnnotations(def.annotations));
-    if (!errors.isEmpty()) {
-      throw new DiagnosticList(errors);
-    }
     return (T) result;
   }
 
@@ -438,17 +431,18 @@ class MacroExpander
     }
 
     var name = nameBuilder.toString().trim();
-    if (name.isEmpty()) {
-      this.errors.add(error("Invalid Empty Identifier", expr)
-          .locationDescription(expr, "This expands to an empty identifier name.")
-          .note("Empty identifiers are forbidden as they needlessly obfuscate the code.")
-          .build());
-    } else if (!ParserUtils.isValidIdentifier(name)) {
+    if (!ParserUtils.isValidIdentifier(name)) {
+      var clashesWithKeyword = ParserUtils.isKeyword(name);
+      var invalidFormat = !clashesWithKeyword && !name.isEmpty();
       this.errors.add(error("Invalid Identifier: `%s`".formatted(name), expr)
-          .locationDescription(expr, "This expands to an invalid identifier name.")
-          .note(
-              "Identifiers must match the regex /[a-zA-Z][a-zA-Z0-9_]*/ and cannot clash "
-                  + "with a keyword.")
+          .applyIf(name.isEmpty(),
+              builder -> builder.locationNote(expr, "Identifiers cannot be empty."))
+          .applyIf(clashesWithKeyword, builder -> builder.locationNote(expr,
+              "This expands to `%s` which clashes with a keyword.", name))
+          .applyIf(invalidFormat, builder -> builder.locationNote(expr,
+              "Identifiers must start with a character, "
+                  + "followed by characters, numbers and or underscore, but `%s` doesn't.",
+              name))
           .build());
     }
 
