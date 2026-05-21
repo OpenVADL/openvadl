@@ -2063,35 +2063,26 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = ADDRESS
   | ALIAS
   | ALIGN
-  // | ASSERT
   | APPEND
   | BINARY
   | CALL
   | CONSTANT
-  // | DESCRIPTION
   | EXCEPTION
   | FETCH
   | GLOBAL
   | GROUP
   | INSTRUCTION
   | INT
-  // | INVALID
-  // | LABEL
   | LONG
   | MAX
   | MEMORY
-  // | MNEMONIC
-  // | MODE
-  // | MODIFIER
   | NONE
   | NOP
-  // | OPERAND
   | OPERATION
   | PREDICTION
-  // | PROCEDURE
   | READ
-  // | REDIRECT
   | REGISTER
+  | RESET
   | RETURN
   | SEQUENCE
   | SIGNED
@@ -2099,10 +2090,10 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | SOURCE
   | STAGE
   | STARTUP
-  | RESET
   | STOP
-  // | SYMBOL
   | SYM_IN
+  | TRANSLATION
+  | TYPE
   | T_BIN
   | T_BIN_OP
   | T_BOOL
@@ -2119,14 +2110,9 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | T_SYM_EX
   | T_UN_OP
   | T_VAL
-  | TRANSLATION
-  | TYPE
   | UNSIGNED
-  // | UNIT
-  // | USER
-  | WRITE
   | WIDTH
-  // TODO Add all allowed keywords
+  | WRITE
   .
 
   assemblyIdentifier<out Identifier identifier>
