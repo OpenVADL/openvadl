@@ -106,7 +106,6 @@ class ParserUtils {
     UN_OPS[Parser._SYM_TILDE] = true;
 
     ID_TOKENS = NO_OPS.clone();
-    ID_TOKENS[Parser._identifierToken] = true;
     ID_TOKENS[Parser._ADDRESS] = true;
     ID_TOKENS[Parser._ALIAS] = true;
     ID_TOKENS[Parser._ALIGN] = true;
@@ -121,14 +120,15 @@ class ParserUtils {
     ID_TOKENS[Parser._INSTRUCTION] = true;
     ID_TOKENS[Parser._INT] = true;
     ID_TOKENS[Parser._LONG] = true;
-    ID_TOKENS[Parser._MEMORY] = true;
     ID_TOKENS[Parser._MAX] = true;
+    ID_TOKENS[Parser._MEMORY] = true;
     ID_TOKENS[Parser._NONE] = true;
     ID_TOKENS[Parser._NOP] = true;
     ID_TOKENS[Parser._OPERATION] = true;
     ID_TOKENS[Parser._PREDICTION] = true;
     ID_TOKENS[Parser._READ] = true;
     ID_TOKENS[Parser._REGISTER] = true;
+    ID_TOKENS[Parser._RESET] = true;
     ID_TOKENS[Parser._RETURN] = true;
     ID_TOKENS[Parser._SEQUENCE] = true;
     ID_TOKENS[Parser._SIGNED] = true;
@@ -136,9 +136,9 @@ class ParserUtils {
     ID_TOKENS[Parser._SOURCE] = true;
     ID_TOKENS[Parser._STAGE] = true;
     ID_TOKENS[Parser._STARTUP] = true;
-    ID_TOKENS[Parser._RESET] = true;
     ID_TOKENS[Parser._STOP] = true;
     ID_TOKENS[Parser._SYM_IN] = true;
+    ID_TOKENS[Parser._TRANSLATION] = true;
     ID_TOKENS[Parser._TYPE] = true;
     ID_TOKENS[Parser._T_BIN] = true;
     ID_TOKENS[Parser._T_BIN_OP] = true;
@@ -156,10 +156,10 @@ class ParserUtils {
     ID_TOKENS[Parser._T_SYM_EX] = true;
     ID_TOKENS[Parser._T_UN_OP] = true;
     ID_TOKENS[Parser._T_VAL] = true;
-    ID_TOKENS[Parser._TRANSLATION] = true;
     ID_TOKENS[Parser._UNSIGNED] = true;
     ID_TOKENS[Parser._WIDTH] = true;
     ID_TOKENS[Parser._WRITE] = true;
+    ID_TOKENS[Parser._identifierToken] = true;
 
 
     EXPECTED_STRS = new String[NO_OPS.length];
@@ -410,6 +410,9 @@ class ParserUtils {
     return ID_TOKENS[token.kind];
   }
 
+  /**
+   * NOTE: Keep in sync with the grammar of the parser.
+   */
   private static final Pattern identifierPattern = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
 
   /**
@@ -424,6 +427,7 @@ class ParserUtils {
       return false;
     }
 
+
     // Only some keywords are allowed as tokens.
     var tokenId = Scanner.literals.get(text);
     if (tokenId != null && !ID_TOKENS[tokenId]) {
@@ -431,6 +435,16 @@ class ParserUtils {
     }
 
     return true;
+  }
+
+  /**
+   * Checks whether a string is a keyword.
+   *
+   * @param text to be checked.
+   * @return whether it is a keyword.
+   */
+  static boolean isKeyword(String text) {
+    return Scanner.literals.containsKey(text);
   }
 
   /**
@@ -669,6 +683,7 @@ class ParserUtils {
   static Node expandNode(Parser parser, Node node) {
     var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, List.of());
     var expanded = macroExpander.expandNode(node, parser.ast);
+    parser.diagnostics.addAll(macroExpander.errors);
     return expanded;
   }
 
@@ -682,15 +697,17 @@ class ParserUtils {
    * @return returns the original isaDefs with the Assemblies expanded.
    */
   @SuppressWarnings("NonApiType")
-  static LinkedList<Definition> expandAssemblyDefinitionsInIsa(LinkedList<Definition> isaDefs) {
+  static LinkedList<Definition> expandAssemblyDefinitionsInIsa(Parser parser,
+                                                               LinkedList<Definition> isaDefs) {
     for (var iter = isaDefs.listIterator(); iter.hasNext(); ) {
       var def = iter.next();
       if (!(def instanceof AssemblyDefinition assembly) || assembly.identifiers.size() == 1) {
         continue;
       }
 
-      var expanded = new MacroExpander(Map.of(), Map.of(), def.location().fullExpandedFromStack())
-          .expandAssemblies(assembly);
+      var expander = new MacroExpander(Map.of(), Map.of(), def.location().fullExpandedFromStack());
+      var expanded = expander.expandAssemblies(assembly);
+      parser.diagnostics.addAll(expander.errors);
       iter.set(expanded.getFirst());
       expanded.subList(1, expanded.size()).forEach(iter::add);
     }

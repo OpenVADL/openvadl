@@ -74,6 +74,7 @@ TOKENS
   decLit = digit {digit | "'"}.
   embeddedSource = "-<{" {validSourceCharacters} "}>-".
 
+  // NOTE: Keep in sync with {@link ParserUtils::identifierPattern}
   identifierToken = letter {letter | digit | "_"}.
   string =
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
@@ -333,10 +334,8 @@ ISA section (#instructionsetDefinition). It is also possible to define macros (#
     SYNC
     topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def); .)
     | macroDefinition<out ModelDefinition def> (. addDef(ast.definitions, def);
-                                                  if (!hasErrors()) {
-                                                    //SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def);
-                                                    macroTable.addModelDefinition(def);
-                                                  }
+                                                 //SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def);
+                                                 macroTable.addModelDefinition(def);
                                                .)
   }SYNC.
 
@@ -442,7 +441,7 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
                                                                     }); .)
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out LinkedList<Definition> definitions.>       (. macroTable = macroTable.pop(); .)
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, ParserUtils.expandAssemblyDefinitionsInIsa(definitions), startLocation.join(lastTokenLoc()));
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, ParserUtils.expandAssemblyDefinitionsInIsa(this, definitions), startLocation.join(lastTokenLoc()));
                                                                    macroTable.defineSymbol(isaDef); .)
   .
 
@@ -2064,35 +2063,26 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = ADDRESS
   | ALIAS
   | ALIGN
-  // | ASSERT
   | APPEND
   | BINARY
   | CALL
   | CONSTANT
-  // | DESCRIPTION
   | EXCEPTION
   | FETCH
   | GLOBAL
   | GROUP
   | INSTRUCTION
   | INT
-  // | INVALID
-  // | LABEL
   | LONG
   | MAX
   | MEMORY
-  // | MNEMONIC
-  // | MODE
-  // | MODIFIER
   | NONE
   | NOP
-  // | OPERAND
   | OPERATION
   | PREDICTION
-  // | PROCEDURE
   | READ
-  // | REDIRECT
   | REGISTER
+  | RESET
   | RETURN
   | SEQUENCE
   | SIGNED
@@ -2100,10 +2090,10 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | SOURCE
   | STAGE
   | STARTUP
-  | RESET
   | STOP
-  // | SYMBOL
   | SYM_IN
+  | TRANSLATION
+  | TYPE
   | T_BIN
   | T_BIN_OP
   | T_BOOL
@@ -2120,14 +2110,9 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | T_SYM_EX
   | T_UN_OP
   | T_VAL
-  | TRANSLATION
-  | TYPE
   | UNSIGNED
-  // | UNIT
-  // | USER
-  | WRITE
   | WIDTH
-  // TODO Add all allowed keywords
+  | WRITE
   .
 
   assemblyIdentifier<out Identifier identifier>

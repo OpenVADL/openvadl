@@ -90,7 +90,8 @@ public class HazardAnalysisPass extends Pass {
           .map(read -> new HazardAnalysis.ReadAnalysis(
               read, stage(mapping, read),
               condition(mapping, read),
-              stage(mapping, read.indices())
+              stage(mapping, read.indices()),
+              forwardToActive(mapping, read.resourceDefinition(), stage(mapping, read))
           ))
           .collect(Collectors.toCollection(LinkedHashSet::new));
       var writes = ipg.getNodes(WriteResourceNode.class)
@@ -160,7 +161,7 @@ public class HazardAnalysisPass extends Pass {
     // add forward from write stage (always possible)
     result.add(new HazardAnalysis.ForwardAnalysis(write, analysis.effect(), stage,
         new ArrayList<>(conditions), address, value,
-        forwardActive(mapping, write.resourceDefinition(), stage)));
+        forwardFromActive(mapping, write.resourceDefinition(), stage)));
 
     // stop if we passed the stage where address or condition are available
     var stop = Stream.of(analysis.condition(), analysis.address()).filter(Objects::nonNull)
@@ -175,14 +176,27 @@ public class HazardAnalysisPass extends Pass {
       }
       result.add(new HazardAnalysis.ForwardAnalysis(write, analysis.effect(), stage,
           new ArrayList<>(conditions), address, value,
-          forwardActive(mapping, write.resourceDefinition(), stage)));
+          forwardFromActive(mapping, write.resourceDefinition(), stage)));
       stage = stage.prev();
     }
 
     return result.stream();
   }
 
-  private boolean forwardActive(MiaMapping mapping, Resource resource, Stage stage) {
+  private boolean forwardToActive(MiaMapping mapping, Resource resource, Stage stage) {
+    if (mapping.mia().logic().stream().noneMatch(Logic.Forwarding.class::isInstance)) {
+      return true; // MiA does not define forwarding paths
+    }
+    if (Objects.requireNonNull(mapping.mia().isa().pc()).registerTensor().equals(resource)) {
+      return true; // always forward to PC read (can not be specified)
+    }
+    // TODO this does not support multiple forwarding logic elements
+    return stage.behavior().getNodes(MiaBuiltInCall.class)
+        .anyMatch(call -> call.builtIn().equals(BuiltInTable.INSTRUCTION_READ_OR_FORWARD)
+            && call.matchResource(resource));
+  }
+
+  private boolean forwardFromActive(MiaMapping mapping, Resource resource, Stage stage) {
     if (mapping.mia().logic().stream().noneMatch(Logic.Forwarding.class::isInstance)) {
       return true; // MiA does not define forwarding paths
     }

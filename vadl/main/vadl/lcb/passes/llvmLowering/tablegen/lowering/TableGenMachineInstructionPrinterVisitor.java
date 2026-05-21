@@ -25,6 +25,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValue
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadArtificialResourceNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
@@ -136,6 +137,13 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   @Override
   public void visit(LlvmReadRegFileNode llvmReadRegFileNode) {
     var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(llvmReadRegFileNode);
+    writer.write(operand.render());
+  }
+
+  @Override
+  public void visit(LlvmReadArtificialResourceNode llvmReadArtificialResourceNode) {
+    var operand = LlvmInstructionLoweringStrategy
+        .generateTableGenInputOutput(llvmReadArtificialResourceNode);
     writer.write(operand.render());
   }
 

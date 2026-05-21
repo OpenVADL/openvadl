@@ -11,13 +11,5 @@ import base::magicNumber with ("magicNumber=two")
 //       │ ^^^^^^^^^^^^^^^^^^^^^^^ note: This model was overridden but only models returning `Id` can be overridden.
 //       │
 //
-//  error: Unknown Model `$num`
-//       ╭── test/resources/frontend-snapshots/imports/base.vadl:11:3
-//       │
-//    11 │   $num + 1
-//       │   ^^^^
-//       │
-//       help: Make sure the macro is defined before (above) they are used.
-//
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

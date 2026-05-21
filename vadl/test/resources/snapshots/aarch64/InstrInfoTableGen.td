@@ -14669,7 +14669,7 @@ let Inst{4-0} = op{4-0};
 let Inst{31-10} = op{26-5};
 let Inst{9-5} = rn{4-0};
 
-let isTerminator       = 1;
+let isTerminator       = 0;
 let isBranch           = 0;
 let isCall             = 0;
 let isReturn           = 0;
@@ -52074,6 +52074,20 @@ let Defs = [  ];
 
 
 
+let isCall = 1, isBranch = 0, isIndirectBranch = 0, isTerminator = 0,
+isBarrier = 0, Defs = [S30]
+in
+    def PseudoCALLIndirect : Pseudo<(outs ), (ins X:$rn),
+                        [(target_call X:$rn)]>,
+                 PseudoInstExpansion<(BLR X:$rn)>;
+
+let isCall = 0, isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
+isBarrier = 1
+in
+    def PseudoBRIND : Pseudo<(outs ), (ins X:$rn),
+                        []>,
+                 PseudoInstExpansion<(BLR X:$rn)>;
+
 def : Pat<(add W:$rn, W:$rm),
         (ADDW W:$rn, W:$rm)>;
 
@@ -52279,6 +52293,10 @@ def : Pat<(sra X:$rn, X:$rm),
 
 def : Pat<(br bb:$offset),
         (B bb:$offset)>;
+
+
+def : Pat<(brind X:$rn),
+        (PseudoBRIND X:$rn)>;
 
 
 def : Pat<(br bb:$offset),
