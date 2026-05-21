@@ -567,6 +567,11 @@ public class TypeChecker
       return canImplicitCast(from, ((FormatType) to).format.typeLiteral.type());
     }
 
+    // EnumType<"?", T1> => T2 iff T1 => T2
+    if (from.getClass() == EnumType.class) {
+      return canImplicitCast(((EnumType) from).innerType(), to);
+    }
+
     return false;
   }
 
@@ -3410,6 +3415,10 @@ public class TypeChecker
       case FormatDefinition formatDef -> {
         check(formatDef);
         yield new FormatType(formatDef);
+      }
+      case EnumerationDefinition enumDef -> {
+        check(enumDef);
+        yield new EnumType(enumDef);
       }
       default -> throw new IllegalStateException("Unexpected value: " + customTarget);
     };

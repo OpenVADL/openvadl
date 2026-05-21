@@ -337,6 +337,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       return getViamType(formatType.innerType());
     }
 
+    if (astType instanceof EnumType enumType) {
+      return getViamType(enumType.innerType());
+    }
+
     if (astType instanceof TensorType tensorType) {
       return getViamType(tensorType.flattenBitsType());
     }
