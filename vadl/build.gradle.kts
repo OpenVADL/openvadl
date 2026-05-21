@@ -4,6 +4,7 @@ import vadl.GenerateCocoParserTask
 import java.util.*
 
 plugins {
+    idea
     id("conventions-jvm")
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.z3)
@@ -48,6 +49,12 @@ sourceSets {
         resources {
             srcDir(project(":vadl-test").layout.projectDirectory.dir("resources"))
         }
+    }
+}
+
+idea {
+    module {
+        generatedSourceDirs.add(file("build/generated/sources/coco/java/main"))
     }
 }
 
