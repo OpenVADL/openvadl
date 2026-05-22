@@ -4116,10 +4116,18 @@ public class TypeChecker
     // The typeliteral always exists for these expressions
     var typeLiteral = requireNonNull(expr.typeLiteral);
 
-    var valType = checkWith(expr.value, intermediateParseTypeLiteral(typeLiteral));
+    // In most cases the typeliteral influences the type of the inner expression we parse, this is
+    // the bidirectional typechecking.
+    var litType = intermediateParseTypeLiteral(typeLiteral);
+    var valType = checkWith(expr.value, litType);
 
-    typeLiteral.type = parseTypeLiteral(typeLiteral, preferredBitWidthOf(valType));
-    var litType = typeLiteral.type();
+    // In some rare cases the inner expression being cast influences the type of the literal.
+    // Example: (5 as Bits<5>) as SInt
+    //                            ^^^^ This type is SInt<5>, influenced by the inner expression.
+    if (litType == null) {
+      litType = parseTypeLiteral(typeLiteral, preferredBitWidthOf(valType));
+    }
+    typeLiteral.type = litType;
 
     if (!canExplicitCast(valType, litType)) {
       // No need to stop checking we can just assume it works and assign the declared type.
