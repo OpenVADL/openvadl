@@ -42,9 +42,6 @@ instruction set architecture TEST = {
 //    . : Identifier name: "a" type: null
 //    . : CastExpr type: Bits<8>
 //    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' TypeLiteral type: Bits<8>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 8 (8) type: null
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

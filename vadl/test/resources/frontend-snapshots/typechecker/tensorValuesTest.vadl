@@ -44,9 +44,6 @@ constant j = i as Dim_2_a
 //    . : ' Identifier name: "a" type: Bits<6>
 //    . : ' CastExpr type: Bits<6>
 //    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' | TypeLiteral type: Bits<6>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 6 (6) type: null
 //    FunctionDefinition name: "flo"
 //    . TypeLiteral type: Bits<6>
 //    . : Identifier name: "Bits" type: null
@@ -83,19 +80,10 @@ constant j = i as Dim_2_a
 //    . : ' | . Identifier name: "Dim_1_a" type: null
 //    . : ' CastExpr type: Bits<16>
 //    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' | TypeLiteral type: Bits<16>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 16 (16) type: null
 //    . : ' CastExpr type: Bits<16>
 //    . : ' | IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' | TypeLiteral type: Bits<16>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 16 (16) type: null
 //    . : ' CastExpr type: Bits<16>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | TypeLiteral type: Bits<16>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 16 (16) type: null
 //    . : TypeLiteral type: Bits<4><16>
 //    . : ' Identifier name: "Dim_2_a" type: null
 //    ConstantDefinition name: "d3" evaluatedValue: 36346553384763581871632909800112128
@@ -110,19 +98,10 @@ constant j = i as Dim_2_a
 //    . : ' | . : ' IntegerLiteral literal: 16 (16) type: Const<16>
 //    . : ' | . CastExpr type: Bits<16>
 //    . : ' | . : IntegerLiteral literal: 6 (6) type: Const<6>
-//    . : ' | . : TypeLiteral type: Bits<16>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 16 (16) type: null
 //    . : ' | . CastExpr type: Bits<16>
 //    . : ' | . : IntegerLiteral literal: 5 (5) type: Const<5>
-//    . : ' | . : TypeLiteral type: Bits<16>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 16 (16) type: null
 //    . : ' | . CastExpr type: Bits<16>
 //    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | . : TypeLiteral type: Bits<16>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 16 (16) type: null
 //    . : ' | TypeLiteral type: Bits<4><16>
 //    . : ' | . Identifier name: "Dim_2_a" type: null
 //    . : ' CastExpr type: Bits<4><16>
@@ -134,19 +113,10 @@ constant j = i as Dim_2_a
 //    . : ' | . : ' IntegerLiteral literal: 16 (16) type: Const<16>
 //    . : ' | . CastExpr type: Bits<16>
 //    . : ' | . : IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' | . : TypeLiteral type: Bits<16>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 16 (16) type: null
 //    . : ' | . CastExpr type: Bits<16>
 //    . : ' | . : IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' | . : TypeLiteral type: Bits<16>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 16 (16) type: null
 //    . : ' | . CastExpr type: Bits<16>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . : TypeLiteral type: Bits<16>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 16 (16) type: null
 //    . : ' | TypeLiteral type: Bits<4><16>
 //    . : ' | . Identifier name: "Dim_2_a" type: null
 //    . : TypeLiteral type: Bits<2><4><16>

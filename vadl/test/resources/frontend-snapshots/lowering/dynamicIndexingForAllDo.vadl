@@ -65,7 +65,7 @@ instruction set architecture Tensor = {
 //    . : ' Inputs: X
 //    . : ' Outputs: X
 //    . : ' Encoding: encoding
-//    . : ' Assembly: Tensor::ReadIndex::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0  ReadsRegisterTensor  in: ()         succ: ()     type: b32   reg: X
 //    . : ' | n1  ForIdx               in: ()         succ: ()     type: b4    from: 0   to: 3
@@ -78,10 +78,10 @@ instruction set architecture Tensor = {
 //    . : ' | n8  Forall               in: (n1)       succ: (n7)   range: 0..3
 //    . : ' | n9  InstrEnd             in: ()         succ: ()     effects: 0
 //    . : ' | n10 Start                in: ()         succ: (n8)   next: set
-//    . : ' Assembly name: "Tensor::ReadIndex::assembly"
-//    . : ' | Function: Tensor::ReadIndex::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "Tensor::ReadIndex::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []
@@ -117,7 +117,7 @@ instruction set architecture Tensor = {
 //    . : ' Inputs: X
 //    . : ' Outputs: X
 //    . : ' Encoding: encoding
-//    . : ' Assembly: Tensor::WriteIndex::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0  ReadsRegisterTensor  in: ()      succ: ()      type: b32   reg: X
 //    . : ' | n1  Constant             in: ()      succ: ()      type: b32   const: 0x1: Bits<32>
@@ -136,10 +136,10 @@ instruction set architecture Tensor = {
 //    . : ' | n14 Forall               in: (n2)    succ: (n13)   range: 0..3
 //    . : ' | n15 InstrEnd             in: ()      succ: ()      effects: 0
 //    . : ' | n16 Start                in: ()      succ: (n14)   next: set
-//    . : ' Assembly name: "Tensor::WriteIndex::assembly"
-//    . : ' | Function: Tensor::WriteIndex::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "Tensor::WriteIndex::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []

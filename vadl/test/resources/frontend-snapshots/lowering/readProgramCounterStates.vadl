@@ -63,7 +63,7 @@ instruction set architecture TEST = {
 //    . : ' Inputs: PC
 //    . : ' Outputs: X
 //    . : ' Encoding: encoding
-//    . : ' Assembly: TEST::CurrentInstr::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
 //    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
@@ -72,10 +72,10 @@ instruction set architecture TEST = {
 //    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
 //    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
 //    . : ' | n6 Start                in: ()      succ: (n5)   next: set
-//    . : ' Assembly name: "TEST::CurrentInstr::assembly"
-//    . : ' | Function: TEST::CurrentInstr::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "TEST::CurrentInstr::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []
@@ -97,7 +97,7 @@ instruction set architecture TEST = {
 //    . : ' Inputs: PC
 //    . : ' Outputs: X
 //    . : ' Encoding: encoding
-//    . : ' Assembly: TEST::Nextnstr::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
 //    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
@@ -106,10 +106,10 @@ instruction set architecture TEST = {
 //    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
 //    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
 //    . : ' | n6 Start                in: ()      succ: (n5)   next: set
-//    . : ' Assembly name: "TEST::Nextnstr::assembly"
-//    . : ' | Function: TEST::Nextnstr::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "TEST::Nextnstr::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []
@@ -131,7 +131,7 @@ instruction set architecture TEST = {
 //    . : ' Inputs: PC
 //    . : ' Outputs: X
 //    . : ' Encoding: encoding
-//    . : ' Assembly: TEST::NextNextInstr::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
 //    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
@@ -140,10 +140,10 @@ instruction set architecture TEST = {
 //    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
 //    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
 //    . : ' | n6 Start                in: ()      succ: (n5)   next: set
-//    . : ' Assembly name: "TEST::NextNextInstr::assembly"
-//    . : ' | Function: TEST::NextNextInstr::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "TEST::NextNextInstr::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []

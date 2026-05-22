@@ -24,9 +24,6 @@
 //    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
 //    . : CastExpr type: Bits<32>
 //    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' TypeLiteral type: Bits<32>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : CastExpr type: Bits<16>
 //    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
 //    . : ' TypeLiteral type: Bits<16>
@@ -34,9 +31,6 @@
 //    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
 //    . : CastExpr type: Bits<32>
 //    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' TypeLiteral type: Bits<32>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : CastExpr type: Bits<16>
 //    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
 //    . : ' TypeLiteral type: Bits<16>
@@ -44,14 +38,8 @@
 //    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
 //    . : CastExpr type: Bits<32>
 //    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
-//    . : ' TypeLiteral type: Bits<32>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : CastExpr type: Bits<32>
 //    . : ' IntegerLiteral literal: 9 (9) type: Const<9>
-//    . : ' TypeLiteral type: Bits<32>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : CastExpr type: Bits<16>
 //    . : ' IntegerLiteral literal: 6 (6) type: Const<6>
 //    . : ' TypeLiteral type: Bits<16>

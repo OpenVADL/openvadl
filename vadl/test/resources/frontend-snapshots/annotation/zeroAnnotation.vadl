@@ -23,9 +23,6 @@ instruction set architecture TEST =
 //    . : ' | ArgsIndices
 //    . : ' | . CastExpr type: Bits<1>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . : TypeLiteral type: Bits<1>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IntegerLiteral literal: 32 (32) type: Const<32>

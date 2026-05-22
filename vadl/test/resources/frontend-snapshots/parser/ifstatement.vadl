@@ -53,9 +53,6 @@ instruction set architecture ISA = {
 //    . : ' | . : Identifier name: "PC" type: Bits<32>
 //    . : ' | . : CastExpr type: Bits<32>
 //    . : ' | . : ' IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | . : ' TypeLiteral type: Bits<32>
-//    . : ' | . : ' | Identifier name: "Bits" type: null
-//    . : ' | . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . AssemblyDefinition
 //    . : Identifier name: "mnemonic" type: String
 //    . EncodingDefinition
@@ -63,9 +60,6 @@ instruction set architecture ISA = {
 //    . : Identifier name: "bits" type: null
 //    . : CastExpr type: Bits<32>
 //    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' TypeLiteral type: Bits<32>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

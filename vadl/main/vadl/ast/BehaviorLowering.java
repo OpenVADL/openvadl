@@ -312,12 +312,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @SuppressWarnings("Indentation")
   Function getRegisterAliasReadFunc(AliasDefinition definition,
                                     List<RegisterTensor.Dimension> dimensions) {
-    var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
+    var graph = new Graph("%s Read Behavior".formatted(String.join("::", definition.viamId)));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
+    final var identifierParts = ViamLowering.append(definition.viamId, "read");
     final var identifier =
-        viamLowering.generateIdentifier(definition.viamId + "::read", definition.loc);
+        new vadl.viam.Identifier(identifierParts, definition.loc);
 
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
@@ -332,8 +333,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // FIXME: Wrap input and output in casts
       for (int i = 0; i < tensorType.indexDims().size(); i++) {
         var param = new vadl.viam.Parameter(
-            viamLowering.generateIdentifier(
-                identifier.name() + "::index",
+            new vadl.viam.Identifier(
+                ViamLowering.append(identifierParts, "index"),
                 identifier.location()),
             Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
             0);
@@ -444,12 +445,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @SuppressWarnings("Indentation")
   Procedure getRegisterAliasWriteProc(AliasDefinition definition,
                                       List<RegisterTensor.Dimension> dimensions) {
-    final var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
+    final var graph =
+        new Graph("%s Write Procedure".formatted(String.join("::", definition.viamId)));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
+    final var identifierParts = ViamLowering.append(definition.viamId, "write");
     final var identifier =
-        viamLowering.generateIdentifier(definition.viamId + "::write", definition.loc);
+        new vadl.viam.Identifier(identifierParts, definition.loc);
     final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
 
@@ -464,8 +467,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // FIXME: Wrap input and output in casts
       for (int i = 0; i < tensorType.indexDims().size(); i++) {
         var param = new vadl.viam.Parameter(
-            viamLowering.generateIdentifier(
-                identifier.name() + "::index",
+            new vadl.viam.Identifier(
+                ViamLowering.append(identifierParts, "index"),
                 identifier.location()),
             Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
             0);
@@ -478,8 +481,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var valueParam = new vadl.viam.Parameter(
-        viamLowering.generateIdentifier(
-            identifier.name() + "::value",
+        new vadl.viam.Identifier(
+            ViamLowering.append(identifierParts, "value"),
             identifier.location()),
         getViamType(resultType),
         1);
@@ -689,7 +692,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     } catch (ArithmeticException e) {
       throw new IllegalStateException(
           "Expansion alias mapping overflow for "
-              + definition.viamId
+              + String.join("::", definition.viamId)
               + ": while calculating covered bit width.",
           e
       );
@@ -697,7 +700,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (coveredBits > sourceValueType.bitWidth()) {
       throw new IllegalStateException(
           "Invalid expansion alias mapping for "
-              + definition.viamId
+              + String.join("::", definition.viamId)
               + ": virtual alias indexing may address "
               + coveredBits
               + " bits, but source read provides only "
@@ -2143,9 +2146,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
     } else {
       // FIXME: Add to a global store so that ISA can get a list of all exceptions
-      var name = statement.viamId + "::anonymousException";
+      var anonymousParts = ViamLowering.append(statement.viamId, "anonymousException");
+      var name = String.join("::", anonymousParts);
       exception = new ExceptionDef(
-          viamLowering.generateIdentifier(name, statement.statement),
+          new vadl.viam.Identifier(anonymousParts, statement.statement.location()),
           new vadl.viam.Parameter[] {},
           new BehaviorLowering(this.viamLowering).getProcedureGraph(statement.statement, name),
           ExceptionDef.Kind.ANONYMOUS

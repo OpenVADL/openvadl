@@ -4113,10 +4113,13 @@ public class TypeChecker
 
   @Override
   public Void visit(CastExpr expr) {
-    var valType = checkWith(expr.value, intermediateParseTypeLiteral(expr.typeLiteral));
+    // The typeliteral always exists for these expressions
+    var typeLiteral = requireNonNull(expr.typeLiteral);
 
-    expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
-    var litType = expr.typeLiteral.type();
+    var valType = checkWith(expr.value, intermediateParseTypeLiteral(typeLiteral));
+
+    typeLiteral.type = parseTypeLiteral(typeLiteral, preferredBitWidthOf(valType));
+    var litType = typeLiteral.type();
 
     if (!canExplicitCast(valType, litType)) {
       // No need to stop checking we can just assume it works and assign the declared type.

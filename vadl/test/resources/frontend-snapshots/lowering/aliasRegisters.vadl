@@ -134,7 +134,7 @@ instruction set architecture ISA = {
 //    . : ' Inputs: R1
 //    . : ' Outputs: R1
 //    . : ' Encoding: encoding
-//    . : ' Assembly: ISA::ReadE1::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b2   const: 0x0: Bits<2>
 //    . : ' | n1 Constant             in: ()      succ: ()     type: b2   const: 0x1: Bits<2>
@@ -144,10 +144,10 @@ instruction set architecture ISA = {
 //    . : ' | n5 WritesRegisterTensor in: (n0 n4) succ: ()     reg: R1
 //    . : ' | n6 InstrEnd             in: (n5)    succ: ()     effects: 1
 //    . : ' | n7 Start                in: ()      succ: (n6)   next: set
-//    . : ' Assembly name: "ISA::ReadE1::assembly"
-//    . : ' | Function: ISA::ReadE1::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "ISA::ReadE1::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []

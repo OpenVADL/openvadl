@@ -55,9 +55,6 @@ instruction set architecture TEST = {
 //    . : ' | . ArgsIndices
 //    . : ' | . : CastExpr type: Bits<3>
 //    . : ' | . : ' IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . : ' TypeLiteral type: Bits<3>
-//    . : ' | . : ' | Identifier name: "Bits" type: null
-//    . : ' | . : ' | IntegerLiteral literal: 3 (3) type: null
 //    . : ' | ForallExpr keyword: fold, type: Bits<8> type: Bits<8>
 //    . : ' | . Identifier name: "i" type: Bits<8>
 //    . : ' | . TypeLiteral type: Bits<8>
@@ -70,9 +67,6 @@ instruction set architecture TEST = {
 //    . : ' | . : Identifier name: "i" type: Bits<8>
 //    . : ' | . : CastExpr type: Bits<8>
 //    . : ' | . : ' IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . : ' TypeLiteral type: Bits<8>
-//    . : ' | . : ' | Identifier name: "Bits" type: null
-//    . : ' | . : ' | IntegerLiteral literal: 8 (8) type: null
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "" ('') type: String
 //    . EncodingDefinition
@@ -80,9 +74,6 @@ instruction set architecture TEST = {
 //    . : Identifier name: "a" type: null
 //    . : CastExpr type: Bits<8>
 //    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' TypeLiteral type: Bits<8>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 8 (8) type: null
 //    . InstructionDefinition name: "Instr2"
 //    . : Identifier name: "Frmt" type: null
 //    . : BlockStatement
@@ -100,14 +91,8 @@ instruction set architecture TEST = {
 //    . : ' | . : ArgsIndices
 //    . : ' | . : ' CastExpr type: Bits<3>
 //    . : ' | . : ' | Identifier name: "i" type: Bits<5>
-//    . : ' | . : ' | TypeLiteral type: Bits<3>
-//    . : ' | . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . : ' | . IntegerLiteral literal: 3 (3) type: null
 //    . : ' | . CastExpr type: Bits<8>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . : TypeLiteral type: Bits<8>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 8 (8) type: null
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "" ('') type: String
 //    . EncodingDefinition
@@ -115,9 +100,6 @@ instruction set architecture TEST = {
 //    . : Identifier name: "a" type: null
 //    . : CastExpr type: Bits<8>
 //    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' TypeLiteral type: Bits<8>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 8 (8) type: null
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

@@ -642,7 +642,7 @@ class SymbolTable {
       } else {
         viamPath.addLast("unknown");
       }
-      definition.viamId = String.join("::", viamPath);
+      definition.viamId = new ArrayList<>(viamPath);
 
       definition.symbolTable = currentSymbols();
     }
@@ -686,7 +686,7 @@ class SymbolTable {
       } else {
         viamPath.addLast("unknown");
       }
-      definition.viamId = String.join("::", viamPath);
+      definition.viamId = new ArrayList<>(viamPath);
 
       definition.symbolTable = currentSymbols().createChild();
       symbolTables.addLast(definition.symbolTable);

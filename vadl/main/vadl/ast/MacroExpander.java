@@ -16,6 +16,7 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
 import java.util.ArrayList;
@@ -378,7 +379,7 @@ class MacroExpander
 
   @Override
   public Expr visit(CastExpr expr) {
-    return new CastExpr(expandExpr(expr.value), expandExpr(expr.typeLiteral));
+    return new CastExpr(expandExpr(expr.value), expandExpr(requireNonNull(expr.typeLiteral)));
   }
 
   @Override
