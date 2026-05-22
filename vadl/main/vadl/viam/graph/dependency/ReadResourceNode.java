@@ -36,11 +36,6 @@ public abstract class ReadResourceNode extends ExpressionNode {
   @Input
   protected NodeList<ExpressionNode> indices;
 
-  // FIXME: not sure what is the best way to implement this...
-  //        maybe add a special node for adding this offset?
-  @Nullable
-  private Integer pcOffset;
-
   public ReadResourceNode(@Nullable ExpressionNode address, DataType type) {
     super(type);
     this.indices = address == null ? new NodeList<>() : new NodeList<>(address);
@@ -111,7 +106,6 @@ public abstract class ReadResourceNode extends ExpressionNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(pcOffset);
   }
 
   @Override
@@ -130,22 +124,5 @@ public abstract class ReadResourceNode extends ExpressionNode {
     }
 
     return false;
-  }
-
-  /**
-   * Sets the read offset produced by calling e.g. {@code .next} on a program
-   * counter.
-   */
-  public void setPcOffset(int pcOffset) {
-    this.pcOffset = pcOffset;
-  }
-
-  /**
-   * Returns the read offset produced by calling e.g. {@code .next} on a program
-   * counter. Is used by {@link vadl.viam.passes.pcOffset.PcOffsetPass}.
-   */
-  @Nullable
-  public Integer pcOffset() {
-    return pcOffset;
   }
 }

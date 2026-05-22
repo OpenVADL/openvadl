@@ -16,6 +16,10 @@
 
 package vadl.viam.passes.pcOffset;
 
+import static vadl.error.Diagnostic.error;
+import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -26,23 +30,26 @@ import vadl.types.BuiltInTable;
 import vadl.utils.GraphUtils;
 import vadl.utils.ViamUtils;
 import vadl.viam.Instruction;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.annotations.PcOffsetAnnotation;
-import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.passes.staticCounterAccess.CounterAccessResolvingPass;
 
 /**
  * Applies program counter offsets to program counter reads.
  *
  * <p>When reading a program counter that has been annotated with
- * {@code [current]}, {@code [next]} or {@code [next next]} or when using
- * one of the subcalls {@code .current}, {@code .next} or {@code .nextnext},
- * the read value is offset by multiples of the instruction length. The subcalls
- * overwrite the annotations.
+ * {@code [current]}, {@code [next]} or {@code [next next]}, the
+ * read value is offset by multiples of the instruction length. The subcalls
+ * {@code .current}, {@code .next} or {@code .nextnext} overwrite the annotation,
+ * but that logic is handled in {@code BehaviorLowering}.
  *
- * <p>This pass looks for {@link PcOffsetAnnotation}s and checks
- * {@link ReadResourceNode#pcOffset()} and applies them by inserting addition nodes.
+ * <p>This pass looks for {@link PcOffsetAnnotation}s and applies them to
+ * {@link ReadRegTensorNode}s, which have access the program counter.
+ *
+ * <p><strong>Note</strong>: This pass must run after {@link CounterAccessResolvingPass}.
  */
 public class PcOffsetPass extends Pass {
 
@@ -56,32 +63,42 @@ public class PcOffsetPass extends Pass {
   }
 
   @Override
-  public @Nullable Object execute(PassResults passResults, Specification viam)
-      throws IOException {
-    ViamUtils.findAllBehaviors(viam).forEach(this::handleBehaviour);
+  public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
+    var isa = viam.isa().get();
+    ViamUtils.findAllBehaviors(viam).forEach(behavior -> {
+      var instruction = behavior.parentDefinition() instanceof Instruction instr ? instr : null;
+      behavior.getNodes(ReadRegTensorNode.class)
+          .forEach(n -> handleRead(n, instruction, isa));
+    });
     return null;
   }
 
-  private void handleBehaviour(Graph behaviour) {
-    // FIXME: are instruction lengths always multiples of 8?
-    //        What if the pc does not counter per byte?
-    // FIXME: What instruction length should be used in behaviours outside
-    //        instructions (eg in functions)?
-    int instrBytes = behaviour.parentDefinition() instanceof Instruction instruction
-        ? instruction.format().type().bitWidth() / 8
-        : 32;
-
-    behaviour.getNodes(ReadResourceNode.class)
-        .forEach(n -> handleRead(n, instrBytes));
-  }
-
-  private void handleRead(ReadResourceNode read, int instrBytes) {
+  private void handleRead(ReadRegTensorNode read, @Nullable Instruction instruction,
+                          InstructionSetArchitecture isa) {
+    if (read.staticCounterAccess() == null) {
+      // this is not a pc access
+      return;
+    }
     var offsetAnn = read.resourceDefinition().annotation(PcOffsetAnnotation.class);
-    var regOffset = offsetAnn == null ? 0 : offsetAnn.offset();
-    var readOffset = read.pcOffset();
-    int offset = readOffset != null ? readOffset : regOffset;
-
+    if (offsetAnn == null) {
+      return;
+    }
+    var offset = offsetAnn.offset();
     if (offset != 0) {
+      instruction = ensureNonNull(instruction, () -> error(
+          "Program counter read with offset can only happen in instruction behavior", read)
+          .locationHelp(offsetAnn, "The program counter offset")
+      );
+
+      var memories = isa.ownMemories();
+      ensure(memories.size() == 1, () -> error(
+          "Exactly one memory definition required for reading program counter with offset", isa)
+          .locationHelp(read, "The program counter read")
+          .locationHelp(offsetAnn, "The program counter offset")
+      );
+      var memory = memories.getFirst();
+
+      var instrBytes = instruction.format().type().bitWidth() / memory.resultType().bitWidth();
       read.replace(BuiltInCall.of(
           BuiltInTable.ADD, read,
           GraphUtils.intUNode((long) offset * instrBytes, read.type().bitWidth())

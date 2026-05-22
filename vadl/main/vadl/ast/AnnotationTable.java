@@ -115,8 +115,13 @@ public class AnnotationTable {
         .check(GroupedAnnotationBuilder.GroupCheckContext::verifyOnlyOneOfGroup)
         .applyViam(ctx -> {
           var reg = ((Counter) ctx.targetDefinition).registerTensor();
-          ctx.get("next").ifPresent(ann -> reg.addAnnotation(new PcOffsetAnnotation(1)));
-          ctx.get("next next").ifPresent(ann -> reg.addAnnotation(new PcOffsetAnnotation(2)));
+          BiConsumer<Annotation, Integer> addAnn = (ann, offset) -> {
+            var offsetAnn = new PcOffsetAnnotation(offset);
+            offsetAnn.setSourceLocation(ann.location());
+            reg.addAnnotation(offsetAnn);
+          };
+          ctx.get("next").ifPresent(ann -> addAnn.accept(ann, 1));
+          ctx.get("next next").ifPresent(ann -> addAnn.accept(ann, 2));
         })
         .build();
 
@@ -135,8 +140,13 @@ public class AnnotationTable {
         })
         .applyViam(ctx -> {
           var reg = ((Counter) ctx.targetDefinition).registerTensor();
-          ctx.get("next").ifPresent(ann -> reg.addAnnotation(new PcOffsetAnnotation(1)));
-          ctx.get("next next").ifPresent(ann -> reg.addAnnotation(new PcOffsetAnnotation(2)));
+          BiConsumer<Annotation, Integer> addAnn = (ann, offset) -> {
+            var offsetAnn = new PcOffsetAnnotation(offset);
+            offsetAnn.setSourceLocation(ann.location());
+            reg.addAnnotation(offsetAnn);
+          };
+          ctx.get("next").ifPresent(ann -> addAnn.accept(ann, 1));
+          ctx.get("next next").ifPresent(ann -> addAnn.accept(ann, 2));
         })
         .build();
 

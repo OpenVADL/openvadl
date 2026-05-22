@@ -67,11 +67,9 @@ instruction set architecture TEST = {
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
 //    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
-//    . : ' | n2 Constant             in: ()      succ: ()     type: u8   const: 0x0: UInt<8>
-//    . : ' | n3 BuiltInCall          in: (n1 n2) succ: ()     type: b8   builtin: VADL::add   operator: +
-//    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
-//    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
-//    . : ' | n6 Start                in: ()      succ: (n5)   next: set
+//    . : ' | n2 WritesRegisterTensor in: (n0 n1) succ: ()     reg: X
+//    . : ' | n3 InstrEnd             in: (n2)    succ: ()     effects: 1
+//    . : ' | n4 Start                in: ()      succ: (n3)   next: set
 //    . : ' Assembly name: "assembly"
 //    . : ' | Function: func
 //    . : ' | FieldAccesses: []
@@ -101,7 +99,7 @@ instruction set architecture TEST = {
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
 //    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
-//    . : ' | n2 Constant             in: ()      succ: ()     type: u8   const: 0x4: UInt<8>
+//    . : ' | n2 Constant             in: ()      succ: ()     type: i8   const: 0x4: SInt<8>
 //    . : ' | n3 BuiltInCall          in: (n1 n2) succ: ()     type: b8   builtin: VADL::add   operator: +
 //    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
 //    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
@@ -135,7 +133,7 @@ instruction set architecture TEST = {
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
 //    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
-//    . : ' | n2 Constant             in: ()      succ: ()     type: u8   const: 0x8: UInt<8>
+//    . : ' | n2 Constant             in: ()      succ: ()     type: i8   const: 0x8: SInt<8>
 //    . : ' | n3 BuiltInCall          in: (n1 n2) succ: ()     type: b8   builtin: VADL::add   operator: +
 //    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
 //    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1

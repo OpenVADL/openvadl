@@ -29,6 +29,7 @@ import vadl.pass.PassOrders;
 import vadl.types.BuiltInTable;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -37,16 +38,20 @@ import vadl.viam.passes.pcOffset.PcOffsetPass;
 
 public class PcOffsetTest extends AbstractTest {
 
+  private static final int TEST_INSTR_BYTE_LENGTH = 4;
+
   @TestFactory
   public Stream<DynamicTest> testOffsets() {
     return Stream.of(
-        testPcSubCalls("valid_pc_alias_subcalls.vadl"),
-        testPcSubCalls("valid_pc_alias_subcalls_with_current.vadl"),
-        testPcSubCalls("valid_pc_alias_subcalls_with_next.vadl"),
+        testPcSubCalls("valid_pc_alias_subcalls.vadl", 0),
+        testPcSubCalls("valid_pc_alias_subcalls_with_current.vadl", 0),
+        testPcSubCalls("valid_pc_alias_subcalls_with_next.vadl", 1),
+        testPcSubCalls("valid_pc_alias_subcalls_with_nextnext.vadl", 2),
 
-        testPcSubCalls("valid_pc_subcalls.vadl"),
-        testPcSubCalls("valid_pc_subcalls_with_current.vadl"),
-        testPcSubCalls("valid_pc_subcalls_with_next.vadl"),
+        testPcSubCalls("valid_pc_subcalls.vadl", 0),
+        testPcSubCalls("valid_pc_subcalls_with_current.vadl", 0),
+        testPcSubCalls("valid_pc_subcalls_with_next.vadl", 1),
+        testPcSubCalls("valid_pc_subcalls_with_nextnext.vadl", 2),
 
         testPcOffsetAnnotation("valid_pc_ann_current.vadl", 0),
         testPcOffsetAnnotation("valid_pc_ann_next.vadl", 1),
@@ -65,24 +70,24 @@ public class PcOffsetTest extends AbstractTest {
           PassOrders.viam(getConfiguration(false))
               .untilFirst(PcOffsetPass.class)
       ).specification();
-      testPcOffset("PcTest::READ_PC", spec, offset);
+      testSinglePcOffset("PcTest::READ_PC", spec, offset);
     });
   }
 
-  private DynamicTest testPcSubCalls(String fileName) {
+  private DynamicTest testPcSubCalls(String fileName, int annOffset) {
     return dynamicTest(fileName, () -> {
       var spec = setupPassManagerAndRunSpec(
           "passes/pcOffset/" + fileName,
           PassOrders.viam(getConfiguration(false))
               .untilFirst(PcOffsetPass.class)
       ).specification();
-      testPcOffset("PcTest::READ_PC_CURRENT", spec, 0);
-      testPcOffset("PcTest::READ_PC_NEXT", spec, 1);
-      testPcOffset("PcTest::READ_PC_NEXTNEXT", spec, 2);
+      testOverwrittenPcOffset("PcTest::READ_PC_CURRENT", spec, 0, annOffset);
+      testOverwrittenPcOffset("PcTest::READ_PC_NEXT", spec, 1, annOffset);
+      testOverwrittenPcOffset("PcTest::READ_PC_NEXTNEXT", spec, 2, annOffset);
     });
   }
 
-  private void testPcOffset(String instrName, Specification spec, int offset) {
+  private void testSinglePcOffset(String instrName, Specification spec, int offset) {
     var instr = TestUtils.findDefinitionByNameIn(instrName, spec, Instruction.class);
     var readReg = getSingleNode(instr.behavior(), ReadRegTensorNode.class);
     Assertions.assertTrue(readReg.hasUsages());
@@ -90,13 +95,35 @@ public class PcOffsetTest extends AbstractTest {
     if (offset == 0) {
       Assertions.assertInstanceOf(WriteResourceNode.class, usage);
     } else {
-      Assertions.assertInstanceOf(BuiltInCall.class, usage);
-      var add = (BuiltInCall) usage;
-      Assertions.assertEquals(BuiltInTable.ADD, add.builtIn());
-      var offsetNode = add.arg(1);
-      Assertions.assertInstanceOf(ConstantNode.class, offsetNode);
-      Assertions.assertEquals(offset * 4,
-          ((ConstantNode) offsetNode).constant().asVal().intValue());
+      testOffset(usage, offset);
     }
+  }
+
+  private void testOverwrittenPcOffset(String instrName, Specification spec,
+                                       int subcallOffset, int annOffset) {
+    if (annOffset == 0 || subcallOffset == annOffset) {
+      // no overwriting happens
+      testSinglePcOffset(instrName, spec, subcallOffset);
+      return;
+    }
+    int adjustment = subcallOffset - annOffset;
+
+    var instr = TestUtils.findDefinitionByNameIn(instrName, spec, Instruction.class);
+    var readReg = getSingleNode(instr.behavior(), ReadRegTensorNode.class);
+    Assertions.assertTrue(readReg.hasUsages());
+
+    var firstUsage = readReg.usages().findFirst().get();
+    var secondUsage = firstUsage.usages().findFirst().get();
+
+    testOffset(firstUsage, annOffset);
+    testOffset(secondUsage, adjustment);
+  }
+
+  private void testOffset(Node usage, int offset) {
+    var add = Assertions.assertInstanceOf(BuiltInCall.class, usage);
+    Assertions.assertEquals(BuiltInTable.ADD, add.builtIn());
+    var offsetNode = Assertions.assertInstanceOf(ConstantNode.class, add.arg(1));
+    Assertions.assertEquals(offset * TEST_INSTR_BYTE_LENGTH,
+        offsetNode.constant().asVal().intValue());
   }
 }

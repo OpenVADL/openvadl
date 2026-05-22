@@ -1,5 +1,7 @@
 
 instruction set architecture PcTest = {
+
+  memory Mem : Bits<8> -> Bits<8>
   using Regs = Bits<32>
 
   register A: Regs

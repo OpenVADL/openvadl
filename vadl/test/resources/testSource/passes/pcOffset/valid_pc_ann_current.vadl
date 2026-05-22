@@ -2,6 +2,8 @@
 instruction set architecture PcTest = {
   using Regs = Bits<32>
 
+  memory Mem : Bits<8> -> Bits<8>
+
   register A: Regs
   [ current ]
   program counter PC: Regs

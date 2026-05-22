@@ -21,7 +21,8 @@ import vadl.viam.RegisterTensor;
 
 /**
  * Annotation for offsetting read pc values by one or two instruction
- * lengths. Can be overwritten by {@link vadl.viam.passes.pcOffset.nodes.PcOffsetNode}.
+ * lengths. Can be overwritten by PC subcalls {@code current}, {@code next} and
+ * {@code nextnext}.
  *
  * <p>The offset is applied by {@link vadl.viam.passes.pcOffset.PcOffsetPass}.
  */

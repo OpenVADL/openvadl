@@ -64,7 +64,6 @@ public final class ViamPassOrder {
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(configuration));
     order.add(new RenamingConflictingRegistersPass(configuration));
     order.add(new SnapshotInstructionBehaviorPass(configuration));
-    order.add(new PcOffsetPass(configuration));
 
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
     order.add(new StatusBuiltInInlinePass(configuration));
@@ -74,6 +73,7 @@ public final class ViamPassOrder {
     order.add(new BehaviorRewritePass(configuration));
 
     order.add(new CounterAccessResolvingPass(configuration));
+    order.add(new PcOffsetPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
     order.add(new FieldAccessInlinerPass(configuration));
     order.add(new ArtificialResPartialAccessExpansionPass(configuration));

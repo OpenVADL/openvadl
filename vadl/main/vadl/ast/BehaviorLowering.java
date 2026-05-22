@@ -23,6 +23,7 @@ import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
 import static vadl.utils.GraphUtils.ifElseSideEffect;
+import static vadl.utils.GraphUtils.intS;
 import static vadl.utils.GraphUtils.intU;
 import static vadl.utils.GraphUtils.neq;
 import static vadl.utils.GraphUtils.or;
@@ -70,6 +71,7 @@ import vadl.viam.Procedure;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.StageOutput;
+import vadl.viam.annotations.PcOffsetAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.BranchBeginNode;
@@ -1192,18 +1194,34 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           case null, default -> false;
         };
         if (targetIsCounter) {
+          var offsetAnn = resRead.resourceDefinition().annotation(PcOffsetAnnotation.class);
           // FIXME: Handle slicing and format subcall properly
-          int offset = 0;
+          long subcallOffset = 0;
           for (var subcall : expr.subCalls) {
             var subcallName = subcall.identifier().name;
             switch (subcallName) {
-              case "current" -> offset = 0;
-              case "next" -> offset += 1;
-              case "nextnext" -> offset += 2;
+              case "current" -> subcallOffset = 0;
+              case "next" -> subcallOffset += 1;
+              case "nextnext" -> subcallOffset += 2;
               default -> throw new IllegalStateException("unknown subcall: " + subcallName);
             }
           }
-          resRead.setPcOffset(offset);
+          // the subcall overwrites the annotation offset
+          long annOffset = offsetAnn == null ? 0 : offsetAnn.offset();
+          if (!expr.subCalls.isEmpty() && subcallOffset != annOffset) {
+            long offsetAdjustment = subcallOffset - annOffset;
+            // FIXME: Get instructions size from surrounding instruction once that's possible
+            long instructionSize = 32;
+            // FIXME: Get byte size from memory definition
+            long byteSize = 8;
+            resultExpr = BuiltInCall.of(BuiltInTable.ADD,
+                resRead,
+                intS(
+                    offsetAdjustment * instructionSize / byteSize,
+                    resRead.type().bitWidth()
+                ).toNode()
+            );
+          }
         }
       } else {
         throw new IllegalStateException();
