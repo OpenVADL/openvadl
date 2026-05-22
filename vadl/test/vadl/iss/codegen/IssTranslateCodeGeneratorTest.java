@@ -36,14 +36,14 @@ import vadl.viam.Specification;
 public class IssTranslateCodeGeneratorTest extends AbstractTest {
 
   @Test
-  void selectsDirectGvecGeneratorForRecognizedVectorPlan()
+  void selectsSharedNonHelperGeneratorForRecognizedVectorPlan()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var instr = findInstruction(viam, "RV64IMV::VADD_VV");
 
     var generator = IssTranslateCodeGenerator.translateGenerator(instr, config());
 
-    assertInstanceOf(DirectGvecTranslateGenerator.class, generator);
+    assertInstanceOf(ScalarTcgTranslateGenerator.class, generator);
   }
 
   @Test

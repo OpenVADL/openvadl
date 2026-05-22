@@ -20,7 +20,7 @@ import static vadl.iss.passes.TcgPassUtils.instrInfo;
 
 import java.util.stream.Stream;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.extensions.InstrExecPlan.StrategyKind;
+import vadl.iss.passes.extensions.InstrExecPlan.ExecutionPath;
 import vadl.pass.Pass;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -45,14 +45,14 @@ public abstract class AbstractIssPass extends Pass {
     return spec.isa().get().ownInstructions().stream();
   }
 
-  public Stream<Instruction> scalarTcgInstrs(Specification spec) {
+  public Stream<Instruction> normalTcgInstrs(Specification spec) {
     return allInstrs(spec)
-        .filter(this::usesScalarTcgPipeline);
+        .filter(this::usesNormalTcgPipeline);
   }
 
-  public Stream<Instruction> directGvecInstrs(Specification spec) {
+  public Stream<Instruction> directGvecCandidateInstrs(Specification spec) {
     return allInstrs(spec)
-        .filter(this::usesDirectGvecPlanningPath);
+        .filter(this::hasViableDirectGvecPlan);
   }
 
   public Stream<Instruction> wholeHelperInstrs(Specification spec) {
@@ -61,30 +61,29 @@ public abstract class AbstractIssPass extends Pass {
   }
 
   public Stream<Instruction> tcgInstrs(Specification spec) {
-    return scalarTcgInstrs(spec);
+    return normalTcgInstrs(spec);
   }
 
   public Stream<Instruction> helperInstrs(Specification spec) {
     return wholeHelperInstrs(spec);
   }
 
-  private boolean usesScalarTcgPipeline(Instruction instruction) {
+  private boolean usesNormalTcgPipeline(Instruction instruction) {
     var executionPlan = instrInfo(instruction).executionPlan();
     if (executionPlan != null) {
-      return executionPlan.selectedStrategy() == StrategyKind.TCG_SCALAR;
+      return executionPlan.selectedPath() == ExecutionPath.NORMAL_TCG;
     }
     return !instrInfo(instruction).asHelperCall();
   }
 
-  private boolean usesDirectGvecPlanningPath(Instruction instruction) {
-    var executionPlan = instrInfo(instruction).executionPlan();
-    return executionPlan != null && executionPlan.selectedStrategy() == StrategyKind.DIRECT_GVEC;
+  private boolean hasViableDirectGvecPlan(Instruction instruction) {
+    return instrInfo(instruction).hasViableDirectGvecPlan();
   }
 
   private boolean usesWholeHelperPath(Instruction instruction) {
     var executionPlan = instrInfo(instruction).executionPlan();
     if (executionPlan != null) {
-      return executionPlan.selectedStrategy() == StrategyKind.HELPER_CALL;
+      return executionPlan.selectedPath() == ExecutionPath.HELPER_CALL;
     }
     return instrInfo(instruction).asHelperCall();
   }

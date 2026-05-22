@@ -86,7 +86,7 @@ public class TcgBranchLoweringPass extends AbstractIssPass {
 
     var optimizeCtrlFlow = !configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_CTRL_FLOW);
 
-    scalarTcgInstrs(viam)
+    normalTcgInstrs(viam)
         .forEach(instr ->
             new TcgBranchLoweringExecutor(
                 instr.behavior(),

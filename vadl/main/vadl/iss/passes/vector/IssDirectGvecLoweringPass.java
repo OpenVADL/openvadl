@@ -49,7 +49,7 @@ public class IssDirectGvecLoweringPass extends AbstractIssPass {
 
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
-    directGvecInstrs(viam).forEach(this::lowerInstruction);
+    normalTcgInstrs(viam).forEach(this::lowerInstruction);
     return null;
   }
 

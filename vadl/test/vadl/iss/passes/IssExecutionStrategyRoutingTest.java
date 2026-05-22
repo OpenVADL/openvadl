@@ -39,18 +39,18 @@ import vadl.viam.Specification;
 public class IssExecutionStrategyRoutingTest extends AbstractTest {
 
   @Test
-  void separatesScalarVectorAndWholeHelperInstructionRoutes()
+  void separatesNormalTcgDirectGvecCandidateAndWholeHelperInstructionRoutes()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var routeProbe = new RouteProbePass(config());
 
-    var scalarNames = simpleNames(routeProbe.scalarTcgInstrs(viam));
-    var directGvecNames = simpleNames(routeProbe.directGvecInstrs(viam));
+    var normalTcgNames = simpleNames(routeProbe.normalTcgInstrs(viam));
+    var directGvecNames = simpleNames(routeProbe.directGvecCandidateInstrs(viam));
     var helperNames = simpleNames(routeProbe.wholeHelperInstrs(viam));
 
-    assertTrue(scalarNames.contains("VSETVLI"));
-    assertFalse(scalarNames.contains("VADD_VV"));
-    assertFalse(scalarNames.contains("VADD_VX"));
+    assertTrue(normalTcgNames.contains("VSETVLI"));
+    assertTrue(normalTcgNames.contains("VADD_VV"));
+    assertFalse(normalTcgNames.contains("VADD_VX"));
 
     assertTrue(directGvecNames.contains("VADD_VV"));
     assertTrue(directGvecNames.contains("VSUB_VV"));

@@ -98,7 +98,7 @@ public class IssTcgSchedulingPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    scalarTcgInstrs(viam)
+    normalTcgInstrs(viam)
         .map(Instruction::behavior)
         .forEach(IssTcgScheduler::runOn);
 

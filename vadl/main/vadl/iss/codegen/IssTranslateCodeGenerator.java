@@ -19,7 +19,7 @@ package vadl.iss.codegen;
 import static vadl.iss.passes.TcgPassUtils.instrInfo;
 
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.extensions.InstrExecPlan.StrategyKind;
+import vadl.iss.passes.extensions.InstrExecPlan.ExecutionPath;
 import vadl.viam.Instruction;
 
 /**
@@ -28,8 +28,9 @@ import vadl.viam.Instruction;
  * in the {@link vadl.viam.InstructionSetArchitecture}.
  *
  * <p>The dispatch is execution-plan-driven when an {@link vadl.iss.passes.extensions.InstrExecPlan}
- * is available and falls back to the legacy scalar-vs-helper split otherwise. Strategy-specific
- * generators provide dedicated seams for scalar TCG, direct gvec, and helper-based translation.
+ * is available and falls back to the legacy direct-TCG-vs-helper split otherwise. Lowered gvec
+ * nodes stay on the shared non-helper renderer and are emitted from the instruction graph like any
+ * other backend node.
  */
 public class IssTranslateCodeGenerator {
 
@@ -45,7 +46,7 @@ public class IssTranslateCodeGenerator {
                                                           IssConfiguration configuration) {
     var executionPlan = instrInfo(def).executionPlan();
     if (executionPlan != null) {
-      return plannedTranslateGenerator(def, configuration, executionPlan.selectedStrategy());
+      return plannedTranslateGenerator(def, configuration, executionPlan.selectedPath());
     }
     return legacyTranslateGenerator(def, configuration);
   }
@@ -53,11 +54,10 @@ public class IssTranslateCodeGenerator {
   private static InstructionTranslateGenerator plannedTranslateGenerator(
       Instruction def,
       IssConfiguration configuration,
-      StrategyKind strategy
+      ExecutionPath path
   ) {
-    return switch (strategy) {
-      case TCG_SCALAR -> new ScalarTcgTranslateGenerator(def, configuration);
-      case DIRECT_GVEC -> new DirectGvecTranslateGenerator(def, configuration);
+    return switch (path) {
+      case NORMAL_TCG -> new ScalarTcgTranslateGenerator(def, configuration);
       case HELPER_CALL -> new HelperCallTranslateGenerator(def, configuration);
     };
   }

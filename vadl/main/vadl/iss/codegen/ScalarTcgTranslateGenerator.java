@@ -39,12 +39,13 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 
 /**
- * Emits direct scalar-TCG translation functions.
+ * Emits direct non-helper translation functions.
  *
  * <p>This generator traverses the instruction's behavior graph and renders TCG operations directly
  * into the generated {@code trans_<instr>} function. It is used for instructions whose selected
- * execution strategy is `TCG_SCALAR`, or through the legacy fallback when no execution plan is
- * available yet.</p>
+ * execution path is `NORMAL_TCG`, or through the legacy fallback when no execution plan is
+ * available yet. Lowered gvec backend nodes stay in the same graph and are emitted by the same
+ * renderer.</p>
  *
  * <p>Compared to helper-based emission, this path keeps instruction semantics in translated TCG
  * form, which is typically the most efficient runtime path for scalar ALU, control-flow, and other

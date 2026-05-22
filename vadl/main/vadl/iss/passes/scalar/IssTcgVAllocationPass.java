@@ -87,7 +87,7 @@ public class IssTcgVAllocationPass extends AbstractIssPass {
     var skipOptimization = configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_VAR_ALLOC);
 
     // Process each instruction in the ISA
-    scalarTcgInstrs(viam)
+    normalTcgInstrs(viam)
         .forEach(instr ->
             // Allocate variables for the instruction's behavior
             new IssVariableAllocator(instr.behavior(),

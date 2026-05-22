@@ -52,7 +52,7 @@ public class IssScheduleIndirectJumpsPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    scalarTcgInstrs(viam).forEach(i -> new IssIndirectJumpScheduler(i.behavior()).run());
+    normalTcgInstrs(viam).forEach(i -> new IssIndirectJumpScheduler(i.behavior()).run());
     return null;
   }
 }
