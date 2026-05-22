@@ -81,7 +81,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
         bindingParamNames(plan.operands().get(0).registerBinding().accessorIndices()));
     assertEquals(List.of("vs1"),
         bindingParamNames(plan.operands().get(1).registerBinding().accessorIndices()));
-    assertEquals(InstrInfo.ExecStrategy.HELPER_CALL, instrInfo(instr).execStrategy());
+    assertEquals(InstrInfo.ExecStrategy.DIRECT_TCG, instrInfo(instr).execStrategy());
   }
 
   @Test

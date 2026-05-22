@@ -17,22 +17,16 @@
 package vadl.iss.codegen;
 
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.extensions.InstrExecPlan.StrategyKind;
 import vadl.viam.Instruction;
 
 /**
- * Temporary translate generator for selected direct-gvec plans.
+ * Translate generator for lowered direct-gvec plans.
  *
- * <p>Until PR 4 emits direct gvec calls, vector instructions selected as
- * {@link StrategyKind#DIRECT_GVEC} still reuse the helper-call wrapper. Keeping the generator
- * separate makes the emission strategy seam explicit and avoids mixing future gvec logic into the
- * helper path.</p>
- *
- * <p>This class exists so the translate/codegen layer already has a dedicated vector strategy
- * entry point. When the real direct-gvec emission work lands, it can grow here without reworking
- * dispatch or conflating vector-specific code with the generic helper wrapper.</p>
+ * <p>Direct-gvec planning now lowers eligible vector loop regions into backend gvec nodes inside
+ * the instruction graph. This generator therefore reuses the non-helper graph renderer while
+ * preserving a dedicated vector strategy entry point in the translate dispatch.</p>
  */
-class DirectGvecTranslateGenerator extends HelperCallTranslateGenerator {
+class DirectGvecTranslateGenerator extends ScalarTcgTranslateGenerator {
 
   DirectGvecTranslateGenerator(Instruction instr,
                                IssConfiguration configuration) {

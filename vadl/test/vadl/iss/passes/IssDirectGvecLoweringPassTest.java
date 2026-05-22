@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss.codegen;
+package vadl.iss.passes;
 
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vadl.TestUtils.findDefinitionByNameIn;
 
 import java.io.IOException;
@@ -26,68 +28,37 @@ import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.common.planning.IssExecStrategyPass;
+import vadl.iss.passes.tcgLowering.nodes.TcgGvecOpNode;
 import vadl.iss.passes.vector.IssDirectGvecLoweringPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.ForallNode;
 
-public class IssTranslateCodeGeneratorTest extends AbstractTest {
+public class IssDirectGvecLoweringPassTest extends AbstractTest {
 
   @Test
-  void selectsDirectGvecGeneratorForRecognizedVectorPlan()
+  void lowersRecognizedVectorLoopIntoBackendGvecNode()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var instr = findInstruction(viam, "RV64IMV::VADD_VV");
 
-    var generator = IssTranslateCodeGenerator.translateGenerator(instr, config());
-
-    assertInstanceOf(DirectGvecTranslateGenerator.class, generator);
+    assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(1, instr.behavior().getNodes(TcgGvecOpNode.class).count());
   }
 
   @Test
-  void selectsHelperGeneratorForHelperPlan()
+  void leavesFallbackVectorInstructionWithoutBackendGvecNode()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var instr = findInstruction(viam, "RV64IMV::VADD_VX");
 
-    var generator = IssTranslateCodeGenerator.translateGenerator(instr, config());
-
-    assertInstanceOf(HelperCallTranslateGenerator.class, generator);
-  }
-
-  @Test
-  void selectsScalarGeneratorForScalarPlan()
-      throws IOException, DuplicatedPassKeyException {
-    var viam = analyze("sys/risc-v/rv64v.vadl");
-    var instr = findInstruction(viam, "RV64IMV::VSETVLI");
-
-    var generator = IssTranslateCodeGenerator.translateGenerator(instr, config());
-
-    assertInstanceOf(ScalarTcgTranslateGenerator.class, generator);
-  }
-
-  @Test
-  void emitsLoweredDirectGvecCallFromGraph()
-      throws IOException, DuplicatedPassKeyException {
-    var viam = analyzeWithLowering("sys/risc-v/rv64v.vadl");
-    var instr = findInstruction(viam, "RV64IMV::VADD_VV");
-
-    var code = IssTranslateCodeGenerator.fetch(instr, config());
-
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_gvec_add("), code);
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("ofs_v(ctx, a->vd)"), code);
+    assertTrue(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(0, instr.behavior().getNodes(TcgGvecOpNode.class).count());
   }
 
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
-    return setupPassManagerAndRunSpec(specPath,
-        PassOrders.iss(config()).untilFirst(IssExecStrategyPass.class)
-    ).specification();
-  }
-
-  private Specification analyzeWithLowering(String specPath)
-      throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpec(specPath,
         PassOrders.iss(config()).untilFirst(IssDirectGvecLoweringPass.class)
     ).specification();

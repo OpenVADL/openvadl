@@ -16,7 +16,6 @@
 
 package vadl.iss.passes.common;
 
-import static vadl.iss.passes.TcgPassUtils.instrInfo;
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
@@ -55,8 +54,7 @@ public class IssBitfieldWriteLoweringPass extends AbstractIssPass {
 
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
-    allInstrs(viam)
-        .filter(instr -> !instrInfo(instr).asHelperCall())
+    scalarTcgInstrs(viam)
         .forEach(instr -> instr.behavior()
             .getNodes(IssWriteRegNode.class)
             .toList()

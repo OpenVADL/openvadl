@@ -58,7 +58,7 @@ public class IssMemoryAccessTransformationPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    tcgInstrs(viam)
+    scalarTcgInstrs(viam)
         .forEach(instruction -> new MemoryTransformer(instruction.behavior()).run());
 
     return null;

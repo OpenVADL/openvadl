@@ -189,7 +189,7 @@ public class TcgOpLoweringPass extends AbstractIssPass {
     // only if we skip the jmp slot optimization, we set it to false
     var optJmpSlot = !configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_JMP_SLOTS);
 
-    tcgInstrs(viam)
+    scalarTcgInstrs(viam)
         .forEach(i ->
             new TcgOpLoweringExecutor(i.expectExtension(TcgCtx.class).assignment(),
                 configuration().targetSize())

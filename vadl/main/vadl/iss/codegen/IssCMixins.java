@@ -50,6 +50,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgFreeTemp;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgGottoTb;
+import vadl.iss.passes.tcgLowering.nodes.TcgGvecOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgHelperCall;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgLookupAndGotoPtr;
@@ -445,6 +446,12 @@ public interface IssCMixins {
 
     @Handler
     default void handle(CGenContext<Node> ctx, TcgVRefNode toHandle) {
+      internalError(toHandle,
+          "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, TcgGvecOpNode toHandle) {
       internalError(toHandle,
           "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
     }

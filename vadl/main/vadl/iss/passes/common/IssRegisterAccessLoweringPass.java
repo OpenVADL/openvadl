@@ -104,7 +104,7 @@ public class IssRegisterAccessLoweringPass extends AbstractIssPass {
 
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
-    tcgInstrs(viam).forEach(i ->
+    scalarTcgInstrs(viam).forEach(i ->
         new IssStaticRegisterAccessConverter(i.behavior()).run());
     viam.isa().get().ownMemories().stream()
         .map(Memory::biEndianCondition)

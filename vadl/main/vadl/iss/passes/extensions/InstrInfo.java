@@ -127,9 +127,9 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   }
 
   private ExecStrategy mapExecutionPlanToExecStrategy(InstrExecPlan executionPlan) {
-    return executionPlan.selectedStrategy() == InstrExecPlan.StrategyKind.TCG_SCALAR
-        ? ExecStrategy.DIRECT_TCG
-        : ExecStrategy.HELPER_CALL;
+    return executionPlan.selectedStrategy() == InstrExecPlan.StrategyKind.HELPER_CALL
+        ? ExecStrategy.HELPER_CALL
+        : ExecStrategy.DIRECT_TCG;
   }
 
   /**

@@ -47,13 +47,15 @@ public class IssLoopUnrollPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    tcgInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());
+    scalarTcgInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());
 
-    helperInstrs(viam)
+    wholeHelperInstrs(viam)
         .filter(i -> i.behavior().getNodes(ForallNode.class).findAny().isPresent())
         .filter(this::helperLoopMustBeUnrolled)
         .forEach(i -> new LoopUnroller(i.behavior()).run());
 
+    // Direct-gvec candidates keep their normalized vector loop structure for a future
+    // graph-based vector lowering pass.
     return null;
   }
 

@@ -47,7 +47,7 @@ public class IssTcgContextPass extends AbstractIssPass {
     var targetSize = configuration().targetSize();
 
     // Process each instruction in the ISA
-    tcgInstrs(viam)
+    scalarTcgInstrs(viam)
         // attach new TCG context to each instruction
         .forEach(instr -> instr.attachExtension(new TcgCtx(instr.behavior(), targetSize))
         );

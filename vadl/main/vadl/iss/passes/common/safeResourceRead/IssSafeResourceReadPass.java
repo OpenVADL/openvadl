@@ -107,7 +107,7 @@ public class IssSafeResourceReadPass extends AbstractIssPass {
   public Result execute(PassResults passResults, Specification viam)
       throws IOException {
     var result = new Result(new HashMap<>());
-    tcgInstrs(viam).forEach(
+    scalarTcgInstrs(viam).forEach(
         instruction -> new IssResourceReadSecurer(instruction, result).run());
     return result;
   }

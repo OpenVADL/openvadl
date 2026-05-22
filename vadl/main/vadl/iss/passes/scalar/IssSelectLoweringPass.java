@@ -16,8 +16,6 @@
 
 package vadl.iss.passes.scalar;
 
-import static java.util.Objects.requireNonNull;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -29,7 +27,6 @@ import vadl.iss.passes.tcgLowering.TcgCtx;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.GraphUtils;
-import vadl.viam.Counter;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -64,7 +61,7 @@ public class IssSelectLoweringPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    tcgInstrs(viam).forEach(instr -> new IssSelectLowerer(
+    scalarTcgInstrs(viam).forEach(instr -> new IssSelectLowerer(
         instr.behavior(),
         instr.expectExtension(TcgCtx.class).assignment()
     ).run());

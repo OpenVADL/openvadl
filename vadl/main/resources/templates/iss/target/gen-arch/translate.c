@@ -5,6 +5,7 @@
 #include "exec/translator.h"
 #include "qemu/qemu-print.h"
 #include "tcg/tcg-op.h"
+#include "tcg/tcg-op-gvec.h"
 #include "cpu-bits.h"
 #include "trace.h"
 #include "vadl-builtins.h"
