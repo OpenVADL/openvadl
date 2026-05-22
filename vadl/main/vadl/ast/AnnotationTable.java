@@ -71,6 +71,7 @@ import vadl.viam.annotations.AssertAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
+import vadl.viam.annotations.StopAnnotation;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
 
 /**
@@ -274,6 +275,17 @@ public class AnnotationTable {
               .getFunctionGraph(annotation.expr, "Assert " + group.simpleName());
           graph.setParentDefinition(group);
           group.addAnnotation(new AssertAnnotation(graph));
+        })
+        .build();
+
+    annotationOn(GroupDefinition.class, "stop", () -> new ExprAnnotation(true))
+        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .applyViam((def, annotation, lowering) -> {
+          var group = (Group) def;
+          var graph = new BehaviorLowering(lowering)
+              .getFunctionGraph(annotation.expr, "Stop " + group.simpleName());
+          graph.setParentDefinition(group);
+          group.addAnnotation(new StopAnnotation(graph));
         })
         .build();
 
