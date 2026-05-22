@@ -43,7 +43,7 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
 
     var generator = IssTranslateCodeGenerator.translateGenerator(instr, config());
 
-    assertInstanceOf(ScalarTcgTranslateGenerator.class, generator);
+    assertInstanceOf(TcgTranslateGenerator.class, generator);
   }
 
   @Test
@@ -65,7 +65,7 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
 
     var generator = IssTranslateCodeGenerator.translateGenerator(instr, config());
 
-    assertInstanceOf(ScalarTcgTranslateGenerator.class, generator);
+    assertInstanceOf(TcgTranslateGenerator.class, generator);
   }
 
   @Test

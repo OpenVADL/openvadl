@@ -56,7 +56,7 @@ import vadl.viam.graph.dependency.FoldNode;
     context = CNodeContext.class,
     include = {"vadl.viam", "vadl.iss"}
 )
-class ScalarTcgTranslateGenerator implements InstructionTranslateGenerator,
+class TcgTranslateGenerator implements InstructionTranslateGenerator,
     CDefaultMixins.All, IssCMixins.Default, IssCMixins.StaticReadRegTensor,
     CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads,
     CInvalidMixins.InstrCall, CInvalidMixins.HardwareRelated {
@@ -67,8 +67,8 @@ class ScalarTcgTranslateGenerator implements InstructionTranslateGenerator,
   private final String targetName;
   private final InstrInfo info;
 
-  ScalarTcgTranslateGenerator(Instruction instr,
-                              IssConfiguration configuration) {
+  TcgTranslateGenerator(Instruction instr,
+                        IssConfiguration configuration) {
     this.insn = instr;
     this.info = instr.expectExtension(InstrInfo.class);
     this.builder = new StringBuilder();
@@ -76,7 +76,7 @@ class ScalarTcgTranslateGenerator implements InstructionTranslateGenerator,
     this.ctx = new CNodeContext(
         builder::append,
         (dispatchCtx, node) ->
-            ScalarTcgTranslateGeneratorDispatcher.dispatch(this, dispatchCtx, node)
+            TcgTranslateGeneratorDispatcher.dispatch(this, dispatchCtx, node)
     );
   }
 

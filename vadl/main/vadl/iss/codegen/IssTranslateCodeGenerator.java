@@ -57,7 +57,7 @@ public class IssTranslateCodeGenerator {
       ExecutionPath path
   ) {
     return switch (path) {
-      case NORMAL_TCG -> new ScalarTcgTranslateGenerator(def, configuration);
+      case NORMAL_TCG -> new TcgTranslateGenerator(def, configuration);
       case HELPER_CALL -> new HelperCallTranslateGenerator(def, configuration);
     };
   }
@@ -68,6 +68,6 @@ public class IssTranslateCodeGenerator {
   ) {
     return instrInfo(def).executionPath() == ExecutionPath.HELPER_CALL
         ? new HelperCallTranslateGenerator(def, configuration)
-        : new ScalarTcgTranslateGenerator(def, configuration);
+        : new TcgTranslateGenerator(def, configuration);
   }
 }
