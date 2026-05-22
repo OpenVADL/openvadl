@@ -1576,6 +1576,9 @@ class ExprAnnotation extends Annotation {
   }
 
   public void verifyExprType(Type type) {
+    Diagnostic.ensure(expr.type != null, () -> error("Invalid annotation expression", expr)
+        .locationDescription(expr, "Unable to determine type")
+        .help("Check additional errors which may have caused the type to be missing"));
     Diagnostic.ensure(expr.type() == type, () -> error("Invalid annotation expression", expr)
         .locationDescription(expr, "Expression must be a %s", type));
   }

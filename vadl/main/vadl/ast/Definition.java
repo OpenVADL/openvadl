@@ -33,6 +33,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.ast.GroupDefUtils.GroupExprLengthCollector;
+import vadl.ast.GroupDefUtils.OperationCollector;
 import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
@@ -3393,6 +3395,14 @@ class GroupDefinition extends Definition implements IdentifiableNode {
     builder.append(" = ");
     groupSequence.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  public List<OperationDefinition> operations() {
+    return OperationCollector.operations(groupSequence);
+  }
+
+  public int maxLength(ConstantEvaluator evaluator) {
+    return GroupExprLengthCollector.maxLength(evaluator, groupSequence);
   }
 
   @Override

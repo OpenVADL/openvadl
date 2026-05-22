@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -45,6 +46,7 @@ import vadl.ast.Group.GroupVisitor;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
+import vadl.types.ArrayType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -3098,6 +3100,18 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof GroupDefinition group) {
+      check(group);
+
+      final var elemType = PseudoFormatType.of(group.operations());
+
+      final int maxLength = group.maxLength(constantEvaluator);
+      final var lengthType = UIntType.minimalTypeFor(maxLength);
+
+      expr.type = Type.array(elemType, lengthType);
+      return;
+    }
+
     if (origin != null) {
       // It's not a builtin but we don't handle it yet.
       // We might be here from a call expr and it might be necessary to handle the call for another
@@ -3629,17 +3643,18 @@ public class TypeChecker
       return;
     }
 
-    var lastSlice = sliceGroups.getLast();
-
-    if (!(typeBeforeSlice instanceof BitsType) && !(typeBeforeSlice instanceof TensorType)) {
-      var loc = expr.target.location().join(lastSlice.location);
-      addErrorAndStopChecking(error("Type Mismatch", loc)
-          .description("Only bit types can be sliced but the target was a `%s`", typeBeforeSlice)
-          .build());
-    }
-
     Type currType = typeBeforeSlice;
+    SourceLocation targetLoc = expr.location();
     for (var slice : sliceGroups) {
+
+      if (!(currType instanceof BitsType) && !(currType instanceof TensorType)
+          && !(currType instanceof ArrayType)) {
+        var loc = expr.target.location().join(targetLoc.location());
+        throw addErrorAndStopChecking(error("Type Mismatch", loc)
+            .description("Type `%s` cannot be indexed or sliced", currType)
+            .build());
+      }
+
       if (currType instanceof BitsType currBitsType) {
         // construct BitSlice for each slice group
         var parts = new ArrayList<Constant.BitSlice.Part>();
@@ -3651,7 +3666,7 @@ public class TypeChecker
           parts.add(part);
         }
 
-        var hasDynamicSlice = parts.stream().anyMatch(p -> p == null);
+        var hasDynamicSlice = parts.stream().anyMatch(Objects::isNull);
         if (hasDynamicSlice) {
           // FIXME: Implement this
           // Dynamic slices cannot be stacked because of a VIAM constraint
@@ -3750,6 +3765,28 @@ public class TypeChecker
           slice.type = currType;
         }
       }
+      if (currType instanceof ArrayType currArrayType) {
+        if (slice.values.size() != 1) {
+          var loc = slice.values.getFirst().location()
+              .join(slice.values.getLast().location());
+          throw addErrorAndStopChecking(error("Invalid Array Indexing", loc)
+              .locationDescription(loc, "Indexing arrays only allows one argument.")
+              .build());
+        }
+
+        var indexExpr = slice.values.getFirst();
+        if (indexExpr instanceof RangeExpr) {
+          throw addErrorAndStopChecking(error("Invalid Array Indexing", indexExpr)
+              .locationDescription(indexExpr, "Arrays cannot be sliced.")
+              .build());
+        }
+        check(indexExpr);
+
+        currType = currArrayType.elementType();
+        expr.type = currType;
+      }
+
+      targetLoc = slice.location;
     }
   }
 
@@ -3903,8 +3940,22 @@ public class TypeChecker
         }
 
         expr.type = output.get().type();
+      } else if (type instanceof ArrayType arrayType) {
+        if (!fieldName.equals("length")) {
+          throw addErrorAndStopChecking(
+              error("Unknown array access `%s`".formatted(fieldName), expr)
+                  .description("Arrays only have the field `length`").build());
+        }
+        if (!subCall.argsIndices.isEmpty()) {
+          throw addErrorAndStopChecking(
+              error("Wrong Argument Number",
+                  SourceLocation.join(subCall.argsIndices.stream().map(a -> a.location).toList()))
+                  .description("This subcall doesn't take any arguments.")
+                  .build());
+        }
+        expr.type = arrayType.lengthType();
       } else {
-        addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)
+        throw addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)
             .description("No subcall `%s` exists for the type `%s`",
                 fieldName,
                 requireNonNull(type))
