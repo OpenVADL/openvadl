@@ -47,7 +47,7 @@ instruction set architecture HUGE = {
   record InstrRec (id : Id, name : Str, op : Id, opcode : Ex)
 
   // condition: CondCode id, assembly extension string, condition expression
-  record CondRec  (condId : Id, condSize : Id, condStr : Str, condEx : Ex)
+  record CondRec  (condId : Id, condSize : Id, condStr : Str, condEx : Ex, encs : Encs)
 
   // shifted operands: shift identifier, encodings, shift expression, assembly elements
   record ShiftRec (sftId : Id, sftEx : Ex, encs : Encs, asms : Ex)
@@ -111,20 +111,21 @@ instruction set architecture HUGE = {
     }
 
   model-type InstrModel = (Id, Str, CondRec, InstrRec, ShiftRec) -> IsaDefs
+  model-type OperandModel = (InstrModel, Id, Str, CondRec, InstrRec) -> IsaDefs
 
   model ArithmeticRegInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
     instruction AsId ($i.id, $size, $sft.sftId, $c.condStr) : ArithmeticRegFormat =
       if ($c.condEx) then
-        AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $sft.sftEx)
+        AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $sft.sftEx) as AsId(Bits, $size)
     encoding AsId ($i.id, $size, $sft.sftId, $c.condStr) = {
       opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
-      op = 0, funct = $i.opcode, $sft.encs
+      op = 0b111'1111, funct = $i.opcode, $c.encs, $sft.encs
       }
     assembly AsId ($i.id, $size, $sft.sftId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
       register(regd), ',', register(regl), ',', register(regr), $sft.asms)
     }
 
-  model ArithShiftInstr (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
+  model OpShiftReg (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
     $m ($size ; $sizeStr ; $c ; $i ; (Zero   ; (AsId(R, $size)(regr)) ;               regs= 0, shift = 0, opShift = OpShift::Add ;  ""                                     ))
     $m ($size ; $sizeStr ; $c ; $i ; (Add    ; (AsId(R, $size)(regr) + AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Add ; ("+", register(regs)                   )))
     $m ($size ; $sizeStr ; $c ; $i ; (Sub    ; (AsId(R, $size)(regr) - AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Sub ; ("-", register(regs)                   )))
@@ -136,30 +137,118 @@ instruction set architecture HUGE = {
     $m ($size ; $sizeStr ; $c ; $i ; (OrSft  ; (AsId(R, $size)(regr) | AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Or  ; ("|", register(regs), "<<", udec(shift))))
     }
 
-  model ArithCondInstr (m: InstrModel, size: Id, sizeStr: Str, i : InstrRec) : IsaDefs = {
-    $ArithShiftInstr ($m ;$size ; $sizeStr ; (EQ ; B ; "beq" ; RB(cregl)  = RB(cregr)) ; $i)
-    $ArithShiftInstr ($m ;$size ; $sizeStr ; (EQ ; H ; "heq" ; RH(cregl)  = RH(cregr)) ; $i)
-    $ArithShiftInstr ($m ;$size ; $sizeStr ; (EQ ; W ; "weq" ; RW(cregl)  = RW(cregr)) ; $i)
-    $ArithShiftInstr ($m ;$size ; $sizeStr ; (EQ ; D ; "deq" ; RD(cregl)  = RD(cregr)) ; $i)
-    $ArithShiftInstr ($m ;$size ; $sizeStr ; (NE ; B ; "bne" ; RB(cregl) != RB(cregr)) ; $i)
-    $ArithShiftInstr ($m ;$size ; $sizeStr ; (NE ; H ; "hne" ; RH(cregl) != RH(cregr)) ; $i)
-    $ArithShiftInstr ($m ;$size ; $sizeStr ; (NE ; W ; "wne" ; RW(cregl) != RW(cregr)) ; $i)
-    $ArithShiftInstr ($m ;$size ; $sizeStr ; (NE ; D ; "dne" ; RD(cregl) != RD(cregr)) ; $i)
+  model ArithmeticImmInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
+    instruction AsId ($i.id, $size, $sft.sftId, $c.condStr) : ArithmeticImmFormat =
+      if ($c.condEx) then
+        AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $sft.sftEx) as AsId(Bits, $size)
+    encoding AsId ($i.id, $size, $sft.sftId, $c.condStr) = {
+      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
+      op = $i.opcode, $c.encs, $sft.encs
+      }
+    assembly AsId ($i.id, $size, $sft.sftId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
+      register(regd), ',', register(regl), ',', $sft.asms)
     }
 
-  model ArithSizeInstr (m: InstrModel, i : InstrRec) : IsaDefs = {
-    $ArithCondInstr ($m ; B ; "b" ; $i )
-    $ArithCondInstr ($m ; H ; "h" ; $i )
-    $ArithCondInstr ($m ; W ; "w" ; $i )
-    $ArithCondInstr ($m ; D ; "d" ; $i )
+  model OpShiftImm (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
+    $m ($size ; $sizeStr ; $c ; $i ; (Sft00 ; (imm0 as AsId(Bits, $size)) ; immShift = 0 ; (udec(imm)        )))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sft16 ; (imm1 as AsId(Bits, $size)) ; immShift = 1 ; (udec(imm), "<<16")))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sft32 ; (imm2 as AsId(Bits, $size)) ; immShift = 2 ; (udec(imm), "<<32")))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sft48 ; (imm3 as AsId(Bits, $size)) ; immShift = 3 ; (udec(imm), "<<48")))
+    }
+
+  model ArithCondInstr (m: InstrModel, o: OperandModel, size: Id, sizeStr: Str, i : InstrRec) : IsaDefs = {
+    $o ($m ;$size ; $sizeStr ; (EQ  ; B ; "" ; true ; cregl = 0,           cregr = 0)     ; $i)
+    $o ($m ;$size ; $sizeStr ; (EQ  ; B ; "beq"  ; RB(cregl)          = RB(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (EQ  ; H ; "heq"  ; RH(cregl)          = RH(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (EQ  ; W ; "weq"  ; RW(cregl)          = RW(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (EQ  ; D ; "deq"  ; RD(cregl)          = RD(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (NE  ; B ; "bne"  ; RB(cregl)         != RB(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (NE  ; H ; "hne"  ; RH(cregl)         != RH(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (NE  ; W ; "wne"  ; RW(cregl)         != RW(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (NE  ; D ; "dne"  ; RD(cregl)         != RD(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (SLT ; B ; "bslt" ; RB(cregl) as SInt <  RB(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (SLT ; H ; "hslt" ; RH(cregl) as SInt <  RH(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (SLT ; W ; "wslt" ; RW(cregl) as SInt <  RW(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (SLT ; D ; "dslt" ; RD(cregl) as SInt <  RD(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (SLE ; B ; "bsle" ; RB(cregl) as SInt <= RB(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (SLE ; H ; "hsle" ; RH(cregl) as SInt <= RH(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (SLE ; W ; "wsle" ; RW(cregl) as SInt <= RW(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (SLE ; D ; "dsle" ; RD(cregl) as SInt <= RD(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (ULT ; B ; "bult" ; RB(cregl)         <  RB(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (ULT ; H ; "hult" ; RH(cregl)         <  RH(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (ULT ; W ; "wult" ; RW(cregl)         <  RW(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (ULT ; D ; "dult" ; RD(cregl)         <  RD(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (ULE ; B ; "bule" ; RB(cregl)         <= RB(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (ULE ; H ; "hule" ; RH(cregl)         <= RH(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (ULE ; W ; "wule" ; RW(cregl)         <= RW(cregr); none ) ; $i)
+    $o ($m ;$size ; $sizeStr ; (ULE ; D ; "dule" ; RD(cregl)         <= RD(cregr); none ) ; $i)
+    }
+
+  model ArithSizeInstr (m: InstrModel, o: OperandModel, i : InstrRec) : IsaDefs = {
+    $ArithCondInstr ($m ; $o; B ; "b" ; $i )
+    $ArithCondInstr ($m ; $o; H ; "h" ; $i )
+    $ArithCondInstr ($m ; $o; W ; "w" ; $i )
+    $ArithCondInstr ($m ; $o; D ; "d" ; $i )
   }
 
-  model SizeCondInstr (m: InstrModel, i : InstrRec) : IsaDefs = {
-    $ArithSizeInstr ($m ; $i )
+  model SizeCondInstr (m: InstrModel, o: OperandModel, i : InstrRec) : IsaDefs = {
+    $ArithSizeInstr ($m ; $o ; $i )
   }
 
 // arithmetic register instructions ********************************************
 
-  $SizeCondInstr    (ArithmeticRegInstr ;  (ADD     ; "add"   ; add    ; 0b00'0000'0000'0000) )
-  $SizeCondInstr    (ArithmeticRegInstr ;  (SUB     ; "sub"   ; sub    ; 0b00'0000'0000'0001) )
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (ADD     ; "add"   ; add    ; 0b00'0000'0000'0000))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SUB     ; "sub"   ; sub    ; 0b00'0000'0000'0001))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (AND     ; "and"   ; and    ; 0b00'0000'0000'0010))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (OR      ; "or"    ; or     ; 0b00'0000'0000'0011))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (XOR     ; "xor"   ; xor    ; 0b00'0000'0000'0100))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (LSL     ; "lsl"   ; lsl    ; 0b00'0000'0000'0101))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (LSR     ; "lsr"   ; lsr    ; 0b00'0000'0000'0110))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (ASR     ; "asr"   ; asr    ; 0b00'0000'0000'0111))
+
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SDIV    ; "sdiv"  ; sdiv   ; 0b00'0000'0000'1000))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (UDIV    ; "udiv"  ; udiv   ; 0b00'0000'0000'1001))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SMOD    ; "smod"  ; smod   ; 0b00'0000'0000'1010))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (UMOD    ; "umod"  ; umod   ; 0b00'0000'0000'1011))
+
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (MUL     ; "mul"   ; mul    ; 0b00'0000'0000'1100))
+
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SEQ     ; "seq"   ; equ    ; 0b00'0000'0000'1110))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SNE     ; "seq"   ; equ    ; 0b00'0000'0000'1111))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SSLT    ; "sslt"  ; slth   ; 0b00'0000'0001'0000))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SSLE    ; "ssle"  ; sleq   ; 0b00'0000'0001'0001))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SSGT    ; "ssgt"  ; sgth   ; 0b00'0000'0001'0010))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SSGE    ; "ssge"  ; sgeq   ; 0b00'0000'0001'0011))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (USLT    ; "uslt"  ; ulth   ; 0b00'0000'0001'0100))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (USLE    ; "usle"  ; uleq   ; 0b00'0000'0001'0101))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (USGT    ; "usgt"  ; ugth   ; 0b00'0000'0001'0110))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (USGE    ; "usge"  ; ugeq   ; 0b00'0000'0001'0111))
+
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (ADD     ; "add"   ; add    ;            0b0'0000))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SUB     ; "sub"   ; sub    ;            0b0'0001))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (AND     ; "and"   ; and    ;            0b0'0010))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (OR      ; "or"    ; or     ;            0b0'0011))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (XOR     ; "xor"   ; xor    ;            0b0'0100))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (LSL     ; "lsl"   ; lsl    ;            0b0'0101))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (LSR     ; "lsr"   ; lsr    ;            0b0'0110))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (ASR     ; "asr"   ; asr    ;            0b0'0111))
+
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SDIV    ; "sdiv"  ; sdiv   ;            0b0'1000))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (UDIV    ; "udiv"  ; udiv   ;            0b0'1001))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SMOD    ; "smod"  ; smod   ;            0b0'1010))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (UMOD    ; "umod"  ; umod   ;            0b0'1011))
+
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (MUL     ; "mul"   ; mul    ;            0b0'1100))
+
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SEQ     ; "seq"   ; equ    ;            0b0'1110))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SNE     ; "seq"   ; equ    ;            0b0'1111))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SSLT    ; "sslt"  ; slth   ;            0b1'0000))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SSLE    ; "ssle"  ; sleq   ;            0b1'0001))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SSGT    ; "ssgt"  ; sgth   ;            0b1'0010))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SSGE    ; "ssge"  ; sgeq   ;            0b1'0011))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USLT    ; "uslt"  ; ulth   ;            0b1'0100))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USLE    ; "usle"  ; uleq   ;            0b1'0101))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USGT    ; "usgt"  ; ugth   ;            0b1'0110))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USGE    ; "usge"  ; ugeq   ;            0b1'0111))
+
   }
