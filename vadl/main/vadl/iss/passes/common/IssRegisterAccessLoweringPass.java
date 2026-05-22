@@ -78,7 +78,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  *   {@link IssStaticReadRegNode} (this only happens in tcg instruction behaviors
  *   and in the optional bi-endian memory condition behavior).</li>
  *   <li>Similarly, PC reads are converted into {@link IssStaticPcRegNode}s, so they are
- *   not scheduled in the {@link IssTcgSchedulingPass}.</li>
+ *   not scheduled in the {@link vadl.iss.passes.tcg.IssTcgSchedulingPass}.</li>
  * </ul>
  *
  * <p>Contract:
@@ -175,7 +175,7 @@ class IssStaticRegisterAccessConverter {
 class IssRegisterAccessLowering {
 
   private final Graph behavior;
-  
+
   IssRegisterAccessLowering(Graph behavior) {
     this.behavior = behavior;
   }
@@ -237,52 +237,17 @@ class IssRegisterAccessLowering {
     var semantics = read.resourceDefinition().semantics();
     var aliasIndices = buildAliasIndices(read.resourceDefinition(), read.indices());
     var baseDims = semantics.baseTensor().indexDimensions().size();
-    var simpleAliasAccessor = semantics.aliasSlice() == null
-        && aliasIndices.size() == baseDims;
-    var helperExpansionAccessor = regInfo(semantics.baseTensor()).execClass()
-        == RegInfo.ExecClass.CPU_VECTOR
-        && semantics.aliasSlice() == null
-        && aliasIndices.size() > baseDims
-        && read.type().asDataType().bitWidth() <= 64;
-    if (simpleAliasAccessor || helperExpansionAccessor) {
-      var resourceIndices = helperExpansionAccessor
-          ? new NodeList<>(aliasIndices.stream().limit(baseDims).toList())
-          : aliasIndices;
-      var readShape = helperExpansionAccessor
-          ? IssReadRegNode.ReadShape.EXPANSION
-          : IssReadRegNode.ReadShape.FULL;
-      var aliasRead = new IssReadRegNode(
-          semantics.baseTensor(),
-          resourceIndices,
-          read.type().asDataType(),
-          null,
-          IssReadRegNode.AccessKind.ALIAS,
-          readShape,
-          read.resourceDefinition().simpleName().toLowerCase(),
-          read.resourceDefinition(),
-          read.indices().copy()
-      );
-      aliasRead.setSourceLocationIfNotSet(read.location());
-      read.replaceAndDelete(aliasRead);
+    if (isSimpleAliasReadAccessor(semantics, aliasIndices, baseDims)) {
+      lowerSimpleAliasRead(read, semantics, aliasIndices);
       return;
     }
 
-    var readValue = lowerBaseAliasRead(read, semantics, aliasIndices);
-    var zeroGuard = buildDontMatchGuard(aliasIndices, semantics);
-    if (zeroGuard != null) {
-      var zero = Constant.Value.of(0, readValue.type().asDataType()).toNode();
-      readValue = new SelectNode(readValue.type(), zeroGuard, readValue, zero);
+    if (isCpuVectorExpansionReadAccessor(read, semantics, aliasIndices, baseDims)) {
+      lowerCpuVectorExpansionRead(read, semantics, aliasIndices, baseDims);
+      return;
     }
 
-    if (semantics.aliasSlice() != null) {
-      readValue = new SliceNode(
-          readValue,
-          semantics.aliasSlice(),
-          Type.bits(semantics.aliasSlice().bitSize()));
-    }
-
-    readValue.setSourceLocationIfNotSet(read.location());
-    read.replaceAndDelete(readValue);
+    lowerGeneralAliasRead(read, semantics, aliasIndices);
   }
 
   private ExpressionNode lowerBaseAliasRead(ReadArtificialResNode read,
@@ -366,100 +331,263 @@ class IssRegisterAccessLowering {
           write.resourceDefinition().simpleName());
     }
 
-    var baseIndices = new NodeList<ExpressionNode>();
-    for (int i = 0; i < baseIndexCount; i++) {
-      baseIndices.add(aliasIndices.get(i));
-    }
-
+    var baseIndices = baseIndices(aliasIndices, baseIndexCount);
     var userCondition = write.nullableCondition();
     var guard = buildDontMatchGuard(aliasIndices, semantics);
-    var guardKind = userCondition == null
-        ? IssWriteRegNode.WriteGuardKind.NONE
-        : IssWriteRegNode.WriteGuardKind.CONDITIONAL;
-    if (guard != null) {
-      // Alias guard semantics must be enforced via dest_<alias>(...) in TCG lowering.
-      // Do not encode them only as side-effect conditions.
-      guardKind = IssWriteRegNode.WriteGuardKind.ZERO_CONSTRAINT;
+    var guardKind = resolveWriteGuardKind(userCondition, guard);
+
+    if (isSimpleAliasWriteAccessor(write, semantics, aliasIndices, baseIndexCount)) {
+      lowerSimpleAliasWrite(write, baseTensor, baseIndices, userCondition, guardKind);
+      return;
     }
 
-    var simpleAliasWriteAccessor = write.value().type().asDataType().bitWidth() <= 64
+    if (isContinuousSliceAliasWriteAccessor(semantics, aliasIndices, baseIndexCount)) {
+      lowerContinuousSliceAliasWrite(write, semantics, baseTensor, baseIndices, userCondition,
+          guardKind);
+      return;
+    }
+
+    if (isCpuVectorExpansionWriteAccessor(semantics, aliasIndices, baseIndexCount)) {
+      lowerCpuVectorExpansionWrite(write, semantics, baseTensor, aliasIndices, baseIndices,
+          baseIndexCount, userCondition, guardKind);
+      return;
+    }
+
+    lowerGeneralAliasWrite(write, semantics, baseTensor, aliasIndices, baseIndices,
+        baseIndexCount, userCondition, guardKind);
+  }
+
+  private boolean isSimpleAliasReadAccessor(ArtificialResource.Semantics semantics,
+                                            NodeList<ExpressionNode> aliasIndices,
+                                            int baseDims) {
+    return semantics.aliasSlice() == null && aliasIndices.size() == baseDims;
+  }
+
+  private boolean isCpuVectorExpansionReadAccessor(ReadArtificialResNode read,
+                                                   ArtificialResource.Semantics semantics,
+                                                   NodeList<ExpressionNode> aliasIndices,
+                                                   int baseDims) {
+    return regInfo(semantics.baseTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR
+        && semantics.aliasSlice() == null
+        && semantics.zeroConstraint() == null
+        && aliasIndices.size() > baseDims
+        && read.type().asDataType().bitWidth() <= 64;
+  }
+
+  private void lowerSimpleAliasRead(ReadArtificialResNode read,
+                                    ArtificialResource.Semantics semantics,
+                                    NodeList<ExpressionNode> aliasIndices) {
+    // Keep exact-width alias forwarding as an alias access. There is no extra virtual indexing
+    // to normalize into a lane offset here, so preserving the alias surface retains the intended
+    // accessor/guard semantics without losing anything the later gvec analysis would need.
+    var aliasRead = new IssReadRegNode(
+        semantics.baseTensor(),
+        aliasIndices,
+        read.type().asDataType(),
+        null,
+        IssReadRegNode.AccessKind.ALIAS,
+        IssReadRegNode.ReadShape.FULL,
+        read.resourceDefinition().simpleName().toLowerCase(),
+        read.resourceDefinition(),
+        read.indices().copy()
+    );
+    aliasRead.setSourceLocationIfNotSet(read.location());
+    read.replaceAndDelete(aliasRead);
+  }
+
+  private void lowerCpuVectorExpansionRead(ReadArtificialResNode read,
+                                           ArtificialResource.Semantics semantics,
+                                           NodeList<ExpressionNode> aliasIndices,
+                                           int baseDims) {
+    // For alias-expansion reads on CPU-vector storage, keep the read as a base chunk access
+    // instead of an alias wrapper. This preserves one lane-local window plus one base-register
+    // selector, which the direct-gvec analysis can later map to env offsets on the base tensor.
+    // If we routed this through an alias accessor or reconstructed a full aggregate read, the
+    // vector planner would lose that normalized "base register + lane offset" shape.
+    var baseIndices = baseIndices(aliasIndices, baseDims);
+    var remainingIndices = aliasIndices.stream().skip(baseDims).toList();
+    var dynamicConsumed = Math.max(0, baseDims - semantics.fixedIndices().size());
+    var remainingDimensions = semantics.dynamicDimensions().stream().skip(dynamicConsumed).toList();
+    var sourceType = semantics.baseTensor().resultType(baseDims);
+    var resultType = read.type().asDataType();
+    ensureExpansionAliasSliceFits(read.resourceDefinition(), sourceType, resultType,
+        remainingDimensions);
+    var msbLsb = getMsbAndLsbOfIndexAccess(sourceType, resultType, remainingIndices,
+        remainingDimensions);
+    var chunkRead = new IssReadRegNode(
+        semantics.baseTensor(),
+        baseIndices,
+        resultType,
+        null,
+        IssReadRegNode.AccessKind.BASE,
+        IssReadRegNode.ReadShape.EXPANSION,
+        null,
+        null,
+        baseIndices.copy(),
+        IssReadRegNode.WindowKind.CHUNK,
+        msbLsb.right(),
+        intU(resultType.bitWidth(), 32).toNode()
+    );
+    chunkRead.setSourceLocationIfNotSet(read.location());
+    read.replaceAndDelete(chunkRead);
+  }
+
+  private void lowerGeneralAliasRead(ReadArtificialResNode read,
+                                     ArtificialResource.Semantics semantics,
+                                     NodeList<ExpressionNode> aliasIndices) {
+    // Everything else is a semantically richer alias case: slices, guarded aliases, or expansion
+    // shapes that cannot stay as one plain base chunk access. Materialize these as expression
+    // trees so later passes/codegen see the full alias semantics directly instead of a misleading
+    // register-access shell that would suggest simple gvec-style offset lowering is still valid.
+    var readValue = lowerBaseAliasRead(read, semantics, aliasIndices);
+    var zeroGuard = buildDontMatchGuard(aliasIndices, semantics);
+    if (zeroGuard != null) {
+      var zero = Constant.Value.of(0, readValue.type().asDataType()).toNode();
+      readValue = new SelectNode(readValue.type(), zeroGuard, readValue, zero);
+    }
+
+    if (semantics.aliasSlice() != null) {
+      readValue = new SliceNode(
+          readValue,
+          semantics.aliasSlice(),
+          Type.bits(semantics.aliasSlice().bitSize()));
+    }
+
+    readValue.setSourceLocationIfNotSet(read.location());
+    read.replaceAndDelete(readValue);
+  }
+
+  private boolean isSimpleAliasWriteAccessor(WriteArtificialResNode write,
+                                             ArtificialResource.Semantics semantics,
+                                             NodeList<ExpressionNode> aliasIndices,
+                                             int baseIndexCount) {
+    return write.value().type().asDataType().bitWidth() <= 64
         && semantics.aliasSlice() == null
         && aliasIndices.size() == baseIndexCount;
-    if (simpleAliasWriteAccessor) {
-      var replacement = new IssWriteRegNode(
-          baseTensor,
-          baseIndices,
-          write.value(),
-          userCondition,
-          IssWriteRegNode.AccessKind.ALIAS,
-          guardKind,
-          write.resourceDefinition().simpleName().toLowerCase(),
-          write.resourceDefinition(),
-          write.indices().copy()
-      );
-      replacement.setSourceLocationIfNotSet(write.location());
-      write.replaceAndDelete(replacement);
-      return;
-    }
+  }
 
-    if (semantics.aliasSlice() != null
+  private boolean isContinuousSliceAliasWriteAccessor(ArtificialResource.Semantics semantics,
+                                                      NodeList<ExpressionNode> aliasIndices,
+                                                      int baseIndexCount) {
+    return semantics.aliasSlice() != null
         && semantics.aliasSlice().isContinuous()
         && semantics.overwriteMode() == ArtificialResource.OverwriteMode.MERGE
-        && aliasIndices.size() == baseIndexCount) {
-      var replacement = new IssWriteRegNode(
-          baseTensor,
-          baseIndices,
-          write.value(),
-          null,
-          userCondition,
-          IssWriteRegNode.AccessKind.ALIAS,
-          guardKind,
-          write.resourceDefinition().simpleName().toLowerCase(),
-          write.resourceDefinition(),
-          write.indices().copy(),
-          IssWriteRegNode.WindowKind.CHUNK,
-          intU(semantics.aliasSlice().lsb(), 32).toNode(),
-          intU(semantics.aliasSlice().bitSize(), 32).toNode()
-      );
-      replacement.setSourceLocationIfNotSet(write.location());
-      write.replaceAndDelete(replacement);
-      return;
-    }
+        && aliasIndices.size() == baseIndexCount;
+  }
 
-    if (aliasIndices.size() > baseIndexCount
+  private boolean isCpuVectorExpansionWriteAccessor(ArtificialResource.Semantics semantics,
+                                                    NodeList<ExpressionNode> aliasIndices,
+                                                    int baseIndexCount) {
+    return aliasIndices.size() > baseIndexCount
         && semantics.overwriteMode() == ArtificialResource.OverwriteMode.MERGE
-        && semantics.aliasSlice() == null) {
-      var remainingIndices = aliasIndices.stream().skip(baseIndexCount).toList();
-      var dynamicConsumed = Math.max(0, baseIndexCount - semantics.fixedIndices().size());
-      var remainingDimensions = semantics.dynamicDimensions().stream().skip(dynamicConsumed)
-          .toList();
-      var sourceType = baseTensor.resultType(baseIndexCount);
-      var resultType = write.value().type().asDataType();
-      var msbLsb = getMsbAndLsbOfIndexAccess(sourceType, resultType, remainingIndices,
-          remainingDimensions);
-      var lsb = msbLsb.right();
-      if (isTranslationTimeConstant(lsb)) {
-        var replacement = new IssWriteRegNode(
-            baseTensor,
-            baseIndices,
-            write.value(),
-            null,
-            userCondition,
-            IssWriteRegNode.AccessKind.BASE,
-            guardKind,
-            null,
-            null,
-            baseIndices.copy(),
-            IssWriteRegNode.WindowKind.CHUNK,
-            lsb,
-            intU(resultType.bitWidth(), 32).toNode()
-        );
-        replacement.setSourceLocationIfNotSet(write.location());
-        write.replaceAndDelete(replacement);
-        return;
-      }
-    }
+        && semantics.zeroConstraint() == null
+        && semantics.aliasSlice() == null;
+  }
 
+  private void lowerSimpleAliasWrite(WriteArtificialResNode write,
+                                     RegisterTensor baseTensor,
+                                     NodeList<ExpressionNode> baseIndices,
+                                     @Nullable ExpressionNode userCondition,
+                                     IssWriteRegNode.WriteGuardKind guardKind) {
+    // Keep exact-width alias forwarding as an alias write. This is the write-side twin of the
+    // simple read case above: there is no extra virtual indexing to normalize, so preserving the
+    // alias accessor keeps the intended guard and emitter metadata intact.
+    var replacement = new IssWriteRegNode(
+        baseTensor,
+        baseIndices,
+        write.value(),
+        userCondition,
+        IssWriteRegNode.AccessKind.ALIAS,
+        guardKind,
+        write.resourceDefinition().simpleName().toLowerCase(),
+        write.resourceDefinition(),
+        write.indices().copy()
+    );
+    replacement.setSourceLocationIfNotSet(write.location());
+    write.replaceAndDelete(replacement);
+  }
+
+  private void lowerContinuousSliceAliasWrite(WriteArtificialResNode write,
+                                              ArtificialResource.Semantics semantics,
+                                              RegisterTensor baseTensor,
+                                              NodeList<ExpressionNode> baseIndices,
+                                              @Nullable ExpressionNode userCondition,
+                                              IssWriteRegNode.WriteGuardKind guardKind) {
+    // Continuous alias slices can stay as alias writes with an explicit chunk window. The write
+    // still targets the alias surface, but we preserve the fixed in-register slice so codegen does
+    // not have to reconstruct it from a synthesized read/modify/write expression.
+    var aliasSlice = requireNonNull(semantics.aliasSlice());
+    var replacement = new IssWriteRegNode(
+        baseTensor,
+        baseIndices,
+        write.value(),
+        null,
+        userCondition,
+        IssWriteRegNode.AccessKind.ALIAS,
+        guardKind,
+        write.resourceDefinition().simpleName().toLowerCase(),
+        write.resourceDefinition(),
+        write.indices().copy(),
+        IssWriteRegNode.WindowKind.CHUNK,
+        intU(aliasSlice.lsb(), 32).toNode(),
+        intU(aliasSlice.bitSize(), 32).toNode()
+    );
+    replacement.setSourceLocationIfNotSet(write.location());
+    write.replaceAndDelete(replacement);
+  }
+
+  private void lowerCpuVectorExpansionWrite(WriteArtificialResNode write,
+                                            ArtificialResource.Semantics semantics,
+                                            RegisterTensor baseTensor,
+                                            NodeList<ExpressionNode> aliasIndices,
+                                            NodeList<ExpressionNode> baseIndices,
+                                            int baseIndexCount,
+                                            @Nullable ExpressionNode userCondition,
+                                            IssWriteRegNode.WriteGuardKind guardKind) {
+    // Mirror the read-side choice above: keep simple alias-expansion writes as chunk writes to
+    // the base tensor. That preserves the same lowered loop shape as rv64v-style element writes,
+    // so later passes can reason about one lane write at `bitOffset(i)` instead of seeing a
+    // synthesized full-register merge expression.
+    var remainingIndices = aliasIndices.stream().skip(baseIndexCount).toList();
+    var dynamicConsumed = Math.max(0, baseIndexCount - semantics.fixedIndices().size());
+    var remainingDimensions = semantics.dynamicDimensions().stream().skip(dynamicConsumed).toList();
+    var sourceType = baseTensor.resultType(baseIndexCount);
+    var resultType = write.value().type().asDataType();
+    ensureExpansionAliasSliceFits(write.resourceDefinition(), sourceType, resultType,
+        remainingDimensions);
+    var msbLsb = getMsbAndLsbOfIndexAccess(sourceType, resultType, remainingIndices,
+        remainingDimensions);
+    var replacement = new IssWriteRegNode(
+        baseTensor,
+        baseIndices,
+        write.value(),
+        null,
+        userCondition,
+        IssWriteRegNode.AccessKind.BASE,
+        guardKind,
+        null,
+        null,
+        baseIndices.copy(),
+        IssWriteRegNode.WindowKind.CHUNK,
+        msbLsb.right(),
+        intU(resultType.bitWidth(), 32).toNode()
+    );
+    replacement.setSourceLocationIfNotSet(write.location());
+    write.replaceAndDelete(replacement);
+  }
+
+  private void lowerGeneralAliasWrite(WriteArtificialResNode write,
+                                      ArtificialResource.Semantics semantics,
+                                      RegisterTensor baseTensor,
+                                      NodeList<ExpressionNode> aliasIndices,
+                                      NodeList<ExpressionNode> baseIndices,
+                                      int baseIndexCount,
+                                      @Nullable ExpressionNode userCondition,
+                                      IssWriteRegNode.WriteGuardKind guardKind) {
+    // The remaining write cases need explicit value shaping before they can be emitted: slice
+    // merge/extend semantics, dynamic expansion merges, or writes that are too wide to keep on
+    // the alias surface. Build the value tree first, then choose the narrowest correct register
+    // access shell for the final write node.
     ExpressionNode writeValue = write.value();
     if (semantics.aliasSlice() != null) {
       var sourceType = baseTensor.resultType(baseIndexCount);
@@ -526,6 +654,29 @@ class IssRegisterAccessLowering {
         baseIndices.copy());
     replacement.setSourceLocationIfNotSet(write.location());
     write.replaceAndDelete(replacement);
+  }
+
+  private NodeList<ExpressionNode> baseIndices(NodeList<ExpressionNode> aliasIndices,
+                                               int baseIndexCount) {
+    var baseIndices = new NodeList<ExpressionNode>();
+    for (int i = 0; i < baseIndexCount; i++) {
+      baseIndices.add(aliasIndices.get(i));
+    }
+    return baseIndices;
+  }
+
+  private IssWriteRegNode.WriteGuardKind resolveWriteGuardKind(
+      @Nullable ExpressionNode userCondition,
+      @Nullable ExpressionNode aliasGuard) {
+    var guardKind = userCondition == null
+        ? IssWriteRegNode.WriteGuardKind.NONE
+        : IssWriteRegNode.WriteGuardKind.CONDITIONAL;
+    if (aliasGuard != null) {
+      // Alias guard semantics must be enforced via dest_<alias>(...) in TCG lowering.
+      // Do not encode them only as side-effect conditions.
+      guardKind = IssWriteRegNode.WriteGuardKind.ZERO_CONSTRAINT;
+    }
+    return guardKind;
   }
 
   private ExpressionNode lowerExpansionWrite(ArtificialResource alias,

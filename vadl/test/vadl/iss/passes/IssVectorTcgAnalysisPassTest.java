@@ -110,15 +110,24 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
-  void keepsAliasVectorInstructionOnFallbackPlan()
+  void recognizesVectorBenchAliasVaddDoVv()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/vectorbench/vectorbench64.vadl");
     var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_DO_VV"));
     var directGvec = executionPlan.directGvec();
+    var plan = vectorPlan(directGvec);
 
-    assertEquals(ExecutionPath.HELPER_CALL, executionPlan.selectedPath());
-    assertTrue(!directGvec.isViable(), directGvec::toString);
-    assertTrue(directGvec.hasIssue("READ_NOT_BASE_ELEMENT"), directGvec::toString);
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(32, plan.elementBits());
+    assertEquals(32, plan.laneCount());
+    assertEquals("Z", plan.destination().registerTensor().simpleName());
+    assertEquals(List.of("vd"), bindingParamNames(plan.destination().accessorIndices()));
+    assertEquals(List.of("vs1"),
+        bindingParamNames(plan.operands().get(0).registerBinding().accessorIndices()));
+    assertEquals(List.of("vs2"),
+        bindingParamNames(plan.operands().get(1).registerBinding().accessorIndices()));
   }
 
   @Test

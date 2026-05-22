@@ -80,6 +80,18 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
     org.junit.jupiter.api.Assertions.assertTrue(code.contains("ofs_v(ctx, a->vd)"), code);
   }
 
+  @Test
+  void emitsLoweredDirectGvecCallForAliasDoVectorBenchInstruction()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyzeWithLowering("sys/vectorbench/vectorbench64.vadl");
+    var instr = findInstruction(viam, "VectorBench64::VADD_DO_VV");
+
+    var code = IssTranslateCodeGenerator.fetch(instr, config());
+
+    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_gvec_add("), code);
+    org.junit.jupiter.api.Assertions.assertTrue(code.contains("ofs_z(ctx, a->vd)"), code);
+  }
+
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpec(specPath,
         PassOrders.iss(config()).untilFirst(IssExecStrategyPass.class)

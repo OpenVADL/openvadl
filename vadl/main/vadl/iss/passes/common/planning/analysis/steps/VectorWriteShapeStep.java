@@ -16,9 +16,9 @@
 
 package vadl.iss.passes.common.planning.analysis.steps;
 
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessBaseKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessWindowKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.bindingFacts;
+import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.gvecAccessBaseKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isConstantInt;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isFullyIndexedElementAccess;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isLoopElementOffset;
@@ -56,7 +56,7 @@ public final class VectorWriteShapeStep implements VectorFactStep {
     var write = candidate.write();
     builder.setWriteFacts(new WriteAccessFacts(
         write,
-        accessBaseKind(write.accessKind()),
+        gvecAccessBaseKind(write),
         accessWindowKind(write.windowKind()),
         matchesElementShape(write, candidate.idx(), elementBits),
         write.nullableCondition() != null,
