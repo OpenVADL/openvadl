@@ -22,17 +22,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
-import org.eclipse.lsp4j.TextDocumentItem;
+import org.openvadl.klsp.protocol.Position;
+import org.openvadl.klsp.protocol.Range;
+import org.openvadl.klsp.protocol.TextDocumentContentChangeEvent;
+import org.openvadl.klsp.protocol.TextDocumentItem;
 import vadl.utils.SourceLocation;
 
 /**
  * Represents one version of a file currently owned by (i.e. opened in) the LSP Client. This
  * effectively snapshots the file at one point in time.
  *
- * @see org.eclipse.lsp4j.TextDocumentItem
+ * @see org.openvadl.klsp.protocol.TextDocumentItem
  */
 public class Document {
   /**

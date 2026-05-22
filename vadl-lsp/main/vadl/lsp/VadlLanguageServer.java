@@ -17,57 +17,53 @@
 package vadl.lsp;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import javax.annotation.Nullable;
-import org.eclipse.lsp4j.DidChangeConfigurationParams;
-import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
-import org.eclipse.lsp4j.InitializeParams;
-import org.eclipse.lsp4j.InitializeResult;
-import org.eclipse.lsp4j.InitializedParams;
-import org.eclipse.lsp4j.PositionEncodingKind;
-import org.eclipse.lsp4j.SemanticTokenTypes;
-import org.eclipse.lsp4j.SemanticTokensLegend;
-import org.eclipse.lsp4j.SemanticTokensServerFull;
-import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
-import org.eclipse.lsp4j.ServerCapabilities;
-import org.eclipse.lsp4j.ServerInfo;
-import org.eclipse.lsp4j.TextDocumentSyncKind;
-import org.eclipse.lsp4j.TextDocumentSyncOptions;
-import org.eclipse.lsp4j.services.LanguageClient;
-import org.eclipse.lsp4j.services.LanguageClientAware;
-import org.eclipse.lsp4j.services.LanguageServer;
-import org.eclipse.lsp4j.services.TextDocumentService;
-import org.eclipse.lsp4j.services.WorkspaceService;
+import org.openvadl.klsp.api.java.LanguageClient;
+import org.openvadl.klsp.api.java.LanguageServer;
+import org.openvadl.klsp.api.java.LanguageServerSession;
+import org.openvadl.klsp.api.java.ServerFeatures;
+import org.openvadl.klsp.api.java.SessionAware;
+import org.openvadl.klsp.api.java.TextDocumentService;
+import org.openvadl.klsp.api.java.WorkspaceService;
+import org.openvadl.klsp.protocol.DidChangeConfigurationParams;
+import org.openvadl.klsp.protocol.DidChangeWatchedFilesParams;
+import org.openvadl.klsp.protocol.InitializeParams;
+import org.openvadl.klsp.protocol.InitializeResult;
+import org.openvadl.klsp.protocol.InitializedParams;
+import org.openvadl.klsp.protocol.PositionEncodingKind;
+import org.openvadl.klsp.protocol.SemanticTokenTypes;
+import org.openvadl.klsp.protocol.SemanticTokensFullOptions;
+import org.openvadl.klsp.protocol.SemanticTokensLegend;
+import org.openvadl.klsp.protocol.SemanticTokensOptions;
+import org.openvadl.klsp.protocol.ServerInfo;
+import org.openvadl.klsp.protocol.TextDocumentSyncKind;
+import org.openvadl.klsp.server.ServerExitStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.ast.LspTokenizer;
 
 /**
- * The openVADL language server, based on lsp4j.
+ * The openVADL language server.
  */
-public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
+public class VadlLanguageServer implements LanguageServer, SessionAware {
   private static final Logger log = LoggerFactory.getLogger(VadlLanguageServer.class);
 
   @Nullable
   private LanguageClient client;
-  @Nullable
-  private Future<Void> listeningFuture;
   private final ExecutorService executor = Executors.newCachedThreadPool();
-  
+
   private final VadlTextDocumentService textService = new VadlTextDocumentService(this);
 
   private final Settings settings;
+  private final ServerFeatures features;
 
   @Nullable
   private InitializeParams params;
-  @Nullable
-  private ServerCapabilities serverCapabilities;
 
 
   /**
@@ -75,6 +71,13 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
    */
   public VadlLanguageServer(Settings settings) {
     this.settings = settings;
+    this.features = ServerFeatures.create()
+        .positionEncoding(PositionEncodingKind.UTF16)
+        .textDocumentSync(TextDocumentSyncKind.INCREMENTAL, true)
+        .definition()
+        .semanticTokens(this::createSemanticTokensOptions)
+        .workspaceDidChangeConfiguration()
+        .workspaceDidChangeWatchedFiles();
   }
 
   @Override
@@ -82,35 +85,27 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     log.debug(">> initialize: {}", params);
     this.params = params;
 
-    createCapabilities(params);
-    var result = new InitializeResult(
-        serverCapabilities,
-        new ServerInfo("openVADL language server")
-    );
+    var result = features.initializeResult(params, new ServerInfo("openVADL language server", null));
     log.debug("<<- initialize: {}", result);
-    
+
     return CompletableFuture.completedFuture(result);
   }
-  
+
   @Override
-  public void initialized(InitializedParams params) {
+  public CompletableFuture<Void> initialized(InitializedParams params) {
     log.debug(">> initialized: {}", params);
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public CompletableFuture<Object> shutdown() {
+  public CompletableFuture<Void> shutdown() {
     log.debug(">> shutdown");
-    // Nothing to do
-    return CompletableFuture.completedFuture(new Object());
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public void exit() {
-    log.debug(">> exit");
-    if (listeningFuture == null) {
-      throw new RuntimeException("listeningFuture isn't set yet");
-    }
-    listeningFuture.cancel(true);
+  public void exit(ServerExitStatus status) {
+    log.debug(">> exit: {}", status);
   }
 
   /**
@@ -130,35 +125,25 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   public WorkspaceService getWorkspaceService() {
     return new WorkspaceService() {
       @Override
-      public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-        // Nothing
+      public CompletableFuture<Void> didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+        return CompletableFuture.completedFuture(null);
       }
-      
+
       @Override
-      public void didChangeConfiguration(DidChangeConfigurationParams params) {
-        // Nothing
+      public CompletableFuture<Void> didChangeConfiguration(DidChangeConfigurationParams params) {
+        return CompletableFuture.completedFuture(null);
       }
     };
   }
 
   @Override
-  public void connect(LanguageClient client) {
+  public void connect(LanguageServerSession session) {
     if (this.client != null) {
       throw new RuntimeException("Client is already connected");
     }
-    this.client = client;
+    this.client = session.getLanguageClient();
   }
-  
-  /**
-   * Sets the Future the Launcher produced. Canceling this Future stops the
-   * language server implementation.
-   *
-   * @param listeningFuture As produced by LSPLauncher.startListening()
-   */
-  public void setListeningFuture(Future<Void> listeningFuture) {
-    this.listeningFuture = listeningFuture;
-  }
-  
+
   LanguageClient client() {
     if (this.client == null) {
       throw new RuntimeException("client isn't set yet");
@@ -176,78 +161,62 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     }
     return this.params;
   }
-  
-  
-  /**
-   * Creates the server capabilities that are returned to the client upon
-   * initialized(). Sets {@code this.serverCapabilities}, {@code this.tokenTypesMap}, and
-   * {@code this.tokenModifiersMap}.
-   *
-   * @param params for convenience
-   */
-  private void createCapabilities(InitializeParams params) {
-    var c = new ServerCapabilities();
-    
-    c.setPositionEncoding(PositionEncodingKind.UTF16);
-    
-    var tdso = new TextDocumentSyncOptions();
-    tdso.setOpenClose(true);
-    tdso.setChange(TextDocumentSyncKind.Incremental);
-    tdso.setWillSave(false);
-    tdso.setWillSaveWaitUntil(false);
-    tdso.setSave(false);
-    c.setTextDocumentSync(tdso);
 
-    // Semantic Tokens
+  ServerFeatures features() {
+    return features;
+  }
+
+  /**
+   * Builds semantic-token options for the current client and configures the matching tokenizer.
+   */
+  @Nullable
+  private SemanticTokensOptions createSemanticTokensOptions(InitializeParams params) {
     if (!settings.noSyntaxHighlighting()) {
       String[] desiredTokenTypes = new String[] {
-          SemanticTokenTypes.Type,
-          SemanticTokenTypes.Variable,
-          SemanticTokenTypes.Keyword,
-          SemanticTokenTypes.String,
-          SemanticTokenTypes.Number,
-          SemanticTokenTypes.Operator
+          SemanticTokenTypes.TYPE,
+          SemanticTokenTypes.VARIABLE,
+          SemanticTokenTypes.KEYWORD,
+          SemanticTokenTypes.STRING,
+          SemanticTokenTypes.NUMBER,
+          SemanticTokenTypes.OPERATOR
       };
       List<String> tokenTypes = new ArrayList<>(desiredTokenTypes.length);
-      // Limit token types to those supported by the client
-      List<String> clientSupportedTypes = params.getCapabilities().getTextDocument()
-          .getSemanticTokens().getTokenTypes();
+
+      List<String> clientSupportedTypes = List.of();
+      if (params.getCapabilities().getTextDocument() != null
+          && params.getCapabilities().getTextDocument().getSemanticTokens() != null) {
+        clientSupportedTypes = params.getCapabilities().getTextDocument()
+            .getSemanticTokens().getTokenTypes();
+      }
       for (String token : desiredTokenTypes) {
-        if (clientSupportedTypes.contains(token)) {
+        if (clientSupportedTypes.isEmpty() || clientSupportedTypes.contains(token)) {
           tokenTypes.add(token);
         }
       }
-      c.setSemanticTokensProvider(new SemanticTokensWithRegistrationOptions(
-          new SemanticTokensLegend(
-              tokenTypes,
-              Arrays.asList(new String[] {
-                  // No modifiers
-              })
-          ),
-          new SemanticTokensServerFull(false), // delta
-          false // range
-      ));
 
-      // Create Tokenizer:
+      var semanticTokensProvider = new SemanticTokensOptions(
+          new SemanticTokensLegend(tokenTypes, List.of()),
+          new SemanticTokensFullOptions(false),
+          false
+      );
+
       var tokenTypesMap = new HashMap<String, Integer>();
       int index = 0;
-      for (String type : c.getSemanticTokensProvider().getLegend().getTokenTypes()) {
+      for (String type : semanticTokensProvider.getLegend().getTokenTypes()) {
         tokenTypesMap.put(type, index);
         index++;
       }
       var tokenModifiersMap = new HashMap<String, Integer>();
       index = 0;
-      for (String modifier : c.getSemanticTokensProvider().getLegend().getTokenModifiers()) {
+      for (String modifier : semanticTokensProvider.getLegend().getTokenModifiers()) {
         tokenModifiersMap.put(modifier, index);
         index++;
       }
       textService.setTokenizer(new LspTokenizer(tokenTypesMap, tokenModifiersMap));
+      return semanticTokensProvider;
     }
-
-    // Goto Definition
-    c.setDefinitionProvider(true);
-
-    this.serverCapabilities = c;
+    textService.setTokenizer(null);
+    return null;
   }
 
   /**
@@ -255,5 +224,6 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
    *
    * @param noSyntaxHighlighting True: Disable syntax highlighting (aka semantic tokens).
    */
-  public record Settings(boolean noSyntaxHighlighting) {}
+  public record Settings(boolean noSyntaxHighlighting) {
+  }
 }

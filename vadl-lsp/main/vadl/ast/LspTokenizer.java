@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.eclipse.lsp4j.SemanticTokenTypes;
+import org.openvadl.klsp.protocol.SemanticTokenTypes;
 
 /**
  * Tokenizer used by the language server. Provides LSP semantic tokens.
@@ -45,11 +45,11 @@ public final class LspTokenizer {
     tokenKindsMap = new String[Parser.maxT + 1];
 
     // Hardcoded mappings:
-    tokenKindsMap[Parser._hexLit] = SemanticTokenTypes.Number;
-    tokenKindsMap[Parser._binLit] = SemanticTokenTypes.Number;
-    tokenKindsMap[Parser._decLit] = SemanticTokenTypes.Number;
-    tokenKindsMap[Parser._identifierToken] = SemanticTokenTypes.Variable;
-    tokenKindsMap[Parser._string] = SemanticTokenTypes.String;
+    tokenKindsMap[Parser._hexLit] = SemanticTokenTypes.NUMBER;
+    tokenKindsMap[Parser._binLit] = SemanticTokenTypes.NUMBER;
+    tokenKindsMap[Parser._decLit] = SemanticTokenTypes.NUMBER;
+    tokenKindsMap[Parser._identifierToken] = SemanticTokenTypes.VARIABLE;
+    tokenKindsMap[Parser._string] = SemanticTokenTypes.STRING;
 
     // Look through all known token kinds
     for (Field field : Parser.class.getDeclaredFields()) {
@@ -75,7 +75,7 @@ public final class LspTokenizer {
       }
       // Operators according to ParserUtils / Token name "SYM_*"
       if (ParserUtils.BIN_OPS[kind] || ParserUtils.UN_OPS[kind] || name.startsWith("_SYM_")) {
-        tokenKindsMap[kind] = SemanticTokenTypes.Operator;
+        tokenKindsMap[kind] = SemanticTokenTypes.OPERATOR;
         continue;
       }
       // Token name "T_*"
@@ -84,7 +84,7 @@ public final class LspTokenizer {
         continue;
       }
       // Everything else should be Keyword
-      tokenKindsMap[kind] = SemanticTokenTypes.Keyword;
+      tokenKindsMap[kind] = SemanticTokenTypes.KEYWORD;
     }
   }
 
@@ -92,10 +92,10 @@ public final class LspTokenizer {
   /**
    * Creates a new tokenizer.
    *
-   * @param tokenTypesMap Maps Semantic token types to their integer index in the legend (which is
-   *                      part of server capabilities). This is required for encoding
-   *                      semanticTokens responses. Should only contain types that the client
-   *                      supports.
+   * @param tokenTypesMap     Maps Semantic token types to their integer index in the legend (which is
+   *                          part of server capabilities). This is required for encoding
+   *                          semanticTokens responses. Should only contain types that the client
+   *                          supports.
    * @param tokenModifiersMap Maps Semantic token modifiers to their integer index in the legend
    *                          (which is part of server capabilities). This is required for encoding
    *                          semanticTokens responses. Should only contain modifiers that the
@@ -111,7 +111,7 @@ public final class LspTokenizer {
    *
    * @param content of a VADL source code file
    * @return Token list encoded for a semanticTokens response. Note: deltaStart and length are
-   *         calculated for UTF-8 encoding.
+   *     calculated for UTF-8 encoding.
    */
   public List<Integer> getTokens(String content) {
     Scanner scanner = new Scanner(

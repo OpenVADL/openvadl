@@ -28,25 +28,23 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.eclipse.lsp4j.DefinitionParams;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.DidChangeTextDocumentParams;
-import org.eclipse.lsp4j.DidCloseTextDocumentParams;
-import org.eclipse.lsp4j.DidOpenTextDocumentParams;
-import org.eclipse.lsp4j.DidSaveTextDocumentParams;
-import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.LocationLink;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.SemanticTokens;
-import org.eclipse.lsp4j.SemanticTokensParams;
-import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
-import org.eclipse.lsp4j.services.TextDocumentService;
+import org.openvadl.klsp.api.java.TextDocumentService;
+import org.openvadl.klsp.jsonrpc.JsonRpcErrorCodes;
+import org.openvadl.klsp.jsonrpc.ResponseError;
+import org.openvadl.klsp.protocol.DefinitionParams;
+import org.openvadl.klsp.protocol.Diagnostic;
+import org.openvadl.klsp.protocol.DiagnosticSeverity;
+import org.openvadl.klsp.protocol.DidChangeTextDocumentParams;
+import org.openvadl.klsp.protocol.DidCloseTextDocumentParams;
+import org.openvadl.klsp.protocol.DidOpenTextDocumentParams;
+import org.openvadl.klsp.protocol.DidSaveTextDocumentParams;
+import org.openvadl.klsp.protocol.Location;
+import org.openvadl.klsp.protocol.Position;
+import org.openvadl.klsp.protocol.PublishDiagnosticsParams;
+import org.openvadl.klsp.protocol.Range;
+import org.openvadl.klsp.protocol.SemanticTokens;
+import org.openvadl.klsp.protocol.SemanticTokensParams;
+import org.openvadl.klsp.server.ResponseErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.ast.Ast;
@@ -95,7 +93,7 @@ public class VadlTextDocumentService implements TextDocumentService {
   }
 
   @Override
-  public void didOpen(DidOpenTextDocumentParams params) {
+  public CompletableFuture<Void> didOpen(DidOpenTextDocumentParams params) {
     log.debug(">> didOpen: {}", params);
 
     Document document = new Document(params.getTextDocument());
@@ -105,18 +103,20 @@ public class VadlTextDocumentService implements TextDocumentService {
       snapshots = createSnapshotFileSystem();
     }
     publishDiagnostics(document, snapshots);
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public void didClose(DidCloseTextDocumentParams params) {
+  public CompletableFuture<Void> didClose(DidCloseTextDocumentParams params) {
     log.debug(">> didClose: {}", params);
     synchronized (openDocuments) {
       openDocuments.remove(params.getTextDocument().getUri());
     }
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public void didChange(DidChangeTextDocumentParams params) {
+  public CompletableFuture<Void> didChange(DidChangeTextDocumentParams params) {
     log.debug(">> didChange: {}", params);
 
     Document document;
@@ -126,17 +126,17 @@ public class VadlTextDocumentService implements TextDocumentService {
           d.withChanges(params.getTextDocument().getVersion(), params.getContentChanges()));
       snapshots = createSnapshotFileSystem();
     }
-    if (document == null) {
-      return;
+    if (document != null) {
+      publishDiagnostics(document, snapshots);
     }
 
-    publishDiagnostics(document, snapshots);
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public void didSave(DidSaveTextDocumentParams params) {
+  public CompletableFuture<Void> didSave(DidSaveTextDocumentParams params) {
     log.debug(">> didSave: {}", params);
-    // Nothing (server capabilities currently don't support this)
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
@@ -147,24 +147,23 @@ public class VadlTextDocumentService implements TextDocumentService {
       Document document = getDocument(params.getTextDocument().getUri());
       if (document == null) {
         throw new ResponseErrorException(new ResponseError(
-            ResponseErrorCode.RequestFailed,
+            JsonRpcErrorCodes.REQUEST_FAILED,
             "Requested semantic tokens for a document that is not open.",
             null
         ));
       }
 
       List<Integer> tokens = tokenizer != null
-            ? tokenizer.getTokens(document.getText())
-            : new ArrayList<>();
-      SemanticTokens result = new SemanticTokens(document.calculateUtf16Positions(tokens));
+          ? tokenizer.getTokens(document.getText())
+          : new ArrayList<>();
+      SemanticTokens result = new SemanticTokens(document.calculateUtf16Positions(tokens), null);
       log.debug("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
       return result;
     });
   }
 
   @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      definition(DefinitionParams params) {
+  public CompletableFuture<List<Location>> definition(DefinitionParams params) {
     log.debug(">> definition: {}", params);
 
     LspSnapshotFileSystem snapshots = createSnapshotFileSystem();
@@ -173,7 +172,7 @@ public class VadlTextDocumentService implements TextDocumentService {
       Document document = snapshots.getDocument(uri);
       if (document == null) {
         throw new ResponseErrorException(new ResponseError(
-            ResponseErrorCode.RequestFailed,
+            JsonRpcErrorCodes.REQUEST_FAILED,
             "Requested (Go to) definition for a document that is not open.",
             null
         ));
@@ -182,10 +181,9 @@ public class VadlTextDocumentService implements TextDocumentService {
       Ast ast;
       try {
         ast = VadlParser.parse(toPath(uri), snapshots);
-
       } catch (DiagnosticList dl) {
         log.debug("UNABLE definition: Parser produced diagnostics instead of AST for {}", uri);
-        return definitionResult(null);
+        return List.of();
       }
 
       var position = document.calculateUtf8Position(params.getPosition(), false);
@@ -193,24 +191,18 @@ public class VadlTextDocumentService implements TextDocumentService {
           position);
 
       if (location == null || location.path() == null) {
-        return definitionResult(null);
+        return List.<Location>of();
       }
       var targetDocument = snapshots.getFileBasedDocument(toUri(location.path()));
       if (targetDocument == null) {
         log.debug("Unexpected: Definition target file {} does not exist", toUri(location.path()));
-        return definitionResult(null);
+        return List.<Location>of();
       }
 
-      var lspLocation = new Location(targetDocument.uri,
-          targetDocument.calculateUtf16Range(location));
-      return definitionResult(lspLocation);
+      var lspLocation = new Location(targetDocument.uri, targetDocument.calculateUtf16Range(location));
+      log.debug("<<- definition: {}", lspLocation);
+      return List.of(lspLocation);
     });
-  }
-
-  private Either<List<? extends Location>, List<? extends LocationLink>> definitionResult(
-      @Nullable Location lspLocation) {
-    log.debug("<<- definition: {}", lspLocation);
-    return Either.forLeft(lspLocation != null ? List.of(lspLocation) : List.of());
   }
 
   /**
@@ -222,16 +214,12 @@ public class VadlTextDocumentService implements TextDocumentService {
    */
   private void publishDiagnostics(Document document, LspSnapshotFileSystem snapshots) {
     var capabilities = server.params().getCapabilities().getTextDocument();
-    if (capabilities == null
-        || capabilities.getPublishDiagnostics() == null) {
-      // Don't push diagnostics if client doesn't support it
+    if (capabilities == null || capabilities.getPublishDiagnostics() == null) {
       return;
     }
 
     var unused = server.executor().submit(() -> {
       try {
-        // TODO Consider to instead delay for remaining time *after* generating diagnostics, to have
-        //  more accurate delay timing
         Thread.sleep(DIAGNOSTICS_DELAY_MS);
       } catch (InterruptedException e) {
         return;
@@ -247,7 +235,6 @@ public class VadlTextDocumentService implements TextDocumentService {
 
       publishDiagnosticsForOneDocument(document, snapshots);
 
-      // Update diagnostics for all dependent documents
       for (String uri : documentDependencies.getDependents(document.uri)) {
         Document d = snapshots.getDocument(uri);
         if (d != null) {
@@ -279,7 +266,6 @@ public class VadlTextDocumentService implements TextDocumentService {
             if (itemPath == null) {
               continue;
             }
-            // Error in imported file
             importedFileErrors.add(LspUtils.relativePath(itemPath, document.getPath()));
             continue;
           }
@@ -288,24 +274,18 @@ public class VadlTextDocumentService implements TextDocumentService {
         }
 
         if (!importedFileErrors.isEmpty()) {
-          // Putting one diagnostic at the top of the file, which points out which imported files
-          // have errors
-          Diagnostic importedFilesDiagnostic = new Diagnostic();
-          importedFilesDiagnostic.setRange(new Range(new Position(0, 0),
-              new Position(0, 0)));
-          // TODO Consider using different severity if all diagnostics represented by this are only
-          //      Warnings
-          importedFilesDiagnostic.setSeverity(DiagnosticSeverity.Error);
-
           String message = importedFileErrors.size() == 1
               ? "Errors in imported file: \n" + importedFileErrors.getFirst()
               : "Errors in imported files:\n- " + String.join("\n- ", importedFileErrors);
-          importedFilesDiagnostic.setMessage(message);
-          lspItems.addFirst(importedFilesDiagnostic);
+          lspItems.addFirst(new Diagnostic(
+              new Range(new Position(0, 0), new Position(0, 0)),
+              DiagnosticSeverity.ERROR,
+              null,
+              null,
+              message
+          ));
         }
       }
-      // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
-      //      has no clear() method (i.e. outdated diagnostics remain visible)
 
       if (!documentVersionIsCurrent(document)) {
         log.debug(
@@ -317,30 +297,21 @@ public class VadlTextDocumentService implements TextDocumentService {
       }
       documentDependencies.setDependencies(document.uri, snapshots.getReadFiles());
       var data = new PublishDiagnosticsParams(document.uri, lspItems, document.version);
-      log.debug("<< publishDiagnostics ({}: {}", document.uri, data);
-      server.client().publishDiagnostics(data);
+      log.debug("<< publishDiagnostics ({}): {}", document.uri, data);
+      server.client().publishDiagnostics(data).exceptionally(exception -> {
+        log.warn("Unable to publish diagnostics for {}", document.uri, exception);
+        return null;
+      });
     });
   }
 
   private Diagnostic buildLspDiagnostic(vadl.error.Diagnostic vadlDiagnostic,
                                         Document document) {
-    // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
-    //      diagnostic message there as well?
     SourceLocation location = vadlDiagnostic.multiLocation.primaryLocation().location();
 
-    Diagnostic lspDiagnostic = new Diagnostic();
-    lspDiagnostic.setRange(document.calculateUtf16Range(location));
-    lspDiagnostic.setSeverity(
-        switch (vadlDiagnostic.level) {
-          case ERROR -> DiagnosticSeverity.Error;
-          case WARNING -> DiagnosticSeverity.Warning;
-        }
-    );
-    // labels (aka messages) per location
     String labelsString = vadlDiagnostic.multiLocation.primaryLocation().labels().stream()
         .map(vadl.error.Diagnostic.Message::content)
         .collect(Collectors.joining("\n"));
-    // messages per Diagnostic - they may offer help or give additional notes
     String messagesString = vadlDiagnostic.messages.stream()
         .filter(m -> !m.type().equals(MsgType.PLAIN)
             || !m.content().contains("parser got confused at this point"))
@@ -350,9 +321,17 @@ public class VadlTextDocumentService implements TextDocumentService {
     String fullMessage = vadlDiagnostic.reason
         + (!labelsString.isBlank() ? "\n" + labelsString : "")
         + (!messagesString.isBlank() ? "\n" + messagesString : "");
-    lspDiagnostic.setMessage(fullMessage);
 
-    return lspDiagnostic;
+    return new Diagnostic(
+        document.calculateUtf16Range(location),
+        switch (vadlDiagnostic.level) {
+          case ERROR -> DiagnosticSeverity.ERROR;
+          case WARNING -> DiagnosticSeverity.WARNING;
+        },
+        null,
+        null,
+        fullMessage
+    );
   }
 
   private boolean documentVersionIsCurrent(Document document) {

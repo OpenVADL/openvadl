@@ -74,7 +74,13 @@ jlink {
     addOptions("--strip-java-debug-attributes", "--compress", "1", "--no-header-files", "--no-man-pages")
     addOptions("--add-modules", "ch.qos.logback.classic,ch.qos.logback.core,java.naming,java.sql")
 
-    addExtraDependencies("picocli", "commons-compress")
+    addExtraDependencies(
+        "picocli",
+        "commons-compress",
+        "kotlinx-serialization-json",
+        "kotlinx-serialization-core",
+        "kotlinx-coroutines-core",
+    )
 
     forceMerge(".*")
 

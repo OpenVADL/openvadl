@@ -11,6 +11,7 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        mavenLocal()
     }
 }
 
@@ -19,6 +20,11 @@ plugins {
 }
 
 rootProject.name = "open-vadl"
+
+val localKlspDir = startParameter.projectProperties["localKlspDir"] ?: System.getenv("KLSP_DIR")
+if (localKlspDir != null) {
+    includeBuild(localKlspDir)
+}
 
 include("vadl")
 include("java-annotations")

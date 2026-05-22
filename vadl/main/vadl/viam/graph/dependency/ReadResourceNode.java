@@ -84,7 +84,7 @@ public abstract class ReadResourceNode extends ExpressionNode {
     var resource = resourceDefinition();
 
     ensure(resource.indexTypes().size() >= indices().size(),
-        "The resource takes %d indices but write provided %d", resource.indexTypes().size(),
+        "The resource takes %d indices but read provided %d", resource.indexTypes().size(),
         indices().size());
 
     Streams.forEachPair(indices.stream(), resource.indexTypes().stream(), (index, expectedType) -> {

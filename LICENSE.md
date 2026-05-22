@@ -78,7 +78,6 @@ with their licence information:
 |     Apache License 2.0     | Error Prone - compile time analysis tool                 | https://github.com/google/error-prone                  |
 |        MIT License         | NullAway - static null checking for java                 | https://github.com/uber/NullAway                       |
 |        MIT License         | Z3 - a theorem prover from Microsoft Research            | https://github.com/Z3Prover/z3                         |
-|  EPL 2.0 or BSD 3-Clause   | Eclipse LSP4J - language server protocol implementation  | https://github.com/eclipse-lsp4j/lsp4j                 |
 
 ### Test Libraries
 
@@ -94,4 +93,3 @@ with their licence information:
 | Apache License 2.0 | Snakeyaml - yaml processor                          | https://bitbucket.org/snakeyaml/snakeyaml             |
 
 Andreas Krall and the OpenVADL team
-

@@ -31,7 +31,7 @@ jqwik = "1.9.0"
 snakeyaml = "2.2"
 picocli = "4.7.6"
 commons-compress = "1.27.1"
-lsp4j = "0.24.0"
+klsp = "0.1.0-SNAPSHOT"
 
 [libraries]
 gradle-errorprone-plugin = { module = "net.ltgt.gradle:gradle-errorprone-plugin", version.ref = "errorprone-plugin" }
@@ -70,7 +70,7 @@ snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commons-compress" }
-lsp4j = { module = "org.eclipse.lsp4j:org.eclipse.lsp4j", version.ref = "lsp4j" }
+klsp = { module = "org.openvadl.klsp:lsp-api-java", version.ref = "klsp" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

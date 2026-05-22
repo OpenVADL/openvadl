@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":vadl"))
-    implementation(libs.lsp4j)
+    implementation(libs.klsp)
 
     testImplementation(libs.assertj.core)
 }
