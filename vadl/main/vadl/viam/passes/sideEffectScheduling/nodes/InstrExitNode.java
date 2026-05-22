@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  * @see Raise
  * @see vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass
  * @see vadl.iss.passes.IssScheduleIndirectJumpsPass
- * @see vadl.iss.passes.tcgLowering.TcgOpLoweringPass
+ * @see vadl.iss.passes.tcg.lowering.TcgOpLoweringPass
  */
 public abstract sealed class InstrExitNode extends DirectionalNode permits InstrExitNode.PcChange,
     InstrExitNode.Raise {

@@ -66,7 +66,7 @@ public class IssTranslateCodeGenerator {
       Instruction def,
       IssConfiguration configuration
   ) {
-    return instrInfo(def).asHelperCall()
+    return instrInfo(def).executionPath() == ExecutionPath.HELPER_CALL
         ? new HelperCallTranslateGenerator(def, configuration)
         : new ScalarTcgTranslateGenerator(def, configuration);
   }

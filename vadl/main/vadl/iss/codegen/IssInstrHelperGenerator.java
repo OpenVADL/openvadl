@@ -29,7 +29,7 @@ import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssStaticEndianConditionNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStaticReadRegNode;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import vadl.iss.passes.tcg.lowering.Tcg_32_64;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.viam.Instruction;

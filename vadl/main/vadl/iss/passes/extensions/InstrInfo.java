@@ -45,14 +45,6 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   List<Function> extractedFunctions = new ArrayList<>();
 
   /**
-   * Determines if the instruction is rendered as a helper call to
-   * a C implementation of this instruction.
-   */
-  public boolean asHelperCall() {
-    return usesWholeHelperPath();
-  }
-
-  /**
    * Returns the execution plan computed for this instruction, if any.
    */
   public @Nullable InstrExecPlan executionPlan() {
@@ -67,40 +59,13 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
   }
 
   /**
-   * Returns the selected direct-gvec plan for this instruction, if any.
+   * Returns the selected instruction-level execution path.
    */
-  public @Nullable VectorTensorPlan directGvecPlan() {
-    if (executionPlan == null) {
-      return null;
-    }
-    return executionPlan.directGvecPlan();
-  }
-
-  /**
-   * Returns whether the instruction uses the shared non-helper lowering path.
-   */
-  public boolean usesNormalTcgPath() {
+  public InstrExecPlan.ExecutionPath executionPath() {
     if (executionPlan != null) {
-      return executionPlan.usesNormalTcgPath();
+      return executionPlan.selectedPath();
     }
-    return computeFallbackExecutionPath() == InstrExecPlan.ExecutionPath.NORMAL_TCG;
-  }
-
-  /**
-   * Returns whether the instruction must still execute as a whole-instruction helper call.
-   */
-  public boolean usesWholeHelperPath() {
-    if (executionPlan != null) {
-      return executionPlan.usesWholeHelperPath();
-    }
-    return computeFallbackExecutionPath() == InstrExecPlan.ExecutionPath.HELPER_CALL;
-  }
-
-  /**
-   * Returns whether the execution plan retained a viable direct-gvec lowering subplan.
-   */
-  public boolean hasViableDirectGvecPlan() {
-    return directGvecPlan() != null;
+    return computeFallbackExecutionPath();
   }
 
   private InstrExecPlan.ExecutionPath computeFallbackExecutionPath() {

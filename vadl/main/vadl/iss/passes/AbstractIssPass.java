@@ -73,11 +73,12 @@ public abstract class AbstractIssPass extends Pass {
     if (executionPlan != null) {
       return executionPlan.selectedPath() == ExecutionPath.NORMAL_TCG;
     }
-    return !instrInfo(instruction).asHelperCall();
+    return instrInfo(instruction).executionPath() == ExecutionPath.NORMAL_TCG;
   }
 
   private boolean hasViableDirectGvecPlan(Instruction instruction) {
-    return instrInfo(instruction).hasViableDirectGvecPlan();
+    var executionPlan = instrInfo(instruction).executionPlan();
+    return executionPlan != null && executionPlan.hasViableDirectGvecPlan();
   }
 
   private boolean usesWholeHelperPath(Instruction instruction) {
@@ -85,6 +86,6 @@ public abstract class AbstractIssPass extends Pass {
     if (executionPlan != null) {
       return executionPlan.selectedPath() == ExecutionPath.HELPER_CALL;
     }
-    return instrInfo(instruction).asHelperCall();
+    return instrInfo(instruction).executionPath() == ExecutionPath.HELPER_CALL;
   }
 }

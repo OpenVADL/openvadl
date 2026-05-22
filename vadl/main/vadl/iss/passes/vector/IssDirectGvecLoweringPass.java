@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.nodes.IssWriteRegNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgGvecOpNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.GraphUtils;
@@ -54,7 +54,11 @@ public class IssDirectGvecLoweringPass extends AbstractIssPass {
   }
 
   private void lowerInstruction(Instruction instruction) {
-    var plan = instrInfo(instruction).directGvecPlan();
+    var executionPlan = instrInfo(instruction).executionPlan();
+    if (executionPlan == null) {
+      return;
+    }
+    var plan = executionPlan.directGvecPlan();
     if (plan == null) {
       return;
     }

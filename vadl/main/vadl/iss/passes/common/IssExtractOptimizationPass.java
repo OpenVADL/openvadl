@@ -27,7 +27,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
-import vadl.iss.passes.tcgLowering.TcgExtend;
+import vadl.iss.passes.tcg.lowering.TcgExtend;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;

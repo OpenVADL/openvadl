@@ -33,6 +33,7 @@ import vadl.error.DiagnosticList;
 import vadl.iss.codegen.HelperParamPacking;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.extensions.ExceptionInfo;
+import vadl.iss.passes.extensions.InstrExecPlan;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
@@ -316,7 +317,7 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
     withIsa(viam, isa -> isa.ownInstructions().stream()
         .map(instr -> {
           var info = instr.expectExtension(InstrInfo.class);
-          if (!info.asHelperCall()) {
+          if (info.executionPath() != InstrExecPlan.ExecutionPath.HELPER_CALL) {
             return null;
           }
 

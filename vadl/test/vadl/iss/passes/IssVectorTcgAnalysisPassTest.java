@@ -80,7 +80,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
         bindingParamNames(plan.operands().get(0).registerBinding().accessorIndices()));
     assertEquals(List.of("vs1"),
         bindingParamNames(plan.operands().get(1).registerBinding().accessorIndices()));
-    assertTrue(instrInfo(instr).usesNormalTcgPath());
+    assertEquals(ExecutionPath.NORMAL_TCG, instrInfo(instr).executionPath());
   }
 
   @Test
@@ -131,7 +131,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
 
     assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
     assertTrue(!directGvec.isViable(), directGvec::toString);
-    assertTrue(instrInfo(instr).usesNormalTcgPath());
+    assertEquals(ExecutionPath.NORMAL_TCG, instrInfo(instr).executionPath());
   }
 
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {

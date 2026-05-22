@@ -17,8 +17,9 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
-import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import java.util.stream.Collectors;
+import vadl.iss.passes.tcg.lowering.TcgV;
+import vadl.iss.passes.tcg.lowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
