@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.GroupDefUtils.GroupExprLengthCollector.maxLength;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
 
@@ -32,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -166,6 +168,7 @@ import vadl.ast.nodes.WildcardLiteral;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
+import vadl.types.ArrayType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -426,8 +429,8 @@ public class TypeChecker
       String message = "This %s is defined by itself.".formatted(def.nodeName());
       if (def instanceof IdentifiableNode identifiableNode) {
         message = "This %s `%s` is defined by itself.".formatted(
-                def.nodeName(),
-                identifiableNode.identifier().name);
+            def.nodeName(),
+            identifiableNode.identifier().name);
       }
 
       throw addErrorAndAbortChecking(error("Infinite Recursion", def)
@@ -974,7 +977,7 @@ public class TypeChecker
   }
 
   private BuiltInCheckResult unCachedCheckBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
-                                          WithLocation location) {
+                                                  WithLocation location) {
     if (!(args.size() == builtIn.argTypeClasses().size() || (builtIn.signature().hasVarArgs()
         && args.size() >= builtIn.argTypeClasses().size()))) {
       throw addErrorAndStopChecking(
@@ -3337,6 +3340,18 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof GroupDefinition group) {
+      check(group);
+
+      final var elemType = PseudoFormatType.of(group.operations());
+
+      final int maxLength = maxLength(constantEvaluator, group.expr());
+      final var lengthType = UIntType.minimalTypeFor(maxLength);
+
+      expr.type = Type.array(elemType, lengthType);
+      return;
+    }
+
     if (origin != null) {
       // It's not a builtin but we don't handle it yet.
       // We might be here from a call expr and it might be necessary to handle the call for another
@@ -3641,8 +3656,8 @@ public class TypeChecker
    *                              constructing them was expensive.
    */
   private ParsedTypeLiteralResult internalParseTypeLiteral(TypeLiteral expr,
-                                                            @Nullable Integer preferredBitWidth,
-                                                                      boolean skipErrorConstruction
+                                                           @Nullable Integer preferredBitWidth,
+                                                           boolean skipErrorConstruction
   ) {
     var base = expr.baseType.pathToString();
 
@@ -3661,9 +3676,9 @@ public class TypeChecker
 
       return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
           error("Unknown Type `%s`".formatted(base), expr)
-              .locationDescription(expr, "No type with that name exists.")
-              .suggestions(suggestions)
-              .build());
+          .locationDescription(expr, "No type with that name exists.")
+          .suggestions(suggestions)
+          .build());
     }
 
     // 2. Calculate the sizes
@@ -3703,9 +3718,9 @@ public class TypeChecker
       if (!sizes.isEmpty()) {
         return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
             error("Invalid Type Notation", expr.location())
-                .description("The `%s` type doesn't use the size notation.", base)
-                .help("Try removing the size parameter here.")
-                .build());
+            .description("The `%s` type doesn't use the size notation.", base)
+            .help("Try removing the size parameter here.")
+            .build());
       }
       return ParsedTypeLiteralResult.success(unSizedBuiltins.get(base).get());
     }
@@ -3720,12 +3735,12 @@ public class TypeChecker
       if (sizes.isEmpty()) {
         return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
             error("Invalid Type Notation", expr.location())
-                .description(
-                    "Unsized `%s` can only be used in special places when it's obvious what the bit"
-                        + " width should be.",
-                    base)
-                .help("Try adding a size parameter here.")
-                .build());
+            .description(
+                "Unsized `%s` can only be used in special places when it's obvious what the bit"
+                + " width should be.",
+                base)
+            .help("Try adding a size parameter here.")
+            .build());
       }
 
       if (sizes.size() == 1) {
@@ -3761,8 +3776,9 @@ public class TypeChecker
 
     return ParsedTypeLiteralResult.error(
         skipErrorConstruction ? null : error("Invalid Tensor Type", expr)
-            .locationDescription(expr, "You can only create tensors from data types.")
-            .build());
+                                       .locationDescription(expr,
+                                           "You can only create tensors from data types.")
+                                       .build());
   }
 
   @Override
@@ -3889,17 +3905,18 @@ public class TypeChecker
       return;
     }
 
-    var lastSlice = sliceGroups.getLast();
-
-    if (!(typeBeforeSlice instanceof BitsType) && !(typeBeforeSlice instanceof TensorType)) {
-      var loc = expr.target.location().join(lastSlice.location);
-      addErrorAndStopChecking(error("Type Mismatch", loc)
-          .description("Only bit types can be sliced but the target was a `%s`", typeBeforeSlice)
-          .build());
-    }
-
     Type currType = typeBeforeSlice;
+    SourceLocation targetLoc = expr.location();
     for (var slice : sliceGroups) {
+
+      if (!(currType instanceof BitsType) && !(currType instanceof TensorType)
+          && !(currType instanceof ArrayType)) {
+        var loc = expr.target.location().join(targetLoc.location());
+        throw addErrorAndStopChecking(error("Type Mismatch", loc)
+            .description("Type `%s` cannot be indexed or sliced", currType)
+            .build());
+      }
+
       if (currType instanceof BitsType currBitsType) {
         // construct BitSlice for each slice group
         var parts = new ArrayList<Constant.BitSlice.Part>();
@@ -3911,7 +3928,7 @@ public class TypeChecker
           parts.add(part);
         }
 
-        var hasDynamicSlice = parts.stream().anyMatch(p -> p == null);
+        var hasDynamicSlice = parts.stream().anyMatch(Objects::isNull);
         if (hasDynamicSlice) {
           // FIXME: Implement this
           // Dynamic slices cannot be stacked because of a VIAM constraint
@@ -4010,6 +4027,28 @@ public class TypeChecker
           slice.type = currType;
         }
       }
+      if (currType instanceof ArrayType currArrayType) {
+        if (slice.values.size() != 1) {
+          var loc = slice.values.getFirst().location()
+              .join(slice.values.getLast().location());
+          throw addErrorAndStopChecking(error("Invalid Array Indexing", loc)
+              .locationDescription(loc, "Indexing arrays only allows one argument.")
+              .build());
+        }
+
+        var indexExpr = slice.values.getFirst();
+        if (indexExpr instanceof RangeExpr) {
+          throw addErrorAndStopChecking(error("Invalid Array Indexing", indexExpr)
+              .locationDescription(indexExpr, "Arrays cannot be sliced.")
+              .build());
+        }
+        check(indexExpr);
+
+        currType = currArrayType.elementType();
+        expr.type = currType;
+      }
+
+      targetLoc = slice.location;
     }
   }
 
@@ -4163,8 +4202,22 @@ public class TypeChecker
         }
 
         expr.type = output.get().type();
+      } else if (type instanceof ArrayType arrayType) {
+        if (!fieldName.equals("length")) {
+          throw addErrorAndStopChecking(
+              error("Unknown array access `%s`".formatted(fieldName), expr)
+                  .description("Arrays only have the field `length`").build());
+        }
+        if (!subCall.argsIndices.isEmpty()) {
+          throw addErrorAndStopChecking(
+              error("Wrong Argument Number",
+                  SourceLocation.join(subCall.argsIndices.stream().map(a -> a.location).toList()))
+                  .description("This subcall doesn't take any arguments.")
+                  .build());
+        }
+        expr.type = arrayType.lengthType();
       } else {
-        addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)
+        throw addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)
             .description("No subcall `%s` exists for the type `%s`",
                 fieldName,
                 requireNonNull(type))

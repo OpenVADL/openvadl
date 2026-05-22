@@ -379,6 +379,21 @@ public abstract class Type {
     }
   }
 
+  private static final HashMap<Integer, ArrayType> arrayTypes = new HashMap<>();
+
+  /**
+   * Returns an array type with the given element type.
+   *
+   * @param elementType the type of the elements of the array.
+   * @param lengthType  the type of the length of the array. Must be an unsigned integer type.
+   * @return the array type.
+   */
+  public static ArrayType array(Type elementType, UIntType lengthType) {
+    var hash = Objects.hash(elementType, lengthType);
+    return arrayTypes
+        .computeIfAbsent(hash, k -> new ArrayType(elementType, lengthType));
+  }
+
   /// These are all the builtin types that exist in the language.
   /// Some of them cannot be initialized like them since they require a size, like `SInt<16>`
   /// which is why they are named bases.
