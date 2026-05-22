@@ -185,15 +185,10 @@ public class TcgGvecOpNode extends TcgNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    destinationAccessorIndices = destinationAccessorIndices.stream().map(
-            (e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
-    lhsAccessorIndices = lhsAccessorIndices.stream().map(
-            (e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
-    rhsAccessorIndices = rhsAccessorIndices.stream().map(
-            (e) -> visitor.apply(this, e, ExpressionNode.class))
-        .collect(Collectors.toCollection(NodeList::new));
+    destinationAccessorIndices =
+        rewriteNodeList(destinationAccessorIndices, visitor, ExpressionNode.class);
+    lhsAccessorIndices = rewriteNodeList(lhsAccessorIndices, visitor, ExpressionNode.class);
+    rhsAccessorIndices = rewriteNodeList(rhsAccessorIndices, visitor, ExpressionNode.class);
   }
 
   private String gvecFunctionName() {
