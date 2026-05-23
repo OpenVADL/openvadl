@@ -3344,6 +3344,15 @@ public class TypeChecker
     if (origin instanceof GroupDefinition group) {
       check(group);
 
+      var def = getCurrentlyVisitingDefinition();
+      if (!(def instanceof AnnotationDefinition annotation)
+          || !(annotation.target instanceof GroupDefinition)) {
+        final var diagnostic = error("Invalid Reference", expr)
+            .description(
+                "Reference to a `group` definition is only allowed within its annotations.");
+        addErrorAndContinueChecking(diagnostic.build());
+      }
+
       final var elemType = PseudoFormatType.of(group.operations());
 
       final int maxLength = maxLength(constantEvaluator, group.expr());
@@ -4047,6 +4056,21 @@ public class TypeChecker
               .build());
         }
         check(indexExpr);
+
+        if (constantEvaluator.isConstant(indexExpr)
+            && expr.path().target() instanceof GroupDefinition group) {
+
+          final var idx = constantEvaluator.eval(indexExpr);
+          final var maxLen = maxLength(constantEvaluator, group.expr());
+
+          if (idx.value().intValueExact() > maxLen - 1) {
+            addErrorAndContinueChecking(error("Index Out Of Bounds", indexExpr)
+                .locationDescription(indexExpr,
+                    "Index is out of bounds for maximal length of `%d`.", maxLen)
+                .build());
+          }
+
+        }
 
         currType = currArrayType.elementType();
         expr.type = currType;

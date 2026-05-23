@@ -1,0 +1,53 @@
+instruction set architecture ISA = {
+  program counter PC : Bits<32>
+
+  format AType : Bits<32> = {
+    a : Bits<20>,
+    b : Bits<5>,
+    c : Bits<7>
+  }
+
+  format BType : Bits<32> = {
+    a : Bits<20>,
+    b : Bits<5>,
+    d : Bits<7>
+  }
+
+  instruction A : AType = PC := 0
+  encoding A = {a = 0b00}
+  assembly A = (mnemonic, "")
+
+  instruction B : BType = PC := 0
+  encoding B = {a = 0b01}
+  assembly B = (mnemonic, "")
+
+  operation OpA = {A}
+  operation OpB = {B}
+
+  [assert : VLIW.a = 0b0]
+  [assert : VLIW.length = 0b0]
+  [assert : VLIW.bitLength = 0b0]
+  group VLIW = OpA.OpB
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown array access `a`
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupReference.vadl:27:13
+//       │
+//    27 │   [assert : VLIW.a = 0b0]
+//       │             ^^^^^^
+//       │
+//       Arrays only have the fields `length` or `bitLength`
+//
+//  error: Invalid annotation expression
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupReference.vadl:27:13
+//       │
+//    27 │   [assert : VLIW.a = 0b0]
+//       │             ^^^^^^^^^^^^ Unable to determine type
+//       │
+//       help: Check additional errors which may have caused the type to be missing
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
