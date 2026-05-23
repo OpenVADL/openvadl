@@ -18,7 +18,9 @@ package vadl.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import vadl.ast.nodes.Group;
+import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.RangeExpr;
 
@@ -31,6 +33,10 @@ public interface GroupDefUtils {
    * Collect all operations occurring in a group expression.
    */
   class OperationCollector implements Group.GroupVisitor<List<OperationDefinition>> {
+
+    private OperationCollector() {
+      // Direct instantiation not allowed
+    }
 
     /**
      * Collect all operations occurring in a group expression.
@@ -126,6 +132,68 @@ public interface GroupDefUtils {
       }
       final var constant = constantEvaluator.eval(range.to);
       return constant.value().intValueExact();
+    }
+
+  }
+
+  /**
+   * Determine the maximum bitlength of a group expression.
+   */
+  class GroupExprBitLengthCollector implements Group.GroupVisitor<Integer> {
+
+    private final ConstantEvaluator constantEvaluator;
+
+    private GroupExprBitLengthCollector(ConstantEvaluator constantEvaluator) {
+      this.constantEvaluator = constantEvaluator;
+    }
+
+    static int maxBitLength(ConstantEvaluator constantEvaluator, Group group) {
+      return group.accept(new GroupExprBitLengthCollector(constantEvaluator));
+    }
+
+    @Override
+    public Integer visit(Group.Sequence seq) {
+      int len = 0;
+      for (Group group : seq.groups) {
+        len += group.accept(this);
+      }
+      return len;
+    }
+
+    @Override
+    public Integer visit(Group.Alternative alt) {
+      int len = 0;
+      for (Group.Sequence seq : alt.sequences) {
+        len = Math.max(len, seq.accept(this));
+      }
+      return len;
+    }
+
+    @Override
+    public Integer visit(Group.Permutation perm) {
+      int len = 0;
+      for (Group.Sequence seq : perm.sequences) {
+        len += seq.accept(this);
+      }
+      return len;
+    }
+
+    @Override
+    public Integer visit(Group.Literal lit) {
+
+      int bitLen = 0;
+      for (InstructionDefinition insn : lit.getOperation().instructions) {
+        final int formatWidth =
+            Objects.requireNonNull(insn.formatNode).type().asDataType().bitWidth();
+        bitLen = Math.max(bitLen, formatWidth);
+      }
+
+      if (!(lit.size instanceof RangeExpr range)) {
+        return bitLen;
+      }
+
+      final var constant = constantEvaluator.eval(range.to);
+      return bitLen * constant.value().intValueExact();
     }
 
   }

@@ -384,14 +384,15 @@ public abstract class Type {
   /**
    * Returns an array type with the given element type.
    *
-   * @param elementType the type of the elements of the array.
-   * @param lengthType  the type of the length of the array. Must be an unsigned integer type.
+   * @param elementType   the type of the elements of the array.
+   * @param lengthType    the type of the length of the array. Must be an unsigned integer type.
+   * @param bitLengthType the type of the bit length of the array. Must be an unsigned integer type.
    * @return the array type.
    */
-  public static ArrayType array(Type elementType, UIntType lengthType) {
-    var hash = Objects.hash(elementType, lengthType);
+  public static ArrayType array(Type elementType, UIntType lengthType, UIntType bitLengthType) {
+    var hash = Objects.hash(elementType, lengthType, bitLengthType);
     return arrayTypes
-        .computeIfAbsent(hash, k -> new ArrayType(elementType, lengthType));
+        .computeIfAbsent(hash, k -> new ArrayType(elementType, lengthType, bitLengthType));
   }
 
   /// These are all the builtin types that exist in the language.

@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.GroupDefUtils.GroupExprBitLengthCollector.maxBitLength;
 import static vadl.ast.GroupDefUtils.GroupExprLengthCollector.maxLength;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
@@ -3348,7 +3349,10 @@ public class TypeChecker
       final int maxLength = maxLength(constantEvaluator, group.expr());
       final var lengthType = UIntType.minimalTypeFor(maxLength);
 
-      expr.type = Type.array(elemType, lengthType);
+      final int maxBitLength = maxBitLength(constantEvaluator, group.expr());
+      final var bitLengthType = UIntType.minimalTypeFor(maxBitLength);
+
+      expr.type = Type.array(elemType, lengthType, bitLengthType);
       return;
     }
 
@@ -4203,10 +4207,10 @@ public class TypeChecker
 
         expr.type = output.get().type();
       } else if (type instanceof ArrayType arrayType) {
-        if (!fieldName.equals("length")) {
+        if (!fieldName.equals("length") && !fieldName.equals("bitLength")) {
           throw addErrorAndStopChecking(
               error("Unknown array access `%s`".formatted(fieldName), expr)
-                  .description("Arrays only have the field `length`").build());
+                  .description("Arrays only have the fields `length` or `bitLength`").build());
         }
         if (!subCall.argsIndices.isEmpty()) {
           throw addErrorAndStopChecking(
@@ -4215,7 +4219,13 @@ public class TypeChecker
                   .description("This subcall doesn't take any arguments.")
                   .build());
         }
-        expr.type = arrayType.lengthType();
+
+        expr.type = switch (fieldName) {
+          case "length" -> arrayType.lengthType();
+          case "bitLength" -> arrayType.bitLengthType();
+          default ->
+              throw new IllegalArgumentException("Unknown array field: `%s`".formatted(fieldName));
+        };
       } else {
         throw addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)
             .description("No subcall `%s` exists for the type `%s`",

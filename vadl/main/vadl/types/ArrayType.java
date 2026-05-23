@@ -26,17 +26,21 @@ package vadl.types;
 public class ArrayType extends Type {
 
   private final Type elementType;
+
   private final UIntType lengthType;
+  private final UIntType bitLengthType;
 
   /**
    * Construct an array type.
    *
-   * @param elementType the type of the elements of the array.
-   * @param lengthType  the type of the length of the array. Must be an unsigned integer type.
+   * @param elementType   the type of the elements of the array.
+   * @param lengthType    the type of the length of the array. Must be an unsigned integer type.
+   * @param bitLengthType the type of the bitlength of the array.
    */
-  public ArrayType(Type elementType, UIntType lengthType) {
+  public ArrayType(Type elementType, UIntType lengthType, UIntType bitLengthType) {
     this.elementType = elementType;
     this.lengthType = lengthType;
+    this.bitLengthType = bitLengthType;
   }
 
   public Type elementType() {
@@ -45,6 +49,10 @@ public class ArrayType extends Type {
 
   public UIntType lengthType() {
     return lengthType;
+  }
+
+  public UIntType bitLengthType() {
+    return bitLengthType;
   }
 
   @Override
