@@ -931,6 +931,16 @@ class SymbolTable {
     }
 
     @Override
+    public Void visit(ExistsInExpr expr) {
+      beforeTravel(expr);
+      for (IsId o : expr.operations) {
+        ((Identifier) o).accept(this);
+      }
+      afterTravel(expr);
+      return null;
+    }
+
+    @Override
     public Void visit(ExistsInThenExpr expr) {
       beforeTravel(expr);
 

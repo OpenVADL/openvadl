@@ -4340,7 +4340,20 @@ public class TypeChecker
 
   @Override
   public Void visit(ExistsInExpr expr) {
-    throw addErrorAndStopChecking(unimplementedError(expr));
+
+    expr.type = Type.bool();
+    checkGroupQuantifier(null, expr.operations);
+
+    var annotation = getContextNode(AnnotationDefinition.class);
+    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
+      final var diagnostic = error("Invalid `exists-in` expression", expr)
+          .description("The exists-in expression is only permissible for annotations on "
+              + "the `group` definition.");
+      addErrorAndContinueChecking(diagnostic.build());
+      return null;
+    }
+
+    return null;
   }
 
   @Override
@@ -4357,7 +4370,7 @@ public class TypeChecker
       return null;
     }
 
-    expr.indices.forEach(i -> checkGroupQuantifiers(i.identifier(), i.operations));
+    expr.indices.forEach(i -> checkGroupQuantifier(i.identifier(), i.operations));
     checkWith(expr.thenExpr, Type.bool());
     if (expr.thenExpr.type() != Type.bool()) {
       addErrorAndContinueChecking(error("Type Mismatch", expr.thenExpr)
@@ -4383,7 +4396,7 @@ public class TypeChecker
       return null;
     }
 
-    expr.indices.forEach(i -> checkGroupQuantifiers(i.identifier(), i.operations));
+    expr.indices.forEach(i -> checkGroupQuantifier(i.identifier(), i.operations));
     checkWith(expr.thenExpr, Type.bool());
     if (expr.thenExpr.type() != Type.bool()) {
       addErrorAndContinueChecking(error("Type Mismatch", expr.thenExpr)
@@ -4395,7 +4408,7 @@ public class TypeChecker
     return null;
   }
 
-  private void checkGroupQuantifiers(Identifier identifier, List<IsId> operations) {
+  private void checkGroupQuantifier(@Nullable Identifier identifier, List<IsId> operations) {
 
     final Map<IsId, OperationDefinition> ops = new LinkedHashMap<>();
     for (IsId o : operations) {
@@ -4411,7 +4424,9 @@ public class TypeChecker
               .build());
     }
 
-    identifier.type = PseudoFormatType.of(ops.values());
+    if (identifier != null) {
+      identifier.type = PseudoFormatType.of(ops.values());
+    }
   }
 
   @Override

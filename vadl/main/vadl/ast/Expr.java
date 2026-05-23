@@ -2448,8 +2448,11 @@ class MatchExpr extends Expr {
 }
 
 class ExistsInExpr extends Expr {
-  List<IsId> operations;
+
   SourceLocation loc;
+
+  @Child
+  List<IsId> operations;
 
   ExistsInExpr(List<IsId> operations, SourceLocation loc) {
     this.operations = operations;

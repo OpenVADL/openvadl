@@ -846,7 +846,10 @@ class Decomposer
         .map(i -> request(i, rq.slice))
         .map(OperationForAllNode.Index.class::cast)
         .toList();
-    final var body = request(toHandle.body(), rq.slice);
+    var body = toHandle.body();
+    if (body != null) {
+      body = request(body, rq.slice);
+    }
     rq.result = new OperationExistsNode(toHandle.type(), indices, body);
   }
 

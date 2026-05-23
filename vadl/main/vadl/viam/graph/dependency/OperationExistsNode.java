@@ -17,6 +17,9 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
@@ -34,6 +37,7 @@ public class OperationExistsNode extends ExpressionNode {
   private NodeList<Index> indices;
 
   @Input
+  @Nullable
   private ExpressionNode body;
 
   /**
@@ -44,16 +48,28 @@ public class OperationExistsNode extends ExpressionNode {
    * @param body    the expression body.
    */
   public OperationExistsNode(Type type, List<Index> indices,
-                             ExpressionNode body) {
+                             @CheckForNull ExpressionNode body) {
     super(type);
     this.indices = new NodeList<>(indices);
     this.body = body;
+  }
+
+  /**
+   * The constructor.
+   *
+   * @param type  type of the exists then node.
+   * @param index the bound variables.
+   */
+  public OperationExistsNode(Type type, Index index) {
+    super(type);
+    this.indices = new NodeList<>(index);
   }
 
   public List<Index> indices() {
     return indices;
   }
 
+  @Nullable
   public ExpressionNode body() {
     return body;
   }
@@ -63,7 +79,7 @@ public class OperationExistsNode extends ExpressionNode {
     return new OperationExistsNode(type(),
         indices.stream().map(Index::copy)
             .map(Index.class::cast).toList(),
-        body.copy());
+        body != null ? body.copy() : null);
   }
 
   @Override
@@ -75,14 +91,16 @@ public class OperationExistsNode extends ExpressionNode {
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
     collection.addAll(indices);
-    collection.add(body);
+    if (this.body != null) {
+      collection.add(body);
+    }
   }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     indices = rewriteNodeList(indices, visitor, Index.class);
-    body = visitor.apply(this, body, ExpressionNode.class);
+    body = visitor.applyNullable(this, body, ExpressionNode.class);
   }
 }
 

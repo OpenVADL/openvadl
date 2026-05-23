@@ -1660,8 +1660,22 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(ExistsInExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+
+    final var opDefs = new ArrayList<OperationDefinition>();
+    final var ops = new ArrayList<Operation>();
+
+    for (IsId op : expr.operations) {
+      final var opDef = requireNonNull((OperationDefinition) op.target());
+      opDefs.add(opDef);
+      viamLowering.fetch(opDef)
+          .ifPresent(o -> ops.add((Operation) o));
+    }
+
+    final var idxType = getViamType(PseudoFormatType.of(opDefs));
+    final var idx = new OperationForAllNode.Index(idxType, ops);
+
+    var type = getViamType(expr.type());
+    return new OperationExistsNode(type, idx);
   }
 
   @Override
