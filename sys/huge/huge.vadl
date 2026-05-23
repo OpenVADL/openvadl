@@ -110,6 +110,18 @@ instruction set architecture HUGE = {
     , imm3     = imm as SIntD << 48     // sign extended shifted immediate value
     }
 
+  format BranchFormat : Instr =         // branch format
+    { opsize   : Bits<2>                // operation size
+    , cond     : Bits<3>                // condition
+    , ccsz     : Bits<2>                // condition size
+    , cregl    : IndexC                 // condition register left
+    , cregr    : IndexC                 // condition register right
+    , op       : Bits<7>                // opcode
+    , regd     : Index                  // destination register (return address)
+    , off      : Bits<37>               // branch offset
+    , offset   = off as SIntD << 3      // sign extended and shifted branch offset
+    }
+
   model-type InstrModel = (Id, Str, CondRec, InstrRec, ShiftRec) -> IsaDefs
   model-type OperandModel = (InstrModel, Id, Str, CondRec, InstrRec) -> IsaDefs
 
@@ -117,6 +129,21 @@ instruction set architecture HUGE = {
     instruction AsId ($i.id, $size, $sft.sftId, $c.condStr) : ArithmeticRegFormat =
       if ($c.condEx) then
         AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $sft.sftEx) as AsId(Bits, $size)
+    encoding AsId ($i.id, $size, $sft.sftId, $c.condStr) = {
+      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
+      op = 0b111'1111, funct = $i.opcode, $c.encs, $sft.encs
+      }
+    assembly AsId ($i.id, $size, $sft.sftId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
+      register(regd), ',', register(regl), ',', register(regr), $sft.asms)
+    }
+
+  model JumpInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
+    instruction AsId ($i.id, $size, $sft.sftId, $c.condStr) : ArithmeticRegFormat =
+      if ($c.condEx) then
+        let return = PC.next in {
+          PC := (RD(regl) + ($sft.sftEx) as SIntD) & -8 as BitsD
+          RD(regd) := return
+        }
     encoding AsId ($i.id, $size, $sft.sftId, $c.condStr) = {
       opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
       op = 0b111'1111, funct = $i.opcode, $c.encs, $sft.encs
@@ -156,6 +183,24 @@ instruction set architecture HUGE = {
     $m ($size ; $sizeStr ; $c ; $i ; (Sft48 ; (imm3 as AsId(Bits, $size)) ; immShift = 3 ; (udec(imm), "<<48")))
     }
 
+  model BranchInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
+    instruction AsId ($i.id, $c.condStr) : BranchFormat =
+      if ($c.condEx) then {
+        RD(regd) := PC.next
+        PC := PC + offset
+        }
+    encoding AsId ($i.id, $c.condStr) = {
+      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
+      op = $i.opcode, $c.encs
+      }
+    assembly AsId ($i.id, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
+      register(regd), ',', sdec(offset))
+    }
+
+  model NoOperand (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
+    $m ($size ; $sizeStr ; $c ; $i ; (none ; none ; none ; ""))
+  }
+
   model ArithCondInstr (m: InstrModel, o: OperandModel, size: Id, sizeStr: Str, i : InstrRec) : IsaDefs = {
     $o ($m ;$size ; $sizeStr ; (EQ  ; B ; "" ; true ; cregl = 0,           cregr = 0)     ; $i)
     $o ($m ;$size ; $sizeStr ; (EQ  ; B ; "beq"  ; RB(cregl)          = RB(cregr); none ) ; $i)
@@ -184,15 +229,15 @@ instruction set architecture HUGE = {
     $o ($m ;$size ; $sizeStr ; (ULE ; D ; "dule" ; RD(cregl)         <= RD(cregr); none ) ; $i)
     }
 
-  model ArithSizeInstr (m: InstrModel, o: OperandModel, i : InstrRec) : IsaDefs = {
+  model SizeCondInstr (m: InstrModel, o: OperandModel, i : InstrRec) : IsaDefs = {
     $ArithCondInstr ($m ; $o; B ; "b" ; $i )
     $ArithCondInstr ($m ; $o; H ; "h" ; $i )
     $ArithCondInstr ($m ; $o; W ; "w" ; $i )
     $ArithCondInstr ($m ; $o; D ; "d" ; $i )
   }
 
-  model SizeCondInstr (m: InstrModel, o: OperandModel, i : InstrRec) : IsaDefs = {
-    $ArithSizeInstr ($m ; $o ; $i )
+  model DoubleCondInstr (m: InstrModel, o: OperandModel, i : InstrRec) : IsaDefs = {
+    $ArithCondInstr ($m ; $o; D ; "d" ; $i )
   }
 
 // arithmetic register instructions ********************************************
@@ -251,4 +296,6 @@ instruction set architecture HUGE = {
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USGT    ; "usgt"  ; ugth   ;            0b1'0110))
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USGE    ; "usge"  ; ugeq   ;            0b1'0111))
 
+  $DoubleCondInstr  (BranchInstr        ; NoOperand  ;  (BR      ; "br"    ; none   ;          0b111'1110))
+  $SizeCondInstr    (JumpInstr          ; OpShiftReg ;  (JMP     ; "jmp"   ; none   ; 0b11'1111'1111'1111))
   }
