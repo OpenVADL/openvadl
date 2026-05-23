@@ -46,7 +46,7 @@ import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
-import vadl.iss.passes.tcgLowering.TcgExtend;
+import vadl.iss.passes.tcg.lowering.TcgExtend;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.pass.PassName;
@@ -122,7 +122,7 @@ public class IssNormalizationPass extends AbstractIssPass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var issConfig = (IssConfiguration) configuration();
 
-    tcgInstrs(viam)
+    normalTcgInstrs(viam)
         .forEach(instruction -> new IssNormalizer(instruction.behavior(),
             issConfig.targetSize().width)
             .run());

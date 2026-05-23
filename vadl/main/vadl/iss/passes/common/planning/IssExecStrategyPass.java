@@ -19,23 +19,18 @@ package vadl.iss.passes.common.planning;
 import static vadl.iss.passes.TcgPassUtils.instrInfo;
 
 import java.io.IOException;
-import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
-import vadl.iss.passes.common.planning.evaluators.DirectGvecStrategyEvaluator;
-import vadl.iss.passes.common.planning.evaluators.HelperCallStrategyEvaluator;
-import vadl.iss.passes.common.planning.evaluators.TcgScalarStrategyEvaluator;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
- * Computes and stores instruction execution plans plus the currently supported backend strategy.
+ * Computes and stores instruction execution plans.
  *
- * <p>The selected execution plan is the backend-independent source of truth. The legacy
- * {@link vadl.iss.passes.extensions.InstrInfo.ExecStrategy} is derived from the selected plan so
- * existing code generation can keep treating unsupported non-scalar strategies as helper calls.</p>
+ * <p>The selected execution plan is the backend-independent source of truth for later pass routing
+ * and code generation.</p>
  */
 public class IssExecStrategyPass extends AbstractIssPass {
 
@@ -43,7 +38,7 @@ public class IssExecStrategyPass extends AbstractIssPass {
 
   public IssExecStrategyPass(IssConfiguration configuration) {
     super(configuration);
-    this.executionPlanner = new InstructionExecutionPlanner(defaultEvaluators());
+    this.executionPlanner = new InstructionExecutionPlanner();
   }
 
   @Override
@@ -62,13 +57,5 @@ public class IssExecStrategyPass extends AbstractIssPass {
         instr -> instrInfo(instr).setExecutionPlan(executionPlanner.plan(instr))
     );
     return null;
-  }
-
-  private List<StrategyEvaluator> defaultEvaluators() {
-    return List.of(
-        new DirectGvecStrategyEvaluator(),
-        new TcgScalarStrategyEvaluator(),
-        new HelperCallStrategyEvaluator()
-    );
   }
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.extensions.RegInfo;
-import vadl.iss.passes.tcgLowering.TcgCondition;
+import vadl.iss.passes.tcg.lowering.TcgCondition;
 import vadl.types.BuiltInTable;
 import vadl.utils.GraphUtils;
 import vadl.viam.Instruction;

@@ -39,53 +39,10 @@ import vadl.viam.graph.dependency.ParamNode;
  */
 public class InstrInfo extends DefinitionExtension<Instruction> {
 
-
-  /**
-   * Backend execution strategy for an instruction.
-   */
-  public enum ExecStrategy {
-    /**
-     * Instruction can be lowered to direct TCG translation.
-     */
-    DIRECT_TCG,
-    /**
-     * Instruction must be translated as helper call.
-     */
-    HELPER_CALL
-  }
-
-  @Nullable
-  private ExecStrategy execStrategy = null;
-
   @Nullable
   private InstrExecPlan executionPlan = null;
 
   List<Function> extractedFunctions = new ArrayList<>();
-
-  /**
-   * Determines if the instruction is rendered as a helper call to
-   * a C implementation of this instruction.
-   */
-  public boolean asHelperCall() {
-    return execStrategy() == ExecStrategy.HELPER_CALL;
-  }
-
-  /**
-   * Gets the execution strategy used by code generation.
-   */
-  public ExecStrategy execStrategy() {
-    if (execStrategy == null) {
-      execStrategy = computeFallbackExecStrategy();
-    }
-    return execStrategy;
-  }
-
-  /**
-   * Sets the execution strategy as computed by the strategy classifier pass.
-   */
-  public void setExecStrategy(ExecStrategy execStrategy) {
-    this.execStrategy = execStrategy;
-  }
 
   /**
    * Returns the execution plan computed for this instruction, if any.
@@ -99,37 +56,26 @@ public class InstrInfo extends DefinitionExtension<Instruction> {
    */
   public void setExecutionPlan(InstrExecPlan executionPlan) {
     this.executionPlan = executionPlan;
-    this.execStrategy = mapExecutionPlanToExecStrategy(executionPlan);
   }
 
   /**
-   * Returns the selected direct-gvec plan for this instruction, if any.
+   * Returns the selected instruction-level execution path.
    */
-  public @Nullable VectorTensorPlan directGvecPlan() {
-    if (executionPlan == null) {
-      return null;
+  public InstrExecPlan.ExecutionPath executionPath() {
+    if (executionPlan != null) {
+      return executionPlan.selectedPath();
     }
-    var evaluation = executionPlan.evaluation(InstrExecPlan.StrategyKind.DIRECT_GVEC);
-    return evaluation == null ? null : evaluation.planAs(VectorTensorPlan.class);
+    return computeFallbackExecutionPath();
   }
 
-  private ExecStrategy computeFallbackExecStrategy() {
-    if (executionPlan != null) {
-      return mapExecutionPlanToExecStrategy(executionPlan);
-    }
+  private InstrExecPlan.ExecutionPath computeFallbackExecutionPath() {
     var hasCpuVectorReads = instr().behavior().getNodes(IssReadRegNode.class)
         .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR);
     var hasCpuVectorWrites = instr().behavior().getNodes(IssWriteRegNode.class)
         .anyMatch(n -> regInfo(n.regTensor()).execClass() == RegInfo.ExecClass.CPU_VECTOR);
     return hasCpuVectorReads || hasCpuVectorWrites
-        ? ExecStrategy.HELPER_CALL
-        : ExecStrategy.DIRECT_TCG;
-  }
-
-  private ExecStrategy mapExecutionPlanToExecStrategy(InstrExecPlan executionPlan) {
-    return executionPlan.selectedStrategy() == InstrExecPlan.StrategyKind.TCG_SCALAR
-        ? ExecStrategy.DIRECT_TCG
-        : ExecStrategy.HELPER_CALL;
+        ? InstrExecPlan.ExecutionPath.HELPER_CALL
+        : InstrExecPlan.ExecutionPath.NORMAL_TCG;
   }
 
   /**

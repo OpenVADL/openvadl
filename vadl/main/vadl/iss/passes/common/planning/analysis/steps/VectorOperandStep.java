@@ -16,9 +16,9 @@
 
 package vadl.iss.passes.common.planning.analysis.steps;
 
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessBaseKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessWindowKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.bindingFacts;
+import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.gvecAccessBaseKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isConstantInt;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isFullyIndexedElementAccess;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isLoopElementOffset;
@@ -81,7 +81,7 @@ public final class VectorOperandStep implements VectorFactStep {
     return new OperandAccessFacts(
         expression,
         read,
-        accessBaseKind(read.accessKind()),
+        gvecAccessBaseKind(read),
         accessWindowKind(read.windowKind()),
         matchesElementShape(read, idx, elementBits),
         storageFacts(read.regTensor()),

@@ -33,48 +33,49 @@ import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgExtend;
-import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgBiNopNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgBr;
-import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
-import vadl.iss.passes.tcgLowering.nodes.TcgConstSelectNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgCountZerosNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgCtpopNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgDepositNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgFreeTemp;
-import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
-import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
-import vadl.iss.passes.tcgLowering.nodes.TcgGottoTb;
-import vadl.iss.passes.tcgLowering.nodes.TcgHelperCall;
-import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
-import vadl.iss.passes.tcgLowering.nodes.TcgLookupAndGotoPtr;
-import vadl.iss.passes.tcgLowering.nodes.TcgMovCondNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgMul2Node;
-import vadl.iss.passes.tcgLowering.nodes.TcgMulNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgMulhNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgNegNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgRemNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgRotlNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgRotrNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgSarNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
-import vadl.iss.passes.tcgLowering.nodes.TcgSetIsJmp;
-import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
-import vadl.iss.passes.tcgLowering.nodes.TcgShlNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgShrNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
-import vadl.iss.passes.tcgLowering.nodes.TcgSubNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgUnaryNopNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
+import vadl.iss.passes.tcg.lowering.TcgExtend;
+import vadl.iss.passes.tcg.lowering.nodes.TcgAddNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgAndNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgBiNopNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgBr;
+import vadl.iss.passes.tcg.lowering.nodes.TcgBrCond;
+import vadl.iss.passes.tcg.lowering.nodes.TcgConstSelectNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgCountZerosNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgCtpopNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgDepositNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgDivNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgExtendNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgExtractNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgFreeTemp;
+import vadl.iss.passes.tcg.lowering.nodes.TcgGenException;
+import vadl.iss.passes.tcg.lowering.nodes.TcgGenLabel;
+import vadl.iss.passes.tcg.lowering.nodes.TcgGottoTb;
+import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgHelperCall;
+import vadl.iss.passes.tcg.lowering.nodes.TcgLoadMemory;
+import vadl.iss.passes.tcg.lowering.nodes.TcgLookupAndGotoPtr;
+import vadl.iss.passes.tcg.lowering.nodes.TcgMovCondNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgMoveNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgMul2Node;
+import vadl.iss.passes.tcg.lowering.nodes.TcgMulNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgMulhNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgNegNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgNotNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgOrNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgRemNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgRotlNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgRotrNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgSarNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgSetCond;
+import vadl.iss.passes.tcg.lowering.nodes.TcgSetIsJmp;
+import vadl.iss.passes.tcg.lowering.nodes.TcgSetLabel;
+import vadl.iss.passes.tcg.lowering.nodes.TcgShlNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgShrNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgStoreMemory;
+import vadl.iss.passes.tcg.lowering.nodes.TcgSubNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgTruncateNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgUnaryNopNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgXorNode;
 import vadl.javaannotations.Handler;
 import vadl.viam.Endianness;
 import vadl.viam.graph.Node;
@@ -445,6 +446,12 @@ public interface IssCMixins {
 
     @Handler
     default void handle(CGenContext<Node> ctx, TcgVRefNode toHandle) {
+      internalError(toHandle,
+          "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, TcgGvecOpNode toHandle) {
       internalError(toHandle,
           "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
     }

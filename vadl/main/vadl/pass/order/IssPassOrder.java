@@ -44,13 +44,14 @@ import vadl.iss.passes.common.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.common.planning.IssExecStrategyPass;
 import vadl.iss.passes.common.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.helper.IssCFunctionExtractionPass;
-import vadl.iss.passes.scalar.IssHardcodedTcgAddOnPass;
-import vadl.iss.passes.scalar.IssSelectLoweringPass;
-import vadl.iss.passes.scalar.IssTcgSchedulingPass;
-import vadl.iss.passes.scalar.IssTcgVAllocationPass;
-import vadl.iss.passes.tcgLowering.IssTcgContextPass;
-import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
-import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
+import vadl.iss.passes.tcg.IssHardcodedTcgAddOnPass;
+import vadl.iss.passes.tcg.IssSelectLoweringPass;
+import vadl.iss.passes.tcg.IssTcgSchedulingPass;
+import vadl.iss.passes.tcg.IssTcgVAllocationPass;
+import vadl.iss.passes.tcg.lowering.IssTcgContextPass;
+import vadl.iss.passes.tcg.lowering.TcgBranchLoweringPass;
+import vadl.iss.passes.tcg.lowering.TcgOpLoweringPass;
+import vadl.iss.passes.vector.IssDirectGvecLoweringPass;
 import vadl.iss.template.IssDefaultRenderingPass;
 import vadl.iss.template.gdb_xml.EmitIssGdbXmlPass;
 import vadl.iss.template.hw.EmitIssHwMachineCPass;
@@ -122,6 +123,7 @@ public final class IssPassOrder {
         .add(new IssTensorAssignmentToForallPass(config))
         .add(new CanonicalizationPass(config))
         .add(new IssExecStrategyPass(config))
+        .add(new IssDirectGvecLoweringPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))
