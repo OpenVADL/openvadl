@@ -31,7 +31,6 @@ import static vadl.utils.GraphUtils.signExtend;
 import static vadl.utils.GraphUtils.zeroExtend;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -797,138 +796,30 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   /// [2] -> [[0], [1]]
   /// [2, 2] -> [[0, 0], [0, 1], [1, 0], [1, 1]]
   /// ```
-  private List<List<Integer>> permutationOfTensorIndicies(List<Integer> dimensions) {
-    if (dimensions.isEmpty()) {
-      return List.of(List.of());
-    }
-
-    var tailResult = permutationOfTensorIndicies(dimensions.subList(1, dimensions.size()));
-
-    var result = new ArrayList<List<Integer>>();
-    for (int i = 0; i < dimensions.getFirst(); i++) {
-      for (var tail : tailResult) {
-        result.add(Stream.concat(Stream.of(i), tail.stream()).toList());
-      }
-    }
-
-    return result;
+  private ExpressionNode readRegisterTensorDirect(RegisterTensor resource,
+                                                  List<ExpressionNode> indices,
+                                                  DataType type) {
+    // Preserve aggregate base-register accesses when fewer than all register-tensor indices are
+    // supplied. The VIAM and ISS node contracts already support these partial reads directly.
+    return new ReadRegTensorNode(resource, new NodeList<>(indices), type, null);
   }
 
-
-  /// It is allowed to read from a register tensor and not supply all indices. In that case all the
-  /// missing indices have to be filled, many reads are issued and concatenated again.
-  ///
-  /// @return the expression to read from a register.
-  private ExpressionNode readRegisterTensorConcatenated(RegisterTensor resource,
-                                                        List<ExpressionNode> indices,
-                                                        DataType type
-  ) {
-    // Matches exactly
-    if (resource.indexTypes().size() == indices.size()) {
-      return new ReadRegTensorNode(resource, new NodeList<>(indices), type, null);
-    }
-
-    // Concatenation needed.
-    // Here we take all provided indices and for the missing dimensions we fill out all possible
-    // values and concatenate them.
-    var missingDimensions = resource.indexDimensions().stream()
-        .skip(indices.size()).toList();
-
-    var missingTypes = missingDimensions.stream().map(d -> d.indexType()).toList();
-
-    var missingPermutations = permutationOfTensorIndicies(
-        missingDimensions.stream()
-            .map(d -> d.size()).toList());
-
-
-    var missingIndices =
-        missingPermutations.stream()
-            .map(
-                entry -> Streams.zip(entry.stream(), missingTypes.stream(),
-                        (a, b) -> (ExpressionNode) Constant.Value.of(a, b).toNode())
-                    .toList())
-            .toList();
-
-    var fullIndices = missingIndices.stream().map(item ->
-        Streams.concat(indices.stream(), item.stream()).toList()
-    ).toList();
-
-
-    ExpressionNode result = null;
-    int currentBitWidth = 0;
-    for (var indexList : fullIndices) {
-      var read = new ReadRegTensorNode(resource, new NodeList<>(indexList), resource.resultType(),
-          null);
-
-      currentBitWidth += read.type().asDataType().bitWidth();
-      if (result == null) {
-        result = read;
-      } else {
-        result = new BuiltInCall(BuiltInTable.CONCATENATE_BITS, new NodeList<>(read, result),
-            Type.bits(currentBitWidth));
-      }
-    }
-
-    return requireNonNull(result);
-  }
-
-  /// Write to a register tensor even if not all indices are supplied.
-  ///
-  /// @return A list of sideeffects which write to the provided resource
-  private List<WriteResourceNode> writeRegisterTensorSliced(RegisterTensor resource,
-                                                            List<ExpressionNode> indices,
+  private List<WriteResourceNode> writeRegisterTensorDirect(RegisterTensor resource,
+                                                            NodeList<ExpressionNode> indices,
                                                             ExpressionNode value,
                                                             List<Constant.BitSlice> slices,
                                                             @Nullable ExpressionNode dynamicIndex) {
-    // No multiple writes and slices needed
-    if (resource.indexTypes().size() <= indices.size()) {
-      var resourceRead =
-          new ReadRegTensorNode(resource, new NodeList<>(indices), resource.resultType(), null);
-      var slicedValue = dynamicIndexWriteValue(
-          staticSliceWriteValue(value, resourceRead, slices),
-          resourceRead,
-          dynamicIndex);
-      return List.of(
-          new WriteRegTensorNode(resource, new NodeList<>(indices), slicedValue, null, null));
-    }
-
-    // Multiple writes needed and value must be sliced
-    var missingDimensions = resource.indexDimensions().stream()
-        .skip(indices.size()).toList();
-
-    var missingTypes = missingDimensions.stream().map(d -> d.indexType()).toList();
-
-    var missingPermutations = permutationOfTensorIndicies(
-        missingDimensions.stream()
-            .map(d -> d.size()).toList());
-
-
-    var missingIndices =
-        missingPermutations.stream()
-            .map(
-                entry -> Streams.zip(entry.stream(), missingTypes.stream(),
-                        (a, b) -> (ExpressionNode) Constant.Value.of(a, b).toNode())
-                    .toList())
-            .toList();
-
-    var fullIndices = missingIndices.stream().map(item ->
-        Streams.concat(indices.stream(), item.stream()).toList()
-    ).toList();
-
-
-    var result = new ArrayList<WriteResourceNode>();
-    var width = resource.resultType().bitWidth();
-    for (int i = 0; i < fullIndices.size(); i++) {
-      var lsb = i * width;
-      var msb = i * width + width - 1;
-      var slice = new SliceNode(value, Constant.BitSlice.of(msb, lsb), Type.bits(width));
-
-      result.add(
-          new WriteRegTensorNode(resource, new NodeList<>(fullIndices.get(i)), slice, null, null)
-      );
-    }
-
-    return result;
+    // Preserve aggregate base-register writes as one side effect even when not all indices are
+    // supplied. Backends can lower the partial access directly instead of requiring frontend
+    // scalarization into per-element writes.
+    var resourceRead = new ReadRegTensorNode(resource, indices.copy(),
+        resource.resultType(indices.size()), null);
+    var shapedValue = dynamicIndexWriteValue(
+        staticSliceWriteValue(value, resourceRead, slices),
+        resourceRead,
+        dynamicIndex
+    );
+    return List.of(new WriteRegTensorNode(resource, indices.copy(), shapedValue, null, null));
   }
 
   /**
@@ -983,7 +874,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Register
     if (computedTarget instanceof RegisterDefinition registerDefinition) {
       var register = (RegisterTensor) viamLowering.fetch(registerDefinition).orElseThrow();
-      return readRegisterTensorConcatenated(register, List.of(),
+      return readRegisterTensorDirect(register, List.of(),
           (DataType) getViamType(expr.type()));
     }
 
@@ -998,7 +889,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var resource = ((Counter) lowered).registerTensor();
       List<ExpressionNode> indices = ((Counter) lowered).indices().stream()
           .map(idx -> (ExpressionNode) new ConstantNode(idx)).toList();
-      return readRegisterTensorConcatenated(resource, indices, (DataType) getViamType(expr.type()));
+      return readRegisterTensorDirect(resource, indices, (DataType) getViamType(expr.type()));
     }
 
     // Counters
@@ -1435,7 +1326,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             (Function) viamLowering.fetch(funcDef).orElseThrow(),
             args, typeBeforeSlice);
 
-        case RegisterDefinition regDef -> readRegisterTensorConcatenated(
+        case RegisterDefinition regDef -> readRegisterTensorDirect(
             (RegisterTensor) viamLowering.fetch(regDef).orElseThrow(), args,
             (DataType) typeBeforeSlice
         );
@@ -1451,7 +1342,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
               ((Counter) lowered).indices().stream().map(ConstantNode::new),
               args.stream()
           ).collect(Collectors.toCollection(NodeList::new));
-          yield readRegisterTensorConcatenated(((Counter) lowered).registerTensor(), aliasArgs,
+          yield readRegisterTensorDirect(((Counter) lowered).registerTensor(), aliasArgs,
               (DataType) typeBeforeSlice);
         }
 
@@ -1786,7 +1677,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // No need to call getViamType here as the viam definitions should already have that.
     var writeNodes = switch (viamTargetDef) {
-      case RegisterTensor regDef -> writeRegisterTensorSliced(
+      case RegisterTensor regDef -> writeRegisterTensorDirect(
           regDef, argExprs, value, staticSlices, dynamicIndex
       );
 
