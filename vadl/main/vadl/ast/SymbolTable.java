@@ -39,6 +39,9 @@ import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
 class SymbolTable {
+
+  static private final int MAX_SUGGESTIONS_SYMBOL_NAMES = 100;
+
   @Nullable
   SymbolTable parent;
 
@@ -398,6 +401,8 @@ class SymbolTable {
 
   /**
    * Internal use only.
+   * Collects all symbol names in scope that are instances of the given classes.
+   * There is a soft limit described by {@link #MAX_SUGGESTIONS_SYMBOL_NAMES}.
    */
   private void collectAllSymbolNamesOf(Set<String> collector, Class<? extends Node>... classes) {
     symbols.entrySet().stream()
@@ -405,6 +410,10 @@ class SymbolTable {
             && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(entry.getValue())))
         .map(Map.Entry::getKey)
         .forEach(collector::add);
+
+    if (collector.size() > MAX_SUGGESTIONS_SYMBOL_NAMES) {
+      return;
+    }
 
     if (parent != null) {
       parent.collectAllSymbolNamesOf(collector, classes);
