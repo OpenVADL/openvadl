@@ -43,15 +43,6 @@ instruction set architecture HUGE = {
   alias register RW = R(*)(31..0)       // word   register file
   alias register RD = R                 // double register file
 
-  // instruction: instruction id, assembly name,  id, opcode
-  record InstrRec (id : Id, name : Str, op : Id, opcode : Ex)
-
-  // condition: CondCode id, assembly extension string, condition expression
-  record CondRec  (condId : Id, condSize : Id, condStr : Str, condEx : Ex, encs : Encs)
-
-  // shifted operands: shift identifier, encodings, shift expression, assembly elements
-  record ShiftRec (sftId : Id, sftEx : Ex, encs : Encs, asms : Ex)
-
   enumeration OpSize : Bits<2> =        // instruction operation size
     { B                                 // Byte
     , H                                 // Half
@@ -77,6 +68,25 @@ instruction set architecture HUGE = {
     , Or                                // bitwise Or
     }
 
+  enumeration AddSub : Bits<1> =        // operation with index register
+    { Add                               // Addition
+    , Sub                               // Subtraction
+    }
+
+  // instruction: instruction id, assembly name,  id, opcode
+  record InstrRec (id : Id, name : Str, op : Id, opcode : Ex)
+
+  // condition: CondCode id, assembly extension string, condition expression
+  record CondRec  (condId : Id, condSize : Id, condStr : Str, condEx : Ex, encs : Encs)
+
+  // shifted operands: operand identifier, operand expression, encodings, assembly elements
+  record OpRec (opId : Id, opEx : Ex, encs : Encs, asms : Ex)
+
+  model-type InstrModel = (Id, Str, CondRec, InstrRec, OpRec) -> IsaDefs
+  model-type OperandModel = (InstrModel, Id, Str, CondRec, InstrRec) -> IsaDefs
+
+// arithmetic register models **************************************************
+
   format ArithmeticRegFormat : Instr =  // arithmetic register +-&| shifted register format
     { opsize   : Bits<2>                // operation size
     , cond     : Bits<3>                // condition
@@ -92,6 +102,47 @@ instruction set architecture HUGE = {
     , funct    : Bits<14>               // function code
     , shift    : Shift                  // shift amount
     }
+
+  model ArithmeticRegInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, o : OpRec) : IsaDefs = {
+    instruction AsId ($i.id, $size, $o.opId, $c.condStr) : ArithmeticRegFormat =
+      if ($c.condEx) then
+        AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $o.opEx) as AsId(Bits, $size)
+    encoding AsId ($i.id, $size, $o.opId, $c.condStr) = {
+      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
+      op = 0b111'1111, funct = $i.opcode, $c.encs, $o.encs
+      }
+    assembly AsId ($i.id, $size, $o.opId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
+      register(regd), ',', register(regl), ',', register(regr), $o.asms)
+    }
+
+  model JumpInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, o : OpRec) : IsaDefs = {
+    instruction AsId ($i.id, $size, $o.opId, $c.condStr) : ArithmeticRegFormat =
+      if ($c.condEx) then
+        let return = PC.next in {
+          PC := (RD(regl) + ($o.opEx) as SIntD) & -8 as BitsD
+          RD(regd) := return
+        }
+    encoding AsId ($i.id, $size, $o.opId, $c.condStr) = {
+      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
+      op = 0b111'1111, funct = $i.opcode, $c.encs, $o.encs
+      }
+    assembly AsId ($i.id, $size, $o.opId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
+      register(regd), ',', register(regl), ',', register(regr), $o.asms)
+    }
+
+  model OpShiftReg (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
+    $m ($size ; $sizeStr ; $c ; $i ; (Zero   ; (AsId(R, $size)(regr)) ;               regs= 0, shift = 0, opShift = OpShift::Add ;  ""                                     ))
+    $m ($size ; $sizeStr ; $c ; $i ; (Add    ; (AsId(R, $size)(regr) + AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Add ; ("+", register(regs)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sub    ; (AsId(R, $size)(regr) - AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Sub ; ("-", register(regs)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (And    ; (AsId(R, $size)(regr) & AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::And ; ("&", register(regs)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (Or     ; (AsId(R, $size)(regr) | AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Or  ; ("|", register(regs)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (AddSft ; (AsId(R, $size)(regr) + AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Add ; ("+", register(regs), "<<", udec(shift))))
+    $m ($size ; $sizeStr ; $c ; $i ; (SubSft ; (AsId(R, $size)(regr) - AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Sub ; ("-", register(regs), "<<", udec(shift))))
+    $m ($size ; $sizeStr ; $c ; $i ; (AndSft ; (AsId(R, $size)(regr) & AsId(R, $size)(regs) << shift)   ; opShift = OpShift::And ; ("&", register(regs), "<<", udec(shift))))
+    $m ($size ; $sizeStr ; $c ; $i ; (OrSft  ; (AsId(R, $size)(regr) | AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Or  ; ("|", register(regs), "<<", udec(shift))))
+    }
+
+// arithmetic immediate models *************************************************
 
   format ArithmeticImmFormat : Instr =  // arithmetic immediate shifted format
     { opsize   : Bits<2>                // operation size
@@ -110,6 +161,81 @@ instruction set architecture HUGE = {
     , imm3     = imm as SIntD << 48     // sign extended shifted immediate value
     }
 
+  model ArithmeticImmInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, o : OpRec) : IsaDefs = {
+    instruction AsId ($i.id, $size, $o.opId, $c.condStr) : ArithmeticImmFormat =
+      if ($c.condEx) then
+        AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $o.opEx) as AsId(Bits, $size)
+    encoding AsId ($i.id, $size, $o.opId, $c.condStr) = {
+      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
+      op = $i.opcode, $c.encs, $o.encs
+      }
+    assembly AsId ($i.id, $size, $o.opId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
+      register(regd), ',', register(regl), ',', $o.asms)
+    }
+
+  model OpShiftImm (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
+    $m ($size ; $sizeStr ; $c ; $i ; (Sft00 ; (imm0 as AsId(Bits, $size)) ; immShift = 0 ; (udec(imm)        )))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sft16 ; (imm1 as AsId(Bits, $size)) ; immShift = 1 ; (udec(imm), "<<16")))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sft32 ; (imm2 as AsId(Bits, $size)) ; immShift = 2 ; (udec(imm), "<<32")))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sft48 ; (imm3 as AsId(Bits, $size)) ; immShift = 3 ; (udec(imm), "<<48")))
+    }
+
+// memory models ***************************************************************
+
+  format MemoryFormat : Instr =         // memory format
+    { opsize   : Bits<2>                // operation size
+    , cond     : Bits<3>                // condition
+    , ccsz     : Bits<2>                // condition size
+    , cregl    : IndexC                 // condition register left
+    , cregr    : IndexC                 // condition register right
+    , op       : Bits<7>                // opcode
+    , regd     : Index                  // source / destination  register
+    , base     : Index                  // address base register
+    , index    : Index                  // shifted index register
+    , addsub   : Bits<1>                // operation with index register
+    , shift    : Shift                  // shift amount
+    , offset   : Bits<20>               // signed offset
+    , offsetB  = offset as SIntD        // byte offset
+    , offsetH  = offset as SIntD << 1   // half offset
+    , offsetW  = offset as SIntD << 2   // word offset
+    , offsetD  = offset as SIntD << 3   // double offset
+    }
+
+  model MemEncAsm (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, o : OpRec) : IsaDefs = {
+      encoding AsId ($i.id, $size, $o.opId, $c.condStr) = {
+      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
+      op = $i.opcode, $c.encs, $o.encs
+      }
+    assembly AsId ($i.id, $size, $o.opId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
+      register(regd), ',', register(base), $o.asms)
+    }
+
+  model LoadInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, o : OpRec) : IsaDefs = {
+    instruction AsId ($i.id, $size, $o.opId, $c.condStr) : MemoryFormat =
+      if ($c.condEx) then
+        let addr = ($o.opEx) as BitsD + AsId (offset, $size) in 
+          RD(regd) := MEM<(1 << OpSize::$size)>(addr) as $i.op
+    $MemEncAsm ($size ; $sizeStr ; $c ; $i ; $o)
+    }
+
+  model StoreInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, o : OpRec) : IsaDefs = {
+    instruction AsId ($i.id, $size, $o.opId, $c.condStr) : MemoryFormat =
+      if ($c.condEx) then
+        let addr = ($o.opEx) as BitsD + AsId (offset, $size) in 
+          MEM<(1 << OpSize::$size)>(addr) := AsId (R, $size)(regd)
+    $MemEncAsm ($size ; $sizeStr ; $c ; $i ; $o)
+    }
+
+  model OpMemory (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
+    $m ($size ; $sizeStr ; $c ; $i ; (Zero   ; (AsId(R, $size)(base)) ;               index= 0, shift = 0, addsub = AddSub::Add ;  ""                                      ))
+    $m ($size ; $sizeStr ; $c ; $i ; (Add    ; (AsId(R, $size)(base) + AsId(R, $size)(index)) ; shift = 0, addsub = AddSub::Add ; ("+", register(index)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (Sub    ; (AsId(R, $size)(base) - AsId(R, $size)(index)) ; shift = 0, addsub = AddSub::Sub ; ("-", register(index)                   )))
+    $m ($size ; $sizeStr ; $c ; $i ; (AddSft ; (AsId(R, $size)(base) + AsId(R, $size)(index) << shift)   ; addsub = AddSub::Add ; ("+", register(index), "<<", udec(shift))))
+    $m ($size ; $sizeStr ; $c ; $i ; (SubSft ; (AsId(R, $size)(base) - AsId(R, $size)(index) << shift)   ; addsub = AddSub::Sub ; ("-", register(index), "<<", udec(shift))))
+    }
+
+// branch models ***************************************************************
+
   format BranchFormat : Instr =         // branch format
     { opsize   : Bits<2>                // operation size
     , cond     : Bits<3>                // condition
@@ -122,68 +248,7 @@ instruction set architecture HUGE = {
     , offset   = off as SIntD << 3      // sign extended and shifted branch offset
     }
 
-  model-type InstrModel = (Id, Str, CondRec, InstrRec, ShiftRec) -> IsaDefs
-  model-type OperandModel = (InstrModel, Id, Str, CondRec, InstrRec) -> IsaDefs
-
-  model ArithmeticRegInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
-    instruction AsId ($i.id, $size, $sft.sftId, $c.condStr) : ArithmeticRegFormat =
-      if ($c.condEx) then
-        AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $sft.sftEx) as AsId(Bits, $size)
-    encoding AsId ($i.id, $size, $sft.sftId, $c.condStr) = {
-      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
-      op = 0b111'1111, funct = $i.opcode, $c.encs, $sft.encs
-      }
-    assembly AsId ($i.id, $size, $sft.sftId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
-      register(regd), ',', register(regl), ',', register(regr), $sft.asms)
-    }
-
-  model JumpInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
-    instruction AsId ($i.id, $size, $sft.sftId, $c.condStr) : ArithmeticRegFormat =
-      if ($c.condEx) then
-        let return = PC.next in {
-          PC := (RD(regl) + ($sft.sftEx) as SIntD) & -8 as BitsD
-          RD(regd) := return
-        }
-    encoding AsId ($i.id, $size, $sft.sftId, $c.condStr) = {
-      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
-      op = 0b111'1111, funct = $i.opcode, $c.encs, $sft.encs
-      }
-    assembly AsId ($i.id, $size, $sft.sftId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
-      register(regd), ',', register(regl), ',', register(regr), $sft.asms)
-    }
-
-  model OpShiftReg (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
-    $m ($size ; $sizeStr ; $c ; $i ; (Zero   ; (AsId(R, $size)(regr)) ;               regs= 0, shift = 0, opShift = OpShift::Add ;  ""                                     ))
-    $m ($size ; $sizeStr ; $c ; $i ; (Add    ; (AsId(R, $size)(regr) + AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Add ; ("+", register(regs)                   )))
-    $m ($size ; $sizeStr ; $c ; $i ; (Sub    ; (AsId(R, $size)(regr) - AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Sub ; ("-", register(regs)                   )))
-    $m ($size ; $sizeStr ; $c ; $i ; (And    ; (AsId(R, $size)(regr) & AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::And ; ("&", register(regs)                   )))
-    $m ($size ; $sizeStr ; $c ; $i ; (Or     ; (AsId(R, $size)(regr) | AsId(R, $size)(regs)) ; shift = 0, opShift = OpShift::Or  ; ("|", register(regs)                   )))
-    $m ($size ; $sizeStr ; $c ; $i ; (AddSft ; (AsId(R, $size)(regr) + AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Add ; ("+", register(regs), "<<", udec(shift))))
-    $m ($size ; $sizeStr ; $c ; $i ; (SubSft ; (AsId(R, $size)(regr) - AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Sub ; ("-", register(regs), "<<", udec(shift))))
-    $m ($size ; $sizeStr ; $c ; $i ; (AndSft ; (AsId(R, $size)(regr) & AsId(R, $size)(regs) << shift)   ; opShift = OpShift::And ; ("&", register(regs), "<<", udec(shift))))
-    $m ($size ; $sizeStr ; $c ; $i ; (OrSft  ; (AsId(R, $size)(regr) | AsId(R, $size)(regs) << shift)   ; opShift = OpShift::Or  ; ("|", register(regs), "<<", udec(shift))))
-    }
-
-  model ArithmeticImmInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
-    instruction AsId ($i.id, $size, $sft.sftId, $c.condStr) : ArithmeticImmFormat =
-      if ($c.condEx) then
-        AsId (R, $size)(regd) := VADL::$i.op (AsId (R, $size)(regl), $sft.sftEx) as AsId(Bits, $size)
-    encoding AsId ($i.id, $size, $sft.sftId, $c.condStr) = {
-      opsize = OpSize::$size, cond = Condition::$c.condId, ccsz = OpSize::$c.condSize,
-      op = $i.opcode, $c.encs, $sft.encs
-      }
-    assembly AsId ($i.id, $size, $sft.sftId, $c.condStr) = (AsStr($i.name, $sizeStr, $c.condStr), ' ', register(cregl), ',', register(cregr), ',', 
-      register(regd), ',', register(regl), ',', $sft.asms)
-    }
-
-  model OpShiftImm (m: InstrModel, size: Id, sizeStr: Str, c : CondRec, i : InstrRec) : IsaDefs = {
-    $m ($size ; $sizeStr ; $c ; $i ; (Sft00 ; (imm0 as AsId(Bits, $size)) ; immShift = 0 ; (udec(imm)        )))
-    $m ($size ; $sizeStr ; $c ; $i ; (Sft16 ; (imm1 as AsId(Bits, $size)) ; immShift = 1 ; (udec(imm), "<<16")))
-    $m ($size ; $sizeStr ; $c ; $i ; (Sft32 ; (imm2 as AsId(Bits, $size)) ; immShift = 2 ; (udec(imm), "<<32")))
-    $m ($size ; $sizeStr ; $c ; $i ; (Sft48 ; (imm3 as AsId(Bits, $size)) ; immShift = 3 ; (udec(imm), "<<48")))
-    }
-
-  model BranchInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, sft : ShiftRec) : IsaDefs = {
+  model BranchInstr (size: Id, sizeStr: Str, c : CondRec, i : InstrRec, o : OpRec) : IsaDefs = {
     instruction AsId ($i.id, $c.condStr) : BranchFormat =
       if ($c.condEx) then {
         RD(regd) := PC.next
@@ -201,7 +266,7 @@ instruction set architecture HUGE = {
     $m ($size ; $sizeStr ; $c ; $i ; (none ; none ; none ; ""))
   }
 
-  model ArithCondInstr (m: InstrModel, o: OperandModel, size: Id, sizeStr: Str, i : InstrRec) : IsaDefs = {
+  model OperandCondInstr (m: InstrModel, o: OperandModel, size: Id, sizeStr: Str, i : InstrRec) : IsaDefs = {
     $o ($m ;$size ; $sizeStr ; (EQ  ; B ; "" ; true ; cregl = 0,           cregr = 0)     ; $i)
     $o ($m ;$size ; $sizeStr ; (EQ  ; B ; "beq"  ; RB(cregl)          = RB(cregr); none ) ; $i)
     $o ($m ;$size ; $sizeStr ; (EQ  ; H ; "heq"  ; RH(cregl)          = RH(cregr); none ) ; $i)
@@ -230,14 +295,14 @@ instruction set architecture HUGE = {
     }
 
   model SizeCondInstr (m: InstrModel, o: OperandModel, i : InstrRec) : IsaDefs = {
-    $ArithCondInstr ($m ; $o; B ; "b" ; $i )
-    $ArithCondInstr ($m ; $o; H ; "h" ; $i )
-    $ArithCondInstr ($m ; $o; W ; "w" ; $i )
-    $ArithCondInstr ($m ; $o; D ; "d" ; $i )
+    $OperandCondInstr ($m ; $o; B ; "b" ; $i )
+    $OperandCondInstr ($m ; $o; H ; "h" ; $i )
+    $OperandCondInstr ($m ; $o; W ; "w" ; $i )
+    $OperandCondInstr ($m ; $o; D ; "d" ; $i )
   }
 
   model DoubleCondInstr (m: InstrModel, o: OperandModel, i : InstrRec) : IsaDefs = {
-    $ArithCondInstr ($m ; $o; D ; "d" ; $i )
+    $OperandCondInstr ($m ; $o; D ; "d" ; $i )
   }
 
 // arithmetic register instructions ********************************************
@@ -295,6 +360,10 @@ instruction set architecture HUGE = {
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USLE    ; "usle"  ; uleq   ;            0b1'0101))
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USGT    ; "usgt"  ; ugth   ;            0b1'0110))
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (USGE    ; "usge"  ; ugeq   ;            0b1'0111))
+
+  $SizeCondInstr    (StoreInstr         ; OpMemory   ;  (ST      ; "st"    ; none   ;          0b111'1011))
+  $SizeCondInstr    (LoadInstr          ; OpMemory   ;  (SLD     ; "sld"   ; SIntD  ;          0b111'1100))
+  $SizeCondInstr    (LoadInstr          ; OpMemory   ;  (ULD     ; "uld"   ; BitsD  ;          0b111'1101))
 
   $DoubleCondInstr  (BranchInstr        ; NoOperand  ;  (BR      ; "br"    ; none   ;          0b111'1110))
   $SizeCondInstr    (JumpInstr          ; OpShiftReg ;  (JMP     ; "jmp"   ; none   ; 0b11'1111'1111'1111))
