@@ -39,6 +39,8 @@ public class DiagnosticPrinter {
   private final Map<Path, List<String>> fileLineCache = new HashMap<>();
   VirtualFileSystem fileSystem;
 
+  private static final int MAX_PRINTED_BACKTRACES = 10;
+
   public DiagnosticPrinter(VirtualFileSystem fileSystem) {
     this(fileSystem, true);
   }
@@ -200,7 +202,7 @@ public class DiagnosticPrinter {
     builder.append("\n     %s│\n     ├─%s %s\n".formatted(colors.cyan(), colors.reset(), title));
 
     var blockBuilder = new StringJoiner("\n");
-    for (int i = 0; i < diagnostic.macroTraces.size(); i++) {
+    for (int i = 0; i < Math.min(tracesCount, MAX_PRINTED_BACKTRACES); i++) {
       var trace = diagnostic.macroTraces.get(i);
       var firstLocation = trace.getFirst();
       var firstIDEString = firstLocation.toIDEString(fileSystem,
@@ -219,6 +221,10 @@ public class DiagnosticPrinter {
             forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
                 SourceLocation.IDEDetectionMode.AUTO, forceUnixPaths)));
       }
+    }
+
+    if (tracesCount > MAX_PRINTED_BACKTRACES) {
+      blockBuilder.add("... invocations %d - %d omitted for readability".formatted(MAX_PRINTED_BACKTRACES + 1, tracesCount));
     }
 
     builder.append(
