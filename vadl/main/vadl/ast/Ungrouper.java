@@ -203,9 +203,15 @@ public class Ungrouper
 
   @Override
   public Expr visit(ExistsInThenExpr expr) {
+    expr.thenExpr = expr.thenExpr.accept(this);
     return expr;
   }
 
+  @Override
+  public Expr visit(ForallThenExpr expr) {
+    expr.thenExpr = expr.thenExpr.accept(this);
+    return expr;
+  }
 
   @Override
   public Expr visit(ForallExpr expr) {

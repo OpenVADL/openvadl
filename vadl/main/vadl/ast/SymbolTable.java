@@ -907,8 +907,61 @@ class SymbolTable {
       afterTravel(expr);
       return null;
     }
-  }
 
+    @Override
+    public Void visit(ForallThenExpr expr) {
+      beforeTravel(expr);
+
+      // The identifiers of the forall must be visible in its children
+      var childTable = currentSymbols().createChild();
+      expr.symbolTable = childTable;
+      expr.indices.forEach(index -> {
+        childTable.defineSymbol(index.identifier().name, expr);
+        index.symbolTable = childTable;
+        index.identifier().symbolTable = childTable;
+
+        for (IsId o : index.operations) {
+          withSymbols(currentSymbols(), () -> ((Identifier) o).accept(this));
+        }
+      });
+      withSymbols(childTable, () -> expr.thenExpr.accept(this));
+
+      afterTravel(expr);
+      return null;
+    }
+
+    @Override
+    public Void visit(ExistsInExpr expr) {
+      beforeTravel(expr);
+      for (IsId o : expr.operations) {
+        ((Identifier) o).accept(this);
+      }
+      afterTravel(expr);
+      return null;
+    }
+
+    @Override
+    public Void visit(ExistsInThenExpr expr) {
+      beforeTravel(expr);
+
+      // The identifiers of the exists must be visible in its children
+      var childTable = currentSymbols().createChild();
+      expr.symbolTable = childTable;
+      expr.indices.forEach(index -> {
+        childTable.defineSymbol(index.identifier().name, expr);
+        index.symbolTable = childTable;
+        index.identifier().symbolTable = childTable;
+
+        for (IsId o : index.operations) {
+          withSymbols(currentSymbols(), () -> ((Identifier) o).accept(this));
+        }
+      });
+      withSymbols(childTable, () -> expr.thenExpr.accept(this));
+
+      afterTravel(expr);
+      return null;
+    }
+  }
 
   /**
    * Resolves identifiers used in expressions, as well as types used in definitions,

@@ -112,6 +112,8 @@ import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.OperationExistsNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
@@ -723,6 +725,22 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   void handle(TensorNode toHandle) {
     throw new UnsupportedOperationException("Type TensorNode not yet implemented");
   }
+
+  @Handler
+  void handle(OperationForAllNode node) {
+    throw new UnsupportedOperationException("Type ForAllNode not supported");
+  }
+
+  @Handler
+  void handle(OperationForAllNode.Index node) {
+    throw new UnsupportedOperationException("Type ForAllIdxNode not supported");
+  }
+
+  @Handler
+  void handle(OperationExistsNode node) {
+    throw new UnsupportedOperationException("Type ExistsNode not supported");
+  }
+
 
   /// / Nodes that are already considered lowered ////
 

@@ -75,6 +75,8 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.OperationExistsNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -866,4 +868,18 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     // do nothing
   }
 
+  @Handler
+  void handle(OperationForAllNode toHandle) {
+    // do nothing
+  }
+
+  @Handler
+  void handle(OperationForAllNode.Index toHandle) {
+    // do nothing
+  }
+
+  @Handler
+  void handle(OperationExistsNode toHandle) {
+    // do nothing
+  }
 }

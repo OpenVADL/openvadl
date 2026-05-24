@@ -33,6 +33,8 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.OperationExistsNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.TensorNode;
 
 /**
@@ -104,6 +106,16 @@ public class IssTbStaticExpressionCodeGen implements
   @Handler
   void handle(CGenContext<Node> ctx, FoldNode toHandle) {
     throw new UnsupportedOperationException("Type FoldNode not allowed");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, OperationForAllNode toHandle) {
+    throw new UnsupportedOperationException("Type ForAll not allowed");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, OperationExistsNode toHandle) {
+    throw new UnsupportedOperationException("Type Exists not allowed");
   }
 
   @Handler

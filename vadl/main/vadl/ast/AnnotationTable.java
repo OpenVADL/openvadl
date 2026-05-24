@@ -56,6 +56,7 @@ import vadl.viam.Constant;
 import vadl.viam.Encoding;
 import vadl.viam.Endianness;
 import vadl.viam.Format;
+import vadl.viam.Group;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.MemoryRegion;
@@ -66,9 +67,11 @@ import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.AssertAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
+import vadl.viam.annotations.StopAnnotation;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
 
 /**
@@ -236,7 +239,7 @@ public class AnnotationTable {
         .build();
 
     groupOn(MemoryDefinition.class)
-        .add("big endian",    OptExprAnnotation::new)
+        .add("big endian", OptExprAnnotation::new)
         .add("little endian", OptExprAnnotation::new)
         .check(ctx -> {
           ctx.verifyOnlyOneOfGroup();
@@ -263,6 +266,28 @@ public class AnnotationTable {
           ctx.get("little endian", OptExprAnnotation.class)
               .ifPresent(ann -> apply.accept(ann, Endianness.LITTLE));
         }).build();
+
+    annotationOn(GroupDefinition.class, "assert", () -> new ExprAnnotation(true))
+        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .applyViam((def, annotation, lowering) -> {
+          var group = (Group) def;
+          var graph = new BehaviorLowering(lowering)
+              .getFunctionGraph(annotation.expr, "Assert " + group.simpleName());
+          graph.setParentDefinition(group);
+          group.addAnnotation(new AssertAnnotation(graph));
+        })
+        .build();
+
+    annotationOn(GroupDefinition.class, "stop", () -> new ExprAnnotation(true))
+        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .applyViam((def, annotation, lowering) -> {
+          var group = (Group) def;
+          var graph = new BehaviorLowering(lowering)
+              .getFunctionGraph(annotation.expr, "Stop " + group.simpleName());
+          graph.setParentDefinition(group);
+          group.addAnnotation(new StopAnnotation(graph));
+        })
+        .build();
 
     /// PROCESSOR RELATED ///
 
@@ -1003,7 +1028,13 @@ abstract class Annotation implements AnnotationDeclaration, WithLocation {
   @LazyInit
   AnnotationDefinition definition;
 
+  protected boolean allowMultiple;
+
   public Annotation() {
+  }
+
+  public Annotation(boolean allowMultiple) {
+    this.allowMultiple = allowMultiple;
   }
 
   /**
@@ -1057,6 +1088,10 @@ abstract class Annotation implements AnnotationDeclaration, WithLocation {
           .locationDescription(definition, "Expected at leat one argument but got none")
           .build();
     }
+  }
+
+  protected boolean allowMultiple() {
+    return false;
   }
 }
 
@@ -1134,7 +1169,8 @@ class FormatFieldAnnotation extends Annotation {
   Constant.BitSlice slice;
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) { }
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
@@ -1516,6 +1552,10 @@ class ExprAnnotation extends Annotation {
 
   public ExprAnnotation() {
     super();
+  }
+
+  public ExprAnnotation(boolean allowMultiple) {
+    super(allowMultiple);
   }
 
   @Override

@@ -14,33 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam;
+package vadl.viam.annotations;
 
-import java.util.Set;
+import vadl.viam.Annotation;
+import vadl.viam.Group;
+import vadl.viam.graph.Graph;
 
 /**
- * Represents a VADL operation, which is a named collection of instructions.
+ * Annotation to attach assertion expression to a {@link Group} definition.
+ *
+ * <p>Example:<pre>{@code
+ *  [assert : forall i in {O1, O2} then i.x = 0b1 ]
+ *  group VLIW = (O1 | O2)
+ * }</pre></p>
  */
-public class Operation extends Definition {
+public class AssertAnnotation extends Annotation<Group> {
 
-  private final Set<Instruction> instructions;
+  private final Graph expression;
 
-  public Operation(Identifier identifier, Set<Instruction> instructions) {
-    super(identifier);
-    this.instructions = instructions;
+  public AssertAnnotation(Graph expression) {
+    this.expression = expression;
   }
 
-  public Set<Instruction> getInstructions() {
-    return instructions;
-  }
-
-  @Override
-  public void accept(DefinitionVisitor visitor) {
-    visitor.visit(this);
+  public Graph expr() {
+    return expression;
   }
 
   @Override
-  public String toString() {
-    return identifier.simpleName();
+  public Class<Group> parentDefinitionClass() {
+    return Group.class;
   }
 }

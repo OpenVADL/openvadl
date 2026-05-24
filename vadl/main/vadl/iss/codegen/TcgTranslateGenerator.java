@@ -37,6 +37,8 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
+import vadl.viam.graph.dependency.OperationExistsNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 
 /**
  * Emits direct non-helper translation functions.
@@ -137,5 +139,15 @@ class TcgTranslateGenerator implements InstructionTranslateGenerator,
   @Handler
   void handle(CGenContext<Node> ctx, IssRegBitfieldWriteNode toHandle) {
     throwNotAllowed(toHandle, "bitfield register writes should be lowered to TCG before codegen");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, OperationForAllNode toHandle) {
+    throwNotAllowed(toHandle, "forall then expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, OperationExistsNode toHandle) {
+    throwNotAllowed(toHandle, "exists then expressions");
   }
 }

@@ -18,6 +18,8 @@ instruction set architecture ISA = {
   operation O1 = {A}
   operation O2 = {A,B}
 
+  [stop : exists i in {O1}, j in {O2} then i = j]
+  [assert : forall i in {O1, O2} then i.opcode(7..4,2) = 0b10101]
   group VLIW = ({O1,O2}|O1<2..5>)
 }
 

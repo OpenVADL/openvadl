@@ -86,16 +86,37 @@ class AstUtils {
     return switch (builtIns.size()) {
       case 0 -> throw new IllegalStateException(
           "Couldn't get any matching builtin for %s".formatted(operator));
-      case 1 -> builtIns.get(0);
+      case 1 -> builtIns.getFirst();
       case 2 -> {
-        var isSigned = argTypes.getFirst().getClass() == SIntType.class;
+
+
+        final var firstArgType = argTypes.getFirst().getClass();
+        if (firstArgType == PseudoFormatType.class) {
+          // For opequ/opneq, we select the overload only upon exact match
+          builtIns = builtIns.stream()
+              .filter(b -> b.signature().argTypeClasses().getFirst() == PseudoFormatType.class)
+              .toList();
+        } else {
+          builtIns = builtIns.stream()
+              .filter(b -> b.signature().argTypeClasses().getFirst() != PseudoFormatType.class)
+              .toList();
+        }
+
+        if (builtIns.size() == 1) {
+          yield builtIns.getFirst();
+        }
+
+        final var isSigned = firstArgType == SIntType.class;
         builtIns = builtIns.stream()
-            .filter(b -> (b.signature().argTypeClasses().get(0) == SIntType.class) == isSigned)
+            .filter(
+                b -> (b.signature().argTypeClasses().getFirst() == SIntType.class) == isSigned)
             .toList();
+
         if (builtIns.size() != 1) {
           throw new IllegalStateException("Couldn't find a builtin function");
         }
-        yield builtIns.get(0);
+
+        yield builtIns.getFirst();
       }
       case 3 -> {
         int numSigned = argTypes.get(0).getClass() == SIntType.class ? 1 : 0;
