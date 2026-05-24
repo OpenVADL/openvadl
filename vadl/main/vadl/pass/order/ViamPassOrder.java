@@ -22,6 +22,7 @@ import vadl.gcb.passes.RenamingConflictingRegistersPass;
 import vadl.lcb.passes.OverwriteInputOperandsPass;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
+import vadl.viam.passes.ArtificialResPartialAccessExpansionPass;
 import vadl.viam.passes.ControlFlowOptimizationPass;
 import vadl.viam.passes.DetectRegisterIndicesPass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
@@ -72,6 +73,7 @@ public final class ViamPassOrder {
     order.add(new CounterAccessResolvingPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
     order.add(new FieldAccessInlinerPass(configuration));
+    order.add(new ArtificialResPartialAccessExpansionPass(configuration));
     order.add(new ArtificialResInlinerPass(configuration));
     order.add(new ControlFlowOptimizationPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));

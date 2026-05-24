@@ -68,7 +68,6 @@ import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.Operation;
 import vadl.viam.Procedure;
-import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.StageOutput;
@@ -816,37 +815,23 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
 
-  /// It is allowed to read from a TensorResource and not supply all indices. In that case all the
-  /// missing indices have to be filled, many reads are issued and
+  /// It is allowed to read from a register tensor and not supply all indices. In that case all the
+  /// missing indices have to be filled, many reads are issued and concatenated again.
   ///
   /// @return the expression to read from a register.
-  private ExpressionNode readTensorResourceConcatinated(RegisterResource resource,
+  private ExpressionNode readRegisterTensorConcatenated(RegisterTensor resource,
                                                         List<ExpressionNode> indices,
                                                         DataType type
   ) {
     // Matches exactly
     if (resource.indexTypes().size() == indices.size()) {
-      return switch (resource) {
-        case RegisterTensor register ->
-            new ReadRegTensorNode(register, new NodeList<>(indices), type, null);
-        case ArtificialResource register ->
-            new ReadArtificialResNode(register, new NodeList<>(indices), type);
-        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-      };
+      return new ReadRegTensorNode(resource, new NodeList<>(indices), type, null);
     }
 
-    // Concatination needed
+    // Concatenation needed.
     // Here we take all provided indices and for the missing dimensions we fill out all possible
     // values and concatenate them.
-
-    var requiredDimensions = switch (resource) {
-      case RegisterTensor register -> register.indexDimensions();
-      case ArtificialResource register -> register.dimensions();
-      default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-    };
-
-
-    var missingDimensions = requiredDimensions.stream()
+    var missingDimensions = resource.indexDimensions().stream()
         .skip(indices.size()).toList();
 
     var missingTypes = missingDimensions.stream().map(d -> d.indexType()).toList();
@@ -872,13 +857,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     ExpressionNode result = null;
     int currentBitWidth = 0;
     for (var indexList : fullIndices) {
-      var read = switch (resource) {
-        case RegisterTensor register ->
-            new ReadRegTensorNode(register, new NodeList<>(indexList), register.resultType(), null);
-        case ArtificialResource register ->
-            new ReadArtificialResNode(register, new NodeList<>(indexList), register.resultType());
-        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-      };
+      var read = new ReadRegTensorNode(resource, new NodeList<>(indexList), resource.resultType(),
+          null);
 
       currentBitWidth += read.type().asDataType().bitWidth();
       if (result == null) {
@@ -892,51 +872,28 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return requireNonNull(result);
   }
 
-  /// Write to a resource even if not all indices are supplied.
+  /// Write to a register tensor even if not all indices are supplied.
   ///
   /// @return A list of sideeffects which write to the provided resource
-  private List<WriteResourceNode> writeTensorResourceSliced(RegisterResource resource,
+  private List<WriteResourceNode> writeRegisterTensorSliced(RegisterTensor resource,
                                                             List<ExpressionNode> indices,
                                                             ExpressionNode value,
                                                             List<Constant.BitSlice> slices,
                                                             @Nullable ExpressionNode dynamicIndex) {
     // No multiple writes and slices needed
     if (resource.indexTypes().size() <= indices.size()) {
-      switch (resource) {
-        case RegisterTensor register -> {
-          var resourceRead =
-              new ReadRegTensorNode(register, new NodeList<>(indices), register.resultType(), null);
-          var slicedValue = dynamicIndexWriteValue(
-              staticSliceWriteValue(value, resourceRead, slices),
-              resourceRead,
-              dynamicIndex);
-          return List.of(
-              new WriteRegTensorNode(register, new NodeList<>(indices), slicedValue, null, null));
-        }
-        case ArtificialResource register -> {
-          var resourceRead =
-              new ReadArtificialResNode(register, new NodeList<>(indices), register.resultType());
-          var slicedValue =
-              dynamicIndexWriteValue(staticSliceWriteValue(value, resourceRead, slices),
-                  resourceRead,
-                  dynamicIndex);
-          return List.of(
-              new WriteArtificialResNode(register, new NodeList<>(indices), slicedValue));
-        }
-        default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-      }
+      var resourceRead =
+          new ReadRegTensorNode(resource, new NodeList<>(indices), resource.resultType(), null);
+      var slicedValue = dynamicIndexWriteValue(
+          staticSliceWriteValue(value, resourceRead, slices),
+          resourceRead,
+          dynamicIndex);
+      return List.of(
+          new WriteRegTensorNode(resource, new NodeList<>(indices), slicedValue, null, null));
     }
 
     // Multiple writes needed and value must be sliced
-
-    var requiredDimensions = switch (resource) {
-      case RegisterTensor register -> register.indexDimensions();
-      case ArtificialResource register -> register.dimensions();
-      default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-    };
-
-
-    var missingDimensions = requiredDimensions.stream()
+    var missingDimensions = resource.indexDimensions().stream()
         .skip(indices.size()).toList();
 
     var missingTypes = missingDimensions.stream().map(d -> d.indexType()).toList();
@@ -967,14 +924,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var slice = new SliceNode(value, Constant.BitSlice.of(msb, lsb), Type.bits(width));
 
       result.add(
-          switch (resource) {
-            case RegisterTensor register ->
-                new WriteRegTensorNode(register, new NodeList<>(fullIndices.get(i)), slice, null,
-                    null);
-            case ArtificialResource register ->
-                new WriteArtificialResNode(register, new NodeList<>(fullIndices.get(i)), slice);
-            default -> throw new IllegalStateException("Unsupported resource type: " + resource);
-          }
+          new WriteRegTensorNode(resource, new NodeList<>(fullIndices.get(i)), slice, null, null)
       );
     }
 
@@ -1033,24 +983,22 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Register
     if (computedTarget instanceof RegisterDefinition registerDefinition) {
       var register = (RegisterTensor) viamLowering.fetch(registerDefinition).orElseThrow();
-      return readTensorResourceConcatinated(register, List.of(),
+      return readRegisterTensorConcatenated(register, List.of(),
           (DataType) getViamType(expr.type()));
     }
 
     // Register Alias
     if (computedTarget instanceof AliasDefinition aliasDefinition) {
       var lowered = viamLowering.fetch(aliasDefinition).orElseThrow();
-      var resource = switch (aliasDefinition.kind) {
-        case REGISTER -> (ArtificialResource) lowered;
-        case PROGRAM_COUNTER -> ((Counter) lowered).registerTensor();
-      };
-      List<ExpressionNode> indices = switch (aliasDefinition.kind) {
-        case REGISTER -> List.of();
-        case PROGRAM_COUNTER -> ((Counter) lowered).indices().stream()
-            .map(idx -> (ExpressionNode) new ConstantNode(idx)).toList();
-      };
-      return readTensorResourceConcatinated(resource, indices,
-          (DataType) getViamType(expr.type()));
+      if (aliasDefinition.kind == AliasDefinition.AliasKind.REGISTER) {
+        return new ReadArtificialResNode((ArtificialResource) lowered, new NodeList<>(),
+            (DataType) getViamType(expr.type()));
+      }
+
+      var resource = ((Counter) lowered).registerTensor();
+      List<ExpressionNode> indices = ((Counter) lowered).indices().stream()
+          .map(idx -> (ExpressionNode) new ConstantNode(idx)).toList();
+      return readRegisterTensorConcatenated(resource, indices, (DataType) getViamType(expr.type()));
     }
 
     // Counters
@@ -1487,25 +1435,24 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             (Function) viamLowering.fetch(funcDef).orElseThrow(),
             args, typeBeforeSlice);
 
-        case RegisterDefinition regDef -> readTensorResourceConcatinated(
-            (RegisterResource) viamLowering.fetch(regDef).orElseThrow(), args,
+        case RegisterDefinition regDef -> readRegisterTensorConcatenated(
+            (RegisterTensor) viamLowering.fetch(regDef).orElseThrow(), args,
             (DataType) typeBeforeSlice
         );
 
         case AliasDefinition aliasDef -> {
           var lowered = viamLowering.fetch(aliasDef).orElseThrow();
-          var resource = switch (aliasDef.kind) {
-            case REGISTER -> (ArtificialResource) lowered;
-            case PROGRAM_COUNTER -> ((Counter) lowered).registerTensor();
-          };
-          var aliasArgs = (NodeList<ExpressionNode>) switch (aliasDef.kind) {
-            case REGISTER -> args;
-            case PROGRAM_COUNTER -> Stream.concat(
-                ((Counter) lowered).indices().stream().map(ConstantNode::new),
-                args.stream()
-            ).collect(Collectors.toCollection(NodeList::new));
-          };
-          yield readTensorResourceConcatinated(resource, aliasArgs, (DataType) typeBeforeSlice);
+          if (aliasDef.kind == AliasDefinition.AliasKind.REGISTER) {
+            yield new ReadArtificialResNode((ArtificialResource) lowered, args,
+                (DataType) typeBeforeSlice);
+          }
+
+          var aliasArgs = Stream.concat(
+              ((Counter) lowered).indices().stream().map(ConstantNode::new),
+              args.stream()
+          ).collect(Collectors.toCollection(NodeList::new));
+          yield readRegisterTensorConcatenated(((Counter) lowered).registerTensor(), aliasArgs,
+              (DataType) typeBeforeSlice);
         }
 
         case MemoryDefinition memDef -> {
@@ -1839,11 +1786,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // No need to call getViamType here as the viam definitions should already have that.
     var writeNodes = switch (viamTargetDef) {
-      case RegisterTensor regDef -> writeTensorResourceSliced(
+      case RegisterTensor regDef -> writeRegisterTensorSliced(
           regDef, argExprs, value, staticSlices, dynamicIndex
       );
 
-      case ArtificialResource aliasDef -> writeTensorResourceSliced(
+      case ArtificialResource aliasDef -> writeAliasResourceDirect(
           aliasDef, argExprs, value, staticSlices, dynamicIndex
       );
 
@@ -1971,6 +1918,24 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var mask = slice.mask().castTo(Type.bits(entireRead.type().bitWidth())).not().toNode();
     var clearedResource = BuiltInCall.of(BuiltInTable.AND, entireRead, mask);
     return BuiltInCall.of(BuiltInTable.OR, clearedResource, requireNonNull(injected));
+  }
+
+  private List<WriteResourceNode> writeAliasResourceDirect(ArtificialResource resource,
+                                                           NodeList<ExpressionNode> indices,
+                                                           ExpressionNode value,
+                                                           List<Constant.BitSlice> slices,
+                                                           @Nullable ExpressionNode dynamicIndex) {
+    // Preserve one aggregate alias write even when not all alias dimensions are supplied.
+    // A later VIAM pass expands this back to the old concrete per-element shape for backends
+    // that still require exhaustive alias indices.
+    var resourceRead = new ReadArtificialResNode(resource, indices.copy(),
+        resource.resultType(indices.size()));
+    var shapedValue = dynamicIndexWriteValue(
+        staticSliceWriteValue(value, resourceRead, slices),
+        resourceRead,
+        dynamicIndex
+    );
+    return List.of(new WriteArtificialResNode(resource, indices.copy(), shapedValue));
   }
 
 
