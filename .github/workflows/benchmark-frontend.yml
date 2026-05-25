@@ -60,6 +60,18 @@ jobs:
       commit-message: 'data: Pushed frontend aarch32 native data'
     secrets: inherit
 
+  huge:
+    needs: build
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-x64
+      download-artifact: openvadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/huge/huge.vadl
+      artifact-source: output/timings-mean.csv
+      destination-folder: data/frontend/huge/native/results
+      commit-message: 'data: Pushed frontend huge native data'
+    secrets: inherit
+
   rv32i:
     needs: build
     uses: ./.github/workflows/reusable-benchmark-publish.yml
