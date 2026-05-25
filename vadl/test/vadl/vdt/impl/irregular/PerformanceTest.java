@@ -30,6 +30,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
+import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
@@ -45,13 +46,13 @@ class PerformanceTest extends AbstractTest {
     /* GIVEN */
 
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.ALWAYS));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
 
     var spec = runAndGetViamSpecification("sys/huge/huge.vadl");
 
     var manager = new PassManager();
     manager.add(new VdtInputPreparationPass(config));
-    //manager.add(new VdtConstraintSynthesisPass(config));
+    manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtLoweringPass(config));
     //manager.add(new VdtVerificationPass(config));
 
