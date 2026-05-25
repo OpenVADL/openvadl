@@ -90,6 +90,10 @@ public enum MachineInstructionLabel {
   BSLEQ_BY_STATUS_REGISTER,
   BSLTH_BY_STATUS_REGISTER,
   BSGTH_BY_STATUS_REGISTER,
+  BUGEQ_BY_STATUS_REGISTER,
+  BULEQ_BY_STATUS_REGISTER,
+  BULTH_BY_STATUS_REGISTER,
+  BUGTH_BY_STATUS_REGISTER,
   /*
   UNCONDITIONAL JUMPS
    */
@@ -101,8 +105,33 @@ public enum MachineInstructionLabel {
   /*
   CONDITIONAL MOVE
    */
-  CSEL_EQ_I32,
-  CSEL_EQ_I64,
-  CSEL_NEQ_I32,
-  CSEL_NEQ_I64
+  CSEL_EQ_I32, // conditional move with "equal" condition, 32bit
+  CSEL_EQ_I64, // conditional move with "equal" condition, 64bit
+
+  CSEL_NEQ_I32, // conditional move with "not-equal" condition, 32bit
+  CSEL_NEQ_I64, // conditional move with "not-equal" condition, 64bit
+
+  CSEL_SLTH_I32, // conditional move with "signed less than" condition, 32bit
+  CSEL_SLTH_I64, // conditional move with "signed less than" condition, 64bit
+
+  CSEL_SGTH_I32, // conditional move with "signed greater than" condition, 32bit
+  CSEL_SGTH_I64, // conditional move with "signed greater than" condition, 64bit
+
+  CSEL_SLEQ_I32, // conditional move with "signed less equal" condition, 32bit
+  CSEL_SLEQ_I64, // conditional move with "signed less equal" condition, 64bit
+
+  CSEL_SGEQ_I32, // conditional move with "signed greater equal" condition, 32bit
+  CSEL_SGEQ_I64, // conditional move with "signed greater equal" condition, 64bit
+
+  CSEL_ULTH_I32, // conditional move with "unsigned less than" condition, 32bit
+  CSEL_ULTH_I64, // conditional move with "unsigned less than" condition, 64bit
+
+  CSEL_UGTH_I32, // conditional move with "unsigned greater than" condition, 32bit
+  CSEL_UGTH_I64, // conditional move with "unsigned greater than" condition, 64bit
+
+  CSEL_ULEQ_I32, // conditional move with "unsigned less equal" condition, 32bit
+  CSEL_ULEQ_I64, // conditional move with "unsigned less equal" condition, 64bit
+
+  CSEL_UGEQ_I32, // conditional move with "unsigned greater equal" condition, 32bit
+  CSEL_UGEQ_I64, // conditional move with "unsigned greater equal" condition, 64bit
 }
