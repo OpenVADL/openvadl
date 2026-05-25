@@ -16,6 +16,8 @@
 
 package vadl.vdt.utils;
 
+import static vadl.vdt.utils.PatternUtils.widthMask;
+
 import java.math.BigInteger;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +36,10 @@ public class BitVector {
    * @param value the bits of the vector
    */
   public BitVector(BigInteger value, int width) {
-    this.value = value;
+    if (width < 0) {
+      throw new IllegalArgumentException("Width must be non-negative");
+    }
+    this.value = Objects.requireNonNull(value).and(widthMask(width));
     this.width = width;
   }
 
@@ -47,8 +52,17 @@ public class BitVector {
    * @return the bit vector
    */
   public static BitVector fromString(String value, int width) {
-    final String sanitized = StringUtils.rightPad(value.substring(0, width), width, '0');
-    final var val = new BigInteger(sanitized, 2);
+    if (width < 0) {
+      throw new IllegalArgumentException("Width must be non-negative");
+    }
+    final String prefix = value.substring(0, Math.min(value.length(), width));
+    for (int i = 0; i < prefix.length(); i++) {
+      if (prefix.charAt(i) != '0' && prefix.charAt(i) != '1') {
+        throw new IllegalArgumentException("Invalid character in value");
+      }
+    }
+    final String sanitized = StringUtils.rightPad(prefix, width, '0');
+    final var val = sanitized.isEmpty() ? BigInteger.ZERO : new BigInteger(sanitized, 2);
     return new BitVector(val, width);
   }
 
@@ -61,23 +75,35 @@ public class BitVector {
   }
 
   public boolean get(int i) {
+    if (i < 0 || i >= width) {
+      throw new IndexOutOfBoundsException(i);
+    }
     return value.testBit(width - 1 - i);
   }
 
   public BitVector and(BitVector other) {
+    if (width != other.width) {
+      throw new IllegalArgumentException("Bit vectors must have the same width");
+    }
     return new BitVector(value.and(other.value), width);
   }
 
   public BitVector or(BitVector other) {
+    if (width != other.width) {
+      throw new IllegalArgumentException("Bit vectors must have the same width");
+    }
     return new BitVector(value.or(other.value), width);
   }
 
   public BitVector xor(BitVector other) {
+    if (width != other.width) {
+      throw new IllegalArgumentException("Bit vectors must have the same width");
+    }
     return new BitVector(value.xor(other.value), width);
   }
 
   public BitVector not() {
-    return new BitVector(value.not(), width);
+    return new BitVector(value.xor(widthMask(width)), width);
   }
 
   /**
@@ -157,6 +183,9 @@ public class BitVector {
 
   @Override
   public String toString() {
-    return value.toString(2);
+    if (width == 0) {
+      return "";
+    }
+    return StringUtils.leftPad(value.toString(2), width, '0');
   }
 }

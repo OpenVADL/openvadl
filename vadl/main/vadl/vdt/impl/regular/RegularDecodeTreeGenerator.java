@@ -138,7 +138,8 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
       return insn;
     }
 
-    return new Instruction(insn.source(), targetWidth, pattern.rightPad(targetWidth));
+    return new Instruction(insn.source(), targetWidth,
+        pattern.rightPad(targetWidth - pattern.width()));
   }
 
   /**

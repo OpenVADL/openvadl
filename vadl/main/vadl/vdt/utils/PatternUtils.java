@@ -68,10 +68,10 @@ public class PatternUtils {
       for (BitSlice.Part p : parts) {
         for (int i = p.lsb(); i <= p.msb(); i++) {
           var val = fixedValue.testBit((offset + i) - p.lsb());
-          // TODO: Check that the indices are correct here
-          mBits = mBits.setBit((insnWidth - (i + 1)));
+          final int idx = bitIndex(alignedWidth, insnWidth - (i + 1));
+          mBits = mBits.setBit(idx);
           if (val) {
-            vBits = vBits.setBit((insnWidth - (i + 1)));
+            vBits = vBits.setBit(idx);
           }
         }
         offset += p.size();
@@ -86,8 +86,8 @@ public class PatternUtils {
     // Reverse the byte order
     for (int i = 0; i < alignedWidth / 16; i++) {
       for (int j = 0; j < 8; j++) {
-        int l = i * 8 + j;
-        int r = alignedWidth - (i + 1) * 8 + j;
+        int l = bitIndex(alignedWidth, i * 8 + j);
+        int r = bitIndex(alignedWidth, alignedWidth - (i + 1) * 8 + j);
 
         boolean mL = mBits.testBit(l);
         boolean vL = vBits.testBit(l);
@@ -163,10 +163,10 @@ public class PatternUtils {
     for (BitSlice.Part p : parts) {
       for (int i = p.lsb(); i <= p.msb(); i++) {
         var val = fixedValue.testBit((offset + i) - p.lsb());
-        // TODO: Check that the indices are correct here
-        mBits = mBits.setBit((insnWidth - (i + 1)));
+        final int idx = bitIndex(alignedWidth, insnWidth - (i + 1));
+        mBits = mBits.setBit(idx);
         if (val) {
-          vBits = vBits.setBit((insnWidth - (i + 1)));
+          vBits = vBits.setBit(idx);
         }
       }
       offset += p.size();
@@ -180,8 +180,8 @@ public class PatternUtils {
     // Reverse the byte order
     for (int i = 0; i < alignedWidth / 16; i++) {
       for (int j = 0; j < 8; j++) {
-        int l = i * 8 + j;
-        int r = alignedWidth - (i + 1) * 8 + j;
+        int l = bitIndex(alignedWidth, i * 8 + j);
+        int r = bitIndex(alignedWidth, alignedWidth - (i + 1) * 8 + j);
 
         boolean mL = mBits.testBit(l);
         boolean vL = vBits.testBit(l);
@@ -248,9 +248,8 @@ public class PatternUtils {
     if (p1.width() != p2.width()) {
       return false;
     }
-    var fixedBits1 = p1.value().and(p1.mask());
-    var fixedBits2 = p2.value().and(p2.mask());
-    return fixedBits1.xor(fixedBits2).signum() == 0;
+    var sharedMask = p1.mask().and(p2.mask());
+    return p1.value().xor(p2.value()).and(sharedMask).signum() == 0;
   }
 
   /**
@@ -266,8 +265,8 @@ public class PatternUtils {
       return false;
     }
 
-    // Check that masks are compatible (i.e. any fixed bit in p2 is also a fixed bit in p1)
-    if (p2.mask().and(p1.mask().not()).signum() != 0) {
+    // Check that any fixed bit in p2 is also a fixed bit in p1.
+    if (!p2.mask().and(p1.mask()).equals(p2.mask())) {
       return false;
     }
 
@@ -289,9 +288,11 @@ public class PatternUtils {
       throw new IllegalArgumentException("Incompatible pattern widths");
     }
 
+    final var keepMask = widthMask(p.width()).xor(inputPattern.mask());
+
     return new BitPattern(
-        p.mask().and(inputPattern.mask().not()),
-        p.value().and(inputPattern.mask().not()),
+        p.mask().and(keepMask),
+        p.value().and(keepMask),
         p.width()
     );
   }
@@ -312,11 +313,25 @@ public class PatternUtils {
     // Compute common mask
     var m = p1.mask().and(p2.mask());
     // Remove disagreeing bits from mask
-    var diffBits = p1.value().and(m).xor(p2.value().and(m));
-    m = m.and(diffBits.not());
+    var diffBits = p1.value().xor(p2.value()).and(m);
+    m = m.and(widthMask(p1.width()).xor(diffBits));
 
     // Compute common value
     var v = p1.value().and(m);
     return new BitPattern(m, v, p1.width());
+  }
+
+  private static int bitIndex(int width, int displayIndex) {
+    return width - 1 - displayIndex;
+  }
+
+  public static BigInteger widthMask(int width) {
+    if (width < 0) {
+      throw new IllegalArgumentException("Width must be non-negative");
+    }
+    if (width == 0) {
+      return BigInteger.ZERO;
+    }
+    return BigInteger.ONE.shiftLeft(width).subtract(BigInteger.ONE);
   }
 }

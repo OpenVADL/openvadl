@@ -16,6 +16,8 @@
 
 package vadl.vdt.utils;
 
+import static vadl.vdt.utils.PatternUtils.widthMask;
+
 import java.math.BigInteger;
 import java.util.Objects;
 
@@ -34,8 +36,11 @@ public class BitPattern {
   }
 
   public BitPattern(BigInteger mask, BigInteger value, int width) {
-    this.mask = mask;
-    this.value = value;
+    if (width < 0) {
+      throw new IllegalArgumentException("Width must be non-negative");
+    }
+    this.mask = Objects.requireNonNull(mask).and(widthMask(width));
+    this.value = Objects.requireNonNull(value).and(this.mask);
     this.width = width;
   }
 
@@ -52,6 +57,9 @@ public class BitPattern {
   }
 
   public PatternBit get(int i) {
+    if (i < 0 || i >= width) {
+      throw new IndexOutOfBoundsException(i);
+    }
     final var idx = width - 1 - i;
     if (!mask.testBit(idx)) {
       return PatternBit.DONT_CARE;
@@ -63,7 +71,7 @@ public class BitPattern {
     if (bitVector.width() != width()) {
       return false;
     }
-    return bitVector.and(toMaskVector()).xor(toBitVector()).value().equals(BigInteger.ZERO);
+    return bitVector.value().xor(value).and(mask).equals(BigInteger.ZERO);
   }
 
   /**
@@ -147,7 +155,7 @@ public class BitPattern {
    * @return the padded bit pattern
    */
   public BitPattern leftPad(int padding) {
-    if (padding <= width()) {
+    if (padding <= 0) {
       return this;
     }
     final var targetWidth = width + padding;
@@ -165,7 +173,7 @@ public class BitPattern {
    * @return the padded bit pattern
    */
   public BitPattern rightPad(int padding) {
-    if (padding <= width()) {
+    if (padding <= 0) {
       return this;
     }
     final var targetWidth = width + padding;
@@ -183,9 +191,7 @@ public class BitPattern {
    * @return A bit pattern of the specified width
    */
   public BitPattern leftTrunc(int width) {
-    final var m = BigInteger.ONE
-        .shiftLeft(width)
-        .subtract(BigInteger.ONE);
+    final var m = widthMask(width);
     return new BitPattern(
         mask.and(m),
         value.and(m),
@@ -203,9 +209,7 @@ public class BitPattern {
     if (this.width < width) {
       throw new IllegalArgumentException("Target width must be leq than the actual width");
     }
-    final var m = BigInteger.ONE
-        .shiftLeft(width)
-        .subtract(BigInteger.ONE);
+    final var m = widthMask(width);
     return new BitPattern(
         mask.shiftRight(this.width - width).and(m),
         value.shiftRight(this.width - width).and(m),

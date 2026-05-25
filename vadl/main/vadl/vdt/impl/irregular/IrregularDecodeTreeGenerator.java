@@ -260,12 +260,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
           .filter(c -> c.matching().doesMatchAll())
           .flatMap(c -> c.unmatching().stream())
           .map(pu -> {
-
-            // Expand the dont-care bits of unmatching patterns to the opcode pattern (if set)
-            BigInteger m = pu.mask().or(e.pattern().mask());
-            BigInteger v = pu.value().or(e.pattern().value());
-
-            final BitPattern po = new BitPattern(m, v, e.width());
+            final BitPattern po = combinePatterns(e.pattern(), pu);
             return new DecodeEntry(e.source(), e.width(), po, validExclusions);
           })
           .forEach(matchingEntries4::add);
