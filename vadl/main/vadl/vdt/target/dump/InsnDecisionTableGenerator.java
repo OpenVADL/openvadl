@@ -109,7 +109,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
   public List<List<CharSequence>> handle(InnerNodeImpl node) {
 
     var label = new StringBuilder();
-    label.append("insn & 0x%x".formatted(node.getMask().toValue()));
+    label.append("insn & 0x%x".formatted(node.getMask().value()));
 
     var result = new ArrayList<List<CharSequence>>();
 
@@ -131,7 +131,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
         continue;
       }
 
-      var childLabel = "%s == 0x%x".formatted(label, entry.getKey().toBitVector().toValue());
+      var childLabel = "%s == 0x%x".formatted(label, entry.getKey().toBitVector().value());
       childLines.forEach(l -> l.add(1, childLabel));
       result.addAll(childLines);
     }
@@ -150,7 +150,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
 
     var label = new StringBuilder();
 
-    final BigInteger mask = node.getMask().toValue();
+    final BigInteger mask = node.getMask().value();
 
     label.append("insn & 0x%x".formatted(mask));
 
@@ -164,7 +164,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
         continue;
       }
 
-      var childLabel = "%s == 0x%x".formatted(label, entry.getKey().toBitVector().toValue());
+      var childLabel = "%s == 0x%x".formatted(label, entry.getKey().toBitVector().value());
       childLines.forEach(l -> l.add(1, childLabel));
       result.addAll(childLines);
     }
@@ -183,8 +183,8 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
 
     var label = new StringBuilder();
 
-    final BigInteger mask = node.getPattern().toMaskVector().toValue();
-    final BigInteger value = node.getPattern().toBitVector().toValue();
+    final BigInteger mask = node.getPattern().toMaskVector().value();
+    final BigInteger value = node.getPattern().toBitVector().value();
 
     label.append("insn & 0x%x".formatted(mask));
 

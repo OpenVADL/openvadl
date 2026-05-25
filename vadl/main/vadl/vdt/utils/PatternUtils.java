@@ -16,14 +16,9 @@
 
 package vadl.vdt.utils;
 
-import static vadl.vdt.utils.PBit.Value.DONT_CARE;
-import static vadl.vdt.utils.PBit.Value.ONE;
-import static vadl.vdt.utils.PBit.Value.ZERO;
-
 import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.util.List;
-import java.util.stream.IntStream;
 import vadl.viam.Constant;
 import vadl.viam.Constant.BitSlice;
 import vadl.viam.Encoding;
@@ -56,12 +51,10 @@ public class PatternUtils {
     // byte first.
     final int insnWidth = insn.format().type().bitWidth();
     final int alignedWidth = insnWidth % 8 != 0 ? insnWidth + (8 - insnWidth % 8) : insnWidth;
-    final PBit[] bits = new PBit[alignedWidth];
 
     // Initialize all bits to "don't care"
-    for (int i = 0; i < bits.length; i++) {
-      bits[i] = new PBit(PBit.Value.DONT_CARE);
-    }
+    BigInteger mBits = BigInteger.ZERO;
+    BigInteger vBits = BigInteger.ZERO;
 
     // Set fixed bits to their respective encoding value
     for (Encoding.Field encField : insn.encoding().fieldEncodings()) {
@@ -74,8 +67,12 @@ public class PatternUtils {
       int offset = 0;
       for (BitSlice.Part p : parts) {
         for (int i = p.lsb(); i <= p.msb(); i++) {
-          var val = fixedValue.testBit((offset + i) - p.lsb()) ? ONE : ZERO;
-          bits[insnWidth - (i + 1)] = new PBit(val);
+          var val = fixedValue.testBit((offset + i) - p.lsb());
+          // TODO: Check that the indices are correct here
+          mBits = mBits.setBit((insnWidth - (i + 1)));
+          if (val) {
+            vBits = vBits.setBit((insnWidth - (i + 1)));
+          }
         }
         offset += p.size();
       }
@@ -83,7 +80,7 @@ public class PatternUtils {
 
     if (byteOrder != ByteOrder.LITTLE_ENDIAN || alignedWidth <= 8) {
       // Pattern is already in the correct byte order
-      return new BitPattern(bits);
+      return new BitPattern(mBits, vBits, alignedWidth);
     }
 
     // Reverse the byte order
@@ -91,13 +88,32 @@ public class PatternUtils {
       for (int j = 0; j < 8; j++) {
         int l = i * 8 + j;
         int r = alignedWidth - (i + 1) * 8 + j;
-        PBit tmp = bits[l];
-        bits[l] = bits[r];
-        bits[r] = tmp;
+
+        boolean mL = mBits.testBit(l);
+        boolean vL = vBits.testBit(l);
+
+        boolean mR = mBits.testBit(r);
+        boolean vR = vBits.testBit(r);
+
+        if (mR) {
+          mBits = mBits.setBit(l);
+          vBits = vR ? vBits.setBit(l) : vBits.clearBit(l);
+        } else {
+          mBits = mBits.clearBit(l);
+          vBits = vBits.clearBit(l);
+        }
+
+        if (mL) {
+          mBits = mBits.setBit(r);
+          vBits = vL ? vBits.setBit(r) : vBits.clearBit(r);
+        } else {
+          mBits = mBits.clearBit(r);
+          vBits = vBits.clearBit(r);
+        }
       }
     }
 
-    return new BitPattern(bits);
+    return new BitPattern(mBits, vBits, alignedWidth);
   }
 
   /**
@@ -131,12 +147,10 @@ public class PatternUtils {
     // byte first.
     final int insnWidth = format.type().bitWidth();
     final int alignedWidth = insnWidth % 8 != 0 ? insnWidth + (8 - insnWidth % 8) : insnWidth;
-    final PBit[] bits = new PBit[alignedWidth];
 
     // Initialize all bits to "don't care"
-    for (int i = 0; i < bits.length; i++) {
-      bits[i] = new PBit(PBit.Value.DONT_CARE);
-    }
+    BigInteger mBits = BigInteger.ZERO;
+    BigInteger vBits = BigInteger.ZERO;
 
     // Set fixed bits to their respective encoding value
     BigInteger fixedValue = value.integer();
@@ -148,15 +162,19 @@ public class PatternUtils {
     int offset = 0;
     for (BitSlice.Part p : parts) {
       for (int i = p.lsb(); i <= p.msb(); i++) {
-        var val = fixedValue.testBit((offset + i) - p.lsb()) ? ONE : ZERO;
-        bits[insnWidth - (i + 1)] = new PBit(val);
+        var val = fixedValue.testBit((offset + i) - p.lsb());
+        // TODO: Check that the indices are correct here
+        mBits = mBits.setBit((insnWidth - (i + 1)));
+        if (val) {
+          vBits = vBits.setBit((insnWidth - (i + 1)));
+        }
       }
       offset += p.size();
     }
 
     if (byteOrder != ByteOrder.LITTLE_ENDIAN || alignedWidth <= 8) {
       // Pattern is already in the correct byte order
-      return new BitPattern(bits);
+      return new BitPattern(mBits, vBits, alignedWidth);
     }
 
     // Reverse the byte order
@@ -164,13 +182,32 @@ public class PatternUtils {
       for (int j = 0; j < 8; j++) {
         int l = i * 8 + j;
         int r = alignedWidth - (i + 1) * 8 + j;
-        PBit tmp = bits[l];
-        bits[l] = bits[r];
-        bits[r] = tmp;
+
+        boolean mL = mBits.testBit(l);
+        boolean vL = vBits.testBit(l);
+
+        boolean mR = mBits.testBit(r);
+        boolean vR = vBits.testBit(r);
+
+        if (mR) {
+          mBits = mBits.setBit(l);
+          vBits = vR ? vBits.setBit(l) : vBits.clearBit(l);
+        } else {
+          mBits = mBits.clearBit(l);
+          vBits = vBits.clearBit(l);
+        }
+
+        if (mL) {
+          mBits = mBits.setBit(r);
+          vBits = vL ? vBits.setBit(r) : vBits.clearBit(r);
+        } else {
+          mBits = mBits.clearBit(r);
+          vBits = vBits.clearBit(r);
+        }
       }
     }
 
-    return new BitPattern(bits);
+    return new BitPattern(mBits, vBits, alignedWidth);
   }
 
   /**
@@ -185,20 +222,16 @@ public class PatternUtils {
     if (p1.width() != p2.width()) {
       throw new IllegalArgumentException("Patterns of different widths cannot be combined");
     }
-    final PBit[] bits = new PBit[p1.width()];
-    for (int i = 0; i < bits.length; i++) {
-      final PBit.Value v1 = p1.get(i).getValue();
-      final PBit.Value v2 = p2.get(i).getValue();
-      if (v1 != v2 && v1 != DONT_CARE && v2 != DONT_CARE) {
-        throw new IllegalArgumentException("Patterns have different fixed bits at position " + i);
-      }
-      if (v1 != DONT_CARE) {
-        bits[i] = new PBit(v1);
-      } else {
-        bits[i] = new PBit(v2);
-      }
+
+    if (!compatible(p1, p2)) {
+      throw new IllegalArgumentException("Patterns have different fixed bits");
     }
-    return new BitPattern(bits);
+
+    return new BitPattern(
+        p1.mask().or(p2.mask()),
+        p1.value().or(p2.value()),
+        p1.width()
+    );
   }
 
   /**
@@ -212,10 +245,12 @@ public class PatternUtils {
    * @return Whether the patterns are compatible or not.
    */
   public static boolean compatible(BitPattern p1, BitPattern p2) {
-    return IntStream.range(0, p1.width())
-        .allMatch(
-            i -> p1.get(i).equals(p2.get(i)) || p1.get(i).getValue() == PBit.Value.DONT_CARE
-                || p2.get(i).getValue() == PBit.Value.DONT_CARE);
+    if (p1.width() != p2.width()) {
+      return false;
+    }
+    var fixedBits1 = p1.value().and(p1.mask());
+    var fixedBits2 = p2.value().and(p2.mask());
+    return fixedBits1.xor(fixedBits2).signum() == 0;
   }
 
   /**
@@ -227,9 +262,19 @@ public class PatternUtils {
    * @return Whether the first pattern is a subset of the second pattern.
    */
   public static boolean contain(BitPattern p1, BitPattern p2) {
-    return IntStream.range(0, p1.width())
-        .allMatch(
-            i -> p1.get(i).equals(p2.get(i)) || p2.get(i).getValue() == PBit.Value.DONT_CARE);
+    if (p1.width() != p2.width()) {
+      return false;
+    }
+
+    // Check that masks are compatible (i.e. any fixed bit in p2 is also a fixed bit in p1)
+    if (p2.mask().and(p1.mask().not()).signum() != 0) {
+      return false;
+    }
+
+    // Check that they agree on values of shared mask (mask of p2)
+    var valBits1 = p1.value().and(p2.mask());
+    var valBits2 = p2.value().and(p2.mask());
+    return valBits1.xor(valBits2).signum() == 0;
   }
 
   /**
@@ -240,12 +285,15 @@ public class PatternUtils {
    * @return A copy of the original pattern p with some bits switched to <i>don't care</i>.
    */
   public static BitPattern invalidate(BitPattern p, BitPattern inputPattern) {
-    final PBit[] bits = new PBit[inputPattern.width()];
-    for (int i = 0; i < inputPattern.width(); i++) {
-      bits[i] = inputPattern.get(i).getValue() == PBit.Value.DONT_CARE ? p.get(i) :
-          new PBit(PBit.Value.DONT_CARE);
+    if (p.width() != inputPattern.width()) {
+      throw new IllegalArgumentException("Incompatible pattern widths");
     }
-    return new BitPattern(bits);
+
+    return new BitPattern(
+        p.mask().and(inputPattern.mask().not()),
+        p.value().and(inputPattern.mask().not()),
+        p.width()
+    );
   }
 
   /**
@@ -260,16 +308,15 @@ public class PatternUtils {
       throw new IllegalArgumentException(
           "Cannot compute common bits for patterns of different widths");
     }
-    final PBit[] bits = new PBit[p1.width()];
-    for (int i = 0; i < bits.length; i++) {
-      final PBit.Value v1 = p1.get(i).getValue();
-      final PBit.Value v2 = p2.get(i).getValue();
-      if (v1 == v2) {
-        bits[i] = new PBit(v1);
-      } else {
-        bits[i] = new PBit(DONT_CARE);
-      }
-    }
-    return new BitPattern(bits);
+
+    // Compute common mask
+    var m = p1.mask().and(p2.mask());
+    // Remove disagreeing bits from mask
+    var diffBits = p1.value().and(m).xor(p2.value().and(m));
+    m = m.and(diffBits.not());
+
+    // Compute common value
+    var v = p1.value().and(m);
+    return new BitPattern(m, v, p1.width());
   }
 }

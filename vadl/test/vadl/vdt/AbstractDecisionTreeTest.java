@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 import vadl.types.BitsType;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.PBit;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
@@ -94,14 +93,7 @@ public class AbstractDecisionTreeTest {
         }
       };
 
-      // Prepare the bit pattern
-      final PBit[] bits = new PBit[insn.length()];
-      for (int i = 0; i < insn.length(); i++) {
-        bits[i] = new PBit(insn.charAt(i) == '1' ? PBit.Value.ONE
-            : (insn.charAt(i) == '0' ? PBit.Value.ZERO : PBit.Value.DONT_CARE));
-      }
-      var pattern = new BitPattern(bits);
-
+      var pattern = BitPattern.fromString(insn, insn.length());
       result.add(new Instruction(source, pattern.width(), pattern));
     }
     return result;

@@ -47,7 +47,6 @@ import vadl.vdt.model.Node;
 import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
-import vadl.vdt.utils.PBit;
 import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Definition;
 
@@ -261,12 +260,12 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
           .filter(c -> c.matching().doesMatchAll())
           .flatMap(c -> c.unmatching().stream())
           .map(pu -> {
-            final PBit[] newOpcodePattern = new PBit[e.width()];
-            for (int i = 0; i < e.width(); i++) {
-              newOpcodePattern[i] =
-                  pu.get(i).getValue() == PBit.Value.DONT_CARE ? e.pattern().get(i) : pu.get(i);
-            }
-            final BitPattern po = new BitPattern(newOpcodePattern);
+
+            // Expand the dont-care bits of unmatching patterns to the opcode pattern (if set)
+            BigInteger m = pu.mask().or(e.pattern().mask());
+            BigInteger v = pu.value().or(e.pattern().value());
+
+            final BitPattern po = new BitPattern(m, v, e.width());
             return new DecodeEntry(e.source(), e.width(), po, validExclusions);
           })
           .forEach(matchingEntries4::add);
@@ -514,7 +513,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     final BitVector mask = insn.toMaskVector().xor(checkedBits.toMaskVector())
         .and(insn.toMaskVector());
 
-    if (mask.toValue().compareTo(BigInteger.ZERO) == 0) {
+    if (mask.value().compareTo(BigInteger.ZERO) == 0) {
       return BitPattern.empty(checkedBits.width());
     }
 
@@ -552,7 +551,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         var mask = pu.toMaskVector().xor(checkedBits.toMaskVector())
             .and(pu.toMaskVector());
 
-        if (mask.toValue().compareTo(BigInteger.ZERO) == 0) {
+        if (mask.value().compareTo(BigInteger.ZERO) == 0) {
           // No bits left to check, skip this condition
           continue;
         }

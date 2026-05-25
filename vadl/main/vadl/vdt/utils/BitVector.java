@@ -18,48 +18,24 @@ package vadl.vdt.utils;
 
 import java.math.BigInteger;
 import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents a bit vector, i.e. a sequence of bits.
  */
-public class BitVector implements Vector<Bit>, BitWise<BitVector> {
+public class BitVector {
 
-  private final Bit[] bits;
-
-  /**
-   * Creates a new bit vector from the given bits.
-   *
-   * @param bits the bits of the vector
-   */
-  public BitVector(Bit[] bits) {
-    this.bits = bits;
-  }
+  private final BigInteger value;
+  private final int width;
 
   /**
-   * Creates a new bit vector from the given bits.
+   * Creates a new bit vector from the given value.
    *
-   * @param bits the bits of the vector
+   * @param value the bits of the vector
    */
-  public BitVector(boolean[] bits) {
-    this.bits = new Bit[bits.length];
-    for (int i = 0; i < bits.length; i++) {
-      this.bits[i] = new Bit(bits[i]);
-    }
-  }
-
-  /**
-   * Creates a bit vector from the given value.
-   *
-   * @param value the value as a big integer
-   * @param width the width of the bit vector to create
-   * @return the bit vector
-   */
-  public static BitVector fromValue(BigInteger value, int width) {
-    final Bit[] bits = new Bit[width];
-    for (int i = 0; i < width; i++) {
-      bits[i] = new Bit(value.testBit(width - 1 - i));
-    }
-    return new BitVector(bits);
+  public BitVector(BigInteger value, int width) {
+    this.value = value;
+    this.width = width;
   }
 
   /**
@@ -71,115 +47,37 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
    * @return the bit vector
    */
   public static BitVector fromString(String value, int width) {
-    final Bit[] bits = new Bit[width];
-    for (int i = 0; i < width; i++) {
-      if (i < value.length()) {
-        if (value.charAt(i) != '0' && value.charAt(i) != '1') {
-          throw new IllegalArgumentException("Invalid character in value");
-        }
-        bits[i] = new Bit(value.charAt(i) == '1');
-      } else {
-        bits[i] = new Bit(false);
-      }
-    }
-    return new BitVector(bits);
+    final String sanitized = StringUtils.rightPad(value.substring(0, width), width, '0');
+    final var val = new BigInteger(sanitized, 2);
+    return new BitVector(val, width);
   }
 
-  /**
-   * Converts the bit vector to its corresponding BigInteger representation.
-   *
-   * @return the value as a big integer
-   */
-  public BigInteger toValue() {
-    BigInteger value = BigInteger.ZERO;
-    for (int i = 0; i < width(); i++) {
-      if (get(width() - (i + 1)).value()) {
-        value = value.setBit(i);
-      }
-    }
+  public BigInteger value() {
     return value;
   }
 
-  @Override
   public int width() {
-    return bits.length;
+    return width;
   }
 
-  @Override
-  public Bit get(int i) {
-    return bits[i];
+  public boolean get(int i) {
+    return value.testBit(width - 1 - i);
   }
 
-  @Override
   public BitVector and(BitVector other) {
-    final Bit[] result = new Bit[width()];
-    for (int i = 0; i < width(); i++) {
-      result[i] = get(i).and(other.get(i));
-    }
-    return new BitVector(result);
+    return new BitVector(value.and(other.value), width);
   }
 
-  @Override
   public BitVector or(BitVector other) {
-    final Bit[] result = new Bit[width()];
-    for (int i = 0; i < width(); i++) {
-      result[i] = get(i).or(other.get(i));
-    }
-    return new BitVector(result);
+    return new BitVector(value.or(other.value), width);
   }
 
-  @Override
   public BitVector xor(BitVector other) {
-    final Bit[] result = new Bit[width()];
-    for (int i = 0; i < width(); i++) {
-      result[i] = get(i).xor(other.get(i));
-    }
-    return new BitVector(result);
+    return new BitVector(value.xor(other.value), width);
   }
 
-  @Override
   public BitVector not() {
-    final Bit[] result = new Bit[width()];
-    for (int i = 0; i < width(); i++) {
-      result[i] = get(i).not();
-    }
-    return new BitVector(result);
-  }
-
-  /**
-   * Shifts the bit vector to the left by n bits. The bits that are shifted out are lost.
-   *
-   * @param n    the number of bits to shift
-   * @param fill the value to fill the shifted out bits with (true for 1, false for 0)
-   * @return the shifted bit vector
-   */
-  public BitVector shiftLeft(int n, boolean fill) {
-    final Bit[] result = new Bit[width()];
-    for (int i = n; i < width(); i++) {
-      result[i - n] = get(i);
-    }
-    for (int i = width() - n; i < width(); i++) {
-      result[i] = fill ? new Bit(true) : new Bit(false);
-    }
-    return new BitVector(result);
-  }
-
-  /**
-   * Shifts the bit vector to the right by n bits. The bits that are shifted out are lost.
-   *
-   * @param n    the number of bits to shift
-   * @param fill the value to fill the shifted out bits with (true for 1, false for 0)
-   * @return the shifted bit vector
-   */
-  public BitVector shiftRight(int n, boolean fill) {
-    final Bit[] result = new Bit[width()];
-    for (int i = 0; i < n; i++) {
-      result[i] = fill ? new Bit(true) : new Bit(false);
-    }
-    for (int i = n; i < width(); i++) {
-      result[i] = get(i - n);
-    }
-    return new BitVector(result);
+    return new BitVector(value.not(), width);
   }
 
   /**
@@ -189,18 +87,18 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
    * @param fill   the value to fill with
    * @return the padded bit vector
    */
-  public BitVector leftPad(int target, Bit fill) {
+  public BitVector leftPad(int target, boolean fill) {
     if (target <= width()) {
       return this;
     }
-    final Bit[] result = new Bit[target];
-    for (int i = 0; i < target - width(); i++) {
-      result[i] = fill;
+    if (!fill) {
+      return new BitVector(value, target);
     }
-    for (int i = target - width(); i < target; i++) {
-      result[i] = get(i - (target - width()));
-    }
-    return new BitVector(result);
+    final var mask = BigInteger.ONE
+        .shiftLeft(target - width)
+        .subtract(BigInteger.ONE)
+        .shiftLeft(width);
+    return new BitVector(value.or(mask), target);
   }
 
   /**
@@ -210,18 +108,19 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
    * @param fill   the value to fill with
    * @return the padded bit vector
    */
-  public BitVector rightPad(int target, Bit fill) {
+  public BitVector rightPad(int target, boolean fill) {
     if (target <= width()) {
       return this;
     }
-    final Bit[] result = new Bit[target];
-    for (int i = 0; i < width(); i++) {
-      result[i] = get(i);
+
+    if (!fill) {
+      return new BitVector(value.shiftLeft(target - width), target);
     }
-    for (int i = width(); i < target; i++) {
-      result[i] = fill;
-    }
-    return new BitVector(result);
+
+    final var mask = BigInteger.ONE
+        .shiftLeft(target - width)
+        .subtract(BigInteger.ONE);
+    return new BitVector(value.shiftLeft(target - width).or(mask), target);
   }
 
   /**
@@ -233,48 +132,31 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
    * @return the truncated bit vector
    */
   public BitVector truncate(int offset, int length) {
-    final Bit[] result = new Bit[length];
-    for (int i = 0; i < length; i++) {
-      result[i] = get(offset + i);
+    if (offset < 0 || length < 0 || offset + length > width()) {
+      throw new IllegalArgumentException("Invalid offset or length for truncation");
     }
-    return new BitVector(result);
+    final var mask = BigInteger.ONE
+        .shiftLeft(length)
+        .subtract(BigInteger.ONE);
+    final var v = value.shiftRight(width - offset - length).and(mask);
+    return new BitVector(v, length);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof BitVector bitVector)) {
+      return false;
+    }
+    return width == bitVector.width && Objects.equals(value, bitVector.value);
   }
 
   @Override
   public int hashCode() {
-    int result = 1;
-    for (int i = 0; i < width(); i++) {
-      result = 31 * result + Objects.hashCode(get(i));
-    }
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    final BitVector other = (BitVector) obj;
-    if (width() != other.width()) {
-      return false;
-    }
-    for (int i = 0; i < width(); i++) {
-      if (!Objects.equals(get(i), other.get(i))) {
-        return false;
-      }
-    }
-    return true;
+    return Objects.hash(value, width);
   }
 
   @Override
   public String toString() {
-    final StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < width(); i++) {
-      builder.append(get(i).value() ? '1' : '0');
-    }
-    return builder.toString();
+    return value.toString(2);
   }
 }

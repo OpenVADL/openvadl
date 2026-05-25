@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
-import vadl.vdt.utils.Bit;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 
@@ -51,7 +50,7 @@ public class MultiDecisionNode implements InnerNode {
 
     // extend/truncate the instruction to the relevant bits before testing
     final BitVector i = insn
-        .rightPad(mask.width(), new Bit(false));
+        .rightPad(mask.width(), false);
 
     for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
       if (entry.getKey().test(i)) {

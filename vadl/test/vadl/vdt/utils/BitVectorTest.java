@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,21 @@
 
 package vadl.vdt.utils;
 
-/**
- * Interface for bitwise operations.
- *
- * @param <T> the type of the elements
- */
-public interface BitWise<T> {
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-  T and(T other);
+public class BitVectorTest {
 
-  T or(T other);
+  @Test
+  void testLeftPad() {
+    /* GIVEN */
+    var bv = BitVector.fromString("101", 8);
 
-  T xor(T other);
+    /* WHEN */
+    BitVector result = bv.leftPad(8, false);
 
-  T not();
-
+    /* THEN */
+    Assertions.assertEquals(9, result.width());
+    Assertions.assertEquals("00000101", result.toString());
+  }
 }
