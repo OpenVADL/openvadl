@@ -56,6 +56,7 @@ import vadl.ast.LspTokenizer;
 import vadl.ast.VadlParser;
 import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
+import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.SourceLocation;
 
 /**
@@ -352,7 +353,7 @@ public class VadlTextDocumentService implements TextDocumentService {
 
   private LspSnapshotFileSystem createSnapshotFileSystem() {
     synchronized (openDocuments) {
-      return new LspSnapshotFileSystem(openDocuments);
+      return new LspSnapshotFileSystem(openDocuments, new DiskVirtualFileSystem());
     }
   }
 }

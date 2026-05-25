@@ -33,7 +33,7 @@ import org.opentest4j.FileInfo;
 /// Snapshot of a Test.
 ///
 /// How to use:
-/// - In the unit test, use [#add(String, String)] to continuously add relevant input and
+/// - In the unit test, use [#add(String, Object)] to continuously add relevant input and
 ///   result data to this snapshot.
 /// - At the end, call [#verify()]: This will compare all collected snapshot data with the
 ///   state stored in a file and fail or pass the test accordingly.
@@ -50,7 +50,7 @@ import org.opentest4j.FileInfo;
 ///   files, the name of the current test case can be provided.
 public class TestSnapshot {
   private static final String BASE_PATH = "test/resources/snapshots";
-  private static final String EXTENSION = ".dat";
+  private static final String EXTENSION = ".snapshot";
 
   private static final StackWalker stackWalker = StackWalker.getInstance(Set.of(), 3);
   private static final boolean UPDATE_SNAPSHOTS = System.getenv("UPDATE_SNAPSHOTS") != null;

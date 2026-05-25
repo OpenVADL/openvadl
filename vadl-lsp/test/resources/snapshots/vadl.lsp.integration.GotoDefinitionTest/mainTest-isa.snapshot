@@ -5,7 +5,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: isa
 # % Requested data of input file input.vadl %
 - Input with position marked: 
   ================
-    // 4:39 position
+    // GOTO POSITION 5:40 - "TEST" points to isa definition
     instruction set architecture TEST = {
       register X : Bits<5> -> Bits<32>
     }
@@ -37,7 +37,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: isa
 
 - ... which looks like this: 
   ================
-    // 4:39 position
+    // GOTO POSITION 5:40 - "TEST" points to isa definition
     <RANGE>instruction set architecture TEST = {
       register X : Bits<5> -> Bits<32>
     }</>

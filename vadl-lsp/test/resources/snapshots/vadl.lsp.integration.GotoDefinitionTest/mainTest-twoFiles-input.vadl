@@ -1,4 +1,4 @@
-// 4:28 position
+// GOTO POSITION 5:29 - "foo" points to constant definition in other file
 import "mainTest-twoFiles-otherFile"::TEST
 
 application binary interface ABI for TEST = {

@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
-import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
 
 /**
@@ -60,15 +59,6 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
   LspSnapshotFileSystem(Map<String, Document> documents, VirtualFileSystem underlyingFileSystem) {
     this.documents = Map.copyOf(documents);
     this.underlyingFileSystem = underlyingFileSystem;
-  }
-
-  /**
-   * Creates a VirtualFileSystem backed with the given documents.
-   *
-   * @param documents Maps URI string to corresponding document. This map is copied.
-   */
-  LspSnapshotFileSystem(Map<String, Document> documents) {
-    this(documents, new DiskVirtualFileSystem());
   }
 
   /**

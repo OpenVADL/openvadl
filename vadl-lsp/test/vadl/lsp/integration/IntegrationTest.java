@@ -38,7 +38,6 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import vadl.lsp.VadlLanguageServer;
-import vadl.lsp.VadlTextDocumentService;
 
 /**
  * The base for all lsp integration tests. Provides a fresh, fully plumbed instance of the
@@ -103,7 +102,7 @@ public abstract class IntegrationTest {
         runnable.run();
 
         try {
-          publishedDiagnostics.wait(VadlTextDocumentService.DIAGNOSTICS_DELAY_MS + 350);
+          publishedDiagnostics.wait(350);
         } catch (InterruptedException e) {
           // Nothing
         }

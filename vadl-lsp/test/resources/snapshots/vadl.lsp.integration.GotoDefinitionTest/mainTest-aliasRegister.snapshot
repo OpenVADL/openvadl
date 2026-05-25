@@ -5,7 +5,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: aliasR
 # % Requested data of input file input.vadl %
 - Input with position marked: 
   ================
-    // 7:22 position
+    // GOTO POSITION 8:23 - "hello" points to alias register definition
     instruction set architecture TEST = {
       register X : Bits<5> -> Bits<32>
     }
@@ -37,7 +37,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: aliasR
 
 - ... which looks like this: 
   ================
-    // 7:22 position
+    // GOTO POSITION 8:23 - "hello" points to alias register definition
     instruction set architecture TEST = {
       register X : Bits<5> -> Bits<32>
     }

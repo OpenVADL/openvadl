@@ -42,7 +42,7 @@ import vadl.lsp.TestUtils;
 public class GotoDefinitionTest extends IntegrationTest {
   private static final String INPUT_NAME = "input.vadl";
   private static final Pattern POSITION_PATTERN =
-      Pattern.compile("^//\\s*(\\d+):(\\d+)", Pattern.MULTILINE);
+      Pattern.compile("^// GOTO POSITION \\s*(\\d+):(\\d+)", Pattern.MULTILINE);
 
   @ParameterizedTest
   @ValueSource(strings = {"noDefinition", "aliasRegister", "isa", "twoFiles"})
@@ -54,11 +54,13 @@ public class GotoDefinitionTest extends IntegrationTest {
     var matcher = POSITION_PATTERN.matcher(input);
     if (!matcher.find()) {
       fail("Input file does not contain position to use "
-          + "(Format: \"// line:character\" at the top of file): " + inputUri);
+          + "(Format: \"// GOTO POSITION line:character\" at the top of file): " + inputUri);
     }
+    // Input files state 1-based position...
     int line = Integer.parseInt(requireNonNull(matcher.group(1)));
     int character = Integer.parseInt(requireNonNull(matcher.group(2)));
-    var position = new Position(line, character);
+    // ... but lsp4j position is 0-based
+    var position = new Position(line - 1, character - 1);
     snapshot.add("Input with position marked", TestUtils.showPositionInFile(position, input));
 
     openDocument(inputUri, input);

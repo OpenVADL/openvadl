@@ -29,9 +29,6 @@ import vadl.lsp.TestUtils;
 /**
  * Tests the LSP Publish Diagnostics feature.
  *
- * <p>(Somewhat) slow test, as for every publish Diagnostic we have to wait
- * {@link vadl.lsp.VadlTextDocumentService#DIAGNOSTICS_DELAY_MS}.
- *
  * <p>Uses snapshot input files to parameterize test cases.
  */
 public class PublishDiagnosticsTest extends IntegrationTest {
@@ -47,6 +44,8 @@ public class PublishDiagnosticsTest extends IntegrationTest {
 
     var result = client.doThenWaitForPublishDiagnostics(() -> openDocument(inputUri, input));
     if (result.size() != 1) {
+      // Note: This may be triggered if wait timeout in doThenWaitForPublishDiagnostics() is too
+      // short
       fail("Expected 1 publishDiagnostics() call, but received "
           + result.size() + " within wait time");
     }

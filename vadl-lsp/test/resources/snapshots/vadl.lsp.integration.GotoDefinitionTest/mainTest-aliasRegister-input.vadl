@@ -1,4 +1,4 @@
-// 7:22 position
+// GOTO POSITION 8:23 - "hello" points to alias register definition
 instruction set architecture TEST = {
   register X : Bits<5> -> Bits<32>
 }
