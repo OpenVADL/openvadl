@@ -31,10 +31,20 @@ public class BitPattern {
   private final BigInteger value;
   private final int width;
 
+  /**
+   * Represents the state of a bit in a bit pattern.
+   */
   public enum PatternBit {
     ZERO, ONE, DONT_CARE
   }
 
+  /**
+   * Creates a new bit pattern.
+   *
+   * @param mask  the mask specifying the bits to consider
+   * @param value the value of the bits
+   * @param width the width of the bit pattern
+   */
   public BitPattern(BigInteger mask, BigInteger value, int width) {
     if (width < 0) {
       throw new IllegalArgumentException("Width must be non-negative");
@@ -56,6 +66,12 @@ public class BitPattern {
     return width;
   }
 
+  /**
+   * Returns the bit at the given index with MSB-first semantics.
+   *
+   * @param i the index of the bit
+   * @return the bit at the given index
+   */
   public PatternBit get(int i) {
     if (i < 0 || i >= width) {
       throw new IndexOutOfBoundsException(i);
@@ -67,6 +83,12 @@ public class BitPattern {
     return value.testBit(idx) ? PatternBit.ONE : PatternBit.ZERO;
   }
 
+  /**
+   * Tests whether the given bit vector matches this bit pattern.
+   *
+   * @param bitVector the bit vector to test
+   * @return {@code true} if the bit vector matches this bit pattern, {@code false} otherwise
+   */
   public boolean test(BitVector bitVector) {
     if (bitVector.width() != width()) {
       return false;

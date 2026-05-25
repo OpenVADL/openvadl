@@ -74,6 +74,12 @@ public class BitVector {
     return width;
   }
 
+  /**
+   * Returns the bit at the given index with MSB-first semantics.
+   *
+   * @param i the index of the bit
+   * @return the bit at the given index
+   */
   public boolean get(int i) {
     if (i < 0 || i >= width) {
       throw new IndexOutOfBoundsException(i);
@@ -81,6 +87,12 @@ public class BitVector {
     return value.testBit(width - 1 - i);
   }
 
+  /**
+   * Performs a bitwise AND operation on this bit vector and the given bit vector.
+   *
+   * @param other the other bit vector.
+   * @return the result of the AND operation.
+   */
   public BitVector and(BitVector other) {
     if (width != other.width) {
       throw new IllegalArgumentException("Bit vectors must have the same width");
@@ -88,6 +100,12 @@ public class BitVector {
     return new BitVector(value.and(other.value), width);
   }
 
+  /**
+   * Performs a bitwise OR operation on this bit vector and the given bit vector.
+   *
+   * @param other the other bit vector
+   * @return the result of the OR operation
+   */
   public BitVector or(BitVector other) {
     if (width != other.width) {
       throw new IllegalArgumentException("Bit vectors must have the same width");
@@ -95,6 +113,12 @@ public class BitVector {
     return new BitVector(value.or(other.value), width);
   }
 
+  /**
+   * Performs a bitwise XOR operation on this bit vector and the given bit vector.
+   *
+   * @param other the other bit vector
+   * @return the result of the XOR operation
+   */
   public BitVector xor(BitVector other) {
     if (width != other.width) {
       throw new IllegalArgumentException("Bit vectors must have the same width");
