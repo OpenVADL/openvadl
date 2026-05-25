@@ -48,20 +48,21 @@ import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.rtl.RtlDockerTest;
 import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
+import vadl.rtl.passes.RtlConfigurationPass;
 import vadl.utils.Pair;
 import vadl.utils.Triple;
 import vadl.viam.Stage;
 
 public class RtlRiscVBenchmarkTest extends RtlDockerTest {
 
-  public static final String ENV_RESULT_CSV = "RTL_DEC_BENCHMARK_RESULT_HOST_PATH";
+  public static final String ENV_RESULT_CSV = "RTL_BENCHMARK_RESULT_HOST_PATH";
 
   /**
-   * Decode benchmark variants.
+   * RTL benchmark variants.
    *
-   * @return the test arguments
+   * @return test arguments
    */
-  static Stream<Arguments> decodeBenchmarkTestSource() {
+  static Stream<Arguments> benchmarkTestSource() {
     return Stream.of(
         Triple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-rtl-table", RTL_TABLE),
         Triple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-vdt-regular", REGULAR),
@@ -93,53 +94,61 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
    */
   @ParameterizedTest
   @Tag("BenchmarkTest")
-  @MethodSource("decodeBenchmarkTestSource")
-  void decodeBenchmark(String spec, String tag, RtlConfiguration config) {
+  @MethodSource("benchmarkTestSource")
+  void benchmark(String spec, String tag, RtlConfiguration config) {
 
-    // GIVEN
-    var yosysLog = new File("build/test-output/bench/synth_decode_" + tag + ".log");
-    var openStaLog = new File("build/test-output/bench/time_decode_" + tag + ".log");
+    var log = new File("build/test-output/bench/core_iter_" + tag + ".log");
 
     var resultMappings = List.of(
-        Pair.of("/rtl/build/synth_decode.log", yosysLog.toString()),
-        Pair.of("/rtl/build/time_decode.log", openStaLog.toString())
+        Pair.of("/rtl/build/core_iter.log", log.toString())
     );
 
+    var topModule = getTopModuleName(spec);
     var decodeModule = getDecodeStageName(spec, config);
 
-    // WHEN
     runBenchmarkWithSpec(spec, config, resultMappings,
-        "/scripts/bench/bench_decode.sh", decodeModule);
+        "/bin/bash", "-c",
+        "sbt \"testOnly CoreEmit -- -z emit\" && /scripts/bench/bench_core_iter.sh "
+            + topModule + " 0 25  | tee /rtl/build/core_iter.log");
 
-    // THEN
-
-    final BigDecimal chipArea = getMetric(yosysLog,
+    var decodeArea = getMetric(log,
         Pattern.compile(
-            "Chip area for module '\\\\" + decodeModule + "': (?<chiparea>\\d+\\.\\d+)"),
-        m -> new BigDecimal(m.group("chiparea")));
-    Assertions.assertNotNull(chipArea);
+            "Chip area for module '\\\\" + decodeModule + "': (?<area>\\d+(\\.\\d+)?)"),
+        m -> new BigDecimal(m.group("area")));
+    Assertions.assertNotNull(decodeArea);
 
-    final BigDecimal dataArrivalTime = getMetric(openStaLog,
-        Pattern.compile("(?<dataArrivalTime>\\d+\\.\\d+)\\s*data arrival time"),
-        m -> new BigDecimal(m.group("dataArrivalTime")));
-    Assertions.assertNotNull(dataArrivalTime);
+    var areaAndDelta = getMetric(log,
+        Pattern.compile(
+            "Final placement area: (?<area>\\d+(\\.\\d+)?) \\(\\+(?<delta>\\d+(\\.\\d+))%\\)"),
+        m -> Pair.of(
+            new BigDecimal(m.group("area")),
+            new BigDecimal(m.group("delta"))
+        ));
+    Assertions.assertNotNull(areaAndDelta);
+
+    final BigDecimal clock = getMetric(log,
+        Pattern.compile("best clock (?<clock>\\d+(\\.\\d+)?) ns"),
+        m -> new BigDecimal(m.group("clock")));
+    Assertions.assertNotNull(clock);
 
     final String envResultPath = System.getenv(ENV_RESULT_CSV);
     final File result =
-        new File(envResultPath != null ? envResultPath : "build/test-output/bench/result.csv");
+        new File(envResultPath != null ? envResultPath : "build/test-output/bench/rtl-result.csv");
     final boolean withHeader = !result.exists();
 
     try (PrintWriter writer = new PrintWriter(
         new FileWriter(result, StandardCharsets.UTF_8, true))) {
 
       if (withHeader) {
-        writer.println("spec,tag,chip area,data arrival time");
+        writer.println("spec,tag,decode area,chip area,clock period,timing delta");
       }
 
       writer.print(spec + ",");
       writer.print(tag + ",");
-      writer.print(chipArea.toPlainString() + ",");
-      writer.println(dataArrivalTime.toPlainString());
+      writer.print(decodeArea.toPlainString() + ",");
+      writer.print(areaAndDelta.left().toPlainString() + ",");
+      writer.print(clock.toPlainString() + ",");
+      writer.println(areaAndDelta.right().toPlainString());
 
       writer.flush();
     } catch (IOException e) {
@@ -165,6 +174,13 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
       Assertions.fail(e);
     }
     return null;
+  }
+
+  private String getTopModuleName(String specPath) {
+
+    final var spec = runAndGetViamSpecification(specPath);
+
+    return RtlConfigurationPass.getTopModuleName(spec);
   }
 
   private String getDecodeStageName(String specPath, RtlConfiguration config) {
