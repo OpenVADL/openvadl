@@ -224,7 +224,9 @@ public class DiagnosticPrinter {
     }
 
     if (tracesCount > MAX_PRINTED_BACKTRACES) {
-      blockBuilder.add("... invocations %d - %d omitted for readability".formatted(MAX_PRINTED_BACKTRACES + 1, tracesCount));
+      blockBuilder.add(
+          "... invocations %d - %d omitted for readability".formatted(MAX_PRINTED_BACKTRACES + 1,
+              tracesCount));
     }
 
     builder.append(

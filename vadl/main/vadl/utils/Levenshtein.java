@@ -16,10 +16,10 @@
 
 package vadl.utils;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
@@ -50,9 +50,14 @@ public class Levenshtein {
                                                 @Nullable Integer maxSolutions,
                                                 @Nullable Double maxChange) {
 
-    Long upperBound = maxChange != null ? Math.round(target.length() * maxChange) : Long.MAX_VALUE;
+    // NOTE: There are further performance optimizations that could be applied by using tries as
+    // described here: https://stevehanov.ca/blog/fast-and-easy-levenshtein-distance-using-a-trie
 
-    List<Pair<T, Integer>> results = new ArrayList<>();
+    Integer upperBound = maxChange != null ? (int) Math.round(target.length() * maxChange) :
+        Integer.MAX_VALUE;
+
+    var results = new PriorityQueue<Pair<T, Integer>>(
+        Comparator.<Pair<T, Integer>>comparingInt(Pair::right).reversed());
 
     var lastRow = new int[target.length() + 1];
     var currentRow = new int[target.length() + 1];
@@ -104,28 +109,33 @@ public class Levenshtein {
         }
       }
 
-      if (skipWord) {
+      var cost = currentRow[target.length()];
+      if (skipWord || cost > upperBound) {
         continue;
       }
 
-      // FIXME: Add optimization here adjusting upper bound if maxLimit is already reached we can
-      // just take as the upperbound the cost of the worst word in our selection we already found.
+      // Evict the worst member to make room for the current word.
+      if (maxSolutions != null && results.size() >= maxSolutions) {
+        results.poll();
+      }
 
-      var cost = currentRow[target.length()];
+      // Add the new entry
       results.add(new Pair<>(item, cost));
+
+      // Adjust the upper bound
+      if (maxSolutions != null && results.size() >= maxSolutions) {
+        upperBound = results.peek().right() - 1;
+      }
     }
 
-    results.sort(Comparator.comparingInt(Pair::right));
-    var resultStream = results.stream()
-          .filter(pair -> pair.right() <= upperBound);
-    if (maxSolutions != null) {
-      resultStream = resultStream.limit(maxSolutions);
-    }
-    return resultStream.toList();
+    return results.stream()
+        .sorted(Comparator.comparingInt(Pair::right))
+        .toList();
   }
 
   /**
-   * Computes the <a href ="https://en.wikipedia.org/wiki/Levenshtein_distance"></a> (edit distance) between two strings.
+   * Computes the <a href ="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein Distance
+   * </a> (edit distance) between two strings.
    *
    * @param first  the first string to be compared
    * @param second the second string to be compared
