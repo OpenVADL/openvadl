@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -50,8 +50,7 @@ public class Levenshtein {
                                                 @Nullable Integer maxSolutions,
                                                 @Nullable Double maxChange) {
 
-    @Nullable Long upperBound =
-        maxChange != null ? Math.round(target.length() * maxChange) : null;
+    Long upperBound = maxChange != null ? Math.round(target.length() * maxChange) : Long.MAX_VALUE;
 
     List<Pair<T, Integer>> results = new ArrayList<>();
 
@@ -60,6 +59,12 @@ public class Levenshtein {
 
     for (var item : dictionary) {
       var word = toString.apply(item);
+      var skipWord = false;
+
+      // Optimization if the words are of outrageously different lengths
+      if (Math.abs(target.length() - word.length()) > upperBound) {
+        continue;
+      }
 
       // Init the last row (since the current row will be moved into the last row first thing in
       // the loop below we actually have to write to the current row).
@@ -77,6 +82,7 @@ public class Levenshtein {
 
         // Init the current row
         currentRow[0] = j;
+        var minCost = currentRow[0];
 
         for (int i = 1; i <= target.length(); i++) {
           var substituteCost = word.charAt(j - 1) == target.charAt(i - 1) ? 0 : 1;
@@ -87,10 +93,19 @@ public class Levenshtein {
               ),
               lastRow[i - 1] + substituteCost
           );
+          minCost = Math.min(minCost, currentRow[i]);
         }
 
-        // FIXME: Insert optimization here respecting upper bound (if all numbers in currentRow are
-        // larger than it we can abort this word).
+        // Optimization respecting upper bound, if all numbers in currentRow are larger than it we
+        // can abort this word.
+        if (minCost > upperBound) {
+          skipWord = true;
+          break;
+        }
+      }
+
+      if (skipWord) {
+        continue;
       }
 
       // FIXME: Add optimization here adjusting upper bound if maxLimit is already reached we can
@@ -101,11 +116,8 @@ public class Levenshtein {
     }
 
     results.sort(Comparator.comparingInt(Pair::right));
-    var resultStream = results.stream();
-    if (upperBound != null) {
-      resultStream = resultStream
+    var resultStream = results.stream()
           .filter(pair -> pair.right() <= upperBound);
-    }
     if (maxSolutions != null) {
       resultStream = resultStream.limit(maxSolutions);
     }
