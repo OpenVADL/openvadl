@@ -22,12 +22,12 @@ import static vadl.error.Diagnostic.error;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
@@ -39,6 +39,9 @@ import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
 class SymbolTable {
+
+  private static final int MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS = 100;
+
   @Nullable
   SymbolTable parent;
 
@@ -398,13 +401,21 @@ class SymbolTable {
 
   /**
    * Internal use only.
+   * Collects all symbol names in scope that are instances of the given classes.
+   * There is a hard limit described by {@link #MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS}.
    */
-  private void collectAllSymbolNamesOf(Set<String> collector, Class<? extends Node>... classes) {
+  private void collectAllSymbolNamesOf(Collection<String> collector,
+                                       Class<? extends Node>... classes) {
     symbols.entrySet().stream()
         .filter(entry -> entry.getValue() != null
             && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(entry.getValue())))
         .map(Map.Entry::getKey)
+        .limit(Math.max(0, MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS - collector.size()))
         .forEach(collector::add);
+
+    if (collector.size() >= MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS) {
+      return;
+    }
 
     if (parent != null) {
       parent.collectAllSymbolNamesOf(collector, classes);
@@ -416,9 +427,10 @@ class SymbolTable {
    *
    * @return the set of all available names.
    */
-  Set<String> allSymbolNames() {
-    var symbols = new HashSet<>(builtinNames);
+  List<String> allSymbolNames() {
+    var symbols = new ArrayList<String>();
     collectAllSymbolNamesOf(symbols, Node.class);
+    symbols.addAll(builtinNames);
     return symbols;
   }
 
@@ -429,8 +441,8 @@ class SymbolTable {
    * @return the set of all available names.
    */
   @SafeVarargs
-  final Set<String> allSymbolNamesOf(Class<? extends Node>... classes) {
-    var symbols = new HashSet<String>();
+  final List<String> allSymbolNamesOf(Class<? extends Node>... classes) {
+    var symbols = new ArrayList<String>();
     collectAllSymbolNamesOf(symbols, classes);
     return symbols;
   }
@@ -442,16 +454,16 @@ class SymbolTable {
    * @return the set of all available names.
    */
   @SafeVarargs
-  final Set<String> allMacroSymbolNamesOf(Class<? extends Node>... classes) {
+  final List<String> allMacroSymbolNamesOf(Class<? extends Node>... classes) {
     var matchingNames = macroSymbols.entrySet().stream()
         .filter(entry -> Arrays.stream(classes)
             .anyMatch(klass -> klass.isInstance(entry.getValue())))
         .map(Map.Entry::getKey)
         .toList();
 
-    var names = new HashSet<>(matchingNames);
+    var names = new ArrayList<>(matchingNames);
     if (parent != null) {
-      names.addAll(parent.allSymbolNamesOf(classes));
+      names.addAll(parent.allMacroSymbolNamesOf(classes));
     }
     return names;
   }
