@@ -166,17 +166,6 @@ public class UmeHardcodedRiscvDefinitionPass extends AbstractIssPass {
         emptyGraph, emptyAssembly, emptyEncoding
     );
 
-    RegisterTensor mainRegFile = (RegisterTensor) abi.stackPointer().registerFile();
-
-    SourceLocation loc = SourceLocation.INVALID_SOURCE_LOCATION;
-    Abi.Alignment align = Abi.Alignment.DEFAULT;
-
-    Abi.RegisterRef spReg = new Abi.RegisterRef(mainRegFile, 2, align, loc);
-
-    Abi.RegisterRef sysReg = new Abi.RegisterRef(mainRegFile, 17, align, loc);
-
-    Abi.RegisterRef retReg = new Abi.RegisterRef(mainRegFile, 10, align, loc);
-
     return new UserModeEmulation(
         identifier,
         isa, abi,
