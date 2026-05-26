@@ -389,8 +389,8 @@ The carry flag is unchanged if the shift/rotate amount is `0`.
 Rotate left (right) provides the operand `a` rotated by a variable number of bits.
 The bits that are rotated off the left (right) end are inserted into the vacated bit positions on the right (left).
 Rotate right with extend ( `rrx`) moves the bits of a register to the right by one bit.
-It copies the carry flag into the highest bit position of the result and sets the carry flag to lowest bit position of
-operand `a`.
+It copies the carry flag into the highest bit position of the result and sets the carry flag to the lowest bit position
+of operand `a`.
 
 \listing{basic_math_shifting, VADL Shifting Operations}
 
@@ -414,7 +414,9 @@ function rolc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status )
 function ror ( a : Bits<N>, b : UInt<M> ) -> Bits<N> // <=> a <>> b
 function rors( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status )
 function rorc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status )
+
 function rrx ( a : Bits<N>, c : Bool ) -> Bits<N>
+function rrxs( a : Bits<N>, c : Bool ) -> ( Bits<N>, Status )
 ~~~
 
 \endlisting

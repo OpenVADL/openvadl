@@ -105,6 +105,8 @@ public interface VadlBuiltInStatusOnlyDispatcher<T> {
       handleRORS(input);
     } else if (builtIn == BuiltInTable.RORC) {
       handleRORC(input);
+    } else if (builtIn == BuiltInTable.RRXS) {
+      handleRRXS(input);
     } else {
       return false;
     }
@@ -184,6 +186,8 @@ public interface VadlBuiltInStatusOnlyDispatcher<T> {
   void handleRORS(T input);
 
   void handleRORC(T input);
+
+  void handleRRXS(T input);
 
 
 }

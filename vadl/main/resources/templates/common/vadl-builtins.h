@@ -537,27 +537,20 @@ static inline Bits VADL_ror(Bits a, Width aw, Bits b, Width bw) {
     return (right | left) & m;
 }
 
-// TODO: What is the exact semantic of rrx?
 /*-----------------------------------------------------------------------
- *    rrx(a : Bits<N>, b : UInt<M>, c : Bool) => Bits<N>
- *    Rotate-right-extend by b bits, each step inserting 'c' from the left.
+ *    rrx(a : Bits<N>, c : Bool) => Bits<N>
+ *    Rotate-right-extend: Rotate right by one bit, using 'c' as the 33rd bit.
  *---------------------------------------------------------------------*/
-static inline Bits VADL_rrx(Bits a, Width aw, Bits b, Width bw, Bits c, Width cw) {
+static inline Bits VADL_rrx(Bits a, Width aw, Bits c, Width cw) {
     Bits x = VADL_uextract(a, aw);
-    Bits s = VADL_uextract(b, bw);
     // normalize c to 0 or 1
     c = c != 0;
-    s %= aw;
 
     Bits m   = VADL_mask(aw);
     Bits reg = x & m;
 
-    while (s > 0ULL) {
-        /* Shift right by 1, insert 'c' at top (bit aw-1). */
-        Bits top = (c & 1ULL) << (aw - 1);
-        reg      = ((reg >> 1) | top) & m;
-        s--;
-    }
+    Bits top = (c & 1ULL) << (aw - 1);
+    reg = ((reg >> 1) | top) & m;
 
     return reg;
 }

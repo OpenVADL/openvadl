@@ -317,5 +317,10 @@ class ResultInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
   public void handleRORC(BuiltInCall input) {
     throwNotImplemented(input);
   }
+
+  @Override
+  public void handleRRXS(BuiltInCall input) {
+    inlineDefault(input, BuiltInTable.RRX);
+  }
 }
 

@@ -940,14 +940,24 @@ public class BuiltInTable {
 
 
   /**
-   * {@code function rrx ( a : Bits<N>, b : UInt<M>, c : Bool ) -> Bits<N> }
+   * {@code function rrx ( a : Bits<N>, c : Bool ) -> Bits<N> }
    */
   public static final BuiltIn RRX =
       func("VADL::rrx",
-          Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
-              BitsType.class))
+          Type.relation(List.of(BitsType.class, BoolType.class), BitsType.class))
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+
+  /**
+   * {@code function rrxs( a : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
+   */
+  public static final BuiltIn RRXS =
+      func("VADL::rrxs",
+          Type.relation(List.of(BitsType.class, BoolType.class), BitsType.class))
+          .takesDefault()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -1407,7 +1417,8 @@ public class BuiltInTable {
       ROR,
       RORS,
       RORC,
-      RRX
+      RRX,
+      RRXS
   );
 
   public static final List<BuiltIn> BITWISE_COUNTING_BUILT_INS = List.of(
