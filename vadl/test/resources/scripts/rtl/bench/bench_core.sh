@@ -25,7 +25,9 @@ sed "s/TOP_MODULE/${TOP_MODULE}/g;s/CLOCK_PERIOD/${CLOCK_PERIOD}/g" \
   > /tmp/openroad.tcl
 
 # Translate Chisel to Verilog, writes the result to build/*
-sbt "testOnly CoreEmit -- -z emit"
+if [ ! -f "build/${TOP_MODULE}.sv" ]; then
+  sbt "testOnly CoreEmit -- -z emit"
+fi
 
 # Synthesize against SkyWater 130nm cell library
 yosys -s /tmp/yosys.ys | tee build/${TOP_MODULE}_yosys_asic_sky130.log

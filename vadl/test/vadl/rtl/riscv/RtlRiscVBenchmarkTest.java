@@ -57,6 +57,8 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
 
   public static final String ENV_RESULT_CSV = "RTL_BENCHMARK_RESULT_HOST_PATH";
 
+  public static final int MAX_CLOCK_NS = 25;
+
   /**
    * RTL benchmark variants.
    *
@@ -100,7 +102,7 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
     var log = new File("build/test-output/bench/core_iter_" + tag + ".log");
 
     var resultMappings = List.of(
-        Pair.of("/rtl/build/core_iter.log", log.toString())
+        Pair.of("/rtl/core_iter.log", log.toString())
     );
 
     var topModule = getTopModuleName(spec);
@@ -108,8 +110,8 @@ public class RtlRiscVBenchmarkTest extends RtlDockerTest {
 
     runBenchmarkWithSpec(spec, config, resultMappings,
         "/bin/bash", "-c",
-        "sbt \"testOnly CoreEmit -- -z emit\" && /scripts/bench/bench_core_iter.sh "
-            + topModule + " 0 25  | tee /rtl/build/core_iter.log");
+        "/scripts/bench/bench_core_iter.sh " + topModule + " 0 " + MAX_CLOCK_NS
+            + "  | tee /rtl/core_iter.log");
 
     var decodeArea = getMetric(log,
         Pattern.compile(
