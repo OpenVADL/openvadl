@@ -53,7 +53,7 @@ public class DecisionTreeDecoder implements Visitor<Instruction> {
    * @return The decoded instruction.
    */
   public DecodedInstruction decode(Value encoding, ByteOrder byteOrder) {
-    this.encoding = BitVector.fromValue(encoding.integer(), encoding.type().bitWidth());
+    this.encoding = new BitVector(encoding.integer(), encoding.type().bitWidth());
     var insn = Objects.requireNonNull(decisionTree.accept(this));
     return new DecodedInstruction(insn, encoding.integer(), byteOrder);
   }

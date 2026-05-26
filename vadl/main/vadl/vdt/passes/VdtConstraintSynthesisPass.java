@@ -16,14 +16,15 @@
 
 package vadl.vdt.passes;
 
-import static vadl.vdt.utils.PatternUtils.toFixedBitPattern;
+import static vadl.vdt.utils.PatternUtils.invalidate;
 
 import java.io.IOException;
-import java.nio.ByteOrder;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.BitSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,9 +36,6 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
-import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.PatternUtils;
-import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -72,11 +70,8 @@ public class VdtConstraintSynthesisPass extends Pass {
       return null;
     }
 
-    // TODO: get the byte order from the VADL specification -> Implement memory annotations
-    final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
-
-    // Prepare a lookup map for possible constraint synthesis
-    final var grouped = groupedInstructions(entries);
+    // Prepare a lookup index for possible constraint synthesis
+    final var index = indexInstructions(entries);
 
     return entries
         .stream()
@@ -87,7 +82,7 @@ public class VdtConstraintSynthesisPass extends Pass {
             return entry;
           }
 
-          var constraints = getSynthesizedExclusions(bo, grouped, entry);
+          var constraints = getSynthesizedExclusions(index, entry);
           return new DecodeEntry(entry.source(), entry.width(), entry.pattern(), constraints);
         })
         .toList();
@@ -103,58 +98,85 @@ public class VdtConstraintSynthesisPass extends Pass {
    * As a result, if {@code b == 1} the decoder matches instruction {@code A} and in any other case
    * it will match instruction {@code B}.
    *
-   * @param bo      The byte order
-   * @param grouped The instruction encodings grouped by format
-   * @param e       The current instruction to consider
+   * @param indexByFormat The instruction encodings indexed by format
+   * @param e             The current instruction to consider
    * @return The exclusion conditions, if any.
    */
   private Set<ExclusionCondition> getSynthesizedExclusions(
-      ByteOrder bo, Map<Format, List<InstructionEncoding>> grouped, DecodeEntry e) {
+      Map<Format, FormatIndex> indexByFormat, DecodeEntry e) {
 
-    if (!grouped.containsKey(e.source().format())) {
+    final var format = e.source().format();
+    final var formatIdx = indexByFormat.get(format);
+
+    if (formatIdx == null) {
       return Set.of();
     }
 
-    final Set<ExclusionCondition> constraints = new HashSet<>();
-    final Set<FixedEncoding> encodedFields = getFixedFields(e.source());
+    final Set<FixedEncoding> fieldEncodings = getFixedFields(e.source());
 
-    grouped.get(e.source().format()).stream()
-        // TODO: Possibly exclude supersets with constrains of their owns
-        .filter(p -> isActualSubset(p.fields(), encodedFields))
-        .forEach(p -> {
+    // Find possible candidates, i.e. instructions that encode all fixed fields of the current
+    // instruction (and possibly more)
 
-          // Determine the encodings to exclude
-          var exclusions = new HashSet<>(p.fields());
-          exclusions.removeAll(encodedFields);
+    BitSet candidates = null;
+    if (fieldEncodings.isEmpty()) {
+      // All encodings are candidates
+      candidates = new BitSet(formatIdx.insns().size());
+      candidates.set(0, formatIdx.insns().size());
+    } else {
+      for (var fixedEncoding : fieldEncodings) {
 
-          BitPattern exclusionPattern = BitPattern.empty(e.width());
-          for (var encoding : exclusions) {
-            BitPattern fieldPattern = toFixedBitPattern(encoding.field(), encoding.value(), bo);
-            exclusionPattern = PatternUtils.combinePatterns(exclusionPattern, fieldPattern);
-          }
+        final BitSet matching = formatIdx.instructionsByFixedEncoding().get(fixedEncoding);
+        if (matching == null) {
+          return Set.of();
+        }
 
-          constraints.add(new ExclusionCondition(exclusionPattern, Set.of()));
-        });
+        if (candidates == null) {
+          candidates = (BitSet) matching.clone();
+        } else {
+          candidates.and(matching);
+        }
+      }
+    }
+
+    if (candidates == null || candidates.isEmpty()) {
+      return Set.of();
+    }
+
+    final Set<ExclusionCondition> constraints = new LinkedHashSet<>();
+
+    for (int i = candidates.nextSetBit(0); i >= 0; i = candidates.nextSetBit(i + 1)) {
+
+      final var insn = formatIdx.insns().get(i);
+      if (insn.fixedFields().size() <= fieldEncodings.size()) {
+        // We only allow strict supersets of the current instruction's fixed fields
+        continue;
+      }
+
+      // Found a subsumed instruction, so we generate an exclusion for it
+      final var exclusionPattern = invalidate(insn.entry().pattern(), e.pattern());
+      constraints.add(new ExclusionCondition(exclusionPattern, Set.of()));
+    }
 
     return constraints;
   }
 
-  private boolean isActualSubset(Set<FixedEncoding> superset,
-                                 Set<FixedEncoding> subset) {
-    return superset.containsAll(subset) && superset.size() > subset.size();
-  }
-
-  private Map<Format, List<InstructionEncoding>> groupedInstructions(List<DecodeEntry> entries) {
-    final Map<Format, List<InstructionEncoding>> result = new LinkedHashMap<>();
+  private Map<Format, FormatIndex> indexInstructions(List<DecodeEntry> entries) {
+    final Map<Format, FormatIndex> result = new LinkedHashMap<>();
 
     for (DecodeEntry e : entries) {
-      var encoding = new InstructionEncoding(e, getFixedFields(e.source()));
+      final var formatIndex = result.computeIfAbsent(e.source().format(),
+          k -> new FormatIndex(new ArrayList<>(), new LinkedHashMap<>()));
 
-      result.merge(e.source().format(), List.of(encoding), (a, b) -> {
-        var merged = new ArrayList<>(a);
-        merged.addAll(b);
-        return merged;
-      });
+      final var fields = getFixedFields(e.source());
+
+      final var insn = new IndexedInstruction(e, fields);
+      formatIndex.insns().add(insn);
+
+      for (var fixedEncoding : fields) {
+        formatIndex.instructionsByFixedEncoding()
+            .computeIfAbsent(fixedEncoding, k -> new BitSet())
+            .set(formatIndex.insns().size() - 1);
+      }
     }
 
     return result;
@@ -162,13 +184,18 @@ public class VdtConstraintSynthesisPass extends Pass {
 
   private Set<FixedEncoding> getFixedFields(Instruction insn) {
     return Arrays.stream(insn.encoding().fieldEncodings())
-        .map(e -> new FixedEncoding(e.formatField(), e.constant()))
+        .map(e -> new FixedEncoding(e.formatField(),
+            e.constant().trivialCastTo(e.formatField().type()).unsignedInteger()))
         .collect(Collectors.toSet());
   }
 
-  private record FixedEncoding(Format.Field field, Constant.Value value) {
+  private record FixedEncoding(Format.Field field, BigInteger value) {
   }
 
-  private record InstructionEncoding(DecodeEntry entry, Set<FixedEncoding> fields) {
+  private record IndexedInstruction(DecodeEntry entry, Set<FixedEncoding> fixedFields) {
+  }
+
+  private record FormatIndex(List<IndexedInstruction> insns,
+                             Map<FixedEncoding, BitSet> instructionsByFixedEncoding) {
   }
 }

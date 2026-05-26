@@ -53,18 +53,18 @@ public class SequentialInstructionDecoderTest {
         // Pattern should be extended to match the prefix of the encoding
         Arguments.of(
             BitPattern.fromBitVector(
-                BitVector.fromValue(new BigInteger("00000e0f", 16), 32),
-                BitVector.fromValue(new BigInteger("00008052", 16), 32)
+                new BitVector(new BigInteger("00000e0f", 16), 32),
+                new BitVector(new BigInteger("00008052", 16), 32)
             ),
-            BitVector.fromValue(new BigInteger("882a805200006000", 16), 64)
+            new BitVector(new BigInteger("882a805200006000", 16), 64)
         ),
         // Pattern should be truncated so only its prefix is matched against a shorter insn
         Arguments.of(
             BitPattern.fromBitVector(
-                BitVector.fromValue(new BigInteger("00000e0f", 16), 32),
-                BitVector.fromValue(new BigInteger("00008052", 16), 32)
+                new BitVector(new BigInteger("00000e0f", 16), 32),
+                new BitVector(new BigInteger("00008052", 16), 32)
             ),
-            BitVector.fromValue(new BigInteger("000080", 16), 24)
+            new BitVector(new BigInteger("000080", 16), 24)
         )
     );
   }

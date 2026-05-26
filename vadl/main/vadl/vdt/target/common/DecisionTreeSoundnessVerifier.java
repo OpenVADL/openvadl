@@ -43,7 +43,6 @@ import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.target.common.dto.PathVerificationInfo;
-import vadl.vdt.utils.Bit;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
@@ -186,8 +185,8 @@ public class DecisionTreeSoundnessVerifier
       final BitPattern pattern = node.getPattern().rightPad(sortWidth - node.getPattern().width());
 
       final BoolExpr eqExpr = ctx.mkEq(
-          ctx.mkBVAND(insn, ctx.mkBV(pattern.toMaskVector().toValue().toString(), sortWidth)),
-          ctx.mkBV(pattern.toBitVector().toValue().toString(), sortWidth)
+          ctx.mkBVAND(insn, ctx.mkBV(pattern.toMaskVector().value().toString(), sortWidth)),
+          ctx.mkBV(pattern.toBitVector().value().toString(), sortWidth)
       );
 
       final BoolExpr newExpr = ctx.mkAnd(
@@ -211,8 +210,8 @@ public class DecisionTreeSoundnessVerifier
       final BitPattern pattern = node.getPattern().rightPad(sortWidth - node.getPattern().width());
 
       final BoolExpr eqExpr = ctx.mkEq(
-          ctx.mkBVAND(insn, ctx.mkBV(pattern.toMaskVector().toValue().toString(), sortWidth)),
-          ctx.mkBV(pattern.toBitVector().toValue().toString(), sortWidth)
+          ctx.mkBVAND(insn, ctx.mkBV(pattern.toMaskVector().value().toString(), sortWidth)),
+          ctx.mkBV(pattern.toBitVector().value().toString(), sortWidth)
       );
 
       final BoolExpr newExpr = ctx.mkAnd(
@@ -240,13 +239,13 @@ public class DecisionTreeSoundnessVerifier
 
         // Pad values to the sort width for comparison
         int sortWidth = insn.getSortSize();
-        m = m.rightPad(sortWidth - m.width(), new Bit(false));
+        m = m.rightPad(sortWidth - m.width(), false);
         label = label.rightPad(sortWidth - label.width());
 
         final BoolExpr newExpr = ctx.mkAnd(
             ctx.mkEq(
-                ctx.mkBVAND(insn, ctx.mkBV(m.toValue().toString(), sortWidth)),
-                ctx.mkBV(label.toBitVector().toValue().toString(), sortWidth)
+                ctx.mkBVAND(insn, ctx.mkBV(m.value().toString(), sortWidth)),
+                ctx.mkBV(label.toBitVector().value().toString(), sortWidth)
             ),
             subExpr
         );
@@ -300,8 +299,8 @@ public class DecisionTreeSoundnessVerifier
     pattern = pattern.rightPad(sortWidth - pattern.width());
 
     return ctx.mkEq(
-        ctx.mkBVAND(i, ctx.mkBV(pattern.toMaskVector().toValue().toString(), sortWidth)),
-        ctx.mkBV(pattern.toBitVector().toValue().toString(), sortWidth)
+        ctx.mkBVAND(i, ctx.mkBV(pattern.toMaskVector().value().toString(), sortWidth)),
+        ctx.mkBV(pattern.toBitVector().value().toString(), sortWidth)
     );
   }
 

@@ -175,8 +175,8 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
     pattern = pattern.rightPad(sortWidth - pattern.width());
 
     return ctx.mkEq(
-        ctx.mkBVAND(i, ctx.mkBV(pattern.toMaskVector().toValue().toString(), sortWidth)),
-        ctx.mkBV(pattern.toBitVector().toValue().toString(), sortWidth)
+        ctx.mkBVAND(i, ctx.mkBV(pattern.toMaskVector().value().toString(), sortWidth)),
+        ctx.mkBV(pattern.toBitVector().value().toString(), sortWidth)
     );
   }
 
@@ -188,7 +188,7 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
                                                  List<DecodeEntry> entries) {
 
     final BitVector encoding =
-        BitVector.fromValue(counterexample.getBigInteger(), counterexample.getSortSize());
+        new BitVector(counterexample.getBigInteger(), counterexample.getSortSize());
 
     // Find all encoding definitions matching the counterexample
 
