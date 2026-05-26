@@ -52,40 +52,24 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
             cpu_exec_step_atomic(cs);
             break;
         case [(${gen_arch_upper})]_EXCP_[(${config.syscallException})]:
-            cause = env->[(${config.excCauseVar})];
-            switch (cause) {
-            case [(${gen_arch_upper})]_EXC_[(${config.syscallInstr})]:
-                env->[(${pc_reg.name_lower})] += [(${config.insn_width_bytes})];
-                    ret = do_syscall(env,
-                                      env->[(${config.mainRegisterFile})][ [(${config.sysReg})] ],
-                                      [# th:each="arg : ${config.args}"]
-                                      env->[(${config.mainRegisterFile})][ [(${arg})] ],
-                                      [/]
-                                      0, 0);
-                if (ret == -QEMU_ERESTARTSYS) {
-                    env->[(${pc_reg.name_lower})] -= [(${config.insn_width_bytes})];
-                } else if (ret != -QEMU_ESIGRETURN) {
-                    env->[(${config.mainRegisterFile})][ [(${config.retReg})] ] = ret;                }
-                if (cs->singlestep_enabled) {
-                    goto gdbstep;
-                }
-                break;
-
-            case [(${gen_arch_upper})]_EXC_[(${config.illegalInstrExc})]:
-                force_sig_fault(TARGET_SIGILL, TARGET_ILL_ILLOPC, env->[(${pc_reg.name_lower})]);
-                break;
-            case [(${gen_arch_upper})]_EXC_[(${config.breakpointExc})]:
-            case EXCP_DEBUG:
-            gdbstep:
-                force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
-                break;
-            default:
-                EXCP_DUMP(env,
-                          "\nqemu: unhandled [(${gen_arch_lower})] exception cause %#x - aborting\n",
-                          cause);
-                exit(EXIT_FAILURE);
+            env->[(${pc_reg.name_lower})] += [(${config.insn_width_bytes})];
+                ret = do_syscall(env,
+                                  env->[(${config.mainRegisterFile})][ [(${config.sysReg})] ],
+                                  [# th:each="arg : ${config.args}"]
+                                  env->[(${config.mainRegisterFile})][ [(${arg})] ],
+                                  [/]
+                                  0, 0);
+            if (ret == -QEMU_ERESTARTSYS) {
+                env->[(${pc_reg.name_lower})] -= [(${config.insn_width_bytes})];
+            } else if (ret != -QEMU_ESIGRETURN) {
+                env->[(${config.mainRegisterFile})][ [(${config.retReg})] ] = ret;                }
+            if (cs->singlestep_enabled) {
+                goto gdbstep;
             }
-            break;
+        case EXCP_DEBUG:
+        gdbstep:
+             force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
+             break;
         default:
             EXCP_DUMP(env, "\nqemu: unhandled CPU exception %#x - aborting\n",
                      trapnr);

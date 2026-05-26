@@ -4,6 +4,32 @@ import rv64csr::{ RV64IMZicsr }
 
 instruction set architecture RV64UME extending RV64IMZicsr = {}
 
+application binary interface ABI for RV64UME = {
+    alias register a0  = X(10)
+    alias register a1  = X(11)
+    alias register a2  = X(12)
+    alias register a3  = X(13)
+    alias register a4  = X(14)
+    alias register a5  = X(15)
+    alias register a7  = X(17)
+    alias register sp  = X(2)
+    alias register ra  = X(1)
+
+    return address    = ra
+    stack  pointer    = sp
+    return value      = a0
+    frame pointer     = X(8)
+    function argument = a{0..5}
+    caller saved = [ a{0..5} ]
+    callee saved = [ X(1) ]
+    special absolute address load instruction = LA
+    return value = a{0..1}
+
+    special return instruction = RET
+    special call instruction = CALL
+    special local address load instruction = LLA
+    special global address load instruction = LGA_64
+}
 
 // This is the system-mode entry point.
 // Once we have a user-mode definition, this should be removed.

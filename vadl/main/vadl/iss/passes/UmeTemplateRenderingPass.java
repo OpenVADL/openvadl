@@ -67,13 +67,13 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
     RegisterTensor mainRegFile = (RegisterTensor) abi.stackPointer().registerFile();
 
     Map<String, Integer> excIds = Map.of(
-        "RV64UME_EXC_ILLEGAL_INSTR", 2,
-        "RV64UME_EXC_ECALL", 11,
-        "RV64UME_EXC_BREAKPOINT", 3
+        "ILLEGAL_INSTR", 2,
+        "ECALL", 11,
+        "BREAKPOINT", 3
     );
 
     vars.put("config", Map.ofEntries(
-        Map.entry("sysReg", abi.stackPointer()),
+        Map.entry("sysReg", abi.stackPointer().addr()),
         Map.entry("retReg", abi.returnRegisters().get(0).get(0).addr()),
         Map.entry("spReg", abi.stackPointer().addr()),
         Map.entry("spRegName", abi.stackPointer().render()),
