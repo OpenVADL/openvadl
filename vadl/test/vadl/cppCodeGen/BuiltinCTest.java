@@ -1415,7 +1415,7 @@ public class BuiltinCTest extends DockerExecutionTest {
   Stream<DynamicTest> rrxTests() {
     return runTests(
         // 1-bit rotate right with carry: 1 >> 1 + carry(0) = 0
-        rrx(0x1, false, 1, 0x1),
+        rrx(0x1, false, 1, 0x0),
         // 1-bit rotate right with carry: 1 >> 1 + carry(1) = 1
         rrx(0x1, true, 1, 0x1),
         // 2-bit rotate right with carry: 2 >> 1 + carry(0) = 1
