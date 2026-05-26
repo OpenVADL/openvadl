@@ -128,18 +128,22 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     }
 
     final Map<BitPattern, Node> children = new LinkedHashMap<>();
-    for (BitPattern p : patterns.patterns()) {
-      final List<DecodeEntry> matchingEntries = makeMatchingEntries(decodeEntries.entries(), p);
+    for (var p : patterns.patterns().entrySet()) {
+
+      final BitPattern pattern = p.getKey();
+      final List<DecodeEntry> potentialMatches = p.getValue();
+
+      final List<DecodeEntry> matchingEntries = makeMatchingEntries(potentialMatches, pattern);
 
       if (matchingEntries.isEmpty()) {
         continue;
       }
 
-      final BitPattern checked = combinePatterns(decodeEntries.checkedBits(), p);
+      final BitPattern checked = combinePatterns(decodeEntries.checkedBits(), pattern);
 
       final DecodeEntries entries = new DecodeEntries(checked, matchingEntries);
       final Node childNode = generateInternal(entries);
-      children.put(p, childNode);
+      children.put(pattern, childNode);
     }
 
     return new MultiDecisionNode(patterns.mask(), children);
@@ -182,11 +186,11 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     BitVector checked = decodeEntries.checkedBits().toMaskVector();
     mask = mask.xor(checked);
 
-    final Set<BitPattern> options = new LinkedHashSet<>();
+    final Map<BitPattern, List<DecodeEntry>> options = new LinkedHashMap<>();
     for (DecodeEntry e : entries) {
       final BitVector b = e.pattern().toBitVector().and(mask);
       final BitPattern p = BitPattern.fromBitVector(mask, b);
-      options.add(p);
+      options.computeIfAbsent(p, k -> new ArrayList<>()).add(e);
     }
 
     return new MultiPatterns(mask, options);
@@ -600,7 +604,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
 
   }
 
-  private record MultiPatterns(BitVector mask, Set<BitPattern> patterns) {
+  private record MultiPatterns(BitVector mask, Map<BitPattern, List<DecodeEntry>> patterns) {
 
     boolean hasDecision() {
       return patterns.size() > 1;
