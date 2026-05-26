@@ -166,6 +166,7 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleMULS(BuiltInCall input) {
+    // TODO: required for aarch32.vadl
     throwNotImplemented(input);
   }
 
@@ -202,7 +203,6 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
   @Override
   public void handleUDIVS(BuiltInCall input) {
     new ArithmeticInliner.UDivS(input).inline();
-
   }
 
   @Override
@@ -218,61 +218,51 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
   @Override
   public void handleORS(BuiltInCall input) {
     new LogicInliner.OrS(input).inline();
-
   }
 
   @Override
   public void handleLSLS(BuiltInCall input) {
-    throwNotImplemented(input);
-
+    new ShiftRotateInliner.LSLS(input).inline();
   }
 
   @Override
   public void handleLSLC(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleASRS(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleLSRS(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleASRC(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleLSRC(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleROLS(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleROLC(BuiltInCall input) {
     throwNotImplemented(input);
-
   }
 
   @Override
   public void handleRORS(BuiltInCall input) {
-    throwNotImplemented(input);
-
+    new ShiftRotateInliner.RORS(input).inline();
   }
 
   @Override

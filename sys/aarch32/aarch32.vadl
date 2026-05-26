@@ -217,10 +217,8 @@ instruction set architecture AArch32v6 = {
   model AndNot() : Ex = {VADL::ands (R(rn), ~operand2)}
   model OrNot()  : Ex = {VADL::ors  (R(rn), ~operand2)}
 
-  // TODO: re-enable once inlining for lsls/rors works
-  //       see RemoveUnusedStatusFlagsFromBuiltinsPass
-  //model MovSft() : Ex = {VADL::lsls (operand2, 0)}
-  //model MovImm() : Ex = {VADL::rors (imm12(7..0) as Word, imm12(11..8) as Bits5 << 1)}
+  model MovSft() : Ex = {VADL::lsls (operand2, 0)}
+  model MovImm() : Ex = {VADL::rors (imm12(7..0) as Word, imm12(11..8) as Bits5 << 1)}
 
   model ArithmeticImmBehavior (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
     instruction AsId ($i.id, $f.flagExt, $c.condStr) : ArithmeticImmFormat =
@@ -867,8 +865,7 @@ instruction set architecture AArch32v6 = {
   $CondInstr3Flags    (ArithmeticSftInstr   ; (ORR   ; "orr"   ; OrS   ; 0b000'1100 )) // TODO set correct carry
   $CondInstr3Flags    (ArithmeticSftInstr   ; (EOR   ; "eor"   ; XOrS  ; 0b000'0001 )) // TODO set correct carry
   $CondInstr3Flags    (ArithmeticSftInstr   ; (BIC   ; "bic"   ; AndNot; 0b000'1110 )) // TODO set correct carry
-  // TODO: re-enable once inlining for lsls/rors works
-  //$CondInstr3Flags    (ArithMovSftInstr     ; (MOV   ; "mov"   ; MovSft; 0b000'1101 )) // TODO set correct carry
+  $CondInstr3Flags    (ArithMovSftInstr     ; (MOV   ; "mov"   ; MovSft; 0b000'1101 )) // TODO set correct carry
 
   $CondInstr4Flags    (ArithmeticImmInstr   ; (ADDI  ; "add"   ; AddS  ; 0b001'0100 ))
   $CondInstr4Flags    (ArithmeticImmInstr   ; (ADCI  ; "adc"   ; AddC  ; 0b001'0101 ))
@@ -879,8 +876,7 @@ instruction set architecture AArch32v6 = {
   $CondInstr3Flags    (ArithmeticImmInstr   ; (ORRI  ; "orr"   ; OrS   ; 0b001'1100 )) // TODO set correct carry
   $CondInstr3Flags    (ArithmeticImmInstr   ; (EORI  ; "eor"   ; XOrS  ; 0b001'0001 )) // TODO set correct carry
   $CondInstr3Flags    (ArithmeticImmInstr   ; (BICI  ; "bic"   ; AndNot; 0b001'1110 )) // TODO set correct carry
-  // TODO: re-enable once inlining for lsls/rors works
-  //$CondInstr3Flags    (ArithMovImmInstr     ; (MOVI  ; "mov"   ; MovImm; 0b001'1101 ))
+  $CondInstr3Flags    (ArithMovImmInstr     ; (MOVI  ; "mov"   ; MovImm; 0b001'1101 ))
 
   // TODO: re-enable once inlining for muls works
   //$CondInstr2Flags    (MultiplyInstr        ; (MUL   ; "mul"   ; Mul   ; 0b000'0000 ))

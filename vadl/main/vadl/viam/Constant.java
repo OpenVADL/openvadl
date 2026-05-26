@@ -692,7 +692,7 @@ public abstract class Constant {
     }
 
     /**
-     * Performs a logical shift left of this constant value by the specified amount
+     * Performs a logical shift right of this constant value by the specified amount
      * of the other value (which must be an unsigned integer).
      * The resulting type is the same as this type, the result is truncated on overflow.
      */
@@ -700,12 +700,34 @@ public abstract class Constant {
       var shift = other;
       var valWidth = BigInteger.valueOf(type().bitWidth());
       if (shift.value.compareTo(valWidth) >= 0) {
-        // if shift value is greather equal the value width, we must take the modulo
+        // if shift value is greater equal the value width, we must take the modulo
         shift = other.modulo(of(type().bitWidth(), other.type()), false);
       }
       var newValue = value
           .shiftRight(shift.intValue());
       return fromTwosComplement(newValue, type());
+    }
+
+    /**
+     * Performs a rotation left of this constant value by the specified amount
+     * of the other value (which must be an unsigned integer).
+     * The resulting type is the same as this type, the result is truncated on overflow.
+     */
+    public Constant.Value rol(Constant.Value other) {
+      int width = type().bitWidth();
+      int amt = other.intValue() % width;
+      if (amt == 0) {
+        return this;                  // nothing to do
+      }
+
+      BigInteger mask = BigInteger.ONE.shiftLeft(width).subtract(BigInteger.ONE); // width-bit mask
+
+      BigInteger rotated =
+          value.shiftLeft(amt)                     // upper part
+              .or(value.shiftRight(width - amt))   // wrapped-around part
+              .and(mask);                          // truncate to <width> bits
+
+      return fromTwosComplement(rotated, type());
     }
 
     /**
