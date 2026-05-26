@@ -29,6 +29,8 @@ import vadl.viam.Format;
  */
 public class PatternUtils {
 
+  private static final BigInteger BYTE_MASK = BigInteger.valueOf(0xff);
+
   private PatternUtils() {
     // Static utility class
   }
@@ -51,6 +53,7 @@ public class PatternUtils {
     // byte first.
     final int insnWidth = insn.format().type().bitWidth();
     final int alignedWidth = insnWidth % 8 != 0 ? insnWidth + (8 - insnWidth % 8) : insnWidth;
+    final int padding = alignedWidth - insnWidth;
 
     // Initialize all bits to "don't care"
     BigInteger mskBits = BigInteger.ZERO;
@@ -66,15 +69,16 @@ public class PatternUtils {
 
       int offset = 0;
       for (BitSlice.Part p : parts) {
-        for (int i = p.lsb(); i <= p.msb(); i++) {
-          var val = fixedValue.testBit((offset + i) - p.lsb());
-          final int idx = bitIndex(alignedWidth, insnWidth - (i + 1));
-          mskBits = mskBits.setBit(idx);
-          if (val) {
-            valBits = valBits.setBit(idx);
-          }
-        }
-        offset += p.size();
+        final int partSize = p.size();
+        final BigInteger partBitsMask = widthMask(partSize);
+        final BigInteger partMask = partBitsMask.shiftLeft(padding + p.lsb());
+        mskBits = mskBits.or(partMask);
+        valBits = valBits.or(
+            fixedValue.shiftRight(offset)
+                .and(partBitsMask)
+                .shiftLeft(padding + p.lsb())
+        );
+        offset += partSize;
       }
     }
 
@@ -84,34 +88,8 @@ public class PatternUtils {
     }
 
     // Reverse the byte order
-    for (int i = 0; i < alignedWidth / 16; i++) {
-      for (int j = 0; j < 8; j++) {
-        int l = bitIndex(alignedWidth, i * 8 + j);
-        int r = bitIndex(alignedWidth, alignedWidth - (i + 1) * 8 + j);
-
-        boolean mskL = mskBits.testBit(l);
-        boolean valL = valBits.testBit(l);
-
-        boolean mskR = mskBits.testBit(r);
-        boolean valR = valBits.testBit(r);
-
-        if (mskR) {
-          mskBits = mskBits.setBit(l);
-          valBits = valR ? valBits.setBit(l) : valBits.clearBit(l);
-        } else {
-          mskBits = mskBits.clearBit(l);
-          valBits = valBits.clearBit(l);
-        }
-
-        if (mskL) {
-          mskBits = mskBits.setBit(r);
-          valBits = valL ? valBits.setBit(r) : valBits.clearBit(r);
-        } else {
-          mskBits = mskBits.clearBit(r);
-          valBits = valBits.clearBit(r);
-        }
-      }
-    }
+    mskBits = reverseBytes(mskBits, alignedWidth);
+    valBits = reverseBytes(valBits, alignedWidth);
 
     return new BitPattern(mskBits, valBits, alignedWidth);
   }
@@ -147,6 +125,7 @@ public class PatternUtils {
     // byte first.
     final int insnWidth = format.type().bitWidth();
     final int alignedWidth = insnWidth % 8 != 0 ? insnWidth + (8 - insnWidth % 8) : insnWidth;
+    final int padding = alignedWidth - insnWidth;
 
     // Initialize all bits to "don't care"
     BigInteger mskBits = BigInteger.ZERO;
@@ -161,15 +140,16 @@ public class PatternUtils {
 
     int offset = 0;
     for (BitSlice.Part p : parts) {
-      for (int i = p.lsb(); i <= p.msb(); i++) {
-        var val = fixedValue.testBit((offset + i) - p.lsb());
-        final int idx = bitIndex(alignedWidth, insnWidth - (i + 1));
-        mskBits = mskBits.setBit(idx);
-        if (val) {
-          valBits = valBits.setBit(idx);
-        }
-      }
-      offset += p.size();
+      final int partSize = p.size();
+      final BigInteger partBitsMask = widthMask(partSize);
+      final BigInteger partMask = partBitsMask.shiftLeft(padding + p.lsb());
+      mskBits = mskBits.or(partMask);
+      valBits = valBits.or(
+          fixedValue.shiftRight(offset)
+              .and(partBitsMask)
+              .shiftLeft(padding + p.lsb())
+      );
+      offset += partSize;
     }
 
     if (byteOrder != ByteOrder.LITTLE_ENDIAN || alignedWidth <= 8) {
@@ -178,34 +158,8 @@ public class PatternUtils {
     }
 
     // Reverse the byte order
-    for (int i = 0; i < alignedWidth / 16; i++) {
-      for (int j = 0; j < 8; j++) {
-        int l = bitIndex(alignedWidth, i * 8 + j);
-        int r = bitIndex(alignedWidth, alignedWidth - (i + 1) * 8 + j);
-
-        boolean mskL = mskBits.testBit(l);
-        boolean valL = valBits.testBit(l);
-
-        boolean mskR = mskBits.testBit(r);
-        boolean valR = valBits.testBit(r);
-
-        if (mskR) {
-          mskBits = mskBits.setBit(l);
-          valBits = valR ? valBits.setBit(l) : valBits.clearBit(l);
-        } else {
-          mskBits = mskBits.clearBit(l);
-          valBits = valBits.clearBit(l);
-        }
-
-        if (mskL) {
-          mskBits = mskBits.setBit(r);
-          valBits = valL ? valBits.setBit(r) : valBits.clearBit(r);
-        } else {
-          mskBits = mskBits.clearBit(r);
-          valBits = valBits.clearBit(r);
-        }
-      }
-    }
+    mskBits = reverseBytes(mskBits, alignedWidth);
+    valBits = reverseBytes(valBits, alignedWidth);
 
     return new BitPattern(mskBits, valBits, alignedWidth);
   }
@@ -321,8 +275,16 @@ public class PatternUtils {
     return new BitPattern(m, v, p1.width());
   }
 
-  private static int bitIndex(int width, int displayIndex) {
-    return width - 1 - displayIndex;
+  private static BigInteger reverseBytes(BigInteger bits, int width) {
+    BigInteger result = BigInteger.ZERO;
+    final int byteCount = width / 8;
+    for (int i = 0; i < byteCount; i++) {
+      result = result.or(bits
+          .shiftRight(i * 8)
+          .and(BYTE_MASK)
+          .shiftLeft((byteCount - i - 1) * 8));
+    }
+    return result;
   }
 
   /**
