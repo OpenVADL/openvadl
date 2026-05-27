@@ -46,7 +46,7 @@ import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStaticReadRegNode;
 import vadl.iss.passes.nodes.IssTempExprNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
-import vadl.iss.passes.tcgLowering.TcgExtend;
+import vadl.iss.passes.tcg.lowering.TcgExtend;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.pass.PassName;
@@ -75,6 +75,8 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.OperationExistsNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -122,7 +124,7 @@ public class IssNormalizationPass extends AbstractIssPass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var issConfig = (IssConfiguration) configuration();
 
-    tcgInstrs(viam)
+    normalTcgInstrs(viam)
         .forEach(instruction -> new IssNormalizer(instruction.behavior(),
             issConfig.targetSize().width)
             .run());
@@ -866,4 +868,18 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     // do nothing
   }
 
+  @Handler
+  void handle(OperationForAllNode toHandle) {
+    // do nothing
+  }
+
+  @Handler
+  void handle(OperationForAllNode.Index toHandle) {
+    // do nothing
+  }
+
+  @Handler
+  void handle(OperationExistsNode toHandle) {
+    // do nothing
+  }
 }

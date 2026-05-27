@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@ package vadl.iss.passes.nodes;
 
 import java.util.List;
 import vadl.iss.passes.TcgPassUtils;
-import vadl.iss.passes.tcgLowering.TcgCondition;
+import vadl.iss.passes.tcg.lowering.TcgCondition;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.Constant;
@@ -33,15 +33,15 @@ import vadl.viam.graph.dependency.SelectNode;
  * The lowering of the {@link SelectNode}. It contains a {@link TcgCondition} as operation
  * condition.
  * This is the preparation for the lowering to
- * {@link vadl.iss.passes.tcgLowering.nodes.TcgMovCondNode}.
+ * {@link vadl.iss.passes.tcg.lowering.nodes.TcgMovCondNode}.
  * The node is created in the {@link vadl.iss.passes.IssTcgSchedulingPass} and substitutes
  * select nodes that were scheduled.
  *
  * <p>This node is never rendered as C-code, as a {@link SelectNode} that was not scheduled
  * is not turned into a {@link IssSelectNode}.
  * If the original node was scheduled, this node is turned into a
- * {@link vadl.iss.passes.tcgLowering.nodes.TcgMovCondNode} or
- * {@link vadl.iss.passes.tcgLowering.nodes.TcgConstSelectNode}</p>
+ * {@link vadl.iss.passes.tcg.lowering.nodes.TcgMovCondNode} or
+ * {@link vadl.iss.passes.tcg.lowering.nodes.TcgConstSelectNode}</p>
  */
 public class IssSelectNode extends ExpressionNode {
 

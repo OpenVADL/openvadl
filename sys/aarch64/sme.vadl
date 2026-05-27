@@ -13,19 +13,19 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
   using UIntS = UIntW
   using UIntD = UIntX
 
-  register       ZA  : BitsZ <NumElementsB>           //        array register file
+  register       ZA  : BitsZ <NumElementsB>       //        array register file
 
-//alias register ZHB : BitsZB<NumElementsB>< 1> = ZA  // byte   array register file
-//alias register ZHH : BitsZH<NumElementsH>< 2> = ZA  // half   array register file
-//alias register ZHS : BitsZS<NumElementsS>< 4> = ZA  // single array register file
-//alias register ZHD : BitsZD<NumElementsD>< 8> = ZA  // double array register file
-//alias register ZHQ : BitsZQ<NumElementsQ><16> = ZA  // quad   array register file
+//alias register ZAB : BitsZB<NumElementsB>< 1> = ZA  // byte   array register file
+//alias register ZAH : BitsZH<NumElementsH>< 2> = ZA  // half   array register file
+//alias register ZAS : BitsZS<NumElementsS>< 4> = ZA  // single array register file
+//alias register ZAD : BitsZD<NumElementsD>< 8> = ZA  // double array register file
+//alias register ZAQ : BitsZQ<NumElementsQ><16> = ZA  // quad   array register file
 
-  alias register ZHB : BitsZB<NumElementsB> = ZA  // byte   array register file
-  alias register ZHH : BitsZH<NumElementsB> = ZA  // half   array register file
-  alias register ZHS : BitsZS<NumElementsB> = ZA  // single array register file
-  alias register ZHD : BitsZD<NumElementsB> = ZA  // double array register file
-  alias register ZHQ : BitsZQ<NumElementsB> = ZA  // quad   array register file
+  alias register ZAB : BitsZB<NumElementsB> = ZA  // byte   array register file
+  alias register ZAH : BitsZH<NumElementsB> = ZA  // half   array register file
+  alias register ZAS : BitsZS<NumElementsB> = ZA  // single array register file
+  alias register ZAD : BitsZD<NumElementsB> = ZA  // double array register file
+  alias register ZAQ : BitsZQ<NumElementsB> = ZA  // quad   array register file
 
 // SME integer outer product models ********************************************
 
@@ -50,15 +50,21 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
     }
 
   model SizeShift (size: Id) : Int = {
-    match: Int ($size = S => 2 ; _ => 2)
+    match: Int ($size = S => 2 ; _ => 3)
   }
 
   model ZAda (size: Id) : Ex = {
     match: Ex ($size = S => (register(zada), '.s, ') ; _ => (register(zada), '.d, '))
   }
 
+  model ZRegBH (size: Id) : Id = {
+    match: Id ($size = S => ZB ; _ => ZH)
+  }
+
   model ZRegB (nm: Id) : Ex = { (register($nm), '.b, ') }
   model ZRegH (nm: Id) : Ex = { (register($nm), '.h, ') }
+  model ZRegS (nm: Id) : Ex = { (register($nm), '.s, ') }
+  model ZRegD (nm: Id) : Ex = { (register($nm), '.d, ') }
 
   model ExtType (mul: Id, size: Id) : Id = {
     match: Id ($mul = umull => AsId (UInt, $size) ; _ => AsId (SInt, $size))
@@ -66,22 +72,22 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
 
   model SMEIntOutProdInstr (i: InstrWithFunct, size: Id, way: Int, zreg: (Id)->Ex): IsaDefs = {
     instruction $i.id: AsId (SMEIntOutProductFormat, $size) =
-      let src1 = ZB(zn) in
-      let src2 = ZB(zm) in
+      let src1 = $ZRegBH($size)(zn) in
+      let src2 = $ZRegBH($size)(zm) in
       let msk1 =  P(pn) in
       let msk2 =  P(pm) in
       forall row : SIntW in 0 .. AsId (NumElements, $size) - 1 do
         forall col : SIntW in 0 .. AsId (NumElements, $size) - 1 do
-          let areg = row << $SizeShift($size) + zada in
-          let aoff = col in
-          let sum = AsId (ZH, $size)(areg)(aoff) + 
+          let arow = row << $SizeShift($size) + zada in
+          let acol = col in
+          let sum = AsId (ZA, $size)(arow)(acol) + 
             forall way : SIntW in 0 .. $way - 1 fold + with
               let rowway = row * $way + way in
               let colway = col * $way + way in
                 if msk1(rowway << $SizeShift($size)) = 1 && msk2(colway << $SizeShift($size)) = 1
                   then VADL::$i.funct(src1(rowway) , src2(colway)) as $ExtType($i.funct ; $size)
                   else 0
-            in AsId (ZH, $size)(areg)(aoff) := sum
+            in AsId (ZA, $size)(arow)(acol) := sum
     encoding $i.id = { op = 0b101'0000, opc = $i.opcode }
     assembly $i.id = ( $i.mnemo, ' ', $ZAda($size), register(pn), '/m, ', register(pm), '/m, ', $zreg(zn), $zreg(zm))
     }
@@ -97,6 +103,64 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
   model SMEIntOutProd4WayDInstr (i: InstrWithFunct): IsaDefs = {
     $SMEIntOutProdInstr ($i ; D ; 4 ; ZRegH)
     }
+
+// SME array add models ********************************************************
+
+  model SMEAddHorizontallyInstr (i: InstrWithFunct, size: Id, zreg: (Id)->Ex): IsaDefs = {
+    instruction $i.id: AsId (SMEIntOutProductFormat, $size) =
+      let src1 = AsId (Z, $size)(zn) in
+      let msk1 =  P(pn) in
+      let msk2 =  P(pm) in
+      forall col : SIntW in 0 .. AsId (NumElements, $size) - 1 do
+        let elem = src1(col) in 
+          forall row : SIntW in 0 .. AsId (NumElements, $size) - 1 do
+            let arow = row << $SizeShift($size) + zada in
+            let acol = col in
+            let sum = AsId (ZA, $size)(arow)(acol) + 
+              if msk1(row << $SizeShift($size)) = 1 && msk2(col << $SizeShift($size)) = 1
+                then elem
+                else 0
+              in AsId (ZA, $size)(arow)(acol) := sum
+    encoding $i.id = { op = 0b110'0000, opc = $i.opcode, zm = 0b1'0000 }
+    assembly $i.id = ( $i.mnemo, ' ', $ZAda($size), register(pn), '/m, ', register(pm), '/m, ', $zreg(zn))
+    }
+
+  model SMEAddHorizontallySInstr (i: InstrWithFunct): IsaDefs = {
+    $SMEAddHorizontallyInstr ($i ; S ; ZRegS)
+    }
+
+  model SMEAddHorizontallyDInstr (i: InstrWithFunct): IsaDefs = {
+    $SMEAddHorizontallyInstr ($i ; D ; ZRegD)
+    }
+
+  model SMEAddVerticallyInstr (i: InstrWithFunct, size: Id, zreg: (Id)->Ex): IsaDefs = {
+    instruction $i.id: AsId (SMEIntOutProductFormat, $size) =
+      let src1 = AsId (Z, $size)(zn) in
+      let msk1 =  P(pn) in
+      let msk2 =  P(pm) in
+      forall row : SIntW in 0 .. AsId (NumElements, $size) - 1 do
+        let elem = src1(row) in 
+          forall col : SIntW in 0 .. AsId (NumElements, $size) - 1 do
+            let arow = row << $SizeShift($size) + zada in
+            let acol = col in
+            let sum = AsId (ZA, $size)(arow)(acol) + 
+              if msk1(row << $SizeShift($size)) = 1 && msk2(col << $SizeShift($size)) = 1
+                then elem
+                else 0
+              in AsId (ZA, $size)(arow)(acol) := sum
+    encoding $i.id = { op = 0b110'0000, opc = $i.opcode, zm = 0b1'0001 }
+    assembly $i.id = ( $i.mnemo, ' ', $ZAda($size), register(pn), '/m, ', register(pm), '/m, ', $zreg(zn))
+    }
+
+  model SMEAddVerticallySInstr (i: InstrWithFunct): IsaDefs = {
+    $SMEAddVerticallyInstr ($i ; S ; ZRegS)
+    }
+
+  model SMEAddVerticallyDInstr (i: InstrWithFunct): IsaDefs = {
+    $SMEAddVerticallyInstr ($i ; D ; ZRegD)
+    }
+
+// sme start / stop models *****************************************************
 
   model SMEImmToSysRegOffInstr (i: InstrWithFunct, off: Int): IsaDefs = {
     instruction AsId ($i.id, $i.funct) : MoveImmSystemRegFormat = {}
@@ -115,6 +179,9 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
   $SMEImmToSysRegInstr     (                     (SMEMSR        ; "msr"   ; 0b0100           ; svcrza   ))
   $SMEImmToSysRegInstr     (                     (SMEMSR        ; "msr"   ; 0b0110           ; svcrsmza ))
 
+  $SMEAddHorizontallySInstr (                    (SMEADDHAS     ; "addha" ; 0b0100'000       ; add      ))
+  $SMEAddVerticallySInstr   (                    (SMEADDVAS     ; "addva" ; 0b0100'000       ; add      ))
+
   $SMEIntOutProd4WaySInstr (                     (SMESMOPA4S    ; "smopa" ; 0b0100'000       ; smull    ))
   $SMEIntOutProd4WaySInstr (                     (SMESUMOPA4S   ; "sumopa"; 0b0101'000       ; sumull   ))
   $SMEIntOutProd4WaySInstr (                     (SMEUMOPA4S    ; "umopa" ; 0b1101'000       ; umull    ))
@@ -130,6 +197,9 @@ instruction set architecture AArch64SME2 extending AArch64SME = {
   }
 
 instruction set architecture AArch64SME_I16I64 extending AArch64SME2 = {
+
+  $SMEAddHorizontallyDInstr (                    (SMEADDHAD     ; "addha" ; 0b0110'00        ; add      ))
+  $SMEAddVerticallyDInstr   (                    (SMEADDVAD     ; "addva" ; 0b0110'00        ; add      ))
 
   $SMEIntOutProd4WayDInstr (                     (SMESMOPA4D    ; "smopa" ; 0b0110'00        ; smull    ))
   $SMEIntOutProd4WayDInstr (                     (SMESUMOPA4D   ; "sumopa"; 0b0111'00        ; sumull   ))

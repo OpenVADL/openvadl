@@ -29,7 +29,7 @@ import java.util.SequencedMap;
  */
 public class StructType extends Type {
 
-  private final SequencedMap<String, Type> types;
+  protected final SequencedMap<String, Type> types;
 
   protected StructType(Map<String, Type> type) {
     this.types = new LinkedHashMap<>(type);

@@ -1,0 +1,42 @@
+instruction set architecture ISA = {
+  program counter PC : Bits<32>
+
+  format AType : Bits<32> = {
+    a : Bits<20>,
+    b : Bits<5>,
+    c : Bits<7>
+  }
+
+  format BType : Bits<32> = {
+    a : Bits<20>,
+    b : Bits<5>,
+    d : Bits<7>
+  }
+
+  instruction A : AType = PC := 0
+  encoding A = {a = 0b00}
+  assembly A = (mnemonic, "")
+
+  instruction B : BType = PC := 0
+  encoding B = {a = 0b01}
+  assembly B = (mnemonic, "")
+
+  operation OpA = {A}
+  operation OpB = {B}
+
+  [assert : exists in {OpA, A}]
+  group VLIW = OpA.OpB
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Operation List
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidExistsInOperationElement.vadl:27:29
+//       │
+//    27 │   [assert : exists in {OpA, A}]
+//       │                             ^ note: Elements must be operations, but this was a `instruction definition`
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

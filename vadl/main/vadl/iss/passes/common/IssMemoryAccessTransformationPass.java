@@ -23,9 +23,9 @@ import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssStoreNode;
-import vadl.iss.passes.tcgLowering.TcgEndianness;
-import vadl.iss.passes.tcgLowering.TcgExtend;
-import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
+import vadl.iss.passes.tcg.lowering.TcgEndianness;
+import vadl.iss.passes.tcg.lowering.TcgExtend;
+import vadl.iss.passes.tcg.lowering.Tcg_8_16_32_64;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -58,7 +58,7 @@ public class IssMemoryAccessTransformationPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    tcgInstrs(viam)
+    normalTcgInstrs(viam)
         .forEach(instruction -> new MemoryTransformer(instruction.behavior()).run());
 
     return null;

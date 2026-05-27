@@ -294,7 +294,7 @@ assembly Test = ""
 //    . : ' Inputs: A, B, C, D
 //    . : ' Outputs: A, B, C, D
 //    . : ' Encoding: encoding
-//    . : ' Assembly: TEST::Test::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0  ReadsRegisterTensor  in: ()              succ: ()      type: b13   reg: A   resource: W   baseReg: A
 //    . : ' | n1  FuncCall             in: (n0)            succ: ()      type: b13   func: func
@@ -312,10 +312,10 @@ assembly Test = ""
 //    . : ' | n13 WritesRegisterTensor in: (n3 n4 n12)     succ: ()      reg: D   resource: U
 //    . : ' | n14 InstrEnd             in: (n2 n7 n10 n13) succ: ()      effects: 4
 //    . : ' | n15 Start                in: ()              succ: (n14)   next: set
-//    . : ' Assembly name: "TEST::Test::assembly"
-//    . : ' | Function: TEST::Test::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "TEST::Test::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []

@@ -74,9 +74,6 @@ instruction set architecture RV3264I = {
 //    . : ' | . ArgsIndices
 //    . : ' | . : CastExpr type: Bits<5>
 //    . : ' | . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' | . : ' TypeLiteral type: Bits<5>
-//    . : ' | . : ' | Identifier name: "Bits" type: null
-//    . : ' | . : ' | IntegerLiteral literal: 5 (5) type: null
 //    . : ' | CastExpr type: Bits<32>
 //    . : ' | . Identifier name: "x" type: Bits<32>
 //    . : ' | . TypeLiteral type: Bits<32>
@@ -87,9 +84,6 @@ instruction set architecture RV3264I = {
 //    . : Identifier name: "op" type: null
 //    . : CastExpr type: Bits<32>
 //    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' TypeLiteral type: Bits<32>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "add1" ("add1") type: String
 //    . InstructionDefinition name: "add2"
@@ -106,9 +100,6 @@ instruction set architecture RV3264I = {
 //    . : ' | . ArgsIndices
 //    . : ' | . : CastExpr type: Bits<5>
 //    . : ' | . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' | . : ' TypeLiteral type: Bits<5>
-//    . : ' | . : ' | Identifier name: "Bits" type: null
-//    . : ' | . : ' | IntegerLiteral literal: 5 (5) type: null
 //    . : ' | CastExpr type: Bits<32>
 //    . : ' | . Identifier name: "x" type: Bits<64>
 //    . : ' | . TypeLiteral type: Bits<32>
@@ -119,9 +110,6 @@ instruction set architecture RV3264I = {
 //    . : Identifier name: "op" type: null
 //    . : CastExpr type: Bits<32>
 //    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' TypeLiteral type: Bits<32>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "add2" ("add2") type: String
 //

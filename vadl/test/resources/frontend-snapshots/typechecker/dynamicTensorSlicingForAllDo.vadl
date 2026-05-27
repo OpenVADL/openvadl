@@ -64,35 +64,20 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . : ' | CastExpr type: Bits<32>
 //    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . TypeLiteral type: Bits<32>
-//    . : ' | . : Identifier name: "Bits" type: null
-//    . : ' | . : IntegerLiteral literal: 32 (32) type: null
 //    . EncodingDefinition
 //    . : Identifier name: "Init4X" type: null
 //    . : Identifier name: "opcode" type: null
 //    . : CastExpr type: Bits<4>
 //    . : ' BinaryLiteral literal: 0b1100 (12) type: Const<12>
-//    . : ' TypeLiteral type: Bits<4>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 4 (4) type: null
 //    . : Identifier name: "rs2" type: null
 //    . : CastExpr type: Bits<4>
 //    . : ' BinaryLiteral literal: 0b0000 (0) type: Const<0>
-//    . : ' TypeLiteral type: Bits<4>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 4 (4) type: null
 //    . : Identifier name: "rs1" type: null
 //    . : CastExpr type: Bits<4>
 //    . : ' BinaryLiteral literal: 0b0000 (0) type: Const<0>
-//    . : ' TypeLiteral type: Bits<4>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 4 (4) type: null
 //    . : Identifier name: "rd" type: null
 //    . : CastExpr type: Bits<4>
 //    . : ' BinaryLiteral literal: 0b0000 (0) type: Const<0>
-//    . : ' TypeLiteral type: Bits<4>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 4 (4) type: null
 //    . AssemblyDefinition
 //    . : GroupedExpr type: String
 //    . : ' Identifier name: "mnemonic" type: String

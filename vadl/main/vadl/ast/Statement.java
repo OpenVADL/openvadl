@@ -396,7 +396,7 @@ final class RaiseStatement extends Statement {
   SourceLocation location;
 
   @LazyInit
-  String viamId;
+  List<String> viamId;
 
   RaiseStatement(Statement statement, SourceLocation location) {
     this.statement = statement;

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -28,10 +28,10 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import vadl.iss.passes.tcgLowering.nodes.TcgBr;
-import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
-import vadl.iss.passes.tcgLowering.nodes.TcgLabelNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
+import vadl.iss.passes.tcg.lowering.nodes.TcgBr;
+import vadl.iss.passes.tcg.lowering.nodes.TcgBrCond;
+import vadl.iss.passes.tcg.lowering.nodes.TcgLabelNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgSetLabel;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;

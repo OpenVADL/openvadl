@@ -83,17 +83,11 @@ constant t = b % 20             // 2
 //    . : Identifier name: "b" type: Const<42>
 //    . : CastExpr type: UInt<2>
 //    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' TypeLiteral type: UInt<2>
-//    . : ' | Identifier name: "UInt" type: null
-//    . : ' | IntegerLiteral literal: 2 (2) type: null
 //    ConstantDefinition name: "o" evaluatedValue: 10
 //    . BinaryExpr operator: >> type: Const<10>
 //    . : Identifier name: "b" type: Const<42>
 //    . : CastExpr type: UInt<2>
 //    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : ' TypeLiteral type: UInt<2>
-//    . : ' | Identifier name: "UInt" type: null
-//    . : ' | IntegerLiteral literal: 2 (2) type: null
 //    ConstantDefinition name: "p" evaluatedValue: 93
 //    . BinaryExpr operator: + type: Const<93>
 //    . : Identifier name: "a" type: Const<51>

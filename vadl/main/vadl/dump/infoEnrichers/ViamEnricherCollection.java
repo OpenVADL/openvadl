@@ -29,7 +29,6 @@ import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.iss.passes.extensions.InstrExecPlan;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.utils.SourceLocation;
 import vadl.viam.DefProp;
@@ -309,14 +308,10 @@ public class ViamEnricherCollection {
         }
 
         var executionPlan = info.executionPlan();
-        entity.addInfo(Info.Tag.of("SelectedExecutionStrategy",
-            executionPlan.selectedStrategy().name()));
+        entity.addInfo(Info.Tag.of("SelectedExecutionPath",
+            executionPlan.selectedPath().name()));
 
-        var directGvec = executionPlan.evaluation(
-            InstrExecPlan.StrategyKind.DIRECT_GVEC);
-        if (directGvec == null) {
-          return;
-        }
+        var directGvec = executionPlan.directGvec();
 
         entity.addInfo(Info.Tag.of("DirectGvecStatus", directGvec.status().name()));
         entity.addInfo(Info.Tag.of("DirectGvecIssues",

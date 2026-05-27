@@ -44,7 +44,7 @@ import vadl.iss.passes.common.opDecomposition.nodes.IssMulKind;
 import vadl.iss.passes.common.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import vadl.iss.passes.tcg.lowering.Tcg_32_64;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.DataType;

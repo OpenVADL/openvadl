@@ -85,9 +85,6 @@ instruction set architecture RV3264I = {
 //    . : ' | ArgsIndices
 //    . : ' | . CastExpr type: Bits<5>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . : TypeLiteral type: Bits<5>
-//    . : ' | . : ' Identifier name: "Bits" type: null
-//    . : ' | . : ' IntegerLiteral literal: 5 (5) type: null
 //    . : TypeLiteral type: Bits<5>
 //    . : ' Identifier name: "Index" type: null
 //    . : TypeLiteral type: Bits<32>
@@ -176,9 +173,6 @@ instruction set architecture RV3264I = {
 //    . : Identifier name: "rs2" type: null
 //    . : CastExpr type: Bits<5>
 //    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' TypeLiteral type: Bits<5>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 5 (5) type: null
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "" ("") type: String
 //    . EncodingDefinition
@@ -186,9 +180,6 @@ instruction set architecture RV3264I = {
 //    . : Identifier name: "rs2" type: null
 //    . : CastExpr type: Bits<5>
 //    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : ' TypeLiteral type: Bits<5>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 5 (5) type: null
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

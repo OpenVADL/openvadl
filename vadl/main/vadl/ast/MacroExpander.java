@@ -16,6 +16,7 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
 import java.util.ArrayList;
@@ -378,7 +379,7 @@ class MacroExpander
 
   @Override
   public Expr visit(CastExpr expr) {
-    return new CastExpr(expandExpr(expr.value), expandExpr(expr.typeLiteral));
+    return new CastExpr(expandExpr(expr.value), expandExpr(requireNonNull(expr.typeLiteral)));
   }
 
   @Override
@@ -480,15 +481,25 @@ class MacroExpander
 
   @Override
   public Expr visit(ExistsInThenExpr expr) {
-    var conditions = new ArrayList<ExistsInThenExpr.Condition>(expr.conditions.size());
-    for (var condition : expr.conditions) {
-      conditions.add(new ExistsInThenExpr.Condition(
-          expandExpr(expandExpr(condition.id())),
-          expandExprs(condition.operations())));
-    }
-    return new ExistsInThenExpr(conditions, expandExpr(expr.thenExpr), copyLoc(expr.loc));
+    var indices = new ArrayList<>(expr.indices);
+    indices.replaceAll(index -> {
+      var operations = new ArrayList<>(index.operations);
+      operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
+      return new ExistsInThenExpr.Index(expandExpr(index.identifier()), operations);
+    });
+    return new ExistsInThenExpr(indices, expandExpr(expr.thenExpr), copyLoc(expr.loc));
   }
 
+  @Override
+  public Expr visit(ForallThenExpr expr) {
+    var indices = new ArrayList<>(expr.indices);
+    indices.replaceAll(index -> {
+      var operations = new ArrayList<>(index.operations);
+      operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
+      return new ForallThenExpr.Index(expandExpr(index.identifier()), operations);
+    });
+    return new ForallThenExpr(indices, expandExpr(expr.thenExpr), copyLoc(expr.loc));
+  }
 
   @Override
   public Expr visit(ForallExpr expr) {

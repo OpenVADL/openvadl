@@ -27,7 +27,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
-import vadl.iss.passes.tcgLowering.TcgExtend;
+import vadl.iss.passes.tcg.lowering.TcgExtend;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -58,7 +58,7 @@ public class IssExtractOptimizationPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var targetSize = configuration().targetSize().width;
-    tcgInstrs(viam).forEach(i -> {
+    normalTcgInstrs(viam).forEach(i -> {
       new IssExtractOptimizer(i.behavior(), targetSize).run();
     });
 

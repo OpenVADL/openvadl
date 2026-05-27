@@ -22,8 +22,8 @@ import static vadl.error.Diagnostic.warning;
 
 import com.google.common.collect.Streams;
 import java.math.BigInteger;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,6 +64,7 @@ import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.utils.Either;
+import vadl.utils.IdentityDeque;
 import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
@@ -122,7 +124,7 @@ public class TypeChecker
    * visiting. This helps us detect cycles, which aren't allowed and so we can abort early with an
    * error instead of causing a crash due to a stack overflow.
    */
-  private final Deque<Integer> currentlyVisiting = new ArrayDeque<Integer>();
+  private final Deque<Node> currentlyVisiting = new IdentityDeque<>();
 
   /**
    * There is no point in checking a statement or definition twice, so these sets record which
@@ -173,8 +175,7 @@ public class TypeChecker
       return requireNonNull(expr.type);
     }
 
-    var nodeId = System.identityHashCode(expr);
-    if (currentlyVisiting.contains(nodeId)) {
+    if (currentlyVisiting.contains(expr)) {
       throw addErrorAndAbortChecking(error("Infinite Recursion", expr)
           .description("The node is defined by itself.")
           .build());
@@ -182,7 +183,7 @@ public class TypeChecker
 
     var previousExpectedType = this.expectedType;
     this.expectedType = expectedType;
-    currentlyVisiting.add(nodeId);
+    currentlyVisiting.add(expr);
     try {
       expr.accept(this);
     } catch (StopPartialCheckingSignal signal) {
@@ -221,14 +222,13 @@ public class TypeChecker
       return;
     }
 
-    var nodeId = System.identityHashCode(stmt);
-    if (currentlyVisiting.contains(nodeId)) {
+    if (currentlyVisiting.contains(stmt)) {
       throw addErrorAndAbortChecking(error("Infinite Recursion", stmt)
           .description("The node is defined by itself.")
           .build());
     }
 
-    currentlyVisiting.add(nodeId);
+    currentlyVisiting.add(stmt);
     try {
       stmt.accept(this);
     } catch (StopPartialCheckingSignal signal) {
@@ -246,10 +246,13 @@ public class TypeChecker
     }
 
     // NOTE: This could have been done in the symbol resolver
-    // Disallow the same annotation multiple times
-    Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
+    // Disallow the same annotation multiple times, unless explicitly allowed
+
+    final Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
     def.annotations.forEach(annotation -> {
-      if (annotationNames.containsKey(annotation.name())) {
+
+      final var isMulti = requireNonNull(annotation.annotation).allowMultiple();
+      if (!isMulti && annotationNames.containsKey(annotation.name())) {
         addErrorAndContinueChecking(error("Duplicate Annotation", def)
             .locationNote(annotationNames.get(annotation.name()), "First usage here")
             .locationNote(def, "Second usage here")
@@ -260,7 +263,9 @@ public class TypeChecker
       // check annotation definition itself
       check(annotation);
 
-      annotationNames.put(annotation.name(), annotation);
+      if (isMulti) {
+        annotationNames.put(annotation.name(), annotation);
+      }
     });
 
     // Find annotations in groups and execute the check of the groups.
@@ -284,8 +289,7 @@ public class TypeChecker
       return;
     }
 
-    var nodeId = System.identityHashCode(def);
-    if (currentlyVisiting.contains(nodeId)) {
+    if (currentlyVisiting.contains(def)) {
       String message = "The node is defined by itself.";
       if (def instanceof IdentifiableNode identifiableNode) {
         message =
@@ -298,7 +302,7 @@ public class TypeChecker
     }
 
     // Visit the definitions
-    currentlyVisiting.add(nodeId);
+    currentlyVisiting.add(def);
     try {
       def.accept(this);
     } catch (StopPartialCheckingSignal signal) {
@@ -335,6 +339,32 @@ public class TypeChecker
     if (!checker.errors.isEmpty()) {
       throw new DiagnosticList(checker.errors);
     }
+  }
+
+  /**
+   * Access the stack of currently visiting nodes.
+   */
+  private Stream<Node> getContext() {
+    return Streams.stream(currentlyVisiting.descendingIterator());
+  }
+
+  /**
+   * Access the stack of currently visiting nodes by type, accepting additional filters.
+   *
+   * @param clz     class of the node
+   * @param filters the filters to apply
+   * @param <T>     type of the node
+   * @return the node
+   */
+  @Nullable
+  @SafeVarargs
+  private <T extends Node> T getContextNode(Class<T> clz, Predicate<T>... filters) {
+    final List<Predicate<T>> predicates = Arrays.asList(filters);
+    return getContext()
+        .filter(clz::isInstance)
+        .map(clz::cast)
+        .filter(n -> predicates.stream().allMatch(p -> p.test(n)))
+        .findFirst().orElse(null);
   }
 
   private Diagnostic unimplementedError(Node node) {
@@ -747,6 +777,31 @@ public class TypeChecker
 
       if (List.of(BuiltInTable.NEG, BuiltInTable.NOT).contains(builtIn)) {
         return new BuiltInCheckResult(args.getFirst().type(), null);
+      }
+    }
+
+    if (args.size() == 2 && BuiltInTable.operationEqualityPredicates.contains(builtIn)) {
+      // Special case for equality over bound variables of the forall and exists then expression
+      final Expr l = args.getFirst();
+      final Expr r = args.getLast();
+
+      if (!(l.type() instanceof PseudoFormatType)) {
+
+        throw addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location, "Expected an intersection format here but the left side "
+                + "was an `%s`", l.type())
+            .build());
+
+      } else if (!(r.type() instanceof PseudoFormatType)) {
+
+        throw addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location,
+                "Expected an intersection format here but the right side "
+                    + "was an `%s`", r.type())
+            .build());
+
+      } else {
+        return new BuiltInCheckResult(Type.bool(), args);
       }
     }
 
@@ -2963,6 +3018,24 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof ForallThenExpr forallThenExpr) {
+      expr.type = forallThenExpr.indices.stream()
+          .filter(index -> index.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow()
+          .identifier().type();
+      return;
+    }
+
+    if (origin instanceof ExistsInThenExpr existsInThenExpr) {
+      expr.type = existsInThenExpr.indices.stream()
+          .filter(index -> index.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow()
+          .identifier().type();
+      return;
+    }
+
     if (origin instanceof ForallExpr forallExpr) {
       // No need to check because this can only be the case if we are inside the for statement.
       expr.type =
@@ -3753,6 +3826,24 @@ public class TypeChecker
         subCall.formatFieldType = fieldType;
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
+      } else if (type instanceof PseudoFormatType pseudoFormatType) {
+        if (!pseudoFormatType.contains(fieldName)) {
+          var formatFieldNames = pseudoFormatType.fieldNames();
+          var suggestions = Levenshtein.suggestions(fieldName, formatFieldNames);
+          if (suggestions.isEmpty()) {
+            suggestions = formatFieldNames.stream().limit(3).toList();
+          }
+
+          addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
+              .description("Intersection format `%s` doesn't have any field with this name",
+                  pseudoFormatType.name())
+              .suggestions(suggestions)
+              .build());
+        }
+
+        subCall.formatFieldType = pseudoFormatType.get(fieldName);
+        visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
+        type = expr.type;
       } else if (type instanceof StatusType) {
         var allowedStatusfields = List.of("negative", "zero", "carry", "overflow");
         if (!allowedStatusfields.contains(fieldName)) {
@@ -3912,7 +4003,8 @@ public class TypeChecker
     // if the target is not a typed node, we just assume that it is some expression
     // that can be sliced.
     // if it is a let expr, we must also only check the target
-    if (!(callTarget instanceof TypedNode typedNode) || callTarget instanceof LetExpr) {
+    if (!(callTarget instanceof TypedNode typedNode) || callTarget instanceof LetExpr
+        || callTarget instanceof ForallThenExpr || callTarget instanceof ExistsInThenExpr) {
       expr.typeBeforeSlice = check((Expr) expr.target);
       return;
     }
@@ -4113,10 +4205,21 @@ public class TypeChecker
 
   @Override
   public Void visit(CastExpr expr) {
-    var valType = checkWith(expr.value, intermediateParseTypeLiteral(expr.typeLiteral));
+    // The typeliteral always exists for these expressions
+    var typeLiteral = requireNonNull(expr.typeLiteral);
 
-    expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
-    var litType = expr.typeLiteral.type();
+    // In most cases the typeliteral influences the type of the inner expression we parse, this is
+    // the bidirectional typechecking.
+    var litType = intermediateParseTypeLiteral(typeLiteral);
+    var valType = checkWith(expr.value, litType);
+
+    // In some rare cases the inner expression being cast influences the type of the literal.
+    // Example: (5 as Bits<5>) as SInt
+    //                            ^^^^ This type is SInt<5>, influenced by the inner expression.
+    if (litType == null) {
+      litType = parseTypeLiteral(typeLiteral, preferredBitWidthOf(valType));
+    }
+    typeLiteral.type = litType;
 
     if (!canExplicitCast(valType, litType)) {
       // No need to stop checking we can just assume it works and assign the declared type.
@@ -4237,14 +4340,94 @@ public class TypeChecker
 
   @Override
   public Void visit(ExistsInExpr expr) {
-    throw addErrorAndStopChecking(unimplementedError(expr));
+
+    expr.type = Type.bool();
+    checkGroupQuantifier(null, expr.operations);
+
+    var annotation = getContextNode(AnnotationDefinition.class);
+    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
+      final var diagnostic = error("Invalid `exists-in` expression", expr)
+          .description("The exists-in expression is only permissible for annotations on "
+              + "the `group` definition.");
+      addErrorAndContinueChecking(diagnostic.build());
+      return null;
+    }
+
+    return null;
   }
 
   @Override
   public Void visit(ExistsInThenExpr expr) {
-    throw addErrorAndStopChecking(unimplementedError(expr));
+
+    expr.type = Type.bool();
+
+    var annotation = getContextNode(AnnotationDefinition.class);
+    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
+      final var diagnostic = error("Invalid `exists-then` expression", expr)
+          .description("The exists-then expression is only permissible for annotations on "
+              + "the `group` definition.");
+      addErrorAndContinueChecking(diagnostic.build());
+      return null;
+    }
+
+    expr.indices.forEach(i -> checkGroupQuantifier(i.identifier(), i.operations));
+    checkWith(expr.thenExpr, Type.bool());
+    if (expr.thenExpr.type() != Type.bool()) {
+      addErrorAndContinueChecking(error("Type Mismatch", expr.thenExpr)
+          .locationDescription(expr.thenExpr,
+              "Expected an expression of type `Bool`, but got `%s`", expr.thenExpr.type())
+          .build());
+    }
+
+    return null;
   }
 
+  @Override
+  public Void visit(ForallThenExpr expr) {
+
+    expr.type = Type.bool();
+
+    var annotation = getContextNode(AnnotationDefinition.class);
+    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
+      final var diagnostic = error("Invalid `forall-then` expression", expr)
+          .description("The forall-then expression is only permissible for annotations on "
+              + "the `group` definition.");
+      addErrorAndContinueChecking(diagnostic.build());
+      return null;
+    }
+
+    expr.indices.forEach(i -> checkGroupQuantifier(i.identifier(), i.operations));
+    checkWith(expr.thenExpr, Type.bool());
+    if (expr.thenExpr.type() != Type.bool()) {
+      addErrorAndContinueChecking(error("Type Mismatch", expr.thenExpr)
+          .locationDescription(expr.thenExpr,
+              "Expected an expression of type `Bool`, but got `%s`", expr.thenExpr.type())
+          .build());
+    }
+
+    return null;
+  }
+
+  private void checkGroupQuantifier(@Nullable Identifier identifier, List<IsId> operations) {
+
+    final Map<IsId, OperationDefinition> ops = new LinkedHashMap<>();
+    for (IsId o : operations) {
+      if (o.target() instanceof OperationDefinition op) {
+        ops.put(o, op);
+        continue;
+      }
+
+      addErrorAndContinueChecking(
+          error("Invalid Operation List", o)
+              .locationNote(o, "Elements must be operations, but this was a `%s`",
+                  requireNonNull(o.target()).nodeName())
+              .build());
+    }
+
+    if (identifier != null) {
+      identifier.type = PseudoFormatType.of(ops.values());
+    }
+  }
 
   @Override
   public Void visit(ForallExpr expr) {

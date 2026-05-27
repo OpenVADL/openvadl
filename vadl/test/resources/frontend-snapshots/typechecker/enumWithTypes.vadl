@@ -20,21 +20,12 @@
 //    . : BinaryExpr operator: + type: Const<1>
 //    . : ' BinaryLiteral literal: 0b00 (0) type: Const<0>
 //    . : ' BinaryLiteral literal: 0b01 (1) type: Const<1>
-//    . : TypeLiteral type: Bits<2>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 2 (2) type: null
 //    . Identifier name: "B" type: null
 //    . CastExpr type: Bits<2>
 //    . : BinaryLiteral literal: 0b01 (1) type: Const<1>
-//    . : TypeLiteral type: Bits<2>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 2 (2) type: null
 //    . Identifier name: "C" type: null
 //    . CastExpr type: Bits<2>
 //    . : BinaryLiteral literal: 0b10 (2) type: Const<2>
-//    . : TypeLiteral type: Bits<2>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 2 (2) type: null
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

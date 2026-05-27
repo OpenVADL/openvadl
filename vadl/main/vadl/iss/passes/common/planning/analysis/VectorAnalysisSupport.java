@@ -30,11 +30,15 @@ import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.StorageFa
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.types.BuiltInTable;
+import vadl.viam.ArtificialResource;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ForIdxNode;
+import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Shared helper logic for vector-analysis steps.
@@ -57,7 +61,7 @@ public final class VectorAnalysisSupport {
   public static BindingFacts bindingFacts(IssWriteRegNode write, ForIdxNode idx) {
     return new BindingFacts(
         write.regTensor(),
-        vectorRegisterAccessorIndices(write.accessorIndices(), idx)
+        vectorRegisterAccessorIndices(write.indices(), idx)
     );
   }
 
@@ -67,7 +71,7 @@ public final class VectorAnalysisSupport {
   public static BindingFacts bindingFacts(IssReadRegNode read, ForIdxNode idx) {
     return new BindingFacts(
         read.regTensor(),
-        vectorRegisterAccessorIndices(read.accessorIndices(), idx)
+        vectorRegisterAccessorIndices(read.indices(), idx)
     );
   }
 
@@ -109,11 +113,42 @@ public final class VectorAnalysisSupport {
         && dimensions.get(baseIndexCount).size() == size.laneCount()
         && dimensions.getLast().size() == size.elementBits();
     var fullRegisterRange = size.oprszBytes() == size.maxszBytes();
+    // Alias expansion and flat raw-vector storage often collapse the lane structure into one
+    // contiguous bit container. When the normalized loop covers the whole selected register view,
+    // that flat container is still a valid direct-gvec layout even without explicit lane dims.
+    if (!contiguousElements && fullRegisterRange) {
+      contiguousElements = binding.registerTensor()
+          .resultType(binding.accessorIndices().size())
+          .bitWidth() == size.elementBits() * size.laneCount();
+    }
     return new LayoutFacts(
         contiguousElements,
         fullRegisterRange,
         fullRegisterRange
     );
+  }
+
+  /**
+   * Returns whether the access kind can be lowered directly against the base CPU-vector storage.
+   */
+  public static AccessBaseKind gvecAccessBaseKind(IssReadRegNode read) {
+    if (read.accessKind() == IssReadRegNode.AccessKind.BASE) {
+      return AccessBaseKind.BASE;
+    }
+    return isSimpleGvecAlias(read.aliasResource()) ? AccessBaseKind.BASE : AccessBaseKind.ALIAS;
+  }
+
+  /**
+   * Returns whether the access kind can be lowered directly against the base CPU-vector storage.
+   */
+  public static AccessBaseKind gvecAccessBaseKind(IssWriteRegNode write) {
+    if (write.accessKind() == IssWriteRegNode.AccessKind.BASE) {
+      return AccessBaseKind.BASE;
+    }
+    if (write.writeGuardKind() == IssWriteRegNode.WriteGuardKind.ZERO_CONSTRAINT) {
+      return AccessBaseKind.ALIAS;
+    }
+    return isSimpleGvecAlias(write.aliasResource()) ? AccessBaseKind.BASE : AccessBaseKind.ALIAS;
   }
 
   /**
@@ -177,12 +212,17 @@ public final class VectorAnalysisSupport {
   public static boolean isLoopElementOffset(ExpressionNode expr,
                                             ForIdxNode idx,
                                             int elementBits) {
-    if (!(expr instanceof BuiltInCall call) || call.builtIn() != BuiltInTable.MUL
-        || call.arguments().size() != 2) {
-      return false;
+    if (expr instanceof BuiltInCall call && call.arguments().size() == 2) {
+      if (call.builtIn() == BuiltInTable.ADD) {
+        return matchesAdditiveLoopOffset(call.arg(0), call.arg(1), idx, elementBits)
+            || matchesAdditiveLoopOffset(call.arg(1), call.arg(0), idx, elementBits);
+      }
+      if (call.builtIn() == BuiltInTable.MUL) {
+        return matchesLoopMul(call.arg(0), call.arg(1), idx, elementBits)
+            || matchesLoopMul(call.arg(1), call.arg(0), idx, elementBits);
+      }
     }
-    return matchesLoopMul(call.arg(0), call.arg(1), idx, elementBits)
-        || matchesLoopMul(call.arg(1), call.arg(0), idx, elementBits);
+    return false;
   }
 
   /**
@@ -203,7 +243,30 @@ public final class VectorAnalysisSupport {
                                         ExpressionNode maybeElementBits,
                                         ForIdxNode idx,
                                         int elementBits) {
-    return maybeIdx == idx && isConstantInt(maybeElementBits, elementBits);
+    return matchesLoopIndex(maybeIdx, idx) && isConstantInt(maybeElementBits, elementBits);
+  }
+
+  private static boolean matchesAdditiveLoopOffset(ExpressionNode maybeZero,
+                                                   ExpressionNode remainder,
+                                                   ForIdxNode idx,
+                                                   int elementBits) {
+    return isConstantInt(maybeZero, 0) && isLoopElementOffset(remainder, idx, elementBits);
+  }
+
+  private static boolean matchesLoopIndex(Node node, ForIdxNode idx) {
+    if (node == idx) {
+      return true;
+    }
+    if (node instanceof ZeroExtendNode zeroExtend) {
+      return matchesLoopIndex(zeroExtend.value(), idx);
+    }
+    if (node instanceof SignExtendNode signExtend) {
+      return matchesLoopIndex(signExtend.value(), idx);
+    }
+    if (node instanceof TruncateNode truncate) {
+      return matchesLoopIndex(truncate.value(), idx);
+    }
+    return false;
   }
 
   /**
@@ -229,5 +292,13 @@ public final class VectorAnalysisSupport {
       return OperationKind.MUL;
     }
     return OperationKind.OTHER;
+  }
+
+  private static boolean isSimpleGvecAlias(@Nullable ArtificialResource alias) {
+    if (alias == null) {
+      return false;
+    }
+    var semantics = alias.semantics();
+    return semantics.aliasSlice() == null && semantics.zeroConstraint() == null;
   }
 }

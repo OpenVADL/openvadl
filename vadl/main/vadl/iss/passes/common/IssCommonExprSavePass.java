@@ -69,7 +69,7 @@ public class IssCommonExprSavePass extends AbstractIssPass {
       return null;
     }
 
-    helperInstrs(viam).forEach(this::saveCommonExpressions);
+    wholeHelperInstrs(viam).forEach(this::saveCommonExpressions);
     return null;
   }
 

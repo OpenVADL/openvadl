@@ -79,16 +79,10 @@ constant l = b32 + cn
 //    . : Identifier name: "u32" type: UInt<32>
 //    . : CastExpr type: UInt<32>
 //    . : ' Identifier name: "cp" type: Const<16>
-//    . : ' TypeLiteral type: UInt<32>
-//    . : ' | Identifier name: "UInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    ConstantDefinition name: "c" evaluatedValue: 18
 //    . BinaryExpr operator: + type: UInt<32>
 //    . : CastExpr type: UInt<32>
 //    . : ' Identifier name: "cp" type: Const<16>
-//    . : ' TypeLiteral type: UInt<32>
-//    . : ' | Identifier name: "UInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : Identifier name: "u32" type: UInt<32>
 //    ConstantDefinition name: "d" evaluatedValue: 8
 //    . BinaryExpr operator: + type: SInt<32>
@@ -98,74 +92,44 @@ constant l = b32 + cn
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "cp" type: Const<16>
-//    . : ' TypeLiteral type: SInt<32>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : Identifier name: "s32" type: SInt<32>
 //    ConstantDefinition name: "f" evaluatedValue: -28
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : Identifier name: "s32" type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "cn" type: Const<-32>
-//    . : ' TypeLiteral type: SInt<32>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    ConstantDefinition name: "g" evaluatedValue: 10
 //    . BinaryExpr operator: + type: UInt<32>
 //    . : Identifier name: "u32" type: UInt<32>
 //    . : CastExpr type: UInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>
-//    . : ' TypeLiteral type: UInt<32>
-//    . : ' | Identifier name: "UInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    ConstantDefinition name: "h" evaluatedValue: 10
 //    . BinaryExpr operator: + type: UInt<32>
 //    . : CastExpr type: UInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>
-//    . : ' TypeLiteral type: UInt<32>
-//    . : ' | Identifier name: "UInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : Identifier name: "u32" type: UInt<32>
 //    ConstantDefinition name: "i" evaluatedValue: 12
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : Identifier name: "s32" type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>
-//    . : ' TypeLiteral type: SInt<32>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    ConstantDefinition name: "j" evaluatedValue: -24
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "cn" type: Const<-32>
-//    . : ' TypeLiteral type: SInt<32>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>
-//    . : ' TypeLiteral type: SInt<32>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    ConstantDefinition name: "k" evaluatedValue: 12
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>
-//    . : ' TypeLiteral type: SInt<32>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : Identifier name: "s32" type: SInt<32>
 //    ConstantDefinition name: "l" evaluatedValue: -24
 //    . BinaryExpr operator: + type: SInt<32>
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "b32" type: Bits<32>
-//    . : ' TypeLiteral type: SInt<32>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //    . : CastExpr type: SInt<32>
 //    . : ' Identifier name: "cn" type: Const<-32>
-//    . : ' TypeLiteral type: SInt<32>
-//    . : ' | Identifier name: "SInt" type: null
-//    . : ' | IntegerLiteral literal: 32 (32) type: null
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

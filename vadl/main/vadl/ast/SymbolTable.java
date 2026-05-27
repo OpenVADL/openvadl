@@ -22,12 +22,12 @@ import static vadl.error.Diagnostic.error;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
@@ -39,6 +39,17 @@ import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
 class SymbolTable {
+
+  // Collecting symbols is expensive and providing many suggestions makes levenshtein slower.
+  // FIXME: Increase this limit if once the levenshtein algorightm is faster
+  private static final int MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS = 100;
+
+  /// Collecting names across the AST is quite expensive so to improve this
+  /// we limit the amount of diagnostics that get that expensive treatment.
+  /// This allows the compiler to stay responsive if a often used format is deleted or renamed
+  /// by accident.
+  private static final int MAX_DIAGNOSTICS_WITH_NAME_SUGGESTIONS = 1000;
+
   @Nullable
   SymbolTable parent;
 
@@ -398,13 +409,21 @@ class SymbolTable {
 
   /**
    * Internal use only.
+   * Collects all symbol names in scope that are instances of the given classes.
+   * There is a hard limit described by {@link #MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS}.
    */
-  private void collectAllSymbolNamesOf(Set<String> collector, Class<? extends Node>... classes) {
+  private void collectAllSymbolNamesOf(Collection<String> collector,
+                                       Class<? extends Node>... classes) {
     symbols.entrySet().stream()
         .filter(entry -> entry.getValue() != null
             && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(entry.getValue())))
         .map(Map.Entry::getKey)
+        .limit(Math.max(0, MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS - collector.size()))
         .forEach(collector::add);
+
+    if (collector.size() >= MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS) {
+      return;
+    }
 
     if (parent != null) {
       parent.collectAllSymbolNamesOf(collector, classes);
@@ -416,9 +435,10 @@ class SymbolTable {
    *
    * @return the set of all available names.
    */
-  Set<String> allSymbolNames() {
-    var symbols = new HashSet<>(builtinNames);
+  List<String> allSymbolNames() {
+    var symbols = new ArrayList<String>();
     collectAllSymbolNamesOf(symbols, Node.class);
+    symbols.addAll(builtinNames);
     return symbols;
   }
 
@@ -429,8 +449,12 @@ class SymbolTable {
    * @return the set of all available names.
    */
   @SafeVarargs
-  final Set<String> allSymbolNamesOf(Class<? extends Node>... classes) {
-    var symbols = new HashSet<String>();
+  final List<String> allSymbolNamesOf(Class<? extends Node>... classes) {
+    if (errors.size() > MAX_DIAGNOSTICS_WITH_NAME_SUGGESTIONS) {
+      return List.of();
+    }
+
+    var symbols = new ArrayList<String>();
     collectAllSymbolNamesOf(symbols, classes);
     return symbols;
   }
@@ -442,16 +466,16 @@ class SymbolTable {
    * @return the set of all available names.
    */
   @SafeVarargs
-  final Set<String> allMacroSymbolNamesOf(Class<? extends Node>... classes) {
+  final List<String> allMacroSymbolNamesOf(Class<? extends Node>... classes) {
     var matchingNames = macroSymbols.entrySet().stream()
         .filter(entry -> Arrays.stream(classes)
             .anyMatch(klass -> klass.isInstance(entry.getValue())))
         .map(Map.Entry::getKey)
         .toList();
 
-    var names = new HashSet<>(matchingNames);
+    var names = new ArrayList<>(matchingNames);
     if (parent != null) {
-      names.addAll(parent.allSymbolNamesOf(classes));
+      names.addAll(parent.allMacroSymbolNamesOf(classes));
     }
     return names;
   }
@@ -642,7 +666,7 @@ class SymbolTable {
       } else {
         viamPath.addLast("unknown");
       }
-      definition.viamId = String.join("::", viamPath);
+      definition.viamId = new ArrayList<>(viamPath);
 
       definition.symbolTable = currentSymbols();
     }
@@ -686,7 +710,7 @@ class SymbolTable {
       } else {
         viamPath.addLast("unknown");
       }
-      definition.viamId = String.join("::", viamPath);
+      definition.viamId = new ArrayList<>(viamPath);
 
       definition.symbolTable = currentSymbols().createChild();
       symbolTables.addLast(definition.symbolTable);
@@ -907,8 +931,61 @@ class SymbolTable {
       afterTravel(expr);
       return null;
     }
-  }
 
+    @Override
+    public Void visit(ForallThenExpr expr) {
+      beforeTravel(expr);
+
+      // The identifiers of the forall must be visible in its children
+      var childTable = currentSymbols().createChild();
+      expr.symbolTable = childTable;
+      expr.indices.forEach(index -> {
+        childTable.defineSymbol(index.identifier().name, expr);
+        index.symbolTable = childTable;
+        index.identifier().symbolTable = childTable;
+
+        for (IsId o : index.operations) {
+          withSymbols(currentSymbols(), () -> ((Identifier) o).accept(this));
+        }
+      });
+      withSymbols(childTable, () -> expr.thenExpr.accept(this));
+
+      afterTravel(expr);
+      return null;
+    }
+
+    @Override
+    public Void visit(ExistsInExpr expr) {
+      beforeTravel(expr);
+      for (IsId o : expr.operations) {
+        ((Identifier) o).accept(this);
+      }
+      afterTravel(expr);
+      return null;
+    }
+
+    @Override
+    public Void visit(ExistsInThenExpr expr) {
+      beforeTravel(expr);
+
+      // The identifiers of the exists must be visible in its children
+      var childTable = currentSymbols().createChild();
+      expr.symbolTable = childTable;
+      expr.indices.forEach(index -> {
+        childTable.defineSymbol(index.identifier().name, expr);
+        index.symbolTable = childTable;
+        index.identifier().symbolTable = childTable;
+
+        for (IsId o : index.operations) {
+          withSymbols(currentSymbols(), () -> ((Identifier) o).accept(this));
+        }
+      });
+      withSymbols(childTable, () -> expr.thenExpr.accept(this));
+
+      afterTravel(expr);
+      return null;
+    }
+  }
 
   /**
    * Resolves identifiers used in expressions, as well as types used in definitions,

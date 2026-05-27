@@ -35,6 +35,8 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.OperationExistsNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -167,6 +169,16 @@ public class RelocationCodeGenerator
   @Handler
   void handle(CGenContext<Node> ctx, TensorNode toHandle) {
     throwNotAllowed(toHandle, "forall tensor expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, OperationForAllNode toHandle) {
+    throwNotAllowed(toHandle, "forall then expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, OperationExistsNode toHandle) {
+    throwNotAllowed(toHandle, "exists then expressions");
   }
 
   @Override

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,7 +49,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
-import vadl.types.StatusType;
+import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
@@ -65,6 +66,7 @@ import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Logic;
 import vadl.viam.Memory;
+import vadl.viam.Operation;
 import vadl.viam.Procedure;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
@@ -98,6 +100,8 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
+import vadl.viam.graph.dependency.OperationExistsNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -312,12 +316,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @SuppressWarnings("Indentation")
   Function getRegisterAliasReadFunc(AliasDefinition definition,
                                     List<RegisterTensor.Dimension> dimensions) {
-    var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
+    var graph = new Graph("%s Read Behavior".formatted(String.join("::", definition.viamId)));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
+    final var identifierParts = ViamLowering.append(definition.viamId, "read");
     final var identifier =
-        viamLowering.generateIdentifier(definition.viamId + "::read", definition.loc);
+        new vadl.viam.Identifier(identifierParts, definition.loc);
 
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
@@ -332,8 +337,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // FIXME: Wrap input and output in casts
       for (int i = 0; i < tensorType.indexDims().size(); i++) {
         var param = new vadl.viam.Parameter(
-            viamLowering.generateIdentifier(
-                identifier.name() + "::index",
+            new vadl.viam.Identifier(
+                ViamLowering.append(identifierParts, "index"),
                 identifier.location()),
             Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
             0);
@@ -444,12 +449,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @SuppressWarnings("Indentation")
   Procedure getRegisterAliasWriteProc(AliasDefinition definition,
                                       List<RegisterTensor.Dimension> dimensions) {
-    final var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
+    final var graph =
+        new Graph("%s Write Procedure".formatted(String.join("::", definition.viamId)));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
+    final var identifierParts = ViamLowering.append(definition.viamId, "write");
     final var identifier =
-        viamLowering.generateIdentifier(definition.viamId + "::write", definition.loc);
+        new vadl.viam.Identifier(identifierParts, definition.loc);
     final var regFileDef = (RegisterDefinition) requireNonNull(definition.computedTarget);
     final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
 
@@ -464,8 +471,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // FIXME: Wrap input and output in casts
       for (int i = 0; i < tensorType.indexDims().size(); i++) {
         var param = new vadl.viam.Parameter(
-            viamLowering.generateIdentifier(
-                identifier.name() + "::index",
+            new vadl.viam.Identifier(
+                ViamLowering.append(identifierParts, "index"),
                 identifier.location()),
             Type.bits(BitsType.indexWidthFor(tensorType.indexDims().get(i))),
             0);
@@ -478,8 +485,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var valueParam = new vadl.viam.Parameter(
-        viamLowering.generateIdentifier(
-            identifier.name() + "::value",
+        new vadl.viam.Identifier(
+            ViamLowering.append(identifierParts, "value"),
             identifier.location()),
         getViamType(resultType),
         1);
@@ -689,7 +696,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     } catch (ArithmeticException e) {
       throw new IllegalStateException(
           "Expansion alias mapping overflow for "
-              + definition.viamId
+              + String.join("::", definition.viamId)
               + ": while calculating covered bit width.",
           e
       );
@@ -697,7 +704,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (coveredBits > sourceValueType.bitWidth()) {
       throw new IllegalStateException(
           "Invalid expansion alias mapping for "
-              + definition.viamId
+              + String.join("::", definition.viamId)
               + ": virtual alias indexing may address "
               + coveredBits
               + " bits, but source read provides only "
@@ -1115,6 +1122,36 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           requireNonNull(index.computedTo));
     }
 
+    if (computedTarget instanceof ForallThenExpr forallThenExpr) {
+      final var index = forallThenExpr.indices.stream()
+          .filter(idx -> idx.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow();
+      final var format = (PseudoFormatType) index.identifier().type();
+
+      final List<Operation> ops = format.operations().stream()
+          .map(viamLowering::fetch)
+          .filter(Optional::isPresent).map(Optional::get)
+          .map(Operation.class::cast)
+          .toList();
+      return new OperationForAllNode.Index(getViamType(format), ops);
+    }
+
+    if (computedTarget instanceof ExistsInThenExpr existsInThenExpr) {
+      final var index = existsInThenExpr.indices.stream()
+          .filter(idx -> idx.identifier().name.equals(innerName))
+          .findFirst()
+          .orElseThrow();
+      final var format = (PseudoFormatType) index.identifier().type();
+
+      final List<Operation> ops = format.operations().stream()
+          .map(viamLowering::fetch)
+          .filter(Optional::isPresent).map(Optional::get)
+          .map(Operation.class::cast)
+          .toList();
+      return new OperationForAllNode.Index(getViamType(format), ops);
+    }
+
     // Function call without arguments (and no parenthesis)
     if (computedTarget instanceof FunctionDefinition functionDefinition) {
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
@@ -1283,7 +1320,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                 (DataType) getViamType(requireNonNull(subCall.formatFieldType)));
         resultExpr =
             visitSliceIndexCall(slice, subCall.formatFieldType, subCall.argsIndices);
-      } else if (exprBeforeSubcall.type() instanceof StatusType) {
+      } else if (exprBeforeSubcall.type() instanceof StructType) {
         var indexing = new StructGetFieldNode(subCall.identifier().name, resultExpr, Type.bool());
         resultExpr = visitSliceIndexCall(indexing, Type.bool(), subCall.argsIndices);
       } else if (exprBeforeSubcall.type() == MicroArchitectureType.instruction()) {
@@ -1623,16 +1660,63 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(ExistsInExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+
+    final var opDefs = new ArrayList<OperationDefinition>();
+    final var ops = new ArrayList<Operation>();
+
+    for (IsId op : expr.operations) {
+      final var opDef = requireNonNull((OperationDefinition) op.target());
+      opDefs.add(opDef);
+      viamLowering.fetch(opDef)
+          .ifPresent(o -> ops.add((Operation) o));
+    }
+
+    final var idxType = getViamType(PseudoFormatType.of(opDefs));
+    final var idx = new OperationForAllNode.Index(idxType, ops);
+
+    var type = getViamType(expr.type());
+    return new OperationExistsNode(type, idx);
   }
 
   @Override
   public ExpressionNode visit(ExistsInThenExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+
+    final List<OperationForAllNode.Index> indices = new ArrayList<>();
+    for (ExistsInThenExpr.Index idx : expr.indices) {
+      final var format = (PseudoFormatType) idx.identifier().type();
+      final List<Operation> ops = format.operations().stream()
+          .map(viamLowering::fetch)
+          .filter(Optional::isPresent).map(Optional::get)
+          .map(Operation.class::cast)
+          .toList();
+      final var idxNode = new OperationForAllNode.Index(getViamType(format), ops);
+      indices.add(idxNode);
+    }
+
+    var body = fetch(expr.thenExpr);
+    var type = getViamType(expr.type());
+    return new OperationExistsNode(type, indices, body);
   }
 
+  @Override
+  public ExpressionNode visit(ForallThenExpr expr) {
+
+    final List<OperationForAllNode.Index> indices = new ArrayList<>();
+    for (ForallThenExpr.Index idx : expr.indices) {
+      final var format = (PseudoFormatType) idx.identifier().type();
+      final List<Operation> ops = format.operations().stream()
+          .map(viamLowering::fetch)
+          .filter(Optional::isPresent).map(Optional::get)
+          .map(Operation.class::cast)
+          .toList();
+      final var idxNode = new OperationForAllNode.Index(getViamType(format), ops);
+      indices.add(idxNode);
+    }
+
+    var body = fetch(expr.thenExpr);
+    var type = getViamType(expr.type());
+    return new OperationForAllNode(type, indices, body);
+  }
 
   @Override
   public ExpressionNode visit(ForallExpr expr) {
@@ -2143,9 +2227,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
     } else {
       // FIXME: Add to a global store so that ISA can get a list of all exceptions
-      var name = statement.viamId + "::anonymousException";
+      var anonymousParts = ViamLowering.append(statement.viamId, "anonymousException");
+      var name = String.join("::", anonymousParts);
       exception = new ExceptionDef(
-          viamLowering.generateIdentifier(name, statement.statement),
+          new vadl.viam.Identifier(anonymousParts, statement.statement.location()),
           new vadl.viam.Parameter[] {},
           new BehaviorLowering(this.viamLowering).getProcedureGraph(statement.statement, name),
           ExceptionDef.Kind.ANONYMOUS

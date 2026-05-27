@@ -1199,7 +1199,7 @@ The #miaDefinition production rule lists all micro architecture language element
 \listing{lst_mia_definitions, Example micro architecture definition}
 ~~~{.vadl}
 micro architecture FiveStage implements RV32IM = {
-    
+
   logic [forwarding] bypass
 
   stage FETCH -> ( fr : FetchResult ) = {
@@ -1987,16 +1987,16 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
       SYM_IN
       operationsList<.out List<IsId> operations.>   (. expr = new ExistsInExpr(operations, start.join(lastTokenLoc())); .)
     | identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-      SYM_IN                                        (. var conditions = new ArrayList<ExistsInThenExpr.Condition>(); .)
-      operationsList<.out List<IsId> operations.>   (. conditions.add(new ExistsInThenExpr.Condition(id, operations)); .)
+      SYM_IN                                        (. var indices = new ArrayList<ExistsInThenExpr.Index>(); .)
+      operationsList<.out List<IsId> operations.>   (. indices.add(new ExistsInThenExpr.Index(id, operations)); .)
       {
         SYM_COMMA
         identifierOrPlaceholder<out id>
         SYM_IN
-        operationsList<out operations>              (. conditions.add(new ExistsInThenExpr.Condition(id, operations)); .)
+        operationsList<out operations>              (. indices.add(new ExistsInThenExpr.Index(id, operations)); .)
       }
       THEN
-      expression<out Expr thenExpr, BIN_OPS>        (. expr = new ExistsInThenExpr(conditions, thenExpr, start.join(lastTokenLoc())); .)
+      expression<out Expr thenExpr, BIN_OPS>        (. expr = new ExistsInThenExpr(indices, thenExpr, start.join(lastTokenLoc())); .)
     )
   .
 
@@ -2018,7 +2018,17 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     typeLiteral<out typeLiteral>
     ]
     SYM_IN
-                                                              (. var indices = new ArrayList<ForallIndex>(); .)
+    (                                                         (. var indices = new ArrayList<ForallThenExpr.Index>(); .)
+      operationsList<.out List<IsId> operations.>             (. indices.add(new ForallThenExpr.Index(id, operations)); .)
+      {
+        SYM_COMMA
+        identifierOrPlaceholder<out id>
+        SYM_IN
+        operationsList<out operations>                        (. indices.add(new ForallThenExpr.Index(id, operations)); .)
+      }
+      THEN
+      expression<out Expr thenExpr, allowedOps>               (. forallExpr = new ForallThenExpr(indices, thenExpr, start.join(lastTokenLoc())); .)
+    |                                                         (. var indices = new ArrayList<ForallIndex>(); .)
       rangeExpression<out Expr domain>                        (. indices.add(new ForallIndex(id, typeLiteral, domain)); .)
       {
         SYM_COMMA
@@ -2040,7 +2050,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
       // | APPEND                                               (. operation = ForallExpr.Operation.APPEND; .)
       )
       expression<out Expr expr, allowedOps>                   (. forallExpr = new ForallExpr(indices, operation, foldAction, expr, start.join(lastTokenLoc())); .)
-
+    )
   .
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------

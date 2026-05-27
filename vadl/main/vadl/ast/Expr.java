@@ -22,18 +22,14 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
-import vadl.types.BitsType;
-import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
-import vadl.types.SIntType;
 import vadl.types.StructType;
 import vadl.types.Type;
-import vadl.types.UIntType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
@@ -141,6 +137,8 @@ interface ExprVisitor<R> {
   R visit(ExistsInExpr expr);
 
   R visit(ExistsInThenExpr expr);
+
+  R visit(ForallThenExpr expr);
 
   R visit(ForallExpr expr);
 
@@ -1425,46 +1423,6 @@ final class TypeLiteral extends Expr {
     this.loc = symExpr.location();
   }
 
-  // A constructor used internally when the type is already known
-  public TypeLiteral(Type type, SourceLocation loc) {
-    this.type = type;
-    this.loc = loc;
-
-    if (type.getClass() == BoolType.class) {
-      this.baseType = new Identifier("Bool", SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices = List.of();
-    } else if (type.getClass() == BitsType.class) {
-      var bitsType = (BitsType) type;
-      this.baseType = new Identifier("Bits", SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices = List.of(new IntegerLiteral(bitsType.bitWidth(), loc));
-    } else if (type.getClass() == UIntType.class) {
-      var uintType = (UIntType) type;
-      this.baseType = new Identifier("UInt", SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices = List.of(new IntegerLiteral(uintType.bitWidth(), loc));
-    } else if (type.getClass() == SIntType.class) {
-      var sintType = (SIntType) type;
-      this.baseType = new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices = List.of(new IntegerLiteral(sintType.bitWidth(), loc));
-    } else if (type.getClass() == FormatType.class) {
-      var formatType = (FormatType) type;
-      this.baseType = new Identifier(formatType.format.identifier().name,
-          SourceLocation.INVALID_SOURCE_LOCATION);
-      this.sizeIndices = List.of();
-    } else if (type instanceof TensorType tensortype) {
-      var innerLiteral = new TypeLiteral(tensortype.innerType(), loc);
-      this.baseType = innerLiteral.baseType;
-      var indices =
-          new ArrayList<Expr>(tensortype.indexDims().size() + innerLiteral.sizeIndices.size());
-      for (var i : tensortype.indexDims()) {
-        indices.add(new IntegerLiteral(i, loc));
-      }
-      indices.addAll(innerLiteral.sizeIndices);
-      this.sizeIndices = indices;
-    } else {
-      throw new IllegalStateException("Unsupported type " + type.getClass().getSimpleName());
-    }
-  }
-
   /**
    * For builtin types this won't return anything, but for custom types it returns the definition
    * the type literal points to. For example users can introduce new custom types with
@@ -1599,10 +1557,11 @@ final class IdentifierPath extends Expr implements IsId {
 
   @Override
   public String pathToString() {
-    return this.segments.stream()
-        .map(id -> (Identifier) id)
-        .map(id -> id.name)
-        .collect(Collectors.joining("::"));
+    var builder = new StringJoiner("::");
+    for (var segment : segments) {
+      builder.add(((Identifier) segment).name);
+    }
+    return builder.toString();
   }
 
   @Nullable
@@ -1617,10 +1576,11 @@ final class IdentifierPath extends Expr implements IsId {
 
   //  @Override
   public List<String> pathToSegments() {
-    return this.segments.stream()
-        .map(id -> (Identifier) id)
-        .map(id -> id.name)
-        .toList();
+    var result = new ArrayList<String>();
+    for (var segment : segments) {
+      result.add(((Identifier) segment).name);
+    }
+    return result;
   }
 
   @Override
@@ -2271,8 +2231,17 @@ class LetExpr extends Expr {
 class CastExpr extends Expr {
   @Child
   Expr value;
+
+  /**
+   * The typeLiteral.
+   * The typechecker also expands implicit casts to explicit ones and often inserts new
+   * CastExpressions. Since these don't come from the source code, this field is left empty in
+   * such cases, and only the Type field is used.
+   */
+  @Nullable
   @Child
   TypeLiteral typeLiteral;
+
   SourceLocation location;
 
   public CastExpr(Expr value, TypeLiteral typeLiteral) {
@@ -2281,11 +2250,16 @@ class CastExpr extends Expr {
     this.location = value.location().join(typeLiteral.location());
   }
 
+  /**
+   * A syntetic constructor that doesn't originate from the source code.
+   *
+   * @param value to be cast.
+   * @param type to which it is cast.
+   */
   public CastExpr(Expr value, Type type) {
     this.value = value;
     this.type = type;
     this.location = value.location();
-    this.typeLiteral = new TypeLiteral(type, value.location());
   }
 
   @Override
@@ -2308,7 +2282,11 @@ class CastExpr extends Expr {
     wrapInGroup(parentPrec, builder, true, () -> {
       value.prettyPrintExpr(indent, builder, Precedence.CastOp);
       builder.append(" as ");
-      typeLiteral.prettyPrint(indent, builder);
+      if (typeLiteral != null) {
+        typeLiteral.prettyPrint(indent, builder);
+      } else {
+        builder.append(requireNonNull(type));
+      }
     });
   }
 
@@ -2328,7 +2306,7 @@ class CastExpr extends Expr {
     }
 
     CastExpr that = (CastExpr) o;
-    return value.equals(that.value) && typeLiteral.equals(that.typeLiteral);
+    return value.equals(that.value) && Objects.equals(typeLiteral, that.typeLiteral);
   }
 
   @Override
@@ -2470,8 +2448,11 @@ class MatchExpr extends Expr {
 }
 
 class ExistsInExpr extends Expr {
-  List<IsId> operations;
+
   SourceLocation loc;
+
+  @Child
+  List<IsId> operations;
 
   ExistsInExpr(List<IsId> operations, SourceLocation loc) {
     this.operations = operations;
@@ -2526,13 +2507,14 @@ class ExistsInExpr extends Expr {
 }
 
 class ExistsInThenExpr extends Expr {
-  List<Condition> conditions;
+  @Child
+  List<ExistsInThenExpr.Index> indices;
   @Child
   Expr thenExpr;
   SourceLocation loc;
 
-  ExistsInThenExpr(List<Condition> conditions, Expr thenExpr, SourceLocation loc) {
-    this.conditions = conditions;
+  ExistsInThenExpr(List<ExistsInThenExpr.Index> indices, Expr thenExpr, SourceLocation loc) {
+    this.indices = indices;
     this.thenExpr = thenExpr;
     this.loc = loc;
   }
@@ -2551,22 +2533,12 @@ class ExistsInThenExpr extends Expr {
   void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("exists ");
     var isFirst = true;
-    for (Condition condition : conditions) {
+    for (ExistsInThenExpr.Index index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }
       isFirst = false;
-      condition.id.prettyPrint(0, builder);
-      builder.append(" in {");
-      var isFirstOp = true;
-      for (IsId operation : condition.operations) {
-        if (!isFirstOp) {
-          builder.append(", ");
-        }
-        isFirstOp = false;
-        operation.prettyPrint(0, builder);
-      }
-      builder.append("}");
+      index.prettyPrint(indent, builder);
     }
     if (isBlockLayout(thenExpr)) {
       builder.append(" then\n");
@@ -2592,16 +2564,206 @@ class ExistsInThenExpr extends Expr {
       return false;
     }
     ExistsInThenExpr that = (ExistsInThenExpr) o;
-    return Objects.equals(conditions, that.conditions)
+    return Objects.equals(indices, that.indices)
         && Objects.equals(thenExpr, that.thenExpr);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(conditions, thenExpr);
+    return Objects.hash(indices, thenExpr);
   }
 
-  record Condition(IsId id, List<IsId> operations) {
+  static final class Index extends Node implements IdentifiableNode {
+    IsId id;
+    @Child
+    List<IsId> operations;
+
+    public Index(IsId id, List<IsId> operations) {
+      this.id = id;
+      this.operations = operations;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return (Identifier) id;
+    }
+
+    @Override
+    public SourceLocation location() {
+      var loc = id.location();
+      if (!operations.isEmpty()) {
+        loc = loc.join(operations.get(operations.size() - 1).location());
+      }
+      return loc;
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      id.prettyPrint(0, builder);
+      builder.append(" in {");
+      var isFirstOp = true;
+      for (IsId operation : operations) {
+        if (!isFirstOp) {
+          builder.append(", ");
+        }
+        isFirstOp = false;
+        operation.prettyPrint(0, builder);
+      }
+      builder.append("}");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Index index = (Index) o;
+      return id.equals(index.id) && operations.equals(index.operations);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = id.hashCode();
+      result = 31 * result + operations.hashCode();
+      return result;
+    }
+  }
+}
+
+class ForallThenExpr extends Expr {
+  @Child
+  List<ForallThenExpr.Index> indices;
+  @Child
+  Expr thenExpr;
+  SourceLocation loc;
+
+  ForallThenExpr(List<ForallThenExpr.Index> indices, Expr thenExpr, SourceLocation loc) {
+    this.indices = indices;
+    this.thenExpr = thenExpr;
+    this.loc = loc;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    builder.append("forall ");
+    var isFirst = true;
+    for (ForallThenExpr.Index index : indices) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      index.prettyPrint(indent, builder);
+
+    }
+    if (isBlockLayout(thenExpr)) {
+      builder.append(" then\n");
+      thenExpr.prettyPrint(indent + 1, builder);
+    } else {
+      builder.append(" then ");
+      thenExpr.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ForallThenExpr that = (ForallThenExpr) o;
+    return Objects.equals(indices, that.indices)
+        && Objects.equals(thenExpr, that.thenExpr);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(indices, thenExpr);
+  }
+
+  static final class Index extends Node implements IdentifiableNode {
+    IsId id;
+    @Child
+    List<IsId> operations;
+
+    public Index(IsId id, List<IsId> operations) {
+      this.id = id;
+      this.operations = operations;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return (Identifier) id;
+    }
+
+    @Override
+    public SourceLocation location() {
+      var loc = id.location();
+      if (!operations.isEmpty()) {
+        loc = loc.join(operations.get(operations.size() - 1).location());
+      }
+      return loc;
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      id.prettyPrint(0, builder);
+      builder.append(" in {");
+      var isFirstOp = true;
+      for (IsId operation : operations) {
+        if (!isFirstOp) {
+          builder.append(", ");
+        }
+        isFirstOp = false;
+        operation.prettyPrint(0, builder);
+      }
+      builder.append("}");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Index index = (Index) o;
+      return id.equals(index.id) && operations.equals(index.operations);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = id.hashCode();
+      result = 31 * result + operations.hashCode();
+      return result;
+    }
   }
 }
 

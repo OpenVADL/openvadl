@@ -51,7 +51,7 @@ abstract class Definition extends Node {
   List<AnnotationDefinition> annotations = new ArrayList<>();
 
   @LazyInit
-  String viamId;
+  List<String> viamId;
 
   Definition withAnnotations(List<AnnotationDefinition> annotations) {
     this.annotations = annotations;

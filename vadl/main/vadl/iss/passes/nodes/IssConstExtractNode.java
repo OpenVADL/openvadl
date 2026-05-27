@@ -18,7 +18,7 @@ package vadl.iss.passes.nodes;
 
 import java.util.List;
 import vadl.iss.passes.common.opDecomposition.nodes.IssExprNode;
-import vadl.iss.passes.tcgLowering.TcgExtend;
+import vadl.iss.passes.tcg.lowering.TcgExtend;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;

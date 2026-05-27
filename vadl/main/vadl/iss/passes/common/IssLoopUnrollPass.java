@@ -47,13 +47,12 @@ public class IssLoopUnrollPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    tcgInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());
+    normalTcgInstrs(viam).forEach(i -> new LoopUnroller(i.behavior()).run());
 
-    helperInstrs(viam)
+    wholeHelperInstrs(viam)
         .filter(i -> i.behavior().getNodes(ForallNode.class).findAny().isPresent())
         .filter(this::helperLoopMustBeUnrolled)
         .forEach(i -> new LoopUnroller(i.behavior()).run());
-
     return null;
   }
 

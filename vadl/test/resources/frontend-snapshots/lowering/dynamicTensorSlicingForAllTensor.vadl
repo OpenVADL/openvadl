@@ -66,7 +66,7 @@ instruction set architecture Tensor = {
 //    . : ' Inputs: rs1, rs2
 //    . : ' Outputs: rd
 //    . : ' Encoding: encoding
-//    . : ' Assembly: Tensor::QADD::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0  FieldRef             in: ()                succ: ()      type: b4     field: rd    format: F
 //    . : ' | n1  Constant             in: ()                succ: ()      type: b2     const: 0x0: Bits<2>
@@ -112,10 +112,10 @@ instruction set architecture Tensor = {
 //    . : ' | n41 WritesRegisterTensor in: (n0 n4 n40)       succ: ()      reg: Q
 //    . : ' | n42 InstrEnd             in: (n35 n37 n39 n41) succ: ()      effects: 4
 //    . : ' | n43 Start                in: ()                succ: (n42)   next: set
-//    . : ' Assembly name: "Tensor::QADD::assembly"
-//    . : ' | Function: Tensor::QADD::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "Tensor::QADD::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []

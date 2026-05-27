@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 package vadl.configuration;
 
 import java.util.EnumSet;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import vadl.iss.passes.tcg.lowering.Tcg_32_64;
 
 /**
  * The configurations required to control the generation of the ISS (QEMU).

@@ -79,16 +79,16 @@ instruction set architecture ISA = {
 //    . : ' Inputs: -
 //    . : ' Outputs: PC
 //    . : ' Encoding: encoding
-//    . : ' Assembly: ISA::A::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()   succ: ()     type: b32   const: 0x1: Bits<32>
 //    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: PC
 //    . : ' | n2 InstrEnd             in: (n1) succ: ()     effects: 1
 //    . : ' | n3 Start                in: ()   succ: (n2)   next: set
-//    . : ' Assembly name: "ISA::A::assembly"
-//    . : ' | Function: ISA::A::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "ISA::A::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []
@@ -110,16 +110,16 @@ instruction set architecture ISA = {
 //    . : ' Inputs: -
 //    . : ' Outputs: PC
 //    . : ' Encoding: encoding
-//    . : ' Assembly: ISA::B::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()   succ: ()     type: b32   const: 0x2: Bits<32>
 //    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: PC
 //    . : ' | n2 InstrEnd             in: (n1) succ: ()     effects: 1
 //    . : ' | n3 Start                in: ()   succ: (n2)   next: set
-//    . : ' Assembly name: "ISA::B::assembly"
-//    . : ' | Function: ISA::B::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "ISA::B::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []
@@ -141,16 +141,16 @@ instruction set architecture ISA = {
 //    . : ' Inputs: -
 //    . : ' Outputs: PC
 //    . : ' Encoding: encoding
-//    . : ' Assembly: ISA::C::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()   succ: ()     type: b32   const: 0x3: Bits<32>
 //    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: PC
 //    . : ' | n2 InstrEnd             in: (n1) succ: ()     effects: 1
 //    . : ' | n3 Start                in: ()   succ: (n2)   next: set
-//    . : ' Assembly name: "ISA::C::assembly"
-//    . : ' | Function: ISA::C::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "ISA::C::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []

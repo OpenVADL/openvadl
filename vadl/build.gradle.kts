@@ -119,6 +119,8 @@ tasks.withType<Test>().configureEach {
         }
     }
     jvmArgs("--enable-preview")
+    // Gradles worker default to 512MB which causes OOM errors on larger specs.
+    maxHeapSize = "2g"
     reports {
         junitXml.required.set(true)
     }

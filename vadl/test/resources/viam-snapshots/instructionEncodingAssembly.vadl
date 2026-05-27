@@ -222,7 +222,7 @@ instruction set architecture Mini = {
 //    . : ' Inputs: rs1, rs2
 //    . : ' Outputs: rd
 //    . : ' Encoding: encoding
-//    . : ' Assembly: Mini::ADD::assembly
+//    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
 //    . : ' | n0 FieldRef             in: ()      succ: ()     type: b5    field: rd    format: Rtype
 //    . : ' | n1 FieldRef             in: ()      succ: ()     type: b5    field: rs1   format: Rtype
@@ -233,10 +233,10 @@ instruction set architecture Mini = {
 //    . : ' | n6 WritesRegisterTensor in: (n0 n5) succ: ()     reg: X
 //    . : ' | n7 InstrEnd             in: (n6)    succ: ()     effects: 1
 //    . : ' | n8 Start                in: ()      succ: (n7)   next: set
-//    . : ' Assembly name: "Mini::ADD::assembly"
-//    . : ' | Function: Mini::ADD::assembly::func
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
 //    . : ' | FieldAccesses: []
-//    . : ' | Function name: "Mini::ADD::assembly::func"
+//    . : ' | Function name: "func"
 //    . : ' | . Type: ()->String
 //    . : ' | . Signature: () -> String
 //    . : ' | . Parameters: []
