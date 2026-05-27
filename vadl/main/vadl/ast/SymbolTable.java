@@ -40,7 +40,15 @@ import vadl.utils.WithLocation;
 
 class SymbolTable {
 
+  // Collecting symbols is expensive and providing many suggestions makes levenshtein slower.
+  // FIXME: Increase this limit if once the levenshtein algorightm is faster
   private static final int MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS = 100;
+
+  /// Collecting names across the AST is quite expensive so to improve this
+  /// we limit the amount of diagnostics that get that expensive treatment.
+  /// This allows the compiler to stay responsive if a often used format is deleted or renamed
+  /// by accident.
+  private static final int MAX_DIAGNOSTICS_WITH_NAME_SUGGESTIONS = 1000;
 
   @Nullable
   SymbolTable parent;
@@ -442,6 +450,10 @@ class SymbolTable {
    */
   @SafeVarargs
   final List<String> allSymbolNamesOf(Class<? extends Node>... classes) {
+    if (errors.size() > MAX_DIAGNOSTICS_WITH_NAME_SUGGESTIONS) {
+      return List.of();
+    }
+
     var symbols = new ArrayList<String>();
     collectAllSymbolNamesOf(symbols, classes);
     return symbols;
