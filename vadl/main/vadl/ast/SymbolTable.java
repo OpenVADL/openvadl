@@ -926,6 +926,14 @@ class SymbolTable {
         }
         index.domain.accept(this);
       });
+      if (expr.foldAction != null) {
+        switch (expr.foldAction) {
+          case Identifier id -> id.accept(this);
+          case IdentifierPath id -> id.accept(this);
+          case BinOp binOp -> { }
+          default -> throw new IllegalStateException("Unknown fold action: " + expr.foldAction);
+        }
+      }
       withSymbols(childTable, () -> expr.body.accept(this));
 
       afterTravel(expr);

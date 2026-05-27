@@ -184,7 +184,7 @@ public class FrontendSnapshotTests {
       var dump = new ViamSnapshotDumper().dump(spec);
       output += dump.indent(2);
     } else {
-      output += "Unable to pretty print AST";
+      output += "Unable to dump VIAM";
     }
     return output;
   }
