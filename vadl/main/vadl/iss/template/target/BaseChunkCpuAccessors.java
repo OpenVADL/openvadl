@@ -80,6 +80,15 @@ final class BaseChunkCpuAccessors {
         .append(" * ((size_t) ")
         .append(containerWidth / 8)
         .append(");\n");
+    body.append("if ((bit_offset & UINT64_C(0x7)) == UINT64_C(0) && (bit_width & 7u) == 0) {\n");
+    body.append("  size_t byte_off = reg_off + (size_t) (bit_offset >> 3);\n");
+    body.append("  size_t byte_count = (size_t) (bit_width >> 3);\n");
+    body.append("  uint64_t out = 0;\n");
+    body.append("  memcpy(&out, ((uint8_t*) env->")
+        .append(reg.simpleName().toLowerCase())
+        .append(") + byte_off, byte_count);\n");
+    body.append("  return out;\n");
+    body.append("}\n");
     body.append("uint64_t out = 0;\n");
     body.append("for (uint32_t b = 0; b < bit_width; b++) {\n");
     body.append("  uint64_t src_bit = bit_offset + ((uint64_t) b);\n");
@@ -123,6 +132,15 @@ final class BaseChunkCpuAccessors {
         .append(" * ((size_t) ")
         .append(containerWidth / 8)
         .append(");\n");
+    body.append("if ((bit_offset & UINT64_C(0x7)) == UINT64_C(0) && (bit_width & 7u) == 0) {\n");
+    body.append("  size_t byte_off = reg_off + (size_t) (bit_offset >> 3);\n");
+    body.append("  size_t byte_count = (size_t) (bit_width >> 3);\n");
+    body.append("  uint64_t tmp = value;\n");
+    body.append("  memcpy(((uint8_t*) env->")
+        .append(reg.simpleName().toLowerCase())
+        .append(") + byte_off, &tmp, byte_count);\n");
+    body.append("  return;\n");
+    body.append("}\n");
     body.append("for (uint32_t b = 0; b < bit_width; b++) {\n");
     body.append("  uint64_t dst_bit = bit_offset + ((uint64_t) b);\n");
     body.append("  size_t dst_byte = reg_off + (size_t) (dst_bit >> 3);\n");
