@@ -786,16 +786,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return result;
   }
 
-
-  /// This utility function can be used to fill in missing indexes of a tensor.
-  ///
-  /// It basically returns a permutation of all possible indices for the dimensions provided.
-  ///
-  /// Example:
-  /// ```
-  /// [2] -> [[0], [1]]
-  /// [2, 2] -> [[0, 0], [0, 1], [1, 0], [1, 1]]
-  /// ```
   private ExpressionNode readRegisterTensorDirect(RegisterTensor resource,
                                                   List<ExpressionNode> indices,
                                                   DataType type) {

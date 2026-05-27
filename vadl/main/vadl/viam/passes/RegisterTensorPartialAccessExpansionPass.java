@@ -26,26 +26,26 @@ import vadl.utils.ViamUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.dependency.ReadArtificialResNode;
-import vadl.viam.graph.dependency.WriteArtificialResNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
- * Expands partial alias-register accesses into the concrete concatenated/sliced access shape.
+ * Expands partial base-register accesses into the concrete concatenated/sliced access shape.
  *
- * <p>The frontend now preserves partial alias accesses such as {@code V(vd)} as one
- * {@link ReadArtificialResNode} / {@link WriteArtificialResNode}. This pass restores the old VIAM
- * shape by enumerating the missing alias dimensions and lowering them to the exact read/write
- * sequence that downstream passes already understand.</p>
+ * <p>The frontend now preserves partial register-tensor accesses such as {@code V(vd)} as one
+ * {@link ReadRegTensorNode} / {@link WriteRegTensorNode}. This pass restores the old VIAM shape by
+ * enumerating the missing register dimensions and lowering them to the exact read/write sequence
+ * that downstream passes already understand.</p>
  */
-public class ArtificialResPartialAccessExpansionPass extends Pass {
+public class RegisterTensorPartialAccessExpansionPass extends Pass {
 
-  public ArtificialResPartialAccessExpansionPass(GeneralConfiguration configuration) {
+  public RegisterTensorPartialAccessExpansionPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return new PassName("Artificial Resource Partial Access Expansion");
+    return new PassName("Register Tensor Partial Access Expansion");
   }
 
   @Nullable
@@ -56,32 +56,32 @@ public class ArtificialResPartialAccessExpansionPass extends Pass {
   }
 
   private void expandInBehavior(Graph behavior) {
-    behavior.getNodes(ReadArtificialResNode.class)
+    behavior.getNodes(ReadRegTensorNode.class)
         .filter(this::isPartialAccess)
         .toList()
         .forEach(this::expandRead);
-    behavior.getNodes(WriteArtificialResNode.class)
+    behavior.getNodes(WriteRegTensorNode.class)
         .filter(this::isPartialAccess)
         .toList()
         .forEach(this::expandWrite);
   }
 
-  private boolean isPartialAccess(ReadArtificialResNode read) {
-    return read.indices().size() < read.resourceDefinition().dimensions().size();
+  private boolean isPartialAccess(ReadRegTensorNode read) {
+    return read.indices().size() < read.resourceDefinition().indexDimensions().size();
   }
 
-  private boolean isPartialAccess(WriteArtificialResNode write) {
-    return write.indices().size() < write.resourceDefinition().dimensions().size();
+  private boolean isPartialAccess(WriteRegTensorNode write) {
+    return write.indices().size() < write.resourceDefinition().indexDimensions().size();
   }
 
-  private void expandRead(ReadArtificialResNode read) {
+  private void expandRead(ReadRegTensorNode read) {
     var replacement = PartialAccessExpansionSupport.expandReadValue(
-        read.resourceDefinition(), read.indices());
+        read.resourceDefinition(), read.indices(), read.staticCounterAccess());
     replacement.setSourceLocationIfNotSet(read.location());
     read.replaceAndDelete(replacement);
   }
 
-  private void expandWrite(WriteArtificialResNode write) {
+  private void expandWrite(WriteRegTensorNode write) {
     var ends = write.usages()
         .filter(AbstractEndNode.class::isInstance)
         .map(AbstractEndNode.class::cast)
