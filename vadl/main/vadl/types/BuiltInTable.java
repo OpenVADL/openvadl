@@ -945,6 +945,8 @@ public class BuiltInTable {
   public static final BuiltIn RRX =
       func("VADL::rrx",
           Type.relation(List.of(BitsType.class, BoolType.class), BitsType.class))
+          .compute((Constant.Value a, Constant.Value c) -> a.rrx(c.bool())
+              .get(BUILTIN_RESULT, Constant.Value.class))
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
           .build();
@@ -956,6 +958,7 @@ public class BuiltInTable {
   public static final BuiltIn RRXS =
       func("VADL::rrxs",
           Type.relation(List.of(BitsType.class, BoolType.class), BitsType.class))
+          .compute((Constant.Value a, Constant.Value c) -> a.rrx(c.bool()))
           .takesDefault()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();

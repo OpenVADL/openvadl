@@ -41,7 +41,7 @@ import vadl.viam.passes.canonicalization.Canonicalizer;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
 /**
- * This class executes all tests in the `valid_builtin_constant_eval.vadl` test source.
+ * This class executes all tests in the `valid_builtin_constant_evaluation.vadl` test source.
  * This is done by searching for all function definitions starting with `exercise_`.
  * For each of these exercise functions there exists a `solution_...` function that contains
  * the expected outcome of the exercise_function.
