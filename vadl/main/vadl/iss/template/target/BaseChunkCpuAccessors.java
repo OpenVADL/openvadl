@@ -62,11 +62,13 @@ final class BaseChunkCpuAccessors {
   private static Map<String, Object> renderReadAccessor(RegisterTensor reg,
                                                         IssConfiguration config) {
     var body = new StringBuilder();
-    var containerWidth = reg.resultType(reg.indexDimensions().size()).bitWidth();
     body.append("assert(bit_width > 0);\n");
     body.append("assert(bit_width <= 64);\n");
+    body.append("assert(provided_index_count <= ")
+        .append(reg.indexDimensions().size())
+        .append("u);\n");
     body.append("assert(bit_offset + bit_width <= ((uint64_t) ")
-        .append(containerWidth)
+        .append(aggregateContainerWidthExpr(reg))
         .append("));\n");
     for (int i = 0; i < reg.indexDimensions().size(); i++) {
       body.append("assert(i")
@@ -77,9 +79,9 @@ final class BaseChunkCpuAccessors {
     }
     body.append("size_t reg_off = ")
         .append(flatBaseIndexExpr(reg))
-        .append(" * ((size_t) ")
-        .append(containerWidth / 8)
-        .append(");\n");
+        .append(" * ((size_t) (")
+        .append(aggregateContainerWidthExpr(reg))
+        .append(" >> 3));\n");
     body.append("if ((bit_offset & UINT64_C(0x7)) == UINT64_C(0) && (bit_width & 7u) == 0) {\n");
     body.append("  size_t byte_off = reg_off + (size_t) (bit_offset >> 3);\n");
     body.append("  size_t byte_count = (size_t) (bit_width >> 3);\n");
@@ -104,7 +106,7 @@ final class BaseChunkCpuAccessors {
     var signature = "uint64_t cpu_get_" + reg.simpleName().toLowerCase() + "_chunk("
         + "CPU" + config.targetName().toUpperCase() + "State *env"
         + renderArgDecls(reg.indexDimensions().size())
-        + ", uint64_t bit_offset, uint32_t bit_width)";
+        + ", uint32_t provided_index_count, uint64_t bit_offset, uint32_t bit_width)";
     return Map.of(
         "signature", signature,
         "body", body.toString()
@@ -114,11 +116,13 @@ final class BaseChunkCpuAccessors {
   private static Map<String, Object> renderWriteAccessor(RegisterTensor reg,
                                                          IssConfiguration config) {
     var body = new StringBuilder();
-    var containerWidth = reg.resultType(reg.indexDimensions().size()).bitWidth();
     body.append("assert(bit_width > 0);\n");
     body.append("assert(bit_width <= 64);\n");
+    body.append("assert(provided_index_count <= ")
+        .append(reg.indexDimensions().size())
+        .append("u);\n");
     body.append("assert(bit_offset + bit_width <= ((uint64_t) ")
-        .append(containerWidth)
+        .append(aggregateContainerWidthExpr(reg))
         .append("));\n");
     for (int i = 0; i < reg.indexDimensions().size(); i++) {
       body.append("assert(i")
@@ -129,9 +133,9 @@ final class BaseChunkCpuAccessors {
     }
     body.append("size_t reg_off = ")
         .append(flatBaseIndexExpr(reg))
-        .append(" * ((size_t) ")
-        .append(containerWidth / 8)
-        .append(");\n");
+        .append(" * ((size_t) (")
+        .append(aggregateContainerWidthExpr(reg))
+        .append(" >> 3));\n");
     body.append("if ((bit_offset & UINT64_C(0x7)) == UINT64_C(0) && (bit_width & 7u) == 0) {\n");
     body.append("  size_t byte_off = reg_off + (size_t) (bit_offset >> 3);\n");
     body.append("  size_t byte_count = (size_t) (bit_width >> 3);\n");
@@ -155,7 +159,8 @@ final class BaseChunkCpuAccessors {
     var signature = "void cpu_set_" + reg.simpleName().toLowerCase() + "_chunk("
         + "CPU" + config.targetName().toUpperCase() + "State *env"
         + renderArgDecls(reg.indexDimensions().size())
-        + ", uint64_t bit_offset, uint32_t bit_width, uint64_t value)";
+        + ", uint32_t provided_index_count, uint64_t bit_offset, uint32_t bit_width, "
+        + "uint64_t value)";
     return Map.of(
         "signature", signature,
         "body", body.toString()
@@ -170,14 +175,32 @@ final class BaseChunkCpuAccessors {
     return sb.toString();
   }
 
+  private static String aggregateContainerWidthExpr(RegisterTensor reg) {
+    var dims = reg.indexDimensions().size();
+    var sb = new StringBuilder();
+    sb.append("(");
+    for (int provided = 0; provided <= dims; provided++) {
+      if (provided != 0) {
+        sb.append(" : ");
+      }
+      if (provided != dims) {
+        sb.append("(provided_index_count == ").append(provided).append("u) ? ");
+      }
+      sb.append("((uint32_t) ").append(reg.resultType(provided).bitWidth()).append(")");
+    }
+    sb.append(")");
+    return sb.toString();
+  }
+
   private static String flatBaseIndexExpr(RegisterTensor base) {
     var dims = base.indexDimensions();
     if (dims.isEmpty()) {
       return "((size_t) 0)";
     }
-    var expr = "((size_t) i0)";
-    for (int i = 1; i < dims.size(); i++) {
-      expr = "((" + expr + ") * ((size_t) " + dims.get(i).size() + ") + ((size_t) i" + i + "))";
+    var expr = "((size_t) 0)";
+    for (int i = 0; i < dims.size(); i++) {
+      expr = "((provided_index_count > " + i + "u) ? ((" + expr + ") * ((size_t) "
+          + dims.get(i).size() + ") + ((size_t) i" + i + ")) : (" + expr + "))";
     }
     return expr;
   }

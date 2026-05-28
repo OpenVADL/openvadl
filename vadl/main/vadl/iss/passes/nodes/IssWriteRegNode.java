@@ -16,10 +16,13 @@
 
 package vadl.iss.passes.nodes;
 
+import com.google.common.collect.Streams;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
@@ -204,6 +207,62 @@ public class IssWriteRegNode extends WriteRegTensorNode {
       return c.constant().asVal().intValue();
     }
     return value().type().asDataType().bitWidth();
+  }
+
+  @Override
+  public void verifyState() {
+    if (nullableCondition() != null) {
+      ensure(nullableCondition().type().isTrivialCastTo(Type.bool()),
+          "Condition must be a boolean but was %s",
+          nullableCondition());
+    }
+
+    ensure(value().type() instanceof DataType valueType && valueType.bitWidth() <= writeBitWidth(),
+        "Mismatching resource type. Value expression's type (%s) has not the expected "
+            + "width of %s.",
+        value().type(), writeBitWidth());
+
+    ensure(regTensor().indexTypes().size() >= indices().size(),
+        "The resource takes %d indices but write provided %d",
+        regTensor().indexTypes().size(), indices().size());
+    Streams.forEachPair(indices().stream(), regTensor().indexTypes().stream(),
+        (index, expectedType) -> {
+          Objects.requireNonNull(index);
+          ensure(index.type() instanceof DataType,
+              "Address must be a DataValue, was %s", index.type());
+          ensure(index.type().isTrivialCastTo(expectedType),
+              "Address value type `%s` cannot be cast to resource's address type `%s`.",
+              index.type(), expectedType);
+        });
+
+    ensure(indices().size() <= regTensor().maxNumberOfAccessIndices(),
+        "Too many indices for tensor access. Write uses %d indices, tensor has %d indices",
+        indices().size(), regTensor().maxNumberOfAccessIndices());
+    regTensor().ensureMatchingIndexTypes(
+        indices().stream().map(e -> e.type().asDataType()).toList());
+
+    if (windowKind == WindowKind.FULL) {
+      ensure(regTensor().resultType(indices().size()).isTrivialCastTo(value().type()),
+          "Try to write value of type %s to register tensor with write type %s",
+          value().type(), regTensor().resultType(indices().size()));
+    } else {
+      ensure(bitOffset.type() instanceof DataType,
+          "Chunk write bit offset must be a data type, was %s", bitOffset.type());
+      ensure(bitWidth.type() instanceof DataType,
+          "Chunk write bit width must be a data type, was %s", bitWidth.type());
+
+      var containerWidth = regTensor().resultType(indices().size()).bitWidth();
+      if (bitOffset instanceof ConstantNode offsetConst
+          && bitWidth instanceof ConstantNode widthConst) {
+        var offset = offsetConst.constant().asVal().intValue();
+        var width = widthConst.constant().asVal().intValue();
+        ensure(offset >= 0, "Chunk write bit offset must be non-negative.");
+        ensure(width > 0, "Chunk write bit width must be positive.");
+        ensure(offset + width <= containerWidth,
+            "Chunk write window [%d, %d) exceeds container width %d.",
+            offset, offset + width, containerWidth);
+      }
+    }
   }
 
   @Override
