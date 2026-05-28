@@ -1,0 +1,22 @@
+// INCLUDE-PRETTY-PRINT
+
+constant AsId("one") = 1
+constant AsId("th", "ree") = 3
+constant AsId(max, count) = 42
+constant AsId(open, "vadl") = 2024
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  constant one = 1
+//  constant three = 3
+//  constant maxcount = 42
+//  constant openvadl = 2024
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
