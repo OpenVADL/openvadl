@@ -934,6 +934,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       return new ForIdxNode(
           forallIndexType(getViamType(expr.type())),
+          index.identifier().name,
+          index.identifier().location(),
           requireNonNull(index.computedFrom),
           requireNonNull(index.computedTo));
     }
@@ -947,6 +949,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       return new ForIdxNode(
           forallIndexType(getViamType(expr.type())),
+          index.identifier().name,
+          index.identifier().location(),
           requireNonNull(index.computedFrom),
           requireNonNull(index.computedTo));
     }
@@ -1554,6 +1558,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var index = requireNonNull(expr.indices.getFirst());
     var idx = new ForIdxNode(forallIndexType(requireNonNull(index.typeLiteral).type()),
+        index.identifier().name,
+        index.identifier().location(),
         requireNonNull(index.computedFrom),
         requireNonNull(index.computedTo));
 
@@ -1891,6 +1897,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var index = requireNonNull(statement.indices.getFirst());
     var idx =
         new ForIdxNode(forallIndexType(requireNonNull(index.typeLiteral).type()),
+            index.identifier().name,
+            index.identifier().location(),
             requireNonNull(index.computedFrom),
             requireNonNull(index.computedTo));
     var branchBegin = addToGraph(new BranchBeginNode(next));
