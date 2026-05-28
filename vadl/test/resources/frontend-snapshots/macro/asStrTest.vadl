@@ -4,6 +4,7 @@ function one -> String = AsStr(one)
 function three -> String = AsStr(th, ree)
 function maxcount -> String = AsStr("max", "count")
 function openvadl -> String = AsStr("open", vadl)
+function thestruggle -> String = AsStr("str", identifier, 123, true, false, 0xabc0, 0b0001)
 
 
 //  Reported Diagnostics:
@@ -17,6 +18,7 @@ function openvadl -> String = AsStr("open", vadl)
 //  function three -> String = "three"
 //  function maxcount -> String = "maxcount"
 //  function openvadl -> String = "openvadl"
+//  function thestruggle -> String = "stridentifier123truefalse0xabc00b0001"
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests
