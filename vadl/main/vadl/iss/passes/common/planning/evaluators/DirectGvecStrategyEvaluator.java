@@ -27,7 +27,9 @@ import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.LayoutFac
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperationKind;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OverlapFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.SizeFacts;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.VectorRegionFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.WriteAccessFacts;
+import vadl.iss.passes.common.planning.analysis.VectorRegion;
 import vadl.iss.passes.common.planning.analysis.VectorStrategyIssueCode;
 import vadl.iss.passes.extensions.InstrExecPlan.DirectGvecSupport;
 import vadl.iss.passes.extensions.InstrExecPlan.PlanningIssue;
@@ -48,36 +50,64 @@ public final class DirectGvecStrategyEvaluator {
   private final VectorFactExtractor factExtractor = VectorFactExtractor.defaultExtractor();
 
   /**
-   * Evaluates whether the instruction contains a vector region that can be rewritten to backend
-   * direct-gvec nodes.
+   * Evaluates direct-gvec eligibility for each discovered vector analysis region.
    */
-  public DirectGvecSupport evaluate(Instruction instruction) {
+  public DirectGvecEvaluation evaluate(Instruction instruction) {
     var facts = factExtractor.extract(instruction);
-    var issues = new ArrayList<PlanningIssue>();
+    var supports = facts.regions().stream()
+        .map(this::evaluateRegion)
+        .toList();
+    return new DirectGvecEvaluation(facts, supports);
+  }
 
-    // Strategy evaluation is additive: each check only rejects DIRECT_GVEC, not the whole
-    // instruction. Other strategies still get the same neutral fact set.
-    recordGeneralShapeIssues(facts, issues);
-
-    var candidate = facts.candidate();
-    if (candidate == null) {
-      return rejected(issues);
+  /**
+   * Evaluation result for all direct-gvec region candidates in one instruction.
+   */
+  public record DirectGvecEvaluation(
+      VectorInstructionFacts facts,
+      List<DirectGvecSupport> regions
+  ) {
+    public DirectGvecEvaluation {
+      regions = List.copyOf(regions);
     }
 
-    recordWriteIssues(facts.write(), issues);
+    /**
+     * Returns whether at least one region is a viable direct-gvec candidate.
+     */
+    public boolean hasViableRegion() {
+      return regions.stream().anyMatch(DirectGvecSupport::isViable);
+    }
 
-    var operationFacts = facts.operation();
-    var vectorOp = evaluateOperation(operationFacts, issues);
+    /**
+     * Returns whether the whole instruction is covered by the currently viable direct-gvec
+     * regions under the conservative pre-region-coverage execution model.
+     */
+    public boolean supportsWholeInstructionLowering() {
+      return !regions.isEmpty()
+          && facts.loop().forallCount() == regions.size()
+          && facts.effects().sideEffectCount() == regions.size()
+          && regions.stream().allMatch(DirectGvecSupport::isViable);
+    }
+  }
 
-    var operands = recordOperandIssues(facts, issues);
-    var writeFacts = facts.write();
+  private DirectGvecSupport evaluateRegion(VectorRegionFacts regionFacts) {
+    var issues = new ArrayList<PlanningIssue>();
+    var region = regionFacts.region();
+
+    recordWriteIssues(regionFacts.write(), issues);
+
+    var vectorOp = evaluateOperation(regionFacts.operation(), issues);
+
+    var operands = recordOperandIssues(regionFacts.operands(), issues);
+    var writeFacts = regionFacts.write();
     if (!issues.isEmpty() || writeFacts == null || vectorOp == null) {
-      return rejected(issues);
+      return rejected(region, issues);
     }
 
     // The direct-gvec plan is assembled only after all direct-gvec-specific preconditions hold.
     return DirectGvecSupport.viable(
         DIRECT_GVEC_ESTIMATED_COST,
+        region,
         VectorTensorPlan.directGvecCandidate(
             vectorOp,
             vectorShape(writeFacts.size(), writeFacts.layout()),
@@ -86,25 +116,6 @@ public final class DirectGvecStrategyEvaluator {
             operands
         )
     );
-  }
-
-  private void recordGeneralShapeIssues(VectorInstructionFacts facts,
-                                        List<PlanningIssue> issues) {
-    // Direct gvec starts from one normalized vector loop. More complex loop structures may still
-    // be usable by other vector strategies later.
-    if (facts.loop().forallCount() == 0) {
-      issues.add(PlanningIssue.of(VectorStrategyIssueCode.NO_FORALL));
-      return;
-    }
-    if (facts.loop().forallCount() != 1) {
-      issues.add(PlanningIssue.of(VectorStrategyIssueCode.MULTIPLE_FORALLS));
-    }
-    if (facts.effects().sideEffectCount() != 1) {
-      issues.add(PlanningIssue.of(VectorStrategyIssueCode.EXTRA_SIDE_EFFECTS));
-    }
-    if (!facts.loop().hasSingleForallRegisterWriteBody()) {
-      issues.add(PlanningIssue.of(VectorStrategyIssueCode.FORALL_WITHOUT_SINGLE_SIDE_EFFECT));
-    }
   }
 
   private @Nullable VectorTensorPlan.VectorOp evaluateOperation(
@@ -167,10 +178,11 @@ public final class DirectGvecStrategyEvaluator {
     }
   }
 
-  private List<VectorOperand> recordOperandIssues(VectorInstructionFacts facts,
+  private List<VectorOperand> recordOperandIssues(
+      List<VectorInstructionFacts.OperandAccessFacts> operandFactsList,
                                                   List<PlanningIssue> issues) {
     var operands = new ArrayList<VectorOperand>();
-    for (var operandFacts : facts.operands()) {
+    for (var operandFacts : operandFactsList) {
       // Direct gvec currently only accepts vector-register operands. Keeping the extracted operand
       // facts explicit lets later strategies reuse the same analysis for scalar or immediate forms.
       var read = operandFacts.read();
@@ -243,7 +255,11 @@ public final class DirectGvecStrategyEvaluator {
     };
   }
 
-  private DirectGvecSupport rejected(List<PlanningIssue> issues) {
-    return DirectGvecSupport.rejected(DIRECT_GVEC_ESTIMATED_COST, List.copyOf(issues));
+  private DirectGvecSupport rejected(VectorRegion region, List<PlanningIssue> issues) {
+    return DirectGvecSupport.rejected(
+        DIRECT_GVEC_ESTIMATED_COST,
+        region,
+        List.copyOf(issues)
+    );
   }
 }

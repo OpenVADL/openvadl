@@ -31,12 +31,15 @@ import vadl.viam.Instruction;
  */
 public final class VectorFactExtractor {
 
+  private final VectorAccessPatternStep accessPatternStep;
   private final List<VectorFactStep> steps;
 
   /**
    * Creates an extractor with the given ordered fact-extraction steps.
    */
-  public VectorFactExtractor(List<VectorFactStep> steps) {
+  public VectorFactExtractor(VectorAccessPatternStep accessPatternStep,
+                             List<VectorFactStep> steps) {
+    this.accessPatternStep = accessPatternStep;
     this.steps = List.copyOf(steps);
   }
 
@@ -44,8 +47,7 @@ public final class VectorFactExtractor {
    * Creates the default vector fact extractor used by current strategy evaluators.
    */
   public static VectorFactExtractor defaultExtractor() {
-    return new VectorFactExtractor(List.of(
-        new VectorAccessPatternStep(),
+    return new VectorFactExtractor(new VectorAccessPatternStep(), List.of(
         new VectorWriteShapeStep(),
         new VectorOperationStep(),
         new VectorOperandStep()
@@ -56,10 +58,39 @@ public final class VectorFactExtractor {
    * Runs all configured fact-extraction steps for one instruction.
    */
   public VectorInstructionFacts extract(Instruction instruction) {
-    var state = new VectorFactsBuilder(instruction);
-    for (var step : steps) {
-      step.extract(state);
-    }
-    return state.toFacts();
+    var regions = accessPatternStep.discoverRegions(instruction).stream()
+        .map(region -> {
+          var state = new VectorFactsBuilder(instruction, region);
+          for (var step : steps) {
+            step.extract(state);
+          }
+          return state.toFacts();
+        })
+        .toList();
+    return new VectorInstructionFacts(
+        instruction,
+        accessPatternStep.loopFacts(instruction),
+        accessPatternStep.effectFacts(instruction),
+        regions
+    );
+  }
+
+  /**
+   * Discovers vector regions without running the region-local fact steps.
+   */
+  public List<VectorRegion> discoverRegions(Instruction instruction) {
+    return accessPatternStep.discoverRegions(instruction);
+  }
+
+  /**
+   * Returns the global loop/effect summary used by conservative instruction-level decisions.
+   */
+  public VectorInstructionFacts extractGlobalFacts(Instruction instruction) {
+    return new VectorInstructionFacts(
+        instruction,
+        accessPatternStep.loopFacts(instruction),
+        accessPatternStep.effectFacts(instruction),
+        List.of()
+    );
   }
 }

@@ -311,14 +311,21 @@ public class ViamEnricherCollection {
         entity.addInfo(Info.Tag.of("SelectedExecutionPath",
             executionPlan.selectedPath().name()));
 
-        var directGvec = executionPlan.directGvec();
+        var directGvecRegions = executionPlan.directGvecRegions();
+        var hasViableRegion = directGvecRegions.stream().anyMatch(region -> region.isViable());
 
-        entity.addInfo(Info.Tag.of("DirectGvecStatus", directGvec.status().name()));
+        entity.addInfo(Info.Tag.of("DirectGvecStatus", hasViableRegion ? "VIABLE" : "REJECTED"));
         entity.addInfo(Info.Tag.of("DirectGvecIssues",
-            directGvec.issues().isEmpty()
+            directGvecRegions.stream()
+                .flatMap(region -> region.issues().stream())
+                .map(issue -> issue.code())
+                .distinct()
+                .toList().isEmpty()
                 ? "-"
-                : directGvec.issues().stream()
+                : directGvecRegions.stream()
+                  .flatMap(region -> region.issues().stream())
                   .map(issue -> issue.code())
+                  .distinct()
                   .collect(Collectors.joining(", "))));
       });
 

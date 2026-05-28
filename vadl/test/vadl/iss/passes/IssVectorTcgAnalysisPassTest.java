@@ -55,10 +55,11 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var instr = findInstruction(viam, "RV64IMV::VADD_VV");
     var executionPlan = executionPlan(instr);
-    var directGvec = executionPlan.directGvec();
+    var directGvec = singleDirectGvecRegion(executionPlan);
     var plan = vectorPlan(directGvec);
 
     assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals("forall-write-0", directGvec.region().regionId());
     assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
     assertEquals(VectorOp.ADD, plan.op());
     assertEquals(32, plan.elementBits());
@@ -84,11 +85,11 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
-  void recognizesRv64vVsubVv()
+    void recognizesRv64vVsubVv()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var executionPlan = executionPlan(findInstruction(viam, "RV64IMV::VSUB_VV"));
-    var directGvec = executionPlan.directGvec();
+    var directGvec = singleDirectGvecRegion(executionPlan);
     var plan = vectorPlan(directGvec);
 
     assertTrue(directGvec.isViable(), directGvec::toString);
@@ -98,11 +99,11 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
-  void keepsVectorScalarInstructionOnFallbackPlan()
+    void keepsVectorScalarInstructionOnFallbackPlan()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var executionPlan = executionPlan(findInstruction(viam, "RV64IMV::VADD_VX"));
-    var directGvec = executionPlan.directGvec();
+    var directGvec = singleDirectGvecRegion(executionPlan);
 
     assertEquals(ExecutionPath.HELPER_CALL, executionPlan.selectedPath());
     assertTrue(!directGvec.isViable(), directGvec::toString);
@@ -110,11 +111,11 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
-  void recognizesVectorBenchAliasVaddDoVv()
+    void recognizesVectorBenchAliasVaddDoVv()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/vectorbench/vectorbench64.vadl");
     var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_DO_VV"));
-    var directGvec = executionPlan.directGvec();
+    var directGvec = singleDirectGvecRegion(executionPlan);
     var plan = vectorPlan(directGvec);
 
     assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
@@ -136,10 +137,9 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var instr = findInstruction(viam, "RV64IMV::VSETVLI");
     var executionPlan = executionPlan(instr);
-    var directGvec = executionPlan.directGvec();
 
     assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
-    assertTrue(!directGvec.isViable(), directGvec::toString);
+    assertTrue(executionPlan.directGvecRegions().isEmpty(), executionPlan::toString);
     assertEquals(ExecutionPath.NORMAL_TCG, instrInfo(instr).executionPath());
   }
 
@@ -158,6 +158,14 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   private InstrExecPlan executionPlan(Instruction instr) {
     var plan = instrInfo(instr).executionPlan();
     return plan == null ? fail("Expected execution plan for " + instr.simpleName()) : plan;
+  }
+
+  private DirectGvecSupport singleDirectGvecRegion(InstrExecPlan executionPlan) {
+    var supports = executionPlan.directGvecRegions();
+    if (supports.size() != 1) {
+      fail("Expected exactly one direct-gvec region but got " + supports.size());
+    }
+    return supports.getFirst();
   }
 
   private VectorTensorPlan vectorPlan(DirectGvecSupport directGvec) {
