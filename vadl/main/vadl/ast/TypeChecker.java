@@ -4476,8 +4476,14 @@ public class TypeChecker
         .sum();
 
     if (expr.operation == ForallExpr.Operation.FOLD) {
-      var builtIn =
-          AstUtils.getOperatorBuiltIn(expr.getFoldOperator(), List.of(bodyType, bodyType));
+      BuiltInTable.BuiltIn builtIn = switch (expr.foldAction) {
+        case Identifier id -> AstUtils.getBuiltIn(id.name, List.of(bodyType, bodyType));
+        case IdentifierPath idPath ->
+            AstUtils.getBuiltIn(idPath.pathToString(), List.of(bodyType, bodyType));
+        case BinOp binOp ->
+            AstUtils.getOperatorBuiltIn(binOp.operator, List.of(bodyType, bodyType));
+        default -> throw new IllegalStateException("Unexpected value: " + expr.foldAction);
+      };
 
       // FIXME: In the future try a more sophisticated approach that determines the allowed
       // functions based on the types, but this will require a larger rewrite of the
@@ -4487,12 +4493,16 @@ public class TypeChecker
           BuiltInTable.MUL,
           BuiltInTable.AND,
           BuiltInTable.OR,
-          BuiltInTable.XOR
+          BuiltInTable.XOR,
+          BuiltInTable.SMIN,
+          BuiltInTable.UMIN,
+          BuiltInTable.SMAX,
+          BuiltInTable.UMAX
       );
 
       if (!allowedFoldBuiltins.contains(builtIn)) {
         // We can continue with this error
-        var location = requireNonNull(((BinOp) expr.foldOperator)).location;
+        var location = requireNonNull(expr.foldAction).location();
         addErrorAndContinueChecking(
             error("Invalid Fold Operator", location)
                 .locationDescription(location,

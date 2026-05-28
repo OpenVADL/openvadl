@@ -2013,7 +2013,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = DUMMY_EXPR; var start = nextTokenLoc(); TypeLiteral typeLiteral = null; .)
   = FORALL
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    [
+   [
     SYM_COLON
     typeLiteral<out typeLiteral>
     ]
@@ -2039,18 +2039,34 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
         ]
         SYM_IN
         rangeExpression<out domain>                           (. indices.add(new ForallIndex(id, typeLiteral, domain)); .)
-      }                                                       (. ForallExpr.Operation operation = null; IsBinOp foldAction = null; .)
+      }                                                       (. ForallExpr.Operation operation = null; Node foldAction = null; .)
       ( TENSOR                                                (. operation = ForallExpr.Operation.TENSOR; .)
       | FOLD                                                  (. operation = ForallExpr.Operation.FOLD; .)
-        ( binaryOperator<out Operator operator>               (. foldAction = new BinOp(operator, lastTokenLoc()); .)
-        | macroReplacement<out Node node>                     (. foldAction = castBinOp(this, node); .)
-        )
+        foldAction<out Node action>                           (. foldAction = action; .)
         WITH
       // Previously the append existed for protocols but at the time of writing protocols are on hold in open-vadl.
       // | APPEND                                               (. operation = ForallExpr.Operation.APPEND; .)
       )
       expression<out Expr expr, allowedOps>                   (. forallExpr = new ForallExpr(indices, operation, foldAction, expr, start.join(lastTokenLoc())); .)
     )
+  .
+
+  // The forall fold action can be a identifier, identifierPath or Operator.
+  // Unfortunatley because of LL1 conflicts we need to reimplement them again so that macros work.
+  foldAction<out Node node>                                 (. node = DUMMY_ID; .)
+  = binaryOperator<out Operator op>                         (. node = new BinOp(op, lastTokenLoc()); .)
+  |
+  (
+    ( identifier<out Identifier id>                                     (. node = id; .)
+    | macroReplacement<out Node replacement>                            (. node = castBinOpOrId(this, replacement); .)
+    )                                                                   (. var parts = new ArrayList<IdentifierOrPlaceholder>(); .)
+    { IF ((la.kind == _SYM_NAMESPACE && isIdType(node.syntaxType()) ))  (. if (parts.isEmpty()) {parts.add((IdentifierOrPlaceholder)node);}.)
+       SYM_NAMESPACE
+       ( identifier<out Identifier id2>                                 (. parts.add(id2); .)
+       | macroReplacement<out Node replacement>                         (. parts.add(castId(this, replacement)); .)
+       )
+    }                                                                   (. if (parts.size() > 1)  { node = new IdentifierPath(parts); } .)
+  )
   .
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------

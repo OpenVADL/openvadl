@@ -280,12 +280,53 @@ class ParserUtils {
     return type.isSubTypeOf(BasicSyntaxType.EX);
   }
 
+  static boolean isIdType(SyntaxType type) {
+    return type == BasicSyntaxType.ID || type.isSubTypeOf(BasicSyntaxType.ID);
+  }
+
   static boolean isDefType(SyntaxType type) {
     return type.isSubTypeOf(BasicSyntaxType.ISA_DEFS);
   }
 
   static boolean isStmtType(SyntaxType type) {
     return type.isSubTypeOf(BasicSyntaxType.STATS);
+  }
+
+  /**
+   * Casts a node to either IsBinOp or IsId, useful in macro contexts where either type might be
+   * valid.
+   * This is similar to {@link #castBinOp} but also accepts identifier nodes.
+   *
+   * @param p The parser instance for error reporting
+   * @param n The node to cast
+   * @return The node if it's IsBinOp or IsId, otherwise a dummy node with an error reported
+   */
+  static Node castBinOpOrId(Parser p, Node n) {
+    if (n instanceof IsBinOp || n instanceof IsId) {
+      return n;
+    }
+
+    String message;
+    if (isPlaceholder(n)) {
+      var sb = new StringBuilder("");
+      n.prettyPrint(0, sb);
+      var name = sb.toString();
+
+      p.diagnostics.add(
+          Diagnostic.error("Unknown Model `%s`".formatted(name), n)
+              .help("Make sure the macro is defined before (above) they are used.")
+              .build());
+    } else {
+      message =
+          "Expected node of type BinOp or Id, received "
+              + n.syntaxType().print() + " - " + n;
+      p.diagnostics.add(
+          Diagnostic.error("SyntaxType Mismatch", n)
+              .description("%s", message)
+              .build());
+    }
+
+    return DUMMY_ID;
   }
 
   static MacroOrPlaceholder macroOrPlaceholder(@Nullable Macro macro, SyntaxType syntaxType,

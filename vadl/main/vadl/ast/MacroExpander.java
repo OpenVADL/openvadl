@@ -514,7 +514,7 @@ class MacroExpander
     return new ForallExpr(
         indices,
         expr.operation,
-        expr.foldOperator != null ? (IsBinOp) expandNode((Node) expr.foldOperator) : null,
+        expr.foldAction != null ? expandNode(expr.foldAction) : null,
         expandExpr(expr.body),
         copyLoc(expr.loc));
   }
