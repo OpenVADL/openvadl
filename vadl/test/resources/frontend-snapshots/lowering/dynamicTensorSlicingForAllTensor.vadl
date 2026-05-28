@@ -68,50 +68,27 @@ instruction set architecture Tensor = {
 //    . : ' Encoding: encoding
 //    . : ' Assembly: assembly
 //    . : ' Behavior Graph:
-//    . : ' | n0  FieldRef             in: ()                succ: ()      type: b4     field: rd    format: F
-//    . : ' | n1  Constant             in: ()                succ: ()      type: b2     const: 0x0: Bits<2>
-//    . : ' | n2  ForIdx               in: ()                succ: ()      type: b4     from: 0   to: 3
-//    . : ' | n3  FieldRef             in: ()                succ: ()      type: b4     field: rs1   format: F
-//    . : ' | n4  Constant             in: ()                succ: ()      type: b2     const: 0x3: Bits<2>
-//    . : ' | n5  ReadsRegisterTensor  in: (n3 n4)           succ: ()      type: b32    reg: Q
-//    . : ' | n6  Constant             in: ()                succ: ()      type: b2     const: 0x2: Bits<2>
-//    . : ' | n7  ReadsRegisterTensor  in: (n3 n6)           succ: ()      type: b32    reg: Q
-//    . : ' | n8  Constant             in: ()                succ: ()      type: b2     const: 0x1: Bits<2>
-//    . : ' | n9  ReadsRegisterTensor  in: (n3 n8)           succ: ()      type: b32    reg: Q
-//    . : ' | n10 ReadsRegisterTensor  in: (n3 n1)           succ: ()      type: b32    reg: Q
-//    . : ' | n11 BuiltInCall          in: (n9 n10)          succ: ()      type: b64    builtin: VADL::concat
-//    . : ' | n12 BuiltInCall          in: (n7 n11)          succ: ()      type: b96    builtin: VADL::concat
-//    . : ' | n13 BuiltInCall          in: (n5 n12)          succ: ()      type: b128   builtin: VADL::concat
-//    . : ' | n14 Let                  in: (n13)             succ: ()      type: b128   name: v
-//    . : ' | n15 Constant             in: ()                succ: ()      type: b7     const: 0x20: Bits<7>
-//    . : ' | n16 ZeroExtend           in: (n2)              succ: ()      type: b7     fromWidth: 4
-//    . : ' | n17 BuiltInCall          in: (n15 n16)         succ: ()      type: b7     builtin: VADL::mul      operator: *
-//    . : ' | n18 BuiltInCall          in: (n15 n17)         succ: ()      type: b7     builtin: VADL::add      operator: +
-//    . : ' | n19 DynSlice             in: (n14 n18 n17)     succ: ()      type: u32    slice: dynamic
-//    . : ' | n20 FieldRef             in: ()                succ: ()      type: b4     field: rs2   format: F
-//    . : ' | n21 ReadsRegisterTensor  in: (n20 n4)          succ: ()      type: b32    reg: Q
-//    . : ' | n22 ReadsRegisterTensor  in: (n20 n6)          succ: ()      type: b32    reg: Q
-//    . : ' | n23 ReadsRegisterTensor  in: (n20 n8)          succ: ()      type: b32    reg: Q
-//    . : ' | n24 ReadsRegisterTensor  in: (n20 n1)          succ: ()      type: b32    reg: Q
-//    . : ' | n25 BuiltInCall          in: (n23 n24)         succ: ()      type: b64    builtin: VADL::concat
-//    . : ' | n26 BuiltInCall          in: (n22 n25)         succ: ()      type: b96    builtin: VADL::concat
-//    . : ' | n27 BuiltInCall          in: (n21 n26)         succ: ()      type: b128   builtin: VADL::concat
-//    . : ' | n28 Let                  in: (n27)             succ: ()      type: b128   name: m
-//    . : ' | n29 DynSlice             in: (n28 n18 n17)     succ: ()      type: u32    slice: dynamic
-//    . : ' | n30 BuiltInCall          in: (n19 n29)         succ: ()      type: u32    builtin: VADL::add      operator: +
-//    . : ' | n31 Tensor               in: (n2 n30)          succ: ()      type: b128
-//    . : ' | n32 Let                  in: (n31)             succ: ()      type: u128   name: sum
-//    . : ' | n33 Let                  in: (n32)             succ: ()      type: u128   name: p
-//    . : ' | n34 Slice                in: (n33)             succ: ()      type: b32    slice: [31..0]
-//    . : ' | n35 WritesRegisterTensor in: (n0 n1 n34)       succ: ()      reg: Q
-//    . : ' | n36 Slice                in: (n33)             succ: ()      type: b32    slice: [63..32]
-//    . : ' | n37 WritesRegisterTensor in: (n0 n8 n36)       succ: ()      reg: Q
-//    . : ' | n38 Slice                in: (n33)             succ: ()      type: b32    slice: [95..64]
-//    . : ' | n39 WritesRegisterTensor in: (n0 n6 n38)       succ: ()      reg: Q
-//    . : ' | n40 Slice                in: (n33)             succ: ()      type: b32    slice: [127..96]
-//    . : ' | n41 WritesRegisterTensor in: (n0 n4 n40)       succ: ()      reg: Q
-//    . : ' | n42 InstrEnd             in: (n35 n37 n39 n41) succ: ()      effects: 4
-//    . : ' | n43 Start                in: ()                succ: (n42)   next: set
+//    . : ' | n0  FieldRef             in: ()          succ: ()      type: b4     field: rd    format: F
+//    . : ' | n1  ForIdx               in: ()          succ: ()      type: b4     from: 0   to: 3
+//    . : ' | n2  FieldRef             in: ()          succ: ()      type: b4     field: rs1   format: F
+//    . : ' | n3  ReadsRegisterTensor  in: (n2)        succ: ()      type: b128   reg: Q
+//    . : ' | n4  Let                  in: (n3)        succ: ()      type: b128   name: v
+//    . : ' | n5  Constant             in: ()          succ: ()      type: b7     const: 0x20: Bits<7>
+//    . : ' | n6  ZeroExtend           in: (n1)        succ: ()      type: b7     fromWidth: 4
+//    . : ' | n7  BuiltInCall          in: (n5 n6)     succ: ()      type: b7     builtin: VADL::mul   operator: *
+//    . : ' | n8  BuiltInCall          in: (n5 n7)     succ: ()      type: b7     builtin: VADL::add   operator: +
+//    . : ' | n9  DynSlice             in: (n4 n8 n7)  succ: ()      type: u32    slice: dynamic
+//    . : ' | n10 FieldRef             in: ()          succ: ()      type: b4     field: rs2   format: F
+//    . : ' | n11 ReadsRegisterTensor  in: (n10)       succ: ()      type: b128   reg: Q
+//    . : ' | n12 Let                  in: (n11)       succ: ()      type: b128   name: m
+//    . : ' | n13 DynSlice             in: (n12 n8 n7) succ: ()      type: u32    slice: dynamic
+//    . : ' | n14 BuiltInCall          in: (n9 n13)    succ: ()      type: u32    builtin: VADL::add   operator: +
+//    . : ' | n15 Tensor               in: (n1 n14)    succ: ()      type: b128
+//    . : ' | n16 Let                  in: (n15)       succ: ()      type: u128   name: sum
+//    . : ' | n17 Let                  in: (n16)       succ: ()      type: u128   name: p
+//    . : ' | n18 WritesRegisterTensor in: (n0 n17)    succ: ()      reg: Q
+//    . : ' | n19 InstrEnd             in: (n18)       succ: ()      effects: 1
+//    . : ' | n20 Start                in: ()          succ: (n19)   next: set
 //    . : ' Assembly name: "assembly"
 //    . : ' | Function: func
 //    . : ' | FieldAccesses: []

@@ -126,6 +126,29 @@ public final class RegisterAccessEmitters {
     ctx.wr(")");
   }
 
+  private static void emitChunkBaseIndices(CGenContext<Node> ctx,
+                                           ReadRegTensorNode node) {
+    emitChunkBaseIndices(ctx, node.indices(), node.regTensor().indexDimensions().size());
+  }
+
+  private static void emitChunkBaseIndices(CGenContext<Node> ctx,
+                                           WriteRegTensorNode node) {
+    emitChunkBaseIndices(ctx, node.indices(), node.regTensor().indexDimensions().size());
+  }
+
+  private static void emitChunkBaseIndices(CGenContext<Node> ctx,
+                                           NodeList<ExpressionNode> indices,
+                                           int expectedIndexCount) {
+    for (var index : indices) {
+      ctx.wr(", ").gen(index);
+    }
+    for (int i = indices.size(); i < expectedIndexCount; i++) {
+      // Chunk helpers operate on the flattened aggregate that starts at the first omitted
+      // sub-index, so omitted inner indices default to the zero offset within that aggregate.
+      ctx.wr(", ((uint32_t) 0)");
+    }
+  }
+
   private static RegisterAccessEmitter emitterFor(RegInfo regInfo) {
     return regInfo.execClass() == RegInfo.ExecClass.TCG_SCALAR
         ? TcgScalarRegisterAccessEmitter.INSTANCE
@@ -175,9 +198,7 @@ public final class RegisterAccessEmitters {
         ctx.wr("((").wr(valueType).wr(") cpu_get_")
             .wr(node.regTensor().simpleName().toLowerCase())
             .wr("_chunk(env");
-        for (var i : readNode.indices()) {
-          ctx.wr(", ").gen(i);
-        }
+        emitChunkBaseIndices(ctx, readNode);
         ctx.wr(", ").gen(readNode.bitOffset());
         ctx.wr(", ").gen(readNode.bitWidth());
         ctx.wr("))");
@@ -195,9 +216,7 @@ public final class RegisterAccessEmitters {
         ctx.wr("cpu_set_")
             .wr(node.regTensor().simpleName().toLowerCase())
             .wr("_chunk(env");
-        for (var i : writeNode.indices()) {
-          ctx.wr(", ").gen(i);
-        }
+        emitChunkBaseIndices(ctx, writeNode);
         ctx.wr(", ").gen(writeNode.bitOffset());
         ctx.wr(", ").gen(writeNode.bitWidth());
         ctx.wr(", ((uint64_t) ").gen(node.value()).wr("))");
