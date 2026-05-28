@@ -84,11 +84,17 @@ public class IssTensorAssignmentToForallPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    allInstrs(viam).forEach(instruction ->
-        instruction.behavior().getNodes(IssWriteRegNode.class)
+    allInstrs(viam).forEach(instruction -> {
+      while (true) {
+        var candidate = instruction.behavior().getNodes(IssWriteRegNode.class)
             .filter(this::canLower)
-            .toList()
-            .forEach(this::lower));
+            .findFirst();
+        if (candidate.isEmpty()) {
+          break;
+        }
+        lower(candidate.get());
+      }
+    });
     return null;
   }
 
