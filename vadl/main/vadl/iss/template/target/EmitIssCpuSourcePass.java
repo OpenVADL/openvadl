@@ -140,7 +140,7 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
       sb.callStmt("qemu_fprintf", "f", "\" " + reg.simpleName() + ":    \"");
       sb.forLoop("int j = " + (bytesPerReg - 1), "j >= 0", "j--", (byteLoop) -> {
         sb.callStmt("qemu_fprintf", "f", "\"%02x\"",
-            "(uint8_t) cpu_get_" + regLower + "_chunk(env, ((uint64_t) j) * 8, 8)");
+            "(uint8_t) cpu_get_" + regLower + "_chunk(env, 0, ((uint64_t) j) * 8, 8)");
       });
       sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
       return;
@@ -151,7 +151,7 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
         sb.callStmt("qemu_fprintf", "f", "\" %-8s \"", names + "[i]");
         sb.forLoop("int j = " + (bytesPerReg - 1), "j >= 0", "j--", (byteLoop) -> {
           sb.callStmt("qemu_fprintf", "f", "\"%02x\"",
-              "(uint8_t) cpu_get_" + regLower + "_chunk(env, i, ((uint64_t) j) * 8, 8)");
+              "(uint8_t) cpu_get_" + regLower + "_chunk(env, i, 1, ((uint64_t) j) * 8, 8)");
         });
         sb.callStmt("qemu_fprintf", "f", "\"\\n\"");
       });

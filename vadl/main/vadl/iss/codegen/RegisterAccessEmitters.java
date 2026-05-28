@@ -199,6 +199,7 @@ public final class RegisterAccessEmitters {
             .wr(node.regTensor().simpleName().toLowerCase())
             .wr("_chunk(env");
         emitChunkBaseIndices(ctx, readNode);
+        ctx.wr(", ").wr(Integer.toString(readNode.indices().size()));
         ctx.wr(", ").gen(readNode.bitOffset());
         ctx.wr(", ").gen(readNode.bitWidth());
         ctx.wr("))");
@@ -217,6 +218,7 @@ public final class RegisterAccessEmitters {
             .wr(node.regTensor().simpleName().toLowerCase())
             .wr("_chunk(env");
         emitChunkBaseIndices(ctx, writeNode);
+        ctx.wr(", ").wr(Integer.toString(writeNode.indices().size()));
         ctx.wr(", ").gen(writeNode.bitOffset());
         ctx.wr(", ").gen(writeNode.bitWidth());
         ctx.wr(", ((uint64_t) ").gen(node.value()).wr("))");
