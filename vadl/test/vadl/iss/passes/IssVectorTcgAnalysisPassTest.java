@@ -37,6 +37,7 @@ import vadl.iss.passes.extensions.InstrExecPlan;
 import vadl.iss.passes.extensions.InstrExecPlan.DirectGvecSupport;
 import vadl.iss.passes.extensions.InstrExecPlan.ExecutionPath;
 import vadl.iss.passes.extensions.VectorTensorPlan;
+import vadl.iss.passes.extensions.VectorTensorPlan.OperandForm;
 import vadl.iss.passes.extensions.VectorTensorPlan.OperandKind;
 import vadl.iss.passes.extensions.VectorTensorPlan.OverlapPolicy;
 import vadl.iss.passes.extensions.VectorTensorPlan.VectorOp;
@@ -62,6 +63,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     assertEquals("forall-write-0", directGvec.region().regionId());
     assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
     assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_VECTOR, plan.operandForm());
     assertEquals(32, plan.elementBits());
     assertEquals(32, plan.laneCount());
     assertEquals(128, plan.opBytes());
@@ -94,6 +96,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
 
     assertTrue(directGvec.isViable(), directGvec::toString);
     assertEquals(VectorOp.SUB, plan.op());
+    assertEquals(OperandForm.VECTOR_VECTOR, plan.operandForm());
     assertEquals(32, plan.elementBits());
     assertEquals(32, plan.laneCount());
   }
@@ -121,6 +124,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
     assertTrue(directGvec.isViable(), directGvec::toString);
     assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_VECTOR, plan.operandForm());
     assertEquals(32, plan.elementBits());
     assertEquals(32, plan.laneCount());
     assertEquals("Z", plan.destination().registerTensor().simpleName());

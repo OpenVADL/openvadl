@@ -22,7 +22,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.iss.passes.extensions.VectorTensorPlan;
+import vadl.iss.passes.extensions.VectorTensorPlan.OperandForm;
+import vadl.iss.passes.extensions.VectorTensorPlan.VectorOperand;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -41,6 +44,8 @@ public class TcgGvecOpNode extends TcgNode {
   @DataValue
   private VectorTensorPlan.VectorOp op;
   @DataValue
+  private OperandForm operandForm;
+  @DataValue
   private int elementBits;
   @DataValue
   private int oprszBytes;
@@ -58,6 +63,7 @@ public class TcgGvecOpNode extends TcgNode {
   private NodeList<ExpressionNode> lhsAccessorIndices;
 
   @DataValue
+  @Nullable
   private RegisterTensor rhsRegister;
   @Input
   private NodeList<ExpressionNode> rhsAccessorIndices;
@@ -68,19 +74,21 @@ public class TcgGvecOpNode extends TcgNode {
   public TcgGvecOpNode(VectorTensorPlan plan) {
     this(
         plan.op(),
+        plan.operandForm(),
         plan.elementBits(),
         plan.shape().oprszBytes(),
         plan.shape().maxszBytes(),
         plan.destination().registerTensor(),
         new NodeList<>(plan.destination().accessorIndices()),
-        requireRegisterOperand(plan, 0),
-        new NodeList<>(requireRegisterOperand(plan, 0).accessorIndices()),
-        requireRegisterOperand(plan, 1),
-        new NodeList<>(requireRegisterOperand(plan, 1).accessorIndices())
+        requireRegisterBinding(requireOperand(plan, 0), plan, 0),
+        new NodeList<>(requireRegisterBinding(requireOperand(plan, 0), plan, 0).accessorIndices()),
+        optionalRegisterBinding(optionalOperand(plan, 1)),
+        rhsAccessorIndicesOf(plan)
     );
   }
 
   private TcgGvecOpNode(VectorTensorPlan.VectorOp op,
+                        OperandForm operandForm,
                         int elementBits,
                         int oprszBytes,
                         int maxszBytes,
@@ -88,9 +96,10 @@ public class TcgGvecOpNode extends TcgNode {
                         NodeList<ExpressionNode> destinationAccessorIndices,
                         VectorTensorPlan.VectorRegisterBinding lhsBinding,
                         NodeList<ExpressionNode> lhsAccessorIndices,
-                        VectorTensorPlan.VectorRegisterBinding rhsBinding,
+                        @Nullable VectorTensorPlan.VectorRegisterBinding rhsBinding,
                         NodeList<ExpressionNode> rhsAccessorIndices) {
     this.op = op;
+    this.operandForm = operandForm;
     this.elementBits = elementBits;
     this.oprszBytes = oprszBytes;
     this.maxszBytes = maxszBytes;
@@ -98,26 +107,41 @@ public class TcgGvecOpNode extends TcgNode {
     this.destinationAccessorIndices = destinationAccessorIndices;
     this.lhsRegister = lhsBinding.registerTensor();
     this.lhsAccessorIndices = lhsAccessorIndices;
-    this.rhsRegister = rhsBinding.registerTensor();
+    this.rhsRegister = rhsBinding == null ? null : rhsBinding.registerTensor();
     this.rhsAccessorIndices = rhsAccessorIndices;
   }
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return gvecFunctionName()
-        + "("
-        + memOp()
-        + ", "
-        + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
-        + ", "
-        + offsetExpr(lhsRegister, lhsAccessorIndices, nodeToCCode)
-        + ", "
-        + offsetExpr(rhsRegister, rhsAccessorIndices, nodeToCCode)
-        + ", "
-        + oprszBytes
-        + ", "
-        + maxszBytes
-        + ");";
+    return switch (operandForm) {
+      case VECTOR_VECTOR -> gvecFunctionName()
+          + "("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + offsetExpr(lhsRegister, lhsAccessorIndices, nodeToCCode)
+          + ", "
+          + offsetExpr(requireRegister(rhsRegister, "rhs"), rhsAccessorIndices, nodeToCCode)
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ");";
+      case VECTOR_MOVE -> "tcg_gen_gvec_mov("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + offsetExpr(lhsRegister, lhsAccessorIndices, nodeToCCode)
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ");";
+      case VECTOR_SCALAR, VECTOR_IMMEDIATE, SCALAR_BROADCAST, IMMEDIATE_BROADCAST ->
+          throw unsupported("unsupported gvec operand form " + operandForm);
+    };
   }
 
   @Override
@@ -134,6 +158,7 @@ public class TcgGvecOpNode extends TcgNode {
   public Node copy() {
     return new TcgGvecOpNode(
         op,
+        operandForm,
         elementBits,
         oprszBytes,
         maxszBytes,
@@ -141,7 +166,10 @@ public class TcgGvecOpNode extends TcgNode {
         destinationAccessorIndices.copy(),
         new VectorTensorPlan.VectorRegisterBinding(lhsRegister, lhsAccessorIndices),
         lhsAccessorIndices.copy(),
-        new VectorTensorPlan.VectorRegisterBinding(rhsRegister, rhsAccessorIndices),
+        rhsRegister == null ? null : new VectorTensorPlan.VectorRegisterBinding(
+            rhsRegister,
+            rhsAccessorIndices
+        ),
         rhsAccessorIndices.copy()
     );
   }
@@ -150,6 +178,7 @@ public class TcgGvecOpNode extends TcgNode {
   public Node shallowCopy() {
     return new TcgGvecOpNode(
         op,
+        operandForm,
         elementBits,
         oprszBytes,
         maxszBytes,
@@ -157,7 +186,10 @@ public class TcgGvecOpNode extends TcgNode {
         destinationAccessorIndices,
         new VectorTensorPlan.VectorRegisterBinding(lhsRegister, lhsAccessorIndices),
         lhsAccessorIndices,
-        new VectorTensorPlan.VectorRegisterBinding(rhsRegister, rhsAccessorIndices),
+        rhsRegister == null ? null : new VectorTensorPlan.VectorRegisterBinding(
+            rhsRegister,
+            rhsAccessorIndices
+        ),
         rhsAccessorIndices
     );
   }
@@ -174,6 +206,7 @@ public class TcgGvecOpNode extends TcgNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(op);
+    collection.add(operandForm);
     collection.add(elementBits);
     collection.add(oprszBytes);
     collection.add(maxszBytes);
@@ -193,13 +226,13 @@ public class TcgGvecOpNode extends TcgNode {
 
   private String gvecFunctionName() {
     return switch (op) {
+      case MOV -> "tcg_gen_gvec_mov";
       case ADD -> "tcg_gen_gvec_add";
       case SUB -> "tcg_gen_gvec_sub";
       case AND -> "tcg_gen_gvec_and";
       case OR -> "tcg_gen_gvec_or";
       case XOR -> "tcg_gen_gvec_xor";
       case MUL -> "tcg_gen_gvec_mul";
-      case NONE -> throw unsupported("unsupported gvec op NONE");
     };
   }
 
@@ -226,16 +259,56 @@ public class TcgGvecOpNode extends TcgNode {
     return helperName + "(ctx, " + args + ")";
   }
 
-  private static VectorTensorPlan.VectorRegisterBinding requireRegisterOperand(
+  private static VectorOperand requireOperand(VectorTensorPlan plan, int operandIndex) {
+    if (operandIndex >= plan.operands().size()) {
+      throw new ViamGraphError("Missing operand %s for gvec plan", operandIndex);
+    }
+    return plan.operands().get(operandIndex);
+  }
+
+  private static @Nullable VectorOperand optionalOperand(
       VectorTensorPlan plan,
       int operandIndex
   ) {
-    var operand = plan.operands().get(operandIndex);
+    return operandIndex < plan.operands().size() ? plan.operands().get(operandIndex) : null;
+  }
+
+  private static VectorTensorPlan.VectorRegisterBinding requireRegisterBinding(
+      VectorOperand operand,
+      VectorTensorPlan plan,
+      int operandIndex
+  ) {
     var binding = operand.registerBinding();
     if (binding == null) {
-      throw new ViamGraphError("Missing vector-register binding for operand %s", operandIndex);
+      throw new ViamGraphError(
+          "Missing vector-register binding for operand %s in %s form",
+          operandIndex,
+          plan.operandForm()
+      );
     }
     return binding;
+  }
+
+  private static @Nullable VectorTensorPlan.VectorRegisterBinding optionalRegisterBinding(
+      @Nullable VectorOperand operand
+  ) {
+    return operand == null ? null : operand.registerBinding();
+  }
+
+  private static NodeList<ExpressionNode> rhsAccessorIndicesOf(VectorTensorPlan plan) {
+    var rhsOperand = optionalOperand(plan, 1);
+    if (rhsOperand == null || rhsOperand.registerBinding() == null) {
+      return new NodeList<>();
+    }
+    return new NodeList<>(rhsOperand.registerBinding().accessorIndices());
+  }
+
+  private RegisterTensor requireRegister(@Nullable RegisterTensor registerTensor,
+                                         String role) {
+    if (registerTensor == null) {
+      throw unsupported("missing " + role + " register operand");
+    }
+    return registerTensor;
   }
 
   private ViamGraphError unsupported(String message) {

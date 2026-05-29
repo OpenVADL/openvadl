@@ -110,6 +110,7 @@ public final class DirectGvecStrategyEvaluator {
         region,
         VectorTensorPlan.directGvecCandidate(
             vectorOp,
+            VectorTensorPlan.OperandForm.VECTOR_VECTOR,
             vectorShape(writeFacts.size(), writeFacts.layout()),
             vectorRegisterBinding(writeFacts.binding()),
             overlapPolicy(writeFacts.overlap()),
