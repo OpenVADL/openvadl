@@ -1144,11 +1144,11 @@ final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPla
  * <p>This node should never leave the parser.
  */
 final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
-  GroupedExpr expr;
+  List<Expr> exprs;
   SourceLocation loc;
 
-  AsIdExpr(GroupedExpr expr, SourceLocation loc) {
-    this.expr = expr;
+  AsIdExpr(List<Expr> exprs, SourceLocation loc) {
+    this.exprs = exprs;
     this.loc = loc;
   }
 
@@ -1169,8 +1169,9 @@ final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("AsId ");
-    expr.prettyPrint(0, builder);
+    builder.append("AsId(");
+    prettyPrintJoin(",", exprs, indent, builder);
+    builder.append(")");
   }
 
   @Override
@@ -1183,12 +1184,12 @@ final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
     }
 
     AsIdExpr that = (AsIdExpr) o;
-    return expr.equals(that.expr);
+    return exprs.equals(that.exprs);
   }
 
   @Override
   public int hashCode() {
-    return expr.hashCode();
+    return exprs.hashCode();
   }
 
   @Override
@@ -1220,11 +1221,11 @@ final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
  * <p>This node should never leave the parser.
  */
 final class AsStrExpr extends Expr {
-  GroupedExpr expr;
+  List<Expr> exprs;
   SourceLocation loc;
 
-  AsStrExpr(GroupedExpr expr, SourceLocation loc) {
-    this.expr = expr;
+  AsStrExpr(List<Expr> exprs, SourceLocation loc) {
+    this.exprs = exprs;
     this.loc = loc;
   }
 
@@ -1245,8 +1246,9 @@ final class AsStrExpr extends Expr {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("AsStr ");
-    expr.prettyPrint(0, builder);
+    builder.append("AsStr (");
+    prettyPrintJoin(",", exprs, indent, builder);
+    builder.append(")");
   }
 
   @Override
@@ -1259,12 +1261,12 @@ final class AsStrExpr extends Expr {
     }
 
     AsStrExpr that = (AsStrExpr) o;
-    return expr.equals(that.expr);
+    return exprs.equals(that.exprs);
   }
 
   @Override
   public int hashCode() {
-    return expr.hashCode();
+    return exprs.hashCode();
   }
 }
 
