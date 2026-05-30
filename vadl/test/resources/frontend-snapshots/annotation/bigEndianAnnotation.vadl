@@ -1,0 +1,30 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ big endian ]
+  memory MEM : Bits<32> -> Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . MemoryDefinition name: "MEM"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "big" type: null
+//    . : ' Identifier name: "endian" type: null
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

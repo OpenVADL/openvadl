@@ -1,0 +1,46 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ execution state ]
+  register R : Bits<32>
+
+  [ big endian : R ]
+  memory MEM : Bits<32> -> Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid annotation presentExpression
+//       ╭── test/resources/frontend-snapshots/annotation/invalidEndianAnnotationInvalidCondType.vadl:8:18
+//       │
+//     8 │   [ big endian : R ]
+//       │                  ^ Expression must be a Bool
+//       │
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "R"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "execution" type: null
+//    . : ' Identifier name: "state" type: null
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . MemoryDefinition name: "MEM"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "big" type: null
+//    . : ' Identifier name: "endian" type: null
+//    . : ' Identifier name: "R" type: Bits<32>
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
