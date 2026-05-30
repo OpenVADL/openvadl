@@ -18,6 +18,7 @@ package vadl.iss.passes.extensions;
 
 import java.util.List;
 import javax.annotation.Nullable;
+import vadl.iss.passes.common.planning.analysis.VectorRegion;
 
 /**
  * General execution-planning result for one instruction.
@@ -29,8 +30,12 @@ import javax.annotation.Nullable;
  */
 public record InstrExecPlan(
     ExecutionPath selectedPath,
-    DirectGvecSupport directGvec
+    List<DirectGvecSupport> directGvecRegions
 ) {
+
+  public InstrExecPlan {
+    directGvecRegions = List.copyOf(directGvecRegions);
+  }
 
   /**
    * Returns whether this instruction stays on the shared non-helper lowering path.
@@ -47,17 +52,30 @@ public record InstrExecPlan(
   }
 
   /**
-   * Returns the selected direct-gvec plan for this instruction, if any.
+   * Returns the viable direct-gvec plans retained for this instruction.
+   */
+  public List<VectorTensorPlan> directGvecPlans() {
+    return directGvecRegions.stream()
+        .filter(DirectGvecSupport::isViable)
+        .map(DirectGvecSupport::plan)
+        .filter(plan -> plan != null)
+        .toList();
+  }
+
+  /**
+   * Returns the first viable direct-gvec plan for this instruction, if any.
    */
   public @Nullable VectorTensorPlan directGvecPlan() {
-    return directGvec.plan();
+    return directGvecPlans().stream().findFirst().orElse(null);
   }
 
   /**
    * Returns whether the planner retained a viable direct-gvec region-lowering plan.
    */
   public boolean hasViableDirectGvecPlan() {
-    return directGvec.isViable() && directGvec.plan() != null;
+    return directGvecRegions.stream().anyMatch(
+        support -> support.isViable() && support.plan() != null
+    );
   }
 
   /**
@@ -98,6 +116,7 @@ public record InstrExecPlan(
       EvaluationStatus status,
       int estimatedCost,
       List<PlanningIssue> issues,
+      VectorRegion region,
       @Nullable VectorTensorPlan plan
   ) {
 
@@ -109,11 +128,13 @@ public record InstrExecPlan(
      * Creates a viable direct-gvec support result.
      */
     public static DirectGvecSupport viable(int estimatedCost,
+                                           VectorRegion region,
                                            VectorTensorPlan plan) {
       return new DirectGvecSupport(
           EvaluationStatus.VIABLE,
           estimatedCost,
           List.of(),
+          region,
           plan
       );
     }
@@ -122,11 +143,13 @@ public record InstrExecPlan(
      * Creates a rejected direct-gvec support result.
      */
     public static DirectGvecSupport rejected(int estimatedCost,
+                                             VectorRegion region,
                                              List<PlanningIssue> issues) {
       return new DirectGvecSupport(
           EvaluationStatus.REJECTED,
           estimatedCost,
           issues,
+          region,
           null
       );
     }

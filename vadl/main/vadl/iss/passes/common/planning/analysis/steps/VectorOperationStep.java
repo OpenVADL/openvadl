@@ -31,15 +31,11 @@ public final class VectorOperationStep implements VectorFactStep {
 
   @Override
   public void extract(VectorFactsBuilder builder) {
-    var candidate = builder.candidate();
-    if (candidate == null) {
-      return;
-    }
-
     // The fact layer records the operation shape without deciding yet whether any concrete
     // strategy can lower it directly.
-    var valueIsBuiltInCall = candidate.valueExpression() instanceof BuiltInCall;
-    var operationCall = binaryOperation(candidate.valueExpression());
+    var valueExpression = builder.region().valueExpression();
+    var valueIsBuiltInCall = valueExpression instanceof BuiltInCall;
+    var operationCall = binaryOperation(valueExpression);
     builder.setOperationFacts(new OperationFacts(
         valueIsBuiltInCall,
         operationCall,

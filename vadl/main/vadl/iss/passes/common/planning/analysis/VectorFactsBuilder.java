@@ -19,53 +19,26 @@ package vadl.iss.passes.common.planning.analysis;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.EffectFacts;
-import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.LoopFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperandAccessFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperationFacts;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.VectorRegionFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.WriteAccessFacts;
 import vadl.viam.Instruction;
 
 /**
- * Mutable assembly object while extracting vector facts for one instruction.
+ * Mutable assembly object while extracting vector facts for one vector analysis region.
  */
 public final class VectorFactsBuilder {
 
   private final Instruction instruction;
-  private int forallCount;
-  private boolean hasSingleForallRegisterWriteBody;
-  private int sideEffectCount;
-  private @Nullable VectorCandidate candidate;
+  private final VectorRegion region;
   private @Nullable WriteAccessFacts writeFacts;
   private @Nullable OperationFacts operationFacts;
   private final List<OperandAccessFacts> operandFacts = new ArrayList<>();
 
-  public VectorFactsBuilder(Instruction instruction) {
+  public VectorFactsBuilder(Instruction instruction, VectorRegion region) {
     this.instruction = instruction;
-  }
-
-  public Instruction instruction() {
-    return instruction;
-  }
-
-  public void setForallCount(int forallCount) {
-    this.forallCount = forallCount;
-  }
-
-  public void setHasSingleForallRegisterWriteBody(boolean hasSingleForallRegisterWriteBody) {
-    this.hasSingleForallRegisterWriteBody = hasSingleForallRegisterWriteBody;
-  }
-
-  public void setSideEffectCount(int sideEffectCount) {
-    this.sideEffectCount = sideEffectCount;
-  }
-
-  public void setCandidate(VectorCandidate candidate) {
-    this.candidate = candidate;
-  }
-
-  public @Nullable VectorCandidate candidate() {
-    return candidate;
+    this.region = region;
   }
 
   public void setWriteFacts(WriteAccessFacts writeFacts) {
@@ -84,19 +57,24 @@ public final class VectorFactsBuilder {
     return operationFacts;
   }
 
+  public Instruction instruction() {
+    return instruction;
+  }
+
+  public VectorRegion region() {
+    return region;
+  }
+
   public void addOperandFact(OperandAccessFacts operandFact) {
     operandFacts.add(operandFact);
   }
 
   /**
-   * Materializes the immutable vector fact set extracted for this instruction.
+   * Materializes the immutable vector fact set extracted for this region.
    */
-  public VectorInstructionFacts toFacts() {
-    return new VectorInstructionFacts(
-        instruction,
-        new LoopFacts(forallCount, hasSingleForallRegisterWriteBody),
-        new EffectFacts(sideEffectCount),
-        candidate,
+  public VectorRegionFacts toFacts() {
+    return new VectorRegionFacts(
+        region,
         writeFacts,
         operationFacts,
         List.copyOf(operandFacts)
