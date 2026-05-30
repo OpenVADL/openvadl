@@ -10,7 +10,7 @@ using b = a
 //     1 │ using a = b
 //       │           ^
 //       │
-//       The node is defined by itself.
+//       This type literal is defined by itself.
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

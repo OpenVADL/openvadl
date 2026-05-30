@@ -10,7 +10,7 @@ constant b = a
 //     1 │ constant a = b
 //       │ ^^^^^^^^^^^^^^
 //       │
-//       Definition `a` is defined by itself.
+//       This constant definition `a` is defined by itself.
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests
