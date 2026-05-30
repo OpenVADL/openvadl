@@ -1,0 +1,13 @@
+
+instruction set architecture EndianTest = {
+  using B32 = Bits<32>
+
+  register R : B32
+
+  [ big endian : R = 0 ]
+  memory MEM : B32 -> Bits<8>
+
+  program counter PC : B32
+}
+
+processor Test implements EndianTest = { }

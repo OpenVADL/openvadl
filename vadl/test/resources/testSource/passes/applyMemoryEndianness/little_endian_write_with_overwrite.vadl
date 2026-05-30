@@ -1,0 +1,19 @@
+
+instruction set architecture EndianTest = {
+  using B32 = Bits<32>
+
+  register R : B32
+
+  [ little endian ]
+  memory MEM : B32 -> Bits<8>
+
+  instruction INSTR: F = MEM<4>(0) := R
+  encoding INSTR = { a = 0 }
+  assembly INSTR = "Test"
+
+  format F: B32 = { a: B32 }
+
+  program counter PC : B32
+}
+
+processor Test implements EndianTest = { }

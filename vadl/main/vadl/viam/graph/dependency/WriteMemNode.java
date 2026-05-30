@@ -176,6 +176,10 @@ public class WriteMemNode extends WriteResourceNode {
     return node;
   }
 
+  public void setEndiannessOverwrite(Endianness endianness) {
+    endiannessOverwrite = endianness;
+  }
+
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
