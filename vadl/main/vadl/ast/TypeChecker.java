@@ -118,7 +118,7 @@ public class TypeChecker
   final ConstantEvaluator constantEvaluator;
 
   /**
-   * We are keeping a list of all the nodes (well, the identities of them) we are currently
+   * We are keeping a list of all the nodes we are currently
    * visiting. This helps us detect cycles, which aren't allowed and so we can abort early with an
    * error instead of causing a crash due to a stack overflow. Most recently visited node is
    * first.
@@ -202,7 +202,7 @@ public class TypeChecker
       throw new StopPartialCheckingSignal();
     } finally {
       this.expectedType = previousExpectedType;
-      currentlyVisiting.pop();
+      currentlyVisiting.poll();
     }
     return expr.type();
   }
@@ -1346,13 +1346,13 @@ public class TypeChecker
       check(def);
     }
 
-    checkOneGroupDefinition(definition);
+    checkAtMostOneGroupDefinition(definition);
 
     // FIXME: Verify at least one programcounter
     return null;
   }
 
-  private void checkOneGroupDefinition(InstructionSetDefinition isa) {
+  private void checkAtMostOneGroupDefinition(InstructionSetDefinition isa) {
 
     final List<GroupDefinition> groups = isa
         .allInheritedNodesOf(GroupDefinition.class)
@@ -3015,6 +3015,7 @@ public class TypeChecker
     if (origin instanceof CounterDefinition counter) {
       check(counter);
       expr.type = requireNonNull(counter.typeLiteral.type);
+
       return;
     }
 
@@ -3799,6 +3800,18 @@ public class TypeChecker
     };
 
     if (targetIsCounter) {
+      var currentDefinition = getCurrentlyVisitingDefinition();
+      if (!(currentDefinition instanceof InstructionDefinition)) {
+        addErrorAndContinueChecking(error("Invalid Program Counter usage", expr)
+            .applyIf(currentDefinition != null, builder -> builder.note(
+                "Program Counters can only be directly used in `Instruction` definitions,"
+                    + " not in `%s`",
+                requireNonNull(currentDefinition).nodeName()))
+            .applyIf(currentDefinition == null, builder -> builder.note(
+                "Program Counters can only be directly used in `Instruction` definitions."))
+            .build()
+        );
+      }
       if (!expr.slices().isEmpty()) {
         addErrorAndStopChecking(error("Invalid counter sub-call", expr)
             .locationDescription(expr, "Cannot do sub call and slice on counter.").build());
