@@ -23,7 +23,6 @@ import static vadl.error.Diagnostic.warning;
 import com.google.common.collect.Streams;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -36,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -120,9 +118,10 @@ public class TypeChecker
   final ConstantEvaluator constantEvaluator;
 
   /**
-   * We are keeping a list of all the nodes (well, the identities of them) we are currently
+   * We are keeping a list of all the nodes we are currently
    * visiting. This helps us detect cycles, which aren't allowed and so we can abort early with an
-   * error instead of causing a crash due to a stack overflow.
+   * error instead of causing a crash due to a stack overflow. Most recently visited node is
+   * first.
    */
   private final Deque<Node> currentlyVisiting = new IdentityDeque<>();
 
@@ -177,13 +176,13 @@ public class TypeChecker
 
     if (currentlyVisiting.contains(expr)) {
       throw addErrorAndAbortChecking(error("Infinite Recursion", expr)
-          .description("The node is defined by itself.")
+          .description("This %s is defined by itself.", expr.nodeName())
           .build());
     }
 
     var previousExpectedType = this.expectedType;
     this.expectedType = expectedType;
-    currentlyVisiting.add(expr);
+    currentlyVisiting.push(expr);
     try {
       expr.accept(this);
     } catch (StopPartialCheckingSignal signal) {
@@ -203,7 +202,7 @@ public class TypeChecker
       throw new StopPartialCheckingSignal();
     } finally {
       this.expectedType = previousExpectedType;
-      currentlyVisiting.pop();
+      currentlyVisiting.poll();
     }
     return expr.type();
   }
@@ -224,19 +223,21 @@ public class TypeChecker
 
     if (currentlyVisiting.contains(stmt)) {
       throw addErrorAndAbortChecking(error("Infinite Recursion", stmt)
-          .description("The node is defined by itself.")
+          .description("This %s is defined by itself.", stmt.nodeName())
           .build());
     }
 
-    currentlyVisiting.add(stmt);
+    currentlyVisiting.push(stmt);
     try {
       stmt.accept(this);
     } catch (StopPartialCheckingSignal signal) {
       // Add the statement to remember that it wasn't sucessfully checked and continue with the next
       // one on purpose.
       erroredStatements.add(stmt);
+    } finally {
+      currentlyVisiting.pop();
     }
-    currentlyVisiting.pop();
+
     checkedStatements.add(stmt);
   }
 
@@ -290,10 +291,11 @@ public class TypeChecker
     }
 
     if (currentlyVisiting.contains(def)) {
-      String message = "The node is defined by itself.";
+      String message = "This %s is defined by itself.".formatted(def.nodeName());
       if (def instanceof IdentifiableNode identifiableNode) {
-        message =
-            "Definition `%s` is defined by itself.".formatted(identifiableNode.identifier().name);
+        message = "This %s `%s` is defined by itself.".formatted(
+                def.nodeName(),
+                identifiableNode.identifier().name);
       }
 
       throw addErrorAndAbortChecking(error("Infinite Recursion", def)
@@ -302,14 +304,15 @@ public class TypeChecker
     }
 
     // Visit the definitions
-    currentlyVisiting.add(def);
+    currentlyVisiting.push(def);
     try {
       def.accept(this);
     } catch (StopPartialCheckingSignal signal) {
       // Add the node to the list of errored nodes and continue with the next one.
       erroredDefinitions.add(def);
+    } finally {
+      currentlyVisiting.pop();
     }
-    currentlyVisiting.pop();
     checkedDefinitions.add(def);
 
     verifyAnnotations(def);
@@ -343,28 +346,48 @@ public class TypeChecker
 
   /**
    * Access the stack of currently visiting nodes.
+   * The returned list is ordered from the most recent to the oldest node.
+   *
+   * <p>USE WITH CAUTION!
+   * This is likely not the order in which the nodes are defined (written in the spec).
+   *
+   * <p>For example, let's inspect the following snippet:
+   * <pre>
+   *  instruction set architecture ISA = {  // Visiting: [ISA]
+   *
+   *   format AType : Bits<32> = {
+   *     opcode : Bits<32>
+   *   }
+   *
+   *   instruction A : AType = PC := 0      // Visiting: [A, ISA]
+   *   encoding A = {opcode = 0b00}
+   *   assembly A = (mnemonic, "")
+   *
+   *   program counter PC : Bits<32>        // Visiting: [PC, A, ISA]
+   * }
+   * </pre>
+   * This is because while we are evaluating A we discover that we need PC which we haven't
+   * visited yet so we are evaluating it on demand.
+   * This means if you are asking the questions "Am I currently in an instruction definition" you
+   * can only inspect the first definition and not all definitions on the stack.
    */
-  private Stream<Node> getContext() {
-    return Streams.stream(currentlyVisiting.descendingIterator());
+  private Stream<Node> getVisitingContext() {
+    return Streams.stream(currentlyVisiting.iterator());
   }
 
   /**
-   * Access the stack of currently visiting nodes by type, accepting additional filters.
+   * Access the innermost definition of the currently visiting nodes.
+   * You can use this to check if you are currenlty of a definition of a certain kind.
    *
-   * @param clz     class of the node
-   * @param filters the filters to apply
-   * @param <T>     type of the node
-   * @return the node
+   * @return the innermost definition or null if none found.
    */
   @Nullable
-  @SafeVarargs
-  private <T extends Node> T getContextNode(Class<T> clz, Predicate<T>... filters) {
-    final List<Predicate<T>> predicates = Arrays.asList(filters);
-    return getContext()
-        .filter(clz::isInstance)
-        .map(clz::cast)
-        .filter(n -> predicates.stream().allMatch(p -> p.test(n)))
-        .findFirst().orElse(null);
+  private Definition getCurrentlyVisitingDefinition() {
+    return getVisitingContext()
+        .filter(Definition.class::isInstance)
+        .map(Definition.class::cast)
+        .findFirst()
+        .orElse(null);
   }
 
   private Diagnostic unimplementedError(Node node) {
@@ -1323,13 +1346,13 @@ public class TypeChecker
       check(def);
     }
 
-    checkOneGroupDefinition(definition);
+    checkAtMostOneGroupDefinition(definition);
 
     // FIXME: Verify at least one programcounter
     return null;
   }
 
-  private void checkOneGroupDefinition(InstructionSetDefinition isa) {
+  private void checkAtMostOneGroupDefinition(InstructionSetDefinition isa) {
 
     final List<GroupDefinition> groups = isa
         .allInheritedNodesOf(GroupDefinition.class)
@@ -3005,6 +3028,7 @@ public class TypeChecker
     if (origin instanceof CounterDefinition counter) {
       check(counter);
       expr.type = requireNonNull(counter.typeLiteral.type);
+
       return;
     }
 
@@ -3789,6 +3813,18 @@ public class TypeChecker
     };
 
     if (targetIsCounter) {
+      var currentDefinition = getCurrentlyVisitingDefinition();
+      if (!(currentDefinition instanceof InstructionDefinition)) {
+        addErrorAndContinueChecking(error("Invalid Program Counter usage", expr)
+            .applyIf(currentDefinition != null, builder -> builder.note(
+                "Program Counters can only be directly used in `Instruction` definitions,"
+                    + " not in `%s`",
+                requireNonNull(currentDefinition).nodeName()))
+            .applyIf(currentDefinition == null, builder -> builder.note(
+                "Program Counters can only be directly used in `Instruction` definitions."))
+            .build()
+        );
+      }
       if (!expr.slices().isEmpty()) {
         addErrorAndStopChecking(error("Invalid counter sub-call", expr)
             .locationDescription(expr, "Cannot do sub call and slice on counter.").build());
@@ -4357,8 +4393,10 @@ public class TypeChecker
     expr.type = Type.bool();
     checkGroupQuantifier(null, expr.operations);
 
-    var annotation = getContextNode(AnnotationDefinition.class);
-    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
+    var visitingDef = getCurrentlyVisitingDefinition();
+    if (visitingDef == null
+        || !(visitingDef instanceof AnnotationDefinition annotation)
+        || !(annotation.target instanceof GroupDefinition)) {
       final var diagnostic = error("Invalid `exists-in` expression", expr)
           .description("The exists-in expression is only permissible for annotations on "
               + "the `group` definition.");
@@ -4374,8 +4412,10 @@ public class TypeChecker
 
     expr.type = Type.bool();
 
-    var annotation = getContextNode(AnnotationDefinition.class);
-    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
+    var visitingDef = getCurrentlyVisitingDefinition();
+    if (visitingDef == null
+        || !(visitingDef instanceof AnnotationDefinition annotation)
+        || !(annotation.target instanceof GroupDefinition)) {
       final var diagnostic = error("Invalid `exists-then` expression", expr)
           .description("The exists-then expression is only permissible for annotations on "
               + "the `group` definition.");
@@ -4400,8 +4440,10 @@ public class TypeChecker
 
     expr.type = Type.bool();
 
-    var annotation = getContextNode(AnnotationDefinition.class);
-    if (annotation == null || !(annotation.target instanceof GroupDefinition)) {
+    var visitingDef = getCurrentlyVisitingDefinition();
+    if (visitingDef == null
+        || !(visitingDef instanceof AnnotationDefinition annotation)
+        || !(annotation.target instanceof GroupDefinition)) {
       final var diagnostic = error("Invalid `forall-then` expression", expr)
           .description("The forall-then expression is only permissible for annotations on "
               + "the `group` definition.");
