@@ -1,0 +1,13 @@
+
+instruction set architecture PcTest = {
+  using Regs = Bits<32>
+
+  program counter PC: Regs
+  alias register AR: Regs = PC
+
+  format F: Regs = {
+    I: Regs
+  }
+}
+
+processor TEST implements PcTest = {}

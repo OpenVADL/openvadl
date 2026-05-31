@@ -1662,12 +1662,25 @@ public class TypeChecker
       // if this does not directly reference a register,
       // it might reference another alias definition
       var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
-      if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
+      if (alias == null) {
+        var candidates = new ArrayList<>(definition.symbolTable().allSymbolNamesWhere(
+            node -> node instanceof RegisterDefinition
+                || (node instanceof AliasDefinition aliasDef
+                && aliasDef.kind == AliasDefinition.AliasKind.REGISTER)
+        ));
+        var suggestions = Levenshtein.suggestions(targetIdent.pathToString(), candidates);
         throw addErrorAndStopChecking(
             error("Unknown alias source register", targetIdent.location())
                 .locationDescription(targetIdent.location(), "Unknown register `%s`.",
                     targetIdent)
+                .suggestions(suggestions)
                 .build());
+      }
+      if (alias.kind == AliasDefinition.AliasKind.PROGRAM_COUNTER) {
+        throw addErrorAndStopChecking(
+            error("Register alias cannot refer to program counter alias", targetIdent.location())
+                .build()
+        );
       }
       check(alias);
       reg = (RegisterDefinition) requireNonNull(alias.computedTarget);
@@ -1681,7 +1694,7 @@ public class TypeChecker
       addErrorAndStopChecking(
           error("Unsupported Alias Type", definition)
               .locationDescription(definition,
-                  "The typechecker doesn't know how such aliases yet.")
+                  "The typechecker doesn't know such aliases yet.")
               .locationHelp(definition,
                   "If you desire this feature, please let us know at: "
                       + "https://github.com/OpenVADL/openvadl/issues/new")

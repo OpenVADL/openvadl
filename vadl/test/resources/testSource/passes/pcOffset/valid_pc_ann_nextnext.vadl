@@ -1,0 +1,21 @@
+
+instruction set architecture PcTest = {
+
+  memory Mem : Bits<8> -> Bits<8>
+  using Regs = Bits<32>
+
+  register A: Regs
+  [ next next ]
+  program counter PC: Regs
+
+  instruction READ_PC: F = A := PC
+
+  encoding READ_PC = { I = 2 }
+  assembly READ_PC = "Test"
+
+  format F: Regs = {
+    I: Regs
+  }
+}
+
+processor TEST implements PcTest = {}

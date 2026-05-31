@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
@@ -409,14 +411,12 @@ class SymbolTable {
 
   /**
    * Internal use only.
-   * Collects all symbol names in scope that are instances of the given classes.
+   * Collects all symbol names in scope that satisfy the given predicate.
    * There is a hard limit described by {@link #MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS}.
    */
-  private void collectAllSymbolNamesOf(Collection<String> collector,
-                                       Class<? extends Node>... classes) {
+  private void collectAllSymbolNamesWhere(Collection<String> collector, Predicate<Node> pred) {
     symbols.entrySet().stream()
-        .filter(entry -> entry.getValue() != null
-            && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(entry.getValue())))
+        .filter(entry -> entry.getValue() != null && pred.test(entry.getValue()))
         .map(Map.Entry::getKey)
         .limit(Math.max(0, MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS - collector.size()))
         .forEach(collector::add);
@@ -426,8 +426,21 @@ class SymbolTable {
     }
 
     if (parent != null) {
-      parent.collectAllSymbolNamesOf(collector, classes);
+      parent.collectAllSymbolNamesWhere(collector, pred);
     }
+  }
+
+  /**
+   * Internal use only.
+   * Collects all symbol names in scope that are instances of the given classes.
+   * There is a hard limit described by {@link #MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS}.
+   */
+  private void collectAllSymbolNamesOf(Collection<String> collector,
+                                       Class<? extends Node>... classes) {
+    collectAllSymbolNamesWhere(
+        collector,
+        node -> Arrays.stream(classes).anyMatch(klass -> klass.isInstance(node))
+    );
   }
 
   /**
@@ -456,6 +469,18 @@ class SymbolTable {
 
     var symbols = new ArrayList<String>();
     collectAllSymbolNamesOf(symbols, classes);
+    return symbols;
+  }
+
+  /**
+   * Returns all symbol names in scope that point to nodes satisfying the given predicate.
+   *
+   * @param predicate that must be satisfied.
+   * @return the set of all available names.
+   */
+  final Set<String> allSymbolNamesWhere(Predicate<Node> predicate) {
+    var symbols = new HashSet<String>();
+    collectAllSymbolNamesWhere(symbols, predicate);
     return symbols;
   }
 
