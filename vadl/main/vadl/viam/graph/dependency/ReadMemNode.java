@@ -145,6 +145,10 @@ public class ReadMemNode extends ReadResourceNode {
     return new ReadMemNode(memory, words, endianness, address().copy(), type());
   }
 
+  public void setEndiannessOverwrite(Endianness endianness) {
+    endiannessOverwrite = endianness;
+  }
+
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);

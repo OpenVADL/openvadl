@@ -21,6 +21,7 @@ import static vadl.error.Diagnostic.error;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,8 +35,9 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.GraphUtils;
 import vadl.utils.ViamUtils;
+import vadl.viam.Endianness;
 import vadl.viam.Memory;
-import vadl.viam.Procedure;
+import vadl.viam.MemoryRegion;
 import vadl.viam.Processor;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
@@ -43,6 +45,8 @@ import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ProcEndNode;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -51,6 +55,7 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * Verifies that the memory endianness condition expression(s) only contain reads from
@@ -82,8 +87,9 @@ public class IssApplyMemoryEndiannessPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     checkMemoryEndiannessConditions(viam);
-    ViamUtils.findAllBehaviors(viam).forEach(behaviour ->
-        new ApplyMemoryEndianness(behaviour).run());
+    ViamUtils.findAllBehaviors(viam)
+        .filter(behaviour -> !(behaviour.parentDefinition() instanceof MemoryRegion))
+        .forEach(behaviour -> new ApplyMemoryEndianness(behaviour).run());
     viam.processor().ifPresent(processor ->
         new ApplyMemoryEndiannessInMemoryRegionInit(processor).run());
     return null;
@@ -127,15 +133,13 @@ public class IssApplyMemoryEndiannessPass extends Pass {
 class ApplyMemoryEndiannessInMemoryRegionInit {
 
   private final Processor processor;
+  private final Map<Memory, Boolean> evaluatedConditions = new HashMap<>();
+  private final Map<RegisterTensor, ExpressionNode> resetVector;
 
   ApplyMemoryEndiannessInMemoryRegionInit(Processor processor) {
     this.processor = processor;
-  }
-
-  void run() {
-    var reset = processor.reset();
-    var end = reset.behavior().getNodes(ProcEndNode.class).findFirst().orElseThrow();
-    var resetVector = end.sideEffects().stream()
+    var end = processor.reset().behavior().getNodes(ProcEndNode.class).findFirst().orElseThrow();
+    resetVector = end.sideEffects().stream()
         .filter(se -> se instanceof WriteRegTensorNode)
         .map(se -> (WriteRegTensorNode) se)
         .filter(write -> write.regTensor().isSingleRegister())
@@ -144,44 +148,67 @@ class ApplyMemoryEndiannessInMemoryRegionInit {
             WriteRegTensorNode::regTensor,
             WriteRegTensorNode::value
         ));
-
-    // FIXME: this does not account for changes to the register values during the procedure
-    processor.memoryRegions().forEach(mr ->
-        mr.behavior().getNodes(ReadRegTensorNode.class).forEach(read ->
-            handleRead(read, resetVector, reset, mr.memoryRef())
-        )
-    );
   }
 
-  private void handleRead(ReadRegTensorNode read,
-                          Map<RegisterTensor, ExpressionNode> resetVector,
-                          Procedure reset,
-                          Memory memory) {
-    var reg = read.regTensor();
-    var resetValue = resetVector.get(reg);
-    if (resetValue == null) {
-      throw error(String.format("""
-              Value of register %s is unknown
-              """, reg.simpleName()),
-          read
-      ).description("""
-          The memory written here is bi-endian. What endianness is used depends on the \
-          value of register %s, which is not known at this point. Only registers initialized \
-          to a constant value in the default branch of the processor reset procedure can be \
-          statically inferred.
-          """, reg.simpleName()
-      ).locationHelp(
-          reset,
-          "Processor reset procedure"
-      ).locationHelp(
-          // we know that the memory is bi-endian, because there are reg reads, which
-          // can only stem from the bi-endian condition
-          requireNonNull(memory.biEndianCondition()).sourceLocation(),
-          "Bi-endian condition"
-      ).build();
+  void run() {
+    // FIXME: this does not account for changes to the register values during the procedure
+    processor.memoryRegions().stream().filter(mr -> mr.memoryRef().isBiEndian()).forEach(mr -> {
+      var endianness = endiannessOf(mr.memoryRef());
+      mr.behavior().getNodes(ReadMemNode.class).forEach(r -> r.setEndiannessOverwrite(endianness));
+      mr.behavior().getNodes(WriteMemNode.class).forEach(w -> w.setEndiannessOverwrite(endianness));
+    });
+  }
+
+  private Endianness endiannessOf(Memory mem) {
+    return evaluatedConditions.computeIfAbsent(mem, this::computeCondition)
+        ? mem.endianness()
+        : mem.endianness().other();
+  }
+
+  private boolean computeCondition(Memory memory) {
+    var errors = new ArrayList<Diagnostic>();
+    var condition = requireNonNull(memory.biEndianCondition()).copy();
+    for (var read : condition.getNodes(ReadRegTensorNode.class).toList()) {
+      var reg = read.regTensor();
+      var resetValue = resetVector.get(reg);
+      if (resetValue == null) {
+        errors.add(error(String.format("""
+                  Value of register %s is unknown
+                  """, reg.simpleName()),
+                read
+            ).description("""
+              The memory written here is bi-endian. What endianness is used depends on the \
+              value of register %s, which is not known at this point. Only registers initialized \
+              to a constant value in the default branch of the processor reset procedure can be \
+              statically inferred.
+              """, reg.simpleName()
+            ).locationHelp(
+                processor.reset(),
+                "Processor reset procedure"
+            ).locationHelp(
+                // we know that the memory is bi-endian, because there are reg reads, which
+                // can only stem from the bi-endian condition
+                requireNonNull(memory.biEndianCondition()).sourceLocation(),
+                "Bi-endian condition"
+            ).build()
+        );
+      } else {
+        read.replace(resetValue.copy());
+        read.safeDelete();
+      }
     }
-    read.replace(resetValue.copy());
-    read.safeDelete();
+
+    if (!errors.isEmpty()) {
+      throw new DiagnosticList(errors);
+    }
+
+    Canonicalizer.canonicalize(condition);
+    var value = condition.getNodes(ReturnNode.class).findFirst().get().value();
+    if (value instanceof ConstantNode constant) {
+      return constant.constant().asVal().bool();
+    } else {
+      throw new IllegalStateException("Failed to constant evaluate memory endian condition");
+    }
   }
 }
 

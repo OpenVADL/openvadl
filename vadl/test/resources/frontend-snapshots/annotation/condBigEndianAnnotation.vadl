@@ -1,0 +1,44 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ execution state ]
+  register R : Bits<32>
+
+  [ big endian : R = 0 ]
+  memory MEM : Bits<32> -> Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "R"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "execution" type: null
+//    . : ' Identifier name: "state" type: null
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . MemoryDefinition name: "MEM"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "big" type: null
+//    . : ' Identifier name: "endian" type: null
+//    . : ' BinaryExpr operator: = type: Bool
+//    . : ' | Identifier name: "R" type: Bits<32>
+//    . : ' | CastExpr type: Bits<32>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

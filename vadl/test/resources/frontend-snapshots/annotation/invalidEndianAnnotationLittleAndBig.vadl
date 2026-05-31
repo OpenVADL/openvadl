@@ -1,0 +1,44 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ big endian ]
+  [ little endian ]
+  memory MEM : Bits<32> -> Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Annotation clash
+//       ╭── test/resources/frontend-snapshots/annotation/invalidEndianAnnotationLittleAndBig.vadl:5:3
+//       │
+//     5 │   [ big endian ]
+//       │   ^^^^^^^^^^^^^^ First defined here
+//       │                  Conflicting defined here
+//       │
+//     6 │   [ little endian ]
+//       │   ----------------- Conflicting defined here
+//       │
+//       Only one of these annotations can be defined.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . MemoryDefinition name: "MEM"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "big" type: null
+//    . : ' Identifier name: "endian" type: null
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "little" type: null
+//    . : ' Identifier name: "endian" type: null
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
