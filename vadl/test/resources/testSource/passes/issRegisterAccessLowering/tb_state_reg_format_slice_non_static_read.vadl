@@ -1,0 +1,25 @@
+
+instruction set architecture Test = {
+  [ execution state : a, c ]
+  register R : F // only (31..31,1..0) should be tb-state
+
+  register A : Bits<32>
+  instruction INSTR: F = A := R.b as Bits<32> // non-static
+  encoding INSTR = { a = 0 }
+  assembly INSTR = "Test"
+
+  format F : Bits<32> = {
+    a : Bits<1>,
+    b : Bits<29>,
+    c : Bits<2>
+  }
+
+  memory MEM : Bits<32> -> Bits<8>
+  program counter PC : Bits<32>
+}
+
+processor Proc implements Test = {
+  [ firmware ]
+  [ base: 0x00000000 ]
+  memory region [RAM] DRAM in MEM
+}

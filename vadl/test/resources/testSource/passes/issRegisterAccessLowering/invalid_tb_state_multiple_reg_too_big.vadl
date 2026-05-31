@@ -1,0 +1,13 @@
+
+instruction set architecture Test = {
+  [ execution state ]
+  register A : Bits<32>
+
+  [ execution state ]
+  register B : Bits<16>
+
+  memory MEM : Bits<32> -> Bits<8>
+  program counter PC : Bits<32>
+}
+
+processor Proc implements Test = { }
