@@ -2016,12 +2016,12 @@ place the return value.
 \listing{user_mode_emulation, User Mode Emulation Definition}
 ~~~{.vadl}
 [os : linux] 
-user mode emulation UME for RV64IM with ABI = {
+user mode emulation UME for RV64UME with ABI = {
 syscall instruction = ECALL
 
-syscall number = a7
+syscall register = a7
 syscall argument = a{0..5}
-syscall return = a0
+return register = a0
 
 }
 ~~~
@@ -2033,9 +2033,10 @@ using the `for` keyword after the identifier.
 Definitions from the referenced \ac{RV64} are now available for use inside the \ac{UME} section.
 The `with` keyword binds the \ac{ABI} to the section. 
 
-
 In the example in listing \r{user_mode_emulation}, the \ac{UME} section uses `ECALL` from the \ac{RV64IM} and the register aliases `a7`, `a0`
-from the \ac{ABI} `ABI`. These aliases represent X(17) and X(10), respectively. 
+from the \ac{ABI}. These aliases represent X(17) and X(10), respectively, but they can be defined interchangeably (either \ac{ABI} alias registers or 
+actual registers from the \ac{ISA} definition).
+
 The annotation `[os : linux]` selects for which target operating system system 
 calls are forwarded and which syscall number table should be used. 
 
@@ -2052,8 +2053,26 @@ argument convention in the \ac{ABI} (`function argument = a{0..7}`).
 
 The `syscall return` declaration determines into which register the host operating system will write the return value of the forwarded syscall. This differs with the function return convention in the \ac{ABI} because it is a single register instead of spanning across two  (`return value = a{0..1}`).
 
+### Syscall Definition 
 
-### Exception Definition 
+The Linux syscall numbers differ between architectures, so each VADL file needs to contain a table 
+that defines the specific syscalls. 
+
+\listing{user_mode_emulation_syscalls, User Mode Emulation Syscalls}
+~~~{.vadl}
+enumeration LinuxSyscall : Bits<64> = {
+     sys_riscv_hwprobe      = 258
+  , sys_riscv_flush_icache  = 259
+}
+~~~
+\endlisting
+
+The `enumeration` keyword is used to define a set of named constants, in this case the 
+key-value pairs are the name of the syscall and its respective number. A generic syscall
+table already exists, so the table defined in the VADL file provides the architecture-specific syscalls 
+that should either be added to or overwrite the generic ones. 
+
+### Exception Definition (work in progress)
 
 Varying exceptions are defined in the VADL like:
 
@@ -2064,5 +2083,3 @@ user mode emulation UME for RV64 with ABI = {
 }
 ~~~
 \endlisting
-
-It is also possible to select the desired OS in the .vadl file (e.g. Linux or BSD). 
