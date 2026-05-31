@@ -47,7 +47,7 @@ public class GotoDefinitionTest extends IntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"noDefinition", "aliasRegister", "isa", "twoFiles"})
   public void mainTest(String testCase) throws ExecutionException, InterruptedException {
-    var snapshot = new TestSnapshot(testCase);
+    var snapshot = new TestSnapshot(testCase, true);
     var inputUri = snapshot.getInputUri(INPUT_NAME);
     var input = snapshot.getInputData(INPUT_NAME);
 

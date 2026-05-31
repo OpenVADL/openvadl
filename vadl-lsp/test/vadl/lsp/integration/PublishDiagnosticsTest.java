@@ -37,7 +37,7 @@ public class PublishDiagnosticsTest extends IntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"empty", "noErrors", "syntax", "noX", "twoFiles"})
   public void mainTest(String testCase) {
-    var snapshot = new TestSnapshot(testCase);
+    var snapshot = new TestSnapshot(testCase, true);
     var inputUri = snapshot.getInputUri(INPUT_NAME);
     var input = snapshot.getInputData(INPUT_NAME);
     snapshot.add("Input", TestUtils.formatFileContent(input));

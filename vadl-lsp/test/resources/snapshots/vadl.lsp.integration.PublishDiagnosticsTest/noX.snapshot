@@ -17,7 +17,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
 # % Requested data of input file input.vadl %
 - Published diagnostics: 
   [PublishDiagnosticsParams [
-    uri = ".../vadl.lsp.integration.PublishDiagnosticsTest/mainTest-noX-input.vadl"
+    uri = ".../vadl.lsp.integration.PublishDiagnosticsTest/noX-input.vadl"
     diagnostics = ArrayList (
       Diagnostic [
         range = Range [

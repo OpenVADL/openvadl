@@ -65,6 +65,7 @@ public class TestSnapshot {
   private final String testMethod;
   @Nullable
   private final String testCase;
+  private final boolean shortenFilePath;
 
   private final StringBuilder data = new StringBuilder();
   @Nullable
@@ -83,6 +84,7 @@ public class TestSnapshot {
     this.testMethod = callerData.getMethodName();
 
     this.testCase = null;
+    this.shortenFilePath = false;
   }
 
   /**
@@ -100,6 +102,28 @@ public class TestSnapshot {
     this.testMethod = callerData.getMethodName();
 
     this.testCase = testCase;
+    this.shortenFilePath = false;
+  }
+
+  /**
+   * Creates a new instance.
+   *
+   * <p>Note: The snapshot is stored under the name of the method that instantiates the Snapshot
+   * object (unless {@code shortenFilePath} is true).
+   *
+   * @param testCase In addition to test class and test method, this test case is used to identify
+   *                 this snapshot. Use this for ParameterizedTests.
+   * @param shortenFilePath True: Do not include the method name as part of file paths. Should not
+   *                        be used if the test class has more than one test method that uses
+   *                        snapshots.
+   */
+  public TestSnapshot(String testCase, boolean shortenFilePath) {
+    var callerData = getCallerData();
+    this.testClass = callerData.getClassName();
+    this.testMethod = callerData.getMethodName();
+
+    this.testCase = testCase;
+    this.shortenFilePath = shortenFilePath;
   }
 
 
@@ -255,7 +279,10 @@ public class TestSnapshot {
   private Path getFilePath(String afterPrefix) throws IOException {
     var directoryPath = getAndCreateContainingDirectoryPath();
 
-    String relativePath = testMethod + (testCase != null ? "-" + testCase : "") + afterPrefix;
+    String relativePath = (!shortenFilePath
+        ? testMethod + (testCase != null ? "-" + testCase : "")
+        : (testCase != null ? testCase : ""))
+        + afterPrefix;
     var filePath = directoryPath.resolve(relativePath);
 
     if (!filePath.getParent().equals(directoryPath)) {

@@ -1,5 +1,5 @@
 // GOTO POSITION 5:29 - "foo" points to constant definition in other file
-import "mainTest-twoFiles-otherFile"::TEST
+import "twoFiles-otherFile"::TEST
 
 application binary interface ABI for TEST = {
   alias register hello = X(foo)
