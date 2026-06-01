@@ -183,12 +183,5 @@ model-type SVEWhileStatModel = (WhileRec, Id) -> Stat
 //       │                                      ^ The parser expected `)` here.
 //       │
 //
-//  error: The macro `SVEWhileCondInstr` expects 4 arguments but 1 were provided.
-//       ╭── test/resources/frontend-snapshots/macro/invalidHigherOrderModelWrongArgumentCount.vadl:147:5
-//       │
-//   147 │     $SVEWhileCondInstr ($ExtInstrStr ($i;  "W"); WSize ; $elements ; $elSize ; $elStr)
-//       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//       │
-//
 //
 // Part of the class vadl.ast.FrontendSnapshotTests
