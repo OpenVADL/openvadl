@@ -29,7 +29,7 @@ constant flo = $numPlusOne()
 //       ├─ From this model invocation (outermost call first):
 //       │       test/resources/frontend-snapshots/imports/invalidImportWhereWithIsMacroOfWrongType.vadl:8:31
 //       │
-//       Expected node of type Str, received Ex - GroupedExpr
+//       Expected node of type `Str` but received `Ex` (grouped expression)
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

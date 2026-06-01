@@ -2182,12 +2182,16 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   // -- MACROS -------------------------------------------------------------------------------------------------------
 
-  macroReplacement<out Node body> (. body = DUMMY_ID; .)
+  macroReplacement<out Node body> (. body = DUMMY_ID; var errCountBefore = diagnostics.size(); .)
   = ( macroMatch<out body>
     | maximumMacroExpr<out body>
     | AsId<out body>
     | AsStr<out body>
-    )                             (. body = expandNode(this, body); .)
+    )                             (.  // There is no need to expand macros if the arguments to a macro are unparsable.
+                                      if (errCountBefore == diagnostics.size()) {
+                                        body = expandNode(this, body);
+                                      }
+                                  .)
   .
 
   AsId<out Node body>                   (. var start = nextTokenLoc(); .)
