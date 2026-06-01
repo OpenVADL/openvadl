@@ -10,7 +10,7 @@ constant y: Bits<x> = 1
 //     1 │ constant x: Bits<y> = 1
 //       │ ^^^^^^^^^^^^^^^^^^^^^^^
 //       │
-//       Definition `x` is defined by itself.
+//       This constant definition `x` is defined by itself.
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests
