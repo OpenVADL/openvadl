@@ -22,16 +22,13 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
-import vadl.iss.passes.nodes.IssWriteRegNode;
+import vadl.iss.passes.extensions.InstrExecPlan.DirectGvecSupport;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.GraphUtils;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.ViamGraphError;
-import vadl.viam.graph.control.ForallEndNode;
-import vadl.viam.graph.control.ForallNode;
 
 /**
  * Lowers direct-gvec candidates from their loop/body graph form into backend gvec nodes.
@@ -58,31 +55,33 @@ public class IssDirectGvecLoweringPass extends AbstractIssPass {
     if (executionPlan == null) {
       return;
     }
-    var plan = executionPlan.directGvecPlan();
-    if (plan == null) {
+    var viableRegions = executionPlan.directGvecRegions().stream()
+        .filter(DirectGvecSupport::isViable)
+        .filter(support -> support.plan() != null)
+        .toList();
+    if (viableRegions.isEmpty()) {
       return;
     }
 
     var graph = instruction.behavior();
-    var foralls = graph.getNodes(ForallNode.class).toList();
-    var forallEnds = graph.getNodes(ForallEndNode.class).toList();
-    if (foralls.size() != 1 || forallEnds.size() != 1) {
-      throw new ViamGraphError("Expected exactly one forall region for direct-gvec lowering")
-          .addContext(instruction)
-          .addContext("foralls", foralls)
-          .addContext("forallEnds", forallEnds);
+    for (var support : viableRegions) {
+      lowerRegion(support);
+    }
+    graph.deleteUnusedDependencies();
+  }
+
+  private void lowerRegion(DirectGvecSupport support) {
+    var region = support.region();
+    var plan = support.plan();
+    if (plan == null) {
+      return;
     }
 
-    var forall = foralls.getFirst();
-    var forallEnd = forallEnds.getFirst();
-    var next = forallEnd.unlinkNext();
-
-    var gvecNode = forall.addBefore(new TcgGvecOpNode(plan));
-    graph.getNodes(IssWriteRegNode.class).findFirst()
-        .ifPresent(w -> gvecNode.setSourceLocationIfNotSet(w.location()));
+    var next = region.forallEnd().unlinkNext();
+    var gvecNode = region.forall().addBefore(new TcgGvecOpNode(plan));
+    gvecNode.setSourceLocationIfNotSet(region.write().location());
     gvecNode.setNext(next);
 
-    GraphUtils.deleteAllBetween(forall, forallEnd);
-    graph.deleteUnusedDependencies();
+    GraphUtils.deleteAllBetween(region.forall(), region.forallEnd());
   }
 }

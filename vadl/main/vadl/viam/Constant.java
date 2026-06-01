@@ -731,6 +731,38 @@ public abstract class Constant {
     }
 
     /**
+     * Performs a rotate-right-extend of this constant value. The value is shifted
+     * right by 1. The vacated msb is set to the given carry and the carry in turn
+     * becomes the shifted out bit (which is the lsb of the original value).
+     * The resulting type is the same as this type.
+     *
+     * @return a struct constant of form {@code ( result, ( z, c, o, n ) )}
+     */
+    public Struct rrx(boolean carry) {
+      int width = type().bitWidth();
+
+      BigInteger mask = BigInteger.ONE.shiftLeft(width).subtract(BigInteger.ONE); // width-bit mask
+
+      BigInteger rotated = value.shiftRight(1);
+      if (carry) {
+        rotated = rotated.or(BigInteger.ONE.shiftLeft(width - 1));
+      }
+      rotated = rotated.and(mask);
+
+      var isZero = rotated.equals(BigInteger.ZERO);
+      var isNegative = rotated.testBit(width - 1);
+      // carry is set to the shifted out bit (the lsb)
+      var isCarry = value.testBit(0);
+      var isOverflow = false;
+
+      var fields = new LinkedHashMap<String, Constant>();
+      fields.put(BUILTIN_RESULT, Constant.Value.fromTwosComplement(rotated, type()));
+      fields.put(BUILTIN_STATUS, Struct.status(isNegative, isZero, isCarry, isOverflow));
+
+      return new Struct(fields);
+    }
+
+    /**
      * Truncates this value to the width of the newType argument.
      * The newType must have the same type class as this type and its with must be
      * less or equal to this constant's width.

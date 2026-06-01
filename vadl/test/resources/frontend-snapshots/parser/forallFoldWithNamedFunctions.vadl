@@ -1,0 +1,309 @@
+// INCLUDE-AST-DUMP
+// Previously this didn't work as only operators were allowed.
+// https://github.com/OpenVADL/openvadl/issues/660
+
+instruction set architecture Tensor = {
+  using Index = Bits<4>
+  register X : Bits<16><32>
+
+  format F : Bits<4> = {opcode : Bits<4>}
+
+  model Instr(id: Id, cnt: Int, ex: Ex): IsaDefs = {
+    instruction $id : F = X(0) := $ex
+    encoding $id = {opcode = $cnt}
+    assembly $id = AsStr(id)
+  }
+
+  $Instr(I1; 1; forall i: Bits<4> in 0 .. 3 fold VADL::add  with X(i))
+  $Instr(I2; 2; forall i: Bits<4> in 0 .. 3 fold VADL::mul  with X(i))
+  $Instr(I3; 3; forall i: Bits<4> in 0 .. 3 fold VADL::and  with X(i))
+  $Instr(I4; 4; forall i: Bits<4> in 0 .. 3 fold VADL::or   with X(i))
+  $Instr(I5; 5; forall i: Bits<4> in 0 .. 3 fold VADL::xor  with X(i))
+  $Instr(I6; 6; forall i: Bits<4> in 0 .. 3 fold VADL::smin with X(i))
+  $Instr(I7; 7; forall i: Bits<4> in 0 .. 3 fold VADL::umin with X(i))
+  $Instr(I8; 8; forall i: Bits<4> in 0 .. 3 fold VADL::smax with X(i))
+  $Instr(I9; 9; forall i: Bits<4> in 0 .. 3 fold VADL::umax with X(i))
+
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "Tensor"
+//    . UsingDefinition name: "Index"
+//    . : TypeLiteral type: Bits<4>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . RegisterDefinition name: "X"
+//    . : TypeLiteral type: Bits<16><32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . FormatDefinition name: "F"
+//    . : TypeLiteral type: Bits<4>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : TypedFormatField name: "opcode"
+//    . : ' TypeLiteral type: Bits<4>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
+//    . InstructionDefinition name: "I1"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::add" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I1" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//    . InstructionDefinition name: "I2"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::mul" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I2" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//    . InstructionDefinition name: "I3"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::and" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I3" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//    . InstructionDefinition name: "I4"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::or" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I4" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//    . InstructionDefinition name: "I5"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::xor" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I5" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//    . InstructionDefinition name: "I6"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::smin" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I6" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 6 (6) type: Const<6>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//    . InstructionDefinition name: "I7"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::umin" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I7" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//    . InstructionDefinition name: "I8"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::smax" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I8" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//    . InstructionDefinition name: "I9"
+//    . : Identifier name: "F" type: null
+//    . : AssignmentStatement
+//    . : ' CallIndexExpr type: Bits<32>
+//    . : ' | Identifier name: "X" type: null
+//    . : ' | ArgsIndices
+//    . : ' | . CastExpr type: Bits<4>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | IdentifierPath name: "VADL::umax" type: null
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "i" type: Bits<4>
+//    . EncodingDefinition
+//    . : Identifier name: "I9" type: null
+//    . : Identifier name: "opcode" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 9 (9) type: Const<9>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "id" ("id") type: String
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

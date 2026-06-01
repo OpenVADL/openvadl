@@ -53,6 +53,7 @@ import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
+import vadl.viam.Counter;
 import vadl.viam.Encoding;
 import vadl.viam.Endianness;
 import vadl.viam.Format;
@@ -71,6 +72,7 @@ import vadl.viam.annotations.AssertAnnotation;
 import vadl.viam.annotations.DefineOperandAnnotation;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.annotations.InstructionUndefinedAnno;
+import vadl.viam.annotations.PcOffsetAnnotation;
 import vadl.viam.annotations.StopAnnotation;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
 
@@ -111,7 +113,16 @@ public class AnnotationTable {
         .add("next", EnableAnnotation::new)
         .add("next next", EnableAnnotation::new)
         .check(GroupedAnnotationBuilder.GroupCheckContext::verifyOnlyOneOfGroup)
-        // FIXME: Apply to AST, see Issue #938
+        .applyViam(ctx -> {
+          var reg = ((Counter) ctx.targetDefinition).registerTensor();
+          BiConsumer<Annotation, Integer> addAnn = (ann, offset) -> {
+            var offsetAnn = new PcOffsetAnnotation(offset);
+            offsetAnn.setSourceLocation(ann.location());
+            reg.addAnnotation(offsetAnn);
+          };
+          ctx.get("next").ifPresent(ann -> addAnn.accept(ann, 1));
+          ctx.get("next next").ifPresent(ann -> addAnn.accept(ann, 2));
+        })
         .build();
 
     groupOn(AliasDefinition.class)
@@ -127,7 +138,16 @@ public class AnnotationTable {
                           + "and program counter aliases"));
           ctx.verifyOnlyOneOfGroup();
         })
-        // FIXME: Apply to AST, see Issue #938
+        .applyViam(ctx -> {
+          var reg = ((Counter) ctx.targetDefinition).registerTensor();
+          BiConsumer<Annotation, Integer> addAnn = (ann, offset) -> {
+            var offsetAnn = new PcOffsetAnnotation(offset);
+            offsetAnn.setSourceLocation(ann.location());
+            reg.addAnnotation(offsetAnn);
+          };
+          ctx.get("next").ifPresent(ann -> addAnn.accept(ann, 1));
+          ctx.get("next next").ifPresent(ann -> addAnn.accept(ann, 2));
+        })
         .build();
 
     annotationOn(RegisterDefinition.class, "zero", ZeroConstraintAnnotation::new)

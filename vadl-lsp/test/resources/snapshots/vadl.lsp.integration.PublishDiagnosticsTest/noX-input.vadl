@@ -1,0 +1,7 @@
+// no X
+instruction set architecture TEST = {
+}
+
+application binary interface ABI for TEST = {
+  alias register hello = X(0)
+}

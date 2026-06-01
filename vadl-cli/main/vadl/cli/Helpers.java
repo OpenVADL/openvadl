@@ -35,7 +35,12 @@ class VersionProvider implements CommandLine.IVersionProvider {
 
   @Override
   public String[] getVersion() {
-    return new String[] {OpenVadlProperties.getVersion()};
+    var version = OpenVadlProperties.getVersion();
+    var commit = OpenVadlProperties.getCommit();
+    var commitDate = OpenVadlProperties.getCommitDate();
+
+    var versionString = "OpenVADL version %s commit %s (%s)".formatted(version, commit, commitDate);
+    return new String[] {versionString};
   }
 }
 

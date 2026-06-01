@@ -39,7 +39,6 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -55,6 +54,9 @@ public class RegisterTest extends AbstractTest {
   private static Stream<Arguments> invalidRegisterTestSources() {
     return AbstractTest.getTestSourceArgsForParameterizedTest("unit/register/invalid_",
         arguments("reg_invalidFormat", "Invalid Format"),
+
+        arguments("alias_reg_referToPC",      "Unknown register"),
+        arguments("alias_reg_referToPCAlias", "Register alias cannot refer"),
 
         arguments("pc_alias_reg_subcall_currentOnReg",  "No subcall"),
         arguments("pc_alias_reg_subcall_nextOnReg",     "No subcall"),
@@ -269,35 +271,8 @@ public class RegisterTest extends AbstractTest {
         testPc("valid_pc_alias_regfile.vadl", "PcTest::PC", "PcTest::X", 31),
         testPc("valid_pc_current.vadl", "PcTest::PC", "PcTest::PC", null),
         testPc("valid_pc_next.vadl", "PcTest::PC", "PcTest::PC", null),
-        testPc("valid_pc_next_next.vadl", "PcTest::PC", "PcTest::PC", null),
-
-        testPcSubcalls("valid_pc_alias_reg_subcalls.vadl"),
-        testPcSubcalls("valid_pc_alias_reg_subcalls_with_annotation.vadl")
+        testPc("valid_pc_next_next.vadl", "PcTest::PC", "PcTest::PC", null)
     );
-
-  }
-
-  private DynamicTest testPcSubcalls(String fileName) {
-    return dynamicTest(fileName, () -> {
-      var spec = runAndGetViamSpecification("unit/register/" + fileName);
-      // FIXME: fix hardcoded instr lengths here
-      testPcSubcall("PcTest::READ_PC_CURRENT", spec, 0);
-      testPcSubcall("PcTest::READ_PC_NEXT", spec, 4);
-      testPcSubcall("PcTest::READ_PC_NEXTNEXT", spec, 8);
-    });
-  }
-
-  private void testPcSubcall(String instrName, Specification spec, int offset) {
-    var instr = TestUtils.findDefinitionByNameIn(instrName, spec, Instruction.class);
-    var readReg = getSingleNode(instr.behavior(), ReadRegTensorNode.class);
-    Assertions.assertTrue(readReg.hasUsages());
-    var usage = readReg.usages().findFirst().get();
-    Assertions.assertInstanceOf(BuiltInCall.class, usage);
-    var add = (BuiltInCall) usage;
-    Assertions.assertEquals(BuiltInTable.ADD, add.builtIn());
-    var offsetNode = add.arg(1);
-    Assertions.assertInstanceOf(ConstantNode.class, offsetNode);
-    Assertions.assertEquals(offset, ((ConstantNode) offsetNode).constant().asVal().intValue());
   }
 
   private DynamicTest testPc(String fileName, String counterName, String resourceName,

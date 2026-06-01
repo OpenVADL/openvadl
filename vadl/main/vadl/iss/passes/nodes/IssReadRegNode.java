@@ -16,7 +16,9 @@
 
 package vadl.iss.passes.nodes;
 
+import com.google.common.collect.Streams;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -204,6 +206,53 @@ public class IssReadRegNode extends ReadRegTensorNode {
       return c.constant().asVal().intValue();
     }
     return type().bitWidth();
+  }
+
+  @Override
+  public void verifyState() {
+    ensure(regTensor().indexTypes().size() >= indices().size(),
+        "The resource takes %d indices but read provided %d",
+        regTensor().indexTypes().size(), indices().size());
+    Streams.forEachPair(indices().stream(), regTensor().indexTypes().stream(),
+        (index, expectedType) -> {
+          Objects.requireNonNull(index);
+          ensure(index.type() instanceof DataType,
+              "Address must be a DataValue, was %s", index.type());
+          ensure(index.type().isTrivialCastTo(expectedType),
+              "Address value type `%s` cannot be cast to resource's address type `%s`.",
+              index.type(), expectedType);
+        });
+
+    ensure(indices().size() <= regTensor().maxNumberOfAccessIndices(),
+        "Too many indices for tensor access. Read uses %d indices, tensor has %d indices",
+        indices().size(), regTensor().maxNumberOfAccessIndices());
+    regTensor().ensureMatchingIndexTypes(
+        indices().stream().map(e -> e.type().asDataType()).toList());
+
+    if (windowKind == WindowKind.FULL) {
+      ensure(type().bitWidth() >= regTensor().resultType(indices().size()).bitWidth(),
+          "Read result width is smaller than register tensor result width.");
+    } else {
+      ensure(type().bitWidth() == readBitWidth(),
+          "Chunk read result width (%d) does not match declared chunk width (%d).",
+          type().bitWidth(), readBitWidth());
+      ensure(bitOffset.type() instanceof DataType,
+          "Chunk read bit offset must be a data type, was %s", bitOffset.type());
+      ensure(bitWidth.type() instanceof DataType,
+          "Chunk read bit width must be a data type, was %s", bitWidth.type());
+
+      var containerWidth = regTensor().resultType(indices().size()).bitWidth();
+      if (bitOffset instanceof ConstantNode offsetConst
+          && bitWidth instanceof ConstantNode widthConst) {
+        var offset = offsetConst.constant().asVal().intValue();
+        var width = widthConst.constant().asVal().intValue();
+        ensure(offset >= 0, "Chunk read bit offset must be non-negative.");
+        ensure(width > 0, "Chunk read bit width must be positive.");
+        ensure(offset + width <= containerWidth,
+            "Chunk read window [%d, %d) exceeds container width %d.",
+            offset, offset + width, containerWidth);
+      }
+    }
   }
 
   @Override

@@ -17,10 +17,12 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
+import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -30,6 +32,11 @@ import vadl.viam.graph.Node;
  * It is the dependency of all {@code forall} related constructs and holds its value range.
  */
 public class ForIdxNode extends ExpressionNode {
+  @DataValue
+  @Nullable
+  private final String bindingName;
+  @DataValue
+  private final SourceLocation bindingLocation;
 
   @DataValue
   private int fromIdx;
@@ -40,9 +47,30 @@ public class ForIdxNode extends ExpressionNode {
    * Construct the index node.
    */
   public ForIdxNode(Type type, int fromIdx, int toIdx) {
+    this(type, null, SourceLocation.INVALID_SOURCE_LOCATION, fromIdx, toIdx);
+  }
+
+  /**
+   * Construct the index node with frontend binder identity.
+   */
+  public ForIdxNode(Type type,
+                    @Nullable String bindingName,
+                    SourceLocation bindingLocation,
+                    int fromIdx,
+                    int toIdx) {
     super(normalizeType(type));
+    this.bindingName = bindingName;
+    this.bindingLocation = bindingLocation;
     this.fromIdx = fromIdx;
     this.toIdx = toIdx;
+  }
+
+  public @Nullable String bindingName() {
+    return bindingName;
+  }
+
+  public SourceLocation bindingLocation() {
+    return bindingLocation;
   }
 
   public int fromIdx() {
@@ -68,12 +96,12 @@ public class ForIdxNode extends ExpressionNode {
 
   @Override
   public ForIdxNode copy() {
-    return new ForIdxNode(type(), fromIdx, toIdx);
+    return new ForIdxNode(type(), bindingName, bindingLocation, fromIdx, toIdx);
   }
 
   @Override
   public Node shallowCopy() {
-    return new ForIdxNode(type(), fromIdx, toIdx);
+    return new ForIdxNode(type(), bindingName, bindingLocation, fromIdx, toIdx);
   }
 
   @Override
@@ -84,6 +112,8 @@ public class ForIdxNode extends ExpressionNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
+    collection.add(bindingName);
+    collection.add(bindingLocation);
     collection.add(fromIdx);
     collection.add(toIdx);
   }

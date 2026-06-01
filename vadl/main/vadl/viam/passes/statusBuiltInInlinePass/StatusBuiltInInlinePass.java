@@ -279,4 +279,9 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
   public void handleRORC(BuiltInCall input) {
     throwNotImplemented(input);
   }
+
+  @Override
+  public void handleRRXS(BuiltInCall input) {
+    throwNotImplemented(input);
+  }
 }

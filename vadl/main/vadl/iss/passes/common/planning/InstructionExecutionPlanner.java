@@ -17,6 +17,7 @@
 package vadl.iss.passes.common.planning;
 
 import vadl.iss.passes.common.planning.evaluators.DirectGvecStrategyEvaluator;
+import vadl.iss.passes.common.planning.evaluators.DirectGvecStrategyEvaluator.DirectGvecEvaluation;
 import vadl.iss.passes.common.planning.evaluators.NormalTcgPathEvaluator;
 import vadl.iss.passes.extensions.InstrExecPlan;
 import vadl.iss.passes.extensions.InstrExecPlan.ExecutionPath;
@@ -39,11 +40,12 @@ final class InstructionExecutionPlanner {
    * Plans instruction execution by evaluating all strategies and selecting the best viable one.
    */
   InstrExecPlan plan(Instruction instruction) {
-    var directGvec = directGvecEvaluator.evaluate(instruction);
+    DirectGvecEvaluation directGvec = directGvecEvaluator.evaluate(instruction);
     var selectedPath =
-        directGvec.isViable() || normalTcgPathEvaluator.isViable(instruction)
+        directGvec.supportsWholeInstructionLowering()
+            || normalTcgPathEvaluator.isViable(instruction)
             ? ExecutionPath.NORMAL_TCG
             : ExecutionPath.HELPER_CALL;
-    return new InstrExecPlan(selectedPath, directGvec);
+    return new InstrExecPlan(selectedPath, directGvec.regions());
   }
 }

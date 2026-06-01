@@ -69,7 +69,9 @@ import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslateCPass;
 import vadl.lcb.passes.OverwriteInputOperandsPass;
 import vadl.pass.PassOrder;
+import vadl.viam.passes.ArtificialResPartialAccessExpansionPass;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
+import vadl.viam.passes.RegisterTensorPartialAccessExpansionPass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.functionInliner.ArtificialResInlinerPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
@@ -92,6 +94,11 @@ public final class IssPassOrder {
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
     order.skip(OverwriteInputOperandsPass.class);
+
+    // Skip partial (alias) register extension passes as the ISS is able to handle them downstream
+    // in an optimized way.
+    order.skip(RegisterTensorPartialAccessExpansionPass.class);
+    order.skip(ArtificialResPartialAccessExpansionPass.class);
 
     addCommonPasses(order, config);
     addScalarTcgPasses(order, config);

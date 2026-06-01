@@ -1,0 +1,20 @@
+// This test is because we have to reimplement the parser for fold actions and it is somewhat
+// likely to run into this bug.
+
+model MulOp(): BinOp = { * }
+
+function f2() -> Bits<32> =
+   forall i: Bits<32> in 0..4 fold $MulOp()::$MulOp()  with i
+
+
+//  Reported Diagnostics:
+//
+//  error: Parsing Error
+//       ╭── test/resources/frontend-snapshots/parser/invalidForallFoldActionOperatorPath.vadl:7:44
+//       │
+//     7 │    forall i: Bits<32> in 0..4 fold $MulOp()::$MulOp()  with i
+//       │                                            ^^ The parser expected `with` here.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

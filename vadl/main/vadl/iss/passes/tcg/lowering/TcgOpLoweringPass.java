@@ -61,6 +61,7 @@ import vadl.iss.passes.tcg.lowering.nodes.TcgDepositNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGenException;
+import vadl.iss.passes.tcg.lowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLookupAndGotoPtr;

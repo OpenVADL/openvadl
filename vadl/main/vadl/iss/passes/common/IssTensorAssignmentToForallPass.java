@@ -27,6 +27,7 @@ import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
@@ -39,6 +40,8 @@ import vadl.viam.graph.control.ForallEndNode;
 import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TensorNode;
+import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Lowers full tensor assignments to element-wise forall statements.
@@ -81,11 +84,17 @@ public class IssTensorAssignmentToForallPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    allInstrs(viam).forEach(instruction ->
-        instruction.behavior().getNodes(IssWriteRegNode.class)
+    allInstrs(viam).forEach(instruction -> {
+      while (true) {
+        var candidate = instruction.behavior().getNodes(IssWriteRegNode.class)
             .filter(this::canLower)
-            .toList()
-            .forEach(this::lower));
+            .findFirst();
+        if (candidate.isEmpty()) {
+          break;
+        }
+        lower(candidate.get());
+      }
+    });
     return null;
   }
 
@@ -118,9 +127,10 @@ public class IssTensorAssignmentToForallPass extends AbstractIssPass {
     var loopIdx = tensor.idx().copy();
     var elementValue = copyWithIndexSubstitution(tensor.body(), tensor.idx(), loopIdx);
     var elementWidth = tensor.body().type().asDataType().bitWidth();
+    var bitOffsetType = Type.bits(BitsType.indexWidthFor(write.writeBitWidth()));
     var bitOffset = BuiltInTable.MUL.call(
-        loopIdx,
-        Constant.Value.of(elementWidth, loopIdx.type()).toNode()
+        castIndexTo(loopIdx, bitOffsetType),
+        Constant.Value.of(elementWidth, bitOffsetType).toNode()
     );
     var bitWidth = Constant.Value.of(elementWidth, Type.bits(32)).toNode();
 
@@ -156,5 +166,15 @@ public class IssTensorAssignmentToForallPass extends AbstractIssPass {
       write.safeDelete();
     }
     forall.setSourceLocationIfNotSet(write.location());
+  }
+
+  private ExpressionNode castIndexTo(ExpressionNode index, BitsType targetType) {
+    var sourceType = index.type().asDataType();
+    if (sourceType.isTrivialCastTo(targetType)) {
+      return index;
+    }
+    return sourceType.bitWidth() > targetType.bitWidth()
+        ? new TruncateNode(index, targetType)
+        : new ZeroExtendNode(index, targetType);
   }
 }

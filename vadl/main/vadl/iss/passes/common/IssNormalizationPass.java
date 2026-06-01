@@ -22,6 +22,7 @@ import static vadl.utils.GraphUtils.add;
 import static vadl.utils.GraphUtils.bits;
 import static vadl.utils.GraphUtils.intU;
 import static vadl.utils.GraphUtils.intUNode;
+import static vadl.utils.GraphUtils.or;
 import static vadl.utils.GraphUtils.sub;
 import static vadl.utils.StreamUtils.only;
 
@@ -694,7 +695,17 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleRRX(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    // we replace RRX as there is no such TCG operation.
+    var opWidth = input.type().asDataType().bitWidth();
+    var val = input.arg(0);
+    var cr = input.arg(1);
+    // the input operand is shifted right by 1
+    var valShifted = BuiltInTable.LSR.call(val, intUNode(1, 32));
+    // the carry bit is shifted to the msb
+    var crShifted = BuiltInTable.LSL.call(cr, intUNode(opWidth - 1, 32));
+    ExpressionNode result = BuiltInTable.OR.call(valShifted, crShifted);
+    result = truncate(result, opWidth);
+    input.replaceAndDelete(result);
   }
 
   @Override

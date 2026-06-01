@@ -359,13 +359,7 @@ public class IssCpuFunctionGenerator extends PureFunctionCodeGenerator
       int chunkWidthBits
   ) {
     var loweredRead = toChunkRead(read, chunkOffsetBits, chunkWidthBits);
-    var accessName = RegisterAccessEmitters.readAccessorName(loweredRead, accessorRegistry);
-    ctx.wr(accessName).wr("(env");
-    for (var index : RegisterAccessEmitters.readAccessorArgs(loweredRead)) {
-      ctx.wr(", ");
-      ctx.gen(index);
-    }
-    ctx.wr(")");
+    RegisterAccessEmitters.emitRead(ctx, loweredRead, accessorRegistry);
   }
 
   private ReadRegTensorNode toChunkRead(ReadRegTensorNode read,

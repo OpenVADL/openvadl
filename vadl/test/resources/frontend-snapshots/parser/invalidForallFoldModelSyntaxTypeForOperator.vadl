@@ -19,7 +19,7 @@ model FoldStat (): Stat = {
 //       ├─ From this model invocation (outermost call first):
 //       │       test/resources/frontend-snapshots/parser/invalidForallFoldModelSyntaxTypeForOperator.vadl:7:43
 //       │
-//       Expected node of type BinOp, received Ex - GroupedExpr
+//       Expected node of type BinOp or Id, received Ex - GroupedExpr
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

@@ -231,7 +231,15 @@ public class ArtificialResource extends RegisterResource {
 
   @Override
   public DataType resultType(int providedDimensions) {
-    return resultType();
+    ensure(providedDimensions <= maxNumberOfAccessIndices(),
+        "Too many dimensions provided, max is %s, got %s.", maxNumberOfAccessIndices(),
+        providedDimensions);
+
+    var width = resultType().bitWidth();
+    for (var dimension : dimensions().stream().skip(providedDimensions).toList()) {
+      width = Math.multiplyExact(width, dimension.size());
+    }
+    return DataType.bits(width);
   }
 
   @Override

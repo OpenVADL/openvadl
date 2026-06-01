@@ -1144,11 +1144,11 @@ final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPla
  * <p>This node should never leave the parser.
  */
 final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
-  GroupedExpr expr;
+  List<Expr> exprs;
   SourceLocation loc;
 
-  AsIdExpr(GroupedExpr expr, SourceLocation loc) {
-    this.expr = expr;
+  AsIdExpr(List<Expr> exprs, SourceLocation loc) {
+    this.exprs = exprs;
     this.loc = loc;
   }
 
@@ -1169,8 +1169,9 @@ final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("AsId ");
-    expr.prettyPrint(0, builder);
+    builder.append("AsId(");
+    prettyPrintJoin(",", exprs, indent, builder);
+    builder.append(")");
   }
 
   @Override
@@ -1183,12 +1184,12 @@ final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
     }
 
     AsIdExpr that = (AsIdExpr) o;
-    return expr.equals(that.expr);
+    return exprs.equals(that.exprs);
   }
 
   @Override
   public int hashCode() {
-    return expr.hashCode();
+    return exprs.hashCode();
   }
 
   @Override
@@ -1220,11 +1221,11 @@ final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
  * <p>This node should never leave the parser.
  */
 final class AsStrExpr extends Expr {
-  GroupedExpr expr;
+  List<Expr> exprs;
   SourceLocation loc;
 
-  AsStrExpr(GroupedExpr expr, SourceLocation loc) {
-    this.expr = expr;
+  AsStrExpr(List<Expr> exprs, SourceLocation loc) {
+    this.exprs = exprs;
     this.loc = loc;
   }
 
@@ -1245,8 +1246,9 @@ final class AsStrExpr extends Expr {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("AsStr ");
-    expr.prettyPrint(0, builder);
+    builder.append("AsStr (");
+    prettyPrintJoin(",", exprs, indent, builder);
+    builder.append(")");
   }
 
   @Override
@@ -1259,12 +1261,12 @@ final class AsStrExpr extends Expr {
     }
 
     AsStrExpr that = (AsStrExpr) o;
-    return expr.equals(that.expr);
+    return exprs.equals(that.exprs);
   }
 
   @Override
   public int hashCode() {
-    return expr.hashCode();
+    return exprs.hashCode();
   }
 }
 
@@ -2783,9 +2785,11 @@ class ForallExpr extends Expr {
 
   /**
    * Only if the node is a fold we need to know which operator is folded over.
+   * The fold can either be a binary operator or a function name.
    */
   @Nullable
-  IsBinOp foldOperator;
+  @Child
+  Node foldAction;
 
   /// The function beeing called by the fold.
   /// The function must be a built-in and satisfy the type contract `(T, T) -> T`
@@ -2798,17 +2802,17 @@ class ForallExpr extends Expr {
 
   SourceLocation loc;
 
-  ForallExpr(List<ForallIndex> indices, Operation operation, @Nullable IsBinOp foldOperator,
+  ForallExpr(List<ForallIndex> indices, Operation operation, @Nullable Node foldAction,
              Expr body, SourceLocation loc) {
     this.indices = indices;
     this.operation = operation;
-    this.foldOperator = foldOperator;
+    this.foldAction = foldAction;
     this.body = body;
     this.loc = loc;
   }
 
   public Operator getFoldOperator() {
-    return requireNonNull(((BinOp) foldOperator)).operator;
+    return requireNonNull(((BinOp) foldAction)).operator;
   }
 
   @Override
@@ -2833,8 +2837,10 @@ class ForallExpr extends Expr {
       index.prettyPrint(indent, builder);
     }
     builder.append(" ").append(operation.keyword);
-    if (foldOperator != null) {
-      builder.append(" ").append(getFoldOperator().symbol).append(" with");
+    if (foldAction != null) {
+      builder.append(" ");
+      foldAction.prettyPrint(indent, builder);
+      builder.append(" with");
     }
     if (isBlockLayout(body)) {
       builder.append("\n");
@@ -2861,12 +2867,12 @@ class ForallExpr extends Expr {
     }
     ForallExpr that = (ForallExpr) o;
     return Objects.equals(indices, that.indices) && operation == that.operation
-        && Objects.equals(foldOperator, that.foldOperator) && Objects.equals(body, that.body);
+        && Objects.equals(foldAction, that.foldAction) && Objects.equals(body, that.body);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(indices, operation, foldOperator, body);
+    return Objects.hash(indices, operation, foldAction, body);
   }
 
   @Override

@@ -2,11 +2,13 @@
 instruction set architecture PcTest = {
   using Regs = Bits<32>
 
+  memory Mem : Bits<8> -> Bits<8>
+
   register A: Regs
-  [ next ]
+  [ current ]
   alias program counter PC: Regs = A
 
-  // subcalls should overwrite the [ next ] annotation
+  // subcalls should overwrite the [ current ] annotation
   instruction READ_PC_CURRENT: F = A := PC.current
   instruction READ_PC_NEXT: F = A := PC.next
   instruction READ_PC_NEXTNEXT: F = A := PC.nextnext

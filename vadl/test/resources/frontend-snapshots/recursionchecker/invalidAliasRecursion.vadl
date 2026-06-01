@@ -12,7 +12,7 @@ instruction set architecture ISA = {
 //     2 │   alias register a = b
 //       │   ^^^^^^^^^^^^^^^^^^^^
 //       │
-//       Definition `a` is defined by itself.
+//       This alias definition `a` is defined by itself.
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

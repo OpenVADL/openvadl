@@ -1,6 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import util.registerBenchmarkTestTask
 import vadl.GenerateCocoParserTask
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 plugins {
@@ -82,10 +85,25 @@ val createProperties by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/resources")
     val versionFile = outputDir.map { it.file("open-vadl.properties") }
 
+    val gitVersion = rootProject.version.toString()
+    val gitCommit = rootProject.findProperty("git.commit")?.toString()?.take(9) ?: "unknown"
+    val gitCommitDate = rootProject.findProperty("git.commit.timestamp")?.toString()?.toLongOrNull()
+        ?.let {
+            Instant.ofEpochSecond(it)
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+        } ?: "unknown"
+
     outputs.file(versionFile)
+    inputs.property("version", gitVersion)
+    inputs.property("commit", gitCommit)
+    inputs.property("commit.date", gitCommitDate)
     doLast {
         val properties = Properties()
-        properties["version"] = rootProject.version.toString()
+        properties["version"] = gitVersion
+        properties["commit"] = gitCommit
+        properties["commit.date"] = gitCommitDate
+
         versionFile.get().asFile.apply {
             parentFile.mkdirs()
             outputStream().use { properties.store(it, null) }

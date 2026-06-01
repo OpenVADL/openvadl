@@ -41,6 +41,7 @@ import vadl.utils.SourceLocation;
  *
  * @see BinaryExpr#reorder(BinaryExpr)
  */
+@SuppressWarnings("OverloadMethodsDeclarationOrder")
 class MacroExpander
     implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
   final Map<String, Node> args;
@@ -412,26 +413,44 @@ class MacroExpander
     );
   }
 
-  @Override
-  public Expr visit(AsIdExpr expr) {
+  @Nullable
+  private String concatStringifyExpressions(Expr origin, List<Expr> expressions) {
     var nameBuilder = new StringBuilder();
-    var expressions = expandExpr(expr.expr);
-    for (var inner : expressions.expressions) {
+    for (var inner : expressions) {
       if (inner instanceof Identifier id) {
         nameBuilder.append(id.name);
       } else if (inner instanceof StringLiteral string) {
         nameBuilder.append(string.value);
+      } else if (inner instanceof IntegerLiteral integerLiteral) {
+        nameBuilder.append(integerLiteral.token);
+      } else if (inner instanceof BinaryLiteral binaryLiteral) {
+        nameBuilder.append(binaryLiteral.token);
+      } else if (inner instanceof BoolLiteral bool) {
+        nameBuilder.append(bool.value);
       } else if (inner instanceof PlaceholderExpr
           || inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
         // Will be expanded as soon as the used placeholders are bound
-        return new AsIdExpr(expressions, copyLoc(expr.location()));
+        return null;
       } else {
-        reportError("Unsupported 'AsId' parameter " + inner, inner.location());
+        reportError("Unsupported '%s' parameter %s".formatted(origin.nodeName(), inner.nodeName()),
+            inner.location());
         nameBuilder.append(inner);
       }
     }
 
-    var name = nameBuilder.toString().trim();
+    return nameBuilder.toString();
+  }
+
+  @Override
+  public Expr visit(AsIdExpr expr) {
+    var expressions = expandExprs(expr.exprs);
+    var unprocessedName = concatStringifyExpressions(expr, expressions);
+    if (unprocessedName == null) {
+      // Will be expanded as soon as the used placeholders are bound
+      return new AsIdExpr(expressions, copyLoc(expr.location()));
+    }
+    var name = unprocessedName.trim();
+
     if (!ParserUtils.isValidIdentifier(name)) {
       var clashesWithKeyword = ParserUtils.isKeyword(name);
       var invalidFormat = !clashesWithKeyword && !name.isEmpty();
@@ -447,29 +466,18 @@ class MacroExpander
           .build());
     }
 
-    return new Identifier(nameBuilder.toString(), copyLoc(expr.location()));
+    return new Identifier(name, copyLoc(expr.location()));
   }
 
   @Override
   public Expr visit(AsStrExpr expr) {
-    var nameBuilder = new StringBuilder();
-    var groupedExpr = expandExpr(expr.expr);
-    for (var inner : groupedExpr.expressions) {
-      if (inner instanceof Identifier id) {
-        nameBuilder.append(id.name);
-      } else if (inner instanceof StringLiteral string) {
-        nameBuilder.append(string.value);
-      } else if (inner instanceof PlaceholderExpr
-          || inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
-        // Will be expanded as soon as the used placeholders are bound
-        return new AsStrExpr(groupedExpr, copyLoc(expr.location()));
-      } else {
-        reportError("Unsupported 'AsStr' parameter " + inner, inner.location());
-        nameBuilder.append(inner);
-      }
+    var expressions = expandExprs(expr.exprs);
+    var name = concatStringifyExpressions(expr, expressions);
+    if (name == null)  {
+      // Will be expanded as soon as the used placeholders are bound
+      return new AsStrExpr(expressions, copyLoc(expr.location()));
     }
 
-    var name = nameBuilder.toString();
     var token = "\"%s\"".formatted(name);
     return new StringLiteral(token, name, copyLoc(expr.location()));
   }
@@ -514,7 +522,7 @@ class MacroExpander
     return new ForallExpr(
         indices,
         expr.operation,
-        expr.foldOperator != null ? (IsBinOp) expandNode((Node) expr.foldOperator) : null,
+        expr.foldAction != null ? expandNode(expr.foldAction) : null,
         expandExpr(expr.body),
         copyLoc(expr.loc));
   }
