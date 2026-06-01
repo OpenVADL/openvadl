@@ -1,0 +1,15 @@
+uint32_t flags = 0;
+uint64_t off = 0;
+flags |= ((env->r1 >> 31) & 0x1ULL) << off;
+off += 1;
+flags |= ((env->r2 >> 17) & 0x3ULL) << off;
+off += 2;
+flags |= ((env->r3 >> 20) & 0x1fULL) << off;
+off += 5;
+flags |= ((env->r3 >> 8) & 0x7ULL) << off;
+off += 3;
+flags |= ((env->r4 >> 0) & 0xfULL) << off;
+off += 4;
+flags |= ((env->r5 >> 0) & 0xffULL) << off;
+off += 8;
+*pflags = flags;
