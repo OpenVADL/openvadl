@@ -642,7 +642,6 @@ class ParserUtils {
       return type.cast(node);
     }
 
-    String message;
     if (isPlaceholder(node)) {
       var sb = new StringBuilder("");
       node.prettyPrint(0, sb);
@@ -654,12 +653,10 @@ class ParserUtils {
               .build());
 
     } else {
-      message =
-          "Expected node of type " + expected + ", received "
-              + node.syntaxType().print() + " - " + node;
       parser.diagnostics.add(
           Diagnostic.error("SyntaxType Mismatch", node)
-              .description("%s", message)
+              .description("Expected node of type `%s` but received `%s` (%s)", expected,
+                  node.syntaxType().print(), node.nodeName())
               .build());
     }
 

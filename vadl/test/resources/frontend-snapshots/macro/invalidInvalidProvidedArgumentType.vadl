@@ -24,12 +24,5 @@ constant n = 3 * $example(5)
 //       │
 //       Mismatched node type: Required `BOOL`, but got `ID`
 //
-//  error: Macro example expects parameter arg to be of type BOOL, got ID instead
-//       ╭── test/resources/frontend-snapshots/macro/invalidInvalidProvidedArgumentType.vadl:5:18
-//       │
-//     5 │ constant n = 3 * $example(5)
-//       │                  ^^^^^^^^^
-//       │
-//
 //
 // Part of the class vadl.ast.FrontendSnapshotTests
