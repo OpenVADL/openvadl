@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.utils.DiskVirtualFileSystem;
+import vadl.error.Diagnostic;
 import vadl.utils.VirtualFileSystem;
 
 /**
@@ -53,10 +53,12 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
    * Creates a VirtualFileSystem backed with the given documents.
    *
    * @param documents Maps URI string to corresponding document. This map is copied.
+   * @param underlyingFileSystem is used for all files for which this instance has no corresponding
+   *                             document.
    */
-  LspSnapshotFileSystem(Map<String, Document> documents) {
+  LspSnapshotFileSystem(Map<String, Document> documents, VirtualFileSystem underlyingFileSystem) {
     this.documents = Map.copyOf(documents);
-    this.underlyingFileSystem = new DiskVirtualFileSystem();
+    this.underlyingFileSystem = underlyingFileSystem;
   }
 
   /**
@@ -125,7 +127,11 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
     }
 
     List<String> textLines;
-    textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
+    try {
+      textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
+    } catch (Diagnostic e) {
+      return null;
+    }
     return new Document(uri, -1, textLines);
   }
 
