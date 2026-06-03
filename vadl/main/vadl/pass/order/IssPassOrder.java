@@ -24,6 +24,8 @@ import vadl.configuration.DumpMode;
 import vadl.configuration.IssConfiguration;
 import vadl.dump.DumpIssInstructionGraphsPass;
 import vadl.gcb.passes.RenamingConflictingRegistersPass;
+import vadl.iss.passes.UmeHardcodedRiscvDefinitionPass;
+import vadl.iss.passes.UmeTemplateRenderingPass;
 import vadl.iss.passes.common.IssApplyMemoryEndiannessPass;
 import vadl.iss.passes.common.IssBitfieldWriteLoweringPass;
 import vadl.iss.passes.common.IssBuiltInArgTruncOptPass;
@@ -52,7 +54,6 @@ import vadl.iss.passes.tcg.lowering.IssTcgContextPass;
 import vadl.iss.passes.tcg.lowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcg.lowering.TcgOpLoweringPass;
 import vadl.iss.passes.vector.IssDirectGvecLoweringPass;
-import vadl.iss.template.IssDefaultRenderingPass;
 import vadl.iss.template.gdb_xml.EmitIssGdbXmlPass;
 import vadl.iss.template.hw.EmitIssHwMachineCPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
@@ -215,37 +216,37 @@ public final class IssPassOrder {
   }
 
   private static void addUserModeEmitPasses(PassOrder order, IssConfiguration config) {
+    // right now, we only emit those passes if we generate the ISS for RV64UME
     var inputPath = config.inputPath();
     if (inputPath != null && inputPath.getFileName().endsWith("rv64ume.vadl")) {
       order
-          .add(IssDefaultRenderingPass.issDefault("/configs/targets/gen-arch-linux-user.mak",
-              config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/meson.build", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/elfload.c", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/syscall_defs.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/meson.build", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/cpu_loop.c", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/signal.c", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/sockbits.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/syscall.tbl", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/syscallhdr.sh", true,
-              config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_cpu.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_elf.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_errno_defs.h",
-              config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_fcntl.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_mman.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_prctl.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_proc.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_resource.h",
-              config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_signal.h", config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_structs.h",
-              config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/target_syscall.h",
-              config))
-          .add(IssDefaultRenderingPass.issDefault("/linux-user/gen-arch/termbits.h", config));
+          .add(new UmeHardcodedRiscvDefinitionPass(config))
+          .add(issDefault("/configs/targets/gen-arch-linux-user.mak", config))
+
+          .add(issDefault("/linux-user/meson.build", config))
+          .add(issDefault("/linux-user/elfload.c", config))
+          .add(issDefault("/linux-user/syscall_defs.h", config))
+
+          .add(issDefault("/linux-user/gen-arch/meson.build", config))
+          .add(new UmeTemplateRenderingPass(config, "cpu_loop.c"))
+          .add(new UmeTemplateRenderingPass(config, "signal.c"))
+          .add(issDefault("/linux-user/gen-arch/sockbits.h", config))
+          .add(issDefault("/linux-user/gen-arch/syscall.tbl", config))
+          .add(issDefault("/linux-user/gen-arch/syscallhdr.sh", true, config))
+          .add(new UmeTemplateRenderingPass(config, "target_cpu.h"))
+
+          .add(issDefault("/linux-user/gen-arch/target_elf.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_errno_defs.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_fcntl.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_mman.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_prctl.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_proc.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_resource.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_signal.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_structs.h", config))
+          .add(issDefault("/linux-user/gen-arch/target_syscall.h", config))
+          .add(issDefault("/linux-user/gen-arch/termbits.h", config))
+      ;
     }
   }
 
