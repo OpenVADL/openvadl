@@ -23,15 +23,16 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.extensions.InstrExecPlan.DirectGvecSupport;
-import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
+import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.GraphUtils;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.ScheduledNode;
 
 /**
- * Lowers direct-gvec candidates from their loop/body graph form into backend gvec nodes.
+ * Canonicalizes direct-gvec candidates from their loop/body graph form into one ISS gvec node.
  */
 public class IssDirectGvecLoweringPass extends AbstractIssPass {
 
@@ -78,9 +79,9 @@ public class IssDirectGvecLoweringPass extends AbstractIssPass {
     }
 
     var next = region.forallEnd().unlinkNext();
-    var gvecNode = region.forall().addBefore(new TcgGvecOpNode(plan));
-    gvecNode.setSourceLocationIfNotSet(region.write().location());
-    gvecNode.setNext(next);
+    var scheduledNode = region.forall().addBefore(new ScheduledNode(new IssGvecOpNode(plan)));
+    scheduledNode.setSourceLocationIfNotSet(region.write().location());
+    scheduledNode.setNext(next);
 
     GraphUtils.deleteAllBetween(region.forall(), region.forallEnd());
   }

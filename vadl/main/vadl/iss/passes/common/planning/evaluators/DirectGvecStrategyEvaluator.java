@@ -24,6 +24,8 @@ import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessBaseKind;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.BindingFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.LayoutFacts;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperandAccessFacts;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperandShape;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperationKind;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OverlapFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.SizeFacts;
@@ -34,6 +36,7 @@ import vadl.iss.passes.common.planning.analysis.VectorStrategyIssueCode;
 import vadl.iss.passes.extensions.InstrExecPlan.DirectGvecSupport;
 import vadl.iss.passes.extensions.InstrExecPlan.PlanningIssue;
 import vadl.iss.passes.extensions.VectorTensorPlan;
+import vadl.iss.passes.extensions.VectorTensorPlan.OperandForm;
 import vadl.iss.passes.extensions.VectorTensorPlan.OverlapPolicy;
 import vadl.iss.passes.extensions.VectorTensorPlan.VectorOperand;
 import vadl.iss.passes.extensions.VectorTensorPlan.VectorRegisterBinding;
@@ -97,10 +100,13 @@ public final class DirectGvecStrategyEvaluator {
     recordWriteIssues(regionFacts.write(), issues);
 
     var vectorOp = evaluateOperation(regionFacts.operation(), issues);
+    var operandEvaluation = evaluateOperands(regionFacts.operands(), vectorOp, issues);
 
-    var operands = recordOperandIssues(regionFacts.operands(), issues);
     var writeFacts = regionFacts.write();
-    if (!issues.isEmpty() || writeFacts == null || vectorOp == null) {
+    if (!issues.isEmpty()
+        || writeFacts == null
+        || vectorOp == null
+        || operandEvaluation == null) {
       return rejected(region, issues);
     }
 
@@ -110,11 +116,11 @@ public final class DirectGvecStrategyEvaluator {
         region,
         VectorTensorPlan.directGvecCandidate(
             vectorOp,
-            VectorTensorPlan.OperandForm.VECTOR_VECTOR,
+            operandEvaluation.operandForm(),
             vectorShape(writeFacts.size(), writeFacts.layout()),
             vectorRegisterBinding(writeFacts.binding()),
             overlapPolicy(writeFacts.overlap()),
-            operands
+            operandEvaluation.operands()
         )
     );
   }
@@ -179,36 +185,158 @@ public final class DirectGvecStrategyEvaluator {
     }
   }
 
-  private List<VectorOperand> recordOperandIssues(
-      List<VectorInstructionFacts.OperandAccessFacts> operandFactsList,
-                                                  List<PlanningIssue> issues) {
-    var operands = new ArrayList<VectorOperand>();
-    for (var operandFacts : operandFactsList) {
-      // Direct gvec currently only accepts vector-register operands. Keeping the extracted operand
-      // facts explicit lets later strategies reuse the same analysis for scalar or immediate forms.
-      var read = operandFacts.read();
-      if (read == null) {
-        issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
-        continue;
-      }
-      if (operandFacts.baseKind() != AccessBaseKind.BASE
-          || !operandFacts.usesSupportedWindowKind()) {
-        issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_NOT_BASE_ELEMENT));
-      } else if (!operandFacts.elementShapeMatches()) {
-        issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_OFFSET_MISMATCH));
-      }
-      var storageFacts = operandFacts.storage();
-      if (storageFacts == null || !storageFacts.envOffsetAddressable()) {
-        issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_NOT_GVEC_CAPABLE));
-      }
-      if (!operandFacts.widthMatches()) {
-        issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_WIDTH_MISMATCH));
-      }
-      if (operandFacts.binding() != null) {
-        operands.add(VectorOperand.vectorRegister(vectorRegisterBinding(operandFacts.binding())));
-      }
+  private @Nullable OperandEvaluation evaluateOperands(
+      List<OperandAccessFacts> operandFactsList,
+      @Nullable VectorTensorPlan.VectorOp vectorOp,
+      List<PlanningIssue> issues
+  ) {
+    if (operandFactsList.size() != 2) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.UNSUPPORTED_VALUE_SHAPE));
+      return null;
     }
-    return List.copyOf(operands);
+
+    var lhs = operandFactsList.get(0);
+    var rhs = operandFactsList.get(1);
+    return switch (rhs.operandShape()) {
+      case VECTOR_REGISTER -> evaluateVectorVectorOperands(lhs, rhs, issues);
+      case SCALAR_EXPRESSION -> evaluateVectorScalarOperands(lhs, rhs, vectorOp, issues);
+      case IMMEDIATE -> evaluateVectorImmediateOperands(lhs, rhs, vectorOp, issues);
+      case OTHER -> {
+        issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
+        yield null;
+      }
+    };
+  }
+
+  private @Nullable OperandEvaluation evaluateVectorVectorOperands(OperandAccessFacts lhs,
+                                                                   OperandAccessFacts rhs,
+                                                                   List<PlanningIssue> issues) {
+    if (lhs.operandShape() != OperandShape.VECTOR_REGISTER) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
+      return null;
+    }
+
+    var operands = new ArrayList<VectorOperand>();
+    recordVectorRegisterOperand(lhs, issues, operands);
+    recordVectorRegisterOperand(rhs, issues, operands);
+    if (!issues.isEmpty()) {
+      return null;
+    }
+    return new OperandEvaluation(OperandForm.VECTOR_VECTOR, List.copyOf(operands));
+  }
+
+  private @Nullable OperandEvaluation evaluateVectorScalarOperands(
+      OperandAccessFacts lhs,
+      OperandAccessFacts rhs,
+      @Nullable VectorTensorPlan.VectorOp vectorOp,
+      List<PlanningIssue> issues
+  ) {
+    if (lhs.operandShape() != OperandShape.VECTOR_REGISTER) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
+      return null;
+    }
+    if (!supportsScalarOperand(vectorOp)) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.UNSUPPORTED_OPERATION));
+      return null;
+    }
+
+    var operands = new ArrayList<VectorOperand>();
+    recordVectorRegisterOperand(lhs, issues, operands);
+    recordScalarOperand(rhs, issues, operands);
+    if (!issues.isEmpty()) {
+      return null;
+    }
+    return new OperandEvaluation(OperandForm.VECTOR_SCALAR, List.copyOf(operands));
+  }
+
+  private @Nullable OperandEvaluation evaluateVectorImmediateOperands(
+      OperandAccessFacts lhs,
+      OperandAccessFacts rhs,
+      @Nullable VectorTensorPlan.VectorOp vectorOp,
+      List<PlanningIssue> issues
+  ) {
+    if (lhs.operandShape() != OperandShape.VECTOR_REGISTER) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
+      return null;
+    }
+    if (!supportsImmediateOperand(vectorOp)) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.UNSUPPORTED_OPERATION));
+      return null;
+    }
+
+    var operands = new ArrayList<VectorOperand>();
+    recordVectorRegisterOperand(lhs, issues, operands);
+    recordImmediateOperand(rhs, issues, operands);
+    if (!issues.isEmpty()) {
+      return null;
+    }
+    return new OperandEvaluation(OperandForm.VECTOR_IMMEDIATE, List.copyOf(operands));
+  }
+
+  private void recordVectorRegisterOperand(OperandAccessFacts operandFacts,
+                                           List<PlanningIssue> issues,
+                                           List<VectorOperand> operands) {
+    var read = operandFacts.read();
+    if (read == null) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
+      return;
+    }
+    if (operandFacts.baseKind() != AccessBaseKind.BASE
+        || !operandFacts.usesSupportedWindowKind()) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_NOT_BASE_ELEMENT));
+    } else if (!operandFacts.elementShapeMatches()) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_OFFSET_MISMATCH));
+    }
+    var storageFacts = operandFacts.storage();
+    if (storageFacts == null || !storageFacts.envOffsetAddressable()) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_NOT_GVEC_CAPABLE));
+    }
+    if (!operandFacts.widthMatches()) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_WIDTH_MISMATCH));
+    }
+    if (operandFacts.binding() != null) {
+      operands.add(VectorOperand.vectorRegister(vectorRegisterBinding(operandFacts.binding())));
+    }
+  }
+
+  private void recordScalarOperand(OperandAccessFacts operandFacts,
+                                   List<PlanningIssue> issues,
+                                   List<VectorOperand> operands) {
+    if (!operandFacts.widthMatches()) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_WIDTH_MISMATCH));
+      return;
+    }
+    operands.add(VectorOperand.scalar(operandFacts.expression()));
+  }
+
+  private void recordImmediateOperand(OperandAccessFacts operandFacts,
+                                      List<PlanningIssue> issues,
+                                      List<VectorOperand> operands) {
+    if (!operandFacts.widthMatches()) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.READ_WIDTH_MISMATCH));
+      return;
+    }
+    operands.add(VectorOperand.immediate(operandFacts.expression()));
+  }
+
+  private boolean supportsScalarOperand(@Nullable VectorTensorPlan.VectorOp vectorOp) {
+    if (vectorOp == null) {
+      return false;
+    }
+    return switch (vectorOp) {
+      case ADD, SUB, AND, OR, XOR, MUL -> true;
+      case MOV -> false;
+    };
+  }
+
+  private boolean supportsImmediateOperand(@Nullable VectorTensorPlan.VectorOp vectorOp) {
+    if (vectorOp == null) {
+      return false;
+    }
+    return switch (vectorOp) {
+      case ADD, AND, OR, XOR, MUL -> true;
+      case MOV, SUB -> false;
+    };
   }
 
   private @Nullable VectorTensorPlan.VectorOp vectorOpOf(@Nullable OperationKind operationKind) {
@@ -262,5 +390,11 @@ public final class DirectGvecStrategyEvaluator {
         region,
         List.copyOf(issues)
     );
+  }
+
+  private record OperandEvaluation(
+      OperandForm operandForm,
+      List<VectorOperand> operands
+  ) {
   }
 }

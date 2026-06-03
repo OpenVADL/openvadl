@@ -20,14 +20,18 @@ import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.util.List;
 import javax.annotation.Nullable;
+import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessBaseKind;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessWindowKind;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.BindingFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.LayoutFacts;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperandShape;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperationKind;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.SizeFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.StorageFacts;
+import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.types.BuiltInTable;
 import vadl.viam.ArtificialResource;
@@ -36,6 +40,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ForIdxNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -53,6 +58,30 @@ public final class VectorAnalysisSupport {
    */
   public static @Nullable IssReadRegNode vectorRead(ExpressionNode node) {
     return node instanceof IssReadRegNode read ? read : null;
+  }
+
+  /**
+   * Classifies an operand for later direct-gvec evaluation without committing to a strategy.
+   */
+  public static OperandShape operandShape(ExpressionNode expression,
+                                          @Nullable IssReadRegNode read,
+                                          int elementBits) {
+    if (read != null) {
+      var storage = storageFacts(read.regTensor());
+      if (storage.envOffsetAddressable()) {
+        return OperandShape.VECTOR_REGISTER;
+      }
+    }
+
+    if (isImmediateOperand(expression, elementBits)) {
+      return OperandShape.IMMEDIATE;
+    }
+
+    if (isScalarOperandExpression(expression, elementBits)) {
+      return OperandShape.SCALAR_EXPRESSION;
+    }
+
+    return OperandShape.OTHER;
   }
 
   /**
@@ -237,6 +266,64 @@ public final class VectorAnalysisSupport {
    */
   public static boolean isConstantInt(ExpressionNode expr, int expected) {
     return expr instanceof ConstantNode c && c.constant().asVal().intValue() == expected;
+  }
+
+  /**
+   * Returns whether an operand is translation-time constant and lane-invariant.
+   */
+  public static boolean isImmediateOperand(ExpressionNode expression, int elementBits) {
+    return expression.type().isDataType()
+        && expression.type().asDataType().bitWidth() == elementBits
+        && !TcgPassUtils.mustBeScheduled(expression);
+  }
+
+  /**
+   * Returns whether an operand is a scalar expression that may be materialized before a gvec op.
+   */
+  public static boolean isScalarOperandExpression(ExpressionNode expression, int elementBits) {
+    if (!expression.type().isDataType()
+        || expression.type().asDataType().bitWidth() != elementBits
+        || !TcgPassUtils.mustBeScheduled(expression)) {
+      return false;
+    }
+    return isScalarOperandCore(stripScalarOperandWrappers(expression));
+  }
+
+  private static boolean isScalarOperandCore(ExpressionNode expression) {
+    if (expression instanceof IssReadRegNode read) {
+      return !storageFacts(read.regTensor()).envOffsetAddressable();
+    }
+    if (expression instanceof ReadMemNode) {
+      return false;
+    }
+    if (expression instanceof BuiltInCall call) {
+      return call.arguments().stream()
+          .allMatch(VectorAnalysisSupport::isScalarOperandCore);
+    }
+    return expression.inputs()
+        .allMatch(input -> input instanceof ExpressionNode expr && isScalarOperandCore(expr));
+  }
+
+  /**
+   * Strips wrappers that disappear before TCG op lowering from a scalar operand expression.
+   */
+  private static ExpressionNode stripScalarOperandWrappers(ExpressionNode expression) {
+    if (expression instanceof IssGhostCastNode ghostCast) {
+      return stripScalarOperandWrappers(ghostCast.value());
+    }
+    if (expression instanceof IssValExtractNode valExtract) {
+      return stripScalarOperandWrappers(valExtract.value());
+    }
+    if (expression instanceof SignExtendNode signExtend) {
+      return stripScalarOperandWrappers(signExtend.value());
+    }
+    if (expression instanceof ZeroExtendNode zeroExtend) {
+      return stripScalarOperandWrappers(zeroExtend.value());
+    }
+    if (expression instanceof TruncateNode truncate) {
+      return stripScalarOperandWrappers(truncate.value());
+    }
+    return expression;
   }
 
   private static boolean matchesLoopMul(Node maybeIdx,

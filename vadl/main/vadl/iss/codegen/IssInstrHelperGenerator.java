@@ -25,6 +25,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
+import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssStaticEndianConditionNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
@@ -178,6 +179,11 @@ public class IssInstrHelperGenerator extends IssProcGen
   void handle(CGenContext<Node> ctx, IssRegBitfieldWriteNode toHandle) {
     throw new UnsupportedOperationException(
         "Type IssRegBitfieldWriteNode not yet implemented for helper generation");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssGvecOpNode toHandle) {
+    throw new UnsupportedOperationException("Type IssGvecOpNode not allowed in helpers");
   }
 
   @Handler

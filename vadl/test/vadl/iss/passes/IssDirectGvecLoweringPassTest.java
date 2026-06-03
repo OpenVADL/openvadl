@@ -28,7 +28,7 @@ import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
+import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.iss.passes.vector.IssDirectGvecLoweringPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -45,17 +45,37 @@ public class IssDirectGvecLoweringPassTest extends AbstractTest {
     var instr = findInstruction(viam, "RV64IMV::VADD_VV");
 
     assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
-    assertEquals(1, instr.behavior().getNodes(TcgGvecOpNode.class).count());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
   }
 
   @Test
   void leavesFallbackVectorInstructionWithoutBackendGvecNode()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
-    var instr = findInstruction(viam, "RV64IMV::VADD_VX");
+    var instr = findInstruction(viam, "RV64IMV::VDIV_VX");
 
     assertTrue(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
-    assertEquals(0, instr.behavior().getNodes(TcgGvecOpNode.class).count());
+    assertEquals(0, instr.behavior().getNodes(IssGvecOpNode.class).count());
+  }
+
+  @Test
+  void lowersRecognizedVectorScalarLoopIntoBackendGvecNode()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/risc-v/rv64v.vadl");
+    var instr = findInstruction(viam, "RV64IMV::VADD_VX");
+
+    assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
+  }
+
+  @Test
+  void lowersRecognizedVectorImmediateLoopIntoBackendGvecNode()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/risc-v/rv64v.vadl");
+    var instr = findInstruction(viam, "RV64IMV::VADD_VI");
+
+    assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
   }
 
   @Test
@@ -65,7 +85,7 @@ public class IssDirectGvecLoweringPassTest extends AbstractTest {
     var instr = findInstruction(viam, "VectorBench64::VADD_DO_VV");
 
     assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
-    assertEquals(1, instr.behavior().getNodes(TcgGvecOpNode.class).count());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
   }
 
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {

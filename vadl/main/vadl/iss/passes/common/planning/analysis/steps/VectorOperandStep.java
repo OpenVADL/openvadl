@@ -22,6 +22,7 @@ import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.gve
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isConstantInt;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isFullyIndexedElementAccess;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isLoopElementOffset;
+import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.operandShape;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.storageFacts;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.vectorRead;
 
@@ -69,22 +70,26 @@ public final class VectorOperandStep implements VectorFactStep {
       return new OperandAccessFacts(
           expression,
           null,
+          operandShape(expression, null, elementBits),
           vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessBaseKind.OTHER,
           vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessWindowKind.OTHER,
           false,
           null,
-          false,
+          expression.type().isDataType()
+              && expression.type().asDataType().bitWidth() == elementBits,
           null
       );
     }
 
+    var storage = storageFacts(read.regTensor());
     return new OperandAccessFacts(
         expression,
         read,
+        operandShape(expression, read, elementBits),
         gvecAccessBaseKind(read),
         accessWindowKind(read.windowKind()),
         matchesElementShape(read, idx, elementBits),
-        storageFacts(read.regTensor()),
+        storage,
         read.readBitWidth() == elementBits,
         bindingFacts(read, idx)
     );

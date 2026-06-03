@@ -102,15 +102,35 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
-    void keepsVectorScalarInstructionOnFallbackPlan()
+    void recognizesRv64vVaddVx()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var executionPlan = executionPlan(findInstruction(viam, "RV64IMV::VADD_VX"));
     var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
 
-    assertEquals(ExecutionPath.HELPER_CALL, executionPlan.selectedPath());
-    assertTrue(!directGvec.isViable(), directGvec::toString);
-    assertTrue(directGvec.hasIssue("OPERAND_NOT_VECTOR_READ"), directGvec::toString);
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_SCALAR, plan.operandForm());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertEquals(OperandKind.SCALAR_REGISTER, plan.operands().get(1).kind());
+  }
+
+  @Test
+    void recognizesRv64vVaddVi()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/risc-v/rv64v.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "RV64IMV::VADD_VI"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_IMMEDIATE, plan.operandForm());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertEquals(OperandKind.IMMEDIATE, plan.operands().get(1).kind());
   }
 
   @Test

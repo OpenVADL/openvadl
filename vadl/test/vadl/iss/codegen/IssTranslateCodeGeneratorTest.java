@@ -27,7 +27,7 @@ import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.common.planning.IssExecStrategyPass;
-import vadl.iss.passes.vector.IssDirectGvecLoweringPass;
+import vadl.iss.passes.tcg.lowering.TcgOpLoweringPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Instruction;
@@ -50,7 +50,7 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
   void selectsHelperGeneratorForHelperPlan()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
-    var instr = findInstruction(viam, "RV64IMV::VADD_VX");
+    var instr = findInstruction(viam, "RV64IMV::VDIV_VX");
 
     var generator = IssTranslateCodeGenerator.translateGenerator(instr, config());
 
@@ -92,6 +92,31 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
     org.junit.jupiter.api.Assertions.assertTrue(code.contains("ofs_z(ctx, a->vd)"), code);
   }
 
+  @Test
+  void emitsLoweredDirectGvecScalarCallFromGraph()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyzeWithLowering("sys/risc-v/rv64v.vadl");
+    var instr = findInstruction(viam, "RV64IMV::VADD_VX");
+
+    var code = IssTranslateCodeGenerator.fetch(instr, config());
+
+    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_gvec_adds("), code);
+    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_extract_i64("), code);
+    org.junit.jupiter.api.Assertions.assertTrue(code.contains("reg_x_rs1"), code);
+  }
+
+  @Test
+  void emitsLoweredDirectGvecImmediateCallFromGraph()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyzeWithLowering("sys/risc-v/rv64v.vadl");
+    var instr = findInstruction(viam, "RV64IMV::VADD_VI");
+
+    var code = IssTranslateCodeGenerator.fetch(instr, config());
+
+    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_gvec_addi("), code);
+    org.junit.jupiter.api.Assertions.assertTrue(code.contains("a->imm"), code);
+  }
+
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpec(specPath,
         PassOrders.iss(config()).untilFirst(IssExecStrategyPass.class)
@@ -101,7 +126,7 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
   private Specification analyzeWithLowering(String specPath)
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpec(specPath,
-        PassOrders.iss(config()).untilFirst(IssDirectGvecLoweringPass.class)
+        PassOrders.iss(config()).untilFirst(TcgOpLoweringPass.class)
     ).specification();
   }
 
