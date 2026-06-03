@@ -2007,7 +2007,7 @@ In addition, several behavioral aspects of the cache can be specified, such as w
 
 \lbl{tut_ume_definition}
 
-The \ac{UserModeEmulation} definition determines how a specification from a VADL file maps to QEMU's Linux user mode emulation (UME). 
+The \ac{UME} definition determines how a specification from a VADL file maps to QEMU's Linux user mode emulation (UME). 
 The UME is used to run Linux ELF binaries without having to emulate the full machine. 
 To achieve this it needs to intercept system calls (syscalls) based on the syscall instruction of the architecture given by the VADL file. 
 The associated register conventions (the \ac{ABI}) need to be mapped to determine the system call number, its arguments, and where to
@@ -2030,10 +2030,10 @@ return register = a0
 A \ac{UME} section starts with the keyword `user mode emulation` followed by a unique identifier.
 Some elements inside of the \ac{UME} section rely on previously defined \ac{ISA} elements, so it needs to be referenced
 using the `for` keyword after the identifier.
-Definitions from the referenced \ac{RV64} are now available for use inside the \ac{UME} section.
+Definitions from the referenced `RV64` are now available for use inside the \ac{UME} section.
 The `with` keyword binds the \ac{ABI} to the section. 
 
-In the example in listing \r{user_mode_emulation}, the \ac{UME} section uses `ECALL` from the \ac{RV64IM} and the register aliases `a7`, `a0`
+In the example in listing \r{user_mode_emulation}, the \ac{UME} section uses `ECALL` from the `RV64IM` and the register aliases `a7`, `a0`
 from the \ac{ABI}. These aliases represent X(17) and X(10), respectively, but they can be defined interchangeably (either \ac{ABI} alias registers or 
 actual registers from the \ac{ISA} definition).
 
@@ -2072,7 +2072,7 @@ key-value pairs are the name of the syscall and its respective number. A generic
 table already exists, so the table defined in the VADL file provides the architecture-specific syscalls 
 that should either be added to or overwrite the generic ones. 
 
-\listing{user_mode_emulation, User Mode Emulation Definition}
+\listing{user_mode_emulation_table, User Mode Emulation Definition}
 ~~~{.vadl}
 [os : linux] 
 user mode emulation UME for RV64UME with ABI = {
@@ -2094,7 +2094,7 @@ Varying exceptions are defined in the VADL like:
 \listing{user_mode_emulation_exc, User Mode Emulation Definition Exceptions}
 ~~~{.vadl}
 user mode emulation UME for RV64 with ABI = {
-  
+
 }
 ~~~
 \endlisting
