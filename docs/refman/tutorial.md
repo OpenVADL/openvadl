@@ -2016,7 +2016,7 @@ place the return value.
 \listing{user_mode_emulation, User Mode Emulation Definition}
 ~~~{.vadl}
 [os : linux] 
-user mode emulation UME for RV64UME with ABI = {
+user mode emulation UME for RV64IM with ABI = {
 syscall instruction = ECALL
 
 syscall register = a7
@@ -2046,10 +2046,10 @@ syscall. The syscall keyword is currently specific to the \ac{UME} section.
 The `syscall number` declaration names the register that holds the syscall number 
 when the syscall instruction is executed. 
 
-The `syscall argument` declaration names the registers that hold the syscall 
+The `syscall %argument` declaration names the registers that hold the syscall 
 arguments. 
 The syscall argument convention utilizes six registers, instead of eight, compared to the function 
-argument convention in the \ac{ABI} (`function argument = a{0..7}`).
+argument convention in the \ac{ABI} (`function %argument = a{0..7}`).
 
 The `syscall return` declaration determines into which register the host operating system will write the return value of the forwarded syscall. This differs with the function return convention in the \ac{ABI} because it is a single register instead of spanning across two  (`return value = a{0..1}`).
 
@@ -2060,10 +2060,10 @@ that defines the specific syscalls.
 
 \listing{user_mode_emulation_syscalls, User Mode Emulation Syscalls}
 ~~~{.vadl}
-enumeration LinuxSyscall : Bits<64> = {
-     sys_riscv_hwprobe      = 258
-  , sys_riscv_flush_icache  = 259
-}
+enumeration LinuxSyscall : Bits<64> =
+  { sys_riscv_hwprobe      = 258
+  , sys_riscv_flush_icache = 259
+  }
 ~~~
 \endlisting
 
@@ -2075,7 +2075,7 @@ that should either be added to or overwrite the generic ones.
 \listing{user_mode_emulation_table, User Mode Emulation Definition}
 ~~~{.vadl}
 [os : linux] 
-user mode emulation UME for RV64UME with ABI = {
+user mode emulation UME for RV64IM with ABI = {
 ...
 
 syscall table = LinuxSyscall
