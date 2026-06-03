@@ -2072,6 +2072,21 @@ key-value pairs are the name of the syscall and its respective number. A generic
 table already exists, so the table defined in the VADL file provides the architecture-specific syscalls 
 that should either be added to or overwrite the generic ones. 
 
+\listing{user_mode_emulation, User Mode Emulation Definition}
+~~~{.vadl}
+[os : linux] 
+user mode emulation UME for RV64UME with ABI = {
+...
+
+syscall table = LinuxSyscall
+
+}
+~~~
+\endlisting
+
+The `syscall table` declaration defines the previously mentioned enumeration `LinuxSyscall` as the syscall table that is
+being used for the \ac{UME}. 
+
 ### Exception Definition (work in progress)
 
 Varying exceptions are defined in the VADL like:
