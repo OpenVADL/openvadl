@@ -2002,3 +2002,99 @@ In addition, several behavioral aspects of the cache can be specified, such as w
 ## Processor Definition
 
 \lbl{tut_prc_definition}
+
+## User Mode Emulation
+
+\lbl{tut_ume_definition}
+
+The \ac{UserModeEmulation} definition determines how a specification from a VADL file maps to QEMU's Linux user mode emulation (UME). 
+The UME is used to run Linux ELF binaries without having to emulate the full machine. 
+To achieve this it needs to intercept system calls (syscalls) based on the syscall instruction of the architecture given by the VADL file. 
+The associated register conventions (the \ac{ABI}) need to be mapped to determine the system call number, its arguments, and where to
+place the return value.
+
+\listing{user_mode_emulation, User Mode Emulation Definition}
+~~~{.vadl}
+[os : linux] 
+user mode emulation UME for RV64UME with ABI = {
+syscall instruction = ECALL
+
+syscall register = a7
+syscall argument = a{0..5}
+return register = a0
+
+}
+~~~
+\endlisting
+
+A \ac{UME} section starts with the keyword `user mode emulation` followed by a unique identifier.
+Some elements inside of the \ac{UME} section rely on previously defined \ac{ISA} elements, so it needs to be referenced
+using the `for` keyword after the identifier.
+Definitions from the referenced \ac{RV64} are now available for use inside the \ac{UME} section.
+The `with` keyword binds the \ac{ABI} to the section. 
+
+In the example in listing \r{user_mode_emulation}, the \ac{UME} section uses `ECALL` from the \ac{RV64IM} and the register aliases `a7`, `a0`
+from the \ac{ABI}. These aliases represent X(17) and X(10), respectively, but they can be defined interchangeably (either \ac{ABI} alias registers or 
+actual registers from the \ac{ISA} definition).
+
+The annotation `[os : linux]` selects for which target operating system system 
+calls are forwarded and which syscall number table should be used. 
+
+The `syscall instruction` declaration determines the \ac{ISA} instruction that triggers a 
+syscall. The syscall keyword is currently specific to the \ac{UME} section. 
+
+The `syscall number` declaration names the register that holds the syscall number 
+when the syscall instruction is executed. 
+
+The `syscall argument` declaration names the registers that hold the syscall 
+arguments. 
+The syscall argument convention utilizes six registers, instead of eight, compared to the function 
+argument convention in the \ac{ABI} (`function argument = a{0..7}`).
+
+The `syscall return` declaration determines into which register the host operating system will write the return value of the forwarded syscall. This differs with the function return convention in the \ac{ABI} because it is a single register instead of spanning across two  (`return value = a{0..1}`).
+
+### Syscall Definition 
+
+The Linux syscall numbers differ between architectures, so each VADL file needs to contain a table 
+that defines the specific syscalls. 
+
+\listing{user_mode_emulation_syscalls, User Mode Emulation Syscalls}
+~~~{.vadl}
+enumeration LinuxSyscall : Bits<64> = {
+     sys_riscv_hwprobe      = 258
+  , sys_riscv_flush_icache  = 259
+}
+~~~
+\endlisting
+
+The `enumeration` keyword is used to define a set of named constants, in this case the 
+key-value pairs are the name of the syscall and its respective number. A generic syscall
+table already exists, so the table defined in the VADL file provides the architecture-specific syscalls 
+that should either be added to or overwrite the generic ones. 
+
+\listing{user_mode_emulation, User Mode Emulation Definition}
+~~~{.vadl}
+[os : linux] 
+user mode emulation UME for RV64UME with ABI = {
+...
+
+syscall table = LinuxSyscall
+
+}
+~~~
+\endlisting
+
+The `syscall table` declaration defines the previously mentioned enumeration `LinuxSyscall` as the syscall table that is
+being used for the \ac{UME}. 
+
+### Exception Definition (work in progress)
+
+Varying exceptions are defined in the VADL like:
+
+\listing{user_mode_emulation_exc, User Mode Emulation Definition Exceptions}
+~~~{.vadl}
+user mode emulation UME for RV64 with ABI = {
+  
+}
+~~~
+\endlisting
