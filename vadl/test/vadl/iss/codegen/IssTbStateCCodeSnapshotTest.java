@@ -16,13 +16,10 @@
 
 package vadl.iss.codegen;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static vadl.TestUtils.assertEqualsFileLines;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -55,6 +52,7 @@ public class IssTbStateCCodeSnapshotTest extends AbstractTest {
 
   private void runSnapshot(Fixture fixture) throws IOException, DuplicatedPassKeyException {
     var config = new IssConfiguration(getConfiguration(false));
+    config.setSkipClangFormatting(true);
     var passResults = setupPassManagerAndRunSpec(
         fixture.specPath,
         PassOrders.iss(config).untilFirst(EmitIssTranslateCPass.class)
@@ -76,24 +74,23 @@ public class IssTbStateCCodeSnapshotTest extends AbstractTest {
     assertTrue(getTbCpuStateMatcher.find());
     var getTbCpuState = getTbCpuStateMatcher.group();
 
-    checkAllLinesPresent(fixture.translateCPath, initDisasContext);
-    checkAllLinesPresent(fixture.cpuHPath, getTbCpuState);
-  }
+    var actual = String.format(
+        "// TRANSLATE_C:\n\n%s\n\n//CPU_H:\n\n%s",
+        initDisasContext,
+        getTbCpuState
+    );
 
-  private void checkAllLinesPresent(Path expectedLines, String actual) throws IOException {
-    assertAll(Files.lines(expectedLines).map(
-        line -> () -> assertThat(actual, containsString(line))));
+    assertEqualsFileLines(fixture.snapshotPath, actual);
   }
 
   private List<Fixture> fixtures() {
     return List.of(
         new Fixture(
             "iss/tb-state/tb_state_spec.vadl",
-            SNAPSHOT_ROOT.resolve("tb_state_spec_translate_c.txt"),
-            SNAPSHOT_ROOT.resolve("tb_state_spec_cpu_h.txt")
+            SNAPSHOT_ROOT.resolve("tb_state_spec.txt")
         )
     );
   }
 
-  private record Fixture(String specPath, Path translateCPath, Path cpuHPath) { }
+  private record Fixture(String specPath, Path snapshotPath) { }
 }

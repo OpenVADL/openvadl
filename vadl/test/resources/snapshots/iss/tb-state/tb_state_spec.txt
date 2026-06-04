@@ -1,0 +1,66 @@
+// TRANSLATE_C:
+
+static void test_tr_init_disas_context(DisasContextBase *db, CPUState *cs)
+{
+    DisasContext *ctx = container_of(db, DisasContext, base);
+    CPUTESTState *env = cpu_env(cs);
+    TESTCPUClass *mcc = TEST_CPU_GET_CLASS(cs);
+    TESTCPU *cpu = TEST_CPU(cs);
+
+    ctx->env = env;
+    
+
+    uint32_t flags = ctx->base.tb->flags;
+    uint64_t off = 0;
+    
+    ctx->tb_state.r1 = 0;
+    
+    ctx->tb_state.r1 |= ((flags >> off) & 0x1ULL) << 31;
+    off += 1;
+    ctx->tb_state.r2 = 0;
+    
+    ctx->tb_state.r2 |= ((flags >> off) & 0x3ULL) << 17;
+    off += 2;
+    ctx->tb_state.r3 = 0;
+    
+    ctx->tb_state.r3 |= ((flags >> off) & 0x1fULL) << 20;
+    off += 5;
+    ctx->tb_state.r3 |= ((flags >> off) & 0x7ULL) << 8;
+    off += 3;
+    ctx->tb_state.r4 = 0;
+    
+    ctx->tb_state.r4 |= ((flags >> off) & 0xfULL) << 0;
+    off += 4;
+    ctx->tb_state.r5 = 0;
+    
+    ctx->tb_state.r5 |= ((flags >> off) & 0xffULL) << 0;
+    off += 8;
+
+    
+}
+
+//CPU_H:
+
+static inline void cpu_get_tb_cpu_state(CPUTESTState *env, vaddr *pc,
+                                        uint64_t *cs_base, uint32_t *pflags)
+{
+  *pc = env->TEST_PC;
+  *cs_base = 0;
+
+  uint32_t flags = 0;
+  uint64_t off = 0;
+
+  flags |= ((env->r1 >> 31) & 0x1ULL) << off;
+  off += 1;
+  flags |= ((env->r2 >> 17) & 0x3ULL) << off;
+  off += 2;
+  flags |= ((env->r3 >> 20) & 0x1fULL) << off;
+  off += 5;
+  flags |= ((env->r3 >> 8) & 0x7ULL) << off;
+  off += 3;
+  flags |= ((env->r4 >> 0) & 0xfULL) << off;
+  off += 4;
+  flags |= ((env->r5 >> 0) & 0xffULL) << off;
+  off += 8;
+  *pflags = flags;
+}
