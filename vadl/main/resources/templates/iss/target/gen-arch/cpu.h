@@ -74,10 +74,9 @@ static inline void cpu_get_tb_cpu_state(CPU[(${gen_arch_upper})]State *env, vadd
 
   uint32_t flags = 0;
   uint64_t off = 0;
-  [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.is_tb_state}"][# th:each="part : ${reg.tb_state_parts}"]
+[# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.is_tb_state}"][# th:each="part : ${reg.tb_state_parts}"]
   flags |= ((env->[(${reg.name_lower})] >> [(${part.lsb})]) & [(${part.mask})]) << off;
-  off += [(${part.width})];
-  [/][/][/]
+  off += [(${part.width})];[/][/][/]
   *pflags = flags;
 }
 

@@ -243,8 +243,7 @@ static void [(${gen_arch_lower})]_tr_init_disas_context(DisasContextBase *db, CP
     ctx->tb_state.[(${reg.name_lower})] = 0;
     [# th:each="part : ${reg.tb_state_parts}"]
     ctx->tb_state.[(${reg.name_lower})] |= ((flags >> off) & [(${part.mask})]) << [(${part.lsb})];
-    off += [(${part.width})];
-    [/][/][/]
+    off += [(${part.width})];[/][/][/]
 
     [# th:if="${mem_bi_endian}"]ctx->endian_cond = [(${bi_endian_condition})];[/]
 }

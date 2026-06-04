@@ -1,0 +1,50 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ execution state : x ]
+  register R : F
+
+  format F : Bits<32> = {
+    a : Bits<16>,
+    b : Bits<16>
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown field name
+//       ╭── test/resources/frontend-snapshots/annotation/invalidExecStateAnnotationWithInvalidFormatField.vadl:5:23
+//       │
+//     5 │   [ execution state : x ]
+//       │                       ^
+//       │
+//       Must be one of: a, b
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "R"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "execution" type: null
+//    . : ' Identifier name: "state" type: null
+//    . : ' Identifier name: "x" type: null
+//    . : TypeLiteral type: F
+//    . : ' Identifier name: "F" type: null
+//    . FormatDefinition name: "F"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypedFormatField name: "a"
+//    . : ' TypeLiteral type: Bits<16>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : TypedFormatField name: "b"
+//    . : ' TypeLiteral type: Bits<16>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -84,9 +84,11 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
 
   @Override
   public @Nullable CodeFormatter getFormatter() {
+    if (configuration().skipClangFormatting()) {
+      return null;
+    }
     if (issTemplatePath().endsWith("translate.c")) {
       return QemuClangFormatter.INSTANCE;
-
     }
     return null;
   }
