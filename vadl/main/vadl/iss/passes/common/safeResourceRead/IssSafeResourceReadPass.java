@@ -18,6 +18,7 @@ package vadl.iss.passes.common.safeResourceRead;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -294,6 +295,39 @@ class IssResourceReadSecurer {
   private record SaveGroup(List<ReadResourceNode> reads, ControlNode location) {
   }
 
+
+  private static class ControlNodeUsageCollector {
+
+    private final Map<DependencyNode, Collection<ControlNode>> usages = new HashMap<>();
+
+    /**
+     * Finds all control node usages of a dependency node recursively.
+     *
+     * @param node The dependency node to find usages of.
+     * @return A collection of control nodes that use the dependency node.
+     */
+    public Collection<ControlNode> findAllControlUsagesOf(DependencyNode node) {
+      var result = findRecursiveCached(node);
+      usages.clear();
+      return result;
+    }
+
+    private Collection<ControlNode> findRecursiveCached(DependencyNode node) {
+      if (usages.containsKey(node)) {
+        return usages.get(node);
+      }
+      var s1 = node.usages()
+          .filter(DependencyNode.class::isInstance)
+          .flatMap(u -> findRecursiveCached((DependencyNode) u).stream());
+      var s2 = node.usages()
+          .filter(ControlNode.class::isInstance)
+          .map(ControlNode.class::cast);
+      var result = Stream.concat(s1, s2).toList();
+      usages.put(node, result);
+      return result;
+    }
+  }
+
   /**
    * Determines whether a read save is required by checking for conflicts between reads and writes.
    *
@@ -310,7 +344,7 @@ class IssResourceReadSecurer {
     var conflictNodes = new HashSet<ControlNode>();
     for (var read : reads) {
       // For all reads to the resource, consider all control node usages of this to be conflicting
-      findAllControlUsagesOf(read)
+      new ControlNodeUsageCollector().findAllControlUsagesOf(read).stream()
           // Ignore AbstractEndNode as we already scheduled side effects
           .filter(n -> !(n instanceof AbstractEndNode))
           .forEach(conflictNodes::add);
@@ -380,22 +414,6 @@ class IssResourceReadSecurer {
       var pred = (DirectionalNode) location.predecessor();
       pred.addAfter(scheduledSaveNode);
     }
-  }
-
-  /**
-   * Finds all control node usages of a dependency node recursively.
-   *
-   * @param dependencyNode The dependency node to find usages of.
-   * @return A stream of control nodes that use the dependency node.
-   */
-  private static Stream<ControlNode> findAllControlUsagesOf(DependencyNode dependencyNode) {
-    var s1 = dependencyNode.usages()
-        .filter(DependencyNode.class::isInstance)
-        .flatMap(u -> findAllControlUsagesOf((DependencyNode) u));
-    var s2 = dependencyNode.usages()
-        .filter(ControlNode.class::isInstance)
-        .map(ControlNode.class::cast);
-    return Stream.concat(s1, s2);
   }
 
 }
