@@ -603,8 +603,9 @@ class SymbolTable {
             "No %s with this name exists.", type
         )
         .applyIf(errors.size() < MAX_DIAGNOSTICS_WITH_NAME_SUGGESTIONS
-            && suggestions != null
-            && !suggestions.isEmpty(), (builder) -> builder.suggestions(requireNonNull(suggestions)))
+                && suggestions != null
+                && !suggestions.isEmpty(),
+            (builder) -> builder.suggestions(requireNonNull(suggestions)))
         .build()
     );
   }

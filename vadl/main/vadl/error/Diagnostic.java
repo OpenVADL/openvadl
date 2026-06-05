@@ -207,7 +207,9 @@ public class Diagnostic extends RuntimeException {
 
     for (var diagnostic : diagnostics) {
 
-      final var locationDiagnostics = structure.computeIfAbsent(diagnostic.multiLocation.primaryLocation.location().asDirectLocation(), k -> new ArrayList<>());
+      final var locationDiagnostics = structure.computeIfAbsent(
+          diagnostic.multiLocation.primaryLocation.location().asDirectLocation(),
+          k -> new ArrayList<>());
 
       var similar = locationDiagnostics.stream()
           .filter(d -> d.equalsIgnoringMacroTraces(diagnostic))

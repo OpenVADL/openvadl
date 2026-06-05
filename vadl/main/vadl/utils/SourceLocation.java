@@ -204,6 +204,11 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
     return SourceLocation.of(firstLocation.path(), begin, end, expanedFrom);
   }
 
+  /**
+   * Strips a location of all expandedFrom information and returns it as a direct location.
+   *
+   * @return the direct location.
+   */
   default DirectLocation asDirectLocation() {
     return switch (this) {
       case DirectLocation direct -> direct;
