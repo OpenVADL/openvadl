@@ -78,6 +78,11 @@ BAL r22, 0x12
 # CHECK-NEXT: <MCOperand Reg:24>
 # CHECK-NEXT: <MCOperand Imm:36>>
 
+BAL_L r22, 0xffff
+# CHECK: <MCInst #{{[0-9]+}} BAL_L
+# CHECK-NEXT: <MCOperand Reg:24>
+# CHECK-NEXT: <MCOperand Imm:65535>>
+
 SEQ r23, r24, r25
 # CHECK: <MCInst #{{[0-9]+}} SEQ
 # CHECK-NEXT: <MCOperand Reg:25>
