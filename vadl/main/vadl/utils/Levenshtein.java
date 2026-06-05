@@ -86,12 +86,20 @@ public class Levenshtein {
         currentRow = tmp;
 
         // Calculate the necessary band (Ukkonen's algorithm)
-        int start = Math.max(1, j - upperBound);
-        int end = Math.min(target.length(), j + upperBound);
+        int start = upperBound == Integer.MAX_VALUE ? 1 : Math.max(1, j - upperBound);
+        int end = upperBound == Integer.MAX_VALUE
+            ? target.length()
+            : Math.min(target.length(), j + upperBound);
 
         // Avoid skipped cells to influence the next row
+        var skippedCellCost = upperBound == Integer.MAX_VALUE
+            ? Integer.MAX_VALUE
+            : upperBound + 1;
         if (start > 1) {
-          currentRow[start - 1] = Integer.MAX_VALUE;
+          currentRow[start - 1] = skippedCellCost;
+        }
+        if (end < target.length()) {
+          currentRow[end + 1] = skippedCellCost;
         }
 
         currentRow[0] = j;
