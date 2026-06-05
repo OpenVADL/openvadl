@@ -248,7 +248,7 @@ interface IdentifiableNode {
   Identifier identifier();
 }
 
-interface TypedNode {
+interface TypedNode extends WithLocation {
   Type type();
 }
 

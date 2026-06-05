@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.opentest4j.AssertionFailedError;
@@ -138,7 +139,7 @@ public class TestSnapshot {
   public void add(String name, Object value) {
     data.append("- ").append(name).append(": ");
 
-    var valueString = value.toString();
+    var valueString = Objects.toString(value);
     if (valueString.contains("\n")) {
       data.append("\n  ");
       data.append(valueString.replace("\n", "\n  "));

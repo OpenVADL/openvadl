@@ -248,6 +248,9 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     // Goto Definition
     c.setDefinitionProvider(true);
 
+    // Hover
+    c.setHoverProvider(true);
+
     this.serverCapabilities = c;
   }
 
