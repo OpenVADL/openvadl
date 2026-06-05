@@ -18,6 +18,7 @@ package vadl.error;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Supplier;
 import org.jetbrains.annotations.Contract;
@@ -202,18 +203,25 @@ public class Diagnostic extends RuntimeException {
    * @return the deflated diagnostics.
    */
   public static List<Diagnostic> collapseSimilar(List<Diagnostic> diagnostics) {
-    var deflated = new ArrayList<Diagnostic>();
+    var structure = new LinkedHashMap<SourceLocation.DirectLocation, List<Diagnostic>>();
+
     for (var diagnostic : diagnostics) {
-      var similar = deflated.stream()
+
+      final var locationDiagnostics = structure.computeIfAbsent(diagnostic.multiLocation.primaryLocation.location().asDirectLocation(), k -> new ArrayList<>());
+
+      var similar = locationDiagnostics.stream()
           .filter(d -> d.equalsIgnoringMacroTraces(diagnostic))
           .findFirst();
 
       similar.ifPresentOrElse(
           d -> d.macroTraces.addAll(diagnostic.macroTraces),
-          () -> deflated.add(diagnostic)
+          () -> locationDiagnostics.add(diagnostic)
       );
     }
-    return deflated;
+
+
+    return structure.values().stream().flatMap(locationDiagnostics -> locationDiagnostics.stream())
+        .toList();
   }
 
   @Override

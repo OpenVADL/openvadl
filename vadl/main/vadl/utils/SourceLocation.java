@@ -204,6 +204,13 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
     return SourceLocation.of(firstLocation.path(), begin, end, expanedFrom);
   }
 
+  default DirectLocation asDirectLocation() {
+    return switch (this) {
+      case DirectLocation direct -> direct;
+      case ExpandedLocation expanded -> expanded.primaryLocation;
+    };
+  }
+
   /**
    * Create a new source location that is a copy of the current one with the provided expanded stack
    * appended to the existing stack.
