@@ -598,16 +598,15 @@ class SymbolTable {
   private void reportUnkownError(String type, String actual, WithLocation locatable,
                                  @Nullable List<String> suggestions) {
 
-    var diagnostic = error("Unknown %s: \"%s\"".formatted(type, actual), locatable)
+    errors.add(error("Unknown %s: \"%s\"".formatted(type, actual), locatable)
         .locationDescription(locatable,
             "No %s with this name exists.", type
-        );
-
-    if (suggestions != null && !suggestions.isEmpty()) {
-      diagnostic = diagnostic.suggestions(suggestions);
-    }
-
-    errors.add(diagnostic.build());
+        )
+        .applyIf(errors.size() < MAX_DIAGNOSTICS_WITH_NAME_SUGGESTIONS
+            && suggestions != null
+            && !suggestions.isEmpty(), (builder) -> builder.suggestions(requireNonNull(suggestions)))
+        .build()
+    );
   }
 
   private void reportAlreadyDefined(String error, SourceLocation location,

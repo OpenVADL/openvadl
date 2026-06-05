@@ -85,11 +85,19 @@ public class Levenshtein {
         lastRow = currentRow;
         currentRow = tmp;
 
-        // Init the current row
+        // Calculate the necessary band (Ukkonen's algorithm)
+        int start = Math.max(1, j - upperBound);
+        int end = Math.min(target.length(), j + upperBound);
+
+        // Avoid skipped cells to influence the next row
+        if (start > 1) {
+          currentRow[start - 1] = Integer.MAX_VALUE;
+        }
+
         currentRow[0] = j;
         var minCost = currentRow[0];
 
-        for (int i = 1; i <= target.length(); i++) {
+        for (int i = start; i <= end; i++) {
           var substituteCost = word.charAt(j - 1) == target.charAt(i - 1) ? 0 : 1;
           currentRow[i] = Math.min(
               Math.min(
