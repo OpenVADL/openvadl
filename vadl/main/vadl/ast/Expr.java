@@ -1971,10 +1971,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
       return Objects.hash(values);
     }
 
-    @Override
-    public SourceLocation location() {
-      return location;
-    }
+
   }
 
   static final class SubCall implements WithLocation {

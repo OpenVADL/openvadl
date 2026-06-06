@@ -21,7 +21,6 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithLocation;
 
 /**
  * Finds AST nodes based on their location in source code. This relies on the AST providing proper
@@ -32,7 +31,7 @@ import vadl.utils.WithLocation;
  * (except model invocation edge cases), thus it is not necessary to traverse into all branches -
  * this would improve performance to O(log n).
  */
-public abstract class AstFinderByPosition<N extends WithLocation> extends RecursiveAstVisitor {
+public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVisitor {
 
   // TODO When using this class for the LSP Goto Definition feature, there are some limitations -
   //      AST doesn't provide all the data we would like to have:
@@ -73,8 +72,9 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
    * @param position The position to search for (within the file identified by {@code path})
    * @return Null if no Identifier or IdentifierPath found at {@code position}
    */
-  static @Nullable IsId findIdentifier(Ast ast, Path path, SourceLocation.Position position) {
-    var visitor = new AstFinderByPosition.BeforeTravel<IsId>(ast, path, position,
+  static @Nullable <T extends Node & IsId> IsId findIdentifier(
+      Ast ast, Path path, SourceLocation.Position position) {
+    var visitor = new AstFinderByPosition.BeforeTravel<T>(ast, path, position,
         (n) -> n instanceof IdentifierPath || n instanceof Identifier);
     return visitor.find();
   }
@@ -110,8 +110,10 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
    * @param position The position to search for (within the file identified by {@code path})
    * @return Null if no TypedNode found at {@code position}
    */
-  static @Nullable TypedNode findTypedNode(Ast ast, Path path, SourceLocation.Position position) {
-    var visitor = new AstFinderByPosition.AfterTravel<TypedNode>(ast, path, position, (n) -> {
+  @SuppressWarnings("TypeParameterUnusedInFormals")
+  static @Nullable <T extends Node & TypedNode> T findTypedNode(
+      Ast ast, Path path, SourceLocation.Position position) {
+    var visitor = new AstFinderByPosition.AfterTravel<T>(ast, path, position, (n) -> {
       if (!(n instanceof TypedNode tn)) {
         return false;
       }
@@ -136,7 +138,7 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
    * candidate for what we are looking for. Must NOT yield true if {@code testedObject instanceof N}
    * is false!
    */
-  protected final Predicate<WithLocation> condition;
+  final Predicate<Node> condition;
 
   @Nullable
   private N foundNode = null;
@@ -145,7 +147,7 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
    * Instantiate one of the subclasses {@link BeforeTravel} or {@link AfterTravel}.
    */
   private AstFinderByPosition(Ast ast, Path path, SourceLocation.Position position,
-                              Predicate<WithLocation> condition) {
+                              Predicate<Node> condition) {
     this.ast = ast;
     this.searchPath = path;
     this.searchPosition = position;
@@ -163,7 +165,7 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
     return null;
   }
 
-  protected void testNode(WithLocation node) {
+  void testNode(Node node) {
     if (!condition.test(node)) {
       return;
     }
@@ -176,7 +178,7 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
   }
 
 
-  private static class BeforeTravel<N extends WithLocation> extends AstFinderByPosition<N> {
+  private static class BeforeTravel<N extends Node> extends AstFinderByPosition<N> {
     /**
      * Creates a finder that checks {@code condition} in {@code beforeTravel()}. I.e. this finds
      * the outermost node that fits {@code condition} and {@code position}.
@@ -188,7 +190,7 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
      */
     private BeforeTravel(
         Ast ast, Path path, SourceLocation.Position position,
-        Predicate<WithLocation> condition) {
+        Predicate<Node> condition) {
       super(ast, path, position, condition);
     }
 
@@ -208,7 +210,7 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
     }
   }
 
-  private static class AfterTravel<N extends WithLocation> extends AstFinderByPosition<N> {
+  private static class AfterTravel<N extends Node> extends AstFinderByPosition<N> {
     /**
      * Creates a finder that checks {@code condition} in {@code afterTravel()}. I.e. this finds
      * the innermost node that fits {@code condition} and {@code position}.
@@ -220,7 +222,7 @@ public abstract class AstFinderByPosition<N extends WithLocation> extends Recurs
      */
     private AfterTravel(
         Ast ast, Path path, SourceLocation.Position position,
-        Predicate<WithLocation> condition) {
+        Predicate<Node> condition) {
       super(ast, path, position, condition);
     }
 

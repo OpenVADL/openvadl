@@ -136,7 +136,7 @@ public class TestSnapshot {
    *              recorded in the snapshot, therefore it should be meaningful to a developer
    *              verifying the snapshot data.
    */
-  public void add(String name, Object value) {
+  public void add(String name, @Nullable Object value) {
     data.append("- ").append(name).append(": ");
 
     var valueString = Objects.toString(value);

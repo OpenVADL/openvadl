@@ -39,7 +39,6 @@ import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
-import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Position;
@@ -218,8 +217,6 @@ public class VadlTextDocumentService implements TextDocumentService {
       Document document = getDocumentForParams(params, snapshots, "hover");
       Ast ast;
       try {
-        // Note: Would like to avoid applying ModelRemover, but the TypeChecker depends on that
-        // step.
         ast = Frontend.compileToAst(toPath(document.uri), snapshots);
 
       } catch (DiagnosticList dl) {
@@ -238,34 +235,38 @@ public class VadlTextDocumentService implements TextDocumentService {
     });
   }
 
-  @SuppressWarnings("deprecation")
   private @Nullable Hover hoverResult(@Nullable String text, @Nullable Range range) {
     Hover result = null;
     if (text != null) {
-      // For now, we assume that all hover texts are snippets of valid OpenVADL source code, so
-      // let's use Markdown to mark them as such
-      if (clientSupportsMarkdownInHoverMarkupContent()) {
-        result = new Hover(new MarkupContent(MarkupKind.MARKDOWN,
-            "```" + LANGUAGE_IDENTIFIER + "\n" + text + "\n```"));
-      } else {
-        // Fallback to deprecated MarkedString
-        result = new Hover(Either.forRight(new MarkedString(LANGUAGE_IDENTIFIER, text)));
+      var clientContentFormat = getClientMarkupContent();
+      MarkupContent content = null;
+
+      if (clientContentFormat.contains(MarkupKind.MARKDOWN)) {
+        // For now, we assume that all hover texts are snippets of valid OpenVADL source code, so
+        // let's use Markdown to mark them as such
+        content = new MarkupContent(MarkupKind.MARKDOWN,
+            "```" + LANGUAGE_IDENTIFIER + "\n" + text + "\n```");
+      } else if (clientContentFormat.contains(MarkupKind.PLAINTEXT)) {
+        // Fallback
+        content = new MarkupContent(MarkupKind.PLAINTEXT, text);
       }
-      result.setRange(range);
+
+      if (content != null) {
+        result = new Hover(content);
+        result.setRange(range);
+      }
     }
     log.debug("<<- hover: {}", result);
     return result;
   }
 
-  private boolean clientSupportsMarkdownInHoverMarkupContent() {
+  private List<String> getClientMarkupContent() {
     var capabilities = server.params().getCapabilities().getTextDocument();
     if (capabilities == null || capabilities.getHover() == null
         || capabilities.getHover().getContentFormat() == null) {
-      return false;
+      return List.of();
     }
-    var contentFormat = capabilities.getHover().getContentFormat();
-
-    return contentFormat.contains(MarkupKind.MARKDOWN);
+    return capabilities.getHover().getContentFormat();
   }
 
   /**
