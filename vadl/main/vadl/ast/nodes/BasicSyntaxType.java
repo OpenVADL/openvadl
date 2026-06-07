@@ -1,0 +1,151 @@
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.ast;
+
+@SuppressWarnings({"MissingJavadocType", "EnumOrdinal"})
+public enum BasicSyntaxType implements SyntaxType {
+  STATS("Stats"),
+  STAT("Stat"),
+  ENCS("Encs"),
+  COMMON_DEFS("Defs"),
+  ISA_DEFS("IsaDefs"),
+  EX("Ex"),
+  LIT("Lit"),
+  STR("Str"),
+  VAL("Val"),
+  BOOL("Bool"),
+  INT("Int"),
+  BIN("Bin"),
+  CALL_EX("CallEx"),
+  SYM_EX("SymEx"),
+  ID("Id"),
+  BIN_OP("BinOp"),
+  UN_OP("UnOp"),
+  INVALID("InvalidType");
+
+  static final boolean[][] IS_SUBTYPE;
+
+  private final String name;
+
+  BasicSyntaxType(String name) {
+    this.name = name;
+  }
+
+  String getName() {
+    return name;
+  }
+
+  /**
+   * Returns whether the current object is a subtype of another.
+   * Note, they are always a subtype of themselves.
+   *
+   * <p>Here is the complete structure for basic types:
+   * <pre>{@code
+   *                                        T
+   *          +---------+--------+---------/ \-------+-----------------------------+------+
+   *          |         |        |                   |                             |      |
+   *          |         |        |                   |                             |      |
+   *          |         |        |                   |                             |      |
+   *          |         |        |                   |                             |      |
+   *          |         |        |                   |                             |      |
+   *          |         |        |            +------Ex------------+               |      |
+   *          |         |     IsaDefs         |                    |               |      |
+   *          |         |        |            |                    |               |      |
+   *          |         |        |        +--Lit-----+           CallEx            |      |
+   *        Stats       |        |        |          |             |               |      |
+   *          |         |       Defs      |          |             |               |     UnOp
+   *          |         |                 |     +-- Val----+      SymEx            |
+   *          |       Encs               Str    |    |     |       |               |
+   *        Stat                                |    |     |       |             BinOp
+   *                                           Bool  |    Bin      Id
+   *                                                 |
+   *                                                Int
+   * }</pre>
+   *
+   * @param other the type to check against.
+   */
+  @Override
+  public boolean isSubTypeOf(SyntaxType other) {
+    return other instanceof BasicSyntaxType bst && IS_SUBTYPE[this.ordinal()][bst.ordinal()];
+  }
+
+  @Override
+  public String print() {
+    return name;
+  }
+
+
+  static {
+    IS_SUBTYPE = new boolean[BasicSyntaxType.values().length][BasicSyntaxType.values().length];
+
+    IS_SUBTYPE[STATS.ordinal()][STATS.ordinal()] = true;
+
+    IS_SUBTYPE[STAT.ordinal()][STAT.ordinal()] = true;
+    IS_SUBTYPE[STAT.ordinal()][STATS.ordinal()] = true;
+
+    IS_SUBTYPE[ENCS.ordinal()][ENCS.ordinal()] = true;
+
+    IS_SUBTYPE[COMMON_DEFS.ordinal()][COMMON_DEFS.ordinal()] = true;
+    IS_SUBTYPE[COMMON_DEFS.ordinal()][ISA_DEFS.ordinal()] = true;
+
+    IS_SUBTYPE[ISA_DEFS.ordinal()][ISA_DEFS.ordinal()] = true;
+
+    IS_SUBTYPE[EX.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[LIT.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[LIT.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[STR.ordinal()][STR.ordinal()] = true;
+    IS_SUBTYPE[STR.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[STR.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[VAL.ordinal()][VAL.ordinal()] = true;
+    IS_SUBTYPE[VAL.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[VAL.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[BOOL.ordinal()][BOOL.ordinal()] = true;
+    IS_SUBTYPE[BOOL.ordinal()][VAL.ordinal()] = true;
+    IS_SUBTYPE[BOOL.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[BOOL.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[INT.ordinal()][INT.ordinal()] = true;
+    IS_SUBTYPE[INT.ordinal()][VAL.ordinal()] = true;
+    IS_SUBTYPE[INT.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[INT.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[BIN.ordinal()][BIN.ordinal()] = true;
+    IS_SUBTYPE[BIN.ordinal()][VAL.ordinal()] = true;
+    IS_SUBTYPE[BIN.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[BIN.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[CALL_EX.ordinal()][CALL_EX.ordinal()] = true;
+    IS_SUBTYPE[CALL_EX.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[SYM_EX.ordinal()][SYM_EX.ordinal()] = true;
+    IS_SUBTYPE[SYM_EX.ordinal()][CALL_EX.ordinal()] = true;
+    IS_SUBTYPE[SYM_EX.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[ID.ordinal()][ID.ordinal()] = true;
+    IS_SUBTYPE[ID.ordinal()][CALL_EX.ordinal()] = true;
+    IS_SUBTYPE[ID.ordinal()][SYM_EX.ordinal()] = true;
+    IS_SUBTYPE[ID.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[BIN_OP.ordinal()][BIN_OP.ordinal()] = true;
+
+    IS_SUBTYPE[UN_OP.ordinal()][UN_OP.ordinal()] = true;
+  }
+}

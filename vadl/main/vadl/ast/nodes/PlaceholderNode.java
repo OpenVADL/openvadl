@@ -1,0 +1,50 @@
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.ast;
+
+import java.util.List;
+import vadl.utils.SourceLocation;
+
+@SuppressWarnings("MissingJavadocType")
+public final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, IsEncs {
+
+  List<String> segments;
+  SyntaxType syntaxType;
+  SourceLocation sourceLocation;
+
+  PlaceholderNode(List<String> segments, SyntaxType syntaxType, SourceLocation sourceLocation) {
+    this.segments = segments;
+    this.syntaxType = syntaxType;
+    this.sourceLocation = sourceLocation;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return sourceLocation;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return syntaxType;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("$");
+    builder.append(String.join(".", segments));
+  }
+}
