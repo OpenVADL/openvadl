@@ -35,13 +35,18 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
+import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensParams;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
@@ -63,6 +68,8 @@ import vadl.utils.SourceLocation;
  * Handles document-related features of the language server.
  */
 public class VadlTextDocumentService implements TextDocumentService {
+  private static final String LANGUAGE_IDENTIFIER = "vadl";
+
   private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
 
   private final VadlLanguageServer server;
@@ -162,28 +169,23 @@ public class VadlTextDocumentService implements TextDocumentService {
 
     LspSnapshotFileSystem snapshots = createSnapshotFileSystem();
     return CompletableFuture.supplyAsync(() -> {
-      String uri = params.getTextDocument().getUri();
-      Document document = snapshots.getDocument(uri);
-      if (document == null) {
-        throw new ResponseErrorException(new ResponseError(
-            ResponseErrorCode.RequestFailed,
-            "Requested (Go to) definition for a document that is not open.",
-            null
-        ));
-      }
-
+      Document document = getDocumentForParams(params, snapshots, "(Go to) definition");
       Ast ast;
       try {
-        ast = VadlParser.parse(toPath(uri), snapshots);
+        ast = VadlParser.parse(toPath(document.uri), snapshots);
 
       } catch (DiagnosticList dl) {
-        log.debug("UNABLE definition: Parser produced diagnostics instead of AST for {}", uri);
+        log.debug("UNABLE definition: Parser produced diagnostics instead of AST for {}",
+            document.uri);
         return definitionResult(null);
       }
 
       var position = document.calculateUtf8Position(params.getPosition(), false);
-      SourceLocation location = AstFinderByPosition.findIdentifierTargetLocation(ast, toPath(uri),
-          position);
+      SourceLocation location = AstFinderByPosition.findIdentifierTargetLocation(
+          ast,
+          toPath(document.uri),
+          position
+      );
 
       if (location == null || location.path() == null) {
         return definitionResult(null);
@@ -204,6 +206,67 @@ public class VadlTextDocumentService implements TextDocumentService {
       @Nullable Location lspLocation) {
     log.debug("<<- definition: {}", lspLocation);
     return Either.forLeft(lspLocation != null ? List.of(lspLocation) : List.of());
+  }
+
+  @Override
+  public CompletableFuture<Hover> hover(HoverParams params) {
+    log.debug(">> hover: {}", params);
+
+    LspSnapshotFileSystem snapshots = createSnapshotFileSystem();
+    return CompletableFuture.supplyAsync(() -> {
+      Document document = getDocumentForParams(params, snapshots, "hover");
+      Ast ast;
+      try {
+        ast = Frontend.compileToAst(toPath(document.uri), snapshots);
+
+      } catch (DiagnosticList dl) {
+        log.debug("UNABLE hover: Parser produced diagnostics instead of AST for {}", document.uri);
+        return hoverResult(null, null);
+      }
+
+      var position = document.calculateUtf8Position(params.getPosition(), false);
+      var info = AstFinderByPosition.findTypedNodeType(ast, toPath(document.uri), position);
+
+      if (info == null) {
+        return hoverResult(null, null);
+      }
+
+      return hoverResult(info.type().name(), document.calculateUtf16Range(info.location()));
+    });
+  }
+
+  private @Nullable Hover hoverResult(@Nullable String text, @Nullable Range range) {
+    Hover result = null;
+    if (text != null) {
+      var clientContentFormat = getClientMarkupContent();
+      MarkupContent content = null;
+
+      if (clientContentFormat.contains(MarkupKind.MARKDOWN)) {
+        // For now, we assume that all hover texts are snippets of valid OpenVADL source code, so
+        // let's use Markdown to mark them as such
+        content = new MarkupContent(MarkupKind.MARKDOWN,
+            "```" + LANGUAGE_IDENTIFIER + "\n" + text + "\n```");
+      } else if (clientContentFormat.contains(MarkupKind.PLAINTEXT)) {
+        // Fallback
+        content = new MarkupContent(MarkupKind.PLAINTEXT, text);
+      }
+
+      if (content != null) {
+        result = new Hover(content);
+        result.setRange(range);
+      }
+    }
+    log.debug("<<- hover: {}", result);
+    return result;
+  }
+
+  private List<String> getClientMarkupContent() {
+    var capabilities = server.params().getCapabilities().getTextDocument();
+    if (capabilities == null || capabilities.getHover() == null
+        || capabilities.getHover().getContentFormat() == null) {
+      return List.of();
+    }
+    return capabilities.getHover().getContentFormat();
   }
 
   /**
@@ -349,6 +412,27 @@ public class VadlTextDocumentService implements TextDocumentService {
     synchronized (openDocuments) {
       return openDocuments.get(uri);
     }
+  }
+
+  /**
+   * Returns the document identified by given LSP {@code params} and contained in {@code snapshots}.
+   *
+   * @param action Used in Exception message.
+   * @throws ResponseErrorException If desired document cannot be found in {@code snapshots}.
+   */
+  private Document getDocumentForParams(
+      TextDocumentPositionParams params, LspSnapshotFileSystem snapshots, String action) {
+
+    var document = snapshots.getDocument(params.getTextDocument().getUri());
+    if (document == null) {
+      throw new ResponseErrorException(new ResponseError(
+          ResponseErrorCode.RequestFailed,
+          "Requested " + action + " for a document that is not open.",
+          null
+      ));
+    }
+
+    return document;
   }
 
   private LspSnapshotFileSystem createSnapshotFileSystem() {

@@ -17,7 +17,9 @@
 package vadl.ast;
 
 import java.nio.file.Path;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
+import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 /**
@@ -29,23 +31,7 @@ import vadl.utils.SourceLocation;
  * (except model invocation edge cases), thus it is not necessary to traverse into all branches -
  * this would improve performance to O(log n).
  */
-public class AstFinderByPosition extends RecursiveAstVisitor {
-
-  private final Path searchPath;
-  private final SourceLocation.Position searchPosition;
-
-  private static class FoundSignal extends RuntimeException {
-    IsId identifier;
-
-    public FoundSignal(IsId identifier) {
-      this.identifier = identifier;
-    }
-  }
-
-  private AstFinderByPosition(Path path, SourceLocation.Position position) {
-    searchPath = path;
-    searchPosition = position;
-  }
+public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVisitor {
 
   // TODO When using this class for the LSP Goto Definition feature, there are some limitations -
   //      AST doesn't provide all the data we would like to have:
@@ -59,7 +45,7 @@ public class AstFinderByPosition extends RecursiveAstVisitor {
   //        identifier nor a target
 
   /**
-   * Finds an Identifier or IdentifierPath at the given source code position, and returns it's
+   * Finds an Identifier or IdentifierPath at the given source code position, and returns its
    * target's location.
    *
    * @param path The source code file to search in
@@ -86,28 +72,175 @@ public class AstFinderByPosition extends RecursiveAstVisitor {
    * @param position The position to search for (within the file identified by {@code path})
    * @return Null if no Identifier or IdentifierPath found at {@code position}
    */
-  static @Nullable IsId findIdentifier(Ast ast, Path path, SourceLocation.Position position) {
-    var visitor = new AstFinderByPosition(path, position);
+  static @Nullable <T extends Node & IsId> IsId findIdentifier(
+      Ast ast, Path path, SourceLocation.Position position) {
+    var visitor = new AstFinderByPosition.BeforeTravel<T>(ast, path, position,
+        (n) -> n instanceof IdentifierPath || n instanceof Identifier);
+    return visitor.find();
+  }
+
+  /**
+   * Finds a TypedNode at the given source code position, and returns its type.
+   *
+   * @param ast Should have gone through the TypeChecker
+   * @param path The source code file to search in
+   * @param position The position to search for (within the file identified by {@code path})
+   * @return Null if no TypedNode found at {@code position}; otherwise: the node's type information
+   *         and location.
+   */
+  public static @Nullable TypeAndLocation findTypedNodeType(
+      Ast ast, Path path, SourceLocation.Position position) {
+    var typedNode = findTypedNode(ast, path, position);
+    if (typedNode == null) {
+      return null;
+    }
+    return new TypeAndLocation(typedNode.type(), typedNode.location());
+  }
+
+  /**
+   * Return value for {@link #findTypedNodeType(Ast, Path, SourceLocation.Position)}.
+   */
+  public record TypeAndLocation(Type type, SourceLocation location) {}
+
+  /**
+   * Finds a TypedNode at the given source code position.
+   *
+   * @param ast Should have gone through the TypeChecker
+   * @param path The source code file to search in
+   * @param position The position to search for (within the file identified by {@code path})
+   * @return Null if no TypedNode found at {@code position}
+   */
+  @SuppressWarnings("TypeParameterUnusedInFormals")
+  static @Nullable <T extends Node & TypedNode> T findTypedNode(
+      Ast ast, Path path, SourceLocation.Position position) {
+    var visitor = new AstFinderByPosition.AfterTravel<T>(ast, path, position, (n) -> {
+      if (!(n instanceof TypedNode tn)) {
+        return false;
+      }
+      // Check if type is actually available
+      try {
+        tn.type();
+      } catch (NullPointerException e) {
+        return false;
+      }
+      return true;
+    });
+    return visitor.find();
+  }
+
+
+  protected final Ast ast;
+  protected final Path searchPath;
+  protected final SourceLocation.Position searchPosition;
+
+  /**
+   * If this yields true in {@code beforeTravel()} or {@code afterTravel()}, the current node is a
+   * candidate for what we are looking for. Must NOT yield true if {@code testedObject instanceof N}
+   * is false!
+   */
+  final Predicate<Node> condition;
+
+  @Nullable
+  private N foundNode = null;
+
+  /**
+   * Instantiate one of the subclasses {@link BeforeTravel} or {@link AfterTravel}.
+   */
+  private AstFinderByPosition(Ast ast, Path path, SourceLocation.Position position,
+                              Predicate<Node> condition) {
+    this.ast = ast;
+    this.searchPath = path;
+    this.searchPosition = position;
+    this.condition = condition;
+  }
+
+  protected @Nullable N find() {
     try {
       for (var definition : ast.definitions) {
-        definition.accept(visitor);
+        definition.accept(this);
       }
     } catch (FoundSignal fs) {
-      return fs.identifier;
+      return foundNode;
     }
     return null;
   }
 
+  void testNode(Node node) {
+    if (!condition.test(node)) {
+      return;
+    }
 
-  @Override
-  protected void beforeTravel(Expr expr) {
-    if (expr instanceof IdentifierPath || expr instanceof Identifier) {
-      IsId identifier = (IsId) expr;
-      var location = identifier.location();
-
-      if (searchPath.equals(location.path()) && searchPosition.isWithin(location)) {
-        throw new FoundSignal(identifier);
-      }
+    var location = node.location();
+    if (searchPath.equals(location.path()) && searchPosition.isWithin(location)) {
+      foundNode = (N) node;
+      throw new FoundSignal();
     }
   }
+
+
+  private static class BeforeTravel<N extends Node> extends AstFinderByPosition<N> {
+    /**
+     * Creates a finder that checks {@code condition} in {@code beforeTravel()}. I.e. this finds
+     * the outermost node that fits {@code condition} and {@code position}.
+     *
+     * @param path The source code file to search in
+     * @param position The position to search for (within the file identified by {@code path})
+     * @param condition If this yields true, the current node is a candidate for what we are looking
+     *                  for. Must NOT yield true if {@code testedObject instanceof N} is false!
+     */
+    private BeforeTravel(
+        Ast ast, Path path, SourceLocation.Position position,
+        Predicate<Node> condition) {
+      super(ast, path, position, condition);
+    }
+
+    @Override
+    protected void beforeTravel(Definition definition) {
+      testNode(definition);
+    }
+
+    @Override
+    protected void beforeTravel(Expr expr) {
+      testNode(expr);
+    }
+
+    @Override
+    protected void beforeTravel(Statement statement) {
+      testNode(statement);
+    }
+  }
+
+  private static class AfterTravel<N extends Node> extends AstFinderByPosition<N> {
+    /**
+     * Creates a finder that checks {@code condition} in {@code afterTravel()}. I.e. this finds
+     * the innermost node that fits {@code condition} and {@code position}.
+     *
+     * @param path The source code file to search in
+     * @param position The position to search for (within the file identified by {@code path})
+     * @param condition If this yields true, the current node is a candidate for what we are looking
+     *                  for. Must NOT yield true if {@code testedObject instanceof N} is false!
+     */
+    private AfterTravel(
+        Ast ast, Path path, SourceLocation.Position position,
+        Predicate<Node> condition) {
+      super(ast, path, position, condition);
+    }
+
+    @Override
+    protected void afterTravel(Definition definition) {
+      testNode(definition);
+    }
+
+    @Override
+    protected void afterTravel(Expr expr) {
+      testNode(expr);
+    }
+
+    @Override
+    protected void afterTravel(Statement statement) {
+      testNode(statement);
+    }
+  }
+
+  private static class FoundSignal extends RuntimeException {}
 }
