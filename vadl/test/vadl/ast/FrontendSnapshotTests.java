@@ -103,7 +103,7 @@ public class FrontendSnapshotTests {
         diagnostics = Diagnostic.collapseSimilar(DeferredDiagnosticStore.getAll());
       }
     } catch (DiagnosticList d) {
-      diagnostics = d.deflateSimilar().items;
+      diagnostics = d.collapseSimilar().items;
     } catch (Diagnostic d) {
       diagnostics = List.of(d);
     } finally {

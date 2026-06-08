@@ -39,7 +39,18 @@ public class DiagnosticPrinter {
   private final Map<Path, List<String>> fileLineCache = new HashMap<>();
   VirtualFileSystem fileSystem;
 
+  /**
+   * Printing thousands of backtraces just clutters the output and reduces readability.
+   */
   private static final int MAX_PRINTED_BACKTRACES = 10;
+
+
+  /**
+   * Printing too many diagnostics can take significant time and means that compiler is no longer
+   * responsive.
+   * This field only describes compressed diagnostics.
+   */
+  private static final int MAX_PRINTED_DIAGNOSTICS = 10_000;
 
   public DiagnosticPrinter(VirtualFileSystem fileSystem) {
     this(fileSystem, true);
@@ -57,7 +68,15 @@ public class DiagnosticPrinter {
    */
   public String toString(List<Diagnostic> diagnosticList) {
     StringBuilder builder = new StringBuilder();
-    diagnosticList.forEach(d -> toString(d, builder));
+    if (diagnosticList.size() <= MAX_PRINTED_DIAGNOSTICS) {
+      diagnosticList.forEach(d -> toString(d, builder));
+    } else {
+      for (int i = 0; i < MAX_PRINTED_DIAGNOSTICS; i++) {
+        toString(diagnosticList.get(i), builder);
+      }
+      builder.append("\n    Additional %d diagnostics omited for readability.".formatted(
+          diagnosticList.size() - MAX_PRINTED_DIAGNOSTICS));
+    }
     return builder.toString();
   }
 
