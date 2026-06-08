@@ -8,7 +8,7 @@ enum {
     [(${gen_arch_upper})]_REG_TP  = 4,
 
     [# th:each="arg, stat : ${config.args}"]
-    [(${gen_arch_upper})]_REG_ARG[(${stat.index})] = [(${arg})],
+    [(${gen_arch_upper})]_REG_ARG[(${stat.index})] = [(${arg.index})],
     [/]
 };
 

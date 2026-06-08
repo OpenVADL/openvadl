@@ -23,7 +23,7 @@ application binary interface ABI for RV64UME = {
     return value      = a0
     frame pointer     = fp
     global pointer    = gp
-    function argument = a{0..7}
+    function argument = [ a{0..7} ]
     caller saved = [ a{0..7} ]
     callee saved = [ ra, fp,
                      X(9),  X(18), X(19), X(20), X(21),
