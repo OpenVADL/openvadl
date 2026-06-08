@@ -43,14 +43,23 @@ public class RtlConfigurationPass extends AbstractRtlPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    var processorName = viam.processor().map(Definition::simpleName).orElseGet(
-        () -> viam.mia().map(Definition::simpleName).orElseThrow(
-            () -> Diagnostic.error("Processor or MiA definition required for emitting RTL",
-                viam.location()).build()));
-
-    configuration().setTopModuleIfEmpty(processorName);
+    configuration().setTopModuleIfEmpty(getTopModuleName(viam));
     configuration().setProjectNameIfEmpty(viam.simpleName());
 
     return null;
+  }
+
+  /**
+   * Get top module name from specification. Uses the processor definition name, if present,
+   * otherwise the MiA definition name.
+   *
+   * @param viam specification
+   * @return top module name
+   */
+  public static String getTopModuleName(Specification viam) {
+    return viam.processor().map(Definition::simpleName).orElseGet(
+        () -> viam.mia().map(Definition::simpleName).orElseThrow(
+            () -> Diagnostic.error("Processor or MiA definition required for emitting RTL",
+                viam.location()).build()));
   }
 }
