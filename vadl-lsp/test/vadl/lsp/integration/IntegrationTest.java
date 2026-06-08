@@ -24,8 +24,10 @@ import java.util.concurrent.ExecutionException;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.DefinitionCapabilities;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.HoverCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializedParams;
+import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsCapabilities;
@@ -58,6 +60,8 @@ public abstract class IntegrationTest {
     // Client Capabilities - these may need to be adjusted if new features are added to the server
     var textDocumentCapabilities = new TextDocumentClientCapabilities();
     textDocumentCapabilities.setDefinition(new DefinitionCapabilities());
+    textDocumentCapabilities.setHover(new HoverCapabilities(
+        List.of(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT), false));
     textDocumentCapabilities.setPublishDiagnostics(new PublishDiagnosticsCapabilities());
 
     var params = new InitializeParams();

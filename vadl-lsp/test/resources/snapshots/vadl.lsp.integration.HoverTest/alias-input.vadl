@@ -1,0 +1,9 @@
+// HOVER POSITION 8:26 - Word alias resolved via using definition
+instruction set architecture TEST = {
+    constant Size = 32
+
+    using Reg  = Bits<32*2>
+    using Word = Bits<Size>
+
+    register R : Reg -> Word
+}

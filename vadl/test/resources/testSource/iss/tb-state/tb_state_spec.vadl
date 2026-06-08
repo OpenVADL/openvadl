@@ -1,0 +1,45 @@
+
+instruction set architecture Test = {
+  [ execution state : a ]    register R1 : F1      // off=31 len=1
+  [ execution state : b ]    register R2 : F2      // off=17 len=2
+  [ execution state : b, d ] register R3 : F3      // off=20 len=5 off=8 len=3
+  [ execution state ]        register R4 : F4      // off=0  len=4
+  [ execution state ]        register R5 : Bits<8> // off=0  len=8
+
+  format F1 : Bits<32> = {
+    a : Bits<1>,
+    b : Bits<31>
+  }
+
+  format F2 : Bits<32> = {
+    a : Bits<13>,
+    b : Bits<2>,
+    c : Bits<17>
+  }
+
+  format F3 : Bits<32> = {
+    a : Bits<7>,
+    b : Bits<5>,
+    c : Bits<9>,
+    d : Bits<3>,
+    e : Bits<8>
+  }
+
+  format F4 : Bits<4> = {
+    a : Bits<4>
+  }
+
+  format INSTR_F : Bits<32> = { op : Bits<32> }
+  instruction DUMMY : INSTR_F = { }
+  encoding DUMMY = { op = 0 }
+  assembly DUMMY = "dummy"
+
+  memory MEM : Bits<32> -> Bits<8>
+  program counter PC : Bits<32>
+}
+
+processor Proc implements Test = {
+  [ firmware ]
+  [ base: 0x00000000 ]
+  memory region [RAM] DRAM in MEM
+}

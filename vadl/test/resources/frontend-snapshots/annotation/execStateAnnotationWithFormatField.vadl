@@ -1,0 +1,44 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ execution state : a ]
+  register R : F
+
+  format F : Bits<32> = {
+    a : Bits<16>,
+    b : Bits<16>
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "R"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "execution" type: null
+//    . : ' Identifier name: "state" type: null
+//    . : ' Identifier name: "a" type: null
+//    . : TypeLiteral type: F
+//    . : ' Identifier name: "F" type: null
+//    . FormatDefinition name: "F"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypedFormatField name: "a"
+//    . : ' TypeLiteral type: Bits<16>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : TypedFormatField name: "b"
+//    . : ' TypeLiteral type: Bits<16>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

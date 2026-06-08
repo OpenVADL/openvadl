@@ -1,0 +1,50 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ execution state : a, c ]
+  register R : F
+
+  format F : Bits<32> = {
+    a : Bits<1>,
+    b : Bits<29>,
+    c : Bits<2>
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "R"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "execution" type: null
+//    . : ' Identifier name: "state" type: null
+//    . : ' Identifier name: "a" type: null
+//    . : ' Identifier name: "c" type: null
+//    . : TypeLiteral type: F
+//    . : ' Identifier name: "F" type: null
+//    . FormatDefinition name: "F"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypedFormatField name: "a"
+//    . : ' TypeLiteral type: Bits<1>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : TypedFormatField name: "b"
+//    . : ' TypeLiteral type: Bits<29>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 29 (29) type: Const<29>
+//    . : TypedFormatField name: "c"
+//    . : ' TypeLiteral type: Bits<2>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

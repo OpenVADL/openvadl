@@ -2,7 +2,7 @@
 # Introduction {#intro}
 
 The \ac{VADL} is a \ac{PDL}.
-The name is inspired by the \ac{VDL} which was developed 50 years ago for the formal specification of the programming language PL/I using operational semantics \cite{wegnerVDL72}.
+The name is inspired by the \ac{VDL} which was developed 50 years ago for the formal specification of the programming language PL/I using operational semantics \cr{WegnerVDL72}.
 
 \ac{VADL} permits the complete formal specification of a processor architecture.
 Additionally it is possible to specify the behavior of generators which produce different artifacts from a processor specification.
