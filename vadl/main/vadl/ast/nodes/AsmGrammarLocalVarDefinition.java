@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -24,13 +24,13 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  public Identifier id;
   @Child
-  AsmGrammarLiteralDefinition asmLiteral;
-  SourceLocation loc;
+  public AsmGrammarLiteralDefinition asmLiteral;
+  public SourceLocation loc;
 
   @Nullable
-  AsmType asmType;
+  public AsmType asmType;
 
   public AsmGrammarLocalVarDefinition(Identifier id, AsmGrammarLiteralDefinition asmLiteral,
                                       SourceLocation loc) {
@@ -40,11 +40,11 @@ public class AsmGrammarLocalVarDefinition extends Definition implements Identifi
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
-  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
+  public <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -54,12 +54,12 @@ public class AsmGrammarLocalVarDefinition extends Definition implements Identifi
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("var ");
     id.prettyPrint(0, builder);
     builder.append(" = ");

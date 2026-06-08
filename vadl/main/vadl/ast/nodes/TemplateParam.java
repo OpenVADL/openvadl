@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -22,11 +22,11 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class TemplateParam extends Node implements IdentifiableNode {
-  IdentifierOrPlaceholder name;
-  TypeLiteral type;
+  public IdentifierOrPlaceholder name;
+  public TypeLiteral type;
 
   @Nullable
-  Expr value;
+  public Expr value;
 
   public TemplateParam(IdentifierOrPlaceholder name, TypeLiteral type, @Nullable Expr value) {
     this.name = name;
@@ -48,12 +48,12 @@ public class TemplateParam extends Node implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     name.prettyPrint(0, builder);
     builder.append(": ");
     type.prettyPrint(0, builder);

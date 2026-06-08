@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -23,9 +23,9 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class MacroInstanceExpr extends Expr
     implements IsMacroInstance, IdentifierOrPlaceholder, IsId {
-  MacroOrPlaceholder macro;
-  List<Node> arguments;
-  SourceLocation loc;
+  public MacroOrPlaceholder macro;
+  public List<Node> arguments;
+  public SourceLocation loc;
 
   public MacroInstanceExpr(MacroOrPlaceholder macro, List<Node> arguments, SourceLocation loc) {
     this.macro = macro;
@@ -34,7 +34,7 @@ public final class MacroInstanceExpr extends Expr
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -44,7 +44,7 @@ public final class MacroInstanceExpr extends Expr
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return macro.returnType();
   }
 

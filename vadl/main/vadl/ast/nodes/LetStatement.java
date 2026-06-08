@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,16 +23,16 @@ import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class LetStatement extends Statement {
-  List<IsId> identifiers;
+  public List<IsId> identifiers;
   @Child
-  Expr valueExpr;
+  public Expr valueExpr;
   @Child
-  Statement body;
-  SourceLocation location;
+  public Statement body;
+  public SourceLocation location;
 
-  LetStatement(List<IsId> identifiers, Expr valueExpr, Statement body,
+  public LetStatement(List<IsId> identifiers, Expr valueExpr, Statement body,
                SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
@@ -40,7 +40,7 @@ public final class LetStatement extends Statement {
     this.location = location;
   }
 
-  List<Identifier> identifiers() {
+  public List<Identifier> identifiers() {
     return identifiers.stream().map(id -> (Identifier) id).toList();
   }
 
@@ -57,7 +57,7 @@ public final class LetStatement extends Statement {
    * @param name the bound name of the let statement.
    * @return the name of the value expression.
    */
-  String mapName(String name) {
+  public String mapName(String name) {
     var valType = valueExpr.type;
     if (!(valType instanceof StructType struct)) {
       throw new IllegalStateException("Expected StructType but got " + valType);
@@ -77,7 +77,7 @@ public final class LetStatement extends Statement {
    *
    * @return the type of the name provided.
    */
-  Type getTypeOf(String name) {
+  public Type getTypeOf(String name) {
     var valType = valueExpr.type;
     if (identifiers.size() == 1) {
       return Objects.requireNonNull(valType);
@@ -133,7 +133,7 @@ public final class LetStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

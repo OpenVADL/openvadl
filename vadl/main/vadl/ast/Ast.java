@@ -23,12 +23,14 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.ast.nodes.Definition;
+import vadl.ast.nodes.ImportDefinition;
 
 /**
  * The abstract syntax tree for the vadl language.
  */
 public class Ast {
-  List<Definition> definitions = new ArrayList<>();
+  public List<Definition> definitions = new ArrayList<>();
 
   @Nullable
   Path filePath = null;

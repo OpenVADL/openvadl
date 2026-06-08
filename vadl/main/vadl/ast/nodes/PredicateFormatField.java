@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -22,10 +22,10 @@ import java.util.function.Consumer;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class PredicateFormatField extends FormatField {
   @Child
-  Expr expr;
+  public Expr expr;
 
   public PredicateFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
     super(identifier);
@@ -37,12 +37,12 @@ public class PredicateFormatField extends FormatField {
    *
    * @return the field.
    */
-  FormatField target() {
+  public FormatField target() {
     return (FormatField) requireNonNull(identifier.target());
   }
 
   @Override
-  void forEachChild(Consumer<Node> action) {
+  public void forEachChild(Consumer<Node> action) {
     // This has to be hardcoded here because for this format field it's a child but for some it's
     // the identfiyable name.
     action.accept((Node) identifier);
@@ -50,17 +50,17 @@ public class PredicateFormatField extends FormatField {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     identifier.prettyPrint(indent, builder);
     builder.append(" :- ");
     expr.prettyPrint(indent, builder);

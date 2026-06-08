@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,15 +23,15 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class MatchStatement extends Statement {
-  Expr candidate;
-  List<Case> cases;
+  public Expr candidate;
+  public List<Case> cases;
   @Nullable
-  Statement defaultResult;
-  SourceLocation loc;
+  public Statement defaultResult;
+  public SourceLocation loc;
 
-  MatchStatement(Expr candidate, List<Case> cases, @Nullable Statement defaultResult,
+  public MatchStatement(Expr candidate, List<Case> cases, @Nullable Statement defaultResult,
                  SourceLocation loc) {
     this.candidate = candidate;
     this.cases = cases;
@@ -40,7 +40,7 @@ public final class MatchStatement extends Statement {
   }
 
   @Override
-  void forEachChild(Consumer<Node> action) {
+  public void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
     action.accept(candidate);
     for (var c : cases) {
@@ -60,12 +60,12 @@ public final class MatchStatement extends Statement {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("match ");
     candidate.prettyPrint(0, builder);
     builder.append(" with\n");
@@ -125,11 +125,11 @@ public final class MatchStatement extends Statement {
     return result;
   }
 
-  static final class Case implements WithLocation {
-    List<Expr> patterns;
-    Statement result;
+  public static final class Case implements WithLocation {
+    public List<Expr> patterns;
+    public Statement result;
 
-    Case(List<Expr> patterns, Statement result) {
+    public Case(List<Expr> patterns, Statement result) {
       this.patterns = patterns;
       this.result = result;
     }
@@ -164,7 +164,7 @@ public final class MatchStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

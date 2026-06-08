@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
@@ -23,20 +23,20 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public sealed interface Group {
 
-  void prettyPrint(int indent, StringBuilder builder);
+  public void prettyPrint(int indent, StringBuilder builder);
 
-  <R> R accept(GroupVisitor<R> visitor);
+  public <R> R accept(GroupVisitor<R> visitor);
 
-  final class Sequence extends Node implements Group {
+  public final class Sequence extends Node implements Group {
 
     @Child
-    List<Group> groups;
-    SourceLocation loc;
+    public List<Group> groups;
+    public SourceLocation loc;
 
-    Sequence(List<Group> groups, SourceLocation loc) {
+    public Sequence(List<Group> groups, SourceLocation loc) {
       this.groups = groups;
       this.loc = loc;
     }
@@ -47,7 +47,7 @@ public sealed interface Group {
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 
@@ -86,22 +86,22 @@ public sealed interface Group {
     }
   }
 
-  final class Literal extends Node implements Group {
+  public final class Literal extends Node implements Group {
 
     @Child
-    IsId id;
+    public IsId id;
     @Child
     @Nullable
-    Expr size;
-    SourceLocation loc;
+    public Expr size;
+    public SourceLocation loc;
 
     /**
      * Operation literal matched by this literal, initialized during type checking.
      */
     @LazyInit
-    OperationDefinition operation;
+    public OperationDefinition operation;
 
-    Literal(IsId id, @Nullable Expr size, SourceLocation loc) {
+    public Literal(IsId id, @Nullable Expr size, SourceLocation loc) {
       this.id = id;
       this.size = size;
       this.loc = loc;
@@ -121,7 +121,7 @@ public sealed interface Group {
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 
@@ -158,13 +158,13 @@ public sealed interface Group {
     }
   }
 
-  final class Alternative extends Node implements Group {
+  public final class Alternative extends Node implements Group {
 
     @Child
-    List<Sequence> sequences;
-    SourceLocation loc;
+    public List<Sequence> sequences;
+    public SourceLocation loc;
 
-    Alternative(List<Sequence> sequences, SourceLocation loc) {
+    public Alternative(List<Sequence> sequences, SourceLocation loc) {
       this.sequences = sequences;
       this.loc = loc;
     }
@@ -175,7 +175,7 @@ public sealed interface Group {
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 
@@ -216,13 +216,13 @@ public sealed interface Group {
     }
   }
 
-  final class Permutation extends Node implements Group {
+  public final class Permutation extends Node implements Group {
 
     @Child
-    List<Sequence> sequences;
-    SourceLocation loc;
+    public List<Sequence> sequences;
+    public SourceLocation loc;
 
-    Permutation(List<Sequence> sequences, SourceLocation loc) {
+    public Permutation(List<Sequence> sequences, SourceLocation loc) {
       this.sequences = sequences;
       this.loc = loc;
     }
@@ -233,7 +233,7 @@ public sealed interface Group {
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 
@@ -274,7 +274,7 @@ public sealed interface Group {
     }
   }
 
-  interface GroupVisitor<R> {
+  public interface GroupVisitor<R> {
     R visit(Sequence seq);
 
     R visit(Alternative alt);

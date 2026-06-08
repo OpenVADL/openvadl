@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class DerivedFormatField extends FormatField implements IdentifiableNode {
   @Child
-  Expr expr;
+  public Expr expr;
 
   public DerivedFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
     super(identifier);
@@ -36,7 +36,7 @@ public class DerivedFormatField extends FormatField implements IdentifiableNode 
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
@@ -70,7 +70,7 @@ public class DerivedFormatField extends FormatField implements IdentifiableNode 
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

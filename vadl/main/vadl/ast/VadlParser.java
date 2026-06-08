@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import vadl.ast.nodes.Identifier;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;

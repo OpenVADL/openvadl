@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public enum UnaryOperator {
   NEGATIVE("-"), LOG_NOT("!"), COMPLEMENT("~");
 
-  final String symbol;
+  public final String symbol;
 
   UnaryOperator(String symbol) {
     this.symbol = symbol;

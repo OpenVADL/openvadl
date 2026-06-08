@@ -16,7 +16,6 @@
 
 package vadl.ast;
 
-
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
@@ -44,7 +43,83 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import vadl.ast.Group.GroupVisitor;
+import vadl.ast.nodes.AbiClangNumericTypeDefinition;
+import vadl.ast.nodes.AbiClangTypeDefinition;
+import vadl.ast.nodes.AbiSequenceDefinition;
+import vadl.ast.nodes.AbiSpecialPurposeInstructionDefinition;
+import vadl.ast.nodes.AliasDefinition;
+import vadl.ast.nodes.AnnotationDefinition;
+import vadl.ast.nodes.ApplicationBinaryInterfaceDefinition;
+import vadl.ast.nodes.AsmDescriptionDefinition;
+import vadl.ast.nodes.AsmDirectiveDefinition;
+import vadl.ast.nodes.AsmGrammarAlternativesDefinition;
+import vadl.ast.nodes.AsmGrammarElementDefinition;
+import vadl.ast.nodes.AsmGrammarLiteralDefinition;
+import vadl.ast.nodes.AsmGrammarLocalVarDefinition;
+import vadl.ast.nodes.AsmGrammarRuleDefinition;
+import vadl.ast.nodes.AsmGrammarTypeDefinition;
+import vadl.ast.nodes.AsmModifierDefinition;
+import vadl.ast.nodes.AssemblyDefinition;
+import vadl.ast.nodes.CacheDefinition;
+import vadl.ast.nodes.CallIndexExpr;
+import vadl.ast.nodes.ConstantDefinition;
+import vadl.ast.nodes.CounterDefinition;
+import vadl.ast.nodes.CpuFunctionDefinition;
+import vadl.ast.nodes.CpuMemoryRegionDefinition;
+import vadl.ast.nodes.CpuProcessDefinition;
+import vadl.ast.nodes.Definition;
+import vadl.ast.nodes.DefinitionList;
+import vadl.ast.nodes.DefinitionVisitor;
+import vadl.ast.nodes.DerivedFormatField;
+import vadl.ast.nodes.EncodingDefinition;
+import vadl.ast.nodes.EncodingFormatField;
+import vadl.ast.nodes.EnumerationDefinition;
+import vadl.ast.nodes.ExceptionDefinition;
+import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
+import vadl.ast.nodes.ExpandedSequenceCallExpr;
+import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.FormatDefinition;
+import vadl.ast.nodes.FormatField;
+import vadl.ast.nodes.FunctionDefinition;
+import vadl.ast.nodes.Group.GroupVisitor;
+import vadl.ast.nodes.GroupDefinition;
+import vadl.ast.nodes.IdentifiableNode;
+import vadl.ast.nodes.Identifier;
+import vadl.ast.nodes.ImportDefinition;
+import vadl.ast.nodes.InstructionDefinition;
+import vadl.ast.nodes.InstructionSetDefinition;
+import vadl.ast.nodes.LogicDefinition;
+import vadl.ast.nodes.MacroInstanceDefinition;
+import vadl.ast.nodes.MacroInstructionDefinition;
+import vadl.ast.nodes.MacroMatchDefinition;
+import vadl.ast.nodes.MemoryDefinition;
+import vadl.ast.nodes.MicroArchitectureDefinition;
+import vadl.ast.nodes.ModelDefinition;
+import vadl.ast.nodes.ModelTypeDefinition;
+import vadl.ast.nodes.OperationDefinition;
+import vadl.ast.nodes.Parameter;
+import vadl.ast.nodes.PatchDefinition;
+import vadl.ast.nodes.PipelineDefinition;
+import vadl.ast.nodes.PlaceholderDefinition;
+import vadl.ast.nodes.PortBehaviorDefinition;
+import vadl.ast.nodes.PredicateFormatField;
+import vadl.ast.nodes.ProcessDefinition;
+import vadl.ast.nodes.ProcessorDefinition;
+import vadl.ast.nodes.PseudoInstructionDefinition;
+import vadl.ast.nodes.RangeExpr;
+import vadl.ast.nodes.RangeFormatField;
+import vadl.ast.nodes.RecordTypeDefinition;
+import vadl.ast.nodes.RegisterDefinition;
+import vadl.ast.nodes.RelocationDefinition;
+import vadl.ast.nodes.SignalDefinition;
+import vadl.ast.nodes.SourceDefinition;
+import vadl.ast.nodes.SpecialPurposeRegisterDefinition;
+import vadl.ast.nodes.StageDefinition;
+import vadl.ast.nodes.StageOutputDefinition;
+import vadl.ast.nodes.StringLiteral;
+import vadl.ast.nodes.TypedFormatField;
+import vadl.ast.nodes.UsingDefinition;
+import vadl.ast.nodes.WildcardLiteral;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -1451,7 +1526,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Literal lit) {
+  public Group.Expression visit(vadl.ast.nodes.Group.Literal lit) {
     final Operation op = (Operation) fetch(lit.operation).orElseThrow(IllegalStateException::new);
     final Group.Expression l = new Group.Literal(lit, op);
 
@@ -1467,19 +1542,19 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Sequence seq) {
+  public Group.Expression visit(vadl.ast.nodes.Group.Sequence seq) {
     final var elems = seq.groups.stream().map(g -> g.accept(this)).toList();
     return elems.size() == 1 ? elems.getFirst() : new Group.Sequence(seq, elems);
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Alternative alt) {
+  public Group.Expression visit(vadl.ast.nodes.Group.Alternative alt) {
     final var elems = alt.sequences.stream().map(g -> g.accept(this)).toList();
     return elems.size() == 1 ? elems.getFirst() : new Group.Alternation(alt, elems);
   }
 
   @Override
-  public Group.Expression visit(vadl.ast.Group.Permutation perm) {
+  public Group.Expression visit(vadl.ast.nodes.Group.Permutation perm) {
     final var elems = perm.sequences.stream().map(g -> g.accept(this)).toList();
     return elems.size() == 1 ? elems.getFirst() : new Group.Permutation(perm, elems);
   }

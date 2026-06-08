@@ -17,6 +17,12 @@
 package vadl.ast;
 
 import javax.annotation.Nullable;
+import vadl.ast.nodes.AsmGrammarRuleDefinition;
+import vadl.ast.nodes.ConstantDefinition;
+import vadl.ast.nodes.Definition;
+import vadl.ast.nodes.FunctionDefinition;
+import vadl.ast.nodes.IdentifiableNode;
+import vadl.ast.nodes.RecursiveAstVisitor;
 import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;

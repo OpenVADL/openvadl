@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Locale;
 import vadl.javaannotations.ast.Child;
@@ -23,18 +23,18 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CounterDefinition extends Definition implements IdentifiableNode, TypedNode {
-  CounterKind kind;
-  IdentifierOrPlaceholder identifier;
+  public CounterKind kind;
+  public IdentifierOrPlaceholder identifier;
   @Child
-  TypeLiteral typeLiteral;
-  SourceLocation loc;
+  public TypeLiteral typeLiteral;
+  public SourceLocation loc;
 
   @Override
   public Type type() {
     return typeLiteral.type();
   }
 
-  enum CounterKind {
+  public enum CounterKind {
     PROGRAM,
     GROUP
   }
@@ -59,12 +59,12 @@ public class CounterDefinition extends Definition implements IdentifiableNode, T
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("%s counter ".formatted(kind.toString().toLowerCase(Locale.ENGLISH)));
@@ -75,7 +75,7 @@ public class CounterDefinition extends Definition implements IdentifiableNode, T
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

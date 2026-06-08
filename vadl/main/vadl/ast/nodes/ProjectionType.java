@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ProjectionType implements SyntaxType {
-  List<SyntaxType> arguments;
-  SyntaxType resultType;
+  public List<SyntaxType> arguments;
+  public SyntaxType resultType;
 
-  ProjectionType(List<SyntaxType> arguments, SyntaxType resultType) {
+  public ProjectionType(List<SyntaxType> arguments, SyntaxType resultType) {
     this.arguments = arguments;
     this.resultType = resultType;
   }

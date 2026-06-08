@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.HashSet;
 import java.util.List;
@@ -24,18 +24,18 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  public Identifier id;
   @Child
-  Identifier abi;
+  public Identifier abi;
   @Child
-  List<AsmModifierDefinition> modifiers;
+  public List<AsmModifierDefinition> modifiers;
   @Child
-  List<AsmDirectiveDefinition> directives;
+  public List<AsmDirectiveDefinition> directives;
   @Child
-  List<AsmGrammarRuleDefinition> rules;
+  public List<AsmGrammarRuleDefinition> rules;
   @Child
-  List<Definition> commonDefinitions;
-  SourceLocation loc;
+  public List<Definition> commonDefinitions;
+  public SourceLocation loc;
 
   public AsmDescriptionDefinition(Identifier id, Identifier abi,
                                   List<AsmModifierDefinition> modifiers,
@@ -53,7 +53,7 @@ public class AsmDescriptionDefinition extends Definition implements Identifiable
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -63,12 +63,12 @@ public class AsmDescriptionDefinition extends Definition implements Identifiable
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
 
     builder.append(prettyIndentString(indent));

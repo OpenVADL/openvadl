@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MatchExpr extends Expr {
-  Expr candidate;
-  List<Case> cases;
-  Expr defaultResult;
-  SourceLocation loc;
+  public Expr candidate;
+  public List<Case> cases;
+  public Expr defaultResult;
+  public SourceLocation loc;
 
-  MatchExpr(Expr candidate, List<Case> cases, Expr defaultResult, SourceLocation loc) {
+  public MatchExpr(Expr candidate, List<Case> cases, Expr defaultResult, SourceLocation loc) {
     this.candidate = candidate;
     this.cases = cases;
     this.defaultResult = defaultResult;
@@ -36,7 +36,7 @@ public class MatchExpr extends Expr {
   }
 
   @Override
-  void forEachChild(Consumer<Node> action) {
+  public void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
     action.accept(candidate);
     for (var c : cases) {
@@ -56,12 +56,12 @@ public class MatchExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent)).append("match ");
     candidate.prettyPrint(0, builder);
     builder.append(" with\n");
@@ -96,7 +96,7 @@ public class MatchExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -124,9 +124,9 @@ public class MatchExpr extends Expr {
     return result;
   }
 
-  static class Case {
-    List<Expr> patterns;
-    Expr result;
+  public static class Case {
+    public List<Expr> patterns;
+    public Expr result;
 
     public Case(List<Expr> patterns, Expr result) {
       this.patterns = patterns;

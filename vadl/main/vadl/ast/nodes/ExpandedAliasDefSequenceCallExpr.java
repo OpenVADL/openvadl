@@ -14,25 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class ExpandedAliasDefSequenceCallExpr extends ExpandedSequenceCallExpr {
-  ExpandedAliasDefSequenceCallExpr(Identifier target,
+  public ExpandedAliasDefSequenceCallExpr(Identifier target,
                                    SourceLocation loc) {
     super(target, loc);
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
   @Override
-  void forEachChild(Consumer<Node> action) {
+  public void forEachChild(Consumer<Node> action) {
     // Remove this method when #293 is fixed.
     action.accept(target);
   }

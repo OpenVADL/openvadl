@@ -16,7 +16,6 @@
 
 package vadl.ast;
 
-
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static vadl.error.Diagnostic.ensure;
@@ -42,6 +41,75 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.ast.nodes.AliasDefinition;
+import vadl.ast.nodes.AsIdExpr;
+import vadl.ast.nodes.AsStrExpr;
+import vadl.ast.nodes.AssignmentStatement;
+import vadl.ast.nodes.BinaryExpr;
+import vadl.ast.nodes.BinaryLiteral;
+import vadl.ast.nodes.BlockStatement;
+import vadl.ast.nodes.BoolLiteral;
+import vadl.ast.nodes.CallIndexExpr;
+import vadl.ast.nodes.CallStatement;
+import vadl.ast.nodes.CastExpr;
+import vadl.ast.nodes.ConstantDefinition;
+import vadl.ast.nodes.CounterDefinition;
+import vadl.ast.nodes.DerivedFormatField;
+import vadl.ast.nodes.EnumerationDefinition;
+import vadl.ast.nodes.ExceptionDefinition;
+import vadl.ast.nodes.ExistsInExpr;
+import vadl.ast.nodes.ExistsInThenExpr;
+import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
+import vadl.ast.nodes.ExpandedSequenceCallExpr;
+import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.ExprVisitor;
+import vadl.ast.nodes.ForallExpr;
+import vadl.ast.nodes.ForallStatement;
+import vadl.ast.nodes.ForallThenExpr;
+import vadl.ast.nodes.FunctionDefinition;
+import vadl.ast.nodes.GroupedExpr;
+import vadl.ast.nodes.Identifier;
+import vadl.ast.nodes.IdentifierPath;
+import vadl.ast.nodes.IfExpr;
+import vadl.ast.nodes.IfStatement;
+import vadl.ast.nodes.InstructionCallStatement;
+import vadl.ast.nodes.InstructionDefinition;
+import vadl.ast.nodes.InstructionSequenceDefinition;
+import vadl.ast.nodes.IntegerLiteral;
+import vadl.ast.nodes.IsId;
+import vadl.ast.nodes.LetExpr;
+import vadl.ast.nodes.LetStatement;
+import vadl.ast.nodes.LockStatement;
+import vadl.ast.nodes.MacroInstanceExpr;
+import vadl.ast.nodes.MacroInstanceStatement;
+import vadl.ast.nodes.MacroMatchExpr;
+import vadl.ast.nodes.MacroMatchStatement;
+import vadl.ast.nodes.MatchExpr;
+import vadl.ast.nodes.MatchStatement;
+import vadl.ast.nodes.MemoryDefinition;
+import vadl.ast.nodes.Node;
+import vadl.ast.nodes.OperationDefinition;
+import vadl.ast.nodes.Parameter;
+import vadl.ast.nodes.PlaceholderExpr;
+import vadl.ast.nodes.PlaceholderStatement;
+import vadl.ast.nodes.PseudoInstructionDefinition;
+import vadl.ast.nodes.RaiseStatement;
+import vadl.ast.nodes.RangeExpr;
+import vadl.ast.nodes.RangeFormatField;
+import vadl.ast.nodes.RegisterDefinition;
+import vadl.ast.nodes.RelocationDefinition;
+import vadl.ast.nodes.ResourceReferenceExression;
+import vadl.ast.nodes.SequenceCallExpr;
+import vadl.ast.nodes.StageDefinition;
+import vadl.ast.nodes.Statement;
+import vadl.ast.nodes.StatementList;
+import vadl.ast.nodes.StatementVisitor;
+import vadl.ast.nodes.StringLiteral;
+import vadl.ast.nodes.SymbolExpr;
+import vadl.ast.nodes.TypeLiteral;
+import vadl.ast.nodes.TypedFormatField;
+import vadl.ast.nodes.UnaryExpr;
+import vadl.ast.nodes.WildcardLiteral;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
@@ -122,7 +190,6 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-
 
 /**
  * Lowers statements and expressions into viam behaivor graph.
@@ -1172,7 +1239,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           for (var arg : subCall.argsIndices.getFirst().values) {
             var viamArg = viamLowering.fetch(
                     requireNonNull(
-                        (vadl.ast.Definition) ((ResourceReferenceExression) arg).resource.target()))
+                        (vadl.ast.nodes.Definition)
+                            ((ResourceReferenceExression) arg).resource.target()))
                 .get();
 
             if (viamArg instanceof Counter counterArg) {
@@ -1631,7 +1699,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(AssignmentStatement statement) {
     var value = fetch(statement.valueExpression);
 
-    vadl.ast.Definition targetDef;
+    vadl.ast.nodes.Definition targetDef;
     List<CallIndexExpr.Arguments> argGroups = List.of();
     List<Constant.BitSlice> staticSlices = new ArrayList<>();
     AtomicReference<ExpressionNode> dynamicIndexExpr = new AtomicReference<>();
@@ -1640,7 +1708,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     @Nullable Integer callSize = null;
 
     if (statement.target instanceof CallIndexExpr callTarget) {
-      targetDef = (vadl.ast.Definition) callTarget.computedTarget();
+      targetDef = (vadl.ast.nodes.Definition) callTarget.computedTarget();
       argGroups = callTarget.args();
       callTarget.slices().forEach(s -> {
         if (s.computedstaticBitSlice != null) {
@@ -1661,7 +1729,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           ? constantEvaluator.eval(sizeExpr).value().intValueExact()
           : null;
     } else if (statement.target instanceof Identifier identTarget) {
-      targetDef = (vadl.ast.Definition) requireNonNull(identTarget.target());
+      targetDef = (vadl.ast.nodes.Definition) requireNonNull(identTarget.target());
     } else {
       throw new IllegalStateException("Unexpected target: " + statement);
     }

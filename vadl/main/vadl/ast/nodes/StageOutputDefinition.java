@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class StageOutputDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder identifier;
+  public IdentifierOrPlaceholder identifier;
   @Child
-  TypeLiteral typeLiteral;
+  public TypeLiteral typeLiteral;
 
   public StageOutputDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral) {
     this.identifier = identifier;
@@ -32,7 +32,7 @@ public class StageOutputDefinition extends Definition implements IdentifiableNod
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -42,12 +42,12 @@ public class StageOutputDefinition extends Definition implements IdentifiableNod
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     identifier.prettyPrint(indent, builder);
     builder.append(" : ");
     typeLiteral.prettyPrint(indent, builder);

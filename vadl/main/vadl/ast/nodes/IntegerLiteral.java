@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -22,9 +22,9 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class IntegerLiteral extends Expr {
-  String token;
-  BigInteger number;
-  SourceLocation loc;
+  public String token;
+  public BigInteger number;
+  public SourceLocation loc;
 
   private static BigInteger parse(String token) {
     return new BigInteger(token.replace("'", ""));
@@ -61,7 +61,7 @@ public class IntegerLiteral extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INT;
   }
 
@@ -71,7 +71,7 @@ public class IntegerLiteral extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

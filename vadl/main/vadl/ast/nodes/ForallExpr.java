@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,15 +25,15 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ForallExpr extends Expr {
   @Child
-  List<ForallIndex> indices;
+  public List<ForallIndex> indices;
 
   /**
    * The kind of forall expression (fold, tensor, etc).
    */
-  Operation operation;
+  public Operation operation;
 
   /**
    * Only if the node is a fold we need to know which operator is folded over.
@@ -41,20 +41,20 @@ public class ForallExpr extends Expr {
    */
   @Nullable
   @Child
-  Node foldAction;
+  public Node foldAction;
 
   /// The function beeing called by the fold.
   /// The function must be a built-in and satisfy the type contract `(T, T) -> T`
   /// Set by the typechecker.
   @Nullable
-  BuiltInTable.BuiltIn computedFoldBuiltin;
+  public BuiltInTable.BuiltIn computedFoldBuiltin;
 
   @Child
-  Expr body;
+  public Expr body;
 
-  SourceLocation loc;
+  public SourceLocation loc;
 
-  ForallExpr(List<ForallIndex> indices, Operation operation, @Nullable Node foldAction,
+  public ForallExpr(List<ForallIndex> indices, Operation operation, @Nullable Node foldAction,
              Expr body, SourceLocation loc) {
     this.indices = indices;
     this.operation = operation;
@@ -73,12 +73,12 @@ public class ForallExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("forall ");
     var isFirst = true;
     for (ForallIndex index : indices) {
@@ -105,7 +105,7 @@ public class ForallExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -134,7 +134,7 @@ public class ForallExpr extends Expr {
   }
 
 
-  enum Operation {
+  public enum Operation {
     TENSOR("tensor"), FOLD("fold");
 
     private final String keyword;

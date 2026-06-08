@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import javax.annotation.Nullable;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
   @Override
-  IsId path();
+  public IsId path();
 
   @Override
   @Nullable
-  Expr size();
+  public Expr size();
 }

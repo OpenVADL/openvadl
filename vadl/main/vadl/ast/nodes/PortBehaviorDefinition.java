@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class PortBehaviorDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
-  PortKind kind;
+  public Identifier id;
+  public PortKind kind;
   @Child
-  List<Parameter> inputs;
+  public List<Parameter> inputs;
   @Child
-  List<Parameter> outputs;
+  public List<Parameter> outputs;
   @Child
-  Statement statement;
-  SourceLocation loc;
+  public Statement statement;
+  public SourceLocation loc;
 
-  PortBehaviorDefinition(Identifier id, PortKind kind, List<Parameter> inputs,
+  public PortBehaviorDefinition(Identifier id, PortKind kind, List<Parameter> inputs,
                          List<Parameter> outputs, Statement statement,
                          SourceLocation loc) {
     this.id = id;
@@ -45,7 +45,7 @@ public class PortBehaviorDefinition extends Definition implements IdentifiableNo
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -55,12 +55,12 @@ public class PortBehaviorDefinition extends Definition implements IdentifiableNo
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
@@ -97,7 +97,7 @@ public class PortBehaviorDefinition extends Definition implements IdentifiableNo
     return id;
   }
 
-  enum PortKind {
+  public enum PortKind {
     READ("read"), WRITE("write"), HIT("hit"), MISS("miss");
 
     private final String keyword;

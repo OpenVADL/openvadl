@@ -14,15 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
+import vadl.ast.StringLiteralParser;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class StringLiteral extends Expr {
-  String token;
-  String value;
-  SourceLocation loc;
+  public String token;
+  public String value;
+  public SourceLocation loc;
 
   // FIXME: Cleanup StringLiteral constructors, each one does interpret their arguments a bit
   // differently, which is quite confusing to use.
@@ -59,17 +60,17 @@ public class StringLiteral extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.STR;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(token);
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

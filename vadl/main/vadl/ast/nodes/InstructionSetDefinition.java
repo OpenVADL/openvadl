@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,16 +25,16 @@ import java.util.stream.Stream;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class InstructionSetDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder identifier;
+  public IdentifierOrPlaceholder identifier;
   @Child
-  List<IsId> extending;
+  public List<IsId> extending;
   @Child
-  List<Definition> definitions;
-  SourceLocation loc;
+  public List<Definition> definitions;
+  public SourceLocation loc;
 
-  InstructionSetDefinition(IdentifierOrPlaceholder identifier,
+  public InstructionSetDefinition(IdentifierOrPlaceholder identifier,
                            List<IsId> extending,
                            List<Definition> statements, SourceLocation location) {
     this.identifier = identifier;
@@ -48,7 +48,7 @@ public class InstructionSetDefinition extends Definition implements Identifiable
     return (Identifier) identifier;
   }
 
-  List<InstructionSetDefinition> extendingNodes() {
+  public List<InstructionSetDefinition> extendingNodes() {
     return extending.stream()
         .map(id -> (InstructionSetDefinition) requireNonNull(id.target()))
         .toList();
@@ -75,12 +75,12 @@ public class InstructionSetDefinition extends Definition implements Identifiable
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("instruction set architecture ").append(identifier().name);
@@ -94,7 +94,7 @@ public class InstructionSetDefinition extends Definition implements Identifiable
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

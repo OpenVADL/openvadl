@@ -14,19 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, IsEncs {
 
-  List<String> segments;
-  SyntaxType syntaxType;
-  SourceLocation sourceLocation;
+  public List<String> segments;
+  public SyntaxType syntaxType;
+  public SourceLocation sourceLocation;
 
-  PlaceholderNode(List<String> segments, SyntaxType syntaxType, SourceLocation sourceLocation) {
+  public PlaceholderNode(List<String> segments, SyntaxType syntaxType,
+                         SourceLocation sourceLocation) {
     this.segments = segments;
     this.syntaxType = syntaxType;
     this.sourceLocation = sourceLocation;
@@ -38,7 +39,7 @@ public final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, IsEn
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return syntaxType;
   }
 

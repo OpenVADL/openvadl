@@ -14,23 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class PatchDefinition extends Definition {
-  Identifier generator;
-  Identifier handle;
+  public Identifier generator;
+  public Identifier handle;
   @Nullable
-  IsId reference;
+  public IsId reference;
   @Nullable
-  String source;
-  SourceLocation loc;
+  public String source;
+  public SourceLocation loc;
 
-  PatchDefinition(Identifier generator, Identifier handle, @Nullable IsId reference,
+  public PatchDefinition(Identifier generator, Identifier handle, @Nullable IsId reference,
                   @Nullable String source, SourceLocation loc) {
     this.generator = generator;
     this.handle = handle;
@@ -40,7 +40,7 @@ public class PatchDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -51,12 +51,12 @@ public class PatchDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("patch ");

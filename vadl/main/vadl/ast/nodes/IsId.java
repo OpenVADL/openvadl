@@ -14,25 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import javax.annotation.Nullable;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public sealed interface IsId extends IsSymExpr
     permits AsIdExpr, Identifier, IdentifierOrPlaceholder, IdentifierPath, MacroInstanceExpr,
     MacroMatchExpr, PlaceholderExpr {
   @Override
-  default IsId path() {
+  public default IsId path() {
     return this;
   }
 
   @Override
-  default @Nullable Expr size() {
+  public default @Nullable Expr size() {
     return null;
   }
 
-  String pathToString();
+  public String pathToString();
 
   /**
    * The target this id refers to. It is resolved during symbol resolving and
@@ -40,5 +40,5 @@ public sealed interface IsId extends IsSymExpr
    * are the only two {@link IsId} subtypes that survive the {@link MacroExpander}.
    */
   @Nullable
-  Node target();
+  public Node target();
 }

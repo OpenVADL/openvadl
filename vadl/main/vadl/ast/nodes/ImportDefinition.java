@@ -14,28 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNullElse;
 
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.ast.Ast;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ImportDefinition extends Definition {
 
-  Ast moduleAst;
-  List<List<Identifier>> importedSymbols;
+  public Ast moduleAst;
+  public List<List<Identifier>> importedSymbols;
   @Nullable
-  Identifier fileId;
+  public Identifier fileId;
   @Nullable
-  StringLiteral filePath;
-  List<StringLiteral> args;
-  SourceLocation loc;
+  public StringLiteral filePath;
+  public List<StringLiteral> args;
+  public SourceLocation loc;
 
-  ImportDefinition(Ast moduleAst, List<List<Identifier>> importedSymbols,
+  public ImportDefinition(Ast moduleAst, List<List<Identifier>> importedSymbols,
                    @Nullable Identifier fileId, @Nullable StringLiteral filePath,
                    List<StringLiteral> args, SourceLocation loc) {
     requireNonNullElse(fileId, filePath);
@@ -48,7 +49,7 @@ public class ImportDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -58,12 +59,12 @@ public class ImportDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("import ");
     if (fileId != null) {
       fileId.prettyPrint(0, builder);

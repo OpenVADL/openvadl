@@ -14,69 +14,69 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public interface ExprVisitor<R> {
-  R visit(Identifier expr);
+  public R visit(Identifier expr);
 
-  R visit(BinaryExpr expr);
+  public R visit(BinaryExpr expr);
 
-  R visit(GroupedExpr expr);
+  public R visit(GroupedExpr expr);
 
-  R visit(IntegerLiteral expr);
+  public R visit(IntegerLiteral expr);
 
-  R visit(WildcardLiteral expr);
+  public R visit(WildcardLiteral expr);
 
-  R visit(BinaryLiteral expr);
+  public R visit(BinaryLiteral expr);
 
-  R visit(BoolLiteral expr);
+  public R visit(BoolLiteral expr);
 
-  R visit(StringLiteral expr);
+  public R visit(StringLiteral expr);
 
-  R visit(PlaceholderExpr expr);
+  public R visit(PlaceholderExpr expr);
 
-  R visit(MacroInstanceExpr expr);
+  public R visit(MacroInstanceExpr expr);
 
-  R visit(RangeExpr expr);
+  public R visit(RangeExpr expr);
 
-  R visit(TypeLiteral expr);
+  public R visit(TypeLiteral expr);
 
-  R visit(IdentifierPath expr);
+  public R visit(IdentifierPath expr);
 
-  R visit(UnaryExpr expr);
+  public R visit(UnaryExpr expr);
 
-  R visit(CallIndexExpr expr);
+  public R visit(CallIndexExpr expr);
 
-  R visit(IfExpr expr);
+  public R visit(IfExpr expr);
 
-  R visit(LetExpr expr);
+  public R visit(LetExpr expr);
 
-  R visit(CastExpr expr);
+  public R visit(CastExpr expr);
 
-  R visit(SymbolExpr expr);
+  public R visit(SymbolExpr expr);
 
-  R visit(MacroMatchExpr expr);
+  public R visit(MacroMatchExpr expr);
 
-  R visit(MatchExpr expr);
+  public R visit(MatchExpr expr);
 
-  R visit(AsIdExpr expr);
+  public R visit(AsIdExpr expr);
 
-  R visit(AsStrExpr expr);
+  public R visit(AsStrExpr expr);
 
-  R visit(ExistsInExpr expr);
+  public R visit(ExistsInExpr expr);
 
-  R visit(ExistsInThenExpr expr);
+  public R visit(ExistsInThenExpr expr);
 
-  R visit(ForallThenExpr expr);
+  public R visit(ForallThenExpr expr);
 
-  R visit(ForallExpr expr);
+  public R visit(ForallExpr expr);
 
-  R visit(SequenceCallExpr expr);
+  public R visit(SequenceCallExpr expr);
 
-  R visit(ExpandedSequenceCallExpr expr);
+  public R visit(ExpandedSequenceCallExpr expr);
 
-  R visit(ExpandedAliasDefSequenceCallExpr expr);
+  public R visit(ExpandedAliasDefSequenceCallExpr expr);
 
-  R visit(ResourceReferenceExression expr);
+  public R visit(ResourceReferenceExression expr);
 }

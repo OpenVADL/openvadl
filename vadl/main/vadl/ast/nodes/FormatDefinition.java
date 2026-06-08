@@ -14,30 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.ast.FormatType;
 import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class FormatDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder identifier;
+  public IdentifierOrPlaceholder identifier;
   @Child
-  TypeLiteral typeLiteral;
+  public TypeLiteral typeLiteral;
   @Child
-  List<FormatField> fields;
-  SourceLocation loc;
+  public List<FormatField> fields;
+  public SourceLocation loc;
 
   @Override
   public Type type() {
     return new FormatType(this);
   }
 
-  record BitRange(int from, int to) {
+  public record BitRange(int from, int to) {
   }
 
 
@@ -49,13 +50,13 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
     this.loc = location;
   }
 
-  Stream<FormatField> fieldsWithoutEncodingPredicate() {
+  public Stream<FormatField> fieldsWithoutEncodingPredicate() {
     return fields.stream()
         .filter(f -> !(f instanceof PredicateFormatField))
         .filter(f -> !(f instanceof EncodingFormatField));
   }
 
-  boolean hasField(String name) {
+  public boolean hasField(String name) {
     for (var field : fields) {
       if (field instanceof PredicateFormatField || field instanceof EncodingFormatField) {
         continue;
@@ -67,7 +68,7 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
     return false;
   }
 
-  FormatField getField(String name) {
+  public FormatField getField(String name) {
     for (var field : fields) {
       if (field instanceof PredicateFormatField || field instanceof EncodingFormatField) {
         continue;
@@ -80,7 +81,7 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
   }
 
   @Nullable
-  Type getFieldType(String name) {
+  public Type getFieldType(String name) {
     var field = getField(name);
 
     if (field instanceof TypedFormatField typedField) {
@@ -95,7 +96,7 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
   }
 
   @Nullable
-  BitRange getFieldRange(String name) {
+  public BitRange getFieldRange(String name) {
     var field = getField(name);
 
     if (field instanceof TypedFormatField typedField) {
@@ -129,12 +130,12 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("format ");
@@ -168,7 +169,7 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

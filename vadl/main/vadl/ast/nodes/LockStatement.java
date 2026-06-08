@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class LockStatement extends Statement {
   @Child
-  Expr expr;
+  public Expr expr;
   @Child
-  Statement statement;
-  SourceLocation loc;
+  public Statement statement;
+  public SourceLocation loc;
 
-  LockStatement(Expr expr, Statement statement, SourceLocation loc) {
+  public LockStatement(Expr expr, Statement statement, SourceLocation loc) {
     this.expr = expr;
     this.statement = statement;
     this.loc = loc;
@@ -40,7 +40,7 @@ public final class LockStatement extends Statement {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("lock ");
     expr.prettyPrint(0, builder);
@@ -67,7 +67,7 @@ public final class LockStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

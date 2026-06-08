@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -22,9 +22,9 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsId {
-  List<String> segments;
-  SyntaxType syntaxType;
-  SourceLocation loc;
+  public List<String> segments;
+  public SyntaxType syntaxType;
+  public SourceLocation loc;
 
   public PlaceholderExpr(List<String> segments, SyntaxType syntaxType, SourceLocation loc) {
     this.segments = segments;
@@ -33,7 +33,7 @@ public final class PlaceholderExpr extends Expr implements IdentifierOrPlacehold
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -43,7 +43,7 @@ public final class PlaceholderExpr extends Expr implements IdentifierOrPlacehold
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return syntaxType;
   }
 

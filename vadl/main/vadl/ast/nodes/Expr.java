@@ -14,28 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
 import javax.annotation.Nullable;
 import vadl.types.Type;
 
-@SuppressWarnings({"MissingJavadocType", "EnumOrdinal"})
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod", "EnumOrdinal"})
 public abstract class Expr extends Node implements TypedNode {
   @Nullable
-  Type type = null;
+  public Type type = null;
 
   @Override
   public Type type() {
     return requireNonNull(type);
   }
 
-  Precedence precedence() {
+  public Precedence precedence() {
     return Precedence.NoPrecedence;
   }
 
-  abstract void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec);
+  public abstract void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec);
 
   /**
    * Wraps the expression in parentheses depending on this precedence and the
@@ -52,7 +52,7 @@ public abstract class Expr extends Node implements TypedNode {
    * @param weak       if true parentheses are not added when parent has same precedence
    * @param builder    lambda that builds the inner expression printing
    */
-  void wrapInGroup(Precedence parentPrec, StringBuilder sb, boolean weak, Runnable builder) {
+  public void wrapInGroup(Precedence parentPrec, StringBuilder sb, boolean weak, Runnable builder) {
     if (parentPrec.ordinal() > precedence().ordinal()
         || (!weak && parentPrec.ordinal() == precedence().ordinal())) {
       sb.append("(");
@@ -68,5 +68,5 @@ public abstract class Expr extends Node implements TypedNode {
     prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
   }
 
-  abstract <R> R accept(ExprVisitor<R> visitor);
+  public abstract <R> R accept(ExprVisitor<R> visitor);
 }

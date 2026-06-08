@@ -14,22 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class MacroMatchExpr extends Expr
     implements IsMacroMatch, IdentifierOrPlaceholder, IsId {
-  MacroMatch macroMatch;
+  public MacroMatch macroMatch;
 
-  MacroMatchExpr(MacroMatch macroMatch) {
+  public MacroMatchExpr(MacroMatch macroMatch) {
     this.macroMatch = macroMatch;
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -39,7 +39,7 @@ public final class MacroMatchExpr extends Expr
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return macroMatch.resultType();
   }
 

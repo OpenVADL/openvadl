@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class BinOp extends Node implements IsBinOp {
 
-  Operator operator;
-  SourceLocation location;
+  public Operator operator;
+  public SourceLocation location;
 
-  BinOp(Operator operator, SourceLocation location) {
+  public BinOp(Operator operator, SourceLocation location) {
     this.operator = operator;
     this.location = location;
   }
@@ -36,7 +36,7 @@ public final class BinOp extends Node implements IsBinOp {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.BIN_OP;
   }
 

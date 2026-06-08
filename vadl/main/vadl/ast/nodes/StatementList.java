@@ -14,20 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class StatementList extends Statement {
 
   @Child
-  List<Statement> items;
-  SourceLocation location;
+  public List<Statement> items;
+  public SourceLocation location;
 
-  StatementList(List<Statement> items, SourceLocation location) {
+  public StatementList(List<Statement> items, SourceLocation location) {
     this.items = items;
     this.location = location;
   }
@@ -38,17 +38,17 @@ public final class StatementList extends Statement {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.STATS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     items.forEach(item -> item.prettyPrint(indent, builder));
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

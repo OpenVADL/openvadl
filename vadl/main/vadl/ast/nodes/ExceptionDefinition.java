@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,19 +25,19 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class ExceptionDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
   @Child
-  Statement statement;
+  public Statement statement;
   @Child
-  List<Parameter> params;
-  SourceLocation loc;
+  public List<Parameter> params;
+  public SourceLocation loc;
 
   @Nullable
-  ConcreteRelationType type;
+  public ConcreteRelationType type;
 
-  ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params,
+  public ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params,
                       Statement statement,
                       SourceLocation location) {
     this.id = id;
@@ -57,12 +57,12 @@ public final class ExceptionDefinition extends Definition implements Identifiabl
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent)).append("exception ");
     id.prettyPrint(0, builder);
     builder.append(" = ");
@@ -71,7 +71,7 @@ public final class ExceptionDefinition extends Definition implements Identifiabl
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

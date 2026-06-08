@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,25 +22,25 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class InstructionCallStatement extends Statement {
 
   @Child
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
   @Child
-  List<NamedArgument> namedArguments;
+  public List<NamedArgument> namedArguments;
   @Child
-  List<Expr> unnamedArguments;
-  SourceLocation loc;
+  public List<Expr> unnamedArguments;
+  public SourceLocation loc;
 
   /**
    * The instruction or pseudo instruction to which it points.
    * Set by the symboltable.
    */
   @Nullable
-  Definition instrDef;
+  public Definition instrDef;
 
-  InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
+  public InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
                            List<Expr> unnamedArguments, SourceLocation loc) {
     this.id = id;
     this.namedArguments = namedArguments;
@@ -48,7 +48,7 @@ public final class InstructionCallStatement extends Statement {
     this.loc = loc;
   }
 
-  Identifier id() {
+  public Identifier id() {
     return (Identifier) id;
   }
 
@@ -59,7 +59,7 @@ public final class InstructionCallStatement extends Statement {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     id.prettyPrint(indent, builder);
     if (!namedArguments.isEmpty()) {
@@ -109,32 +109,32 @@ public final class InstructionCallStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
-  static final class NamedArgument extends Node {
+  public static final class NamedArgument extends Node {
     @Child
-    IdentifierOrPlaceholder name;
+    public IdentifierOrPlaceholder name;
     @Child
-    Expr value;
+    public Expr value;
 
-    NamedArgument(IdentifierOrPlaceholder name, Expr value) {
+    public NamedArgument(IdentifierOrPlaceholder name, Expr value) {
       this.name = name;
       this.value = value;
     }
 
-    Identifier identifier() {
+    public Identifier identifier() {
       return (Identifier) name;
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 
     @Override
-    void prettyPrint(int indent, StringBuilder builder) {
+    public void prettyPrint(int indent, StringBuilder builder) {
       name.prettyPrint(0, builder);
       builder.append(" = ");
       value.prettyPrint(0, builder);

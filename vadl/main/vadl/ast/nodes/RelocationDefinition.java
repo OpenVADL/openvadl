@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,21 +25,21 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RelocationDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder identifier;
+  public IdentifierOrPlaceholder identifier;
   @Child
-  List<Parameter> params;
+  public List<Parameter> params;
   @Child
-  TypeLiteral resultTypeLiteral;
+  public TypeLiteral resultTypeLiteral;
   @Child
-  Expr expr;
-  SourceLocation loc;
+  public Expr expr;
+  public SourceLocation loc;
 
   @Nullable
-  ConcreteRelationType type;
+  public ConcreteRelationType type;
 
-  RelocationDefinition(IdentifierOrPlaceholder identifier, List<Parameter> params,
+  public RelocationDefinition(IdentifierOrPlaceholder identifier, List<Parameter> params,
                        TypeLiteral resultTypeLiteral,
                        Expr expr, SourceLocation loc) {
     this.identifier = identifier;
@@ -60,12 +60,12 @@ public class RelocationDefinition extends Definition implements IdentifiableNode
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("relocation ");
@@ -85,7 +85,7 @@ public class RelocationDefinition extends Definition implements IdentifiableNode
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

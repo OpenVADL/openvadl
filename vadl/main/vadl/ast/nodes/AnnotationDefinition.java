@@ -14,38 +14,39 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.ast.Annotation;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class AnnotationDefinition extends Definition {
 
-  List<IdentifierOrPlaceholder> keywords;
+  public List<IdentifierOrPlaceholder> keywords;
 
   @Child
-  List<Expr> values;
+  public List<Expr> values;
 
   /**
    * The Definition on which it is defined.
    * Set by the parser.
    */
   @LazyInit
-  Definition target;
+  public Definition target;
 
   /**
    * Set by the symboltable.
    */
   @Nullable
-  Annotation annotation;
+  public Annotation annotation;
 
-  SourceLocation loc;
+  public SourceLocation loc;
 
   public AnnotationDefinition(List<IdentifierOrPlaceholder> keywords, List<Expr> values,
                               SourceLocation loc) {
@@ -54,19 +55,19 @@ public final class AnnotationDefinition extends Definition {
     this.loc = loc;
   }
 
-  String name() {
+  public String name() {
     return keywords.stream()
         .map(i -> ((Identifier) i).name)
         .collect(Collectors.joining(" "));
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(Node.prettyIndentString(indent));
     builder.append("[ ");
     prettyPrintJoin(" ", keywords.stream().map(k -> (Node) k).toList(), indent, builder);
@@ -79,7 +80,7 @@ public final class AnnotationDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

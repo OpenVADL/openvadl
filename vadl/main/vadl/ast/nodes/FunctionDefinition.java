@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,21 +25,21 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class FunctionDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder name;
+  public IdentifierOrPlaceholder name;
   @Child
-  List<Parameter> params;
+  public List<Parameter> params;
   @Child
-  TypeLiteral retType;
+  public TypeLiteral retType;
   @Child
-  Expr expr;
-  SourceLocation loc;
+  public Expr expr;
+  public SourceLocation loc;
 
   @Nullable
-  ConcreteRelationType type;
+  public ConcreteRelationType type;
 
-  FunctionDefinition(IdentifierOrPlaceholder name, List<Parameter> params,
+  public FunctionDefinition(IdentifierOrPlaceholder name, List<Parameter> params,
                      TypeLiteral retType,
                      Expr expr, SourceLocation location) {
     this.name = name;
@@ -60,12 +60,12 @@ public class FunctionDefinition extends Definition implements IdentifiableNode, 
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("function ");
     name.prettyPrint(indent, builder);
@@ -82,7 +82,7 @@ public class FunctionDefinition extends Definition implements IdentifiableNode, 
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

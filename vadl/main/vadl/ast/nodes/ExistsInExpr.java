@@ -14,22 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ExistsInExpr extends Expr {
 
-  SourceLocation loc;
+  public SourceLocation loc;
 
   @Child
-  List<IsId> operations;
+  public List<IsId> operations;
 
-  ExistsInExpr(List<IsId> operations, SourceLocation loc) {
+  public ExistsInExpr(List<IsId> operations, SourceLocation loc) {
     this.operations = operations;
     this.loc = loc;
   }
@@ -40,12 +40,12 @@ public class ExistsInExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("exists in {");
     var isFirst = true;
     for (IsId operation : operations) {
@@ -59,7 +59,7 @@ public class ExistsInExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

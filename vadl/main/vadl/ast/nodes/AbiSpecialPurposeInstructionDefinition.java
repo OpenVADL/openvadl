@@ -14,22 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Map;
 import java.util.Objects;
+import vadl.ast.Occurrence;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AbiSpecialPurposeInstructionDefinition extends Definition {
 
-  Kind kind;
+  public Kind kind;
   @Child
-  IdentifierOrPlaceholder target;
-  SourceLocation loc;
+  public IdentifierOrPlaceholder target;
+  public SourceLocation loc;
 
-  AbiSpecialPurposeInstructionDefinition(Kind kind,
+  public AbiSpecialPurposeInstructionDefinition(Kind kind,
                                          IdentifierOrPlaceholder target,
                                          SourceLocation loc) {
     this.kind = kind;
@@ -38,7 +39,7 @@ public class AbiSpecialPurposeInstructionDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -48,12 +49,12 @@ public class AbiSpecialPurposeInstructionDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("special ").append(kind.keyword).append(" instruction = ");
@@ -78,7 +79,7 @@ public class AbiSpecialPurposeInstructionDefinition extends Definition {
     return Objects.hash(kind, target);
   }
 
-  enum Kind {
+  public enum Kind {
     RETURN("return"),
     CALL("call"),
     LOCAL_ADDRESS_LOAD("local address load"),

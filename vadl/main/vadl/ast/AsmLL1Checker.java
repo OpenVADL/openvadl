@@ -27,9 +27,17 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.ast.nodes.AsmGrammarAlternativesDefinition;
+import vadl.ast.nodes.AsmGrammarElementDefinition;
+import vadl.ast.nodes.AsmGrammarEntityVisitor;
+import vadl.ast.nodes.AsmGrammarLiteralDefinition;
+import vadl.ast.nodes.AsmGrammarLocalVarDefinition;
+import vadl.ast.nodes.AsmGrammarRuleDefinition;
+import vadl.ast.nodes.FunctionDefinition;
+import vadl.ast.nodes.Node;
+import vadl.ast.nodes.StringLiteral;
 import vadl.error.Diagnostic;
 import vadl.viam.asm.AsmToken;
-
 
 /**
  * A class that evaluates the assembly grammar for LL(1) compliance.

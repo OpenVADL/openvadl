@@ -14,32 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class LogicDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder id;
-  SourceLocation loc;
-  List<IdentifierOrPlaceholder> logicTypeIdentifiers;
+  public IdentifierOrPlaceholder id;
+  public SourceLocation loc;
+  public List<IdentifierOrPlaceholder> logicTypeIdentifiers;
 
   /// Set by the typechecker and inferred from the logicType identifiers.
   /// This cannot be directly set by the parser because of possible macro expansion.
   @Nullable
-  LogicType logicType;
+  public LogicType logicType;
 
-  LogicDefinition(IdentifierOrPlaceholder id, List<IdentifierOrPlaceholder> logicTypeIdentifiers,
-                  SourceLocation loc) {
+  public LogicDefinition(IdentifierOrPlaceholder id,
+                         List<IdentifierOrPlaceholder> logicTypeIdentifiers,
+                         SourceLocation loc) {
     this.id = id;
     this.logicTypeIdentifiers = logicTypeIdentifiers;
     this.loc = loc;
   }
 
-  enum LogicType {
+  public enum LogicType {
     Forwarding,
     BranchPrediction,
     Control;
@@ -55,7 +56,7 @@ public class LogicDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -65,12 +66,12 @@ public class LogicDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("logic [ ");

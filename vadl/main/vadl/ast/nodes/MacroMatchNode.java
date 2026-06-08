@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs, IsBinOp, IsUnOp {
-  MacroMatch macroMatch;
+  public MacroMatch macroMatch;
 
-  MacroMatchNode(MacroMatch macroMatch) {
+  public MacroMatchNode(MacroMatch macroMatch) {
     this.macroMatch = macroMatch;
   }
 
@@ -32,7 +32,7 @@ public final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs, 
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return macroMatch.resultType();
   }
 

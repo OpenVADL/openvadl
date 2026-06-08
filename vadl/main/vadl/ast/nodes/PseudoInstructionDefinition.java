@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,20 +22,20 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class PseudoInstructionDefinition extends InstructionSequenceDefinition
     implements IdentifiableNode {
-  IdentifierOrPlaceholder identifier;
-  PseudoInstrKind kind;
+  public IdentifierOrPlaceholder identifier;
+  public PseudoInstrKind kind;
 
   /**
    * The matching assembly definition.
    * Set by the symboltable.
    */
   @Nullable
-  AssemblyDefinition assemblyDefinition;
+  public AssemblyDefinition assemblyDefinition;
 
-  PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
+  public PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
                               List<Parameter> params,
                               List<InstructionCallStatement> statements,
                               SourceLocation loc) {
@@ -58,12 +58,12 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
 
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     var kindStr = switch (kind) {
@@ -81,7 +81,7 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -113,7 +113,7 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
     return result;
   }
 
-  enum PseudoInstrKind {
+  public enum PseudoInstrKind {
     PSEUDO, COMPILER
   }
 }

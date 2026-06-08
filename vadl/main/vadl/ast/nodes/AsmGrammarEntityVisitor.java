@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public interface AsmGrammarEntityVisitor<R> {
-  R visit(AsmGrammarRuleDefinition entity);
+  public R visit(AsmGrammarRuleDefinition entity);
 
-  R visit(AsmGrammarAlternativesDefinition entity);
+  public R visit(AsmGrammarAlternativesDefinition entity);
 
-  R visit(AsmGrammarElementDefinition entity);
+  public R visit(AsmGrammarElementDefinition entity);
 
-  R visit(AsmGrammarLocalVarDefinition entity);
+  public R visit(AsmGrammarLocalVarDefinition entity);
 
-  R visit(AsmGrammarLiteralDefinition entity);
+  public R visit(AsmGrammarLiteralDefinition entity);
 }

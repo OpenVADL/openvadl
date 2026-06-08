@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class PlaceholderStatement extends Statement {
 
-  List<String> segments;
-  SyntaxType syntaxType;
-  SourceLocation loc;
+  public List<String> segments;
+  public SyntaxType syntaxType;
+  public SourceLocation loc;
 
-  PlaceholderStatement(List<String> segments, SyntaxType type, SourceLocation loc) {
+  public PlaceholderStatement(List<String> segments, SyntaxType type, SourceLocation loc) {
     this.segments = segments;
     this.syntaxType = type;
     this.loc = loc;
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -43,12 +43,12 @@ public final class PlaceholderStatement extends Statement {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return syntaxType;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
     builder.append(String.join(".", segments));
   }

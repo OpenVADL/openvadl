@@ -14,24 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasDefSequenceCallExpr {
   @Child
-  Expr target;
-  SourceLocation loc;
+  public Expr target;
+  public SourceLocation loc;
 
-  ExpandedSequenceCallExpr(Expr target, SourceLocation loc) {
+  public ExpandedSequenceCallExpr(Expr target, SourceLocation loc) {
     this.target = target;
     this.loc = loc;
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -41,12 +41,12 @@ public sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasD
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     target.prettyPrint(0, builder);
   }
 }

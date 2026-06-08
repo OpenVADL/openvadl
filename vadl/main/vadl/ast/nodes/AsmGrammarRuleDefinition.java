@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -24,18 +24,18 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  public Identifier id;
   @Nullable
   @Child
-  AsmGrammarTypeDefinition asmTypeDefinition;
+  public AsmGrammarTypeDefinition asmTypeDefinition;
   @Child
-  AsmGrammarAlternativesDefinition alternatives;
-  SourceLocation loc;
+  public AsmGrammarAlternativesDefinition alternatives;
+  public SourceLocation loc;
 
-  boolean isTerminalRule = false;
-  boolean isBuiltinRule = false;
+  public boolean isTerminalRule = false;
+  public boolean isBuiltinRule = false;
   @Nullable
-  AsmType asmType;
+  public AsmType asmType;
 
   public AsmGrammarRuleDefinition(Identifier id,
                                   @Nullable AsmGrammarTypeDefinition asmTypeDefinition,
@@ -48,11 +48,11 @@ public class AsmGrammarRuleDefinition extends Definition implements Identifiable
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
-  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
+  public <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -62,12 +62,12 @@ public class AsmGrammarRuleDefinition extends Definition implements Identifiable
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     id.prettyPrint(indent, builder);
     if (asmTypeDefinition != null) {
       asmTypeDefinition.prettyPrint(indent, builder);

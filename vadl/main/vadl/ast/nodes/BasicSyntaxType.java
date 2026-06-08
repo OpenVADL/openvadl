@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
-@SuppressWarnings({"MissingJavadocType", "EnumOrdinal"})
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod", "EnumOrdinal"})
 public enum BasicSyntaxType implements SyntaxType {
   STATS("Stats"),
   STAT("Stat"),
@@ -37,7 +37,7 @@ public enum BasicSyntaxType implements SyntaxType {
   UN_OP("UnOp"),
   INVALID("InvalidType");
 
-  static final boolean[][] IS_SUBTYPE;
+  public static final boolean[][] IS_SUBTYPE;
 
   private final String name;
 
@@ -45,7 +45,7 @@ public enum BasicSyntaxType implements SyntaxType {
     this.name = name;
   }
 
-  String getName() {
+  public String getName() {
     return name;
   }
 

@@ -14,24 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.ast.Annotation;
 import vadl.javaannotations.ast.Child;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public abstract class Definition extends Node {
   @Child
-  List<AnnotationDefinition> annotations = new ArrayList<>();
+  public List<AnnotationDefinition> annotations = new ArrayList<>();
 
   @LazyInit
-  List<String> viamId;
+  public List<String> viamId;
 
-  Definition withAnnotations(List<AnnotationDefinition> annotations) {
+  public Definition withAnnotations(List<AnnotationDefinition> annotations) {
     this.annotations = annotations;
     for (var annotation : annotations) {
       annotation.target = this;
@@ -39,12 +40,12 @@ public abstract class Definition extends Node {
     return this;
   }
 
-  void prettyPrintAnnotations(int indent, StringBuilder builder) {
+  public void prettyPrintAnnotations(int indent, StringBuilder builder) {
     annotations.forEach(annotation -> annotation.prettyPrint(indent, builder));
   }
 
   @Nullable
-  <T extends Annotation> T getAnnotation(String name, Class<T> annotationClass) {
+  public <T extends Annotation> T getAnnotation(String name, Class<T> annotationClass) {
     return annotations.stream()
         .map(a -> a.annotation)
         .filter(Objects::nonNull)
@@ -53,7 +54,7 @@ public abstract class Definition extends Node {
         .map(annotationClass::cast).findFirst().orElse(null);
   }
 
-  static void prettyPrintDefinitions(int indent, StringBuilder builder,
+  public static void prettyPrintDefinitions(int indent, StringBuilder builder,
                                      List<Definition> definitions) {
     Definition previousDefinition = null;
     for (Definition definition : definitions) {
@@ -68,7 +69,7 @@ public abstract class Definition extends Node {
   }
 
   @Nullable
-  <T extends Annotation> T findAnnotation(String name, Class<T> annotationClass) {
+  public <T extends Annotation> T findAnnotation(String name, Class<T> annotationClass) {
     return annotations.stream()
         .filter(a -> a.name().equals(name))
         .map(a -> a.annotation)
@@ -76,5 +77,5 @@ public abstract class Definition extends Node {
         .map(annotationClass::cast).findFirst().orElse(null);
   }
 
-  abstract <R> R accept(DefinitionVisitor<R> visitor);
+  public abstract <R> R accept(DefinitionVisitor<R> visitor);
 }

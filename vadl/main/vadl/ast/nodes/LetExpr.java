@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,16 +25,16 @@ import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class LetExpr extends Expr {
-  List<IdentifierOrPlaceholder> identifiers;
+  public List<IdentifierOrPlaceholder> identifiers;
   @Child
-  Expr valueExpr;
+  public Expr valueExpr;
   @Child
-  Expr body;
-  SourceLocation location;
+  public Expr body;
+  public SourceLocation location;
 
-  LetExpr(List<IdentifierOrPlaceholder> identifiers, Expr valueExpr, Expr body,
+  public LetExpr(List<IdentifierOrPlaceholder> identifiers, Expr valueExpr, Expr body,
           SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
@@ -42,7 +42,7 @@ public class LetExpr extends Expr {
     this.location = location;
   }
 
-  List<Identifier> identifiers() {
+  public List<Identifier> identifiers() {
     return identifiers.stream().map(id -> (Identifier) id).toList();
   }
 
@@ -59,7 +59,7 @@ public class LetExpr extends Expr {
    * @param name the bound name of the let expression.
    * @return the name of the value expression.
    */
-  String mapName(String name) {
+  public String mapName(String name) {
     var valType = valueExpr.type;
     if (!(valType instanceof StructType struct)) {
       throw new IllegalStateException("Expected StructType but got " + valType);
@@ -78,7 +78,7 @@ public class LetExpr extends Expr {
    *
    * @return the type of the name provided.
    */
-  Type getTypeOf(String name) {
+  public Type getTypeOf(String name) {
     var valType = valueExpr.type;
     if (identifiers.size() == 1) {
       return requireNonNull(valType);
@@ -97,12 +97,12 @@ public class LetExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent));
     builder.append("(let ");
     var isFirst = true;
@@ -124,7 +124,7 @@ public class LetExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

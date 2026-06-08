@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,16 +25,16 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class TypeLiteral extends Expr {
   @Child
-  IsId baseType;
+  public IsId baseType;
 
   /**
    * The sizes of the type literal.
    * Can be zero or more, written like {@code Bits<dimension1><dimension2><dimension3>} etc.
    */
   @Child
-  List<Expr> sizeIndices;
+  public List<Expr> sizeIndices;
 
-  SourceLocation loc;
+  public SourceLocation loc;
 
   public TypeLiteral(IsId baseType, List<Expr> sizeIndices, SourceLocation loc) {
     this.baseType = baseType;
@@ -57,7 +57,7 @@ public final class TypeLiteral extends Expr {
    * @return the target of the type literal
    */
   @Nullable
-  Node target() {
+  public Node target() {
     return this.baseType.target();
   }
 
@@ -67,7 +67,7 @@ public final class TypeLiteral extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
@@ -82,7 +82,7 @@ public final class TypeLiteral extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

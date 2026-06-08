@@ -14,24 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
-  List<Expr> exprs;
-  SourceLocation loc;
+  public List<Expr> exprs;
+  public SourceLocation loc;
 
-  AsIdExpr(List<Expr> exprs, SourceLocation loc) {
+  public AsIdExpr(List<Expr> exprs, SourceLocation loc) {
     this.exprs = exprs;
     this.loc = loc;
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -41,7 +41,7 @@ public final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsI
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ID;
   }
 

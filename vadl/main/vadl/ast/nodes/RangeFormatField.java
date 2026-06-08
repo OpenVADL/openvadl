@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,20 +26,20 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RangeFormatField extends FormatField implements IdentifiableNode {
   @Child
-  List<Expr> ranges;
+  public List<Expr> ranges;
   @Child
   @Nullable
-  TypeLiteral typeLiteral;
+  public TypeLiteral typeLiteral;
 
   @Nullable
-  Type type;
+  public Type type;
 
   // While the ranges are expressions in diffrent forms, once computed they are stored here to
   // make them easier to process.
   // FIXME: @flofriday we should use a Constant.BitSlice instead of this list of BitRange.
   //   BitSlice is much more complete and also easier to handle
   @Nullable
-  List<FormatDefinition.BitRange> computedRanges;
+  public List<FormatDefinition.BitRange> computedRanges;
 
   public RangeFormatField(IdentifierOrPlaceholder identifier, List<Expr> ranges,
                           @Nullable TypeLiteral typeLiteral) {
@@ -59,7 +59,7 @@ public class RangeFormatField extends FormatField implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
@@ -102,7 +102,7 @@ public class RangeFormatField extends FormatField implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

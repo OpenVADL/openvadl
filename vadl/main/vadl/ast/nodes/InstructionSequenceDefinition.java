@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.javaannotations.ast.Child;
@@ -23,10 +23,10 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public abstract class InstructionSequenceDefinition extends Definition {
   @Child
-  List<Parameter> params;
+  public List<Parameter> params;
   @Child
-  List<InstructionCallStatement> statements;
-  SourceLocation loc;
+  public List<InstructionCallStatement> statements;
+  public SourceLocation loc;
 
   public InstructionSequenceDefinition(List<Parameter> params,
                                        List<InstructionCallStatement> statements,

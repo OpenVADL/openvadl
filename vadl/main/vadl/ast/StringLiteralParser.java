@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -33,9 +33,10 @@ package vadl.ast;
  * </ul>
  *
  */
-class StringLiteralParser {
+@SuppressWarnings("MissingJavadocMethod")
+public class StringLiteralParser {
 
-  static String parseString(String token) {
+  public static String parseString(String token) {
     final StringBuilder str = new StringBuilder();
     for (int i = 0; i < token.length(); i++) {
       char c = token.charAt(i);

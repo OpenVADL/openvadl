@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -22,30 +22,30 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class UnaryExpr extends Expr {
-  IsUnOp operator;
+  public IsUnOp operator;
   @Child
-  Expr operand;
+  public Expr operand;
 
   /**
    * The builtin that will be called.
    * Set by the typechecker.
    */
   @Nullable
-  BuiltInTable.BuiltIn computedTarget;
+  public BuiltInTable.BuiltIn computedTarget;
 
-  UnaryExpr(IsUnOp operator, Expr operand) {
+  public UnaryExpr(IsUnOp operator, Expr operand) {
     this.operator = operator;
     this.operand = operand;
   }
 
-  UnOp unOp() {
+  public UnOp unOp() {
     return (UnOp) operator;
   }
 
   @Override
-  Precedence precedence() {
+  public Precedence precedence() {
     return Precedence.UnaryOp;
   }
 
@@ -55,12 +55,12 @@ public class UnaryExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     operator.prettyPrint(indent, builder);
     wrapInGroup(parentPrec, builder, true, () -> {
       operand.prettyPrintExpr(indent, builder, precedence());
@@ -68,7 +68,7 @@ public class UnaryExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public record MacroMatch(SyntaxType resultType, List<Choice> choices, Node defaultChoice,
                   SourceLocation sourceLocation) {
 
-  void prettyPrint(int indent, StringBuilder sb) {
+  public void prettyPrint(int indent, StringBuilder sb) {
     sb.append("  ".repeat(indent)).append("match : ").append(resultType.print()).append("(");
     for (Choice choice : choices) {
       sb.append("\n").append("  ".repeat(indent + 1));
@@ -51,11 +51,11 @@ public record MacroMatch(SyntaxType resultType, List<Choice> choices, Node defau
     sb.append("\n").append(" ".repeat(indent)).append(")\n");
   }
 
-  enum Comparison { EQUAL, NOT_EQUAL }
+  public enum Comparison { EQUAL, NOT_EQUAL }
 
-  record Choice(List<Pattern> patterns, Node result) {
+  public record Choice(List<Pattern> patterns, Node result) {
   }
 
-  record Pattern(Node candidate, Comparison comparison, Node match) {
+  public record Pattern(Node candidate, Comparison comparison, Node match) {
   }
 }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -26,17 +26,17 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class EnumerationDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
   @Nullable
   @Child
-  TypeLiteral enumType;
+  public TypeLiteral enumType;
   @Child
-  List<Entry> entries;
-  SourceLocation loc;
+  public List<Entry> entries;
+  public SourceLocation loc;
 
-  EnumerationDefinition(IdentifierOrPlaceholder id, @Nullable TypeLiteral enumType,
+  public EnumerationDefinition(IdentifierOrPlaceholder id, @Nullable TypeLiteral enumType,
                         List<Entry> entries, SourceLocation location) {
     this.id = id;
     this.enumType = enumType;
@@ -45,15 +45,15 @@ public final class EnumerationDefinition extends Definition implements Identifia
     this.loc = location;
   }
 
-  Entry getEntry(String name) {
+  public Entry getEntry(String name) {
     return entries.stream().filter(e -> e.identifier().name.equals(name)).findFirst().orElseThrow();
   }
 
-  Expr getEntryValue(String name) {
+  public Expr getEntryValue(String name) {
     return requireNonNull(getEntry(name).value);
   }
 
-  Type getEntryType(String name) {
+  public Type getEntryType(String name) {
     return requireNonNull(getEntry(name).value).type();
   }
 
@@ -68,12 +68,12 @@ public final class EnumerationDefinition extends Definition implements Identifia
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent)).append("enumeration ");
     id.prettyPrint(0, builder);
     if (enumType != null) {
@@ -99,7 +99,7 @@ public final class EnumerationDefinition extends Definition implements Identifia
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -130,9 +130,9 @@ public final class EnumerationDefinition extends Definition implements Identifia
   }
 
   // FIXME: this should be a definition.
-  static class Entry extends Node implements IdentifiableNode {
+  public static class Entry extends Node implements IdentifiableNode {
 
-    IdentifierOrPlaceholder name;
+    public IdentifierOrPlaceholder name;
 
     /**
      * Potentially set by the typechecker if no value was explicitly assigned.
@@ -141,13 +141,13 @@ public final class EnumerationDefinition extends Definition implements Identifia
      */
     @Nullable
     @Child
-    Expr value;
+    public Expr value;
 
     /**
      * Points to the parent definition of the entry, is set in the constructor of the parent.
      */
     @LazyInit
-    EnumerationDefinition enumDef;
+    public EnumerationDefinition enumDef;
 
 
     public Entry(IdentifierOrPlaceholder name, @Nullable Expr value) {
@@ -165,12 +165,12 @@ public final class EnumerationDefinition extends Definition implements Identifia
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 
     @Override
-    void prettyPrint(int indent, StringBuilder builder) {
+    public void prettyPrint(int indent, StringBuilder builder) {
       name.prettyPrint(indent, builder);
       builder.append(" = ");
       if (value != null) {

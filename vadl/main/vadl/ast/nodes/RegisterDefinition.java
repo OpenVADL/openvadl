@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -27,13 +27,13 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RegisterDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder identifier;
+  public IdentifierOrPlaceholder identifier;
   @Child
-  RelationTypeLiteral typeLiteral;
-  SourceLocation loc;
+  public RelationTypeLiteral typeLiteral;
+  public SourceLocation loc;
 
   @Nullable
-  Type type;
+  public Type type;
 
   public RegisterDefinition(IdentifierOrPlaceholder identifier, RelationTypeLiteral typeLiteral,
                             SourceLocation location) {
@@ -53,12 +53,12 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("register ");
@@ -69,7 +69,7 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -101,14 +101,14 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
     return requireNonNull(type);
   }
 
-  static final class RelationTypeLiteral extends Node {
+  public static final class RelationTypeLiteral extends Node {
     @Child
-    final List<TypeLiteral> argTypes;
+    public final List<TypeLiteral> argTypes;
     @Child
-    TypeLiteral resultType;
+    public TypeLiteral resultType;
 
 
-    RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
+    public RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
       this.argTypes = argTypes;
       this.resultType = resultType;
     }
@@ -146,12 +146,12 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 
     @Override
-    void prettyPrint(int indent, StringBuilder builder) {
+    public void prettyPrint(int indent, StringBuilder builder) {
       var isFirst = true;
       for (TypeLiteral argType : argTypes) {
         if (!isFirst) {

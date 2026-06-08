@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.HashSet;
 import java.util.List;
@@ -23,23 +23,24 @@ import java.util.Set;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class OperationDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder name;
+  public IdentifierOrPlaceholder name;
 
   @Child
-  List<IsId> resources;
+  public List<IsId> resources;
 
   /**
    * This is the actual set of instructions this operation set contains.
    * The resources might contain other operations, however here they are expaned.
    * Populated by the Typechecker.
    */
-  Set<InstructionDefinition> instructions = new HashSet<>();
+  public Set<InstructionDefinition> instructions = new HashSet<>();
 
-  SourceLocation loc;
+  public SourceLocation loc;
 
-  OperationDefinition(IdentifierOrPlaceholder name, List<IsId> resources, SourceLocation loc) {
+  public OperationDefinition(IdentifierOrPlaceholder name, List<IsId> resources,
+                             SourceLocation loc) {
     this.name = name;
     this.resources = resources;
     this.loc = loc;
@@ -51,12 +52,12 @@ public class OperationDefinition extends Definition implements IdentifiableNode 
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("operation ");
@@ -79,7 +80,7 @@ public class OperationDefinition extends Definition implements IdentifiableNode 
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

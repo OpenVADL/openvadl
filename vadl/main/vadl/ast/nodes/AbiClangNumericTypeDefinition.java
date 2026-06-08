@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
@@ -22,10 +22,10 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AbiClangNumericTypeDefinition extends Definition {
-  NumTypeName typeName;
+  public NumTypeName typeName;
   @Child
-  Expr size;
-  SourceLocation loc;
+  public Expr size;
+  public SourceLocation loc;
 
   @Override
   public int hashCode() {
@@ -46,7 +46,7 @@ public class AbiClangNumericTypeDefinition extends Definition {
         && Objects.equals(size, that.size);
   }
 
-  enum NumTypeName {
+  public enum NumTypeName {
     POINTER_WIDTH("pointer width"),
     POINTER_ALIGN("pointer align"),
     LONG_WIDTH("long width"),
@@ -68,7 +68,7 @@ public class AbiClangNumericTypeDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -78,12 +78,12 @@ public class AbiClangNumericTypeDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent))
         .append(typeName.keyword).append(" = ");
     size.prettyPrint(indent + 1, builder);

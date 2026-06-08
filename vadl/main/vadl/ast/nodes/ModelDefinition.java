@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,27 +22,27 @@ import java.util.Map;
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class ModelDefinition extends Definition implements IdentifiableNode {
   /**
    * Either a concrete identifier for this model or, if it is a model-in-model, a placeholder ID.
    */
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
 
   /**
    * The list of formal parameters for the represented macro.
    */
-  List<MacroParam> params;
+  public List<MacroParam> params;
 
   /**
    * The actual macro body to be templated.
    */
-  Node body;
+  public Node body;
 
   /**
    * A macro return type - should only be a {@link BasicSyntaxType}.
    */
-  SyntaxType returnType;
+  public SyntaxType returnType;
 
   /**
    * In a model-in-model situation, the parent model's arguments can be referenced in the inner
@@ -51,10 +51,10 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
    * @see MacroExpander#visit(ModelDefinition)
    * @see MacroExpander#collectMacroParameters(Macro, List, SourceLocation)
    */
-  Map<String, Node> boundArguments = new HashMap<>();
-  SourceLocation loc;
+  public Map<String, Node> boundArguments = new HashMap<>();
+  public SourceLocation loc;
 
-  ModelDefinition(IdentifierOrPlaceholder id, List<MacroParam> params, Node body,
+  public ModelDefinition(IdentifierOrPlaceholder id, List<MacroParam> params, Node body,
                   SyntaxType returnType, SourceLocation loc) {
     this.id = id;
     this.params = params;
@@ -63,7 +63,7 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
     this.loc = loc;
   }
 
-  Macro toMacro() {
+  public Macro toMacro() {
     return new Macro(new Identifier(id.pathToString(), id.location()), params, body, returnType,
         boundArguments);
   }
@@ -74,7 +74,7 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -84,12 +84,12 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent)).append("model ");
     id.prettyPrint(0, builder);
     builder.append("(");

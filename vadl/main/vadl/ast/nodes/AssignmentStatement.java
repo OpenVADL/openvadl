@@ -14,20 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class AssignmentStatement extends Statement {
   @Child
-  Expr target;
+  public Expr target;
   @Child
-  Expr valueExpression;
+  public Expr valueExpression;
 
-  AssignmentStatement(Expr target, Expr valueExpression) {
+  public AssignmentStatement(Expr target, Expr valueExpression) {
     this.target = target;
     this.valueExpression = valueExpression;
   }
@@ -69,7 +69,7 @@ public final class AssignmentStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

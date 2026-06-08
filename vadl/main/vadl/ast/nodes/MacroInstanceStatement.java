@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class MacroInstanceStatement extends Statement implements IsMacroInstance {
-  MacroOrPlaceholder macro;
-  List<Node> arguments;
-  SourceLocation loc;
+  public MacroOrPlaceholder macro;
+  public List<Node> arguments;
+  public SourceLocation loc;
 
   public MacroInstanceStatement(MacroOrPlaceholder macro, List<Node> arguments,
                                 SourceLocation loc) {
@@ -38,12 +38,12 @@ public final class MacroInstanceStatement extends Statement implements IsMacroIn
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return macro.returnType();
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("$");
     if (macro instanceof Macro m) {
@@ -69,7 +69,7 @@ public final class MacroInstanceStatement extends Statement implements IsMacroIn
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

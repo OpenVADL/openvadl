@@ -14,25 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MacroInstructionDefinition extends Definition {
-  MacroBehaviorKind kind;
+  public MacroBehaviorKind kind;
   @Child
-  List<Parameter> inputs;
+  public List<Parameter> inputs;
   @Child
-  List<Parameter> outputs;
+  public List<Parameter> outputs;
   @Child
-  Statement statement;
-  SourceLocation loc;
+  public Statement statement;
+  public SourceLocation loc;
 
-  MacroInstructionDefinition(MacroBehaviorKind kind, List<Parameter> inputs,
+  public MacroInstructionDefinition(MacroBehaviorKind kind, List<Parameter> inputs,
                              List<Parameter> outputs, Statement statement,
                              SourceLocation loc) {
     this.kind = kind;
@@ -43,7 +43,7 @@ public class MacroInstructionDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -53,12 +53,12 @@ public class MacroInstructionDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
@@ -88,7 +88,7 @@ public class MacroInstructionDefinition extends Definition {
     return Objects.hash(kind, inputs, outputs, statement);
   }
 
-  enum MacroBehaviorKind {
+  public enum MacroBehaviorKind {
     TRANSLATION("translation"), PREDICTION("prediction"), FETCH("fetch"), DECODER("decoder"),
     STARTUP("startup");
 

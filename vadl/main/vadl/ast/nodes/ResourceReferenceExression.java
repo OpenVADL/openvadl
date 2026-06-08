@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ResourceReferenceExression extends Expr {
   @Child
-  IdentifierOrPlaceholder resource;
-  SourceLocation location;
+  public IdentifierOrPlaceholder resource;
+  public SourceLocation location;
 
   public ResourceReferenceExression(IdentifierOrPlaceholder resource, SourceLocation location) {
     this.resource = resource;
@@ -31,18 +31,18 @@ public class ResourceReferenceExression extends Expr {
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("@");
     resource.prettyPrint(indent, builder);
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 

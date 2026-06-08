@@ -14,35 +14,35 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public interface StatementVisitor<T> {
-  T visit(AssignmentStatement statement);
+  public T visit(AssignmentStatement statement);
 
-  T visit(BlockStatement statement);
+  public T visit(BlockStatement statement);
 
-  T visit(CallStatement statement);
+  public T visit(CallStatement statement);
 
-  T visit(ForallStatement statement);
+  public T visit(ForallStatement statement);
 
-  T visit(IfStatement statement);
+  public T visit(IfStatement statement);
 
-  T visit(InstructionCallStatement statement);
+  public T visit(InstructionCallStatement statement);
 
-  T visit(LetStatement statement);
+  public T visit(LetStatement statement);
 
-  T visit(LockStatement statement);
+  public T visit(LockStatement statement);
 
-  T visit(MacroInstanceStatement statement);
+  public T visit(MacroInstanceStatement statement);
 
-  T visit(MacroMatchStatement statement);
+  public T visit(MacroMatchStatement statement);
 
-  T visit(MatchStatement statement);
+  public T visit(MatchStatement statement);
 
-  T visit(PlaceholderStatement statement);
+  public T visit(PlaceholderStatement statement);
 
-  T visit(RaiseStatement statement);
+  public T visit(RaiseStatement statement);
 
-  T visit(StatementList statement);
+  public T visit(StatementList statement);
 }

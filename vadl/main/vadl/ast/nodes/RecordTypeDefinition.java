@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class RecordTypeDefinition extends Definition implements IdentifiableNode {
-  Identifier name;
-  RecordType recordType;
-  SourceLocation loc;
+  public Identifier name;
+  public RecordType recordType;
+  public SourceLocation loc;
 
-  RecordTypeDefinition(Identifier name, RecordType recordType, SourceLocation loc) {
+  public RecordTypeDefinition(Identifier name, RecordType recordType, SourceLocation loc) {
     this.name = name;
     this.recordType = recordType;
     this.loc = loc;
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -43,12 +43,12 @@ public final class RecordTypeDefinition extends Definition implements Identifiab
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("record ");
     builder.append(recordType.print());

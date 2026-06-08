@@ -14,25 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class ModelTypeDefinition extends Definition implements IdentifiableNode {
-  Identifier name;
-  ProjectionType projectionType;
-  SourceLocation loc;
+  public Identifier name;
+  public ProjectionType projectionType;
+  public SourceLocation loc;
 
-  ModelTypeDefinition(Identifier name, ProjectionType projectionType, SourceLocation loc) {
+  public ModelTypeDefinition(Identifier name, ProjectionType projectionType, SourceLocation loc) {
     this.name = name;
     this.projectionType = projectionType;
     this.loc = loc;
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -42,12 +42,12 @@ public final class ModelTypeDefinition extends Definition implements Identifiabl
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("model-type ");
     name.prettyPrint(0, builder);

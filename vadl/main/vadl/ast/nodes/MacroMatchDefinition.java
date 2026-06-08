@@ -14,20 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class MacroMatchDefinition extends Definition implements IsMacroMatch {
-  MacroMatch macroMatch;
+  public MacroMatch macroMatch;
 
-  MacroMatchDefinition(MacroMatch macroMatch) {
+  public MacroMatchDefinition(MacroMatch macroMatch) {
     this.macroMatch = macroMatch;
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -37,7 +37,7 @@ public final class MacroMatchDefinition extends Definition implements IsMacroMat
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return macroMatch.resultType();
   }
 

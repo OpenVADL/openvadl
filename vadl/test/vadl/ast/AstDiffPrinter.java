@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,6 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package vadl.ast;
+
+import vadl.ast.nodes.ImportDefinition;
+import vadl.ast.nodes.InstructionSetDefinition;
+import vadl.ast.nodes.ProcessorDefinition;
 
 public class AstDiffPrinter {
   static String printDiff(Ast actual, Ast expected) {

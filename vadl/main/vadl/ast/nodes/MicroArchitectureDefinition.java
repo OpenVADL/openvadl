@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -23,17 +23,17 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MicroArchitectureDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
   @Child
-  IsId isa;
+  public IsId isa;
   @Child
-  List<Definition> definitions;
-  SourceLocation loc;
+  public List<Definition> definitions;
+  public SourceLocation loc;
 
-  MicroArchitectureDefinition(IdentifierOrPlaceholder id, IsId isa, List<Definition> definitions,
-                              SourceLocation loc) {
+  public MicroArchitectureDefinition(IdentifierOrPlaceholder id, IsId isa,
+                                     List<Definition> definitions, SourceLocation loc) {
     this.id = id;
     this.isa = isa;
     this.definitions = definitions;
@@ -45,12 +45,12 @@ public class MicroArchitectureDefinition extends Definition implements Identifia
     return (Identifier) id;
   }
 
-  InstructionSetDefinition isaNode() {
+  public InstructionSetDefinition isaNode() {
     return (InstructionSetDefinition) requireNonNull(isa.target());
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -60,12 +60,12 @@ public class MicroArchitectureDefinition extends Definition implements Identifia
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("micro architecture ");
     id.prettyPrint(0, builder);

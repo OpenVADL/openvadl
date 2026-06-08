@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,19 +25,19 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ProcessorDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
   @Child
-  IsId implementedIsa;
+  public IsId implementedIsa;
   @Nullable
   @Child
-  IsId abi;
+  public IsId abi;
   @Child
-  List<Definition> definitions;
-  SourceLocation loc;
+  public List<Definition> definitions;
+  public SourceLocation loc;
 
-  ProcessorDefinition(IdentifierOrPlaceholder id, IsId implementedIsa, @Nullable IsId abi,
+  public ProcessorDefinition(IdentifierOrPlaceholder id, IsId implementedIsa, @Nullable IsId abi,
                       List<Definition> definitions, SourceLocation loc) {
     this.id = id;
     this.implementedIsa = implementedIsa;
@@ -47,7 +47,7 @@ public class ProcessorDefinition extends Definition implements IdentifiableNode 
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -56,12 +56,12 @@ public class ProcessorDefinition extends Definition implements IdentifiableNode 
     return (Identifier) id;
   }
 
-  InstructionSetDefinition implementedIsaNode() {
+  public InstructionSetDefinition implementedIsaNode() {
     return (InstructionSetDefinition) requireNonNull(implementedIsa.target());
   }
 
   @Nullable
-  ApplicationBinaryInterfaceDefinition abiNode() {
+  public ApplicationBinaryInterfaceDefinition abiNode() {
     if (abi == null) {
       return null;
     }
@@ -74,7 +74,7 @@ public class ProcessorDefinition extends Definition implements IdentifiableNode 
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
@@ -84,7 +84,7 @@ public class ProcessorDefinition extends Definition implements IdentifiableNode 
    * @return A stream of definitions.
    *     After the typechecker, this is known to consist of 0..1 elements.
    */
-  Stream<CpuProcessDefinition> findCpuProcDef(CpuProcessDefinition.ProcessKind kind) {
+  public Stream<CpuProcessDefinition> findCpuProcDef(CpuProcessDefinition.ProcessKind kind) {
     return definitions.stream()
         .filter(e -> e instanceof CpuProcessDefinition proc && proc.kind == kind)
         .map(e -> (CpuProcessDefinition) e);
@@ -96,20 +96,20 @@ public class ProcessorDefinition extends Definition implements IdentifiableNode 
    * @return A stream of definitions.
    *     After the typechecker, this is known to consist of 0..1 elements.
    */
-  Stream<CpuFunctionDefinition> findCpuFuncDef(CpuFunctionDefinition.BehaviorKind kind) {
+  public Stream<CpuFunctionDefinition> findCpuFuncDef(CpuFunctionDefinition.BehaviorKind kind) {
     return definitions.stream()
         .filter(e -> e instanceof CpuFunctionDefinition func && func.kind == kind)
         .map(e -> (CpuFunctionDefinition) e);
   }
 
-  Stream<CpuMemoryRegionDefinition> findMemoryRegionDefs() {
+  public Stream<CpuMemoryRegionDefinition> findMemoryRegionDefs() {
     return definitions.stream()
         .filter(e -> e instanceof CpuMemoryRegionDefinition)
         .map(e -> (CpuMemoryRegionDefinition) e);
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent)).append("processor ");
     id.prettyPrint(0, builder);

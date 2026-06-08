@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,19 +22,19 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ApplicationBinaryInterfaceDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
   @Child
-  IsId isa;
+  public IsId isa;
   @Child
-  List<Definition> definitions;
-  SourceLocation loc;
+  public List<Definition> definitions;
+  public SourceLocation loc;
 
   @Nullable
-  InstructionSetDefinition isaNode;
+  public InstructionSetDefinition isaNode;
 
-  ApplicationBinaryInterfaceDefinition(IdentifierOrPlaceholder id,
+  public ApplicationBinaryInterfaceDefinition(IdentifierOrPlaceholder id,
                                        IsId isa,
                                        List<Definition> definitions,
                                        SourceLocation loc) {
@@ -45,7 +45,7 @@ public class ApplicationBinaryInterfaceDefinition extends Definition implements 
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -55,12 +55,12 @@ public class ApplicationBinaryInterfaceDefinition extends Definition implements 
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent)).append("application binary interface ");
     id.prettyPrint(indent, builder);

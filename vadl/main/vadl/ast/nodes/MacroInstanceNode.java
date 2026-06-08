@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.utils.SourceLocation;
@@ -23,9 +23,9 @@ import vadl.utils.SourceLocation;
 public final class MacroInstanceNode extends Node
     implements IsMacroInstance, IsEncs, IsBinOp, IsUnOp {
 
-  MacroOrPlaceholder macro;
-  List<Node> arguments;
-  SourceLocation loc;
+  public MacroOrPlaceholder macro;
+  public List<Node> arguments;
+  public SourceLocation loc;
 
   public MacroInstanceNode(MacroOrPlaceholder macro, List<Node> arguments, SourceLocation loc) {
     this.macro = macro;
@@ -39,7 +39,7 @@ public final class MacroInstanceNode extends Node
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return macro.returnType();
   }
 

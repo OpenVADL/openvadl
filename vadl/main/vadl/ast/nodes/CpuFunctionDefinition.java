@@ -14,25 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CpuFunctionDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
-  BehaviorKind kind;
+  public Identifier id;
+  public BehaviorKind kind;
   @Nullable
   @Child
-  IsId stopWithReference;
+  public IsId stopWithReference;
   @Child
-  Expr expr;
-  SourceLocation loc;
+  public Expr expr;
+  public SourceLocation loc;
 
-  CpuFunctionDefinition(Identifier id, BehaviorKind kind, @Nullable IsId stopWithReference,
+  public CpuFunctionDefinition(Identifier id, BehaviorKind kind, @Nullable IsId stopWithReference,
                         Expr expr,
                         SourceLocation loc) {
     this.id = id;
@@ -43,7 +43,7 @@ public class CpuFunctionDefinition extends Definition implements IdentifiableNod
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -53,12 +53,12 @@ public class CpuFunctionDefinition extends Definition implements IdentifiableNod
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
@@ -99,10 +99,10 @@ public class CpuFunctionDefinition extends Definition implements IdentifiableNod
     return id;
   }
 
-  enum BehaviorKind {
+  public enum BehaviorKind {
     STOP("stop");
 
-    final String keyword;
+    public final String keyword;
 
     BehaviorKind(String keyword) {
       this.keyword = keyword;

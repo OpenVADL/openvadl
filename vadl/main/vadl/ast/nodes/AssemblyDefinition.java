@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,17 +22,17 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AssemblyDefinition extends Definition {
-  List<IdentifierOrPlaceholder> identifiers;
+  public List<IdentifierOrPlaceholder> identifiers;
   @Child
-  Expr expr;
-  SourceLocation loc;
+  public Expr expr;
+  public SourceLocation loc;
 
   // Can hold InstructionDefinition or PseudoInstructionDefinition
-  List<Definition> instructionNodes = new ArrayList<>();
+  public List<Definition> instructionNodes = new ArrayList<>();
 
-  AssemblyDefinition(List<IdentifierOrPlaceholder> identifiers, Expr expr,
+  public AssemblyDefinition(List<IdentifierOrPlaceholder> identifiers, Expr expr,
                      SourceLocation location) {
     this.identifiers = identifiers;
     this.expr = expr;
@@ -45,12 +45,12 @@ public class AssemblyDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("assembly ");
@@ -68,7 +68,7 @@ public class AssemblyDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

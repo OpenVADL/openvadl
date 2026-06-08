@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,22 +22,22 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class BlockStatement extends Statement {
   @Child
-  List<Statement> statements;
-  SourceLocation location;
+  public List<Statement> statements;
+  public SourceLocation location;
 
-  BlockStatement(List<Statement> statements, SourceLocation location) {
+  public BlockStatement(List<Statement> statements, SourceLocation location) {
     this.statements = statements;
     this.location = location;
   }
 
-  BlockStatement(SourceLocation location) {
+  public BlockStatement(SourceLocation location) {
     this(new ArrayList<>(), location);
   }
 
-  BlockStatement add(Statement statement) {
+  public BlockStatement add(Statement statement) {
     statements.add(statement);
     return this;
   }
@@ -74,7 +74,7 @@ public final class BlockStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

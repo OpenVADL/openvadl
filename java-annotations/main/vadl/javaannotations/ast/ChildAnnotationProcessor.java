@@ -65,7 +65,7 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
   private Filer filer;
   private Messager messager;
   private Types typeUtils;
-  private static final String packageName = "vadl.ast";
+  private static final String packageName = "vadl.ast.nodes";
 
   @Nullable
   JavaFileObject registryFile;

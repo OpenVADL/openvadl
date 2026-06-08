@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class TypedFormatField extends FormatField implements IdentifiableNode {
   @Child
-  TypeLiteral typeLiteral;
+  public TypeLiteral typeLiteral;
 
   // The range this field occupies in its parent format.
   @Nullable
-  FormatDefinition.BitRange range;
+  public FormatDefinition.BitRange range;
 
   public TypedFormatField(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral) {
     super(identifier);
@@ -46,7 +46,7 @@ public class TypedFormatField extends FormatField implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
@@ -81,7 +81,7 @@ public class TypedFormatField extends FormatField implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

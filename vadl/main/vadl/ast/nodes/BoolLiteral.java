@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class BoolLiteral extends Expr {
-  boolean value;
-  SourceLocation loc;
+  public boolean value;
+  public SourceLocation loc;
 
-  BoolLiteral(boolean value, SourceLocation loc) {
+  public BoolLiteral(boolean value, SourceLocation loc) {
     this.value = value;
     this.loc = loc;
   }
@@ -34,7 +34,7 @@ public class BoolLiteral extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.BOOL;
   }
 
@@ -44,7 +44,7 @@ public class BoolLiteral extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

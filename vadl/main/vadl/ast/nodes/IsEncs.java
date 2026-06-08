@@ -14,14 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public sealed interface IsEncs permits EncodingDefinition.EncsNode,
     EncodingDefinition.EncodingField, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
   public SourceLocation location();
 
-  void prettyPrint(int indent, StringBuilder builder);
+  public void prettyPrint(int indent, StringBuilder builder);
 }

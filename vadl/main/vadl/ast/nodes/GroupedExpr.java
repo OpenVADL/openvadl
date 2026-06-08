@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class GroupedExpr extends Expr {
   @Child
-  List<Expr> expressions;
-  SourceLocation loc;
+  public List<Expr> expressions;
+  public SourceLocation loc;
 
   public GroupedExpr(List<Expr> expressions, SourceLocation loc) {
     this.expressions = expressions;
@@ -32,7 +32,7 @@ public class GroupedExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     // This node should never leave the parser and therefore never meet a visitor.
     return visitor.visit(this);
   }
@@ -43,12 +43,12 @@ public class GroupedExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("(");
     var isFirst = true;
     for (var expr : expressions) {

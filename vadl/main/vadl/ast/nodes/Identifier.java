@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
-  String name;
-  SourceLocation loc;
+  public String name;
+  public SourceLocation loc;
 
   /**
    * The node this identifier refers to.
    */
   @Nullable
-  Node target;
+  public Node target;
 
   public Identifier(String name, SourceLocation location) {
     this.loc = location;
@@ -41,7 +41,7 @@ public final class Identifier extends Expr implements IsId, IdentifierOrPlacehol
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ID;
   }
 
@@ -85,7 +85,7 @@ public final class Identifier extends Expr implements IsId, IdentifierOrPlacehol
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

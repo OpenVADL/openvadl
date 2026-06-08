@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class Parameter extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder name;
+  public IdentifierOrPlaceholder name;
   @Child
-  TypeLiteral typeLiteral;
+  public TypeLiteral typeLiteral;
 
   public Parameter(IdentifierOrPlaceholder name, TypeLiteral typeLiteral) {
     this.name = name;
@@ -43,18 +43,18 @@ public class Parameter extends Definition implements IdentifiableNode, TypedNode
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     name.prettyPrint(indent, builder);
     builder.append(" : ");
     typeLiteral.prettyPrint(indent, builder);
   }
 
-  static void prettyPrintMultiple(int indent, List<Parameter> parameters,
+  public static void prettyPrintMultiple(int indent, List<Parameter> parameters,
                                   StringBuilder builder) {
     if (parameters.isEmpty()) {
       return;
@@ -89,7 +89,7 @@ public class Parameter extends Definition implements IdentifiableNode, TypedNode
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

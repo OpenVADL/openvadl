@@ -14,29 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class BinaryExpr extends Expr {
   @Child
-  Expr left;
-  IsBinOp operator;
+  public Expr left;
+  public IsBinOp operator;
   @Child
-  Expr right;
-  boolean hasBeenReordered = false;
+  public Expr right;
+  public boolean hasBeenReordered = false;
 
-  BinaryExpr(Expr left, IsBinOp operator, Expr right) {
+  public BinaryExpr(Expr left, IsBinOp operator, Expr right) {
     this.left = left;
     this.operator = operator;
     this.right = right;
   }
 
-  static @Nullable BinaryExpr root = null;
+  public static @Nullable BinaryExpr root = null;
 
   /**
    * This method reorders a left-sided source expression tree
@@ -57,7 +57,7 @@ public class BinaryExpr extends Expr {
    * @param expr A left-sided binary expression tree.
    * @return the root of the expression tree in operator precedence order
    */
-  static BinaryExpr reorder(BinaryExpr expr) {
+  public static BinaryExpr reorder(BinaryExpr expr) {
     root = expr;
     transformRecRightToLeft(null, expr);
     if (root == null) {
@@ -67,7 +67,7 @@ public class BinaryExpr extends Expr {
   }
 
   @SuppressWarnings("EnumOrdinal")
-  static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
+  public static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
     par.hasBeenReordered = true;
     while (par.left instanceof BinaryExpr curr) {
       if (par.operator().precedence.ordinal() > curr.operator().precedence.ordinal()) {
@@ -84,12 +84,12 @@ public class BinaryExpr extends Expr {
     return par;
   }
 
-  Operator operator() {
+  public Operator operator() {
     return ((BinOp) operator).operator;
   }
 
   @Override
-  Precedence precedence() {
+  public Precedence precedence() {
     return operator().precedence;
   }
 
@@ -99,13 +99,13 @@ public class BinaryExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     wrapInGroup(parentPrec, builder, false, () -> {
       left.prettyPrintExpr(indent, builder, precedence());
       builder.append(" ");
@@ -116,7 +116,7 @@ public class BinaryExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

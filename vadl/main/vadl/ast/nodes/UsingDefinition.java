@@ -14,20 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class UsingDefinition extends Definition implements IdentifiableNode {
-  final IdentifierOrPlaceholder id;
+  public final IdentifierOrPlaceholder id;
   @Child
-  final TypeLiteral typeLiteral;
-  final SourceLocation loc;
+  public final TypeLiteral typeLiteral;
+  public final SourceLocation loc;
 
-  UsingDefinition(IdentifierOrPlaceholder id, TypeLiteral typeLiteral, SourceLocation location) {
+  public UsingDefinition(IdentifierOrPlaceholder id, TypeLiteral typeLiteral,
+                         SourceLocation location) {
     this.id = id;
     this.typeLiteral = typeLiteral;
     this.loc = location;
@@ -45,12 +46,12 @@ public class UsingDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("using ");
     id.prettyPrint(indent, builder);
@@ -60,7 +61,7 @@ public class UsingDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

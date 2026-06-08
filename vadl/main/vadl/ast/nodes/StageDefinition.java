@@ -14,23 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class StageDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
   @Child
-  List<StageOutputDefinition> outputs;
+  public List<StageOutputDefinition> outputs;
   @Child
-  Statement statement;
-  SourceLocation loc;
+  public Statement statement;
+  public SourceLocation loc;
 
-  StageDefinition(IdentifierOrPlaceholder id,
+  public StageDefinition(IdentifierOrPlaceholder id,
                   List<StageOutputDefinition> outputs,
                   Statement statement,
                   SourceLocation loc) {
@@ -41,7 +41,7 @@ public class StageDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -51,12 +51,12 @@ public class StageDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("stage ");

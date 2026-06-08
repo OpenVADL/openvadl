@@ -16,7 +16,6 @@
 
 package vadl.ast;
 
-
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
@@ -37,6 +36,29 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.ast.nodes.AbiSequenceDefinition;
+import vadl.ast.nodes.AliasDefinition;
+import vadl.ast.nodes.AnnotationDefinition;
+import vadl.ast.nodes.AsmDescriptionDefinition;
+import vadl.ast.nodes.CallIndexExpr;
+import vadl.ast.nodes.CounterDefinition;
+import vadl.ast.nodes.CpuMemoryRegionDefinition;
+import vadl.ast.nodes.Definition;
+import vadl.ast.nodes.DerivedFormatField;
+import vadl.ast.nodes.EncodingDefinition;
+import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.FormatField;
+import vadl.ast.nodes.GroupDefinition;
+import vadl.ast.nodes.Identifier;
+import vadl.ast.nodes.InstructionDefinition;
+import vadl.ast.nodes.MemoryDefinition;
+import vadl.ast.nodes.Node;
+import vadl.ast.nodes.OperationDefinition;
+import vadl.ast.nodes.ProcessorDefinition;
+import vadl.ast.nodes.RegisterDefinition;
+import vadl.ast.nodes.RelocationDefinition;
+import vadl.ast.nodes.StringLiteral;
+import vadl.ast.nodes.TypedNode;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
@@ -46,8 +68,6 @@ import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.BitsType;
 import vadl.types.Type;
 import vadl.utils.Pair;
-import vadl.utils.SourceLocation;
-import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
@@ -1030,90 +1050,7 @@ interface AnnotationDeclaration {
 
 }
 
-/**
- * A Annotation in Vadl keeps state and knows how to resolve and type check itself. Further checks
- * can be defined on the {@link AnnotationGroupProvider} and who also knows how to apply the
- * annotation to the VIAM.
- *
- * <p>Every Annotation also has a group it belongs to, though it might be the only annotation in
- * the group.
- */
-abstract class Annotation implements AnnotationDeclaration, WithLocation {
-  @LazyInit
-  String name;
 
-  @LazyInit
-  AnnotationGroupProvider groupProvider;
-
-  @LazyInit
-  AnnotationDefinition definition;
-
-  protected boolean allowMultiple;
-
-  public Annotation() {
-  }
-
-  public Annotation(boolean allowMultiple) {
-    this.allowMultiple = allowMultiple;
-  }
-
-  /**
-   * Called by the symbol resolver to resolve parts of the annotation.
-   *
-   * @param definition to be resolved.
-   * @param resolver   who resolves the annotation.
-   */
-  abstract void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver);
-
-  /**
-   * Called by the type checker to type check the annotation.
-   *
-   * @param definition  to be type checked.
-   * @param typeChecker who type checks the annotation.
-   */
-  abstract void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker);
-
-  @Override
-  public String name() {
-    return name;
-  }
-
-  @Override
-  public SourceLocation location() {
-    return definition.location();
-  }
-
-  protected void verifyValuesCntBetween(AnnotationDefinition definition, int min, int max) {
-    if (definition.values.size() < min || definition.values.size() > max) {
-      throw error("Invalid annotation arguments", definition)
-          .locationDescription(definition, "Expected between %d and %d arguments but got %d", min,
-              max,
-              definition.values.size())
-          .build();
-    }
-  }
-
-  protected void verifyValuesCnt(AnnotationDefinition definition, int cnt) {
-    if (definition.values.size() != cnt) {
-      throw error("Invalid annotation arguments", definition)
-          .locationDescription(definition, "Expected %d arguments but got %d", cnt,
-              definition.values.size())
-          .build();
-    }
-  }
-
-  protected void verifyValuesNonEmpty(AnnotationDefinition definition) {
-    if (definition.values.isEmpty()) {
-      throw error("Invalid annotation arguments", definition)
-          .locationDescription(definition, "Expected at leat one argument but got none")
-          .build();
-    }
-  }
-
-  protected boolean allowMultiple() {
-    return false;
-  }
-}
 
 // ---------- GENERAL ANNOTATION CLASSES ----------
 

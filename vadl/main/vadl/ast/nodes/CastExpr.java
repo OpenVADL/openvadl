@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -27,7 +27,7 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CastExpr extends Expr {
   @Child
-  Expr value;
+  public Expr value;
 
   /**
    * The typeLiteral.
@@ -37,9 +37,9 @@ public class CastExpr extends Expr {
    */
   @Nullable
   @Child
-  TypeLiteral typeLiteral;
+  public TypeLiteral typeLiteral;
 
-  SourceLocation location;
+  public SourceLocation location;
 
   public CastExpr(Expr value, TypeLiteral typeLiteral) {
     this.value = value;
@@ -60,7 +60,7 @@ public class CastExpr extends Expr {
   }
 
   @Override
-  Precedence precedence() {
+  public Precedence precedence() {
     return Precedence.CastOp;
   }
 
@@ -70,12 +70,12 @@ public class CastExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     wrapInGroup(parentPrec, builder, true, () -> {
       value.prettyPrintExpr(indent, builder, Precedence.CastOp);
       builder.append(" as ");
@@ -88,7 +88,7 @@ public class CastExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public interface SyntaxType {
-  boolean isSubTypeOf(SyntaxType other);
+  public boolean isSubTypeOf(SyntaxType other);
 
-  String print();
+  public String print();
 }

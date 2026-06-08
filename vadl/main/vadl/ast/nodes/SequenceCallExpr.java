@@ -14,30 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class SequenceCallExpr extends Expr {
 
   @Child
-  IsCallExpr target;
+  public IsCallExpr target;
   @Nullable
   @Child
-  Expr range;
-  SourceLocation loc;
+  public Expr range;
+  public SourceLocation loc;
 
-  SequenceCallExpr(IsCallExpr target, @Nullable Expr range, SourceLocation loc) {
+  public SequenceCallExpr(IsCallExpr target, @Nullable Expr range, SourceLocation loc) {
     this.target = target;
     this.range = range;
     this.loc = loc;
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -47,12 +47,12 @@ public class SequenceCallExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     target.prettyPrint(0, builder);
     if (range != null) {
       builder.append("{");

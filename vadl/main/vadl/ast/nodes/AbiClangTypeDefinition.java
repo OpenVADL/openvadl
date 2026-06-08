@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AbiClangTypeDefinition extends Definition {
-  TypeName typeName;
-  TypeSize typeSize;
-  SourceLocation loc;
+  public TypeName typeName;
+  public TypeSize typeSize;
+  public SourceLocation loc;
 
   @Override
   public int hashCode() {
@@ -44,7 +44,7 @@ public class AbiClangTypeDefinition extends Definition {
         && typeSize == that.typeSize;
   }
 
-  enum TypeName {
+  public enum TypeName {
     // Type of the size_t in C.
     SIZE_TYPE("size_t type"),
     INT_MAX_TYPE("int max type");
@@ -56,7 +56,7 @@ public class AbiClangTypeDefinition extends Definition {
     }
   }
 
-  enum TypeSize {
+  public enum TypeSize {
     UNSIGNED_INT("unsigned int"),
     SIGNED_INT("signed int"),
     UNSIGNED_LONG("unsigned long"),
@@ -78,7 +78,7 @@ public class AbiClangTypeDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -88,12 +88,12 @@ public class AbiClangTypeDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent)).append(typeName.keyword)
         .append(" = ").append(typeSize.keyword);
   }

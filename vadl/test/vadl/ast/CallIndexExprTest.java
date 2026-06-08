@@ -16,7 +16,6 @@
 
 package vadl.ast;
 
-
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import java.util.Arrays;

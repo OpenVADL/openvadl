@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class Operator {
-  final String symbol;
-  final Precedence precedence;
+  public final String symbol;
+  public final Precedence precedence;
 
   private Operator(String symbol, Precedence precedence) {
     this.symbol = symbol;

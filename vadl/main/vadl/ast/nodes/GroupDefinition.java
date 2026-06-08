@@ -14,24 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class GroupDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder name;
+  public IdentifierOrPlaceholder name;
   @Nullable
   @Child
-  TypeLiteral type;
+  public TypeLiteral type;
   @Child
-  Group.Sequence groupSequence;
-  SourceLocation loc;
+  public Group.Sequence groupSequence;
+  public SourceLocation loc;
 
-  GroupDefinition(IdentifierOrPlaceholder name, @Nullable TypeLiteral type,
+  public GroupDefinition(IdentifierOrPlaceholder name, @Nullable TypeLiteral type,
                   Group.Sequence groupSequence, SourceLocation loc) {
     this.name = name;
     this.type = type;
@@ -50,12 +50,12 @@ public class GroupDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("group ");
@@ -70,7 +70,7 @@ public class GroupDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

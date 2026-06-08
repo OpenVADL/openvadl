@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
@@ -23,12 +23,12 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AsmModifierDefinition extends Definition {
   @Child
-  Expr stringLiteral;
+  public Expr stringLiteral;
   @Child
-  Identifier isa;
+  public Identifier isa;
   @Child
-  Identifier relocation;
-  SourceLocation loc;
+  public Identifier relocation;
+  public SourceLocation loc;
 
   public AsmModifierDefinition(Expr stringLiteral, Identifier isa, Identifier relocation,
                                SourceLocation loc) {
@@ -39,7 +39,7 @@ public class AsmModifierDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -49,12 +49,12 @@ public class AsmModifierDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     stringLiteral.prettyPrint(0, builder);
     builder.append(" -> ");

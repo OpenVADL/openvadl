@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import vadl.utils.SourceLocation;
 import vadl.utils.VirtualFileSystem;
 import vadl.error.Diagnostic;
+import vadl.ast.nodes.*;
 import static vadl.error.Diagnostic.error;
 
 /**

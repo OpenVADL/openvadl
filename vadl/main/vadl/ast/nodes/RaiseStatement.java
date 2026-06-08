@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
@@ -22,17 +22,17 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class RaiseStatement extends Statement {
 
   @Child
-  Statement statement;
-  SourceLocation location;
+  public Statement statement;
+  public SourceLocation location;
 
   @LazyInit
-  List<String> viamId;
+  public List<String> viamId;
 
-  RaiseStatement(Statement statement, SourceLocation location) {
+  public RaiseStatement(Statement statement, SourceLocation location) {
     this.statement = statement;
     this.location = location;
   }
@@ -43,7 +43,7 @@ public final class RaiseStatement extends Statement {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("raise ");
     statement.prettyPrint(indent + 1, builder);
   }
@@ -66,7 +66,7 @@ public final class RaiseStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

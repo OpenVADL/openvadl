@@ -32,6 +32,59 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.ast.nodes.AliasDefinition;
+import vadl.ast.nodes.AnnotationDefinition;
+import vadl.ast.nodes.ApplicationBinaryInterfaceDefinition;
+import vadl.ast.nodes.AsmDescriptionDefinition;
+import vadl.ast.nodes.AsmDirectiveDefinition;
+import vadl.ast.nodes.AsmGrammarAlternativesDefinition;
+import vadl.ast.nodes.AsmGrammarElementDefinition;
+import vadl.ast.nodes.AsmGrammarLiteralDefinition;
+import vadl.ast.nodes.AsmGrammarLocalVarDefinition;
+import vadl.ast.nodes.AsmGrammarTypeDefinition;
+import vadl.ast.nodes.AsmModifierDefinition;
+import vadl.ast.nodes.AssemblyDefinition;
+import vadl.ast.nodes.BinOp;
+import vadl.ast.nodes.CpuMemoryRegionDefinition;
+import vadl.ast.nodes.Definition;
+import vadl.ast.nodes.EncodingDefinition;
+import vadl.ast.nodes.EnumerationDefinition;
+import vadl.ast.nodes.ExistsInExpr;
+import vadl.ast.nodes.ExistsInThenExpr;
+import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.ForallExpr;
+import vadl.ast.nodes.ForallStatement;
+import vadl.ast.nodes.ForallThenExpr;
+import vadl.ast.nodes.FormatDefinition;
+import vadl.ast.nodes.FormatField;
+import vadl.ast.nodes.FunctionDefinition;
+import vadl.ast.nodes.IdentifiableNode;
+import vadl.ast.nodes.Identifier;
+import vadl.ast.nodes.IdentifierOrPlaceholder;
+import vadl.ast.nodes.IdentifierPath;
+import vadl.ast.nodes.ImportDefinition;
+import vadl.ast.nodes.InstructionCallStatement;
+import vadl.ast.nodes.InstructionDefinition;
+import vadl.ast.nodes.InstructionSetDefinition;
+import vadl.ast.nodes.IsId;
+import vadl.ast.nodes.LetExpr;
+import vadl.ast.nodes.LetStatement;
+import vadl.ast.nodes.Macro;
+import vadl.ast.nodes.MemoryDefinition;
+import vadl.ast.nodes.MicroArchitectureDefinition;
+import vadl.ast.nodes.ModelDefinition;
+import vadl.ast.nodes.ModelTypeDefinition;
+import vadl.ast.nodes.Node;
+import vadl.ast.nodes.Parameter;
+import vadl.ast.nodes.ProcessorDefinition;
+import vadl.ast.nodes.PseudoInstructionDefinition;
+import vadl.ast.nodes.RecordTypeDefinition;
+import vadl.ast.nodes.RecursiveAstVisitor;
+import vadl.ast.nodes.RelocationDefinition;
+import vadl.ast.nodes.Statement;
+import vadl.ast.nodes.SyntaxType;
+import vadl.ast.nodes.TypeLiteral;
+import vadl.ast.nodes.UsingDefinition;
 import vadl.error.Diagnostic;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
@@ -40,7 +93,8 @@ import vadl.utils.Levenshtein;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
-class SymbolTable {
+@SuppressWarnings("MissingJavadocType")
+public class SymbolTable {
 
   // Collecting symbols is expensive and providing many suggestions makes levenshtein slower.
   // FIXME: Increase this limit if once the levenshtein algorightm is faster

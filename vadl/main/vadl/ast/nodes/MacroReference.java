@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MacroReference extends Node {
-  Macro macro;
-  ProjectionType type;
-  SourceLocation sourceLocation;
+  public Macro macro;
+  public ProjectionType type;
+  public SourceLocation sourceLocation;
 
-  MacroReference(Macro macro, ProjectionType type, SourceLocation sourceLocation) {
+  public MacroReference(Macro macro, ProjectionType type, SourceLocation sourceLocation) {
     this.macro = macro;
     this.type = type;
     this.sourceLocation = sourceLocation;
@@ -36,12 +36,12 @@ public class MacroReference extends Node {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return type;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     macro.name().prettyPrint(indent, builder);
   }
 }

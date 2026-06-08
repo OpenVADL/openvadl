@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class DefinitionList extends Definition {
 
   @Child
-  List<Definition> items;
-  SyntaxType syntaxType;
-  SourceLocation location;
+  public List<Definition> items;
+  public SyntaxType syntaxType;
+  public SourceLocation location;
 
-  DefinitionList(List<Definition> items, SyntaxType syntaxType, SourceLocation location) {
+  public DefinitionList(List<Definition> items, SyntaxType syntaxType, SourceLocation location) {
     this.items = items;
     this.location = location;
     this.syntaxType = syntaxType;
@@ -40,17 +40,17 @@ public class DefinitionList extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return syntaxType;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     items.forEach(item -> item.prettyPrint(indent, builder));
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

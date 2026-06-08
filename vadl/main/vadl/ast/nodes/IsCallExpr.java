@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import javax.annotation.Nullable;
 import vadl.utils.WithLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public sealed interface IsCallExpr extends WithLocation permits CallIndexExpr, IsSymExpr {
-  IsId path();
+  public IsId path();
 
   @Nullable
-  Expr size();
+  public Expr size();
 
-  void prettyPrint(int indent, StringBuilder builder);
+  public void prettyPrint(int indent, StringBuilder builder);
 }

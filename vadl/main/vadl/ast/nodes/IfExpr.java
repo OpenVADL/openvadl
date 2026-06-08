@@ -14,23 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class IfExpr extends Expr {
   @Child
-  Expr condition;
+  public Expr condition;
   @Child
-  Expr thenExpr;
+  public Expr thenExpr;
   @Child
-  Expr elseExpr;
-  SourceLocation location;
+  public Expr elseExpr;
+  public SourceLocation location;
 
-  IfExpr(Expr condition, Expr thenExpr, Expr elseExpr, SourceLocation location) {
+  public IfExpr(Expr condition, Expr thenExpr, Expr elseExpr, SourceLocation location) {
     this.condition = condition;
     this.thenExpr = thenExpr;
     this.elseExpr = elseExpr;
@@ -43,12 +43,12 @@ public class IfExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent));
     builder.append("if ");
     condition.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
@@ -65,7 +65,7 @@ public class IfExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

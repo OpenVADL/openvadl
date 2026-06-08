@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -26,35 +26,35 @@ import vadl.utils.SourceLocation;
 public class AsmGrammarElementDefinition extends Definition {
   @Nullable
   @Child
-  AsmGrammarLocalVarDefinition localVar;
+  public AsmGrammarLocalVarDefinition localVar;
   @Nullable
   @Child
-  Identifier attribute;
-  Boolean isPlusEqualsAttributeAssign;
-  Boolean isAttributeLocalVar = false;
+  public Identifier attribute;
+  public Boolean isPlusEqualsAttributeAssign;
+  public Boolean isAttributeLocalVar = false;
   @Nullable
   @Child
-  AsmGrammarLiteralDefinition asmLiteral;
+  public AsmGrammarLiteralDefinition asmLiteral;
   @Nullable
   @Child
-  AsmGrammarAlternativesDefinition groupAlternatives;
+  public AsmGrammarAlternativesDefinition groupAlternatives;
   @Nullable
   @Child
-  AsmGrammarAlternativesDefinition optionAlternatives;
+  public AsmGrammarAlternativesDefinition optionAlternatives;
   @Nullable
   @Child
-  AsmGrammarAlternativesDefinition repetitionAlternatives;
+  public AsmGrammarAlternativesDefinition repetitionAlternatives;
   @Nullable
   @Child
-  Expr semanticPredicate;
+  public Expr semanticPredicate;
   @Nullable
   @Child
-  AsmGrammarTypeDefinition groupAsmTypeDefinition;
-  SourceLocation loc;
+  public AsmGrammarTypeDefinition groupAsmTypeDefinition;
+  public SourceLocation loc;
 
   @Nullable
-  AsmType asmType;
-  Boolean isWithinRepetitionBlock = false;
+  public AsmType asmType;
+  public Boolean isWithinRepetitionBlock = false;
 
   public AsmGrammarElementDefinition(@Nullable AsmGrammarLocalVarDefinition localVar,
                                      @Nullable Identifier attribute,
@@ -80,11 +80,11 @@ public class AsmGrammarElementDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
-  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
+  public <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -94,11 +94,11 @@ public class AsmGrammarElementDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
-  String symbol() {
+  public String symbol() {
     return isPlusEqualsAttributeAssign ? "+=" : "=";
   }
 
@@ -114,7 +114,7 @@ public class AsmGrammarElementDefinition extends Definition {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
 
     if (localVar != null) {

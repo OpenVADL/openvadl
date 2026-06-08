@@ -14,22 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CacheDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder id;
+  public IdentifierOrPlaceholder id;
   @Child
-  TypeLiteral sourceType;
+  public TypeLiteral sourceType;
   @Child
-  TypeLiteral targetType;
-  SourceLocation loc;
+  public TypeLiteral targetType;
+  public SourceLocation loc;
 
-  CacheDefinition(IdentifierOrPlaceholder id, TypeLiteral sourceType, TypeLiteral targetType,
+  public CacheDefinition(IdentifierOrPlaceholder id, TypeLiteral sourceType, TypeLiteral targetType,
                   SourceLocation loc) {
     this.id = id;
     this.sourceType = sourceType;
@@ -38,7 +38,7 @@ public class CacheDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -48,12 +48,12 @@ public class CacheDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("cache ");

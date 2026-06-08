@@ -14,24 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class ForallStatement extends Statement {
   @Child
-  List<ForallIndex> indices;
+  public List<ForallIndex> indices;
 
   @Child
-  Statement body;
+  public Statement body;
 
-  SourceLocation loc;
+  public SourceLocation loc;
 
-  ForallStatement(List<ForallIndex> indices, Statement body, SourceLocation loc) {
+  public ForallStatement(List<ForallIndex> indices, Statement body, SourceLocation loc) {
     this.indices = indices;
     this.body = body;
     this.loc = loc;
@@ -43,7 +43,7 @@ public final class ForallStatement extends Statement {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("forall ");
     var isFirst = true;
@@ -76,7 +76,7 @@ public final class ForallStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

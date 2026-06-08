@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public abstract class FormatField extends Definition {
-  IdentifierOrPlaceholder identifier;
+  public IdentifierOrPlaceholder identifier;
 
-  Identifier identifier() {
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 

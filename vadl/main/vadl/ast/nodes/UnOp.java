@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class UnOp extends Node implements IsUnOp {
 
-  UnaryOperator operator;
-  SourceLocation location;
+  public UnaryOperator operator;
+  public SourceLocation location;
 
-  UnOp(UnaryOperator operator, SourceLocation location) {
+  public UnOp(UnaryOperator operator, SourceLocation location) {
     this.operator = operator;
     this.location = location;
   }
@@ -36,7 +36,7 @@ public final class UnOp extends Node implements IsUnOp {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.UN_OP;
   }
 

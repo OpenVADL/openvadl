@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,15 +25,15 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder identifier;
+  public IdentifierOrPlaceholder identifier;
   @Child
-  TypeLiteral addressTypeLiteral;
+  public TypeLiteral addressTypeLiteral;
   @Child
-  TypeLiteral dataTypeLiteral;
-  SourceLocation loc;
+  public TypeLiteral dataTypeLiteral;
+  public SourceLocation loc;
 
   @Nullable
-  ConcreteRelationType type;
+  public ConcreteRelationType type;
 
   public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressTypeLiteral,
                           TypeLiteral dataTypeLiteral, SourceLocation loc) {
@@ -54,12 +54,12 @@ public class MemoryDefinition extends Definition implements IdentifiableNode, Ty
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("memory ");
@@ -72,7 +72,7 @@ public class MemoryDefinition extends Definition implements IdentifiableNode, Ty
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

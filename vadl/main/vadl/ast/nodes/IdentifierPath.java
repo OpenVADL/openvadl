@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,13 +29,13 @@ public final class IdentifierPath extends Expr implements IsId {
    * the last segment is an identifier in the (nested) namespace.
    * Size has to be at least 1
    */
-  List<IdentifierOrPlaceholder> segments;
+  public List<IdentifierOrPlaceholder> segments;
 
   /**
    * The node this identifier refers to.
    */
   @Nullable
-  Node target;
+  public Node target;
 
   public IdentifierPath(List<IdentifierOrPlaceholder> segments) {
     this.segments = segments;
@@ -49,7 +49,7 @@ public final class IdentifierPath extends Expr implements IsId {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ID;
   }
 
@@ -94,7 +94,7 @@ public final class IdentifierPath extends Expr implements IsId {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

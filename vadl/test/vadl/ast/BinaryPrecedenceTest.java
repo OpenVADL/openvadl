@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,11 @@ import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.ast.nodes.BinaryExpr;
+import vadl.ast.nodes.ConstantDefinition;
+import vadl.ast.nodes.Definition;
+import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.Node;
 
 public class BinaryPrecedenceTest {
 

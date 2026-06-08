@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -26,38 +26,38 @@ import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AliasDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder id;
-  AliasKind kind;
+  public IdentifierOrPlaceholder id;
+  public AliasKind kind;
   @Nullable
   @Child
-  TypeLiteral aliasType;
+  public TypeLiteral aliasType;
   @Nullable
   @Child
-  TypeLiteral targetType;
+  public TypeLiteral targetType;
   @Child
-  Expr value;
-  SourceLocation loc;
+  public Expr value;
+  public SourceLocation loc;
 
   @Nullable
-  Type type;
+  public Type type;
 
   /**
    * Set by the typechecker, the register file or register the alias points to.
    */
   @Nullable
-  Definition computedTarget;
+  public Definition computedTarget;
   /**
    * Set by the typechecker, the arguments used to pre-access the computedTarget.
    */
   @Nullable
-  List<Expr> computedFixedArgs;
+  public List<Expr> computedFixedArgs;
 
   @Nullable
-  Constant.BitSlice slice;
+  public Constant.BitSlice slice;
 
-  AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
+  public AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
                   @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,
                   SourceLocation location) {
     this.id = id;
@@ -85,12 +85,12 @@ public class AliasDefinition extends Definition implements IdentifiableNode, Typ
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent)).append("alias ");
     switch (kind) {
@@ -114,7 +114,7 @@ public class AliasDefinition extends Definition implements IdentifiableNode, Typ
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -148,7 +148,7 @@ public class AliasDefinition extends Definition implements IdentifiableNode, Typ
     return result;
   }
 
-  enum AliasKind {
+  public enum AliasKind {
     REGISTER, PROGRAM_COUNTER
   }
 }

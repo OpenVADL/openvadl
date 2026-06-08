@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,18 +22,18 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class EncodingDefinition extends Definition {
   @Child
-  IdentifierOrPlaceholder instrIdentifier;
+  public IdentifierOrPlaceholder instrIdentifier;
   @Child
-  EncsNode encodings;
-  SourceLocation loc;
+  public EncsNode encodings;
+  public SourceLocation loc;
 
   @Nullable
-  FormatDefinition formatNode;
+  public FormatDefinition formatNode;
 
-  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, EncsNode encodings,
+  public EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, EncsNode encodings,
                      SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
     this.encodings = encodings;
@@ -50,12 +50,12 @@ public class EncodingDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("encoding ");
@@ -67,7 +67,7 @@ public class EncodingDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -95,12 +95,12 @@ public class EncodingDefinition extends Definition {
     return result;
   }
 
-  static final class EncsNode extends Node implements IsEncs {
+  public static final class EncsNode extends Node implements IsEncs {
     @Child
-    List<IsEncs> items;
-    SourceLocation loc;
+    public List<IsEncs> items;
+    public SourceLocation loc;
 
-    EncsNode(List<IsEncs> items, SourceLocation loc) {
+    public EncsNode(List<IsEncs> items, SourceLocation loc) {
       this.items = items;
       this.loc = loc;
     }
@@ -112,7 +112,7 @@ public class EncodingDefinition extends Definition {
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.ENCS;
     }
 
@@ -147,18 +147,18 @@ public class EncodingDefinition extends Definition {
     }
   }
 
-  static final class EncodingField extends Node implements IsEncs {
+  public static final class EncodingField extends Node implements IsEncs {
     @Child
-    final IdentifierOrPlaceholder field;
+    public final IdentifierOrPlaceholder field;
     @Child
-    Expr value;
+    public Expr value;
 
-    EncodingField(IdentifierOrPlaceholder field, Expr value) {
+    public EncodingField(IdentifierOrPlaceholder field, Expr value) {
       this.field = field;
       this.value = value;
     }
 
-    Identifier identifier() {
+    public Identifier identifier() {
       return (Identifier) field;
     }
 
@@ -168,7 +168,7 @@ public class EncodingDefinition extends Definition {
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 

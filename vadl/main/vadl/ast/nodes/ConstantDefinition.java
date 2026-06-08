@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -22,25 +22,25 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ConstantDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder identifier;
+  public IdentifierOrPlaceholder identifier;
 
   @Child
   @Nullable
-  TypeLiteral typeLiteral;
+  public TypeLiteral typeLiteral;
 
   @Child
-  Expr value;
-  SourceLocation loc;
+  public Expr value;
+  public SourceLocation loc;
 
   /**
    * Set by the typechecker, the actual value that will be used here.
    */
   @Nullable
-  Object evaluatedValue;
+  public Object evaluatedValue;
 
-  ConstantDefinition(IdentifierOrPlaceholder identifier, @Nullable TypeLiteral typeLiteral,
+  public ConstantDefinition(IdentifierOrPlaceholder identifier, @Nullable TypeLiteral typeLiteral,
                      Expr value,
                      SourceLocation location) {
     this.identifier = identifier;
@@ -60,12 +60,12 @@ public class ConstantDefinition extends Definition implements IdentifiableNode, 
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("constant %s".formatted(identifier().name));
@@ -83,7 +83,7 @@ public class ConstantDefinition extends Definition implements IdentifiableNode, 
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

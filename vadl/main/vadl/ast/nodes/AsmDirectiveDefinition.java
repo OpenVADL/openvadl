@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
@@ -23,10 +23,10 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AsmDirectiveDefinition extends Definition {
   @Child
-  Expr stringLiteral;
+  public Expr stringLiteral;
   @Child
-  Identifier builtinDirective;
-  SourceLocation loc;
+  public Identifier builtinDirective;
+  public SourceLocation loc;
 
   public AsmDirectiveDefinition(Expr stringLiteral, Identifier builtinDirective,
                                 SourceLocation loc) {
@@ -36,7 +36,7 @@ public class AsmDirectiveDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -46,12 +46,12 @@ public class AsmDirectiveDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     stringLiteral.prettyPrint(0, builder);
     builder.append(" -> ");

@@ -14,25 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class IfStatement extends Statement {
   @Child
-  Expr condition;
+  public Expr condition;
   @Child
-  Statement thenStmt;
+  public Statement thenStmt;
   @Nullable
   @Child
-  Statement elseStmt;
-  SourceLocation location;
+  public Statement elseStmt;
+  public SourceLocation location;
 
-  IfStatement(Expr condition, Statement thenStmt, @Nullable Statement elseStmt,
+  public IfStatement(Expr condition, Statement thenStmt, @Nullable Statement elseStmt,
               SourceLocation location) {
     this.condition = condition;
     this.thenStmt = thenStmt;
@@ -81,7 +81,7 @@ public final class IfStatement extends Statement {
   }
 
   @Override
-  <R> R accept(StatementVisitor<R> visitor) {
+  public <R> R accept(StatementVisitor<R> visitor) {
     return visitor.visit(this);
   }
 }

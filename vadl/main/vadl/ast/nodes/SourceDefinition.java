@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class SourceDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
-  String source;
-  SourceLocation loc;
+  public Identifier id;
+  public String source;
+  public SourceLocation loc;
 
-  SourceDefinition(Identifier id, String source, SourceLocation loc) {
+  public SourceDefinition(Identifier id, String source, SourceLocation loc) {
     this.id = id;
     this.source = source;
     this.loc = loc;
@@ -37,7 +37,7 @@ public class SourceDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -47,12 +47,12 @@ public class SourceDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("source ");
     id.prettyPrint(0, builder);

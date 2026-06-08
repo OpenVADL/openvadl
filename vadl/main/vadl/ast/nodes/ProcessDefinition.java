@@ -14,27 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ProcessDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder name;
+  public IdentifierOrPlaceholder name;
   @Child
-  List<TemplateParam> templateParams;
+  public List<TemplateParam> templateParams;
   @Child
-  List<Parameter> inputs;
+  public List<Parameter> inputs;
   @Child
-  List<Parameter> outputs;
+  public List<Parameter> outputs;
   @Child
-  Statement statement;
-  SourceLocation loc;
+  public Statement statement;
+  public SourceLocation loc;
 
-  ProcessDefinition(IdentifierOrPlaceholder name, List<TemplateParam> templateParams,
+  public ProcessDefinition(IdentifierOrPlaceholder name, List<TemplateParam> templateParams,
                     List<Parameter> inputs, List<Parameter> outputs,
                     Statement statement,
                     SourceLocation loc) {
@@ -57,12 +57,12 @@ public class ProcessDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("process ");
@@ -90,7 +90,7 @@ public class ProcessDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

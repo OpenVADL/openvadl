@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,17 +25,17 @@ import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 import vadl.viam.asm.AsmToken;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AsmGrammarAlternativesDefinition extends Definition {
-  List<List<AsmGrammarElementDefinition>> alternatives;
-  SourceLocation loc;
+  public List<List<AsmGrammarElementDefinition>> alternatives;
+  public SourceLocation loc;
 
   @Nullable
-  AsmType asmType;
+  public AsmType asmType;
   @Nullable
-  List<Set<AsmToken>> alternativesFirstTokens;
+  public List<Set<AsmToken>> alternativesFirstTokens;
   @Nullable
-  Set<AsmToken> enclosingBlockFirstTokens;
+  public Set<AsmToken> enclosingBlockFirstTokens;
 
   public AsmGrammarAlternativesDefinition(List<List<AsmGrammarElementDefinition>> alternatives,
                                           SourceLocation loc) {
@@ -44,7 +44,7 @@ public class AsmGrammarAlternativesDefinition extends Definition {
   }
 
   @Override
-  void forEachChild(Consumer<Node> action) {
+  public void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
     for (var l : alternatives) {
       for (var a : l) {
@@ -56,11 +56,11 @@ public class AsmGrammarAlternativesDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
-  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
+  public <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -70,12 +70,12 @@ public class AsmGrammarAlternativesDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     var elementIndent = indent + 1;
     for (int i = 0; i < alternatives.size(); i++) {
       var alternative = alternatives.get(i);

@@ -21,6 +21,20 @@ import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.ast.nodes.BinOp;
+import vadl.ast.nodes.BinaryExpr;
+import vadl.ast.nodes.BlockStatement;
+import vadl.ast.nodes.Definition;
+import vadl.ast.nodes.FormatDefinition;
+import vadl.ast.nodes.Identifier;
+import vadl.ast.nodes.IfStatement;
+import vadl.ast.nodes.InstructionDefinition;
+import vadl.ast.nodes.InstructionSetDefinition;
+import vadl.ast.nodes.IntegerLiteral;
+import vadl.ast.nodes.Operator;
+import vadl.ast.nodes.RangeExpr;
+import vadl.ast.nodes.RangeFormatField;
+import vadl.ast.nodes.TypeLiteral;
 import vadl.utils.SourceLocation;
 
 public class StatementTest {

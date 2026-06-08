@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RecordInstance extends Node {
-  RecordType type;
-  List<Node> entries;
-  SourceLocation sourceLocation;
+  public RecordType type;
+  public List<Node> entries;
+  public SourceLocation sourceLocation;
 
-  RecordInstance(RecordType type, List<Node> entries, SourceLocation sourceLocation) {
+  public RecordInstance(RecordType type, List<Node> entries, SourceLocation sourceLocation) {
     this.type = type;
     this.entries = entries;
     this.sourceLocation = sourceLocation;
@@ -37,12 +37,12 @@ public class RecordInstance extends Node {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return type;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("(");
     var isFirst = true;
     for (Node entry : entries) {

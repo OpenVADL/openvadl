@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AsmGrammarTypeDefinition extends Definition {
   @Child
-  Identifier id;
-  SourceLocation loc;
+  public Identifier id;
+  public SourceLocation loc;
 
   public AsmGrammarTypeDefinition(Identifier id, SourceLocation loc) {
     this.id = id;
@@ -32,7 +32,7 @@ public class AsmGrammarTypeDefinition extends Definition {
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -42,12 +42,12 @@ public class AsmGrammarTypeDefinition extends Definition {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(" @");
     id.prettyPrint(0, builder);
   }

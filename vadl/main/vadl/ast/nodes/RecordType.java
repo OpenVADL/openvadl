@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RecordType implements SyntaxType {
 
-  String name;
-  List<Entry> entries;
+  public String name;
+  public List<Entry> entries;
 
-  RecordType(String name, List<Entry> entries) {
+  public RecordType(String name, List<Entry> entries) {
     this.name = name;
     this.entries = entries;
   }
@@ -57,7 +57,7 @@ public class RecordType implements SyntaxType {
     return name;
   }
 
-  SyntaxType findEntry(String name) {
+  public SyntaxType findEntry(String name) {
     for (Entry entry : entries) {
       if (entry.name().equals(name)) {
         return entry.type();
@@ -66,6 +66,6 @@ public class RecordType implements SyntaxType {
     return BasicSyntaxType.INVALID;
   }
 
-  record Entry(String name, SyntaxType type) {
+  public record Entry(String name, SyntaxType type) {
   }
 }

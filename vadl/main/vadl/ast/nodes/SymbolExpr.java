@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class SymbolExpr extends Expr implements IsSymExpr {
   @Child
-  IsId path;
+  public IsId path;
   @Child
-  Expr size;
-  SourceLocation location;
+  public Expr size;
+  public SourceLocation location;
 
-  SymbolExpr(IsId path, Expr size, SourceLocation location) {
+  public SymbolExpr(IsId path, Expr size, SourceLocation location) {
     this.path = path;
     this.size = size;
     this.location = location;
@@ -50,7 +50,7 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.SYM_EX;
   }
 
@@ -65,7 +65,7 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

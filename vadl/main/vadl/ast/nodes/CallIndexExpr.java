@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import vadl.ast.TensorType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
@@ -31,30 +32,30 @@ import vadl.viam.Constant;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class CallIndexExpr extends Expr implements IsCallExpr {
-  IsSymExpr target;
+  public IsSymExpr target;
 
   /**
    * A list of function arguments or register/memory indices.
    *
    * <p>Because, a callExpr can actually represent multiple calls this is a list of lists.
    */
-  List<Arguments> argsIndices;
+  public List<Arguments> argsIndices;
 
   /**
    * A list of method or sub-field access, e.g. the {@code .bar()} in {@code Namespace::Foo.bar()}.
    * Each sub-call can itself also have single- and multidimensional arguments.
    */
-  List<SubCall> subCalls;
-  SourceLocation location;
+  public List<SubCall> subCalls;
+  public SourceLocation location;
 
   /**
    * If the call points to a builtin this field is set instead of computedTarget.
    */
   @Nullable
-  BuiltInTable.BuiltIn computedBuiltIn;
+  public BuiltInTable.BuiltIn computedBuiltIn;
 
   @Nullable
-  Type typeBeforeSlice;
+  public Type typeBeforeSlice;
 
   public CallIndexExpr(IsSymExpr target, List<Arguments> argsIndices, List<SubCall> subCalls,
                        SourceLocation location) {
@@ -137,7 +138,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  void forEachChild(Consumer<Node> action) {
+  public void forEachChild(Consumer<Node> action) {
     // This is too complicated for the @Child annotation
     if (target != null) {
       action.accept((Node) target);
@@ -160,7 +161,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
     }
   }
 
-  void replaceArgsFor(int index, List<Expr> newArgs) {
+  public void replaceArgsFor(int index, List<Expr> newArgs) {
     var args = this.argsIndices.get(index);
     if (args.values.size() != newArgs.size()) {
       throw new IllegalStateException();
@@ -186,7 +187,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.CALL_EX;
   }
 
@@ -217,7 +218,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -245,13 +246,13 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
     return result;
   }
 
-  static final class Arguments implements TypedNode {
-    List<Expr> values;
-    SourceLocation location;
+  public static final class Arguments implements TypedNode {
+    public List<Expr> values;
+    public SourceLocation location;
 
     // FIXME: I think this type does not make sense here.
     @Nullable
-    Type type;
+    public Type type;
 
     /**
      * The computed static slices.
@@ -260,9 +261,9 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
      * If the slice is dynamic this will be left null.
      */
     @Nullable
-    Constant.BitSlice computedstaticBitSlice;
+    public Constant.BitSlice computedstaticBitSlice;
 
-    Arguments(List<Expr> values, SourceLocation location) {
+    public Arguments(List<Expr> values, SourceLocation location) {
       this.values = values;
       this.location = location;
     }
@@ -292,30 +293,30 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
 
   }
 
-  static final class SubCall implements WithLocation {
-    IdentifierOrPlaceholder id;
-    List<Arguments> argsIndices;
+  public static final class SubCall implements WithLocation {
+    public IdentifierOrPlaceholder id;
+    public List<Arguments> argsIndices;
 
     /**
      * If the subcall is a format fieldaccess the type of that access is stored here.
      * This does ignore further manipulation by the argsIndicies.
      */
     @Nullable
-    Type formatFieldType;
+    public Type formatFieldType;
 
     /**
      * If the subcall is a format fieldaccess the range of that access is stored here.
      * This does ignore further manipulation by the argsIndicies.
      */
     @Nullable
-    Constant.BitSlice computedBitSlice;
+    public Constant.BitSlice computedBitSlice;
 
-    SubCall(IdentifierOrPlaceholder id, List<Arguments> argsIndices) {
+    public SubCall(IdentifierOrPlaceholder id, List<Arguments> argsIndices) {
       this.id = id;
       this.argsIndices = argsIndices;
     }
 
-    Identifier identifier() {
+    public Identifier identifier() {
       return (Identifier) id;
     }
 

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
@@ -23,10 +23,10 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
 
-  enum MemKind {
+  public enum MemKind {
     RAM, ROM;
 
     String keyword() {
@@ -34,16 +34,16 @@ public class CpuMemoryRegionDefinition extends Definition implements Identifiabl
     }
   }
 
-  IdentifierOrPlaceholder id;
-  MemKind kind;
+  public IdentifierOrPlaceholder id;
+  public MemKind kind;
   @Child
-  IsId memoryRef;
+  public IsId memoryRef;
   @Child
   @Nullable
-  Statement stmt;
-  SourceLocation loc;
+  public Statement stmt;
+  public SourceLocation loc;
 
-  CpuMemoryRegionDefinition(IdentifierOrPlaceholder id, MemKind kind, IsId memoryRef,
+  public CpuMemoryRegionDefinition(IdentifierOrPlaceholder id, MemKind kind, IsId memoryRef,
                             @Nullable Statement stmt,
                             SourceLocation loc) {
     this.id = id;
@@ -54,11 +54,11 @@ public class CpuMemoryRegionDefinition extends Definition implements Identifiabl
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
-  MemoryDefinition memoryNode() {
+  public MemoryDefinition memoryNode() {
     return (MemoryDefinition) requireNonNull(memoryRef.target());
   }
 
@@ -68,12 +68,12 @@ public class CpuMemoryRegionDefinition extends Definition implements Identifiabl
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("memory region [").append(kind.keyword()).append("] ");

@@ -14,27 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class SignalDefinition extends Definition implements IdentifiableNode {
-  Identifier id;
+  public Identifier id;
   @Child
-  TypeLiteral type;
-  SourceLocation loc;
+  public TypeLiteral type;
+  public SourceLocation loc;
 
-  SignalDefinition(Identifier id, TypeLiteral type, SourceLocation loc) {
+  public SignalDefinition(Identifier id, TypeLiteral type, SourceLocation loc) {
     this.id = id;
     this.type = type;
     this.loc = loc;
   }
 
   @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
+  public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -44,12 +44,12 @@ public class SignalDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("signal ");

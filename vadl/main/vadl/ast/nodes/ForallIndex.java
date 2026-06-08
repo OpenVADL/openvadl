@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -24,22 +24,22 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class ForallIndex extends Node implements IdentifiableNode {
   @Child
-  IsId name;
+  public IsId name;
 
   @Child
   @Nullable
-  TypeLiteral typeLiteral;
+  public TypeLiteral typeLiteral;
 
   @Child
-  Expr domain;
+  public Expr domain;
 
   /**
    * Set by the typechecker.
    */
   @Nullable
-  Integer computedFrom;
+  public Integer computedFrom;
   @Nullable
-  Integer computedTo;
+  public Integer computedTo;
 
   public ForallIndex(IsId name, @Nullable TypeLiteral typeLiteral, Expr domain) {
     this.name = name;
@@ -58,12 +58,12 @@ public final class ForallIndex extends Node implements IdentifiableNode {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     name.prettyPrint(0, builder);
     if (typeLiteral != null) {
       builder.append(": ");

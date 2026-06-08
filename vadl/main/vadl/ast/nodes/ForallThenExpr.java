@@ -14,22 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings("MissingJavadocType")
+@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ForallThenExpr extends Expr {
   @Child
-  List<ForallThenExpr.Index> indices;
+  public List<ForallThenExpr.Index> indices;
   @Child
-  Expr thenExpr;
-  SourceLocation loc;
+  public Expr thenExpr;
+  public SourceLocation loc;
 
-  ForallThenExpr(List<ForallThenExpr.Index> indices, Expr thenExpr, SourceLocation loc) {
+  public ForallThenExpr(List<ForallThenExpr.Index> indices, Expr thenExpr, SourceLocation loc) {
     this.indices = indices;
     this.thenExpr = thenExpr;
     this.loc = loc;
@@ -41,12 +41,12 @@ public class ForallThenExpr extends Expr {
   }
 
   @Override
-  SyntaxType syntaxType() {
+  public SyntaxType syntaxType() {
     return BasicSyntaxType.EX;
   }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("forall ");
     var isFirst = true;
     for (ForallThenExpr.Index index : indices) {
@@ -68,7 +68,7 @@ public class ForallThenExpr extends Expr {
   }
 
   @Override
-  <R> R accept(ExprVisitor<R> visitor) {
+  public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -90,10 +90,10 @@ public class ForallThenExpr extends Expr {
     return Objects.hash(indices, thenExpr);
   }
 
-  static final class Index extends Node implements IdentifiableNode {
-    IsId id;
+  public static final class Index extends Node implements IdentifiableNode {
+    public IsId id;
     @Child
-    List<IsId> operations;
+    public List<IsId> operations;
 
     public Index(IsId id, List<IsId> operations) {
       this.id = id;
@@ -115,12 +115,12 @@ public class ForallThenExpr extends Expr {
     }
 
     @Override
-    SyntaxType syntaxType() {
+    public SyntaxType syntaxType() {
       return BasicSyntaxType.INVALID;
     }
 
     @Override
-    void prettyPrint(int indent, StringBuilder builder) {
+    public void prettyPrint(int indent, StringBuilder builder) {
       id.prettyPrint(0, builder);
       builder.append(" in {");
       var isFirstOp = true;
