@@ -44,8 +44,6 @@ import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.SemanticTokens;
-import org.eclipse.lsp4j.SemanticTokensParams;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -57,7 +55,6 @@ import org.slf4j.LoggerFactory;
 import vadl.ast.Ast;
 import vadl.ast.AstFinderByPosition;
 import vadl.ast.Frontend;
-import vadl.ast.LspTokenizer;
 import vadl.ast.VadlParser;
 import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
@@ -73,25 +70,12 @@ public class VadlTextDocumentService implements TextDocumentService {
   private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
 
   private final VadlLanguageServer server;
-  @Nullable
-  private LspTokenizer tokenizer;
 
   private final Map<String, Document> openDocuments = new HashMap<>();
   private final DependencyMap<String> documentDependencies = new DependencyMap<>();
 
   VadlTextDocumentService(VadlLanguageServer server) {
     this.server = server;
-  }
-
-  /**
-   * Sets the tokenizer to use. As the tokenizer's configuration depends on
-   * server capabilities, this shall be called once by the Server object upon
-   * initializing connection with the LSP client.
-   *
-   * @param tokenizer A fully configured Tokenizer for VADL
-   */
-  void setTokenizer(@Nullable LspTokenizer tokenizer) {
-    this.tokenizer = tokenizer;
   }
 
   @Override
@@ -137,29 +121,6 @@ public class VadlTextDocumentService implements TextDocumentService {
   public void didSave(DidSaveTextDocumentParams params) {
     log.debug(">> didSave: {}", params);
     // Nothing (server capabilities currently don't support this)
-  }
-
-  @Override
-  public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-    log.debug(">> semanticTokens/full: {}", params);
-
-    return CompletableFuture.supplyAsync(() -> {
-      Document document = getDocument(params.getTextDocument().getUri());
-      if (document == null) {
-        throw new ResponseErrorException(new ResponseError(
-            ResponseErrorCode.RequestFailed,
-            "Requested semantic tokens for a document that is not open.",
-            null
-        ));
-      }
-
-      List<Integer> tokens = tokenizer != null
-            ? tokenizer.getTokens(document.getText())
-            : new ArrayList<>();
-      SemanticTokens result = new SemanticTokens(document.calculateUtf16Positions(tokens));
-      log.debug("<<- semanticTokens/full: <omitted>({} tokens)", tokens.size() / 5);
-      return result;
-    });
   }
 
   @Override
