@@ -913,7 +913,6 @@ instruction set architecture AArch32v6 = {
   $CondInstr          (HalfMemStoreImmInstr ; (STRHI ; "strh"  ; None  ; 0b10'1011  ))
   $CondInstr          (HalfMemStoreRegInstr ; (STRH  ; "strh"  ; None  ; 0b00'1011  ))
 
-  // NOTE: IssTcgVAllocationPass takes very long for these instructions, use --skip=opt-var-alloc
   $CondInstr          (LoadMultipleInstr    ; (LDM   ; "ldm"   ; None  ; 0b100'01   ))
   $CondInstr          (StoreMultipleInstr   ; (STM   ; "stm"   ; None  ; 0b100'00   ))
 

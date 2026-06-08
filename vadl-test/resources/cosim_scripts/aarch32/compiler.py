@@ -59,6 +59,7 @@ def build_assembly(id: str, core: str) -> Path:
     ldr pc, =0x40000008
     nop
     {core}
+    @ Jump triggers simulation termination (stoptrigger plugin)
     ldr pc, =0x40000004
     """
     with open(asm_out, "w") as f:

@@ -18,19 +18,31 @@ package vadl.viam.passes.functionInliner;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
+import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.stream.Streams;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
+import vadl.viam.ArtificialResource;
 import vadl.viam.DefProp;
+import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 
 /**
- * A pass which inlines all the function with the given function.
- * Note that the function must be {@code pure} to be inlined.
+ * A pass which inlines all the function calls with the given function in certain behaviors.
+ * Calls inside functions are only inlined when the function itself is inlined into another
+ * behavior or when the function is used later by something that requires it to have no
+ * function calls.
+ *
+ * <p>Note that the function must be {@code pure} to be inlined.
  * Also, the given {@link Specification} will be mutated in-place. However, the pass
  * saves the original uninlined instruction's behaviors as pass result.
  */
@@ -54,32 +66,44 @@ public class FunctionInlinerPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    IdentityHashMap<Instruction, UninlinedGraph> behaviors = new IdentityHashMap<>();
+    IdentityHashMap<Instruction, UninlinedGraph> uninlined = new IdentityHashMap<>();
 
-    allWithBehavior(viam, behaviors);
+    // functions calls in function are not inlined by default, but in some places it is
+    // still required
+    getFunctionsToInline(viam).map(Function::behavior).forEach(Inliner::inlineFuncs);
 
-    return new Output(behaviors);
+    // we inline into every behavior except functions
+    getDefs(viam, DefProp.WithOptionalBehaviour.class)
+        .filter(Predicate.not(Function.class::isInstance))
+        .forEach(def -> handleDefinition(def, uninlined));
+
+    return new Output(uninlined);
   }
 
-  private void allWithBehavior(Specification viam,
-                               IdentityHashMap<Instruction, UninlinedGraph> behaviors) {
-
-    ViamUtils.findDefinitionsByFilter(viam, d -> d instanceof DefProp.WithBehavior)
-        .stream()
-        .map(DefProp.WithBehavior.class::cast)
-        .forEach(withBehavior -> {
-          var uninlinedGraph = handleMainBehavior(withBehavior);
-          var def = withBehavior.asDefinition();
-          if (def instanceof Instruction instr) {
-            behaviors.put(instr, uninlinedGraph);
-          }
-        });
+  private Stream<Function> getFunctionsToInline(Specification viam) {
+    // TODO: check if other functions need to be inlined
+    return Stream.concat(
+        getDefs(viam, Format.class)
+            .flatMap(f -> f.fieldAccesses().stream())
+            .flatMap(fa -> Streams.of(fa.accessFunction(), fa.predicate()))
+            .filter(Objects::nonNull),
+        getDefs(viam, ArtificialResource.class)
+            .map(ArtificialResource::readFunction)
+    );
   }
 
-  private UninlinedGraph handleMainBehavior(DefProp.WithBehavior def) {
-    var behavior = def.behaviors().getFirst();
-    var copy = behavior.copy();
-    Inliner.inlineFuncs(behavior);
-    return new UninlinedGraph(copy, def.asDefinition());
+  private void handleDefinition(DefProp.WithOptionalBehaviour def,
+                                IdentityHashMap<Instruction, UninlinedGraph> uninlined) {
+    def.behaviors().forEach(behavior -> {
+      if (def instanceof Instruction instr) {
+        // we save the uninlined version of the instruction behavior
+        uninlined.put(instr, new UninlinedGraph(behavior.copy(), def.asDefinition()));
+      }
+      Inliner.inlineFuncs(behavior);
+    });
+  }
+
+  private <T> Stream<T> getDefs(Specification viam, Class<T> type) {
+    return ViamUtils.findDefinitionsByFilter(viam, type::isInstance).stream().map(type::cast);
   }
 }
