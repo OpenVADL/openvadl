@@ -17,30 +17,27 @@
 package vadl.iss.passes;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.math.BigInteger;
 import java.util.List;
-import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
+import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
 import vadl.viam.Assembly;
+import vadl.viam.Constant;
 import vadl.viam.Encoding;
-import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Parameter;
-import vadl.viam.RegisterResource;
-import vadl.viam.RegisterTensor;
+import vadl.viam.RegisterRef;
 import vadl.viam.Specification;
 import vadl.viam.UserModeEmulation;
 import vadl.viam.graph.Graph;
@@ -85,59 +82,23 @@ public class UmeHardcodedRiscvDefinitionPass extends AbstractIssPass {
     Identifier identifier = new Identifier(new String[]{"ume"},
         SourceLocation.INVALID_SOURCE_LOCATION);
 
-    RegisterTensor.Dimension regDim = new RegisterTensor.Dimension(
-        0,
-        Type.bits(5),
-        32
+    var registerResource = isa.registerTensors()
+        .stream()
+        .filter(r -> r.simpleName().equals("X"))
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("Register file X not found in ISA"));
+
+    var index = Constant.Value.of(BigInteger.valueOf(10).toByteArray(), DataType.bits(5));
+
+    var ref = new RegisterRef(
+        registerResource,
+        List.of(index),
+        SourceLocation.INVALID_SOURCE_LOCATION
     );
 
-    RegisterTensor.Dimension dummyDim = new RegisterTensor.Dimension(
-        1,
-        Type.bits(1),
-        1
-    );
+    List<RegisterRef> args = List.of(ref);
 
-    List<RegisterTensor.Dimension> dimensions = List.of(regDim, dummyDim);
-    RegisterTensor mainFile = new RegisterTensor(
-        new Identifier(new String[]{"x"},
-            SourceLocation.INVALID_SOURCE_LOCATION),
-        dimensions
-    );
-
-    var dummyMap = new HashMap<Pair<RegisterResource, Integer>, List<Abi.RegisterAlias>>();
-
-    RegisterUtils.RegisterClass gprClass = RegisterUtils.getRegisterClass(mainFile, dummyMap);
-
-    List<RegisterUtils.Register> args = IntStream.range(10, 16)
-        .mapToObj(i -> gprClass.registers().get(i))
-        .toList();
-
-    Parameter[] emptyParams = new Parameter[0];
     Graph emptyGraph = new Graph("empty_graph");
-
-    ExceptionDef mockSyscallExc = new ExceptionDef(
-        new Identifier(new String[]{"EXC"},
-            SourceLocation.INVALID_SOURCE_LOCATION),
-        emptyParams,
-        emptyGraph,
-        ExceptionDef.Kind.DECLARED
-    );
-
-    ExceptionDef mockBreakpointExc = new ExceptionDef(
-        new Identifier(new String[]{"BREAKPOINT"},
-            SourceLocation.INVALID_SOURCE_LOCATION),
-        emptyParams,
-        emptyGraph,
-        ExceptionDef.Kind.DECLARED
-    );
-
-    ExceptionDef mockIllegalExc = new ExceptionDef(
-        new Identifier(new String[]{"ILLEGAL_INSTR"},
-            SourceLocation.INVALID_SOURCE_LOCATION),
-        emptyParams,
-        emptyGraph,
-        ExceptionDef.Kind.DECLARED
-    );
 
     BitsType mockType = BitsType.bits(32);
 
@@ -166,13 +127,24 @@ public class UmeHardcodedRiscvDefinitionPass extends AbstractIssPass {
         emptyGraph, emptyAssembly, emptyEncoding
     );
 
+    var syscallNrRef = new RegisterRef(
+        registerResource,
+        List.of(Constant.Value.of(BigInteger.valueOf(17).toByteArray(), DataType.bits(5))),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+
+    var syscallReturnRef = new RegisterRef(
+        registerResource,
+        List.of(Constant.Value.of(BigInteger.valueOf(10).toByteArray(), DataType.bits(5))),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+
     return new UserModeEmulation(
         identifier,
-        isa, abi,
-        mockSyscallExc, args,
+        isa, abi, args,
         mockSyscallInsn,
-        mockBreakpointExc,
-        mockIllegalExc);
+        syscallNrRef,
+        syscallReturnRef);
   }
 
 }

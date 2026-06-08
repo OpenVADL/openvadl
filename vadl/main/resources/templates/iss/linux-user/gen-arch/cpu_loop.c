@@ -24,13 +24,6 @@
 #include "signal-common.h"
 #include "elf.h"
 
-
-enum {
-    [# th:each="exc : ${config.excIds}"]
-       [(${gen_arch_upper})]_EXC_[(${exc.key})] = [(${exc.value})],
-   [/]
-};
-
 void cpu_loop(CPU[(${gen_arch_upper})]State *env)
 {
     CPUState *cs = env_cpu(env);
@@ -51,24 +44,24 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
         case EXCP_ATOMIC:
             cpu_exec_step_atomic(cs);
             break;
-        case [(${gen_arch_upper})]_EXCP_[(${config.syscallException})]:
-            env->[(${pc_reg.name_lower})] += [(${config.insn_width_bytes})];
+        case [(${gen_arch_upper})]_EXCP_SYSCALL:
+            env->[(${pc_info.accessor})] += [(${config.insn_width_bytes})];
                 ret = do_syscall(env,
-                                  env->[(${config.mainRegisterFile})][ [(${config.sysReg})] ],
+                                  env->[(${config.sysRegFile})][ [(${config.sysReg})] ],
                                   [# th:each="arg : ${config.args}"]
-                                  env->[(${config.mainRegisterFile})][ [(${arg})] ],
+                                  env->[(${arg.file})][ [(${arg.index})] ],
                                   [/]
                                   0, 0);
             if (ret == -QEMU_ERESTARTSYS) {
-                env->[(${pc_reg.name_lower})] -= [(${config.insn_width_bytes})];
+                env->[(${pc_info.accessor})] -= [(${config.insn_width_bytes})];
             } else if (ret != -QEMU_ESIGRETURN) {
-                env->[(${config.mainRegisterFile})][ [(${config.retReg})] ] = ret;                }
+                env->[(${config.retRegFile})][ [(${config.retReg})] ] = ret;                }
             if (cs->singlestep_enabled) {
                 goto gdbstep;
             }
         case EXCP_DEBUG:
         gdbstep:
-             force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_reg.name_lower})]);
+             force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_info.accessor})]);
              break;
         default:
             EXCP_DUMP(env, "\nqemu: unhandled CPU exception %#x - aborting\n",
@@ -85,8 +78,8 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     TaskState *ts = get_task_state(cpu);
     struct image_info *info = ts->info;
 
-    env->[(${pc_reg.name_lower})] = regs->[(${pc_reg.name_lower})];
-    env->[(${config.mainRegisterFile})][ [(${config.spReg})] ] = regs->[(${config.spRegName})];
+    env->[(${pc_info.accessor})] = regs->[(${pc_info.accessor})];
+    env->[(${config.spRegFile})][ [(${config.spReg})] ] = regs->[(${config.spRegName})];
 
     ts->stack_base = info->start_stack;
 }

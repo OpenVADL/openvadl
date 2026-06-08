@@ -17,8 +17,6 @@
 package vadl.viam;
 
 import java.util.List;
-import javax.annotation.Nullable;
-import vadl.lcb.templateUtils.RegisterUtils;
 
 /**
  * Represents the configuration for QEMU user-mode emulation.
@@ -33,55 +31,43 @@ public class UserModeEmulation extends Definition {
   private final InstructionSetArchitecture isa;
   private final Abi abi;
 
-  private final List<RegisterUtils.Register> args;
+  private final List<RegisterRef> args;
   private final Instruction syscallInstr;
-  private final ExceptionDef syscallException;
-  @Nullable
-  private final ExceptionDef breakpointExc;
-  @Nullable
-  private final ExceptionDef illegalInstrExc;
+  private final RegisterRef syscallNumber;
+  private final RegisterRef syscallReturn;
 
   /**
    * Constructs a UserModeEmulation configuration.
    */
   public UserModeEmulation(
-      Identifier identifier, InstructionSetArchitecture isa, Abi abi, ExceptionDef syscallException,
-      List<RegisterUtils.Register> args,
-      Instruction syscallInstr, ExceptionDef breakpointExc,
-      ExceptionDef illegalInstrExc
+      Identifier identifier, InstructionSetArchitecture isa, Abi abi,
+      List<RegisterRef> args,
+      Instruction syscallInstr, RegisterRef syscallNumber, RegisterRef syscallReturn
   ) {
 
     super(identifier);
     this.isa = isa;
     this.abi = abi;
-    this.syscallException = syscallException;
-
     this.args = args;
     this.syscallInstr = syscallInstr;
-    this.breakpointExc = breakpointExc;
-    this.illegalInstrExc = illegalInstrExc;
+    this.syscallNumber = syscallNumber;
+    this.syscallReturn = syscallReturn;
   }
 
   public Instruction syscallInstr() {
     return syscallInstr;
   }
 
-  @Nullable
-  public ExceptionDef breakpointExc() {
-    return breakpointExc;
+  public RegisterRef getSyscallNumber() {
+    return syscallNumber;
   }
 
-  @Nullable
-  public ExceptionDef illegalInstrExc() {
-    return illegalInstrExc;
+  public RegisterRef getSyscallReturn() {
+    return syscallReturn;
   }
 
-  public List<RegisterUtils.Register> args() {
+  public List<RegisterRef> args() {
     return args;
-  }
-
-  public ExceptionDef syscallException() {
-    return syscallException;
   }
 
   public InstructionSetArchitecture isa() {

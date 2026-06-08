@@ -16,14 +16,14 @@
 
 package vadl.iss.passes;
 
+import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.template.IssTemplateRenderingPass;
-import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
 import vadl.viam.Abi;
-import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.UserModeEmulation;
 
@@ -64,36 +64,32 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
         .orElseThrow(() -> new IllegalStateException("No UserModeEmulation defined"));
 
     Abi abi = ume.abi();
-    RegisterTensor mainRegFile = (RegisterTensor) abi.stackPointer().registerFile();
-
-    Map<String, Integer> excIds = Map.of(
-        "ILLEGAL_INSTR", 2,
-        "ECALL", 11,
-        "BREAKPOINT", 3
-    );
 
     vars.put("config", Map.ofEntries(
-        Map.entry("sysReg", abi.stackPointer().addr()),
-        Map.entry("retReg", abi.returnRegisters().get(0).get(0).addr()),
+        Map.entry("sysReg", ume.getSyscallNumber().singleIndex()),
+        Map.entry("sysRegFile", ume.getSyscallNumber().resource().simpleName().toLowerCase()),
+        Map.entry("retReg", ume.getSyscallReturn().singleIndex()),
+        Map.entry("retRegFile", ume.getSyscallReturn().resource().simpleName().toLowerCase()),
         Map.entry("spReg", abi.stackPointer().addr()),
-        Map.entry("spRegName", abi.stackPointer().render()),
-        Map.entry("args", ume.args().stream()
-            .map(RegisterUtils.Register::index)
+        Map.entry("spRegFile",  abi.stackPointer().registerFile().simpleName().toLowerCase()),
+        Map.entry("spRegName",  abi.aliases()
+            .getOrDefault(
+                Pair.of(abi.stackPointer().registerFile(), abi.stackPointer().addr()),
+                List.of(new Abi.RegisterAlias("sp"))
+            )
+            .getFirst().value()),
+        Map.entry("args", abi.argumentRegisters().stream()
+            .map(abiReg -> {
+              var ref = abiReg.registerRef();
+
+              return Map.of(
+                  "index", ref.singleIndex(),
+                  "file",  ref.resource().simpleName().toLowerCase()
+              );
+            })
             .toList()),
-        Map.entry("excIds", excIds),
         Map.entry("syscallInstr", ume.syscallInstr().simpleName()),
-        Map.entry("syscallException", ume.syscallException().simpleName()),
-        Map.entry(
-            "breakpointExc",
-            ume.breakpointExc() != null ? ume.breakpointExc().simpleName() : ""
-        ),
-        Map.entry(
-            "IllegalInstrExc",
-            ume.illegalInstrExc() != null ? ume.illegalInstrExc().simpleName() : ""
-        ),
-        Map.entry("insn_width_bytes", ume.syscallInstr().format().type().bitWidth() / 8),
-        Map.entry("mainRegisterFile", mainRegFile.simpleName().toLowerCase()),
-        Map.entry("mainRegFileSize", mainRegFile.outermostDim().size())
+        Map.entry("insn_width_bytes", ume.syscallInstr().format().type().bitWidth() / 8)
     ));
 
     return vars;
