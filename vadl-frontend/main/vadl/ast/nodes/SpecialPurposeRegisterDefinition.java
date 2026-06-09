@@ -99,7 +99,7 @@ public class SpecialPurposeRegisterDefinition extends Definition {
     CALLER_SAVED("caller saved"),
     CALLEE_SAVED("callee saved");
 
-    private final String keyword;
+    public final String keyword;
 
     Purpose(String keyword) {
       this.keyword = keyword;

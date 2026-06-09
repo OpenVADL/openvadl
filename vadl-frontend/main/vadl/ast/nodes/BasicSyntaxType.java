@@ -39,7 +39,7 @@ public enum BasicSyntaxType implements SyntaxType {
 
   public static final boolean[][] IS_SUBTYPE;
 
-  private final String name;
+  public final String name;
 
   BasicSyntaxType(String name) {
     this.name = name;

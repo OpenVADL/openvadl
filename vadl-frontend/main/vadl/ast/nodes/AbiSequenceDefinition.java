@@ -91,7 +91,7 @@ public class AbiSequenceDefinition extends InstructionSequenceDefinition {
     CONSTANT("constant"),
     REGISTER("register adjustment");
 
-    private final String keyword;
+    public final String keyword;
 
     SeqKind(String keyword) {
       this.keyword = keyword;

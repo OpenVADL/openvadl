@@ -86,7 +86,7 @@ public class AbiSpecialPurposeInstructionDefinition extends Definition {
     GLOBAL_ADDRESS_LOAD("global address load"),
     ABSOLUTE_ADDRESS_LOAD("absolute address load");
 
-    private final String keyword;
+    public final String keyword;
 
     Kind(String keyword) {
       this.keyword = keyword;

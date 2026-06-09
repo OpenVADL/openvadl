@@ -52,7 +52,7 @@ public class AbiClangNumericTypeDefinition extends Definition {
     LONG_WIDTH("long width"),
     LONG_ALIGN("long align");
 
-    final String keyword;
+    public final String keyword;
 
     NumTypeName(String keyword) {
       this.keyword = keyword;

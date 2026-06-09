@@ -137,7 +137,7 @@ public class ForallExpr extends Expr {
   public enum Operation {
     TENSOR("tensor"), FOLD("fold");
 
-    private final String keyword;
+    public final String keyword;
 
     Operation(String keyword) {
       this.keyword = keyword;

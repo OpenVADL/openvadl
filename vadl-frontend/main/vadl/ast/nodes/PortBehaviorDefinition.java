@@ -100,7 +100,7 @@ public class PortBehaviorDefinition extends Definition implements IdentifiableNo
   public enum PortKind {
     READ("read"), WRITE("write"), HIT("hit"), MISS("miss");
 
-    private final String keyword;
+    public final String keyword;
 
     PortKind(String keyword) {
       this.keyword = keyword;

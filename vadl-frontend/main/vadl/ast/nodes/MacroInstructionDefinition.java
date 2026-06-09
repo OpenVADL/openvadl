@@ -92,7 +92,7 @@ public class MacroInstructionDefinition extends Definition {
     TRANSLATION("translation"), PREDICTION("prediction"), FETCH("fetch"), DECODER("decoder"),
     STARTUP("startup");
 
-    private final String keyword;
+    public final String keyword;
 
     MacroBehaviorKind(String keyword) {
       this.keyword = keyword;

@@ -49,7 +49,7 @@ public class AbiClangTypeDefinition extends Definition {
     SIZE_TYPE("size_t type"),
     INT_MAX_TYPE("int max type");
 
-    final String keyword;
+    public final String keyword;
 
     TypeName(String keyword) {
       this.keyword = keyword;
@@ -62,7 +62,7 @@ public class AbiClangTypeDefinition extends Definition {
     UNSIGNED_LONG("unsigned long"),
     SIGNED_LONG("signed  long");
 
-    final String keyword;
+    public final String keyword;
 
     TypeSize(String keyword) {
       this.keyword = keyword;
