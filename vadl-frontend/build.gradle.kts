@@ -1,11 +1,8 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import vadl.GenerateCocoParserTask
 
 plugins {
     idea
     id("conventions-jvm")
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.z3)
 }
 
 dependencies {
@@ -14,29 +11,13 @@ dependencies {
     annotationProcessor(project(":java-annotations"))
     compileOnly(project(":java-annotations"))
 
-    implementation(libs.thymeleaf)
     implementation(libs.guava)
-    implementation(libs.commons.io)
-    implementation(libs.commons.lang3)
-    implementation(libs.commons.text)
-    implementation(libs.z3.bootstrap)
-    implementation(kotlin("stdlib-jdk8"))
 
     testCompileOnly(project(":java-annotations"))
     testCompileOnly(libs.jsr305)
     testAnnotationProcessor(project(":java-annotations"))
-    testImplementation(libs.buildkitcli)
     testImplementation(libs.assertj.core)
-    testImplementation(libs.awaitility)
-    testImplementation(libs.testcontainers)
     testImplementation(libs.archunit.junit5)
-    testImplementation(libs.velocity.engine.core)
-    testImplementation(libs.jqwik)
-    testImplementation(libs.snakeyaml)
-}
-
-kotlin {
-    jvmToolchain(25)
 }
 
 sourceSets {
@@ -58,7 +39,7 @@ idea {
     }
 }
 
-tasks.matching { it is KotlinCompile || it is JavaCompile }.configureEach {
+tasks.matching { it is JavaCompile }.configureEach {
     dependsOn("generateCocoParser")
 }
 
