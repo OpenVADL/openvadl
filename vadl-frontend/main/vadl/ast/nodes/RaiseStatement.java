@@ -22,7 +22,13 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Marks the following statement as exceptional code.
+ * After the raise statement finishes, no further instruction behavior is executed.
+ *
+ * @see ExceptionDefinition
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class RaiseStatement extends Statement {
 
   @Child

@@ -19,7 +19,13 @@ package vadl.ast.nodes;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A reference literal that references a structural element using the {@code @} prefix.
+ * Written as {@code @identifier}, e.g. {@code @PC} to reference the program counter resource.
+ * This syntax is mostly used in the microarchitecture to differentiate between direct usages and
+ * references.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class ResourceReferenceExression extends Expr {
   @Child
   public IdentifierOrPlaceholder resource;

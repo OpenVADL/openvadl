@@ -20,7 +20,12 @@ import java.math.BigInteger;
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A positive integer literal in decimal form.
+ * Digits can be separated with {@code '} for readability (e.g. {@code 1'000'000}).
+ * Negative numeric literals are represented by applying the negation {@link UnaryExpr}.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class IntegerLiteral extends Expr {
   public String token;
   public BigInteger number;

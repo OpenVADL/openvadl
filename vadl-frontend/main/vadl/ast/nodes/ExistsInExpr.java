@@ -21,7 +21,12 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An existential quantifier expression over a set of operations.
+ * Written as {@code exists in {op1, op2, ...}}.
+ * Evaluates to true if the current context matches any of the listed operations.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class ExistsInExpr extends Expr {
 
   public SourceLocation loc;

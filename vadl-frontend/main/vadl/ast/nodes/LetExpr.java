@@ -25,7 +25,13 @@ import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A let expression that binds a value to one or more identifiers within a body expression.
+ * Written as {@code let x = expr in body}.
+ * Supports tuple unpacking when multiple identifiers are provided:
+ * {@code let a, b = tupleExpr in body}.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class LetExpr extends Expr {
   public List<IdentifierOrPlaceholder> identifiers;
   @Child

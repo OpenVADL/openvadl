@@ -21,6 +21,12 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
+/**
+ * A match expression that selects a result based on pattern matching.
+ * Written as {@code match expr with { pattern => result, ..., _ => default }}.
+ * Each case has one or more patterns on the LHS and a result expression on the RHS of {@code =>}.
+ * Must contain a wildcard {@code _} as the default catch-all case.
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MatchExpr extends Expr {
   public Expr candidate;

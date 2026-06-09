@@ -21,7 +21,12 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An index variable binding in a {@link ForallStatement} or {@link ForallExpr}.
+ * Binds a name to a range domain.
+ * e.g. {@code i: Bits<8> in 0..3}.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class ForallIndex extends Node implements IdentifiableNode {
   @Child
   public IsId name;

@@ -20,7 +20,12 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A conditional expression of the form {@code if condition then thenExpr else elseExpr}.
+ * Unlike {@link IfStatement}, the expression form always requires an else branch
+ * since it must evaluate to a value.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class IfExpr extends Expr {
   @Child
   public Expr condition;

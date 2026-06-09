@@ -19,7 +19,11 @@ package vadl.ast.nodes;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A range expression of the form {@code from..to}.
+ * Used in forall expression/statements, slicing, and sequence literals.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class RangeExpr extends Expr {
   @Child
   public Expr from;

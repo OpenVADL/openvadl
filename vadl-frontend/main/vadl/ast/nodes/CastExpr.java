@@ -24,7 +24,13 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A type cast expression using the {@code as} keyword.
+ * Performs explicit type conversions between VADL types, e.g. for signed/unsigned arithmetic.
+ *
+ * <p>Example: {@code value as UInt<32>}
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class CastExpr extends Expr {
   @Child
   public Expr value;

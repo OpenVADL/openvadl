@@ -20,7 +20,13 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A sequence call expression used in the ABI modeling view to represent a list of alias
+ * registers with the same identifier.
+ * Provides syntactic sugar like {@code a{1..4}} which is equivalent to listing
+ * {@code a1, a2, a3, a4} individually.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class SequenceCallExpr extends Expr {
 
   @Child

@@ -19,7 +19,11 @@ package vadl.ast.nodes;
 import vadl.ast.StringLiteralParser;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A string literal delimited by double or single quotes.
+ * Like {@code "apfelstrudel"} or {@code 'apfelstrudel'}
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class StringLiteral extends Expr {
   public String token;
   public String value;

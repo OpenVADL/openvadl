@@ -22,7 +22,13 @@ import java.util.StringJoiner;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An identifier path pointing to one or multiple nested namespaces, separated by {@code ::}.
+ * The first N-1 segments are namespace references and the last segment is the actual identifier.
+ *
+ * <p>Example: {@code MyIsa::MyFormat::fieldName}
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class IdentifierPath extends Expr implements IsId {
   /**
    * List of segments in this path; the first N-1 segments are (nested) namespaces,

@@ -20,7 +20,10 @@ import java.util.List;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An ordered list of statements executed sequentially.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class StatementList extends Statement {
 
   @Child

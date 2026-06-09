@@ -18,7 +18,10 @@ package vadl.ast.nodes;
 
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A boolean literal ({@code true} or {@code false}).
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class BoolLiteral extends Expr {
   public boolean value;
   public SourceLocation loc;

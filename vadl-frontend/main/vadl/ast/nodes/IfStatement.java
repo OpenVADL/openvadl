@@ -21,7 +21,12 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A conditional statement of the form {@code if condition then thenStmt else elseStmt}.
+ * Unlike {@link IfExpr}, the else branch is optional since a statement does not need
+ * to produce a value.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class IfStatement extends Statement {
   @Child
   public Expr condition;

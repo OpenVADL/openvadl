@@ -19,7 +19,12 @@ package vadl.ast.nodes;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A reference to a named entity in the specification.
+ * The {@link #target} field is resolved during symbol resolving to point to the
+ * referenced {@link Node}.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   public String name;
   public SourceLocation loc;

@@ -20,7 +20,11 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An assignment statement that stores a value in a register, register file, or memory location.
+ * The target (LHS) and value expression (RHS) are separated by the {@code :=} operator.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class AssignmentStatement extends Statement {
   @Child
   public Expr target;

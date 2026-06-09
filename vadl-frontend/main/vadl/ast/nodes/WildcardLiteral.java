@@ -18,7 +18,10 @@ package vadl.ast.nodes;
 
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A wildcard literal ({@code *}) used for outer dimensions in tensors.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class WildcardLiteral extends Expr {
   public SourceLocation loc;
 

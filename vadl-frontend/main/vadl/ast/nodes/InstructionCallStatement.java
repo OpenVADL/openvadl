@@ -22,6 +22,11 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
+/**
+ * A call to an instruction or pseudo instruction.
+ * Supports both named arguments (using mapping syntax {@code {name = value}})
+ * and unnamed positional arguments.
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class InstructionCallStatement extends Statement {
 

@@ -23,6 +23,12 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
+/**
+ * A match statement that selects a statement to execute based on pattern matching.
+ * Written as {@code match expr with { pattern => stmt, ..., _ => default }}.
+ * Each case has one or more patterns on the LHS and a statement on the RHS of {@code =>}.
+ * The wildcard {@code _} default case is optional for statements (unlike {@link MatchExpr}).
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class MatchStatement extends Statement {
   public Expr candidate;

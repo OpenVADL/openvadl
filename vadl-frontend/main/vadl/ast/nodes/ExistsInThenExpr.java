@@ -21,6 +21,11 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
+/**
+ * An existential quantifier expression with a body.
+ * Written as {@code exists x in {op1, op2, ...} then expr}.
+ * Binds identifiers to operations from the given set and evaluates the body expression.
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ExistsInThenExpr extends Expr {
   @Child

@@ -20,7 +20,14 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A lock statement that gains exclusive access to a memory part,
+ * guaranteeing atomic read-modify-write operations.
+ * The lock is automatically released after the subsequent statement or block completes.
+ *
+ * <p>Written as {@code lock expr in statement}.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class LockStatement extends Statement {
   @Child
   public Expr expr;

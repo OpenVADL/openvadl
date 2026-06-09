@@ -22,7 +22,10 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A block of multiple statements surrounded by curly braces.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class BlockStatement extends Statement {
   @Child
   public List<Statement> statements;

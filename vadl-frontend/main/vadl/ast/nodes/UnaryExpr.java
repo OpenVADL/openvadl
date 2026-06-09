@@ -22,7 +22,12 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A unary expression using prefix notation.
+ * Supported operators are {@code -} (negation), {@code !} (logical not),
+ * and {@code ~} (bitwise complement).
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class UnaryExpr extends Expr {
   public IsUnOp operator;
   @Child

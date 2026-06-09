@@ -20,7 +20,11 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A standalone call statement (e.g. a function or instruction call without assignment).
+ * Used for pseudo instruction definitions and ABI sequence definitions.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class CallStatement extends Statement {
 
   @Child
