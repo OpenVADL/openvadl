@@ -22,7 +22,13 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents the definition of a local variable in the assembly grammar.
+ * A variable defines an identifier and assigns an assembly grammar literal to it.
+ *
+ * @see AsmGrammarLiteralDefinition
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNode {
   public Identifier id;
   @Child

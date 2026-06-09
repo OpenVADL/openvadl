@@ -20,7 +20,10 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A representation of terms of form {@code "MEM<9>"}.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class SymbolExpr extends Expr implements IsSymExpr {
   @Child
   public IsId path;

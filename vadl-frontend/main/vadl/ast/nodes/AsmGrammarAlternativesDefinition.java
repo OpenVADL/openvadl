@@ -25,7 +25,13 @@ import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 import vadl.viam.asm.AsmToken;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents alternatives in an assembly grammar rule.
+ * Contains a list of alternatives, where each alternative is a list of assembly grammar elements.
+ *
+ * @see AsmGrammarElementDefinition
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarAlternativesDefinition extends Definition {
   public List<List<AsmGrammarElementDefinition>> alternatives;
   public SourceLocation loc;

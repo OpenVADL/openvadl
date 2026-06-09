@@ -23,7 +23,10 @@ import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * If multiple identifiers are provided, they are used to unpack fields of a struct.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class LetStatement extends Statement {
   public List<IsId> identifiers;
   @Child

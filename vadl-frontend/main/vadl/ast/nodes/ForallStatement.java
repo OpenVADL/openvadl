@@ -21,7 +21,16 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A statement to do repeated work in a loop, mostly used for tensors.
+ *
+ * <p>{@code
+ * // initialize 4 consecutive X registers
+ * instruction Init4X : F = forall i: Bits<8> in 0 .. 3 do
+ * X(rd + i) := 0
+ * }}
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class ForallStatement extends Statement {
   @Child
   public List<ForallIndex> indices;

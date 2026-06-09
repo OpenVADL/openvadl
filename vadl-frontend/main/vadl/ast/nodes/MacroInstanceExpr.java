@@ -20,7 +20,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class MacroInstanceExpr extends Expr
     implements IsMacroInstance, IdentifierOrPlaceholder, IsId {
   public MacroOrPlaceholder macro;

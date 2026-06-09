@@ -19,7 +19,13 @@ package vadl.ast.nodes;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A projection type describes an operation that converts multiple arguments to a new value.
+ * A projection type is considered a subtype of another projection type, iif the result type of
+ * the projection type is a subtype of the other projection type AND all argument types of the
+ * projection types are a subtype of the other projection type's respective argument.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class ProjectionType implements SyntaxType {
   public List<SyntaxType> arguments;
   public SyntaxType resultType;

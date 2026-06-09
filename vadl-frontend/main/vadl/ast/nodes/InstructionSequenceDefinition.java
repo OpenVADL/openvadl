@@ -20,7 +20,10 @@ import java.util.List;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Class which is parent for {@link PseudoInstructionDefinition} and {@link AbiSequenceDefinition}.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public abstract class InstructionSequenceDefinition extends Definition {
   @Child
   public List<Parameter> params;

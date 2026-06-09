@@ -21,7 +21,10 @@ import static java.util.Objects.requireNonNull;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod", "EnumOrdinal"})
+/**
+ * The Expression node of the AST.
+ */
+@SuppressWarnings({"MissingJavadocMethod", "EnumOrdinal"})
 public abstract class Expr extends Node implements TypedNode {
   @Nullable
   public Type type = null;

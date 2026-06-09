@@ -20,7 +20,11 @@ import java.math.BigInteger;
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A hex or binary integer literal.
+ * Example: `0xaf` for hex or `0b01` for binary.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class BinaryLiteral extends Expr {
   public String token;
   public BigInteger number;

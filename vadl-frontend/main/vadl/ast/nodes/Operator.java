@@ -19,7 +19,10 @@ package vadl.ast.nodes;
 import java.util.List;
 import javax.annotation.Nullable;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * The operator class provides singleton constructors for immutable instances for each operator.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class Operator {
   public final String symbol;
   public final Precedence precedence;

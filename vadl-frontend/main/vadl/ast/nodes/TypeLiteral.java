@@ -22,7 +22,12 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * TypeLiterals are needed as the types are not known during parsing.
+ * For example {@code Bits<counter>} depends on the constant {@code counter} used here and so some
+ * constant evaluation has to be performed for the concrete type to be known here.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class TypeLiteral extends Expr {
   @Child
   public IsId baseType;

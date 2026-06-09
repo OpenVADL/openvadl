@@ -19,7 +19,21 @@ package vadl.ast.nodes;
 import java.util.List;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary node representing the AsStr lexical macro.
+ * Produces string literals from identifiers or is used to concatenate multiple
+ * identifiers/strings into one.
+ *
+ * <p><pre>{@code
+ *  function one -> String = AsStr(one)
+ *  function three -> String = AsStr(th, ree)
+ *  function maxcount -> String = AsStr("max", "count")
+ *  function openvadl -> String = AsStr("open", vadl)
+ *  }</pre>
+ *
+ * <p>This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class AsStrExpr extends Expr {
   public List<Expr> exprs;
   public SourceLocation loc;

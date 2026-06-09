@@ -22,7 +22,13 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents a rule(non-terminal) in the assembly language grammar.
+ * The body of the rule is represented by a list of alternatives.
+ *
+ * @see AsmGrammarAlternativesDefinition
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   public Identifier id;
   @Nullable

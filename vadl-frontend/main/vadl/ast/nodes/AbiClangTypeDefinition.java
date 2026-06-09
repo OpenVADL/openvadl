@@ -19,6 +19,11 @@ package vadl.ast.nodes;
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
+/**
+ * The compiler does not only generate a compiler backend but also a clang frontend.
+ * This frontend requires information about the types like: What is the size of an integer?
+ * Is it unsigned or signed?
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AbiClangTypeDefinition extends Definition {
   public TypeName typeName;

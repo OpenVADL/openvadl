@@ -19,7 +19,11 @@ package vadl.ast.nodes;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary placeholder of a macro-level "match" construct.
+ * This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class MacroMatchExpr extends Expr
     implements IsMacroMatch, IdentifierOrPlaceholder, IsId {
   public MacroMatch macroMatch;

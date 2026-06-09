@@ -22,7 +22,24 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents an element in an assembly grammar rule.
+ * An element is the basic building block of which rules are made of.
+ * <p>
+ * An element can be any, or multiple of:
+ * <li>local variable definition</li>
+ * <li>rule invocation</li>
+ * <li>vadl function invocation</li>
+ * <li>sequence of elements</li>
+ * <li>optional block</li>
+ * <li>repetition block</li>
+ * <li>semantic predicate</li>
+ * <li>string literal</li>
+ * </p>
+ *
+ * @see AsmGrammarLiteralDefinition
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarElementDefinition extends Definition {
   @Nullable
   @Child

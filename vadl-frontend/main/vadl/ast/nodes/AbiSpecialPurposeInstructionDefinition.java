@@ -22,6 +22,11 @@ import vadl.ast.Occurrence;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
+/**
+ * The compiler generator requires a few special instructions. Those need to be defined
+ * in the ABI. They are distinguished with the {@link AbiSpecialPurposeInstructionDefinition#kind}
+ * property.
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AbiSpecialPurposeInstructionDefinition extends Definition {
 

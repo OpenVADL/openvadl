@@ -24,7 +24,12 @@ import javax.annotation.Nullable;
 import vadl.ast.Annotation;
 import vadl.javaannotations.ast.Child;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * The Definition nodes inside the AST.
+ * A definition defines part of the architecture, but has no side effects and doesn't evaluate to
+ * anything.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public abstract class Definition extends Node {
   @Child
   public List<AnnotationDefinition> annotations = new ArrayList<>();

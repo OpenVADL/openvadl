@@ -20,7 +20,12 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents a modifier in the specified assembly language.
+ * A modifier is a mapping from a string to a defined relocation.
+ * e.g. <code>"hi" −> RV32I::HI`</code>
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmModifierDefinition extends Definition {
   @Child
   public Expr stringLiteral;

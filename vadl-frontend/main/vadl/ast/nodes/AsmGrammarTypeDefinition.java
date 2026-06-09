@@ -20,7 +20,11 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents a type cast in an assembly grammar rule.
+ * Contains the identifier of the type to be cast to.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarTypeDefinition extends Definition {
   @Child
   public Identifier id;

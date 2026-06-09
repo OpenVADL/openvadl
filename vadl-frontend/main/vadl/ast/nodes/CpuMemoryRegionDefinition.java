@@ -23,6 +23,19 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
+/**
+ * Represents a memory region in the {@link ProcessorDefinition}.
+ * <pre>{@code
+ * [ firmware ]
+ * [ base: 0x8000000 ]
+ * memory region [RAM] DRAM in MEM
+ *
+ * memory region [ROM] MROM in MEM = {
+ *   MEM<4>(0x1000 as Bits<64>) := 0x00000297  // auipc t0, 0x0
+ *   MEM<4>(0x1004 as Bits<64>) := 0x02828613  // addi a2, t0, 40
+ * }
+ * }</pre>
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
 

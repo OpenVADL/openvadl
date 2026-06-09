@@ -19,7 +19,11 @@ package vadl.ast.nodes;
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary placeholder of model type.
+ * This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class ModelTypeDefinition extends Definition implements IdentifiableNode {
   public Identifier name;
   public ProjectionType projectionType;

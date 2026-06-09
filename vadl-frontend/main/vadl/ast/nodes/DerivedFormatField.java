@@ -20,7 +20,20 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A (pseudo) field derived from another. In the VIAM this is called FieldAccess.
+ *
+ * <p><pre>
+ * {@code
+ * format ABC : Bits<8> =
+ *   { A  : Bits<2>
+ *   , B  : Bits<6>
+ *   , C = A as Bits<4>    // This is a derived format field
+ *   }
+ * }
+ * </pre>
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class DerivedFormatField extends FormatField implements IdentifiableNode {
   @Child
   public Expr expr;

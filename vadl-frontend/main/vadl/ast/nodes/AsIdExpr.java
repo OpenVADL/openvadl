@@ -20,7 +20,21 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary node representing the AsId lexical macro.
+ * Produces identifiers from strings or is used to concatenate multiple identifiers/strings into
+ * one.
+ *
+ * <p><pre>{@code
+ *  constant AsId("one") = 1
+ *  constant AsId("th", "ree") = 3
+ *  constant AsId(max, count) = 42
+ *  constant AsId(open, "vadl") = 2024
+ *  }</pre>
+ *
+ * <p>This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   public List<Expr> exprs;
   public SourceLocation loc;

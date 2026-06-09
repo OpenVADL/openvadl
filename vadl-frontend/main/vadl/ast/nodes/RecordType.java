@@ -19,6 +19,11 @@ package vadl.ast.nodes;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * A record type is a composite type of other syntax types.
+ * A record type is considered a subtype of another record type, iif all composite entries of the
+ * type are a subtype of the other record's corresponding entry.
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RecordType implements SyntaxType {
 

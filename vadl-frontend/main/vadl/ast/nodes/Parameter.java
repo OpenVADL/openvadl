@@ -21,7 +21,13 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A common parameter type that corresponds to the {@code parameter} grammar rule.
+ *
+ * <p>name The declared name of this parameter.
+ * type The declared type of this parameter.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class Parameter extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder name;
   @Child

@@ -22,7 +22,10 @@ import java.util.function.Consumer;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Predicate format field definition.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class PredicateFormatField extends FormatField {
   @Child
   public Expr expr;

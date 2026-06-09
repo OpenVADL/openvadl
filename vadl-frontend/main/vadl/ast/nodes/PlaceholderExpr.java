@@ -20,7 +20,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary placeholder node inside model definitions.
+ * This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   public List<String> segments;
   public SyntaxType syntaxType;

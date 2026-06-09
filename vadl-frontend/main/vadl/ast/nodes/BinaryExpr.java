@@ -21,7 +21,10 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Any kind of binary expression (often written with the infix notation in vadl).
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class BinaryExpr extends Expr {
   @Child
   public Expr left;

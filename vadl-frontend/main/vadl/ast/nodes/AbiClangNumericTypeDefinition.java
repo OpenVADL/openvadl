@@ -20,6 +20,12 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
+/**
+ * The compiler does not only generate a compiler backend but also a clang frontend.
+ * This frontend requires information about the types like: What is the alignment of an integer?
+ * The difference between {@link AbiClangTypeDefinition} and {@link AbiClangNumericTypeDefinition}
+ * is that {@link AbiClangNumericTypeDefinition} requires an integer as property.
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AbiClangNumericTypeDefinition extends Definition {
   public NumTypeName typeName;

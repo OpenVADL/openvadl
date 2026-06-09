@@ -20,7 +20,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary placeholder of record type.
+ * This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class RecordTypeDefinition extends Definition implements IdentifiableNode {
   public Identifier name;
   public RecordType recordType;

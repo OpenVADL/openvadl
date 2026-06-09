@@ -22,7 +22,11 @@ import java.util.Map;
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary definition of a model.
+ * This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class ModelDefinition extends Definition implements IdentifiableNode {
   /**
    * Either a concrete identifier for this model or, if it is a model-in-model, a placeholder ID.

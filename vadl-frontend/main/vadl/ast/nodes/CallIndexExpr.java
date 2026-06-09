@@ -30,6 +30,19 @@ import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
 
+/**
+ * A call expression or indexing or many similar expressions.
+ *
+ * <p>The expression represents zero or one calls followed by zero or many indexing/slicing.
+ *
+ * <p>The following are also call expressions:
+ * - Memory access: Mem<4>(addr)
+ * - Slicing: target(4..8)
+ * - Access of fields: PC.next ... a subcall
+ *
+ * <p>One call expr can have multiple "calls":
+ * - Accessing a Register File and slicing: X(0)(3..7)
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class CallIndexExpr extends Expr implements IsCallExpr {
   public IsSymExpr target;

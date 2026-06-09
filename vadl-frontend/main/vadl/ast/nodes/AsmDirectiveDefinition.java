@@ -20,7 +20,12 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents a directive in the specified assembly language.
+ * A directive is a mapping from a string to a predefined builtin directive.
+ * e.g. <code>".word"  -> Byte4</code>
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmDirectiveDefinition extends Definition {
   @Child
   public Expr stringLiteral;

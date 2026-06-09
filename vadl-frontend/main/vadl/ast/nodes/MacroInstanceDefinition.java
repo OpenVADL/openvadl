@@ -19,7 +19,11 @@ package vadl.ast.nodes;
 import java.util.List;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public final class MacroInstanceDefinition extends Definition implements IsMacroInstance {
   public MacroOrPlaceholder macro;
   public List<Node> arguments;

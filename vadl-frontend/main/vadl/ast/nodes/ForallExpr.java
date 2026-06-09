@@ -25,6 +25,11 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 
+/**
+ * A expression to express tensor operations.
+ * forall in tesnor
+ * forall in fold
+ */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ForallExpr extends Expr {
   @Child

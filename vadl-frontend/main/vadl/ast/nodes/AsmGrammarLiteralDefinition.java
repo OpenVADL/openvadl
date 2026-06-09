@@ -23,7 +23,18 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents a literal in the assembly grammar.
+ * Literals have types and can be cast to another type.
+ * <p>
+ * A literal is any of:
+ * <li>string literal</li>
+ * <li>rule invocation</li>
+ * <li>vadl function invocation</li>
+ * <li>local variable usage</li>
+ * </p>
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarLiteralDefinition extends Definition {
   @Nullable
   public Identifier id;

@@ -22,7 +22,14 @@ import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * Represents the <code>assembly description</code> definition of a vadl specification.
+ * It contains definitions for modifiers, directives and grammar rules of an assembly language.
+ * <p>
+ * Further, it can also contain constant, function and using definitions.
+ * </p>
+ */
+@SuppressWarnings("MissingJavadocMethod")
 public class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
   public Identifier id;
   @Child
