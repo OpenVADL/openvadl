@@ -16,8 +16,6 @@
 
 package vadl.ast;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static vadl.ast.AstTestUtils.assertAstEquality;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
@@ -235,8 +233,8 @@ public class BinaryPrecedenceTest {
 
     assertAstEquality(expAst, progAst);
     verifyPrettifiedAst(expAst);
-    assertThat(reorderedOnce, equalTo(reorderedTwice));
-    assertThat(reorderedTwice, equalTo(reorderedThrice));
+    Assertions.assertEquals(reorderedTwice, reorderedOnce);
+    Assertions.assertEquals(reorderedThrice, reorderedTwice);
   }
 
   private void assertHasBeenReordered(Ast... asts) {

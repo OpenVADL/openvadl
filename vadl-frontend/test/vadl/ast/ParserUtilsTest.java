@@ -16,8 +16,7 @@
 
 package vadl.ast;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import org.junit.jupiter.api.Test;
@@ -46,7 +45,7 @@ class ParserUtilsTest {
       var wasParsedAsId = parsedWithoutError && !parser.hasErrors();
 
       var message = "Grammar / isIdentifierToken mismatch (token %d)".formatted(i);
-      assertThat(message, isIdToken, is(wasParsedAsId));
+      assertEquals(wasParsedAsId, isIdToken, message);
     }
   }
 
@@ -67,7 +66,7 @@ class ParserUtilsTest {
       var wasParsedAsBinOp = parsedWithoutError && !parser.hasErrors();
 
       var message = "Grammar / BIN_OPS mismatch (token %d)".formatted(i);
-      assertThat(message, isBinOpToken, is(wasParsedAsBinOp));
+      assertEquals(wasParsedAsBinOp, isBinOpToken, message);
     }
   }
 
@@ -89,7 +88,7 @@ class ParserUtilsTest {
 
 
       var message = "Grammar / UN_OPS mismatch (token %d)".formatted(i);
-      assertThat(message, isUnOpToken, is(wasParsedAsUnOp));
+      assertEquals(wasParsedAsUnOp, isUnOpToken, message);
     }
   }
 

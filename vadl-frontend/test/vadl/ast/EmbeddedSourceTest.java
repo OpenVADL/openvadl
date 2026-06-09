@@ -16,8 +16,7 @@
 
 package vadl.ast;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 import vadl.ast.nodes.ProcessorDefinition;
@@ -40,6 +39,6 @@ public class EmbeddedSourceTest {
     var ast = VadlParser.parse(prog);
     var mip = (ProcessorDefinition) ast.definitions.get(2);
     var source = (SourceDefinition) mip.definitions.get(0);
-    assertThat(source.source.trim(), is("Hello, world!"));
+    assertEquals("Hello, world!", source.source.trim());
   }
 }
