@@ -1,0 +1,23 @@
+instruction set architecture TEST =
+{
+  register Y: Bits<5>
+
+  [ zero : X(Y) ]
+  register X : Bits<5> -> Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid zero annotation
+//       ╭── test/resources/frontend-snapshots/annotation/invalidZeroAnnotationInvalidArgument.vadl:5:14
+//       │
+//     5 │   [ zero : X(Y) ]
+//       │              ^ Index must be a constant expression.
+//       │
+//     6 │   register X : Bits<5> -> Bits<32>
+//       │   -------------------------------- note: Cannot evaluate identifier with origin of register definition
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
