@@ -53,7 +53,6 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.ast.Ast;
-import vadl.ast.AstFinderByPosition;
 import vadl.ast.Frontend;
 import vadl.ast.VadlParser;
 import vadl.error.Diagnostic.MsgType;
@@ -186,13 +185,13 @@ public class VadlTextDocumentService implements TextDocumentService {
       }
 
       var position = document.calculateUtf8Position(params.getPosition(), false);
-      var info = AstFinderByPosition.findTypedNodeType(ast, toPath(document.uri), position);
+      var node = AstFinderByPosition.findTypedNode(ast, toPath(document.uri), position);
 
-      if (info == null) {
+      if (node == null) {
         return hoverResult(null, null);
       }
 
-      return hoverResult(info.type().name(), document.calculateUtf16Range(info.location()));
+      return hoverResult(node.type().name(), document.calculateUtf16Range(node.location()));
     });
   }
 

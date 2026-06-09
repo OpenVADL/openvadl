@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast;
+package vadl.lsp;
 
 import java.nio.file.Path;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
+import vadl.ast.Ast;
 import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.Identifier;
@@ -28,7 +29,6 @@ import vadl.ast.nodes.Node;
 import vadl.ast.nodes.RecursiveAstVisitor;
 import vadl.ast.nodes.Statement;
 import vadl.ast.nodes.TypedNode;
-import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 /**
@@ -87,29 +87,6 @@ public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVi
         (n) -> n instanceof IdentifierPath || n instanceof Identifier);
     return visitor.find();
   }
-
-  /**
-   * Finds a TypedNode at the given source code position, and returns its type.
-   *
-   * @param ast Should have gone through the TypeChecker
-   * @param path The source code file to search in
-   * @param position The position to search for (within the file identified by {@code path})
-   * @return Null if no TypedNode found at {@code position}; otherwise: the node's type information
-   *         and location.
-   */
-  public static @Nullable TypeAndLocation findTypedNodeType(
-      Ast ast, Path path, SourceLocation.Position position) {
-    var typedNode = findTypedNode(ast, path, position);
-    if (typedNode == null) {
-      return null;
-    }
-    return new TypeAndLocation(typedNode.type(), typedNode.location());
-  }
-
-  /**
-   * Return value for {@link #findTypedNodeType(Ast, Path, SourceLocation.Position)}.
-   */
-  public record TypeAndLocation(Type type, SourceLocation location) {}
 
   /**
    * Finds a TypedNode at the given source code position.
