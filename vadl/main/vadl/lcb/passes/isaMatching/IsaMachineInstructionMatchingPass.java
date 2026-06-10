@@ -280,6 +280,55 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.CSEL_SGTH_I32,
                 Optional.empty()));
+
+      } else if (findCSEL_CC(originalGraph, Type.signedInt(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_CC_I64,
+                Optional.empty()));
+      } else if (findCSEL_CC(originalGraph, Type.signedInt(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_CC_I32,
+                Optional.empty()));
+      } else if (findCSEL_CS(originalGraph, Type.signedInt(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_CS_I64,
+                Optional.empty()));
+      } else if (findCSEL_CS(originalGraph, Type.signedInt(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_CS_I32,
+                Optional.empty()));
+      } else if (findCSEL_NS(originalGraph, Type.signedInt(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NS_I64,
+                Optional.empty()));
+      } else if (findCSEL_NS(originalGraph, Type.signedInt(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NS_I32,
+                Optional.empty()));
+      } else if (findCSEL_NC(originalGraph, Type.signedInt(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NC_I64,
+                Optional.empty()));
+      } else if (findCSEL_NC(originalGraph, Type.signedInt(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NC_I32,
+                Optional.empty()));
+      } else if (findCSEL_OS(originalGraph, Type.signedInt(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_VS_I64,
+                Optional.empty()));
+      } else if (findCSEL_OS(originalGraph, Type.signedInt(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_VS_I32,
+                Optional.empty()));
+      } else if (findCSEL_OC(originalGraph, Type.signedInt(64))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_VC_I64,
+                Optional.empty()));
+      } else if (findCSEL_OC(originalGraph, Type.signedInt(32))) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.CSEL_VC_I32,
+                Optional.empty()));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
@@ -340,6 +389,30 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (findBranchWithConditionalWithStatusRegisters(behavior, SLTH)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER,
+                Optional.empty()));
+      } else if (findBranchCarrySet(behavior)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.B_CS,
+                Optional.empty()));
+      } else if (findBranchCarryClear(behavior)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.B_CC,
+                Optional.empty()));
+      } else if (findBranchNegativeSet(behavior)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.B_NS,
+                Optional.empty()));
+      } else if (findBranchNegativeClear(behavior)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.B_NC,
+                Optional.empty()));
+      } else if (findBranchOverflowSet(behavior)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.B_VS,
+                Optional.empty()));
+      } else if (findBranchOverflowClear(behavior)) {
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.B_VC,
                 Optional.empty()));
       } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, EQU)) {
         instruction.attachExtension(
@@ -459,6 +532,60 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     return this.comparesRegisterWithConstantFn(EQU,
           StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class, 
           Constant.Value.one(DataType.bits(1)));
+  }
+
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_NegativeStatusRegisterIsZero() {
+    return this.comparesRegisterWithConstantFn(EQU,
+          StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class, 
+          Constant.Value.zero(DataType.bits(1)));
+  }
+
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_NegativeStatusRegisterIsOne() {
+    return this.comparesRegisterWithConstantFn(EQU,
+          StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class, 
+          Constant.Value.one(DataType.bits(1)));
+  }
+
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_OverflowStatusRegisterIsZero() {
+    return this.comparesRegisterWithConstantFn(EQU,
+          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class, 
+          Constant.Value.zero(DataType.bits(1)));
+  }
+
+  private Function<BuiltInCall, Boolean> compareStatusRegisters_OverflowStatusRegisterIsOne() {
+    return this.comparesRegisterWithConstantFn(EQU,
+          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class, 
+          Constant.Value.one(DataType.bits(1)));
+  }
+
+  private boolean findCSEL_CC(Graph originalGraph, SIntType ty) {
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_CarryStatusRegisterIsZero());
+  }
+
+  private boolean findCSEL_CS(Graph originalGraph, SIntType ty) {
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_CarryStatusRegisterIsOne());
+  }
+
+  private boolean findCSEL_NS(Graph originalGraph, SIntType ty) {
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_NegativeStatusRegisterIsOne());
+  }
+
+  private boolean findCSEL_NC(Graph originalGraph, SIntType ty) {
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_NegativeStatusRegisterIsZero());
+  }
+
+  private boolean findCSEL_OS(Graph originalGraph, SIntType ty) {
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_OverflowStatusRegisterIsOne());
+  }
+
+  private boolean findCSEL_OC(Graph originalGraph, SIntType ty) {
+    return findCSEL_UnaryCondition(originalGraph, ty, 
+        this.compareStatusRegisters_OverflowStatusRegisterIsZero());
   }
 
   private boolean findCSEL_EQ(Graph originalGraph, SIntType ty) {
@@ -827,6 +954,46 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
+  private boolean findBranchCarrySet(UninlinedGraph behavior) {
+    return this.findBranchWithCondition(behavior, 
+        this.compareStatusRegisters_CarryStatusRegisterIsOne());
+  }
+
+  private boolean findBranchCarryClear(UninlinedGraph behavior) {
+    return this.findBranchWithCondition(behavior, 
+        this.compareStatusRegisters_CarryStatusRegisterIsZero());
+  }
+
+  private boolean findBranchNegativeSet(UninlinedGraph behavior) {
+    return this.findBranchWithCondition(behavior, 
+        this.compareStatusRegisters_NegativeStatusRegisterIsOne());
+  }
+
+  private boolean findBranchNegativeClear(UninlinedGraph behavior) {
+    return this.findBranchWithCondition(behavior, 
+        this.compareStatusRegisters_NegativeStatusRegisterIsZero());
+  }
+
+  private boolean findBranchOverflowSet(UninlinedGraph behavior) {
+    return this.findBranchWithCondition(behavior, 
+        this.compareStatusRegisters_OverflowStatusRegisterIsOne());
+  }
+
+  private boolean findBranchOverflowClear(UninlinedGraph behavior) {
+    return this.findBranchWithCondition(behavior, 
+        this.compareStatusRegisters_OverflowStatusRegisterIsZero());
+  }
+
+  private boolean findBranchWithCondition(
+      UninlinedGraph behavior, 
+      Function<BuiltInCall, Boolean> cond) {
+    var meetsCondition = this.checkConditionsForBaseUnary(behavior, cond);
+    var writesPc = behavior
+        .getNodes(WriteRegTensorNode.class)
+        .anyMatch(x -> x.staticCounterAccess() != null);
+    return meetsCondition && writesPc;
+  }
+
   private boolean findBranchWithConditional(UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
     var hasCondition = behavior.getNodes(IfNode.class)
         .anyMatch(x -> x.condition() instanceof BuiltInCall bc && builtin == bc.builtIn());
@@ -863,7 +1030,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * the given {@code base}. For example, if the {@code base} is "equality" then it needs a
    * status register which is the Zero Register and a constant which is {@code 1}.
    */
-  private boolean checkConditionsForBase(BuiltInTable.BuiltIn base, UninlinedGraph behavior) {
+  private boolean checkConditionsForBase(
+      BuiltInTable.BuiltIn base, 
+      UninlinedGraph behavior) {
     if (base == EQU) {
       return this.checkConditionsForBaseUnary(behavior, 
           this.compareStatusRegisters_ZeroStatusRegisterIsOne());
@@ -886,22 +1055,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
           OR,
           this.compareStatusRegisters_ZeroStatusRegisterIsOne(),
           this.compareStatusRegisters_NegativeNotEqualsOverflow());
-    } else if (base == ULEQ) {
-      return this.checkConditionsForBaseBinary(behavior, 
-          OR,
-        this.compareStatusRegisters_CarryStatusRegisterIsZero(), 
-        this.compareStatusRegisters_ZeroStatusRegisterIsOne());
-    } else if (base == ULTH) {
-      return this.checkConditionsForBaseUnary(behavior, 
-          this.compareStatusRegisters_CarryStatusRegisterIsZero());
-    } else if (base == UGEQ) {
-      return this.checkConditionsForBaseUnary(behavior, 
-          this.compareStatusRegisters_CarryStatusRegisterIsOne());
-    } else if (base == UGTH) {
-      return this.checkConditionsForBaseBinary(behavior, 
-          AND, 
-          this.compareStatusRegisters_CarryStatusRegisterIsOne(), 
-          this.compareStatusRegisters_ZeroStatusRegisterIsZero());
     }
 
     // Default
