@@ -21,6 +21,7 @@ plugins {
 rootProject.name = "open-vadl"
 
 include("vadl")
+include("vadl-frontend")
 include("java-annotations")
 include("vadl-cli")
 include("vadl-lsp")

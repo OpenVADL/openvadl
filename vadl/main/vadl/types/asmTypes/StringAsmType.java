@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ import vadl.types.Type;
 /**
  * {@code @string} is the type of most terminal rules.
  *
- * @see vadl.ast.AsmGrammarDefaultRules
+ * @see vadl.viam.asm.AsmGrammarDefaultTerminalRules
  */
 public class StringAsmType implements AsmType {
   @Nullable

@@ -1,6 +1,4 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import util.registerBenchmarkTestTask
-import vadl.GenerateCocoParserTask
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -28,6 +26,7 @@ dependencies {
     testCompileOnly(project(":java-annotations"))
     testCompileOnly(libs.jsr305)
     testAnnotationProcessor(project(":java-annotations"))
+    testImplementation(project(":vadl-frontend"))
     testImplementation(libs.buildkitcli)
     testImplementation(libs.assertj.core)
     testImplementation(libs.awaitility)
@@ -43,42 +42,11 @@ kotlin {
 }
 
 sourceSets {
-    main {
-        java {
-            srcDir("build/generated/sources/coco/java/main")
-        }
-    }
     test {
         resources {
             srcDir(project(":vadl-test").layout.projectDirectory.dir("resources"))
         }
     }
-}
-
-idea {
-    module {
-        generatedSourceDirs.add(file("build/generated/sources/coco/java/main"))
-    }
-}
-
-tasks.matching { it is KotlinCompile || it is JavaCompile }.configureEach {
-    dependsOn("generateCocoParser")
-}
-
-tasks.withType<Checkstyle>().configureEach {
-    doFirst {
-        exclude { fileTreeElement ->
-            fileTreeElement.file.absolutePath.contains("build/generated/")
-        }
-    }
-}
-
-tasks.register<GenerateCocoParserTask>("generateCocoParser") {
-    group = "build"
-    inputFiles.from("main/vadl/ast/vadl.ATG")
-    parserFrame.set(project.file("main/vadl/ast/Parser.frame"))
-    outputDir.set(outputDir.get().dir("vadl/ast"))
-    cocoJar.set(project.file("libs/Coco.jar"))
 }
 
 val createProperties by tasks.registering {

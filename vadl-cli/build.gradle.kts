@@ -11,6 +11,7 @@ version = "unspecified"
 
 dependencies {
     implementation(project(":vadl"))
+    implementation(project(":vadl-frontend"))
     implementation(project(":vadl-lsp"))
     implementation(libs.picocli)
     implementation(libs.commons.compress)
