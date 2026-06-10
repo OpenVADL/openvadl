@@ -199,8 +199,12 @@ public enum MachineInstructionLabel {
   BSLEQ_BY_STATUS_REGISTER,  // signed-less-equal conditoon
   BSLTH_BY_STATUS_REGISTER,  // signed-less-than condition
   BSGTH_BY_STATUS_REGISTER,  // signed-greater-than condition
-  B_CS,                      // carry-clear condition
-  B_CC,                      // carry-set condition
+  B_CS,                      // carry-bit-clear condition
+  B_CC,                      // carry-bit-set condition
+  B_NS,                      // negative-bit-set condition (less than zero)
+  B_NC,                      // negative-bit-clear condition (greater-or-equal-zero)
+  B_VS,                      // overflow-bit-set condition
+  B_VC,                      // overflow-bit-clear condition
 
   /*
    UNCONDITIONAL JUMPS
@@ -264,4 +268,16 @@ public enum MachineInstructionLabel {
 
   CSEL_CS_I32,  // carry-set condition: Carry-SR == 1
   CSEL_CS_I64,
+
+  CSEL_NS_I32,  // less-than-zero condition: Negative-SR == 1
+  CSEL_NS_I64,
+
+  CSEL_NC_I32,  // greater-or-equal-zero condition: Negative-SR == 0
+  CSEL_NC_I64,
+
+  CSEL_VS_I32,  // Overflow-SR == 1
+  CSEL_VS_I64,
+
+  CSEL_VC_I32,  // Overflow-SR == 0
+  CSEL_VC_I64,
 }
