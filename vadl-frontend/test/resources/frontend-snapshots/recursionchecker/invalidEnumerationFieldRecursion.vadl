@@ -1,0 +1,21 @@
+enumeration rec : SInt<32> =
+  { a = rec::b
+  , b = rec::a
+  }
+
+
+//  Reported Diagnostics:
+//
+//  error: Infinite Recursion
+//       ╭── test/resources/frontend-snapshots/recursionchecker/invalidEnumerationFieldRecursion.vadl:1:1
+//       │
+//     1 │> enumeration rec : SInt<32> =
+//     2 │>   { a = rec::b
+//     3 │>   , b = rec::a
+//     4 │>   }
+//       │    
+//       │
+//       This enumeration definition `rec` is defined by itself.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

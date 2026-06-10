@@ -89,7 +89,7 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
     var result = new ArrayList<StringBuilder>();
 
     var label = new StringBuilder();
-    BigInteger mask = node.getMask().toValue();
+    BigInteger mask = node.getMask().value();
     label.append("insn & 0x%x".formatted(mask));
 
     result.add(label);
@@ -120,7 +120,7 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
       }
 
       var edgeLabel = new StringBuilder("  |- ");
-      edgeLabel.append("0x%x".formatted(child.getKey().toBitVector().toValue()));
+      edgeLabel.append("0x%x".formatted(child.getKey().toBitVector().value()));
 
       result.add(edgeLabel);
 
@@ -145,7 +145,7 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
 
     var result = new ArrayList<StringBuilder>();
 
-    final BigInteger mask = node.getMask().toValue();
+    final BigInteger mask = node.getMask().value();
 
     var label = new StringBuilder();
 
@@ -164,7 +164,7 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
       }
 
       var edgeLabel = new StringBuilder("  |- ");
-      edgeLabel.append("0x%x".formatted(child.getKey().toBitVector().toValue()));
+      edgeLabel.append("0x%x".formatted(child.getKey().toBitVector().value()));
 
       result.add(edgeLabel);
 
@@ -189,8 +189,8 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
 
     var result = new ArrayList<StringBuilder>();
 
-    final BigInteger mask = node.getPattern().toMaskVector().toValue();
-    final BigInteger value = node.getPattern().toBitVector().toValue();
+    final BigInteger mask = node.getPattern().toMaskVector().value();
+    final BigInteger value = node.getPattern().toBitVector().value();
 
     var label = new StringBuilder();
 

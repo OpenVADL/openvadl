@@ -1,0 +1,16 @@
+constant a = b (1)
+function b (x : SInt<32>) -> SInt<32> = a
+
+
+//  Reported Diagnostics:
+//
+//  error: Infinite Recursion
+//       ╭── test/resources/frontend-snapshots/recursionchecker/invalidConstantFunctionRecursion.vadl:1:1
+//       │
+//     1 │ constant a = b (1)
+//       │ ^^^^^^^^^^^^^^^^^^
+//       │
+//       This constant definition `a` is defined by itself.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

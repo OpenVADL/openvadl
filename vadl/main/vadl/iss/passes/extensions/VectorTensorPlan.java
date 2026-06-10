@@ -33,7 +33,7 @@ public record VectorTensorPlan(
     VectorRegisterBinding destination,
     OverlapPolicy overlapPolicy,
     List<VectorOperand> operands
-) implements InstrExecPlan.StrategyPlan {
+) {
 
   /**
    * Creates a direct-gvec candidate plan.

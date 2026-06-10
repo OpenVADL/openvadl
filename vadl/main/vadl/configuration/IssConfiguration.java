@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,11 +17,11 @@
 package vadl.configuration;
 
 import java.util.EnumSet;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import vadl.iss.passes.tcg.lowering.Tcg_32_64;
 
 /**
  * The configurations required to control the generation of the ISS (QEMU).
- * Some settings may be added by the {@link vadl.iss.passes.IssConfigurationPass}
+ * Some settings may be added by the {@link vadl.iss.passes.common.IssConfigurationPass}
  * if they are not statically available.
  */
 public class IssConfiguration extends GeneralConfiguration {
@@ -48,6 +48,9 @@ public class IssConfiguration extends GeneralConfiguration {
   private String machineName;
   private Tcg_32_64 targetSize;
   private EnumSet<IssOptsToSkip> optsToSkip;
+
+  // is set by tests for snapshot tests
+  private boolean skipClangFormatting;
 
   /**
    * Constructs a {@link IssConfiguration}.
@@ -76,6 +79,10 @@ public class IssConfiguration extends GeneralConfiguration {
     return targetSize;
   }
 
+  public boolean skipClangFormatting() {
+    return skipClangFormatting;
+  }
+
   public void setTargetName(String targetName) {
     this.targetName = targetName;
   }
@@ -86,6 +93,10 @@ public class IssConfiguration extends GeneralConfiguration {
 
   public void setTargetSize(Tcg_32_64 targetSize) {
     this.targetSize = targetSize;
+  }
+
+  public void setSkipClangFormatting(boolean skipClangFormatting) {
+    this.skipClangFormatting = skipClangFormatting;
   }
 
   public boolean isSkip(IssOptsToSkip optsToSkip) {

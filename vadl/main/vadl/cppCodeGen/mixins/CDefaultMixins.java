@@ -53,6 +53,7 @@ import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -313,7 +314,7 @@ public interface CDefaultMixins {
 
     @Handler
     default void handle(CGenContext<Node> ctx, TensorNode node) {
-      
+
     }
   }
 
@@ -328,7 +329,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface AllExpressions
       extends TypeCasts, Constant, FuncCall, BuiltIns, Slice, LetNode, Select, FuncParam, ForallIdx,
-      FieldAccess, Label {
+      FieldAccess, Label, ForAllThenIdx {
 
   }
 
@@ -498,6 +499,13 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("checkstyle:MissingJavadocType")
+  interface ForAllThenIdx {
+    @Handler
+    default void handle(CGenContext<Node> ctx, OperationForAllNode.Index toHandle) {
+      ctx.wr("i" + toHandle.id().numericId());
+    }
+  }
 
   @SuppressWarnings("MissingJavadocType")
   interface BuiltIns {

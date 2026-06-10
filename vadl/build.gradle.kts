@@ -1,9 +1,11 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import util.registerBenchmarkTestTask
-import vadl.GenerateCocoParserTask
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 plugins {
+    idea
     id("conventions-jvm")
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.z3)
@@ -24,6 +26,7 @@ dependencies {
     testCompileOnly(project(":java-annotations"))
     testCompileOnly(libs.jsr305)
     testAnnotationProcessor(project(":java-annotations"))
+    testImplementation(project(":vadl-frontend"))
     testImplementation(libs.buildkitcli)
     testImplementation(libs.assertj.core)
     testImplementation(libs.awaitility)
@@ -39,11 +42,6 @@ kotlin {
 }
 
 sourceSets {
-    main {
-        java {
-            srcDir("build/generated/sources/coco/java/main")
-        }
-    }
     test {
         resources {
             srcDir(project(":vadl-test").layout.projectDirectory.dir("resources"))
@@ -51,34 +49,29 @@ sourceSets {
     }
 }
 
-tasks.matching { it is KotlinCompile || it is JavaCompile }.configureEach {
-    dependsOn("generateCocoParser")
-}
-
-tasks.withType<Checkstyle>().configureEach {
-    doFirst {
-        exclude { fileTreeElement ->
-            fileTreeElement.file.absolutePath.contains("build/generated/")
-        }
-    }
-}
-
-tasks.register<GenerateCocoParserTask>("generateCocoParser") {
-    group = "build"
-    inputFiles.from("main/vadl/ast/vadl.ATG")
-    parserFrame.set(project.file("main/vadl/ast/Parser.frame"))
-    outputDir.set(outputDir.get().dir("vadl/ast"))
-    cocoJar.set(project.file("libs/Coco.jar"))
-}
-
 val createProperties by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/resources")
     val versionFile = outputDir.map { it.file("open-vadl.properties") }
 
+    val gitVersion = rootProject.version.toString()
+    val gitCommit = rootProject.findProperty("git.commit")?.toString()?.take(9) ?: "unknown"
+    val gitCommitDate = rootProject.findProperty("git.commit.timestamp")?.toString()?.toLongOrNull()
+        ?.let {
+            Instant.ofEpochSecond(it)
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+        } ?: "unknown"
+
     outputs.file(versionFile)
+    inputs.property("version", gitVersion)
+    inputs.property("commit", gitCommit)
+    inputs.property("commit.date", gitCommitDate)
     doLast {
         val properties = Properties()
-        properties["version"] = rootProject.version.toString()
+        properties["version"] = gitVersion
+        properties["commit"] = gitCommit
+        properties["commit.date"] = gitCommitDate
+
         versionFile.get().asFile.apply {
             parentFile.mkdirs()
             outputStream().use { properties.store(it, null) }
@@ -112,6 +105,8 @@ tasks.withType<Test>().configureEach {
         }
     }
     jvmArgs("--enable-preview")
+    // Gradles worker default to 512MB which causes OOM errors on larger specs.
+    maxHeapSize = "2g"
     reports {
         junitXml.required.set(true)
     }

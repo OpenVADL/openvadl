@@ -29,7 +29,6 @@ import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.iss.passes.extensions.InstrExecPlan;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.utils.SourceLocation;
 import vadl.viam.DefProp;
@@ -309,21 +308,24 @@ public class ViamEnricherCollection {
         }
 
         var executionPlan = info.executionPlan();
-        entity.addInfo(Info.Tag.of("SelectedExecutionStrategy",
-            executionPlan.selectedStrategy().name()));
+        entity.addInfo(Info.Tag.of("SelectedExecutionPath",
+            executionPlan.selectedPath().name()));
 
-        var directGvec = executionPlan.evaluation(
-            InstrExecPlan.StrategyKind.DIRECT_GVEC);
-        if (directGvec == null) {
-          return;
-        }
+        var directGvecRegions = executionPlan.directGvecRegions();
+        var hasViableRegion = directGvecRegions.stream().anyMatch(region -> region.isViable());
 
-        entity.addInfo(Info.Tag.of("DirectGvecStatus", directGvec.status().name()));
+        entity.addInfo(Info.Tag.of("DirectGvecStatus", hasViableRegion ? "VIABLE" : "REJECTED"));
         entity.addInfo(Info.Tag.of("DirectGvecIssues",
-            directGvec.issues().isEmpty()
+            directGvecRegions.stream()
+                .flatMap(region -> region.issues().stream())
+                .map(issue -> issue.code())
+                .distinct()
+                .toList().isEmpty()
                 ? "-"
-                : directGvec.issues().stream()
+                : directGvecRegions.stream()
+                  .flatMap(region -> region.issues().stream())
                   .map(issue -> issue.code())
+                  .distinct()
                   .collect(Collectors.joining(", "))));
       });
 

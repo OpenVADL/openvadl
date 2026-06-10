@@ -1,0 +1,338 @@
+// INCLUDE-VIAM-DUMP
+
+instruction set architecture TEST = {
+
+  register A: Bits<64>
+  register B: Bits<5> -> Bits<64>
+  register C: Bits<32><64>
+  register D: Bits<32><32><64>
+
+  alias register W = A(12..0)
+  alias register X = B(*)(12..0)
+  alias register Y = C(*)(12..0)
+  alias register U = D(*)(*)(12..0)
+
+function func(a: Bits<13>) -> Bits<13> = a
+
+instruction Test: F = {
+  W := func(W)
+  X(1) := func(X(2))
+  Y(2) := func(Y(2))
+  U(1)(2) := func(U(1)(2))
+  // U is not yet supported to write (even for normal registers)
+}
+encoding Test = { one = 0 }
+assembly Test = ""
+
+
+  format F : Bits<32> =
+    { one : Bits<15>
+    , two : Bits<15>
+    , three : Bits<2>
+    }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "aliasConstantRegister"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "TEST"
+//    . : PC: -
+//    . : InstructionCount: 1
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 1
+//    . : FunctionCount: 1
+//    . : OperationCount: 0
+//    . : ExceptionCount: 0
+//    . : RelocationCount: 0
+//    . : RegisterCount: 4
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 4
+//    . : Format name: "F"
+//    . : ' Type: b32
+//    . : ' FieldCount: 3
+//    . : ' FieldAccessCount: 0
+//    . : ' FieldEncodingCount: 0
+//    . : ' Field name: "one"
+//    . : ' | Type: b15
+//    . : ' | BitSlice: [31..17]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "two"
+//    . : ' | Type: b15
+//    . : ' | BitSlice: [16..2]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "three"
+//    . : ' | Type: b2
+//    . : ' | BitSlice: [1..0]
+//    . : ' | RefFormat: -
+//    . : Function name: "func"
+//    . : ' Type: (Bits<13>)->Bits<13>
+//    . : ' Signature: (Bits<13>) -> Bits<13>
+//    . : ' Parameters: [a:b13]
+//    . : ' Behavior Graph:
+//    . : ' | n0 FuncParam in: ()   succ: ()     type: b13   param: a   index: 0
+//    . : ' | n1 Return    in: (n0) succ: ()     retType: b13
+//    . : ' | n2 Start     in: ()   succ: (n1)   next: set
+//    . : ' Parameter name: "a"
+//    . : ' | Index: 0
+//    . : ' | Type: b13
+//    . : RegisterTensor name: "A"
+//    . : ' Type: b64
+//    . : ' Dimensions: [0:b6x64]
+//    . : ' ConstraintCount: 0
+//    . : RegisterTensor name: "B"
+//    . : ' Type: b64
+//    . : ' Dimensions: [0:b5x32, 1:b6x64]
+//    . : ' ConstraintCount: 0
+//    . : RegisterTensor name: "C"
+//    . : ' Type: b64
+//    . : ' Dimensions: [0:b5x32, 1:b6x64]
+//    . : ' ConstraintCount: 0
+//    . : RegisterTensor name: "D"
+//    . : ' Type: b64
+//    . : ' Dimensions: [0:b5x32, 1:b5x32, 2:b6x64]
+//    . : ' ConstraintCount: 0
+//    . : ArtificialResource name: "W"
+//    . : ' Kind: REGISTER
+//    . : ' InnerResource: A
+//    . : ' ReadFunction: read
+//    . : ' WriteProcedure: write
+//    . : ' AliasSlice: [12..0]
+//    . : ' Semantics:
+//    . : ' | BaseTensor: A
+//    . : ' | FixedIndices: []
+//    . : ' | DynamicDimensions: []
+//    . : ' | AliasSlice: [12..0]
+//    . : ' | OverwriteMode: MERGE
+//    . : ' | ZeroConstraint: -
+//    . : ' Function name: "read"
+//    . : ' | Type: ()->Bits<13>
+//    . : ' | Signature: () -> Bits<13>
+//    . : ' | Parameters: []
+//    . : ' | Behavior Graph:
+//    . : ' | . n0 ReadsRegisterTensor in: ()   succ: ()     type: b64   reg: A
+//    . : ' | . n1 Slice               in: (n0) succ: ()     type: b13   slice: [12..0]
+//    . : ' | . n2 Return              in: (n1) succ: ()     retType: b13
+//    . : ' | . n3 Start               in: ()   succ: (n2)   next: set
+//    . : ' Procedure name: "write"
+//    . : ' | Parameters: [value:b13]
+//    . : ' | ReadResources: [A]
+//    . : ' | WrittenResources: [A]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0 ReadsRegisterTensor  in: ()      succ: ()     type: b64   reg: A
+//    . : ' | . n1 Constant             in: ()      succ: ()     type: b64   const: 0xffffffffffffe000: Bits<64>
+//    . : ' | . n2 BuiltInCall          in: (n0 n1) succ: ()     type: b64   builtin: VADL::and   operator: &
+//    . : ' | . n3 FuncParam            in: ()      succ: ()     type: b13   param: value   index: 1
+//    . : ' | . n4 Truncate             in: (n3)    succ: ()     type: b13   fromWidth: 13
+//    . : ' | . n5 ZeroExtend           in: (n4)    succ: ()     type: b64   fromWidth: 13
+//    . : ' | . n6 BuiltInCall          in: (n2 n5) succ: ()     type: b64   builtin: VADL::or    operator: |
+//    . : ' | . n7 WritesRegisterTensor in: (n6)    succ: ()     reg: A
+//    . : ' | . n8 ProcEnd              in: (n7)    succ: ()     effects: 1
+//    . : ' | . n9 Start                in: ()      succ: (n8)   next: set
+//    . : ' | Parameter name: "value"
+//    . : ' | . Index: 1
+//    . : ' | . Type: b13
+//    . : ArtificialResource name: "X"
+//    . : ' Kind: REGISTER
+//    . : ' InnerResource: B
+//    . : ' ReadFunction: read
+//    . : ' WriteProcedure: write
+//    . : ' AliasSlice: [12..0]
+//    . : ' Semantics:
+//    . : ' | BaseTensor: B
+//    . : ' | FixedIndices: []
+//    . : ' | DynamicDimensions: [0:b5x32]
+//    . : ' | AliasSlice: [12..0]
+//    . : ' | OverwriteMode: MERGE
+//    . : ' | ZeroConstraint: -
+//    . : ' Function name: "read"
+//    . : ' | Type: (Bits<5>)->Bits<13>
+//    . : ' | Signature: (Bits<5>) -> Bits<13>
+//    . : ' | Parameters: [index:b5]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0 FuncParam           in: ()   succ: ()     type: b5    param: index   index: 0
+//    . : ' | . n1 ReadsRegisterTensor in: (n0) succ: ()     type: b64   reg: B
+//    . : ' | . n2 Slice               in: (n1) succ: ()     type: b13   slice: [12..0]
+//    . : ' | . n3 Return              in: (n2) succ: ()     retType: b13
+//    . : ' | . n4 Start               in: ()   succ: (n3)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' Procedure name: "write"
+//    . : ' | Parameters: [index:b5, value:b13]
+//    . : ' | ReadResources: [B]
+//    . : ' | WrittenResources: [B]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0  FuncParam            in: ()      succ: ()     type: b5    param: index   index: 0
+//    . : ' | . n1  ReadsRegisterTensor  in: (n0)    succ: ()     type: b64   reg: B
+//    . : ' | . n2  Constant             in: ()      succ: ()     type: b64   const: 0xffffffffffffe000: Bits<64>
+//    . : ' | . n3  BuiltInCall          in: (n1 n2) succ: ()     type: b64   builtin: VADL::and   operator: &
+//    . : ' | . n4  FuncParam            in: ()      succ: ()     type: b13   param: value   index: 1
+//    . : ' | . n5  Truncate             in: (n4)    succ: ()     type: b13   fromWidth: 13
+//    . : ' | . n6  ZeroExtend           in: (n5)    succ: ()     type: b64   fromWidth: 13
+//    . : ' | . n7  BuiltInCall          in: (n3 n6) succ: ()     type: b64   builtin: VADL::or    operator: |
+//    . : ' | . n8  WritesRegisterTensor in: (n0 n7) succ: ()     reg: B
+//    . : ' | . n9  ProcEnd              in: (n8)    succ: ()     effects: 1
+//    . : ' | . n10 Start                in: ()      succ: (n9)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "value"
+//    . : ' | . Index: 1
+//    . : ' | . Type: b13
+//    . : ArtificialResource name: "Y"
+//    . : ' Kind: REGISTER
+//    . : ' InnerResource: C
+//    . : ' ReadFunction: read
+//    . : ' WriteProcedure: write
+//    . : ' AliasSlice: [12..0]
+//    . : ' Semantics:
+//    . : ' | BaseTensor: C
+//    . : ' | FixedIndices: []
+//    . : ' | DynamicDimensions: [0:b5x32]
+//    . : ' | AliasSlice: [12..0]
+//    . : ' | OverwriteMode: MERGE
+//    . : ' | ZeroConstraint: -
+//    . : ' Function name: "read"
+//    . : ' | Type: (Bits<5>)->Bits<13>
+//    . : ' | Signature: (Bits<5>) -> Bits<13>
+//    . : ' | Parameters: [index:b5]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0 FuncParam           in: ()   succ: ()     type: b5    param: index   index: 0
+//    . : ' | . n1 ReadsRegisterTensor in: (n0) succ: ()     type: b64   reg: C
+//    . : ' | . n2 Slice               in: (n1) succ: ()     type: b13   slice: [12..0]
+//    . : ' | . n3 Return              in: (n2) succ: ()     retType: b13
+//    . : ' | . n4 Start               in: ()   succ: (n3)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' Procedure name: "write"
+//    . : ' | Parameters: [index:b5, value:b13]
+//    . : ' | ReadResources: [C]
+//    . : ' | WrittenResources: [C]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0  FuncParam            in: ()      succ: ()     type: b5    param: index   index: 0
+//    . : ' | . n1  ReadsRegisterTensor  in: (n0)    succ: ()     type: b64   reg: C
+//    . : ' | . n2  Constant             in: ()      succ: ()     type: b64   const: 0xffffffffffffe000: Bits<64>
+//    . : ' | . n3  BuiltInCall          in: (n1 n2) succ: ()     type: b64   builtin: VADL::and   operator: &
+//    . : ' | . n4  FuncParam            in: ()      succ: ()     type: b13   param: value   index: 1
+//    . : ' | . n5  Truncate             in: (n4)    succ: ()     type: b13   fromWidth: 13
+//    . : ' | . n6  ZeroExtend           in: (n5)    succ: ()     type: b64   fromWidth: 13
+//    . : ' | . n7  BuiltInCall          in: (n3 n6) succ: ()     type: b64   builtin: VADL::or    operator: |
+//    . : ' | . n8  WritesRegisterTensor in: (n0 n7) succ: ()     reg: C
+//    . : ' | . n9  ProcEnd              in: (n8)    succ: ()     effects: 1
+//    . : ' | . n10 Start                in: ()      succ: (n9)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "value"
+//    . : ' | . Index: 1
+//    . : ' | . Type: b13
+//    . : ArtificialResource name: "U"
+//    . : ' Kind: REGISTER
+//    . : ' InnerResource: D
+//    . : ' ReadFunction: read
+//    . : ' WriteProcedure: write
+//    . : ' AliasSlice: [12..0]
+//    . : ' Semantics:
+//    . : ' | BaseTensor: D
+//    . : ' | FixedIndices: []
+//    . : ' | DynamicDimensions: [0:b5x32, 1:b5x32]
+//    . : ' | AliasSlice: [12..0]
+//    . : ' | OverwriteMode: MERGE
+//    . : ' | ZeroConstraint: -
+//    . : ' Function name: "read"
+//    . : ' | Type: (Bits<5>,Bits<5>)->Bits<13>
+//    . : ' | Signature: (Bits<5>, Bits<5>) -> Bits<13>
+//    . : ' | Parameters: [index:b5, index:b5]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0 FuncParam           in: ()      succ: ()     type: b5    param: index   index: 0
+//    . : ' | . n1 FuncParam           in: ()      succ: ()     type: b5    param: index   index: 0
+//    . : ' | . n2 ReadsRegisterTensor in: (n0 n1) succ: ()     type: b64   reg: D
+//    . : ' | . n3 Slice               in: (n2)    succ: ()     type: b13   slice: [12..0]
+//    . : ' | . n4 Return              in: (n3)    succ: ()     retType: b13
+//    . : ' | . n5 Start               in: ()      succ: (n4)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' Procedure name: "write"
+//    . : ' | Parameters: [index:b5, index:b5, value:b13]
+//    . : ' | ReadResources: [D]
+//    . : ' | WrittenResources: [D]
+//    . : ' | Behavior Graph:
+//    . : ' | . n0  FuncParam            in: ()         succ: ()      type: b5    param: index   index: 0
+//    . : ' | . n1  FuncParam            in: ()         succ: ()      type: b5    param: index   index: 0
+//    . : ' | . n2  ReadsRegisterTensor  in: (n0 n1)    succ: ()      type: b64   reg: D
+//    . : ' | . n3  Constant             in: ()         succ: ()      type: b64   const: 0xffffffffffffe000: Bits<64>
+//    . : ' | . n4  BuiltInCall          in: (n2 n3)    succ: ()      type: b64   builtin: VADL::and   operator: &
+//    . : ' | . n5  FuncParam            in: ()         succ: ()      type: b13   param: value   index: 1
+//    . : ' | . n6  Truncate             in: (n5)       succ: ()      type: b13   fromWidth: 13
+//    . : ' | . n7  ZeroExtend           in: (n6)       succ: ()      type: b64   fromWidth: 13
+//    . : ' | . n8  BuiltInCall          in: (n4 n7)    succ: ()      type: b64   builtin: VADL::or    operator: |
+//    . : ' | . n9  WritesRegisterTensor in: (n0 n1 n8) succ: ()      reg: D
+//    . : ' | . n10 ProcEnd              in: (n9)       succ: ()      effects: 1
+//    . : ' | . n11 Start                in: ()         succ: (n10)   next: set
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "index"
+//    . : ' | . Index: 0
+//    . : ' | . Type: b5
+//    . : ' | Parameter name: "value"
+//    . : ' | . Index: 1
+//    . : ' | . Type: b13
+//    . : Instruction name: "Test" format: "F"
+//    . : ' Inputs: A, B, C, D
+//    . : ' Outputs: A, B, C, D
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0  ReadsRegisterTensor  in: ()              succ: ()      type: b13   reg: A   resource: W   baseReg: A
+//    . : ' | n1  FuncCall             in: (n0)            succ: ()      type: b13   func: func
+//    . : ' | n2  WritesRegisterTensor in: (n1)            succ: ()      reg: A   resource: W
+//    . : ' | n3  Constant             in: ()              succ: ()      type: b5    const: 0x1: Bits<5>
+//    . : ' | n4  Constant             in: ()              succ: ()      type: b5    const: 0x2: Bits<5>
+//    . : ' | n5  ReadsRegisterTensor  in: (n4)            succ: ()      type: b13   reg: B   resource: X   baseReg: B
+//    . : ' | n6  FuncCall             in: (n5)            succ: ()      type: b13   func: func
+//    . : ' | n7  WritesRegisterTensor in: (n3 n6)         succ: ()      reg: B   resource: X
+//    . : ' | n8  ReadsRegisterTensor  in: (n4)            succ: ()      type: b13   reg: C   resource: Y   baseReg: C
+//    . : ' | n9  FuncCall             in: (n8)            succ: ()      type: b13   func: func
+//    . : ' | n10 WritesRegisterTensor in: (n4 n9)         succ: ()      reg: C   resource: Y
+//    . : ' | n11 ReadsRegisterTensor  in: (n3 n4)         succ: ()      type: b13   reg: D   resource: U   baseReg: D
+//    . : ' | n12 FuncCall             in: (n11)           succ: ()      type: b13   func: func
+//    . : ' | n13 WritesRegisterTensor in: (n3 n4 n12)     succ: ()      reg: D   resource: U
+//    . : ' | n14 InstrEnd             in: (n2 n7 n10 n13) succ: ()      effects: 4
+//    . : ' | n15 Start                in: ()              succ: (n14)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 Constant in: ()   succ: ()     type: String   const: ""
+//    . : ' | . : n1 Return   in: (n0) succ: ()     retType: String
+//    . : ' | . : n2 Start    in: ()   succ: (n1)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b32
+//    . : ' | Format: F
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: [two, three]
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "one"
+//    . : ' | . Field: one
+//    . : ' | . Type: b15
+//    . : ' | . Constant: 0x0: Bits<15>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

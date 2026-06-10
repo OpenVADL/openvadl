@@ -1,0 +1,147 @@
+// INCLUDE-VIAM-DUMP
+
+instruction set architecture ISA = {
+  program counter PC : Bits<32>
+
+  format IType : Bits<32> = {
+    opcode : Bits<32>
+  }
+
+  instruction A : IType = PC := 0
+  encoding A = {opcode = 0b00}
+  assembly A = (mnemonic, "")
+
+  instruction B : IType = PC := 0
+  encoding B = {opcode = 0b01}
+  assembly B = (mnemonic, "")
+
+  operation O1 = {A}
+  operation O2 = {A,B}
+
+  [stop : exists i in {O1}, j in {O2} then i = j]
+  [assert : forall i in {O1, O2} then i.opcode(7..4,2) = 0b10101]
+  group VLIW = ({O1,O2}|O1<2..5>)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "groupDefinition"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "ISA"
+//    . : PC: PC
+//    . : InstructionCount: 2
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 1
+//    . : FunctionCount: 0
+//    . : OperationCount: 2
+//    . : ExceptionCount: 0
+//    . : RelocationCount: 0
+//    . : RegisterCount: 1
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 0
+//    . : Format name: "IType"
+//    . : ' Type: b32
+//    . : ' FieldCount: 1
+//    . : ' FieldAccessCount: 0
+//    . : ' FieldEncodingCount: 0
+//    . : ' Field name: "opcode"
+//    . : ' | Type: b32
+//    . : ' | BitSlice: [31..0]
+//    . : ' | RefFormat: -
+//    . : Operation name: "O1"
+//    . : ' Instructions: [A]
+//    . : Operation name: "O2"
+//    . : ' Instructions: [A, B]
+//    . : RegisterTensor name: "PC"
+//    . : ' Type: b32
+//    . : ' Dimensions: [0:b5x32]
+//    . : ' ConstraintCount: 0
+//    . : Instruction name: "A" format: "IType"
+//    . : ' Inputs: -
+//    . : ' Outputs: PC
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()   succ: ()     type: b32   const: 0x0: Bits<32>
+//    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: PC
+//    . : ' | n2 InstrEnd             in: (n1) succ: ()     effects: 1
+//    . : ' | n3 Start                in: ()   succ: (n2)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 BuiltInCall in: ()      succ: ()     type: String   builtin: mnemonic
+//    . : ' | . : n1 Constant    in: ()      succ: ()     type: String   const: ""
+//    . : ' | . : n2 BuiltInCall in: (n0 n1) succ: ()     type: String   builtin: VADL::concat_str
+//    . : ' | . : n3 Return      in: (n2)    succ: ()     retType: String
+//    . : ' | . : n4 Start       in: ()      succ: (n3)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b32
+//    . : ' | Format: IType
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: []
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "opcode"
+//    . : ' | . Field: opcode
+//    . : ' | . Type: b32
+//    . : ' | . Constant: 0x0: Bits<32>
+//    . : Instruction name: "B" format: "IType"
+//    . : ' Inputs: -
+//    . : ' Outputs: PC
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()   succ: ()     type: b32   const: 0x0: Bits<32>
+//    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: PC
+//    . : ' | n2 InstrEnd             in: (n1) succ: ()     effects: 1
+//    . : ' | n3 Start                in: ()   succ: (n2)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 BuiltInCall in: ()      succ: ()     type: String   builtin: mnemonic
+//    . : ' | . : n1 Constant    in: ()      succ: ()     type: String   const: ""
+//    . : ' | . : n2 BuiltInCall in: (n0 n1) succ: ()     type: String   builtin: VADL::concat_str
+//    . : ' | . : n3 Return      in: (n2)    succ: ()     retType: String
+//    . : ' | . : n4 Start       in: ()      succ: (n3)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b32
+//    . : ' | Format: IType
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: []
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "opcode"
+//    . : ' | . Field: opcode
+//    . : ' | . Type: b32
+//    . : ' | . Constant: 0x1: Bits<32>
+//    . : Counter name: "PC"
+//    . : ' RegisterTensor: PC
+//    . : ' Indices: []
+//    . : ' ResultType: b32
+//    . : Group name: "VLIW"
+//    . : ' Alternation
+//    . : ' | Permutation
+//    . : ' | . Operation name: "O1"
+//    . : ' | . : Instructions: [A]
+//    . : ' | . Operation name: "O2"
+//    . : ' | . : Instructions: [A, B]
+//    . : ' | Repetition: 2..5
+//    . : ' | . Operation name: "O1"
+//    . : ' | . : Instructions: [A]
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

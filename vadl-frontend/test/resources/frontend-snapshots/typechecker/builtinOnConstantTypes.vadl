@@ -1,0 +1,177 @@
+// INCLUDE-AST-DUMP
+
+constant a = 51                 // 0b110011
+constant b = 42                 // 0b101010
+
+//constant c = VADL::and(true, true)  // true
+//constant d = true || false          // true
+constant e = VADL::or(a,  b)          // 0b111011 = 59
+constant f = VADL::and(a, b)          // 0b100010 = 34
+constant g = VADL::xor(a, b)          // 0b011001 = 25
+constant h = VADL::equ(a, b)          // false
+constant i = VADL::neq(a, b)          // true
+constant j = VADL::sgeq(a, b)         // true
+constant k = VADL::sgth(a, b)         // true
+constant l = VADL::slth(a, b)         // false
+constant m = VADL::sleq(a, b)         // false
+constant n = VADL::lsl(b, 2)          // 0b10101000 = 168
+constant o = VADL::lsr(b, 2)          // 0b1010 = 10
+constant p = VADL::add(a, b)          // 93
+constant q = VADL::sub(a, b)          // 9
+constant r = VADL::mul(a, b)          // 2142
+constant s = VADL::div(a, 5)          // 5
+constant t = VADL::mod(b, 20)         // 2
+constant u = VADL::cob(0b110110)      // 4
+constant v = VADL::czb(0b110110)      // 2
+constant w = VADL::smin(a, b)         // 42
+constant x = VADL::umin(a, b)         // 42
+constant y = VADL::smax(a, b)         // 51
+constant z = VADL::umax(a, b)         // 51
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "a" evaluatedValue: 51
+//    . IntegerLiteral literal: 51 (51) type: Const<51>
+//    ConstantDefinition name: "b" evaluatedValue: 42
+//    . IntegerLiteral literal: 42 (42) type: Const<42>
+//    ConstantDefinition name: "e" evaluatedValue: 59
+//    . CallIndexExpr type: Const<59>
+//    . : IdentifierPath name: "VADL::or" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "f" evaluatedValue: 34
+//    . CallIndexExpr type: Const<34>
+//    . : IdentifierPath name: "VADL::and" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "g" evaluatedValue: 25
+//    . CallIndexExpr type: Const<25>
+//    . : IdentifierPath name: "VADL::xor" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "h" evaluatedValue: 0
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath name: "VADL::equ" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "i" evaluatedValue: 1
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath name: "VADL::neq" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "j" evaluatedValue: 1
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath name: "VADL::sgeq" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "k" evaluatedValue: 1
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath name: "VADL::sgth" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "l" evaluatedValue: 0
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath name: "VADL::slth" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "m" evaluatedValue: 0
+//    . CallIndexExpr type: Bool
+//    . : IdentifierPath name: "VADL::sleq" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "n" evaluatedValue: 168
+//    . CallIndexExpr type: Const<168>
+//    . : IdentifierPath name: "VADL::lsl" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "b" type: Const<42>
+//    . : ' CastExpr type: UInt<2>
+//    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
+//    ConstantDefinition name: "o" evaluatedValue: 10
+//    . CallIndexExpr type: Const<10>
+//    . : IdentifierPath name: "VADL::lsr" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "b" type: Const<42>
+//    . : ' CastExpr type: UInt<2>
+//    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
+//    ConstantDefinition name: "p" evaluatedValue: 93
+//    . CallIndexExpr type: Const<93>
+//    . : IdentifierPath name: "VADL::add" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "q" evaluatedValue: 9
+//    . CallIndexExpr type: Const<9>
+//    . : IdentifierPath name: "VADL::sub" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "r" evaluatedValue: 2142
+//    . CallIndexExpr type: Const<2142>
+//    . : IdentifierPath name: "VADL::mul" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "s" evaluatedValue: 10
+//    . CallIndexExpr type: Const<10>
+//    . : IdentifierPath name: "VADL::div" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    ConstantDefinition name: "t" evaluatedValue: 2
+//    . CallIndexExpr type: Const<2>
+//    . : IdentifierPath name: "VADL::mod" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "b" type: Const<42>
+//    . : ' IntegerLiteral literal: 20 (20) type: Const<20>
+//    ConstantDefinition name: "u" evaluatedValue: 4
+//    . CallIndexExpr type: Const<4>
+//    . : IdentifierPath name: "VADL::cob" type: null
+//    . : ArgsIndices
+//    . : ' BinaryLiteral literal: 0b110110 (54) type: Const<54>
+//    ConstantDefinition name: "v" evaluatedValue: 2
+//    . CallIndexExpr type: Const<2>
+//    . : IdentifierPath name: "VADL::czb" type: null
+//    . : ArgsIndices
+//    . : ' BinaryLiteral literal: 0b110110 (54) type: Const<54>
+//    ConstantDefinition name: "w" evaluatedValue: 42
+//    . CallIndexExpr type: Const<42>
+//    . : IdentifierPath name: "VADL::smin" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "x" evaluatedValue: 42
+//    . CallIndexExpr type: Const<42>
+//    . : IdentifierPath name: "VADL::umin" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "y" evaluatedValue: 51
+//    . CallIndexExpr type: Const<51>
+//    . : IdentifierPath name: "VADL::smax" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//    ConstantDefinition name: "z" evaluatedValue: 51
+//    . CallIndexExpr type: Const<51>
+//    . : IdentifierPath name: "VADL::umax" type: null
+//    . : ArgsIndices
+//    . : ' Identifier name: "a" type: Const<51>
+//    . : ' Identifier name: "b" type: Const<42>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -16,44 +16,84 @@
 
 package vadl.vdt.utils;
 
+import static vadl.vdt.utils.PatternUtils.widthMask;
+
+import java.math.BigInteger;
 import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  * Represents a bit pattern, which is a vector of bits where each bit can be either 0, 1 or <i>don't
  * care</i>.
  */
-public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
+public class BitPattern {
 
-  private final PBit[] bits;
+  private final BigInteger mask;
+  private final BigInteger value;
+  private final int width;
 
-  public BitPattern(PBit[] bits) {
-    this.bits = bits;
+  /**
+   * Represents the state of a bit in a bit pattern.
+   */
+  public enum PatternBit {
+    ZERO, ONE, DONT_CARE
   }
 
-  @Override
+  /**
+   * Creates a new bit pattern.
+   *
+   * @param mask  the mask specifying the bits to consider
+   * @param value the value of the bits
+   * @param width the width of the bit pattern
+   */
+  public BitPattern(BigInteger mask, BigInteger value, int width) {
+    if (width < 0) {
+      throw new IllegalArgumentException("Width must be non-negative");
+    }
+    this.mask = Objects.requireNonNull(mask).and(widthMask(width));
+    this.value = Objects.requireNonNull(value).and(this.mask);
+    this.width = width;
+  }
+
+  public BigInteger mask() {
+    return mask;
+  }
+
+  public BigInteger value() {
+    return value;
+  }
+
   public int width() {
-    return bits.length;
+    return width;
   }
 
-  @Override
-  public PBit get(int i) {
-    return bits[i];
+  /**
+   * Returns the bit at the given index with MSB-first semantics.
+   *
+   * @param i the index of the bit
+   * @return the bit at the given index
+   */
+  public PatternBit get(int i) {
+    if (i < 0 || i >= width) {
+      throw new IndexOutOfBoundsException(i);
+    }
+    final var idx = width - 1 - i;
+    if (!mask.testBit(idx)) {
+      return PatternBit.DONT_CARE;
+    }
+    return value.testBit(idx) ? PatternBit.ONE : PatternBit.ZERO;
   }
 
-  @Override
+  /**
+   * Tests whether the given bit vector matches this bit pattern.
+   *
+   * @param bitVector the bit vector to test
+   * @return {@code true} if the bit vector matches this bit pattern, {@code false} otherwise
+   */
   public boolean test(BitVector bitVector) {
     if (bitVector.width() != width()) {
       return false;
     }
-    for (int i = 0; i < width(); i++) {
-      if (get(i).getValue() != PBit.Value.DONT_CARE && (
-          (get(i).getValue() == PBit.Value.ONE && !bitVector.get(i).value()) || (
-              get(i).getValue() == PBit.Value.ZERO && bitVector.get(i).value()))) {
-        return false;
-      }
-    }
-    return true;
+    return bitVector.value().xor(value).and(mask).equals(BigInteger.ZERO);
   }
 
   /**
@@ -66,15 +106,22 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
    * @return The bit pattern
    */
   public static BitPattern fromString(String pattern, int width) {
-    final PBit[] bits = new PBit[width];
     if (pattern.length() != width) {
       throw new IllegalArgumentException("Pattern length must match width");
     }
+    BigInteger mask = BigInteger.ZERO;
+    BigInteger value = BigInteger.ZERO;
     for (int i = 0; i < pattern.length(); i++) {
-      bits[i] = new PBit(pattern.charAt(i) == '1' ? PBit.Value.ONE
-          : (pattern.charAt(i) == '0' ? PBit.Value.ZERO : PBit.Value.DONT_CARE));
+      final var idx = width - 1 - i;
+      final var bit = pattern.charAt(i);
+      if (bit == '0') {
+        mask = mask.setBit(idx);
+      } else if (bit == '1') {
+        mask = mask.setBit(idx);
+        value = value.setBit(idx);
+      }
     }
-    return new BitPattern(bits);
+    return new BitPattern(mask, value, width);
   }
 
   /**
@@ -85,18 +132,10 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
    * @return The bit pattern.
    */
   public static BitPattern fromBitVector(BitVector mask, BitVector value) {
-    final PBit[] bits = new PBit[mask.width()];
     if (mask.width() != value.width()) {
-      throw new IllegalArgumentException("Bit vectors must be aligned");
+      throw new IllegalArgumentException("Mask and value must have the same width");
     }
-    for (int i = 0; i < bits.length; i++) {
-      if (!mask.get(i).value()) {
-        bits[i] = new PBit(PBit.Value.DONT_CARE);
-        continue;
-      }
-      bits[i] = new PBit(value.get(i).value() ? PBit.Value.ONE : PBit.Value.ZERO);
-    }
-    return new BitPattern(bits);
+    return new BitPattern(mask.value(), value.value(), mask.width());
   }
 
   /**
@@ -106,11 +145,7 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
    * @return The empty bit pattern
    */
   public static BitPattern empty(int width) {
-    final PBit[] bits = new PBit[width];
-    for (int i = 0; i < width; i++) {
-      bits[i] = new PBit(PBit.Value.DONT_CARE);
-    }
-    return new BitPattern(bits);
+    return new BitPattern(BigInteger.ZERO, BigInteger.ZERO, width);
   }
 
   /**
@@ -121,81 +156,7 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
    * @return the bit vector
    */
   public BitVector toMaskVector() {
-    Bit[] veBits = new Bit[width()];
-    for (int i = 0; i < veBits.length; i++) {
-      veBits[i] = new Bit(bits[i].getValue() != PBit.Value.DONT_CARE);
-    }
-    return new BitVector(veBits);
-  }
-
-  /**
-   * Left pads the bit vector with <i>don't care</i> bits.
-   *
-   * @param padding the padding
-   * @return the padded bit pattern
-   */
-  public BitPattern leftPad(int padding) {
-    final int target = padding + width();
-    final PBit[] result = new PBit[target];
-    for (int i = 0; i < padding; i++) {
-      result[i] = new PBit(PBit.Value.DONT_CARE);
-    }
-    for (int i = padding; i < target; i++) {
-      result[i] = get(i - padding);
-    }
-    return new BitPattern(result);
-  }
-
-  /**
-   * Right pads the bit vector with <i>don't care</i> bits.
-   *
-   * @param padding the padding
-   * @return the padded bit pattern
-   */
-  public BitPattern rightPad(int padding) {
-    final int target = padding + width();
-    final PBit[] result = new PBit[target];
-    for (int i = 0; i < width(); i++) {
-      result[i] = get(i);
-    }
-    for (int i = width(); i < target; i++) {
-      result[i] = new PBit(PBit.Value.DONT_CARE);
-    }
-    return new BitPattern(result);
-  }
-
-  /**
-   * Truncates the pattern by removing higher order bits.
-   *
-   * @param width the width to truncate to
-   * @return A bit pattern of the specified width
-   */
-  public BitPattern leftTrunc(int width) {
-    return BitPattern.fromBitVector(
-        BitVector.fromValue(toMaskVector().toValue(), width),
-        BitVector.fromValue(toBitVector().toValue(), width)
-    );
-  }
-
-  /**
-   * Truncates the pattern by removing lower order bits.
-   *
-   * @param width the width to truncate to
-   * @return A bit pattern of the specified width
-   */
-  public BitPattern rightTrunc(int width) {
-    if (width() < width) {
-      throw new IllegalArgumentException("Target width must be leq than the actual width");
-    }
-
-    final var mask = toMaskVector();
-    final var value = toBitVector();
-
-    final var truncateWidth = width() - width;
-    return BitPattern.fromBitVector(
-        BitVector.fromValue(mask.toValue().shiftRight(truncateWidth), width),
-        BitVector.fromValue(value.toValue().shiftRight(truncateWidth), width)
-    );
+    return new BitVector(mask, width);
   }
 
   /**
@@ -206,11 +167,76 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
    * @return the bit vector
    */
   public BitVector toBitVector() {
-    Bit[] veBits = new Bit[width()];
-    for (int i = 0; i < veBits.length; i++) {
-      veBits[i] = new Bit(bits[i].getValue() == PBit.Value.ONE);
+    return new BitVector(value, width);
+  }
+
+  /**
+   * Left pads the bit vector with <i>don't care</i> bits.
+   *
+   * @param padding the padding
+   * @return the padded bit pattern
+   */
+  public BitPattern leftPad(int padding) {
+    if (padding <= 0) {
+      return this;
     }
-    return new BitVector(veBits);
+    final var targetWidth = width + padding;
+    return new BitPattern(
+        toMaskVector().leftPad(targetWidth, false).value(),
+        toBitVector().leftPad(targetWidth, false).value(),
+        targetWidth
+    );
+  }
+
+  /**
+   * Right pads the bit vector with <i>don't care</i> bits.
+   *
+   * @param padding the padding
+   * @return the padded bit pattern
+   */
+  public BitPattern rightPad(int padding) {
+    if (padding <= 0) {
+      return this;
+    }
+    final var targetWidth = width + padding;
+    return new BitPattern(
+        toMaskVector().rightPad(targetWidth, false).value(),
+        toBitVector().rightPad(targetWidth, false).value(),
+        targetWidth
+    );
+  }
+
+  /**
+   * Truncates the pattern by removing higher order bits.
+   *
+   * @param width the width to truncate to
+   * @return A bit pattern of the specified width
+   */
+  public BitPattern leftTrunc(int width) {
+    final var m = widthMask(width);
+    return new BitPattern(
+        mask.and(m),
+        value.and(m),
+        width
+    );
+  }
+
+  /**
+   * Truncates the pattern by removing lower order bits.
+   *
+   * @param width the width to truncate to
+   * @return A bit pattern of the specified width
+   */
+  public BitPattern rightTrunc(int width) {
+    if (this.width < width) {
+      throw new IllegalArgumentException("Target width must be leq than the actual width");
+    }
+    final var m = widthMask(width);
+    return new BitPattern(
+        mask.shiftRight(this.width - width).and(m),
+        value.shiftRight(this.width - width).and(m),
+        width
+    );
   }
 
   /**
@@ -219,49 +245,30 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
    * @return {@code true} if all bits are <i>don't care</i>, {@code false} otherwise
    */
   public boolean doesMatchAll() {
-    for (int i = 0; i < width(); i++) {
-      if (get(i).getValue() != PBit.Value.DONT_CARE) {
-        return false;
-      }
+    return mask.equals(BigInteger.ZERO);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof BitPattern that)) {
+      return false;
     }
-    return true;
+    return width == that.width && Objects.equals(mask, that.mask)
+        && Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
-    int result = 1;
-    for (int i = 0; i < width(); i++) {
-      result = 31 * result + Objects.hashCode(get(i));
-    }
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    final BitPattern other = (BitPattern) obj;
-    if (width() != other.width()) {
-      return false;
-    }
-    for (int i = 0; i < width(); i++) {
-      if (!Objects.equals(get(i), other.get(i))) {
-        return false;
-      }
-    }
-    return true;
+    return Objects.hash(mask, value, width);
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < width(); i++) {
-      sb.append(get(i).getValue() == PBit.Value.ONE ? '1' : (
-          get(i).getValue() == PBit.Value.ZERO ? '0' : '-'));
+      PatternBit bit = get(i);
+      sb.append(bit == PatternBit.ONE ? '1' : (
+          bit == PatternBit.ZERO ? '0' : '-'));
     }
     return sb.toString();
   }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,17 +21,19 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import vadl.iss.passes.tcgLowering.nodes.TcgBr;
-import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
-import vadl.iss.passes.tcgLowering.nodes.TcgLabelNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
+import vadl.iss.passes.tcg.lowering.nodes.TcgBr;
+import vadl.iss.passes.tcg.lowering.nodes.TcgBrCond;
+import vadl.iss.passes.tcg.lowering.nodes.TcgLabelNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgSetLabel;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
@@ -53,6 +55,54 @@ import vadl.viam.graph.control.StartNode;
 public abstract class DataFlowAnalysis<D> {
 
   /**
+   * Creates a topological sorting of the CFG via depth-first-search. If a cycle is
+   * detected, an error is thrown.
+   */
+  private class TopologicalSorting {
+
+    /**
+     * Marks all nodes that have been visited and put into {@link #ordering}.
+     */
+    protected Set<ControlNode> permanent = new HashSet<>();
+
+    /**
+     * Marks all nodes that have been visited and have <strong>not</strong> been put into
+     * {@link #ordering}.
+     */
+    protected Set<ControlNode> temporary = new HashSet<>();
+
+    /**
+     * Contains the topologically ordered nodes.
+     */
+    public List<ControlNode> ordering = new ArrayList<>();
+
+    public void sort(Graph cfg) {
+      if (isForward()) {
+        orderNode(getSingleNode(cfg, StartNode.class));
+      } else {
+        orderNode(getSingleNode(cfg, InstrEndNode.class));
+      }
+    }
+
+    protected void orderNode(ControlNode node) {
+      if (permanent.contains(node)) {
+        // node has already been added to the ordering
+        return;
+      }
+      node.ensureGraph().ensure(
+          !temporary.contains(node),
+          "Control flow cycle detected during acyclic data flow analysis"
+      );
+      temporary.add(node);
+      for (var child : isForward() ? successorsOf(node) : predecessorsOf(node)) {
+        orderNode(child);
+      }
+      permanent.add(node);
+      ordering.addFirst(node);
+    }
+  }
+
+  /**
    * Map storing the IN data flow value for each node.
    */
   protected Map<ControlNode, D> inValues = new HashMap<>();
@@ -68,6 +118,37 @@ public abstract class DataFlowAnalysis<D> {
    * @param cfg The control flow graph to analyze.
    */
   public void analyze(Graph cfg) {
+    if (isAcyclic()) {
+      analyzeAcyclic(cfg);
+    } else {
+      analyzeCyclic(cfg);
+    }
+  }
+
+  /**
+   * Performs the data flow analysis on the given control flow graph. Each node is visited once
+   * in topological order.
+   *
+   * @param cfg The control flow graph to analyze.
+   */
+  private void analyzeAcyclic(Graph cfg) {
+    var ordering = new TopologicalSorting();
+    ordering.sort(cfg);
+    ordering.ordering.forEach(this::visitNode);
+  }
+
+  /**
+   * Performs the data flow analysis on the given (possibly cyclic) control flow graph.
+   *
+   * @param cfg The control flow graph to analyze.
+   */
+  private void analyzeCyclic(Graph cfg) {
+    // FIXME: This algorithm currently does not terminate on cyclic graphs.
+    //        It currently recomputes the in/out values even when the out/in values
+    //        have not changed. To make it work we should add that check.
+    // FIXME: Also, on larger cyclic graphs, this algorithm has an aggressively exponential runtime
+    //        that can reach hours/days. It would be beneficial to use
+    //        e.g. Tarjan's strongly connected components algorithm
     Queue<ControlNode> worklist = new ArrayDeque<>();
 
     // Initialize the IN and OUT sets for each node
@@ -85,28 +166,37 @@ public abstract class DataFlowAnalysis<D> {
 
     while (!worklist.isEmpty()) {
       ControlNode node = worklist.poll();
-
-      D inValue;
-      D outValue;
-
-      if (isForward()) {
-        // Forward analysis
-        inValue = meetOfPredecessors(node);
-        outValue = transferFunction(node, inValue);
-      } else {
-        // Backward analysis
-        outValue = meetOfSuccessors(node);
-        inValue = transferFunction(node, outValue);
-      }
-
-      inValues.put(node, inValue);
-      outValues.put(node, outValue);
+      // FIXME: as stated before, here we need to check whether in/out has changed
+      visitNode(node);
 
       // Add neighbors to the worklist
       Set<ControlNode> neighbors = isForward() ? successorsOf(node) : predecessorsOf(node);
       worklist.addAll(neighbors);
-
     }
+  }
+
+  /**
+   * Calls the {@link #transferFunction(ControlNode, Object)} on the given {@code node} to compute
+   * the IN/OUT value.
+   *
+   * @param node The control node to compute the IN/OUT value for.
+   */
+  private void visitNode(ControlNode node) {
+    D inValue;
+    D outValue;
+
+    if (isForward()) {
+      // Forward analysis
+      inValue = meetOfPredecessors(node);
+      outValue = transferFunction(node, inValue);
+    } else {
+      // Backward analysis
+      outValue = meetOfSuccessors(node);
+      inValue = transferFunction(node, outValue);
+    }
+
+    inValues.put(node, inValue);
+    outValues.put(node, outValue);
   }
 
   /**
@@ -150,6 +240,13 @@ public abstract class DataFlowAnalysis<D> {
    * @return {@code true} if the analysis is a may analysis; {@code false} if must.
    */
   protected abstract boolean isMayAnalysis();
+
+  /**
+   * Determines if the analysis can assume that the CGF is acyclic.
+   *
+   * @return {@code true} if the CFG is acyclic; {@code false} if it can be cyclic.
+   */
+  protected abstract boolean isAcyclic();
 
   /**
    * Checks if two data flow values are equal.

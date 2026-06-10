@@ -1,0 +1,15 @@
+format rec : Bits<16> = { a : rec }
+
+
+//  Reported Diagnostics:
+//
+//  error: Infinite Recursion
+//       ╭── test/resources/frontend-snapshots/recursionchecker/invalidFormatRecursion.vadl:1:1
+//       │
+//     1 │ format rec : Bits<16> = { a : rec }
+//       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//       │
+//       This format definition `rec` is defined by itself.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

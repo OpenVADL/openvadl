@@ -28,13 +28,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +61,7 @@ import vadl.vdt.target.dump.TextGraphGenerator;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.PBit;
+import vadl.vdt.utils.PatternUtils;
 
 class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
 
@@ -507,7 +505,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
           "Instruction '%s' has a different width than the checked pattern.".formatted(
               i.simpleName()));
 
-      Assertions.assertTrue(contains(checkedPattern, iPattern),
+      Assertions.assertTrue(PatternUtils.contain(checkedPattern, iPattern),
           "Expected the checked pattern '%s' to be more specific than or equal to the instruction's fixed bits '%s'."
               .formatted(checkedPattern, iPattern));
     }
@@ -577,7 +575,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
 
     MultiDecisionNode decisionNode = assertInstanceOf(MultiDecisionNode.class, decodeTree);
     Assertions.assertEquals(
-        BitVector.fromValue(new BigInteger("FF", 16), 8),
+        new BitVector(new BigInteger("FF", 16), 8),
         decisionNode.getMask());
   }
 
@@ -636,7 +634,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
 
     MultiDecisionNode decisionNode = assertInstanceOf(MultiDecisionNode.class, decodeTree);
     Assertions.assertEquals(
-        BitVector.fromValue(new BigInteger("FF", 16), 8),
+        new BitVector(new BigInteger("FF", 16), 8),
         decisionNode.getMask());
   }
 
@@ -689,19 +687,5 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     RuntimeException e = Assertions.assertThrows(RuntimeException.class,
         () -> decoder.decide(BitVector.fromString(finalInsn, finalInsn.length())));
     Assertions.assertTrue(e.getMessage().startsWith("No decision found"));
-  }
-
-  /**
-   * Checks whether the first pattern contains all fixed bits of the second pattern. I.e. whether
-   * p1 is more (or equally) specific than p2.
-   *
-   * @param p1 The first pattern to check.
-   * @param p2 The second pattern to check.
-   * @return true if p1 contains all fixed bits of p2, false otherwise.
-   */
-  private boolean contains(BitPattern p1, BitPattern p2) {
-    return IntStream.range(0, p1.width())
-        .allMatch(
-            i -> p1.get(i).equals(p2.get(i)) || p2.get(i).getValue() == PBit.Value.DONT_CARE);
   }
 }

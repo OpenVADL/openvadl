@@ -1,0 +1,117 @@
+// INCLUDE-AST-DUMP
+//
+// Previously there was a bug where the identifier of the let statement was not copied when expanded from a model
+// invocation. This meant that the type of the identifier was assigned in the first invocation of the model and in the
+// second the same identifier was linked which meant it already had a type (potentially a different one) and it
+// wouldn't be checked again.
+//
+
+instruction set architecture RV3264I = {
+  register    X : Bits<5>   -> Bits<32>
+
+  format Rtype : Bits<32> =
+    { op: Bits<32>
+    }
+
+  model AddIntr(name: Id, typeName: Id, opcode: Ex): IsaDefs = {
+  instruction $name : Rtype =
+       let x = 8 as $typeName in
+        X(1) := x as Bits<32>
+
+  encoding $name = {op = $opcode}
+  assembly $name = AsStr($name)
+  }
+
+  using Bits32 = Bits<32>
+  using Bits64 = Bits<64>
+  $AddIntr(add1; Bits32; 1)
+  $AddIntr(add2; Bits64; 2)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "RV3264I"
+//    . RegisterDefinition name: "X"
+//    . : TypeLiteral type: Bits<5>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . FormatDefinition name: "Rtype"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypedFormatField name: "op"
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
+//    . UsingDefinition name: "Bits32"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . UsingDefinition name: "Bits64"
+//    . : TypeLiteral type: Bits<64>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 64 (64) type: Const<64>
+//    . InstructionDefinition name: "add1"
+//    . : Identifier name: "Rtype" type: null
+//    . : LetStatement
+//    . : ' Identifier name: "x" type: Bits<32>
+//    . : ' CastExpr type: Bits<32>
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | TypeLiteral type: Bits<32>
+//    . : ' | . Identifier name: "Bits32" type: null
+//    . : ' AssignmentStatement
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : CastExpr type: Bits<5>
+//    . : ' | . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' | CastExpr type: Bits<32>
+//    . : ' | . Identifier name: "x" type: Bits<32>
+//    . : ' | . TypeLiteral type: Bits<32>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 32 (32) type: Const<32>
+//    . EncodingDefinition
+//    . : Identifier name: "add1" type: null
+//    . : Identifier name: "op" type: null
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "add1" ("add1") type: String
+//    . InstructionDefinition name: "add2"
+//    . : Identifier name: "Rtype" type: null
+//    . : LetStatement
+//    . : ' Identifier name: "x" type: Bits<64>
+//    . : ' CastExpr type: Bits<64>
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | TypeLiteral type: Bits<64>
+//    . : ' | . Identifier name: "Bits64" type: null
+//    . : ' AssignmentStatement
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : CastExpr type: Bits<5>
+//    . : ' | . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' | CastExpr type: Bits<32>
+//    . : ' | . Identifier name: "x" type: Bits<64>
+//    . : ' | . TypeLiteral type: Bits<32>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 32 (32) type: Const<32>
+//    . EncodingDefinition
+//    . : Identifier name: "add2" type: null
+//    . : Identifier name: "op" type: null
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "add2" ("add2") type: String
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

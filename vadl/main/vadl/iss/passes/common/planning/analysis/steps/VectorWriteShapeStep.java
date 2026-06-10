@@ -16,9 +16,9 @@
 
 package vadl.iss.passes.common.planning.analysis.steps;
 
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessBaseKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessWindowKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.bindingFacts;
+import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.gvecAccessBaseKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isConstantInt;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isFullyIndexedElementAccess;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isLoopElementOffset;
@@ -39,26 +39,22 @@ public final class VectorWriteShapeStep implements VectorFactStep {
 
   @Override
   public void extract(VectorFactsBuilder builder) {
-    var candidate = builder.candidate();
-    if (candidate == null) {
-      return;
-    }
-
-    var elementBits = candidate.write().writeBitWidth();
-    var laneCount = candidate.idx().toIdx() - candidate.idx().fromIdx() + 1;
+    var region = builder.region();
+    var elementBits = region.write().writeBitWidth();
+    var laneCount = region.idx().toIdx() - region.idx().fromIdx() + 1;
     // Binding extraction strips the lane index so later evaluators see the selected vector
     // register rather than one per-lane access inside the lowered loop body.
-    var destination = bindingFacts(candidate.write(), candidate.idx());
+    var destination = bindingFacts(region.write(), region.idx());
     // Size and layout remain strategy-neutral here so later strategies can reuse them with
     // different acceptance rules.
     var size = sizeFacts(destination, elementBits, laneCount);
     var layout = layoutFacts(destination, size);
-    var write = candidate.write();
+    var write = region.write();
     builder.setWriteFacts(new WriteAccessFacts(
         write,
-        accessBaseKind(write.accessKind()),
+        gvecAccessBaseKind(write),
         accessWindowKind(write.windowKind()),
-        matchesElementShape(write, candidate.idx(), elementBits),
+        matchesElementShape(write, region.idx(), elementBits),
         write.nullableCondition() != null,
         storageFacts(write.regTensor()),
         destination,

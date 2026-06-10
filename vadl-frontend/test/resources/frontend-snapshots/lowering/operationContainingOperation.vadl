@@ -1,0 +1,177 @@
+// INCLUDE-VIAM-DUMP
+// When operations contain other operations, they are expanded in the VIAM.
+
+instruction set architecture ISA = {
+  program counter PC : Bits<32>                 // program counter
+
+  format Instr : Bits<32> =                    // branch format
+    { offset : SInt<24>                         // PC relative offset
+    , opcode : Bits<8>                          // operation code
+    }
+
+  instruction A : Instr =
+    PC := 1
+  encoding A = {opcode = 0}
+  assembly A = "A"
+
+  instruction B : Instr =
+    PC := 2
+  encoding B = {opcode = 1}
+  assembly B = "B"
+
+  instruction C : Instr =
+    PC := 3
+  encoding C = {opcode = 2}
+  assembly C = "C"
+
+
+  operation all = {double, C}
+  operation double = {single, B}
+  operation single = {A}
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "operationContainingOperation"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "ISA"
+//    . : PC: PC
+//    . : InstructionCount: 3
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 1
+//    . : FunctionCount: 0
+//    . : OperationCount: 3
+//    . : ExceptionCount: 0
+//    . : RelocationCount: 0
+//    . : RegisterCount: 1
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 0
+//    . : Format name: "Instr"
+//    . : ' Type: b32
+//    . : ' FieldCount: 2
+//    . : ' FieldAccessCount: 0
+//    . : ' FieldEncodingCount: 0
+//    . : ' Field name: "offset"
+//    . : ' | Type: i24
+//    . : ' | BitSlice: [31..8]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "opcode"
+//    . : ' | Type: b8
+//    . : ' | BitSlice: [7..0]
+//    . : ' | RefFormat: -
+//    . : Operation name: "all"
+//    . : ' Instructions: [A, B, C]
+//    . : Operation name: "double"
+//    . : ' Instructions: [A, B]
+//    . : Operation name: "single"
+//    . : ' Instructions: [A]
+//    . : RegisterTensor name: "PC"
+//    . : ' Type: b32
+//    . : ' Dimensions: [0:b5x32]
+//    . : ' ConstraintCount: 0
+//    . : Instruction name: "A" format: "Instr"
+//    . : ' Inputs: -
+//    . : ' Outputs: PC
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()   succ: ()     type: b32   const: 0x1: Bits<32>
+//    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: PC
+//    . : ' | n2 InstrEnd             in: (n1) succ: ()     effects: 1
+//    . : ' | n3 Start                in: ()   succ: (n2)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 Constant in: ()   succ: ()     type: String   const: "A"
+//    . : ' | . : n1 Return   in: (n0) succ: ()     retType: String
+//    . : ' | . : n2 Start    in: ()   succ: (n1)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b32
+//    . : ' | Format: Instr
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: [offset]
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "opcode"
+//    . : ' | . Field: opcode
+//    . : ' | . Type: b8
+//    . : ' | . Constant: 0x0: Bits<8>
+//    . : Instruction name: "B" format: "Instr"
+//    . : ' Inputs: -
+//    . : ' Outputs: PC
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()   succ: ()     type: b32   const: 0x2: Bits<32>
+//    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: PC
+//    . : ' | n2 InstrEnd             in: (n1) succ: ()     effects: 1
+//    . : ' | n3 Start                in: ()   succ: (n2)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 Constant in: ()   succ: ()     type: String   const: "B"
+//    . : ' | . : n1 Return   in: (n0) succ: ()     retType: String
+//    . : ' | . : n2 Start    in: ()   succ: (n1)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b32
+//    . : ' | Format: Instr
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: [offset]
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "opcode"
+//    . : ' | . Field: opcode
+//    . : ' | . Type: b8
+//    . : ' | . Constant: 0x1: Bits<8>
+//    . : Instruction name: "C" format: "Instr"
+//    . : ' Inputs: -
+//    . : ' Outputs: PC
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()   succ: ()     type: b32   const: 0x3: Bits<32>
+//    . : ' | n1 WritesRegisterTensor in: (n0) succ: ()     reg: PC
+//    . : ' | n2 InstrEnd             in: (n1) succ: ()     effects: 1
+//    . : ' | n3 Start                in: ()   succ: (n2)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 Constant in: ()   succ: ()     type: String   const: "C"
+//    . : ' | . : n1 Return   in: (n0) succ: ()     retType: String
+//    . : ' | . : n2 Start    in: ()   succ: (n1)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b32
+//    . : ' | Format: Instr
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: [offset]
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "opcode"
+//    . : ' | . Field: opcode
+//    . : ' | . Type: b8
+//    . : ' | . Constant: 0x2: Bits<8>
+//    . : Counter name: "PC"
+//    . : ' RegisterTensor: PC
+//    . : ' Indices: []
+//    . : ' ResultType: b32
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

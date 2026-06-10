@@ -154,7 +154,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
   @Handler
   public Void handle(InnerNodeImpl node) {
 
-    final BigInteger mask = node.getMask().toValue();
+    final BigInteger mask = node.getMask().value();
     final Map<BitPattern, Node> children = node.getChildren();
 
     appendable.append("switch (insn & 0x")
@@ -164,7 +164,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     appendable.indent();
 
     for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
-      final BigInteger caseValue = entry.getKey().toBitVector().toValue();
+      final BigInteger caseValue = entry.getKey().toBitVector().value();
       appendable.append("case 0x").append(caseValue.toString(16))
           .append(":\n");
 
@@ -197,7 +197,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
   @Handler
   public Void handle(MultiDecisionNode node) {
 
-    final BigInteger mask = node.getMask().toValue();
+    final BigInteger mask = node.getMask().value();
 
     final Map<BitPattern, Node> children = node.getChildren();
 
@@ -210,7 +210,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     appendable.indent();
 
     for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
-      final BigInteger caseValue = entry.getKey().toBitVector().toValue();
+      final BigInteger caseValue = entry.getKey().toBitVector().value();
       appendable.append("case 0x").append(caseValue.toString(16))
           .append(":\n");
 
@@ -239,8 +239,8 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
   @Handler
   public Void handle(SingleDecisionNode node) {
 
-    final BigInteger mask = node.getPattern().toMaskVector().toValue();
-    final BigInteger value = node.getPattern().toBitVector().toValue();
+    final BigInteger mask = node.getPattern().toMaskVector().value();
+    final BigInteger value = node.getPattern().toBitVector().value();
 
     // TODO: Possibly shift the value to avoid large integer constants
     //  (-> evaluate if there is a runtime penalty either way)

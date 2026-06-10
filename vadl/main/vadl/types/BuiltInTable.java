@@ -19,7 +19,6 @@ package vadl.types;
 import static org.slf4j.LoggerFactory.getLogger;
 import static vadl.types.Type.constructDataType;
 
-import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
 import java.util.Collections;
@@ -35,7 +34,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
-import vadl.ast.AsmGrammarDefaultRules;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
@@ -658,7 +656,6 @@ public class BuiltInTable {
           .returns(Type.bool())
           .build();
 
-
   /**
    * {@code function slth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b }
    */
@@ -920,14 +917,27 @@ public class BuiltInTable {
 
 
   /**
-   * {@code function rrx ( a : Bits<N>, b : UInt<M>, c : Bool ) -> Bits<N> }
+   * {@code function rrx ( a : Bits<N>, c : Bool ) -> Bits<N> }
    */
   public static final BuiltIn RRX =
       func("VADL::rrx",
-          Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
-              BitsType.class))
+          Type.relation(List.of(BitsType.class, BoolType.class), BitsType.class))
+          .compute((Constant.Value a, Constant.Value c) -> a.rrx(c.bool())
+              .get(BUILTIN_RESULT, Constant.Value.class))
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+
+  /**
+   * {@code function rrxs( a : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
+   */
+  public static final BuiltIn RRXS =
+      func("VADL::rrxs",
+          Type.relation(List.of(BitsType.class, BoolType.class), BitsType.class))
+          .compute((Constant.Value a, Constant.Value c) -> a.rrx(c.bool()))
+          .takesDefault()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -1187,7 +1197,6 @@ public class BuiltInTable {
   /**
    * Checks if the token kind at lookahead {@code n} in the AsmParser
    * is any of the kinds passed as strings in {@code s}.
-   * To see all possible token kinds refer to the terminal rules in {@link AsmGrammarDefaultRules}.
    *
    * <p>{@code function LaKindIn(n: UInt<N>,s: String...) -> Bool}
    */
@@ -1385,7 +1394,8 @@ public class BuiltInTable {
       ROR,
       RORS,
       RORC,
-      RRX
+      RRX,
+      RRXS
   );
 
   public static final List<BuiltIn> BITWISE_COUNTING_BUILT_INS = List.of(
@@ -1453,6 +1463,8 @@ public class BuiltInTable {
       SMAX, UMAX,
       CONCATENATE_STRINGS
   );
+
+  public static final List<BuiltIn> operationEqualityPredicates = List.of();
 
   public static final List<BuiltIn> arithmeticComparisons = List.of(
       EQU, NEQ,
@@ -1627,28 +1639,30 @@ public class BuiltInTable {
       // to a constructed type of the parameter type, we return false.
       // otherwise true.
       // overrides should further constraint the properties of the given types.
-      return Streams.zip(argTypes.stream(), argTypeClasses.stream(),
-          (argType, argTypeClass) -> {
-            if (argType.getClass() == argTypeClass) {
-              // if the class is the same, we know that the argument type is correct
-              return true;
+      for (int i = 0; i < argTypes.size(); i++) {
+        var argType = argTypes.get(i);
+        var argTypeClass = argTypeClasses.get(i);
+        if (argType.getClass() == argTypeClass) {
+          // if the class is the same, we know that the argument type is correct
+          continue;
+        }
+        if (argType instanceof DataType argDataType) {
+          // if the concrete type is a data type we try to construct a data type
+          // with the same bit width from the built-ins argument type class.
+          // if this fails, we know that the type can't be correct.
+          var constructedType = constructDataType(argTypeClass, argDataType.bitWidth());
+          if (constructedType != null) {
+            // check that the argument type can be trivially cast to the constructed type
+            if (argDataType.isTrivialCastTo(constructedType)) {
+              continue;
             }
-            if (argType instanceof DataType argDataType) {
-              // if the concrete type is a data type we try to construct a data type
-              // with the same bit width from the built-ins argument type class.
-              // if this fails, we know that the type can't be correct.
-              var constructedType = constructDataType(argTypeClass, argDataType.bitWidth());
-              if (constructedType != null) {
-                // check that the argument type can be trivially cast to the constructed type
-                return argDataType.isTrivialCastTo(argDataType);
-              }
-              return false;
-            }
-            // if the concrete type is not a data type, we know that the given type is wrong
-            // as there is no way of trivially casting the argument type to the parameter type
-            return false;
           }
-      ).allMatch(p -> p);
+        }
+        // if the concrete type is not a data type, we know that the given type is wrong
+        // as there is no way of trivially casting the argument type to the parameter type
+        return false;
+      }
+      return true;
     }
 
     /**
@@ -1704,12 +1718,18 @@ public class BuiltInTable {
     }
   }
 
-  private static BuiltInBuilder func(String name, @Nullable String operator,
-                                     RelationType signature) {
+  /**
+   * Creates a function built-in builder.
+   */
+  public static BuiltInBuilder func(String name, @Nullable String operator,
+                                    RelationType signature) {
     return new BuiltInBuilder(name, operator, signature, BuiltIn.Kind.FUNCTION);
   }
 
-  private static BuiltInBuilder func(String name, RelationType signature) {
+  /**
+   * Creates a function built-in builder without an operator symbol.
+   */
+  public static BuiltInBuilder func(String name, RelationType signature) {
     return func(name, (String) null, signature);
   }
 
@@ -1718,7 +1738,8 @@ public class BuiltInTable {
     return new BuiltInBuilder(name, operator, signature, BuiltIn.Kind.PROCESS);
   }
 
-  private static class BuiltInBuilder {
+  @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+  public static class BuiltInBuilder {
     private String name;
     private @Nullable String operator;
     private RelationType signature;
@@ -1858,7 +1879,7 @@ public class BuiltInTable {
     }
 
 
-    BuiltIn build() {
+    public BuiltIn build() {
 
       var takesFunction = this.takesFunction;
       ensure(takesFunction != null,

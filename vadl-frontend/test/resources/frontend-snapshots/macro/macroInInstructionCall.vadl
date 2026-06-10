@@ -1,0 +1,73 @@
+// INCLUDE-AST-DUMP
+
+model echo(id: Id): Id = {
+  $id
+}
+
+instruction set architecture TEST = {
+
+  register X: Bits<5><8>
+
+  format Frmt : Bits<8> = { a: Bits<4>, b: Bits<4> }
+
+  instruction Instr : Frmt = { }
+  assembly Instr = ''
+  encoding Instr = { a = 1 }
+
+  pseudo instruction $echo(abc)($echo(arg): Bits<4>) = {
+    $echo(Instr) {$echo(b) = $echo(arg)}
+  }
+
+  assembly abc = 'abc'
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "X"
+//    . : TypeLiteral type: Bits<5><8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . FormatDefinition name: "Frmt"
+//    . : TypeLiteral type: Bits<8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : TypedFormatField name: "a"
+//    . : ' TypeLiteral type: Bits<4>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : TypedFormatField name: "b"
+//    . : ' TypeLiteral type: Bits<4>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
+//    . InstructionDefinition name: "Instr"
+//    . : Identifier name: "Frmt" type: null
+//    . : BlockStatement
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "" ('') type: String
+//    . EncodingDefinition
+//    . : Identifier name: "Instr" type: null
+//    . : Identifier name: "a" type: null
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . PseudoInstructionDefinition name: "abc"
+//    . : Parameter name: "arg"
+//    . : ' TypeLiteral type: Bits<4>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : InstructionCallStatement
+//    . : ' Identifier name: "Instr" type: null
+//    . : ' Identifier name: "b" type: null
+//    . : ' Identifier name: "arg" type: Bits<4>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "abc" ('abc') type: String
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

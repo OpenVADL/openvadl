@@ -16,8 +16,11 @@
 
 package vadl.vdt.target.rtl;
 
+import static vadl.vdt.utils.BitPattern.PatternBit.DONT_CARE;
+import static vadl.vdt.utils.BitPattern.PatternBit.ONE;
+import static vadl.vdt.utils.BitPattern.PatternBit.ZERO;
+
 import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.PBit;
 
 /**
  * Util methods used by the RTL decoder generators.
@@ -40,13 +43,13 @@ public class ChiselUtils {
 
     boolean isLeadingWildcard = true;
     for (int i = 0; i < pattern.width(); i++) {
-      if (pattern.get(i).getValue() == PBit.Value.DONT_CARE && isLeadingWildcard && !padding) {
+      if (pattern.get(i) == DONT_CARE && isLeadingWildcard && !padding) {
         continue;
       }
       isLeadingWildcard = false;
-      if (pattern.get(i).getValue() == PBit.Value.ONE) {
+      if (pattern.get(i) == ONE) {
         sb.append('1');
-      } else if (pattern.get(i).getValue() == PBit.Value.ZERO) {
+      } else if (pattern.get(i) == ZERO) {
         sb.append('0');
       } else {
         sb.append('?');

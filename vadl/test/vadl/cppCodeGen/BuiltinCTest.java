@@ -1415,37 +1415,36 @@ public class BuiltinCTest extends DockerExecutionTest {
   Stream<DynamicTest> rrxTests() {
     return runTests(
         // 1-bit rotate right with carry: 1 >> 1 + carry(0) = 0
-        rrx(0x1, 0x1, false, 1, 0x1),
+        rrx(0x1, false, 1, 0x0),
         // 1-bit rotate right with carry: 1 >> 1 + carry(1) = 1
-        rrx(0x1, 0x1, true, 1, 0x1),
+        rrx(0x1, true, 1, 0x1),
         // 2-bit rotate right with carry: 2 >> 1 + carry(0) = 1
-        rrx(0x2, 0x1, false, 2, 0x1),
+        rrx(0x2, false, 2, 0x1),
         // 2-bit rotate right with carry: 2 >> 1 + carry(1) = 3
-        rrx(0x2, 0x1, true, 2, 0x3),
+        rrx(0x2, true, 2, 0x3),
         // 8-bit rotate right with carry: 0x80 >> 1 + carry(0) = 0x40
-        rrx(0x80, 0x1, false, 8, 0x40),
+        rrx(0x80, false, 8, 0x40),
         // 8-bit rotate right with carry: 0x80 >> 1 + carry(1) = 0xC0
-        rrx(0x80, 0x1, true, 8, 0xC0),
+        rrx(0x80, true, 8, 0xC0),
         // 8-bit rotate right with carry: 0x01 >> 1 + carry(1) = 0x80
-        rrx(0x01, 0x1, true, 8, 0x80),
+        rrx(0x01, true, 8, 0x80),
         // 16-bit rotate right with carry: 0x8000 >> 1 + carry(0) = 0x4000
-        rrx(0x8000, 0x1, false, 16, 0x4000),
+        rrx(0x8000, false, 16, 0x4000),
         // 16-bit rotate right with carry: 0x8000 >> 1 + carry(1) = 0xC000
-        rrx(0x8000, 0x1, true, 16, 0xC000),
+        rrx(0x8000, true, 16, 0xC000),
         // 32-bit rotate right with carry: 0x80000000 >> 1 + carry(0) = 0x40000000
-        rrx(0x80000000L, 0x1, false, 32, 0x40000000),
+        rrx(0x80000000L, false, 32, 0x40000000),
         // 32-bit rotate right with carry: 0x80000000 >> 1 + carry(1) = 0xC0000000
-        rrx(0x80000000L, 0x1, true, 32, 0xC0000000L),
+        rrx(0x80000000L, true, 32, 0xC0000000L),
         // 64-bit rotate right with carry: 0x8000000000000000 >> 1 + carry(0) = 0x4000000000000000
-        rrx(0x8000000000000000L, 0x1, false, 64, 0x4000000000000000L),
+        rrx(0x8000000000000000L, false, 64, 0x4000000000000000L),
         // 64-bit rotate right with carry: 0x8000000000000000 >> 1 + carry(1) = 0xC000000000000000
-        rrx(0x8000000000000000L, 0x1, true, 64, 0xC000000000000000L)
+        rrx(0x8000000000000000L, true, 64, 0xC000000000000000L)
     );
   }
 
-  private Function rrx(long a, long b, boolean carry, int size, long expected) {
+  private Function rrx(long a, boolean carry, int size, long expected) {
     a = norm(a, size);
-    b = norm(b, size);
     expected = norm(expected, size);
     var builtIn = BuiltInTable.RRX;
     var name = builtIn.name().toLowerCase() + "_" + counter++;
@@ -1455,7 +1454,6 @@ public class BuiltinCTest extends DockerExecutionTest {
         new BuiltInCall(builtIn,
             new NodeList<>(
                 GraphUtils.bitsNode(a, size),
-                GraphUtils.bitsNode(b, size),
                 GraphUtils.bitsNode(carry ? 1 : 0, 1)
             ),
             Type.bits(size)

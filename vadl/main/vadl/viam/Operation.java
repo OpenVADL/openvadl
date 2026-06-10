@@ -38,4 +38,9 @@ public class Operation extends Definition {
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
   }
+
+  @Override
+  public String toString() {
+    return identifier.simpleName();
+  }
 }

@@ -104,7 +104,7 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
     var id = counter.getAndIncrement();
 
     final List<CharSequence> lines = new ArrayList<>();
-    lines.add("    %d [label=\"Mask 0x%x\"];\n".formatted(id, node.getMask().toValue()));
+    lines.add("    %d [label=\"Mask 0x%x\"];\n".formatted(id, node.getMask().value()));
 
     // Handle default node
     if (node.getFallback() != null) {
@@ -125,7 +125,7 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
 
       lines.addAll(childResult.right());
       lines.add("    %d -> %d [label=\"0x%x\"];\n".formatted(id, childResult.left(),
-          pattern.toBitVector().toValue()));
+          pattern.toBitVector().value()));
     });
 
     return Pair.of(id, lines);
@@ -158,7 +158,7 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
 
     final List<CharSequence> lines = new ArrayList<>();
 
-    final BigInteger mask = node.getMask().toValue();
+    final BigInteger mask = node.getMask().value();
 
     lines.add("    %d [label=\"Mask 0x%x\"];\n".formatted(id, mask));
 
@@ -172,7 +172,7 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
 
       lines.addAll(childResult.right());
       lines.add("    %d -> %d [label=\"0x%x\"];\n".formatted(id, childResult.left(),
-          pattern.toBitVector().toValue()));
+          pattern.toBitVector().value()));
     });
 
     return Pair.of(id, lines);
@@ -190,8 +190,8 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
 
     final List<CharSequence> lines = new ArrayList<>();
 
-    final BigInteger mask = node.getPattern().toMaskVector().toValue();
-    final BigInteger value = node.getPattern().toBitVector().toValue();
+    final BigInteger mask = node.getPattern().toMaskVector().value();
+    final BigInteger value = node.getPattern().toBitVector().value();
 
     lines.add("    %d [label=\"insn & 0x%x == 0x%x\"];\n".formatted(id, mask, value));
 

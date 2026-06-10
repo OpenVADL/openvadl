@@ -1,0 +1,407 @@
+// INCLUDE-AST-DUMP
+
+// These include examples of typechecking that previously weren't possible with the pure bottom-up approach.
+// https://github.com/OpenVADL/openvadl/issues/825
+
+// Function with condition with both branches returning const types.
+function abc(cond: Bool) -> Bits<32> = if cond then 9 else 8
+
+// Function with math with all branches returning const types.
+function abc2(num: Bits<32>) -> Bits<32> = match num with
+  { 0 => 0
+  , 1 => 2
+  , 2 => 4
+  , _ => 8
+  }
+
+// Long if-else chain.
+using BitsX = Bits<64>
+using SIntW = SInt<32>
+
+function patternSize (val: BitsX) -> SIntW =
+       if val =  0    || val = -1   then  0
+  else if val(63..32) != val(31..0) then 64
+  else if val(31..16) != val(15..0) then 32
+  else if val(15.. 8) != val( 7..0) then 16
+  else if val( 7.. 4) != val( 3..0) then  8
+  else if val( 3.. 2) != val( 1..0) then  4
+  else 2
+
+// Long match-chain
+constant VL = 128
+
+using Bits5 = Bits<5>
+
+function DecodePredCount (pattern: Bits5) -> BitsX =
+  let elCount = VL as BitsX >> 3 + 0 in
+    match pattern with
+      { 0b00000 => elCount // elCount is always a power of 2
+      , 0b00001 => if elCount >=   1 then   1 else 0
+      , 0b00010 => if elCount >=   2 then   2 else 0
+      , 0b00011 => if elCount >=   3 then   3 else 0
+      , 0b00100 => if elCount >=   4 then   4 else 0
+      , 0b00101 => if elCount >=   5 then   5 else 0
+      , 0b00110 => if elCount >=   6 then   6 else 0
+      , 0b00111 => if elCount >=   7 then   7 else 0
+      , 0b01000 => if elCount >=   8 then   8 else 0
+      , 0b01001 => if elCount >=  16 then  16 else 0
+      , 0b01010 => if elCount >=  32 then  32 else 0
+      , 0b01011 => if elCount >=  64 then  64 else 0
+      , 0b01100 => if elCount >= 128 then 128 else 0
+      , 0b01101 => if elCount >= 256 then 256 else 0
+      , 0b11101 => elCount - elCount % 4
+      , 0b11110 => elCount - elCount % 3
+      , 0b11111 => elCount
+      , _       => 0
+      }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    FunctionDefinition name: "abc"
+//    . Parameter name: "cond"
+//    . : TypeLiteral type: Bool
+//    . : ' Identifier name: "Bool" type: null
+//    . TypeLiteral type: Bits<32>
+//    . : Identifier name: "Bits" type: null
+//    . : IntegerLiteral literal: 32 (32) type: Const<32>
+//    . IfExpr type: Bits<32>
+//    . : Identifier name: "cond" type: Bool
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 9 (9) type: Const<9>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    FunctionDefinition name: "abc2"
+//    . Parameter name: "num"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . TypeLiteral type: Bits<32>
+//    . : Identifier name: "Bits" type: null
+//    . : IntegerLiteral literal: 32 (32) type: Const<32>
+//    . MatchExpr type: Bits<32>
+//    . : Identifier name: "num" type: Bits<32>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    UsingDefinition name: "BitsX"
+//    . TypeLiteral type: Bits<64>
+//    . : Identifier name: "Bits" type: null
+//    . : IntegerLiteral literal: 64 (64) type: Const<64>
+//    UsingDefinition name: "SIntW"
+//    . TypeLiteral type: SInt<32>
+//    . : Identifier name: "SInt" type: null
+//    . : IntegerLiteral literal: 32 (32) type: Const<32>
+//    FunctionDefinition name: "patternSize"
+//    . Parameter name: "val"
+//    . : TypeLiteral type: Bits<64>
+//    . : ' Identifier name: "BitsX" type: null
+//    . TypeLiteral type: SInt<32>
+//    . : Identifier name: "SIntW" type: null
+//    . IfExpr type: SInt<32>
+//    . : BinaryExpr operator: || type: Bool
+//    . : ' BinaryExpr operator: = type: Bool
+//    . : ' | Identifier name: "val" type: Bits<64>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' BinaryExpr operator: = type: Bool
+//    . : ' | CastExpr type: SInt<64>
+//    . : ' | . Identifier name: "val" type: Bits<64>
+//    . : ' | CastExpr type: SInt<64>
+//    . : ' | . UnaryExpr operator: UnOp - type: Const<-1>
+//    . : ' | . : IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : CastExpr type: SInt<32>
+//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : IfExpr type: SInt<32>
+//    . : ' BinaryExpr operator: != type: Bool
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "val" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : RangeExpr type: null
+//    . : ' | . : ' IntegerLiteral literal: 63 (63) type: Const<63>
+//    . : ' | . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : ' | CallIndexExpr type: Bits<32>
+//    . : ' | . Identifier name: "val" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : RangeExpr type: null
+//    . : ' | . : ' IntegerLiteral literal: 31 (31) type: Const<31>
+//    . : ' | . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: SInt<32>
+//    . : ' | IntegerLiteral literal: 64 (64) type: Const<64>
+//    . : ' IfExpr type: SInt<32>
+//    . : ' | BinaryExpr operator: != type: Bool
+//    . : ' | . CallIndexExpr type: Bits<16>
+//    . : ' | . : Identifier name: "val" type: null
+//    . : ' | . : ArgsIndices
+//    . : ' | . : ' RangeExpr type: null
+//    . : ' | . : ' | IntegerLiteral literal: 31 (31) type: Const<31>
+//    . : ' | . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : ' | . CallIndexExpr type: Bits<16>
+//    . : ' | . : Identifier name: "val" type: null
+//    . : ' | . : ArgsIndices
+//    . : ' | . : ' RangeExpr type: null
+//    . : ' | . : ' | IntegerLiteral literal: 15 (15) type: Const<15>
+//    . : ' | . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | CastExpr type: SInt<32>
+//    . : ' | . IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : ' | IfExpr type: SInt<32>
+//    . : ' | . BinaryExpr operator: != type: Bool
+//    . : ' | . : CallIndexExpr type: Bits<8>
+//    . : ' | . : ' Identifier name: "val" type: null
+//    . : ' | . : ' ArgsIndices
+//    . : ' | . : ' | RangeExpr type: null
+//    . : ' | . : ' | . IntegerLiteral literal: 15 (15) type: Const<15>
+//    . : ' | . : ' | . IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | . : CallIndexExpr type: Bits<8>
+//    . : ' | . : ' Identifier name: "val" type: null
+//    . : ' | . : ' ArgsIndices
+//    . : ' | . : ' | RangeExpr type: null
+//    . : ' | . : ' | . IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : ' | . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . CastExpr type: SInt<32>
+//    . : ' | . : IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : ' | . IfExpr type: SInt<32>
+//    . : ' | . : BinaryExpr operator: != type: Bool
+//    . : ' | . : ' CallIndexExpr type: Bits<4>
+//    . : ' | . : ' | Identifier name: "val" type: null
+//    . : ' | . : ' | ArgsIndices
+//    . : ' | . : ' | . RangeExpr type: null
+//    . : ' | . : ' | . : IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : ' | . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . : ' CallIndexExpr type: Bits<4>
+//    . : ' | . : ' | Identifier name: "val" type: null
+//    . : ' | . : ' | ArgsIndices
+//    . : ' | . : ' | . RangeExpr type: null
+//    . : ' | . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : CastExpr type: SInt<32>
+//    . : ' | . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | . : IfExpr type: SInt<32>
+//    . : ' | . : ' BinaryExpr operator: != type: Bool
+//    . : ' | . : ' | CallIndexExpr type: Bits<2>
+//    . : ' | . : ' | . Identifier name: "val" type: null
+//    . : ' | . : ' | . ArgsIndices
+//    . : ' | . : ' | . : RangeExpr type: null
+//    . : ' | . : ' | . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | . : ' | . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : ' | . : ' | CallIndexExpr type: Bits<2>
+//    . : ' | . : ' | . Identifier name: "val" type: null
+//    . : ' | . : ' | . ArgsIndices
+//    . : ' | . : ' | . : RangeExpr type: null
+//    . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : ' CastExpr type: SInt<32>
+//    . : ' | . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . : ' CastExpr type: SInt<32>
+//    . : ' | . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
+//    ConstantDefinition name: "VL" evaluatedValue: 128
+//    . IntegerLiteral literal: 128 (128) type: Const<128>
+//    UsingDefinition name: "Bits5"
+//    . TypeLiteral type: Bits<5>
+//    . : Identifier name: "Bits" type: null
+//    . : IntegerLiteral literal: 5 (5) type: Const<5>
+//    FunctionDefinition name: "DecodePredCount"
+//    . Parameter name: "pattern"
+//    . : TypeLiteral type: Bits<5>
+//    . : ' Identifier name: "Bits5" type: null
+//    . TypeLiteral type: Bits<64>
+//    . : Identifier name: "BitsX" type: null
+//    . LetExpr type: Bits<64>
+//    . : Identifier name: "elCount" type: Bits<64>
+//    . : BinaryExpr operator: >> type: Bits<64>
+//    . : ' CastExpr type: Bits<64>
+//    . : ' | Identifier name: "VL" type: Const<128>
+//    . : ' | TypeLiteral type: Bits<64>
+//    . : ' | . Identifier name: "BitsX" type: null
+//    . : ' CastExpr type: UInt<2>
+//    . : ' | BinaryExpr operator: + type: Const<3>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : MatchExpr type: Bits<64>
+//    . : ' Identifier name: "pattern" type: Bits<5>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b00000 (0) type: Const<0>
+//    . : ' Identifier name: "elCount" type: Bits<64>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b00001 (1) type: Const<1>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b00010 (2) type: Const<2>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b00011 (3) type: Const<3>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b00100 (4) type: Const<4>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b00101 (5) type: Const<5>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b00110 (6) type: Const<6>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 6 (6) type: Const<6>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 6 (6) type: Const<6>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b00111 (7) type: Const<7>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b01000 (8) type: Const<8>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b01001 (9) type: Const<9>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b01010 (10) type: Const<10>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b01011 (11) type: Const<11>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 64 (64) type: Const<64>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 64 (64) type: Const<64>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b01100 (12) type: Const<12>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 128 (128) type: Const<128>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 128 (128) type: Const<128>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b01101 (13) type: Const<13>
+//    . : ' IfExpr type: Bits<64>
+//    . : ' | BinaryExpr operator: >= type: Bool
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 256 (256) type: Const<256>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 256 (256) type: Const<256>
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b11101 (29) type: Const<29>
+//    . : ' BinaryExpr operator: - type: Bits<64>
+//    . : ' | Identifier name: "elCount" type: Bits<64>
+//    . : ' | BinaryExpr operator: % type: Bits<64>
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b11110 (30) type: Const<30>
+//    . : ' BinaryExpr operator: - type: Bits<64>
+//    . : ' | Identifier name: "elCount" type: Bits<64>
+//    . : ' | BinaryExpr operator: % type: Bits<64>
+//    . : ' | . Identifier name: "elCount" type: Bits<64>
+//    . : ' | . CastExpr type: Bits<64>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' CastExpr type: Bits<5>
+//    . : ' | BinaryLiteral literal: 0b11111 (31) type: Const<31>
+//    . : ' Identifier name: "elCount" type: Bits<64>
+//    . : ' CastExpr type: Bits<64>
+//    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

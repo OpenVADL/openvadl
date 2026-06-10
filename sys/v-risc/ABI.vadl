@@ -196,6 +196,12 @@ assembly description AD for ABI = {
             imm = ImmediateOperand
         ;
 
+        BalLInstruction @instruction:
+            mnemonic = "BAL_L" @operand
+            rd = Register @operand ","
+            imm = ImmediateOperand
+        ;
+
         CondIds: "SEQ" | "SNE" | "SLT" | "SLE" | "ULT" | "UGE";
 
         CondInstruction @instruction:

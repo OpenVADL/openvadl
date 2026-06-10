@@ -1,0 +1,38 @@
+// INCLUDE-AST-DUMP
+
+// There once was a crash with code like that:
+// https://github.com/OpenVADL/openvadl/issues/190
+constant friday:  Bits<Nums::second> = 5
+
+enumeration Nums : Bits<4> =
+  { first = 10
+  , second
+  }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    ConstantDefinition name: "friday" evaluatedValue: 5
+//    . TypeLiteral type: Bits<11>
+//    . : Identifier name: "Bits" type: null
+//    . : IdentifierPath name: "Nums::second" type: Bits<4>
+//    . CastExpr type: Bits<11>
+//    . : IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : TypeLiteral type: Bits<11>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IdentifierPath name: "Nums::second" type: Bits<4>
+//    EnumerationDefinition name: "Nums"
+//    . Identifier name: "first" type: null
+//    . CastExpr type: Bits<4>
+//    . : IntegerLiteral literal: 10 (10) type: Const<10>
+//    . Identifier name: "second" type: null
+//    . CastExpr type: Bits<4>
+//    . : IntegerLiteral literal: 11 (11) type: Const<11>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

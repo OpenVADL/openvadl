@@ -75,6 +75,8 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.OperationExistsNode;
+import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -360,6 +362,25 @@ public class AsmGrammarRuleGenerator {
   public void handle(AsmRuleContext ctx, FoldNode node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(AsmRuleContext ctx, OperationForAllNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(AsmRuleContext ctx, OperationForAllNode.Index node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(AsmRuleContext ctx, OperationExistsNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")

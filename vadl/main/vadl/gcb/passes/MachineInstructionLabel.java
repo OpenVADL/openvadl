@@ -183,7 +183,6 @@ public enum MachineInstructionLabel {
   BULEQ,  // unsigned-less-equal condition
   BULTH,  // unsigned-less-than condition
   BUGTH,  // unsigned-greater-than condition
-
   /*
    CONDITIONAL BRANCHES using status-register-comparisons as condition.
 

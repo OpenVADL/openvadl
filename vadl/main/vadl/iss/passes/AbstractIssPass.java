@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@ import static vadl.iss.passes.TcgPassUtils.instrInfo;
 
 import java.util.stream.Stream;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.extensions.InstrExecPlan.ExecutionPath;
 import vadl.pass.Pass;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -44,14 +45,47 @@ public abstract class AbstractIssPass extends Pass {
     return spec.isa().get().ownInstructions().stream();
   }
 
-  public Stream<Instruction> tcgInstrs(Specification spec) {
+  public Stream<Instruction> normalTcgInstrs(Specification spec) {
     return allInstrs(spec)
-        .filter(i -> !instrInfo(i).asHelperCall());
+        .filter(this::usesNormalTcgPipeline);
+  }
+
+  public Stream<Instruction> directGvecCandidateInstrs(Specification spec) {
+    return allInstrs(spec)
+        .filter(this::hasViableDirectGvecPlan);
+  }
+
+  public Stream<Instruction> wholeHelperInstrs(Specification spec) {
+    return allInstrs(spec)
+        .filter(this::usesWholeHelperPath);
+  }
+
+  public Stream<Instruction> tcgInstrs(Specification spec) {
+    return normalTcgInstrs(spec);
   }
 
   public Stream<Instruction> helperInstrs(Specification spec) {
-    return allInstrs(spec)
-        .filter(i -> instrInfo(i).asHelperCall());
+    return wholeHelperInstrs(spec);
   }
 
+  private boolean usesNormalTcgPipeline(Instruction instruction) {
+    var executionPlan = instrInfo(instruction).executionPlan();
+    if (executionPlan != null) {
+      return executionPlan.selectedPath() == ExecutionPath.NORMAL_TCG;
+    }
+    return instrInfo(instruction).executionPath() == ExecutionPath.NORMAL_TCG;
+  }
+
+  private boolean hasViableDirectGvecPlan(Instruction instruction) {
+    var executionPlan = instrInfo(instruction).executionPlan();
+    return executionPlan != null && executionPlan.hasViableDirectGvecPlan();
+  }
+
+  private boolean usesWholeHelperPath(Instruction instruction) {
+    var executionPlan = instrInfo(instruction).executionPlan();
+    if (executionPlan != null) {
+      return executionPlan.selectedPath() == ExecutionPath.HELPER_CALL;
+    }
+    return instrInfo(instruction).executionPath() == ExecutionPath.HELPER_CALL;
+  }
 }

@@ -1,0 +1,9 @@
+// GOTO POSITION 8:23 - "hello" points to alias register definition
+instruction set architecture TEST = {
+  register X : Bits<5> -> Bits<32>
+}
+application binary interface ABI for TEST = {
+  alias register hello = X(0)
+
+  return address = hello
+}

@@ -32,11 +32,9 @@ import vadl.error.Diagnostic;
 import vadl.vdt.model.DecodeTreeGenerator;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.impl.LeafNodeImpl;
-import vadl.vdt.utils.Bit;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.PBit;
 import vadl.viam.Definition;
 
 /**
@@ -77,17 +75,17 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
     // set in the gMask are considered.
     BitVector mask = ggMask;
     for (Instruction instruction : instructions) {
-      mask = mask.and(mask(instruction));
+      mask = mask.and(instruction.pattern().toMaskVector());
     }
 
     // Step 2: possibly terminate: insn set must be a singleton
-    if (mask.toValue().equals(BigInteger.ZERO) && instructions.size() == 1) {
+    if (mask.value().equals(BigInteger.ZERO) && instructions.size() == 1) {
       return new LeafNodeImpl(instructions.iterator().next());
     }
 
     // Step 3: Decide about default node (for subsumed instructions)
     Optional<Node> defaultNode = Optional.empty();
-    if (mask.toValue().equals(BigInteger.ZERO)) {
+    if (mask.value().equals(BigInteger.ZERO)) {
       final var result = getDefault(ggMask, instructions);
 
       defaultNode = Optional.of(new LeafNodeImpl(result.getLeft()));
@@ -140,16 +138,8 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
       return insn;
     }
 
-    final PBit[] bits = new PBit[targetWidth];
-    for (int i = 0; i < targetWidth; i++) {
-      if (i < pattern.width()) {
-        bits[i] = pattern.get(i);
-      } else {
-        bits[i] = new PBit(PBit.Value.DONT_CARE);
-      }
-    }
-
-    return new Instruction(insn.source(), targetWidth, new BitPattern(bits));
+    return new Instruction(insn.source(), targetWidth,
+        pattern.rightPad(targetWidth - pattern.width()));
   }
 
   /**
@@ -161,15 +151,11 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
    * @return The decision bits
    */
   private BitPattern applyMask(BitVector mask, Instruction instruction) {
-    final PBit[] decisionBits = new PBit[instruction.width()];
-    for (int i = 0; i < instruction.width(); i++) {
-      if (mask.get(i).value()) {
-        decisionBits[i] = instruction.pattern().get(i);
-      } else {
-        decisionBits[i] = new PBit(PBit.Value.DONT_CARE);
-      }
-    }
-    return new BitPattern(decisionBits);
+    return new BitPattern(
+        mask.value(),
+        instruction.pattern().toBitVector().value(),
+        instruction.width()
+    );
   }
 
   private ImmutableTriple<Instruction, Collection<Instruction>, BitVector> getDefault(
@@ -178,8 +164,8 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
     // Compute the set of bit patterns that have empty remaining bit masks
     final Set<Instruction> m = new LinkedHashSet<>();
     for (Instruction instruction : instructions) {
-      var k = mask(instruction).and(ggMask);
-      if (k.toValue().equals(BigInteger.ZERO)) {
+      var k = instruction.pattern().toMaskVector().and(ggMask);
+      if (k.value().equals(BigInteger.ZERO)) {
         m.add(instruction);
       }
     }
@@ -196,10 +182,10 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
     // Compute the new mask for the subsumed instructions (Similar to Step 1)
     var newMask = ggMask;
     for (var insn : subsumed) {
-      newMask = newMask.and(mask(insn));
+      newMask = newMask.and(insn.pattern().toMaskVector());
     }
 
-    if (newMask.toValue().equals(BigInteger.ZERO)) {
+    if (newMask.value().equals(BigInteger.ZERO)) {
       throw toOverlappingInstructionDiagnostic(subsumed);
     }
 
@@ -230,27 +216,11 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
     return diagnostic.build();
   }
 
-  /**
-   * Compute the mask for the given instruction. The mask is a bit vector where each bit is set if
-   * the corresponding bit in the instruction is significant.
-   *
-   * @param instruction The instruction to compute the mask for
-   * @return The mask
-   */
-  private BitVector mask(Instruction instruction) {
-    final Bit[] maskBits = new Bit[instruction.width()];
-    for (int i = 0; i < instruction.width(); i++) {
-      maskBits[i] = new Bit(instruction.pattern().get(i).getValue() != PBit.Value.DONT_CARE);
-    }
-    return new BitVector(maskBits);
-  }
-
   private BitVector fullMask(int width) {
-    final Bit[] bits = new Bit[width];
-    for (int i = 0; i < width; i++) {
-      bits[i] = new Bit(true);
-    }
-    return new BitVector(bits);
+    return new BitVector(
+        BigInteger.ONE.shiftLeft(width).subtract(BigInteger.ONE),
+        width
+    );
   }
 
   /**

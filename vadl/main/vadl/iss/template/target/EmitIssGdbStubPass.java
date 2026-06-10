@@ -419,7 +419,7 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
     for (var i : indices) {
       args.append(", ").append(i);
     }
-    return "cpu_get_" + base + "_chunk(" + args + ", ";
+    return "cpu_get_" + base + "_chunk(" + args + ", " + indices.size() + ", ";
   }
 
   private static String chunkSetCallPrefix(RegisterTensor origin, List<String> indices) {
@@ -428,6 +428,6 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
     for (var i : indices) {
       args.append(", ").append(i);
     }
-    return "cpu_set_" + base + "_chunk(" + args + ", ";
+    return "cpu_set_" + base + "_chunk(" + args + ", " + indices.size() + ", ";
   }
 }

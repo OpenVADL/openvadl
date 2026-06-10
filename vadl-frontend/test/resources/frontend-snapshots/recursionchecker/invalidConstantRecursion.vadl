@@ -1,0 +1,16 @@
+constant a = b
+constant b = a
+
+
+//  Reported Diagnostics:
+//
+//  error: Infinite Recursion
+//       ╭── test/resources/frontend-snapshots/recursionchecker/invalidConstantRecursion.vadl:1:1
+//       │
+//     1 │ constant a = b
+//       │ ^^^^^^^^^^^^^^
+//       │
+//       This constant definition `a` is defined by itself.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

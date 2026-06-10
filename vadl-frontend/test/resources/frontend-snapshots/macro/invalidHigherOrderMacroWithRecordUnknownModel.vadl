@@ -1,0 +1,35 @@
+// This code previously crashed
+// https://github.com/OpenVADL/openvadl/issues/991
+// FIXME: Investigate why there are so many errors
+
+model-type exType = ()-> Ex
+
+record wrap (ex: exType)
+
+model genConstant (w : wrap) : Defs = {
+  constant test = $w.ex()
+}
+
+$genConstant ((DoesNotExist))
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown Model `DoesNotExist`
+//       ╭── test/resources/frontend-snapshots/macro/invalidHigherOrderMacroWithRecordUnknownModel.vadl:13:16
+//       │
+//    13 │ $genConstant ((DoesNotExist))
+//       │                ^^^^^^^^^^^^
+//       │
+//       help: Make sure the macro is defined before (above) they are used.
+//
+//  error: SyntaxType Mismatch
+//       ╭── Source Location was lost
+//       │
+//       │    No Preview available: No source location found
+//       │    
+//       │
+//       Mismatched node type: Required `() -> EX`, but got `ID`
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

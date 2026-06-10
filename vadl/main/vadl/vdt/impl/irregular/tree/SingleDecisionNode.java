@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
-import vadl.vdt.utils.Bit;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 
@@ -77,7 +76,7 @@ public class SingleDecisionNode implements InnerNode {
 
     // extend/truncate the instruction to the relevant bits before testing
     final BitVector i = insn
-        .rightPad(pattern.width(), new Bit(false));
+        .rightPad(pattern.width(), false);
 
     final boolean matches = pattern.test(i);
 

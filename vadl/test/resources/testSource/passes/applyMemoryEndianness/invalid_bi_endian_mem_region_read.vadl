@@ -1,0 +1,21 @@
+
+instruction set architecture EndianTest = {
+  using B32 = Bits<32>
+
+  [ execution state ]
+  register R : B32
+
+  [ big endian : R = 0 ]
+  memory MEM : B32 -> Bits<8>
+
+  program counter PC : B32
+}
+
+processor Test implements EndianTest = {
+
+  reset = { } // R not set here, so cond is undefined
+
+  memory region [ROM] MR in MEM = {
+    MEM<4>(0) := 123 // cannot determine endianness
+  }
+}

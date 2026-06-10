@@ -41,6 +41,10 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
 
   private static final String VADL_SPEC = "sys/risc-v/rv64v.vadl";
   private static final int TESTS_PER_INSTRUCTION = 50;
+  // The test linker places .text.init at 0x80000000 and aligns .tohost to the next 4 KiB page.
+  // Keep randomized load/store scratch addresses above that reserved startup/HTIF region.
+  private static final BigInteger TEST_DATA_MIN_ADDR = BigInteger.valueOf(0x80002000L);
+  private static final BigInteger TEST_DATA_MAX_ADDR = BigInteger.valueOf(0x800F0000L);
 
   @Override
   public int getTestPerInstruction() {
@@ -189,7 +193,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var storeReg = b.anyTempReg().sample();
       b.fillRegSigned(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
-      b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L),
+      b.fillReg(addrReg, TEST_DATA_MIN_ADDR, TEST_DATA_MAX_ADDR,
           calculateAlignment(dataSize));
       b.add("%s %s, 0(%s)", storeInstruction, storeReg, addrReg);
       var loadReg = b.anyTempReg().sample();
@@ -207,7 +211,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var storeReg = b.anyTempReg().sample();
       b.fillRegSigned(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
-      b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L),
+      b.fillReg(addrReg, TEST_DATA_MIN_ADDR, TEST_DATA_MAX_ADDR,
           calculateAlignment(dataSize));
       b.add("%s %s, 0(%s)", instruction, storeReg, addrReg);
       var loadReg = b.anyTempReg()

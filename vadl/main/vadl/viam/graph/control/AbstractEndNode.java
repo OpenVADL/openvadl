@@ -80,4 +80,22 @@ public abstract class AbstractEndNode extends ControlNode {
     this.sideEffects.add(sideEffectNode);
     updateUsageOf(null, sideEffectNode);
   }
+
+  /**
+   * Replaces a side effect with zero or more side effects while preserving order.
+   */
+  public void replaceSideEffect(SideEffectNode original,
+                                List<? extends SideEffectNode> replacement) {
+    var index = sideEffects.indexOf(original);
+    ensure(index >= 0, "Side effect %s is not attached to %s.", original, this);
+
+    sideEffects.remove(index);
+    original.removeUsage(this);
+
+    for (int i = 0; i < replacement.size(); i++) {
+      var node = replacement.get(i);
+      sideEffects.add(index + i, node);
+      updateUsageOf(null, node);
+    }
+  }
 }

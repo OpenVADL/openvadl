@@ -22,7 +22,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import vadl.iss.passes.tcg.lowering.Tcg_32_64;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;

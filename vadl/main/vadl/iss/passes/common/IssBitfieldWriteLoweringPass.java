@@ -16,7 +16,6 @@
 
 package vadl.iss.passes.common;
 
-import static vadl.iss.passes.TcgPassUtils.instrInfo;
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
@@ -35,12 +34,12 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
- * Converts chunk-window ISS writes into dedicated TCG bitfield-write nodes for DIRECT_TCG
- * instruction behaviors.
+ * Converts chunk-window ISS writes into dedicated TCG bitfield-write nodes for instruction
+ * behaviors that keep scalar register-container lowering.
  *
  * <p>The register-access lowering pass emits only unified {@link IssWriteRegNode}. This pass
- * is strategy-aware and performs the TCG-specific rewrite to {@link IssRegBitfieldWriteNode}
- * only for instructions classified as DIRECT_TCG.</p>
+ * performs the TCG-specific rewrite to {@link IssRegBitfieldWriteNode} only when the accessed
+ * register storage still uses scalar TCG register containers.</p>
  */
 public class IssBitfieldWriteLoweringPass extends AbstractIssPass {
 
@@ -56,7 +55,6 @@ public class IssBitfieldWriteLoweringPass extends AbstractIssPass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
     allInstrs(viam)
-        .filter(instr -> !instrInfo(instr).asHelperCall())
         .forEach(instr -> instr.behavior()
             .getNodes(IssWriteRegNode.class)
             .toList()

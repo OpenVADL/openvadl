@@ -1,0 +1,117 @@
+// INCLUDE-VIAM-DUMP
+
+instruction set architecture Tensor = {
+  using Index = Bits<4>
+  register X : Bits<16><4><32>
+  format F : Bits<16> = {opcode : Bits<4>, rs2: Index, rs1: Index, rd: Index}
+  instruction ADD4V : F = forall i: Bits<4> in 0 .. 3 do X(rd)(i) := X(rs1)(i) + X(rs2)(i)
+  encoding ADD4V = {opcode = 0b1100}
+  assembly ADD4V = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "dynamicTensorSlicingForAllDo"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "Tensor"
+//    . : PC: -
+//    . : InstructionCount: 1
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 1
+//    . : FunctionCount: 0
+//    . : OperationCount: 0
+//    . : ExceptionCount: 0
+//    . : RelocationCount: 0
+//    . : RegisterCount: 1
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 0
+//    . : Format name: "F"
+//    . : ' Type: b16
+//    . : ' FieldCount: 4
+//    . : ' FieldAccessCount: 0
+//    . : ' FieldEncodingCount: 0
+//    . : ' Field name: "opcode"
+//    . : ' | Type: b4
+//    . : ' | BitSlice: [15..12]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "rs2"
+//    . : ' | Type: b4
+//    . : ' | BitSlice: [11..8]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "rs1"
+//    . : ' | Type: b4
+//    . : ' | BitSlice: [7..4]
+//    . : ' | RefFormat: -
+//    . : ' Field name: "rd"
+//    . : ' | Type: b4
+//    . : ' | BitSlice: [3..0]
+//    . : ' | RefFormat: -
+//    . : RegisterTensor name: "X"
+//    . : ' Type: b32
+//    . : ' Dimensions: [0:b4x16, 1:b2x4, 2:b5x32]
+//    . : ' ConstraintCount: 0
+//    . : Instruction name: "ADD4V" format: "F"
+//    . : ' Inputs: rs1, rs2
+//    . : ' Outputs: rd
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0  FieldRef             in: ()         succ: ()      type: b4    field: rd    format: F
+//    . : ' | n1  ForIdx               in: ()         succ: ()      type: b4    from: 0   to: 3
+//    . : ' | n2  Truncate             in: (n1)       succ: ()      type: b2    fromWidth: 4
+//    . : ' | n3  FieldRef             in: ()         succ: ()      type: b4    field: rs1   format: F
+//    . : ' | n4  ReadsRegisterTensor  in: (n3 n2)    succ: ()      type: b32   reg: X
+//    . : ' | n5  FieldRef             in: ()         succ: ()      type: b4    field: rs2   format: F
+//    . : ' | n6  ReadsRegisterTensor  in: (n5 n2)    succ: ()      type: b32   reg: X
+//    . : ' | n7  BuiltInCall          in: (n4 n6)    succ: ()      type: b32   builtin: VADL::add   operator: +
+//    . : ' | n8  WritesRegisterTensor in: (n0 n2 n7) succ: ()      reg: X
+//    . : ' | n9  BranchEnd            in: (n8)       succ: ()      effects: 1
+//    . : ' | n10 ForallEnd            in: (n9)       succ: (n13)   branchEnds: 1
+//    . : ' | n11 BranchBegin          in: ()         succ: (n9)    next: set
+//    . : ' | n12 Forall               in: (n1)       succ: (n11)   range: 0..3
+//    . : ' | n13 InstrEnd             in: ()         succ: ()      effects: 0
+//    . : ' | n14 Start                in: ()         succ: (n12)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0  BuiltInCall in: ()        succ: ()      type: String   builtin: mnemonic
+//    . : ' | . : n1  Constant    in: ()        succ: ()      type: String   const: " "
+//    . : ' | . : n2  BuiltInCall in: (n0 n1)   succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n3  FieldRef    in: ()        succ: ()      type: b4       field: rd    format: F
+//    . : ' | . : n4  BuiltInCall in: (n3)      succ: ()      type: String   builtin: register
+//    . : ' | . : n5  BuiltInCall in: (n2 n4)   succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n6  Constant    in: ()        succ: ()      type: String   const: ","
+//    . : ' | . : n7  BuiltInCall in: (n5 n6)   succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n8  FieldRef    in: ()        succ: ()      type: b4       field: rs1   format: F
+//    . : ' | . : n9  BuiltInCall in: (n8)      succ: ()      type: String   builtin: register
+//    . : ' | . : n10 BuiltInCall in: (n7 n9)   succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n11 BuiltInCall in: (n10 n6)  succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n12 FieldRef    in: ()        succ: ()      type: b4       field: rs2   format: F
+//    . : ' | . : n13 BuiltInCall in: (n12)     succ: ()      type: String   builtin: register
+//    . : ' | . : n14 BuiltInCall in: (n11 n13) succ: ()      type: String   builtin: VADL::concat_str
+//    . : ' | . : n15 Return      in: (n14)     succ: ()      retType: String
+//    . : ' | . : n16 Start       in: ()        succ: (n15)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b16
+//    . : ' | Format: F
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: [rs2, rs1, rd]
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "opcode"
+//    . : ' | . Field: opcode
+//    . : ' | . Type: b4
+//    . : ' | . Constant: 0xc: Bits<4>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -104,6 +104,11 @@ public abstract class ReadResourceNode extends ExpressionNode {
   }
 
   @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+  }
+
+  @Override
   public void applyOnInputsUnsafe(
       vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
     super.applyOnInputsUnsafe(visitor);

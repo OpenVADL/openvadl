@@ -16,61 +16,73 @@
 
 package vadl.iss.passes.common.planning.analysis.steps;
 
+import java.util.ArrayList;
 import java.util.List;
-import vadl.iss.passes.common.planning.analysis.VectorCandidate;
-import vadl.iss.passes.common.planning.analysis.VectorFactStep;
-import vadl.iss.passes.common.planning.analysis.VectorFactsBuilder;
+import javax.annotation.Nullable;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.EffectFacts;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.LoopFacts;
+import vadl.iss.passes.common.planning.analysis.VectorRegion;
 import vadl.iss.passes.nodes.IssWriteRegNode;
+import vadl.viam.Instruction;
 import vadl.viam.graph.control.ForallEndNode;
 import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
- * Detects the current vector instruction shape.
+ * Detects vector analysis regions and global loop/effect counts for one instruction.
  */
-public final class VectorAccessPatternStep implements VectorFactStep {
+public final class VectorAccessPatternStep {
 
-  @Override
-  public void extract(VectorFactsBuilder builder) {
-    var graph = builder.instruction().behavior();
-    // Later evaluators want loop and side-effect counts even for rejected shapes so they can
-    // explain a rejection without re-walking the graph.
-    var foralls = graph.getNodes(ForallNode.class).toList();
-    builder.setForallCount(foralls.size());
-    builder.setSideEffectCount(graph.getNodes(SideEffectNode.class).toList().size());
-    analyzeForallPattern(builder, foralls);
+  /**
+   * Returns global loop-shape facts used for conservative instruction-level planning decisions.
+   */
+  public LoopFacts loopFacts(Instruction instruction) {
+    var foralls = instruction.behavior().getNodes(ForallNode.class).toList();
+    return new LoopFacts(foralls.size(), discoverRegions(instruction).size());
   }
 
-  private void analyzeForallPattern(VectorFactsBuilder builder, List<ForallNode> foralls) {
-    // No forall means there is no lane-structured vector body for later strategies to reason about.
-    if (foralls.isEmpty()) {
-      builder.setHasSingleForallRegisterWriteBody(false);
-      return;
-    }
+  /**
+   * Returns global side-effect counts used for conservative instruction-level planning decisions.
+   */
+  public EffectFacts effectFacts(Instruction instruction) {
+    return new EffectFacts(instruction.behavior().getNodes(SideEffectNode.class).toList().size());
+  }
 
-    // The first vector strategies only know how to reason about one elementwise vector write.
-    var forallEnds = builder.instruction().behavior().getNodes(ForallEndNode.class).toList();
-    if (forallEnds.size() != 1 || forallEnds.getFirst().sideEffects().size() != 1) {
-      builder.setHasSingleForallRegisterWriteBody(false);
-      return;
+  /**
+   * Discovers the current set of normalized vector regions in one instruction.
+   */
+  public List<VectorRegion> discoverRegions(Instruction instruction) {
+    var regions = new ArrayList<VectorRegion>();
+    var foralls = instruction.behavior().getNodes(ForallNode.class).toList();
+    for (int idx = 0; idx < foralls.size(); idx++) {
+      var forall = foralls.get(idx);
+      var region = regionOf(forall, idx);
+      if (region != null) {
+        regions.add(region);
+      }
     }
+    return List.copyOf(regions);
+  }
 
-    var sideEffect = forallEnds.getFirst().sideEffects().getFirst();
-    // A non-register side effect does not expose the destination binding later strategies need for
-    // offset, layout, and overlap reasoning.
+  private @Nullable VectorRegion regionOf(ForallNode forall, int ordinal) {
+    if (!(forall.mergeNode() instanceof ForallEndNode forallEnd)) {
+      return null;
+    }
+    // Only one lowered vector write per forall body is considered a first-class analysis region.
+    if (forallEnd.sideEffects().size() != 1) {
+      return null;
+    }
+    var sideEffect = forallEnd.sideEffects().getFirst();
     if (!(sideEffect instanceof IssWriteRegNode write)) {
-      builder.setHasSingleForallRegisterWriteBody(false);
-      return;
+      return null;
     }
-
-    // Candidate extraction stays intentionally minimal: later steps and evaluators decide which
-    // write shape, storage kind, and operation forms a strategy can actually accept.
-    builder.setHasSingleForallRegisterWriteBody(true);
-    var idx = foralls.getFirst().idx();
-    builder.setCandidate(new VectorCandidate(
+    return new VectorRegion(
+        "forall-write-" + ordinal,
+        forall,
+        forallEnd,
         write,
         write.value(),
-        idx
-    ));
+        forall.idx()
+    );
   }
 }

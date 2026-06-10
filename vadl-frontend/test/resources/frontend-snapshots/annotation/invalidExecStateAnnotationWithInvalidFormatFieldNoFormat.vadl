@@ -1,0 +1,34 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ execution state : x ]
+  register R : Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Annotation target has invalid type
+//       ╭── test/resources/frontend-snapshots/annotation/invalidExecStateAnnotationWithInvalidFormatFieldNoFormat.vadl:5:3
+//       │
+//     5 │   [ execution state : x ]
+//       │   ^^^^^^^^^^^^^^^^^^^^^^^
+//       │
+//       Execution state annotation with format fields can only be applied to register definitions with a format type
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "R"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "execution" type: null
+//    . : ' Identifier name: "state" type: null
+//    . : ' Identifier name: "x" type: null
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

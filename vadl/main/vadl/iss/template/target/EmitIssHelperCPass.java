@@ -24,6 +24,7 @@ import vadl.iss.codegen.IssCpuFunctionGenerator;
 import vadl.iss.codegen.IssInstrHelperGenerator;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.common.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.InstrExecPlan;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.template.IssTemplateRenderingPass;
@@ -58,7 +59,7 @@ public class EmitIssHelperCPass extends IssTemplateRenderingPass {
                                              IssAccessorRegistry accessorRegistry) {
     return specification.isa().get().ownInstructions().stream()
         .map(TcgPassUtils::instrInfo)
-        .filter(InstrInfo::asHelperCall)
+        .filter(info -> info.executionPath() == InstrExecPlan.ExecutionPath.HELPER_CALL)
         .flatMap(e -> Stream.concat(
             instrExtractedFunctionImpl(e, accessorRegistry),
             Stream.of(instrHelperImpl(e, accessorRegistry))

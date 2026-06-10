@@ -422,7 +422,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       returnVal = 1;
     } catch (DiagnosticList d) {
       System.out.println(
-          new DiagnosticPrinter(new DiskVirtualFileSystem()).toString(d.deflateSimilar()));
+          new DiagnosticPrinter(new DiskVirtualFileSystem()).toString(d.collapseSimilar()));
       if (showStacktrace) {
         System.out.println(getStackTrace(d));
       }

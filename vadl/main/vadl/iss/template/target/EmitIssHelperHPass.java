@@ -21,6 +21,7 @@ import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.HelperParamPacking;
 import vadl.iss.passes.TcgPassUtils;
+import vadl.iss.passes.extensions.InstrExecPlan;
 import vadl.iss.passes.extensions.InstrInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -53,7 +54,7 @@ public class EmitIssHelperHPass extends IssTemplateRenderingPass {
   private List<String> instrHelperDefs(Specification specification) {
     return specification.isa().get().ownInstructions().stream()
         .map(TcgPassUtils::instrInfo)
-        .filter(InstrInfo::asHelperCall)
+        .filter(info -> info.executionPath() == InstrExecPlan.ExecutionPath.HELPER_CALL)
         .map(this::instrHelperDef)
         .toList();
   }

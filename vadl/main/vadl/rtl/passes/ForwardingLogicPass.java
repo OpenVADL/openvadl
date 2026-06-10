@@ -73,10 +73,9 @@ public class ForwardingLogicPass extends AbstractLogicPass {
         .orElseGet(() -> new Logic.Forwarding(mia.identifier.append("bypass")));
     var behavior = forwarding.behavior();
 
-    // no forwarding to instruction fetch and pc read in fetch
+    // no forwarding to instruction fetch
     var ignore = Stream.of(
             inline.mapping().ipg().fetch()
-        // inline.mapping().ipg().pcRead()
         )
         .map(inline.inlineMap()::get).toList();
 
@@ -91,7 +90,16 @@ public class ForwardingLogicPass extends AbstractLogicPass {
         if (!isa.registerTensors().contains(res) && !isa.ownMemories().contains(res)) {
           continue;
         }
+
         var analysis = res.expectExtension(HazardAnalysis.class);
+
+        var ipgRead = inline.inlineMap().inverse().get(read.asReadNode());
+        var hazardRd = analysis.reads().stream()
+            .filter(rd -> rd.node().equals(ipgRead) && rd.forwarding()).findFirst();
+        if (hazardRd.isEmpty()) {
+          continue; // no forwarding to this read
+        }
+
         var hazardWr = analysis.writes().stream()
             .filter(wr -> isAfter(stage, wr.effect())).toList();
         if (!hazardWr.isEmpty()) {

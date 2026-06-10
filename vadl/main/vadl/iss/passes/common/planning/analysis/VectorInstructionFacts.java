@@ -33,14 +33,11 @@ public record VectorInstructionFacts(
     Instruction instruction,
     LoopFacts loop,
     EffectFacts effects,
-    @Nullable VectorCandidate candidate,
-    @Nullable WriteAccessFacts write,
-    @Nullable OperationFacts operation,
-    List<OperandAccessFacts> operands
+    List<VectorRegionFacts> regions
 ) {
 
   public VectorInstructionFacts {
-    operands = List.copyOf(operands);
+    regions = List.copyOf(regions);
   }
 
   /**
@@ -48,7 +45,7 @@ public record VectorInstructionFacts(
    */
   public record LoopFacts(
       int forallCount,
-      boolean hasSingleForallRegisterWriteBody
+      int recognizedRegionCount
   ) {
   }
 
@@ -58,6 +55,20 @@ public record VectorInstructionFacts(
   public record EffectFacts(
       int sideEffectCount
   ) {
+  }
+
+  /**
+   * Strategy-neutral facts extracted for one vector analysis region.
+   */
+  public record VectorRegionFacts(
+      VectorRegion region,
+      @Nullable WriteAccessFacts write,
+      @Nullable OperationFacts operation,
+      List<OperandAccessFacts> operands
+  ) {
+    public VectorRegionFacts {
+      operands = List.copyOf(operands);
+    }
   }
 
   /**

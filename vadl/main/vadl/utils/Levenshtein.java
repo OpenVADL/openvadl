@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,10 @@
 
 package vadl.utils;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
@@ -50,16 +50,26 @@ public class Levenshtein {
                                                 @Nullable Integer maxSolutions,
                                                 @Nullable Double maxChange) {
 
-    @Nullable Long upperBound =
-        maxChange != null ? Math.round(target.length() * maxChange) : null;
+    // NOTE: There are further performance optimizations that could be applied by using tries as
+    // described here: https://stevehanov.ca/blog/fast-and-easy-levenshtein-distance-using-a-trie
 
-    List<Pair<T, Integer>> results = new ArrayList<>();
+    Integer upperBound = maxChange != null ? (int) Math.round(target.length() * maxChange) :
+        Integer.MAX_VALUE;
+
+    var results = new PriorityQueue<Pair<T, Integer>>(
+        Comparator.<Pair<T, Integer>>comparingInt(Pair::right).reversed());
 
     var lastRow = new int[target.length() + 1];
     var currentRow = new int[target.length() + 1];
 
     for (var item : dictionary) {
       var word = toString.apply(item);
+      var skipWord = false;
+
+      // Optimization if the words are of outrageously different lengths
+      if (Math.abs(target.length() - word.length()) > upperBound) {
+        continue;
+      }
 
       // Init the last row (since the current row will be moved into the last row first thing in
       // the loop below we actually have to write to the current row).
@@ -75,10 +85,27 @@ public class Levenshtein {
         lastRow = currentRow;
         currentRow = tmp;
 
-        // Init the current row
-        currentRow[0] = j;
+        // Calculate the necessary band (Ukkonen's algorithm)
+        int start = upperBound == Integer.MAX_VALUE ? 1 : Math.max(1, j - upperBound);
+        int end = upperBound == Integer.MAX_VALUE
+            ? target.length()
+            : Math.min(target.length(), j + upperBound);
 
-        for (int i = 1; i <= target.length(); i++) {
+        // Avoid skipped cells to influence the next row
+        var skippedCellCost = upperBound == Integer.MAX_VALUE
+            ? Integer.MAX_VALUE
+            : upperBound + 1;
+        if (start > 1) {
+          currentRow[start - 1] = skippedCellCost;
+        }
+        if (end < target.length()) {
+          currentRow[end + 1] = skippedCellCost;
+        }
+
+        currentRow[0] = j;
+        var minCost = currentRow[0];
+
+        for (int i = start; i <= end; i++) {
           var substituteCost = word.charAt(j - 1) == target.charAt(i - 1) ? 0 : 1;
           currentRow[i] = Math.min(
               Math.min(
@@ -87,33 +114,44 @@ public class Levenshtein {
               ),
               lastRow[i - 1] + substituteCost
           );
+          minCost = Math.min(minCost, currentRow[i]);
         }
 
-        // FIXME: Insert optimization here respecting upper bound (if all numbers in currentRow are
-        // larger than it we can abort this word).
+        // Optimization respecting upper bound, if all numbers in currentRow are larger than it we
+        // can abort this word.
+        if (minCost > upperBound) {
+          skipWord = true;
+          break;
+        }
       }
 
-      // FIXME: Add optimization here adjusting upper bound if maxLimit is already reached we can
-      // just take as the upperbound the cost of the worst word in our selection we already found.
-
       var cost = currentRow[target.length()];
+      if (skipWord || cost > upperBound) {
+        continue;
+      }
+
+      // Evict the worst member to make room for the current word.
+      if (maxSolutions != null && results.size() >= maxSolutions) {
+        results.poll();
+      }
+
+      // Add the new entry
       results.add(new Pair<>(item, cost));
+
+      // Adjust the upper bound
+      if (maxSolutions != null && results.size() >= maxSolutions) {
+        upperBound = results.peek().right() - 1;
+      }
     }
 
-    results.sort(Comparator.comparingInt(Pair::right));
-    var resultStream = results.stream();
-    if (upperBound != null) {
-      resultStream = resultStream
-          .filter(pair -> pair.right() <= upperBound);
-    }
-    if (maxSolutions != null) {
-      resultStream = resultStream.limit(maxSolutions);
-    }
-    return resultStream.toList();
+    return results.stream()
+        .sorted(Comparator.comparingInt(Pair::right))
+        .toList();
   }
 
   /**
-   * Computes the <a href ="https://en.wikipedia.org/wiki/Levenshtein_distance"></a> (edit distance) between two strings.
+   * Computes the <a href ="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein Distance
+   * </a> (edit distance) between two strings.
    *
    * @param first  the first string to be compared
    * @param second the second string to be compared

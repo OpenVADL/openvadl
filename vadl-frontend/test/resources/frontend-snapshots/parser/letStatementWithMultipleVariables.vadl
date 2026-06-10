@@ -1,0 +1,70 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture ISA = {
+  program counter PC : Bits<32>
+  format Btype : Bits<32> = {
+    bits [31..0]
+  }
+  instruction BEQ : Btype = {
+    let next, status = VADL::adds(PC, 4 as Bits<32>) in
+      if status.zero then
+        PC := next
+  }
+  assembly BEQ = mnemonic
+  encoding BEQ = {bits = 0}
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "ISA"
+//    . CounterDefinition kind: PROGRAM name: "PC"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . FormatDefinition name: "Btype"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : RangeFormatField name: "bits"
+//    . : ' RangeExpr type: Bits<32>
+//    . : ' | IntegerLiteral literal: 31 (31) type: Const<31>
+//    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
+//    . InstructionDefinition name: "BEQ"
+//    . : Identifier name: "Btype" type: null
+//    . : BlockStatement
+//    . : ' LetStatement
+//    . : ' | Identifier name: "next" type: Bits<32>
+//    . : ' | Identifier name: "status" type: Status
+//    . : ' | CallIndexExpr type: Struct<result: Bits<32>, status: Status>
+//    . : ' | . IdentifierPath name: "VADL::adds" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : Identifier name: "PC" type: Bits<32>
+//    . : ' | . : CastExpr type: Bits<32>
+//    . : ' | . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . : ' TypeLiteral type: Bits<32>
+//    . : ' | . : ' | Identifier name: "Bits" type: null
+//    . : ' | . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : ' | IfStatement
+//    . : ' | . CallIndexExpr type: Bool
+//    . : ' | . : Identifier name: "status" type: Status
+//    . : ' | . : SubCall
+//    . : ' | . : ' Identifier name: "zero" type: null
+//    . : ' | . AssignmentStatement
+//    . : ' | . : Identifier name: "PC" type: Bits<32>
+//    . : ' | . : Identifier name: "next" type: Bits<32>
+//    . AssemblyDefinition
+//    . : Identifier name: "mnemonic" type: String
+//    . EncodingDefinition
+//    . : Identifier name: "BEQ" type: null
+//    . : Identifier name: "bits" type: null
+//    . : CastExpr type: Bits<32>
+//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

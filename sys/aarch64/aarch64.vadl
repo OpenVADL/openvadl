@@ -40,6 +40,7 @@ instruction set architecture AArch64Base = {
   using Bits14   = Bits<14>           // 14 bit type
   using Bits15   = Bits<15>           // 15 bit type
   using Bits16   = Bits<16>           // 16 bit type
+  using Bits17   = Bits<17>           // 17 bit type
   using Bits19   = Bits<19>           // 19 bit type
   using Bits21   = Bits<21>           // 21 bit type
   using Bits24   = Bits<24>           // 24 bit type
@@ -1718,11 +1719,18 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
 
   format MoveSystemRegFormat: Instr =        // move system register format
     { op        : Bits12                     // [31..20] opcode
-    , rs        : Bits15                     // [20..5]  system register code without leading one
+    , rs        : Bits15                     // [19..5]  system register code without leading one
     , rt        : Index                      // [4..0]   source/target register
     , sysreg    = (true, rs)
     , rs        := sysreg(14..0)
     , sysreg    :- false                     // don't match this instruction
+    }
+
+  format MoveImmSystemRegFormat: Instr =     // move immediate to system register (PState) format
+    { op       [31..19,15..12] : Bits17      // opcode
+    , op12     [18..16,7..5]   : Bits6       // opcode op1 and op2
+    , crm      [11..8]         : Bits4       // crm field encodes PState
+    , rt       [4..0]          : Index       // all ones (target register)
     }
 
   format SuperVisorCallFormat: Instr =       // supervisor call format

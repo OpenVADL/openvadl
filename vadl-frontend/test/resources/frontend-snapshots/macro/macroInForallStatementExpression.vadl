@@ -1,0 +1,105 @@
+// INCLUDE-AST-DUMP
+
+model echo(id: Id): Id = {
+  $id
+}
+
+instruction set architecture TEST = {
+  register X: Bits<5><8>
+
+  format Frmt : Bits<8> = { a: Bits<8> }
+
+  // Expression
+  instruction Instr1 : Frmt = {
+    X(0) := forall $echo(i): Bits<8> in 0 .. 3 fold + with $echo(i) * 0
+  }
+  assembly Instr1 = ''
+  encoding Instr1 = { a = 1 }
+
+  // Statement
+  instruction Instr2 : Frmt = {
+    forall $echo(i): Bits<5> in 0..3 do X($echo(i)) := 0
+  }
+  assembly Instr2 = ''
+  encoding Instr2 = { a = 2 }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . RegisterDefinition name: "X"
+//    . : TypeLiteral type: Bits<5><8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . FormatDefinition name: "Frmt"
+//    . : TypeLiteral type: Bits<8>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : TypedFormatField name: "a"
+//    . : ' TypeLiteral type: Bits<8>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
+//    . InstructionDefinition name: "Instr1"
+//    . : Identifier name: "Frmt" type: null
+//    . : BlockStatement
+//    . : ' AssignmentStatement
+//    . : ' | CallIndexExpr type: Bits<8>
+//    . : ' | . Identifier name: "X" type: null
+//    . : ' | . ArgsIndices
+//    . : ' | . : CastExpr type: Bits<3>
+//    . : ' | . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | ForallExpr keyword: fold, type: Bits<8> type: Bits<8>
+//    . : ' | . Identifier name: "i" type: Bits<8>
+//    . : ' | . TypeLiteral type: Bits<8>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | . BinaryExpr operator: * type: Bits<8>
+//    . : ' | . : Identifier name: "i" type: Bits<8>
+//    . : ' | . : CastExpr type: Bits<8>
+//    . : ' | . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "" ('') type: String
+//    . EncodingDefinition
+//    . : Identifier name: "Instr1" type: null
+//    . : Identifier name: "a" type: null
+//    . : CastExpr type: Bits<8>
+//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . InstructionDefinition name: "Instr2"
+//    . : Identifier name: "Frmt" type: null
+//    . : BlockStatement
+//    . : ' ForallStatement
+//    . : ' | Identifier name: "i" type: Bits<5>
+//    . : ' | TypeLiteral type: Bits<5>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | AssignmentStatement
+//    . : ' | . CallIndexExpr type: Bits<8>
+//    . : ' | . : Identifier name: "X" type: null
+//    . : ' | . : ArgsIndices
+//    . : ' | . : ' CastExpr type: Bits<3>
+//    . : ' | . : ' | Identifier name: "i" type: Bits<5>
+//    . : ' | . CastExpr type: Bits<8>
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . AssemblyDefinition
+//    . : StringLiteral literal: "" ('') type: String
+//    . EncodingDefinition
+//    . : Identifier name: "Instr2" type: null
+//    . : Identifier name: "a" type: null
+//    . : CastExpr type: Bits<8>
+//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

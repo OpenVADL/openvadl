@@ -275,21 +275,21 @@ instruction set architecture AArch32v6 = {
     }
 
   model ShiftedImmOpInstr (m : IdCondInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                        ;  ''                     ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5                ; (', lsl #', udec(imm5)) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                    ; (', lsr #32'          ) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5                ; (', lsr #', udec(imm5)) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31          ; (', asr #32'          ) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5        ; (', asr #', udec(imm5)) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), 1, APSR_C) ; (', rrx #1')            ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5               ; (', ror #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                     ;  ''                     ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5             ; (', lsl #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                 ; (', lsr #32'          ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5             ; (', lsr #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31       ; (', asr #32'          ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5     ; (', asr #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), APSR_C) ; (', rrx'              ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5            ; (', ror #', udec(imm5)) ))
     }
 
   model ShiftedRegOpInstr (m : IdCondInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
-    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSLR ; type = ShiftType::LSLR, op1 = 0  ; lslW (R(rm), R(rs))          ; (', lsl ', register(rs))))
-    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSRR ; type = ShiftType::LSRR, op1 = 0  ; lsrW (R(rm), R(rs))          ; (', lsr ', register(rs))))
-    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (ASRR ; type = ShiftType::ASRR, op1 = 0  ; asrW (R(rm), R(rs))          ; (', asr ', register(rs))))
-    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (RORR ; type = ShiftType::RORR, op1 = 0  ; R(rm) <>> R(rs)              ; (', ror ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSLR ; type = ShiftType::LSLR, op1 = 0  ; lslW (R(rm), R(rs))       ; (', lsl ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSRR ; type = ShiftType::LSRR, op1 = 0  ; lsrW (R(rm), R(rs))       ; (', lsr ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (ASRR ; type = ShiftType::ASRR, op1 = 0  ; asrW (R(rm), R(rs))       ; (', asr ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (RORR ; type = ShiftType::RORR, op1 = 0  ; R(rm) <>> R(rs)           ; (', ror ', register(rs))))
     }
 
   model ArithmeticSftInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
@@ -481,14 +481,14 @@ instruction set architecture AArch32v6 = {
     }
 
   model MemRegShiftInstr (c : CondRec, i : InstrRec, blId : Id, memStmt : Stats) : IsaDefs = {
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                        ;  ''                     ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5                ; (', lsl #', udec(imm5)) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                    ; (', lsr #32')           ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5                ; (', lsr #', udec(imm5)) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31          ; (', asr #32')           ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5        ; (', asr #', udec(imm5)) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), 1, APSR_C) ; (', rrx #1')            ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5               ; (', ror #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                     ;  ''                     ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5             ; (', lsl #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                 ; (', lsr #32'          ) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5             ; (', lsr #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31       ; (', asr #32'          ) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5     ; (', asr #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), APSR_C) ; (', rrx'              ) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5            ; (', ror #', udec(imm5)) ))
     }
 
   model MemoryInstr (c : CondRec, i : InstrRec,  blId : Id, memStmt : Stats) : IsaDefs = {

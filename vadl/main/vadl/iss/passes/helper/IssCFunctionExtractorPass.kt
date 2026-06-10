@@ -31,7 +31,7 @@ class IssCFunctionExtractionPass(config: IssConfiguration) : AbstractIssPass(con
 
     @Throws(IOException::class)
     override fun execute(passResults: PassResults, viam: Specification): Any? {
-        helperInstrs(viam).forEach {
+        wholeHelperInstrs(viam).forEach {
             // extract forall-expression nodes rendered through C helper functions
             FunctionExtractor(it).run()
         }

@@ -16,9 +16,9 @@
 
 package vadl.iss.passes.common.planning.analysis.steps;
 
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessBaseKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessWindowKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.bindingFacts;
+import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.gvecAccessBaseKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isConstantInt;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isFullyIndexedElementAccess;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isLoopElementOffset;
@@ -38,14 +38,14 @@ public final class VectorOperandStep implements VectorFactStep {
 
   @Override
   public void extract(VectorFactsBuilder builder) {
-    var candidate = builder.candidate();
     var writeFacts = builder.writeFacts();
     var operationFacts = builder.operationFacts();
     var operationCall = operationFacts == null ? null : operationFacts.binaryOperation();
-    if (candidate == null || writeFacts == null || operationCall == null) {
+    if (writeFacts == null || operationCall == null) {
       return;
     }
 
+    var region = builder.region();
     for (var arg : operationCall.arguments()) {
       // Each operand is recorded independently so different strategies can make different decisions
       // about vector, scalar, immediate, alias, or broadcast forms from the same fact set.
@@ -53,7 +53,7 @@ public final class VectorOperandStep implements VectorFactStep {
       builder.addOperandFact(operandFact(
           arg,
           read,
-          candidate.idx(),
+          region.idx(),
           writeFacts.size().elementBits()
       ));
     }
@@ -81,7 +81,7 @@ public final class VectorOperandStep implements VectorFactStep {
     return new OperandAccessFacts(
         expression,
         read,
-        accessBaseKind(read.accessKind()),
+        gvecAccessBaseKind(read),
         accessWindowKind(read.windowKind()),
         matchesElementShape(read, idx, elementBits),
         storageFacts(read.regTensor()),

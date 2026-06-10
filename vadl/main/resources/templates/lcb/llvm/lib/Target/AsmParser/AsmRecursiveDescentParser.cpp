@@ -53,10 +53,12 @@ namespace llvm {
 
   RuleParsingResult<const MCExpr*> [(${namespace})]AsmRecursiveDescentParser::BuiltinExpression() {
     const MCExpr* expr;
+    SMLoc start = Lexer.getTok().getLoc();
     if (Parser.parseExpression(expr)) {
       return RuleParsingResult<const MCExpr*>(Lexer.getTok().getLoc(), "Invalid expression.");
     } else {
-      return RuleParsingResult<const MCExpr*>(ParsedValue<const MCExpr*>(expr, expr->getLoc(), expr->getLoc()));
+      SMLoc end = Lexer.getTok().getLoc();
+      return RuleParsingResult<const MCExpr*>(ParsedValue<const MCExpr*>(expr, start, end));
     }
   }
 

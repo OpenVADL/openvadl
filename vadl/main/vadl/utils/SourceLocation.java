@@ -205,6 +205,18 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
   }
 
   /**
+   * Strips a location of all expandedFrom information and returns it as a direct location.
+   *
+   * @return the direct location.
+   */
+  default DirectLocation asDirectLocation() {
+    return switch (this) {
+      case DirectLocation direct -> direct;
+      case ExpandedLocation expanded -> expanded.primaryLocation;
+    };
+  }
+
+  /**
    * Create a new source location that is a copy of the current one with the provided expanded stack
    * appended to the existing stack.
    * This operation is especially performant and finishes in O(1) time.

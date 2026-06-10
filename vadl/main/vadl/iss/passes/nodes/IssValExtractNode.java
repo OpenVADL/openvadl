@@ -18,7 +18,7 @@ package vadl.iss.passes.nodes;
 
 import java.util.List;
 import vadl.iss.passes.common.opDecomposition.nodes.IssExprNode;
-import vadl.iss.passes.tcgLowering.TcgExtend;
+import vadl.iss.passes.tcg.lowering.TcgExtend;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
@@ -28,7 +28,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * The expression node equivalent to {@link vadl.iss.passes.tcgLowering.nodes.TcgExtractNode}.
+ * The expression node equivalent to {@link vadl.iss.passes.tcg.lowering.nodes.TcgExtractNode}.
  *
  * <p>NOTE: {@code ofs} and {@code len} must be TCG translation time constants.
  * So they must not be TCG variables.</p>

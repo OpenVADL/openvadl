@@ -1,0 +1,15 @@
+// FIXME: The second error shouldn't appear here
+import base::magicNumber with ("magicNumber=two")
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Model Override
+//       ╭── test/resources/frontend-snapshots/imports/base.vadl:1:1
+//       │
+//     1 │ model magicNumber(): Ex = {
+//       │ ^^^^^^^^^^^^^^^^^^^^^^^ note: This model was overridden but only models returning `Id` can be overridden.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

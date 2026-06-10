@@ -1,0 +1,168 @@
+// INCLUDE-VIAM-DUMP
+
+// This test verifies that the subcalls of a program counter can be read
+
+instruction set architecture TEST = {
+
+  register X: Bits<5><8>
+  program counter PC: Bits<8>
+
+  format Frmt : Bits<8> = { a: Bits<8> }
+
+  model ReadPC(name: Id, readExpr: Ex): IsaDefs = {
+    instruction $name : Frmt = { X(0) := $readExpr}
+    assembly $name = AsStr($name)
+    encoding $name = { a = 1 }
+  }
+
+  $ReadPC(CurrentInstr; PC.current)
+  $ReadPC(Nextnstr; PC.next)
+  $ReadPC(NextNextInstr; PC.nextnext)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "readProgramCounterStates"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "TEST"
+//    . : PC: PC
+//    . : InstructionCount: 3
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 1
+//    . : FunctionCount: 0
+//    . : OperationCount: 0
+//    . : ExceptionCount: 0
+//    . : RelocationCount: 0
+//    . : RegisterCount: 2
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 0
+//    . : Format name: "Frmt"
+//    . : ' Type: b8
+//    . : ' FieldCount: 1
+//    . : ' FieldAccessCount: 0
+//    . : ' FieldEncodingCount: 0
+//    . : ' Field name: "a"
+//    . : ' | Type: b8
+//    . : ' | BitSlice: [7..0]
+//    . : ' | RefFormat: -
+//    . : RegisterTensor name: "X"
+//    . : ' Type: b8
+//    . : ' Dimensions: [0:b3x5, 1:b3x8]
+//    . : ' ConstraintCount: 0
+//    . : RegisterTensor name: "PC"
+//    . : ' Type: b8
+//    . : ' Dimensions: [0:b3x8]
+//    . : ' ConstraintCount: 0
+//    . : Instruction name: "CurrentInstr" format: "Frmt"
+//    . : ' Inputs: PC
+//    . : ' Outputs: X
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
+//    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
+//    . : ' | n2 WritesRegisterTensor in: (n0 n1) succ: ()     reg: X
+//    . : ' | n3 InstrEnd             in: (n2)    succ: ()     effects: 1
+//    . : ' | n4 Start                in: ()      succ: (n3)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 Constant in: ()   succ: ()     type: String   const: "CurrentInstr"
+//    . : ' | . : n1 Return   in: (n0) succ: ()     retType: String
+//    . : ' | . : n2 Start    in: ()   succ: (n1)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b8
+//    . : ' | Format: Frmt
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: []
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "a"
+//    . : ' | . Field: a
+//    . : ' | . Type: b8
+//    . : ' | . Constant: 0x1: Bits<8>
+//    . : Instruction name: "Nextnstr" format: "Frmt"
+//    . : ' Inputs: PC
+//    . : ' Outputs: X
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
+//    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
+//    . : ' | n2 Constant             in: ()      succ: ()     type: i8   const: 0x4: SInt<8>
+//    . : ' | n3 BuiltInCall          in: (n1 n2) succ: ()     type: b8   builtin: VADL::add   operator: +
+//    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
+//    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
+//    . : ' | n6 Start                in: ()      succ: (n5)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 Constant in: ()   succ: ()     type: String   const: "Nextnstr"
+//    . : ' | . : n1 Return   in: (n0) succ: ()     retType: String
+//    . : ' | . : n2 Start    in: ()   succ: (n1)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b8
+//    . : ' | Format: Frmt
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: []
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "a"
+//    . : ' | . Field: a
+//    . : ' | . Type: b8
+//    . : ' | . Constant: 0x1: Bits<8>
+//    . : Instruction name: "NextNextInstr" format: "Frmt"
+//    . : ' Inputs: PC
+//    . : ' Outputs: X
+//    . : ' Encoding: encoding
+//    . : ' Assembly: assembly
+//    . : ' Behavior Graph:
+//    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
+//    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
+//    . : ' | n2 Constant             in: ()      succ: ()     type: i8   const: 0x8: SInt<8>
+//    . : ' | n3 BuiltInCall          in: (n1 n2) succ: ()     type: b8   builtin: VADL::add   operator: +
+//    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
+//    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
+//    . : ' | n6 Start                in: ()      succ: (n5)   next: set
+//    . : ' Assembly name: "assembly"
+//    . : ' | Function: func
+//    . : ' | FieldAccesses: []
+//    . : ' | Function name: "func"
+//    . : ' | . Type: ()->String
+//    . : ' | . Signature: () -> String
+//    . : ' | . Parameters: []
+//    . : ' | . Behavior Graph:
+//    . : ' | . : n0 Constant in: ()   succ: ()     type: String   const: "NextNextInstr"
+//    . : ' | . : n1 Return   in: (n0) succ: ()     retType: String
+//    . : ' | . : n2 Start    in: ()   succ: (n1)   next: set
+//    . : ' Encoding name: "encoding"
+//    . : ' | Type: b8
+//    . : ' | Format: Frmt
+//    . : ' | FieldEncodings: 1
+//    . : ' | NonEncodedFields: []
+//    . : ' | HasConstraint: false
+//    . : ' | Field name: "a"
+//    . : ' | . Field: a
+//    . : ' | . Type: b8
+//    . : ' | . Constant: 0x1: Bits<8>
+//    . : Counter name: "PC"
+//    . : ' RegisterTensor: PC
+//    . : ' Indices: []
+//    . : ' ResultType: b8
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

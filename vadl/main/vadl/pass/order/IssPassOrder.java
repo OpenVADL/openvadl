@@ -44,13 +44,14 @@ import vadl.iss.passes.common.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.common.planning.IssExecStrategyPass;
 import vadl.iss.passes.common.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.helper.IssCFunctionExtractionPass;
-import vadl.iss.passes.scalar.IssHardcodedTcgAddOnPass;
-import vadl.iss.passes.scalar.IssSelectLoweringPass;
-import vadl.iss.passes.scalar.IssTcgSchedulingPass;
-import vadl.iss.passes.scalar.IssTcgVAllocationPass;
-import vadl.iss.passes.tcgLowering.IssTcgContextPass;
-import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
-import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
+import vadl.iss.passes.tcg.IssHardcodedTcgAddOnPass;
+import vadl.iss.passes.tcg.IssSelectLoweringPass;
+import vadl.iss.passes.tcg.IssTcgSchedulingPass;
+import vadl.iss.passes.tcg.IssTcgVAllocationPass;
+import vadl.iss.passes.tcg.lowering.IssTcgContextPass;
+import vadl.iss.passes.tcg.lowering.TcgBranchLoweringPass;
+import vadl.iss.passes.tcg.lowering.TcgOpLoweringPass;
+import vadl.iss.passes.vector.IssDirectGvecLoweringPass;
 import vadl.iss.template.IssDefaultRenderingPass;
 import vadl.iss.template.gdb_xml.EmitIssGdbXmlPass;
 import vadl.iss.template.hw.EmitIssHwMachineCPass;
@@ -68,7 +69,9 @@ import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslateCPass;
 import vadl.lcb.passes.OverwriteInputOperandsPass;
 import vadl.pass.PassOrder;
+import vadl.viam.passes.ArtificialResPartialAccessExpansionPass;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
+import vadl.viam.passes.RegisterTensorPartialAccessExpansionPass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.functionInliner.ArtificialResInlinerPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
@@ -91,6 +94,11 @@ public final class IssPassOrder {
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
     order.skip(RenamingConflictingRegistersPass.class);
     order.skip(OverwriteInputOperandsPass.class);
+
+    // Skip partial (alias) register extension passes as the ISS is able to handle them downstream
+    // in an optimized way.
+    order.skip(RegisterTensorPartialAccessExpansionPass.class);
+    order.skip(ArtificialResPartialAccessExpansionPass.class);
 
     addCommonPasses(order, config);
     addScalarTcgPasses(order, config);
@@ -122,6 +130,7 @@ public final class IssPassOrder {
         .add(new IssTensorAssignmentToForallPass(config))
         .add(new CanonicalizationPass(config))
         .add(new IssExecStrategyPass(config))
+        .add(new IssDirectGvecLoweringPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))

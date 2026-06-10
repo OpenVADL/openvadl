@@ -1,0 +1,31 @@
+// INCLUDE-AST-DUMP
+
+  enumeration ENUM: Bits<2> =
+  { A = 0b00 + 0b01
+  , B = 0b01
+  , C = 0b10
+  }
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    EnumerationDefinition name: "ENUM"
+//    . Identifier name: "A" type: null
+//    . CastExpr type: Bits<2>
+//    . : BinaryExpr operator: + type: Const<1>
+//    . : ' BinaryLiteral literal: 0b00 (0) type: Const<0>
+//    . : ' BinaryLiteral literal: 0b01 (1) type: Const<1>
+//    . Identifier name: "B" type: null
+//    . CastExpr type: Bits<2>
+//    . : BinaryLiteral literal: 0b01 (1) type: Const<1>
+//    . Identifier name: "C" type: null
+//    . CastExpr type: Bits<2>
+//    . : BinaryLiteral literal: 0b10 (2) type: Const<2>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -39,7 +39,7 @@ public class DiagnosticList extends RuntimeException {
    *
    * @return the deflated diagnostic list.
    */
-  public DiagnosticList deflateSimilar() {
+  public DiagnosticList collapseSimilar() {
     return new DiagnosticList(Diagnostic.collapseSimilar(items));
   }
 }

@@ -21,9 +21,9 @@ jobs:
     with:
       runner: self-hosted-x64
       benchmark-command: ./gradlew :vadl:test -i --tests "vadl.rtl.riscv.RtlRiscVBenchmarkTest" -Dtags.include=BenchmarkTest
-      artifact-source: vadl/riscv_rtl_dec_benchmarks.csv
+      artifact-source: vadl/riscv_rtl_benchmarks.csv
       destination-folder: data/rtl/riscv/benchmark/results
       commit-message: 'data: Pushed RTL data'
       extra-env: |
-        RTL_DEC_BENCHMARK_RESULT_HOST_PATH=riscv_rtl_dec_benchmarks.csv
+        RTL_BENCHMARK_RESULT_HOST_PATH=riscv_rtl_benchmarks.csv
     secrets: inherit

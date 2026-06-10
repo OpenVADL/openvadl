@@ -39,6 +39,19 @@ public class DiagnosticPrinter {
   private final Map<Path, List<String>> fileLineCache = new HashMap<>();
   VirtualFileSystem fileSystem;
 
+  /**
+   * Printing thousands of backtraces just clutters the output and reduces readability.
+   */
+  private static final int MAX_PRINTED_BACKTRACES = 10;
+
+
+  /**
+   * Printing too many diagnostics can take significant time and means that compiler is no longer
+   * responsive.
+   * This field only describes compressed diagnostics.
+   */
+  private static final int MAX_PRINTED_DIAGNOSTICS = 10_000;
+
   public DiagnosticPrinter(VirtualFileSystem fileSystem) {
     this(fileSystem, true);
   }
@@ -55,7 +68,15 @@ public class DiagnosticPrinter {
    */
   public String toString(List<Diagnostic> diagnosticList) {
     StringBuilder builder = new StringBuilder();
-    diagnosticList.forEach(d -> toString(d, builder));
+    if (diagnosticList.size() <= MAX_PRINTED_DIAGNOSTICS) {
+      diagnosticList.forEach(d -> toString(d, builder));
+    } else {
+      for (int i = 0; i < MAX_PRINTED_DIAGNOSTICS; i++) {
+        toString(diagnosticList.get(i), builder);
+      }
+      builder.append("\n    Additional %d diagnostics omited for readability.".formatted(
+          diagnosticList.size() - MAX_PRINTED_DIAGNOSTICS));
+    }
     return builder.toString();
   }
 
@@ -200,7 +221,7 @@ public class DiagnosticPrinter {
     builder.append("\n     %s│\n     ├─%s %s\n".formatted(colors.cyan(), colors.reset(), title));
 
     var blockBuilder = new StringJoiner("\n");
-    for (int i = 0; i < diagnostic.macroTraces.size(); i++) {
+    for (int i = 0; i < Math.min(tracesCount, MAX_PRINTED_BACKTRACES); i++) {
       var trace = diagnostic.macroTraces.get(i);
       var firstLocation = trace.getFirst();
       var firstIDEString = firstLocation.toIDEString(fileSystem,
@@ -219,6 +240,12 @@ public class DiagnosticPrinter {
             forceRelativePaths ? SourceLocation.IDEDetectionMode.RELATIVE :
                 SourceLocation.IDEDetectionMode.AUTO, forceUnixPaths)));
       }
+    }
+
+    if (tracesCount > MAX_PRINTED_BACKTRACES) {
+      blockBuilder.add(
+          "... invocations %d - %d omitted for readability".formatted(MAX_PRINTED_BACKTRACES + 1,
+              tracesCount));
     }
 
     builder.append(

@@ -1,0 +1,14 @@
+constant function = 4
+
+
+//  Reported Diagnostics:
+//
+//  error: Parsing Error
+//       ╭── test/resources/frontend-snapshots/parser/invalidIdentifierInParserClashesKeyword.vadl:1:10
+//       │
+//     1 │ constant function = 4
+//       │          ^^^^^^^^ Invalid identifier, because it clashes with a keyword.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
