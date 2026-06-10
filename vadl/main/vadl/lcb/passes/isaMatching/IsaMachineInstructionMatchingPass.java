@@ -91,7 +91,6 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.RegisterResource;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterTensor;
@@ -111,7 +110,6 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -266,22 +264,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.CSEL_SGEQ_I32,
                 Optional.empty()));
-      } else if (findCSEL_UGEQ(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_UGEQ_I64,
-                Optional.empty()));
-      } else if (findCSEL_UGEQ(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_UGEQ_I32,
-                Optional.empty()));
-      } else if (findCSEL_ULTH(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_ULTH_I64,
-                Optional.empty()));
-      } else if (findCSEL_ULTH(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_ULTH_I32,
-                Optional.empty()));
       } else if (findCSEL_SLEQ(originalGraph, Type.signedInt(64))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.CSEL_SLEQ_I64,
@@ -290,14 +272,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.CSEL_SLEQ_I32,
                 Optional.empty()));
-      } else if (findCSEL_UGTH(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_UGTH_I64,
-                Optional.empty()));
-      } else if (findCSEL_UGTH(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_UGTH_I32,
-                Optional.empty()));
       } else if (findCSEL_SGTH(originalGraph, Type.signedInt(64))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.CSEL_SGTH_I64,
@@ -305,14 +279,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (findCSEL_SGTH(originalGraph, Type.signedInt(32))) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.CSEL_SGTH_I32,
-                Optional.empty()));
-      } else if (findCSEL_ULEQ(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_ULEQ_I64,
-                Optional.empty()));
-      } else if (findCSEL_ULEQ(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_ULEQ_I32,
                 Optional.empty()));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB, ty));
@@ -359,33 +325,17 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER,
                 Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, UGEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BUGEQ_BY_STATUS_REGISTER,
-                Optional.empty()));
       } else if (findBranchWithConditionalWithStatusRegisters(behavior, SGEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER,
-                Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, UGTH)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BUGTH_BY_STATUS_REGISTER,
                 Optional.empty()));
       } else if (findBranchWithConditionalWithStatusRegisters(behavior, SGTH)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER,
                 Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, ULEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BULEQ_BY_STATUS_REGISTER,
-                Optional.empty()));
       } else if (findBranchWithConditionalWithStatusRegisters(behavior, SLEQ)) {
         instruction.attachExtension(
             new MachineInstructionCtx(MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER,
-                Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, ULTH)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BULTH_BY_STATUS_REGISTER,
                 Optional.empty()));
       } else if (findBranchWithConditionalWithStatusRegisters(behavior, SLTH)) {
         instruction.attachExtension(
@@ -531,16 +481,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         this.compareStatusRegisters_NegativeEqualsOverflow());
   }
 
-  private boolean findCSEL_UGEQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
-        this.compareStatusRegisters_CarryStatusRegisterIsOne());
-  }
-
-  private boolean findCSEL_ULTH(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
-        this.compareStatusRegisters_CarryStatusRegisterIsZero());
-  }
-
   private boolean findCSEL_SLEQ(Graph originalGraph, SIntType ty) {
     return findCSEL_BinaryCondition(originalGraph, ty, 
         OR, 
@@ -553,20 +493,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         AND, 
         this.compareStatusRegisters_NegativeEqualsOverflow(), 
         this.compareStatusRegisters_ZeroStatusRegisterIsZero());
-  }
-
-  private boolean findCSEL_UGTH(Graph originalGraph, SIntType ty) {
-    return findCSEL_BinaryCondition(originalGraph, ty, 
-        AND, 
-        this.compareStatusRegisters_CarryStatusRegisterIsOne(), 
-        this.compareStatusRegisters_ZeroStatusRegisterIsZero());
-  }
-
-  private boolean findCSEL_ULEQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_BinaryCondition(originalGraph, ty, 
-        OR, 
-        this.compareStatusRegisters_CarryStatusRegisterIsZero(), 
-        this.compareStatusRegisters_ZeroStatusRegisterIsOne());
   }
 
   private boolean findCSEL_BinaryCondition(

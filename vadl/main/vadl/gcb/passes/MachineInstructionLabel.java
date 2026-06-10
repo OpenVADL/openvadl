@@ -183,6 +183,7 @@ public enum MachineInstructionLabel {
   BULEQ,  // unsigned-less-equal condition
   BULTH,  // unsigned-less-than condition
   BUGTH,  // unsigned-greater-than condition
+
   /*
    CONDITIONAL BRANCHES using status-register-comparisons as condition.
 
@@ -198,10 +199,8 @@ public enum MachineInstructionLabel {
   BSLEQ_BY_STATUS_REGISTER,  // signed-less-equal conditoon
   BSLTH_BY_STATUS_REGISTER,  // signed-less-than condition
   BSGTH_BY_STATUS_REGISTER,  // signed-greater-than condition
-  BUGEQ_BY_STATUS_REGISTER,  // unsigned-greater-equal condition
-  BULEQ_BY_STATUS_REGISTER,  // unsigned-less-equal condition
-  BULTH_BY_STATUS_REGISTER,  // unsigned-less-than condition
-  BUGTH_BY_STATUS_REGISTER,  // unsigned-greater-than condition
+  B_CS,                      // carry-clear condition
+  B_CC,                      // carry-set condition
 
   /*
    UNCONDITIONAL JUMPS
@@ -260,15 +259,9 @@ public enum MachineInstructionLabel {
   CSEL_SGEQ_I32,  // signed-greater-or-equal condition: Negative-SR == Overflow-SR
   CSEL_SGEQ_I64,
 
-  CSEL_ULTH_I32,  // unsigned-less-than condition: Carry-SR == 0
-  CSEL_ULTH_I64,
+  CSEL_CC_I32,  // carry-clear condition: Carry-SR == 0
+  CSEL_CC_I64,
 
-  CSEL_UGTH_I32,  // unsigned-greater-than condition: Carry-SR == 1 && Zero-SR == 0
-  CSEL_UGTH_I64,
-
-  CSEL_ULEQ_I32,  // unsigned-less-equal condition: Carry-SR == 0 || Zero-SR == 1
-  CSEL_ULEQ_I64,
-
-  CSEL_UGEQ_I32,  // unsigned-greater-equal condition: Carry-SR == 1
-  CSEL_UGEQ_I64,
+  CSEL_CS_I32,  // carry-set condition: Carry-SR == 1
+  CSEL_CS_I64,
 }
