@@ -443,10 +443,10 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   }
   assembly LLA = (mnemonic, " ", register(rd), ",", hex( symbol ))
 
-  pseudo instruction LI( rd : Index, symbol : Bits<32> ) =
+  pseudo instruction LI( rd : Index, symbol : SIntW ) =
   {
-      LUI{ rd = rd, imm = hi( symbol ) }
-      ADDI{ rd = rd, rs1 = rd, imm = lo( symbol ) }
+      LUI{ rd = rd, imm = hi( symbol as Bits<32> ) }
+      ADDI{ rd = rd, rs1 = rd, imm = lo( symbol as Bits<32> ) }
   }
   assembly LI = (mnemonic, " ", register( rd ), ",", decimal( symbol ))
 

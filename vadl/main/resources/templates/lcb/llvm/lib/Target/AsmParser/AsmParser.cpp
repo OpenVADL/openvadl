@@ -9,6 +9,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "Utils/ImmediateUtils.h"
 #include "llvm/MC/MCRegister.h"
+#include "vadl-builtins.hpp"
 
 
 using namespace llvm;
@@ -92,7 +93,20 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
             int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
 
             [# th:if="${operand.isFieldOperand}"]
+            if (!VADL_fits_in_bit_width([(${operand.params})], [(${operand.fieldBitWidth})])) {
+              std::string error = "Invalid immediate operand for [(${operand.name})]. Value is larger than [(${operand.fieldBitWidth})] bits.";
+              Parser.Error(Op.getStartLoc(), error);
+              return true;
+            }
             opImm64 = [(${operand.decodeMethod})]([(${operand.params})]);
+            [/]
+
+            [# th:if="${operand.lowest} != ${operand.highest}"]
+            if (opImm64 < [(${operand.lowest})] || opImm64 > [(${operand.highest})]) {
+              std::string error = "Invalid immediate operand for [(${operand.name})]. Value is out of range ([(${operand.lowest})],[(${operand.highest})]).";
+              Parser.Error(Op.getStartLoc(), error);
+              return true;
+            }
             [/]
 
             [# th:if="${operand.requiresPredicate}" ]
