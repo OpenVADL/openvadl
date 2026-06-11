@@ -74,6 +74,11 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+          buildkitd-flags: --allow-insecure-entitlement network.host
+          driver-opts: |
+            network=host
 
       - name: Build and push
         id: build
@@ -85,6 +90,8 @@ jobs:
           tags: ${{ inputs.image }}
           file: ${{ inputs.file != '' && inputs.file || format('{0}/Dockerfile', inputs.context) }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          provenance: false
+          sbom: false
 
       - name: Export digest
         run: |
