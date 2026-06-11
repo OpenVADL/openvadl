@@ -2,8 +2,8 @@ import asyncio
 import os
 from pathlib import Path
 
-CC="arm-linux-gnueabihf-gcc"
-NM="arm-linux-gnueabihf-nm"
+CC="arm-none-linux-gnueabihf-gcc"
+NM="arm-none-linux-gnueabihf-nm"
 
 async def compile(id: str, asm: str, compargs: str) -> dict:
   asm_path = await build_assembly(id, asm)
@@ -120,4 +120,3 @@ def _tmp_file(id: str, name: str) -> Path:
   build_dir = f"/tmp/build-{id}/"
   os.makedirs(build_dir, exist_ok=True)
   return Path(f"{build_dir}/{name}")
-
