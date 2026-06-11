@@ -51539,6 +51539,11 @@ def : Pat<(i64 AddrFI:$rs1),
   (ADDXI AddrFI:$rs1, (i64 0))>;
 
 
+def : Pat<(i32 (trunc S:$rd)), (EXTRACT_SUBREG S:$rd, SUB_32)>;
+def : Pat<(i32 (trunc X:$rd)), (EXTRACT_SUBREG X:$rd, SUB_32)>;
+
+
+
 def ASRIW : Instruction
 {
 let Namespace = "processorNameValue";

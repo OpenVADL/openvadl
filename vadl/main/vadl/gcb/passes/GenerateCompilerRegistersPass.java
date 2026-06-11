@@ -21,7 +21,10 @@ import static vadl.viam.ViamError.ensureNonNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
@@ -36,6 +39,8 @@ import vadl.types.BitsType;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
+import vadl.viam.Constant;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -93,33 +98,107 @@ public class GenerateCompilerRegistersPass extends Pass {
 
   private void createSubRegisters(List<CompilerRegisterClass> aliasRegisterClasses,
                                   List<CompilerRegisterClass> registerClasses) {
+    var regTensorToRegClass = registerClasses.stream().collect(Collectors.toMap(
+        k -> k.registerFile(),
+        v -> v
+    ));
 
-    for (var registerClass : registerClasses) {
-      for (var aliasRegisterClass : aliasRegisterClasses) {
-        var artificialResource = (ArtificialResource) aliasRegisterClass.registerFile();
-        var referencesResource = (RegisterTensor) artificialResource.innerResourceRef();
+    var parentChildMapping = aliasRegisterClasses
+        .stream()
+        .collect(Collectors.groupingBy(x -> {
+          var artificialResource = (ArtificialResource) x.registerFile();
+          var referencesResource = (RegisterTensor) artificialResource.innerResourceRef();
+          return regTensorToRegClass.get(referencesResource);
+        }));
 
-        // If yes then the alias points to real register file.
-        if (registerClass.registerFile().equals(referencesResource)) {
-          var hasEqualType = artificialResource.type().asDataType()
-              .equals(referencesResource.resultType().asDataType());
+    for (var parentChildren : parentChildMapping.entrySet()) {
+      var parentRegister = parentChildren.getKey();
+      var childRegisters = parentChildren.getValue();
+      childRegisters.sort(this.compareRegisterClassesBySizeAndOffset());
 
-          for (int i = 0; i < registerClass.registers().size(); i++) {
-            var aliasRegister = aliasRegisterClass.registers().get(i);
-            var realRegister = registerClass.registers().get(i);
+      for (int i = 0; i < childRegisters.size(); i++) {
+        var subRegClass = childRegisters.get(i);
 
-            if (hasEqualType && artificialResource.type().equals(BitsType.bits(64))) {
-              realRegister.addSubReg(aliasRegister, new CompilerRegister.SubRegIndex(
-                  CompilerRegister.SubRegIndexEnum.FULL_64));
-            } else {
-              realRegister.addSubReg(aliasRegister, new CompilerRegister.SubRegIndex(
-                  CompilerRegister.SubRegIndexEnum.SUB_32));
-            }
+        var superRegIndex = -1;
+        for (int j = i - 1; j >= 0; j--) {
+          var isSubReg = isPossibleSubregisterOf(subRegClass.registerFile(), 
+              childRegisters.get(j).registerFile());
+          if (isSubReg) {
+            superRegIndex = j;
+            break;
           }
         }
+
+        var superRegClass = superRegIndex != -1 
+            ? childRegisters.get(superRegIndex)
+            : parentRegister;
+        this.addAllAsSubRegisters(superRegClass, subRegClass);
       }
     }
   }
+
+  private Comparator<CompilerRegisterClass> compareRegisterClassesBySizeAndOffset() {
+    return new Comparator<>() {
+      @Override
+      public int compare(CompilerRegisterClass o1, CompilerRegisterClass o2) {
+        var regFile1 = o1.registerFile();
+        var regFile2 = o2.registerFile();
+        var typeDiff = regFile2.type().asDataType().bitWidth() 
+            - regFile1.type().asDataType().bitWidth();
+        if (typeDiff != 0) {
+          return typeDiff;
+        }
+
+        return getRegisterSliceRange(regFile2).lsb() - getRegisterSliceRange(regFile1).lsb();
+      }
+    };
+  }
+
+  private Constant.BitSlice.Part getRegisterSliceRange(RegisterResource r) {
+    if (r instanceof ArtificialResource ar) {
+      return Optional.ofNullable(ar.aliasSlice())
+            .flatMap(s -> s.parts().findFirst())
+            .orElseGet(() -> new Constant.BitSlice.Part(ar.type().asDataType().bitWidth(), 0));
+    }
+
+    return new Constant.BitSlice.Part(r.type().asDataType().bitWidth(), 0);
+  }
+
+  private boolean isPossibleSubregisterOf(
+      RegisterResource subReg, 
+      RegisterResource supReg) {
+    var sliceSup = this.getRegisterSliceRange(supReg);
+    var sliceSub = this.getRegisterSliceRange(subReg);
+    return sliceSup.lsb() <= sliceSub.lsb() 
+      && sliceSup.msb() >= sliceSub.msb();
+  }
+
+  private void addAllAsSubRegisters(
+      CompilerRegisterClass superRegisterClass, 
+      CompilerRegisterClass subRegisterClass) {
+    var superRegisters = superRegisterClass.registers();
+    var subRegisters = subRegisterClass.registers();
+    var superRegisterFile = superRegisterClass.registerFile();
+    var subRegisterFile = subRegisterClass.registerFile();
+
+    var hasEqualType = superRegisterFile.type().asDataType().equals(
+        subRegisterFile.type().asDataType());
+    var is64Bit = superRegisterFile.type().equals(BitsType.bits(64));
+    var subLsb = this.getRegisterSliceRange(subRegisterFile).lsb();
+
+    var subregIndex = hasEqualType && is64Bit 
+        ? new CompilerRegister.SubRegIndex(CompilerRegister.SubRegIndexEnum.FULL_64)
+        : subLsb == 0
+          ? new CompilerRegister.SubRegIndex(CompilerRegister.SubRegIndexEnum.SUB_32)
+          : new CompilerRegister.SubRegIndex(CompilerRegister.SubRegIndexEnum.SUB_32_HI);
+
+    for (int j = 0; j < superRegisters.size(); j++) {
+      var superReg = superRegisters.get(j);
+      var subReg = subRegisters.get(j);
+      superReg.addSubReg(subReg, subregIndex);
+    }
+  }
+
 
   private List<CompilerRegister> generalRegisters(List<RegisterTensor> registers) {
     var compilerRegisters = new ArrayList<CompilerRegister>();
