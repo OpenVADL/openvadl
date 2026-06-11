@@ -366,6 +366,12 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
     return true;
   }
 
+  @Override
+  protected boolean isAcyclic() {
+    // the cfg does not contain any loops
+    return true;
+  }
+
   /**
    * Retrieves the set of variables defined at the given node.
    *

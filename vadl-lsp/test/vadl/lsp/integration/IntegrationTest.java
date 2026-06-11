@@ -52,7 +52,7 @@ public abstract class IntegrationTest {
 
   @BeforeEach
   public void createServer() throws ExecutionException, InterruptedException {
-    server = new VadlLanguageServer(new VadlLanguageServer.Settings(false));
+    server = new VadlLanguageServer();
     client = new MockLanguageClient();
     server.connect(client);
     server.setListeningFuture(Futures.immediateFuture(null));

@@ -23,6 +23,7 @@ gitVersioning.apply {
 
 tasks.register<Test>("test-common") {
     dependsOn(
+        ":vadl-frontend:test",
         ":vadl:test-others",
         ":vadl-cli:test",
         ":vadl-lsp:test",

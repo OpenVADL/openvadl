@@ -34,8 +34,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
-import vadl.ast.AsmGrammarDefaultRules;
-import vadl.ast.PseudoFormatType;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
@@ -659,27 +657,6 @@ public class BuiltInTable {
           .build();
 
   /**
-   * {@code function opequ ( a : PseudoFormatType, b : PseudoFormatType ) -> Bool // <=> a = b }
-   */
-  public static final BuiltIn OP_EQU =
-      func("VADL::opequ", "=",
-          Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
-          .takesDefault()
-          .returns(Type.bool())
-          .build();
-
-
-  /**
-   * {@code function opneq ( a : PseudoFormatType, b : PseudoFormatType ) -> Bool // <=> a != b }
-   */
-  public static final BuiltIn OP_NEQ =
-      func("VADL::opneq", "!=",
-          Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
-          .takesDefault()
-          .returns(Type.bool())
-          .build();
-
-  /**
    * {@code function slth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b }
    */
   public static final BuiltIn SLTH =
@@ -1220,7 +1197,6 @@ public class BuiltInTable {
   /**
    * Checks if the token kind at lookahead {@code n} in the AsmParser
    * is any of the kinds passed as strings in {@code s}.
-   * To see all possible token kinds refer to the terminal rules in {@link AsmGrammarDefaultRules}.
    *
    * <p>{@code function LaKindIn(n: UInt<N>,s: String...) -> Bool}
    */
@@ -1399,9 +1375,7 @@ public class BuiltInTable {
       SGTH,
       UGTH,
       SGEQ,
-      UGEQ,
-      OP_EQU,
-      OP_NEQ
+      UGEQ
   );
 
   public static final List<BuiltIn> SHIFTING_BUILT_INS = List.of(
@@ -1490,9 +1464,7 @@ public class BuiltInTable {
       CONCATENATE_STRINGS
   );
 
-  public static final List<BuiltIn> operationEqualityPredicates = List.of(
-      OP_EQU, OP_NEQ
-  );
+  public static final List<BuiltIn> operationEqualityPredicates = List.of();
 
   public static final List<BuiltIn> arithmeticComparisons = List.of(
       EQU, NEQ,
@@ -1746,12 +1718,18 @@ public class BuiltInTable {
     }
   }
 
-  private static BuiltInBuilder func(String name, @Nullable String operator,
-                                     RelationType signature) {
+  /**
+   * Creates a function built-in builder.
+   */
+  public static BuiltInBuilder func(String name, @Nullable String operator,
+                                    RelationType signature) {
     return new BuiltInBuilder(name, operator, signature, BuiltIn.Kind.FUNCTION);
   }
 
-  private static BuiltInBuilder func(String name, RelationType signature) {
+  /**
+   * Creates a function built-in builder without an operator symbol.
+   */
+  public static BuiltInBuilder func(String name, RelationType signature) {
     return func(name, (String) null, signature);
   }
 
@@ -1760,7 +1738,8 @@ public class BuiltInTable {
     return new BuiltInBuilder(name, operator, signature, BuiltIn.Kind.PROCESS);
   }
 
-  private static class BuiltInBuilder {
+  @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+  public static class BuiltInBuilder {
     private String name;
     private @Nullable String operator;
     private RelationType signature;
@@ -1900,7 +1879,7 @@ public class BuiltInTable {
     }
 
 
-    BuiltIn build() {
+    public BuiltIn build() {
 
       var takesFunction = this.takesFunction;
       ensure(takesFunction != null,

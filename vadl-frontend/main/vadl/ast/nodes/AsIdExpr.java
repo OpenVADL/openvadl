@@ -1,0 +1,99 @@
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.ast.nodes;
+
+import java.util.List;
+import javax.annotation.Nullable;
+import vadl.utils.SourceLocation;
+
+/**
+ * An internal temporary node representing the AsId lexical macro.
+ * Produces identifiers from strings or is used to concatenate multiple identifiers/strings into
+ * one.
+ *
+ * <p><pre>{@code
+ *  constant AsId("one") = 1
+ *  constant AsId("th", "ree") = 3
+ *  constant AsId(max, count) = 42
+ *  constant AsId(open, "vadl") = 2024
+ *  }</pre>
+ *
+ * <p>This node should never leave the parser.
+ */
+@SuppressWarnings("MissingJavadocMethod")
+public final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
+  public List<Expr> exprs;
+  public SourceLocation loc;
+
+  public AsIdExpr(List<Expr> exprs, SourceLocation loc) {
+    this.exprs = exprs;
+    this.loc = loc;
+  }
+
+  @Override
+  public <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  public SyntaxType syntaxType() {
+    return BasicSyntaxType.ID;
+  }
+
+  @Override
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    builder.append("AsId(");
+    prettyPrintJoin(",", exprs, indent, builder);
+    builder.append(")");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AsIdExpr that = (AsIdExpr) o;
+    return exprs.equals(that.exprs);
+  }
+
+  @Override
+  public int hashCode() {
+    return exprs.hashCode();
+  }
+
+  @Override
+  public String pathToString() {
+    var sb = new StringBuilder();
+    prettyPrint(0, sb);
+    return sb.toString();
+  }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
+  }
+}
