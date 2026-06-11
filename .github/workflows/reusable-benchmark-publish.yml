@@ -39,10 +39,10 @@ jobs:
   benchmark:
     runs-on: ${{ inputs.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download pre-built artifact
         if: ${{ inputs.download-artifact != '' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ inputs.download-artifact }}
       - name: Make downloaded artifact executable
@@ -64,7 +64,7 @@ jobs:
       - name: Prepare artifact
         run: cp "${{ inputs.artifact-source }}" "${{ github.workspace }}/${ARTIFACT_NAME}"
       - name: Checkout target repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: openVADL/resselpark
           token: ${{ secrets.ACCESS_TOKEN_RESSELPARK }}
