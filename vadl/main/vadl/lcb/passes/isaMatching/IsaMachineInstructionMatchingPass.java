@@ -1030,7 +1030,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * the given {@code base}. For example, if the {@code base} is "equality" then it needs a
    * status register which is the Zero Register and a constant which is {@code 1}.
    */
-  private boolean checkConditionsForBase(BuiltInTable.BuiltIn base, UninlinedGraph behavior) {
+  private boolean checkConditionsForBase(
+      BuiltInTable.BuiltIn base, 
+      UninlinedGraph behavior) {
     if (base == EQU) {
       return this.checkConditionsForBaseUnary(behavior, 
           this.compareStatusRegisters_ZeroStatusRegisterIsOne());
