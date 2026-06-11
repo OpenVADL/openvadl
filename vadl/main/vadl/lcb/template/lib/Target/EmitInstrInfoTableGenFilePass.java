@@ -21,15 +21,20 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.valuetypes.CompilerRegister;
+import vadl.gcb.valuetypes.CompilerRegister.SubRegIndex;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecordPass;
@@ -55,7 +60,10 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
+import vadl.viam.ArtificialResource;
+import vadl.viam.Constant;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterResource;
 import vadl.viam.Specification;
 
 /**
@@ -191,12 +199,19 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var registerFiles =
         Stream.concat(generateTableGenRegistersPassOutput.registerClasses().stream(),
                 generateTableGenRegistersPassOutput.aliasRegisterClasses().stream())
-            .map(this::map)
             .toList();
+
+    var registerTruncations = generateRegisterTruncationPatterns(registerFiles)
+        .stream()
+        .map(this::map)
+        .toList();
+
+    var registerFilesPrintable = registerFiles.stream().map(this::map).toList();
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase());
+    map.put("registerTruncations", registerTruncations);
     map.put("returnAddress", renderRegister(abi.returnAddress()));
     map.put("addi", addi.simpleName());
     map.put("stackPointerRegister", renderRegister(abi.stackPointer()));
@@ -208,7 +223,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("compiler", renderedTableGenCompilerInstructionsRecords);
     map.put("instAliases", renderedTableGenInstAliases);
     map.put("patterns", renderedPatterns);
-    map.put("registerFiles", registerFiles);
+    map.put("registerFiles", registerFilesPrintable);
     map.put("returnInstruction", abi.returnSequence().identifier().simpleName());
     map.put("callInstruction", abi.callSequence().identifier().simpleName());
     map.put("isCallInstructionPseudo", abi.callSequence() instanceof PseudoInstruction ? 1 : 0);
@@ -218,6 +233,75 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     return map;
   }
 
+  private List<RegisterTruncation> generateRegisterTruncationPatterns(
+      List<TableGenRegisterClass> registerClasses) {
+    return registerClasses
+      .stream()
+      .flatMap(regClass -> {
+        var regs = regClass.registers().getFirst();
+        return this.generateTruncationPatternsForAllSubregisters(
+            regClass, 
+            regs.subRegs(), 
+            regs.subRegIndices()).stream();
+      }).toList();
+  }
+
+  private Set<RegisterTruncation> generateTruncationPatternsForAllSubregisters(
+      TableGenRegisterClass current,
+      List<CompilerRegister> subRegs,
+      List<SubRegIndex> subRegsIndices) {
+    if (subRegs.isEmpty()) {
+      return Set.of();
+    }
+
+    var truncations = new HashSet<RegisterTruncation>();
+    var currentWidth = current.registerFileRef().type().asDataType().bitWidth();
+
+    for (int i = 0; i < subRegs.size(); i++) {
+      var subReg = subRegs.get(i);
+      var subRegResource = subReg.registerFile();
+      var subType = subRegResource.type();
+      var subWidth = subType.asDataType().bitWidth();
+      var subSliceRange = this.getRegisterSliceRange(subRegResource);
+
+      if (subSliceRange.lsb() != 0) {
+        continue;
+      }
+
+      if (subWidth < currentWidth) {
+        truncations.add(new RegisterTruncation(
+              current.name(), 
+              ValueType.from(subType).get().getLlvmType(),
+              subRegsIndices.get(i).name()));
+      }
+
+      truncations.addAll(this.generateTruncationPatternsForAllSubregisters(
+            current, 
+            subReg.subRegs(), 
+            subReg.subRegIndices()));
+    }
+
+    return truncations;
+  }
+
+  private Constant.BitSlice.Part getRegisterSliceRange(RegisterResource r) {
+    if (r instanceof ArtificialResource ar) {
+      return Optional.ofNullable(ar.aliasSlice())
+            .flatMap(s -> s.parts().findFirst())
+            .orElseGet(() -> new Constant.BitSlice.Part(ar.type().asDataType().bitWidth(), 0));
+    }
+
+    return new Constant.BitSlice.Part(r.type().asDataType().bitWidth(), 0);
+  }
+
+  private Map<String, Object> map(RegisterTruncation obj) {
+    return Map.of(
+      "register", obj.register(),
+      "resultType", obj.resultType(),
+      "subIdx", obj.subIdx()
+    );
+  }
+
   private Map<String, Object> map(TableGenRegisterClass obj) {
     return Map.of(
         "resultWidth", obj.registerFileRef().resultType().bitWidth(),
@@ -225,3 +309,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     );
   }
 }
+
+record RegisterTruncation(
+    String register,
+    String resultType, 
+    String subIdx) {}

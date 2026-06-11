@@ -223,6 +223,10 @@ def SelectCC_[(${registerFile.name})]: Instruction {
 def : Pat<([(${stackPointerType})] AddrFI:$rs1),
   ([(${addi})] AddrFI:$rs1, ([(${stackPointerType})] 0))>;
 
+[# th:each="trunc : ${registerTruncations}"]
+def : Pat<([(${trunc.resultType})] (trunc [(${trunc.register})]:$rd)), (EXTRACT_SUBREG [(${trunc.register})]:$rd, [(${trunc.subIdx})])>;
+[/]
+
 [# th:each="pseudo : ${pseudos}" ]
 [(${pseudo})]
 [/]
