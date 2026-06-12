@@ -78,15 +78,11 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
                 List.of(new Abi.RegisterAlias("sp"))
             )
             .getFirst().value()),
-        Map.entry("args", abi.argumentRegisters().stream()
-            .map(abiReg -> {
-              var ref = abiReg.registerRef();
-
-              return Map.of(
-                  "index", ref.singleIndex(),
-                  "file",  ref.resource().simpleName().toLowerCase()
-              );
-            })
+        Map.entry("args", ume.args().stream()
+            .map(ref -> Map.of(
+                "index", ref.singleIndex(),
+                "file",  ref.resource().simpleName().toLowerCase()
+            ))
             .toList()),
         Map.entry("syscallInstr", ume.syscallInstr().simpleName()),
         Map.entry("insn_width_bytes", ume.syscallInstr().format().type().bitWidth() / 8)
