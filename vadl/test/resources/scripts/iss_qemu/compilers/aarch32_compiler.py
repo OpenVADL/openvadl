@@ -59,7 +59,9 @@ async def build_assembly(id: str, core: str) -> Path:
       @ exit VADL virt (HTIF)
       mov     r0, #1           @ cmd: exit 0
       ldr     r1, =tohost      @ load addr of 'tohost' into r1
-      str     r0, [r1]         @ store r0 to 'tohost'
+      str     r0, [r1]         @ write low 32 bits of 'tohost'
+      mov     r2, #0
+      str     r2, [r1, #4]     @ write high 32 bits of 'tohost'
       
       @ exit upstream (semihosting)
       ldr     r1, =args
