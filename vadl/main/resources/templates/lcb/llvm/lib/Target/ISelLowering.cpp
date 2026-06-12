@@ -130,26 +130,14 @@ static SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) {
     case ISD::CondCode::SETNE:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_NEQ})], dl, MVT::Other, Dest, ConditionFlag), 0);
     break;
-    case ISD::CondCode::SETULT:
-      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_ULT})], dl, MVT::Other, Dest, ConditionFlag), 0);
-    break;
     case ISD::CondCode::SETLT:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_LT})], dl, MVT::Other, Dest, ConditionFlag), 0);
-    break;
-    case ISD::CondCode::SETULE:
-      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_ULE})], dl, MVT::Other, Dest, ConditionFlag), 0);
     break;
     case ISD::CondCode::SETLE:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_LE})], dl, MVT::Other, Dest, ConditionFlag), 0);
     break;
-    case ISD::CondCode::SETUGT:
-      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_UGT})], dl, MVT::Other, Dest, ConditionFlag), 0);
-    break;
     case ISD::CondCode::SETGT:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_GT})], dl, MVT::Other, Dest, ConditionFlag), 0);
-    break;
-    case ISD::CondCode::SETUGE:
-      return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_UGE})], dl, MVT::Other, Dest, ConditionFlag), 0);
     break;
     case ISD::CondCode::SETGE:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${B_GE})], dl, MVT::Other, Dest, ConditionFlag), 0);
@@ -185,33 +173,17 @@ static SDValue lowerSelectcc(SDValue Op, SelectionDAG &DAG)
     case ISD::CondCode::SETLT:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_SLTH})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
     [/th:block]
-    [#th:block th:if="${CSEL_ULTH} != ''"]
-    case ISD::CondCode::SETULT:
-      return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_ULTH})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
-    [/th:block]
     [#th:block th:if="${CSEL_SGTH} != ''"]
     case ISD::CondCode::SETGT:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_SGTH})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
-    [/th:block]
-    [#th:block th:if="${CSEL_UGTH} != ''"]
-    case ISD::CondCode::SETUGT:
-      return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_UGTH})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
     [/th:block]
     [#th:block th:if="${CSEL_SGEQ} != ''"]
     case ISD::CondCode::SETGE:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_SGEQ})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
     [/th:block]
-    [#th:block th:if="${CSEL_UGEQ} != ''"]
-    case ISD::CondCode::SETUGE:
-      return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_UGEQ})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
-    [/th:block]
     [#th:block th:if="${CSEL_SLEQ} != ''"]
     case ISD::CondCode::SETLE:
       return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_SLEQ})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
-    [/th:block]
-    [#th:block th:if="${CSEL_ULEQ} != ''"]
-    case ISD::CondCode::SETULE:
-      return SDValue(DAG.getMachineNode([(${namespace})]::[(${CSEL_ULEQ})], dl, MVT::[(${stackPointerType})], TVal, FVal, ConditionFlag ), 0);
     [/th:block]
     default:
       llvm_unreachable("unimplemented operand");

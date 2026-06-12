@@ -198,50 +198,30 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                     ? MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32 :
                     MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64)
             .build())));
-    map.put("B_ULT", getBranchInstructionNameOrEmpty(database, 
-          MachineInstructionLabel.BULTH_BY_STATUS_REGISTER));
     map.put("B_LT", getBranchInstructionNameOrEmpty(database, 
           MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER));
     map.put("B_EQ", getBranchInstructionNameOrEmpty(database,
           MachineInstructionLabel.BEQ_BY_STATUS_REGISTER));
     map.put("B_NEQ", getBranchInstructionNameOrEmpty(database,
           MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER));
-    map.put("B_ULE", getBranchInstructionNameOrEmpty(database,
-          MachineInstructionLabel.BULEQ_BY_STATUS_REGISTER));
     map.put("B_LE", getBranchInstructionNameOrEmpty(database,
           MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER));
-    map.put("B_UGT", getBranchInstructionNameOrEmpty(database,
-          MachineInstructionLabel.BUGTH_BY_STATUS_REGISTER));
     map.put("B_GT", getBranchInstructionNameOrEmpty(database,
           MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER));
-    map.put("B_UGE", getBranchInstructionNameOrEmpty(database,
-          MachineInstructionLabel.BUGEQ_BY_STATUS_REGISTER));
     map.put("B_GE", getBranchInstructionNameOrEmpty(database,
           MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER));
     map.put("CSEL_SGEQ", getCselInstructionNameOrEmpty(database, stackPointerType, 
           MachineInstructionLabel.CSEL_SGEQ_I32, 
           MachineInstructionLabel.CSEL_SGEQ_I64));
-    map.put("CSEL_UGEQ", getCselInstructionNameOrEmpty(database, stackPointerType,
-          MachineInstructionLabel.CSEL_UGEQ_I32,
-          MachineInstructionLabel.CSEL_UGEQ_I64));
     map.put("CSEL_SLEQ", getCselInstructionNameOrEmpty(database, stackPointerType,
           MachineInstructionLabel.CSEL_SLEQ_I32,
           MachineInstructionLabel.CSEL_SLEQ_I64));
-    map.put("CSEL_ULEQ", getCselInstructionNameOrEmpty(database, stackPointerType,
-          MachineInstructionLabel.CSEL_ULEQ_I32,
-          MachineInstructionLabel.CSEL_ULEQ_I64));
     map.put("CSEL_SLTH", getCselInstructionNameOrEmpty(database, stackPointerType,
           MachineInstructionLabel.CSEL_SLTH_I32,
           MachineInstructionLabel.CSEL_SLTH_I64));
-    map.put("CSEL_ULTH", getCselInstructionNameOrEmpty(database, stackPointerType,
-          MachineInstructionLabel.CSEL_ULTH_I32,
-          MachineInstructionLabel.CSEL_ULTH_I64));
     map.put("CSEL_SGTH", getCselInstructionNameOrEmpty(database, stackPointerType,
           MachineInstructionLabel.CSEL_SGTH_I32,
           MachineInstructionLabel.CSEL_SGTH_I64));
-    map.put("CSEL_UGTH", getCselInstructionNameOrEmpty(database, stackPointerType,
-          MachineInstructionLabel.CSEL_UGTH_I32,
-          MachineInstructionLabel.CSEL_UGTH_I64));
     map.put("CSEL_EQ", getCselInstructionNameOrEmpty(database, stackPointerType,
           MachineInstructionLabel.CSEL_EQ_I32,
           MachineInstructionLabel.CSEL_EQ_I64));
