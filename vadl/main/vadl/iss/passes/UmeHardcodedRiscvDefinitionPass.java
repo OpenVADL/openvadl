@@ -19,6 +19,7 @@ package vadl.iss.passes;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassName;
@@ -82,21 +83,15 @@ public class UmeHardcodedRiscvDefinitionPass extends AbstractIssPass {
     Identifier identifier = new Identifier(new String[]{"ume"},
         SourceLocation.INVALID_SOURCE_LOCATION);
 
-    var registerResource = isa.registerTensors()
-        .stream()
-        .filter(r -> r.simpleName().equals("X"))
-        .findFirst()
-        .orElseThrow(() -> new IllegalStateException("Register file X not found in ISA"));
+    var registerResource = abi.stackPointer().registerFile();
 
-    var index = Constant.Value.of(BigInteger.valueOf(10).toByteArray(), DataType.bits(5));
-
-    var ref = new RegisterRef(
-        registerResource,
-        List.of(index),
-        SourceLocation.INVALID_SOURCE_LOCATION
-    );
-
-    List<RegisterRef> args = List.of(ref);
+    List<RegisterRef> args = IntStream.rangeClosed(10, 15)
+        .mapToObj(i -> new RegisterRef(
+            registerResource,
+            List.of(Constant.Value.of(BigInteger.valueOf(i).toByteArray(), DataType.bits(5))),
+            SourceLocation.INVALID_SOURCE_LOCATION
+        ))
+        .toList();
 
     Graph emptyGraph = new Graph("empty_graph");
 
