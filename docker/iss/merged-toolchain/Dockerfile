@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/aarch32-toolchain:latest AS aarch32
+FROM ghcr.io/openvadl/aarch32-toolchain@sha256:1cd5737436cf7b584bc7af4245e2c2932b6b00022b9c5cd598a7ff868531351c AS aarch32
 FROM ghcr.io/openvadl/aarch64-toolchain@sha256:68f072ee959a07586a2a761d9ba354d0f218cf27c756277510c01579ea701c13 AS aarch64
 FROM ghcr.io/openvadl/ppc64-toolchain:latest AS ppc64
 FROM ghcr.io/openvadl/riscv-toolchain:medany-rv32i-rv32im-rv32impriv-rv64i-rv64im-rv64impriv AS riscv
