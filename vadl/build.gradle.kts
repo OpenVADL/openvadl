@@ -140,6 +140,12 @@ val benchmarkIssAarch64 = registerBenchmarkTestTask(
     includePattern = "vadl.iss.aarch64.IssAarch64EmbenchBenchmarkTest"
 )
 
+val benchmarkIssAarch32 = registerBenchmarkTestTask(
+    name = "benchmark-iss-aarch32",
+    description = "Runs the ISS AArch32 benchmark tests",
+    includePattern = "vadl.iss.aarch32.IssAarch32EmbenchBenchmarkTest"
+)
+
 val benchmarkIssVectorBench64 = registerBenchmarkTestTask(
     name = "benchmark-iss-vectorbench64",
     description = "Runs the synthetic vector benchmark ISA tests",
