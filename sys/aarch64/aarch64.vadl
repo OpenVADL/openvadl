@@ -1319,8 +1319,8 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     }
 
   model LoadInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
-    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b01; X(rt) := MEM<1> (addr) as UIntX))
-    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b01; X(rt) := MEM<2> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b01; W(rt) := MEM<1> (addr) as UIntW))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b01; W(rt) := MEM<2> (addr) as UIntW))
     $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b01; W(rt) := MEM<4> (addr) as UIntW))
     $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b01; X(rt) := MEM<8> (addr)         ))
     $MemoryInstr ($memmodel; $i; "SBX"; (XSize; Byte ; "sb"; 0b10; X(rt) := MEM<1> (addr) as SIntX))
