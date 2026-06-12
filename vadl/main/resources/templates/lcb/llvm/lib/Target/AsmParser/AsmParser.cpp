@@ -93,7 +93,7 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
             int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
 
             [# th:if="${operand.isFieldOperand}"]
-            if (!VADL_fits_in_bit_width([(${operand.params})], [(${operand.fieldBitWidth})])) {
+            if (!VADL_fits_in_bit_width(opImm64, [(${operand.fieldBitWidth})])) {
               std::string error = "Invalid immediate operand for [(${operand.name})]. Value is larger than [(${operand.fieldBitWidth})] bits.";
               Parser.Error(Op.getStartLoc(), error);
               return true;
