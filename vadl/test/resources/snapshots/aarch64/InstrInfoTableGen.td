@@ -51544,6 +51544,11 @@ def : Pat<(i32 (trunc X:$rd)), (EXTRACT_SUBREG X:$rd, SUB_32)>;
 
 
 
+def : Pat<(i64 (anyext R:$rd)), (INSERT_SUBREG (i64 (IMPLICIT_DEF)), R:$rd, SUB_32)>;
+def : Pat<(i64 (anyext W:$rd)), (INSERT_SUBREG (i64 (IMPLICIT_DEF)), W:$rd, SUB_32)>;
+
+
+
 def ASRIW : Instruction
 {
 let Namespace = "processorNameValue";
@@ -55211,4 +55216,5 @@ def : Pat<(int_processorNameValue_UMSUBL X:$ra, W:$rn, W:$rm),
 
 def : Pat<(int_processorNameValue_UMULH X:$rn, X:$rm),
         (UMULH X:$rn, X:$rm)>;
+
 

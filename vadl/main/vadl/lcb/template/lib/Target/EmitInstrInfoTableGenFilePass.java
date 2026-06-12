@@ -201,7 +201,14 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                 generateTableGenRegistersPassOutput.aliasRegisterClasses().stream())
             .toList();
 
-    var registerTruncations = generateRegisterTruncationPatterns(registerFiles)
+    var registerSubregisterPatterns = generateRegisterSubregisterPatterns(registerFiles);
+    var registerTruncations = registerSubregisterPatterns
+        .truncations()
+        .stream()
+        .map(this::map)
+        .toList();
+    var registerExtensions = registerSubregisterPatterns
+        .extensions()
         .stream()
         .map(this::map)
         .toList();
@@ -212,6 +219,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase());
     map.put("registerTruncations", registerTruncations);
+    map.put("registerExtensions", registerExtensions);
     map.put("returnAddress", renderRegister(abi.returnAddress()));
     map.put("addi", addi.simpleName());
     map.put("stackPointerRegister", renderRegister(abi.stackPointer()));
@@ -233,29 +241,36 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     return map;
   }
 
-  private List<RegisterTruncation> generateRegisterTruncationPatterns(
+  private RegisterSubRegisterPatterns generateRegisterSubregisterPatterns(
       List<TableGenRegisterClass> registerClasses) {
-    return registerClasses
-      .stream()
-      .flatMap(regClass -> {
-        var regs = regClass.registers().getFirst();
-        return this.generateTruncationPatternsForAllSubregisters(
-            regClass, 
-            regs.subRegs(), 
-            regs.subRegIndices()).stream();
-      }).toList();
+    RegisterSubRegisterPatterns patterns = new RegisterSubRegisterPatterns(
+        new HashSet<>(), 
+        new HashSet<>());
+
+    registerClasses
+        .forEach(regClass -> {
+          var regs = regClass.registers().getFirst();
+          this.generateMovePatternsForAllSubregisters(
+              regClass,
+              regs.subRegs(),
+              regs.subRegIndices(),
+              patterns);
+        });
+
+    return patterns;
   }
 
-  private Set<RegisterTruncation> generateTruncationPatternsForAllSubregisters(
+  private void generateMovePatternsForAllSubregisters(
       TableGenRegisterClass current,
       List<CompilerRegister> subRegs,
-      List<SubRegIndex> subRegsIndices) {
+      List<SubRegIndex> subRegsIndices,
+      RegisterSubRegisterPatterns patterns) {
     if (subRegs.isEmpty()) {
-      return Set.of();
+      return;
     }
 
-    var truncations = new HashSet<RegisterTruncation>();
-    var currentWidth = current.registerFileRef().type().asDataType().bitWidth();
+    var currentType = current.registerFileRef().type().asDataType();
+    var currentWidth = currentType.bitWidth();
 
     for (int i = 0; i < subRegs.size(); i++) {
       var subReg = subRegs.get(i);
@@ -269,19 +284,23 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
       }
 
       if (subWidth < currentWidth) {
-        truncations.add(new RegisterTruncation(
+        patterns.truncations().add(new RegisterSubregisterMove(
               current.name(), 
               ValueType.from(subType).get().getLlvmType(),
               subRegsIndices.get(i).name()));
+
+        patterns.extensions().add(new RegisterSubregisterMove(
+              subRegResource.simpleName(),
+              ValueType.from(currentType).get().getLlvmType(),
+              subRegsIndices.get(i).name()));
       }
 
-      truncations.addAll(this.generateTruncationPatternsForAllSubregisters(
+      this.generateMovePatternsForAllSubregisters(
             current, 
             subReg.subRegs(), 
-            subReg.subRegIndices()));
+            subReg.subRegIndices(),
+            patterns);
     }
-
-    return truncations;
   }
 
   private Constant.BitSlice.Part getRegisterSliceRange(RegisterResource r) {
@@ -294,7 +313,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     return new Constant.BitSlice.Part(r.type().asDataType().bitWidth(), 0);
   }
 
-  private Map<String, Object> map(RegisterTruncation obj) {
+  private Map<String, Object> map(RegisterSubregisterMove obj) {
     return Map.of(
       "register", obj.register(),
       "resultType", obj.resultType(),
@@ -310,7 +329,13 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
   }
 }
 
-record RegisterTruncation(
+record RegisterSubRegisterPatterns(
+    Set<RegisterSubregisterMove> truncations,
+    Set<RegisterSubregisterMove> extensions) {
+}
+
+record RegisterSubregisterMove(
     String register,
     String resultType, 
-    String subIdx) {}
+    String subIdx) {
+}

@@ -227,6 +227,10 @@ def : Pat<([(${stackPointerType})] AddrFI:$rs1),
 def : Pat<([(${trunc.resultType})] (trunc [(${trunc.register})]:$rd)), (EXTRACT_SUBREG [(${trunc.register})]:$rd, [(${trunc.subIdx})])>;
 [/]
 
+[# th:each="ext : ${registerExtensions}"]
+def : Pat<([(${ext.resultType})] (anyext [(${ext.register})]:$rd)), (INSERT_SUBREG ([(${ext.resultType})] (IMPLICIT_DEF)), [(${ext.register})]:$rd, [(${ext.subIdx})])>;
+[/]
+
 [# th:each="pseudo : ${pseudos}" ]
 [(${pseudo})]
 [/]
