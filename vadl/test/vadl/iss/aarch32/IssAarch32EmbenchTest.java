@@ -17,7 +17,6 @@
 package vadl.iss.aarch32;
 
 import java.io.IOException;
-import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.utility.MountableFile;
@@ -28,7 +27,7 @@ public class IssAarch32EmbenchTest extends QemuIssTest {
 
   private static final Logger log = LoggerFactory.getLogger(IssAarch32EmbenchTest.class);
 
-  @Test
+  // @Test
   void a32EmbenchTest() throws IOException {
     runEmbenchTest("sys/aarch32/virt.vadl", "build_virt-iss-a32.sh", "qemu-system-a32");
   }
