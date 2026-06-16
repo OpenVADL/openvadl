@@ -42,8 +42,7 @@ final class InstructionExecutionPlanner {
   InstrExecPlan plan(Instruction instruction) {
     DirectGvecEvaluation directGvec = directGvecEvaluator.evaluate(instruction);
     var selectedPath =
-        directGvec.supportsWholeInstructionLowering()
-            || normalTcgPathEvaluator.isViable(instruction)
+        normalTcgPathEvaluator.isViable(instruction, directGvec.regions())
             ? ExecutionPath.NORMAL_TCG
             : ExecutionPath.HELPER_CALL;
     return new InstrExecPlan(selectedPath, directGvec.regions());

@@ -64,6 +64,21 @@ public class IssExecutionStrategyRoutingTest extends AbstractTest {
     assertFalse(helperNames.contains("VADD_VV"));
   }
 
+  @Test
+  void keepsVectorBenchCompositeScalarSideEffectOnNormalTcgRoute()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var routeProbe = new RouteProbePass(config());
+
+    var normalTcgNames = simpleNames(routeProbe.normalTcgInstrs(viam));
+    var directGvecNames = simpleNames(routeProbe.directGvecCandidateInstrs(viam));
+    var helperNames = simpleNames(routeProbe.wholeHelperInstrs(viam));
+
+    assertTrue(normalTcgNames.contains("VADD_XINC"));
+    assertTrue(directGvecNames.contains("VADD_XINC"));
+    assertFalse(helperNames.contains("VADD_XINC"));
+  }
+
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpec(specPath,
         PassOrders.iss(config()).untilFirst(IssExecStrategyPass.class)
