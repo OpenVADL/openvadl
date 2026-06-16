@@ -52,7 +52,7 @@ VectorBench64::VLD2_PRED_Z | helper-call | forall-write-0:rejected[UNSUPPORTED_V
 VectorBench64::VLD3_PRED_Z | helper-call | forall-write-0:rejected[UNSUPPORTED_VALUE_SHAPE]
 VectorBench64::VLD4_PRED_Z | helper-call | forall-write-0:rejected[UNSUPPORTED_VALUE_SHAPE]
 VectorBench64::VMAC_VVV | helper-call | forall-write-0:rejected[OPERAND_NOT_VECTOR_READ]
-VectorBench64::VMOV_VV | helper-call | forall-write-0:rejected[UNSUPPORTED_VALUE_SHAPE]
+VectorBench64::VMOV_VV | normal-tcg | forall-write-0:gvec
 VectorBench64::VREDSUM | helper-call | -
 VectorBench64::VSCATTER_PRED | helper-call | -
 VectorBench64::VSEL | helper-call | forall-write-0:rejected[UNSUPPORTED_VALUE_SHAPE]

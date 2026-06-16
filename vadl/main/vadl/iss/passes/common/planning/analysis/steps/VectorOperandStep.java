@@ -41,18 +41,33 @@ public final class VectorOperandStep implements VectorFactStep {
   public void extract(VectorFactsBuilder builder) {
     var writeFacts = builder.writeFacts();
     var operationFacts = builder.operationFacts();
-    var operationCall = operationFacts == null ? null : operationFacts.binaryOperation();
-    if (writeFacts == null || operationCall == null) {
+    if (writeFacts == null || operationFacts == null) {
       return;
     }
 
     var region = builder.region();
-    for (var arg : operationCall.arguments()) {
-      // Each operand is recorded independently so different strategies can make different decisions
-      // about vector, scalar, immediate, alias, or broadcast forms from the same fact set.
-      var read = vectorRead(arg);
+    var operationCall = operationFacts.binaryOperation();
+    if (operationCall != null) {
+      for (var arg : operationCall.arguments()) {
+        // Each operand is recorded independently so different strategies can make different
+        // decisions about vector, scalar, immediate, alias, or broadcast forms from the same fact
+        // set.
+        var read = vectorRead(arg);
+        builder.addOperandFact(operandFact(
+            arg,
+            read,
+            region.idx(),
+            writeFacts.size().elementBits()
+        ));
+      }
+      return;
+    }
+
+    var unaryOperand = operationFacts.unaryOperand();
+    if (unaryOperand != null) {
+      var read = vectorRead(unaryOperand);
       builder.addOperandFact(operandFact(
-          arg,
+          unaryOperand,
           read,
           region.idx(),
           writeFacts.size().elementBits()

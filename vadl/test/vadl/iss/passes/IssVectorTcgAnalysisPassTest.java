@@ -27,6 +27,8 @@ import static vadl.iss.passes.TcgPassUtils.instrInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
@@ -49,6 +51,10 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ParamNode;
 
 public class IssVectorTcgAnalysisPassTest extends AbstractTest {
+
+  private static final IssConfiguration CONFIG =
+      new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+  private static final Map<String, Specification> SPEC_CACHE = new ConcurrentHashMap<>();
 
   @Test
   void recognizesRv64vVaddVv()
@@ -134,7 +140,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
-    void recognizesVectorBenchAliasVaddDoVv()
+  void recognizesVectorBenchAliasVaddDoVv()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/vectorbench/vectorbench64.vadl");
     var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_DO_VV"));
@@ -156,6 +162,25 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
+  void recognizesVectorBenchVmovVv()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VMOV_VV"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.MOV, plan.op());
+    assertEquals(OperandForm.VECTOR_MOVE, plan.operandForm());
+    assertEquals(1, plan.operands().size());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().getFirst().kind());
+    assertEquals(List.of("vd"), bindingParamNames(plan.destination().accessorIndices()));
+    assertEquals(List.of("vs1"),
+        bindingParamNames(plan.operands().getFirst().registerBinding().accessorIndices()));
+  }
+
+  @Test
   void keepsScalarInstructionOnNormalTcgPathWithoutDirectGvecPlan()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
@@ -168,11 +193,25 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
-    var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
-    return setupPassManagerAndRunSpec(specPath,
-        PassOrders.iss(config).untilFirst(IssExecStrategyPass.class)
-    ).specification();
+    try {
+      return SPEC_CACHE.computeIfAbsent(specPath, path -> {
+        try {
+          return setupPassManagerAndRunSpec(path,
+              PassOrders.iss(CONFIG).untilFirst(IssExecStrategyPass.class)
+          ).specification();
+        } catch (IOException | DuplicatedPassKeyException e) {
+          throw new CachedSpecException(e);
+        }
+      });
+    } catch (CachedSpecException e) {
+      if (e.getCause() instanceof IOException ioException) {
+        throw ioException;
+      }
+      if (e.getCause() instanceof DuplicatedPassKeyException duplicatedPassKeyException) {
+        throw duplicatedPassKeyException;
+      }
+      throw e;
+    }
   }
 
   private Instruction findInstruction(Specification viam, String name) {
@@ -201,5 +240,11 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     return indices.stream()
         .map(index -> assertInstanceOf(ParamNode.class, index).definition().simpleName())
         .toList();
+  }
+
+  private static final class CachedSpecException extends RuntimeException {
+    private CachedSpecException(Exception cause) {
+      super(cause);
+    }
   }
 }

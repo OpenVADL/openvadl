@@ -23,6 +23,8 @@ import static vadl.TestUtils.findDefinitionByNameIn;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
@@ -37,6 +39,10 @@ import vadl.viam.Specification;
 import vadl.viam.graph.control.ForallNode;
 
 public class IssDirectGvecLoweringPassTest extends AbstractTest {
+
+  private static final IssConfiguration CONFIG =
+      new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+  private static final Map<String, Specification> SPEC_CACHE = new ConcurrentHashMap<>();
 
   @Test
   void lowersRecognizedVectorLoopIntoBackendGvecNode()
@@ -88,19 +94,45 @@ public class IssDirectGvecLoweringPassTest extends AbstractTest {
     assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
   }
 
-  private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
-    return setupPassManagerAndRunSpec(specPath,
-        PassOrders.iss(config()).untilFirst(IssDirectGvecLoweringPass.class)
-    ).specification();
+  @Test
+  void lowersVectorBenchMoveLoopIntoBackendGvecNode()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var instr = findInstruction(viam, "VectorBench64::VMOV_VV");
+
+    assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
   }
 
-  private IssConfiguration config() {
-    return new IssConfiguration(
-        new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE)
-    );
+  private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
+    try {
+      return SPEC_CACHE.computeIfAbsent(specPath, path -> {
+        try {
+          return setupPassManagerAndRunSpec(path,
+              PassOrders.iss(CONFIG).untilFirst(IssDirectGvecLoweringPass.class)
+          ).specification();
+        } catch (IOException | DuplicatedPassKeyException e) {
+          throw new CachedSpecException(e);
+        }
+      });
+    } catch (CachedSpecException e) {
+      if (e.getCause() instanceof IOException ioException) {
+        throw ioException;
+      }
+      if (e.getCause() instanceof DuplicatedPassKeyException duplicatedPassKeyException) {
+        throw duplicatedPassKeyException;
+      }
+      throw e;
+    }
   }
 
   private Instruction findInstruction(Specification viam, String name) {
     return findDefinitionByNameIn(name, viam, Instruction.class);
+  }
+
+  private static final class CachedSpecException extends RuntimeException {
+    private CachedSpecException(Exception cause) {
+      super(cause);
+    }
   }
 }

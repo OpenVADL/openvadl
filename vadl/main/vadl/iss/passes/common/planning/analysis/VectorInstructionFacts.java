@@ -98,6 +98,7 @@ public record VectorInstructionFacts(
   public record OperationFacts(
       boolean valueIsBuiltInCall,
       @Nullable BuiltInCall binaryOperation,
+      @Nullable ExpressionNode unaryOperand,
       @Nullable OperationKind operationKind
   ) {
   }
@@ -207,6 +208,7 @@ public record VectorInstructionFacts(
    * Neutralized vector-operation classification.
    */
   public enum OperationKind {
+    MOV,
     ADD,
     SUB,
     AND,

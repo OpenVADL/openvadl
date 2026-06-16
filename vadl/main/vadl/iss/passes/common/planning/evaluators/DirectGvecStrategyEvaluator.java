@@ -128,9 +128,9 @@ public final class DirectGvecStrategyEvaluator {
   private @Nullable VectorTensorPlan.VectorOp evaluateOperation(
       @Nullable VectorInstructionFacts.OperationFacts operationFacts,
       List<PlanningIssue> issues) {
-    // Distinguish "not a binary builtin shape" from "binary builtin but not one of the currently
-    // mapped direct-gvec ops" so diagnostics stay useful as more strategies are added.
-    if (operationFacts == null || operationFacts.binaryOperation() == null) {
+    // Distinguish "unsupported builtin/value shape" from a recognized neutral operation kind so
+    // diagnostics stay useful as more strategies are added.
+    if (operationFacts == null || operationFacts.operationKind() == null) {
       if (operationFacts != null && operationFacts.valueIsBuiltInCall()) {
         issues.add(PlanningIssue.of(VectorStrategyIssueCode.UNSUPPORTED_OPERATION));
       } else {
@@ -190,6 +190,10 @@ public final class DirectGvecStrategyEvaluator {
       @Nullable VectorTensorPlan.VectorOp vectorOp,
       List<PlanningIssue> issues
   ) {
+    if (vectorOp == VectorTensorPlan.VectorOp.MOV) {
+      return evaluateVectorMoveOperands(operandFactsList, issues);
+    }
+
     if (operandFactsList.size() != 2) {
       issues.add(PlanningIssue.of(VectorStrategyIssueCode.UNSUPPORTED_VALUE_SHAPE));
       return null;
@@ -206,6 +210,29 @@ public final class DirectGvecStrategyEvaluator {
         yield null;
       }
     };
+  }
+
+  private @Nullable OperandEvaluation evaluateVectorMoveOperands(
+      List<OperandAccessFacts> operandFactsList,
+      List<PlanningIssue> issues
+  ) {
+    if (operandFactsList.size() != 1) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.UNSUPPORTED_VALUE_SHAPE));
+      return null;
+    }
+
+    var operandFacts = operandFactsList.getFirst();
+    if (operandFacts.operandShape() != OperandShape.VECTOR_REGISTER) {
+      issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
+      return null;
+    }
+
+    var operands = new ArrayList<VectorOperand>();
+    recordVectorRegisterOperand(operandFacts, issues, operands);
+    if (!issues.isEmpty()) {
+      return null;
+    }
+    return new OperandEvaluation(OperandForm.VECTOR_MOVE, List.copyOf(operands));
   }
 
   private @Nullable OperandEvaluation evaluateVectorVectorOperands(OperandAccessFacts lhs,
@@ -345,6 +372,7 @@ public final class DirectGvecStrategyEvaluator {
     }
     // The neutral operation kind is translated to a direct-gvec-specific opcode only here.
     return switch (operationKind) {
+      case MOV -> VectorTensorPlan.VectorOp.MOV;
       case ADD -> VectorTensorPlan.VectorOp.ADD;
       case SUB -> VectorTensorPlan.VectorOp.SUB;
       case AND -> VectorTensorPlan.VectorOp.AND;
