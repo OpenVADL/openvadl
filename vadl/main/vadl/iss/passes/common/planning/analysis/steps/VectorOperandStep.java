@@ -22,6 +22,7 @@ import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.gve
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isConstantInt;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isFullyIndexedElementAccess;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isLoopElementOffset;
+import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.operandShape;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.storageFacts;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.vectorRead;
 
@@ -40,18 +41,33 @@ public final class VectorOperandStep implements VectorFactStep {
   public void extract(VectorFactsBuilder builder) {
     var writeFacts = builder.writeFacts();
     var operationFacts = builder.operationFacts();
-    var operationCall = operationFacts == null ? null : operationFacts.binaryOperation();
-    if (writeFacts == null || operationCall == null) {
+    if (writeFacts == null || operationFacts == null) {
       return;
     }
 
     var region = builder.region();
-    for (var arg : operationCall.arguments()) {
-      // Each operand is recorded independently so different strategies can make different decisions
-      // about vector, scalar, immediate, alias, or broadcast forms from the same fact set.
-      var read = vectorRead(arg);
+    var operationCall = operationFacts.binaryOperation();
+    if (operationCall != null) {
+      for (var arg : operationCall.arguments()) {
+        // Each operand is recorded independently so different strategies can make different
+        // decisions about vector, scalar, immediate, alias, or broadcast forms from the same fact
+        // set.
+        var read = vectorRead(arg);
+        builder.addOperandFact(operandFact(
+            arg,
+            read,
+            region.idx(),
+            writeFacts.size().elementBits()
+        ));
+      }
+      return;
+    }
+
+    var unaryOperand = operationFacts.unaryOperand();
+    if (unaryOperand != null) {
+      var read = vectorRead(unaryOperand);
       builder.addOperandFact(operandFact(
-          arg,
+          unaryOperand,
           read,
           region.idx(),
           writeFacts.size().elementBits()
@@ -69,22 +85,26 @@ public final class VectorOperandStep implements VectorFactStep {
       return new OperandAccessFacts(
           expression,
           null,
+          operandShape(expression, null, elementBits),
           vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessBaseKind.OTHER,
           vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessWindowKind.OTHER,
           false,
           null,
-          false,
+          expression.type().isDataType()
+              && expression.type().asDataType().bitWidth() == elementBits,
           null
       );
     }
 
+    var storage = storageFacts(read.regTensor());
     return new OperandAccessFacts(
         expression,
         read,
+        operandShape(expression, read, elementBits),
         gvecAccessBaseKind(read),
         accessWindowKind(read.windowKind()),
         matchesElementShape(read, idx, elementBits),
-        storageFacts(read.regTensor()),
+        storage,
         read.readBitWidth() == elementBits,
         bindingFacts(read, idx)
     );

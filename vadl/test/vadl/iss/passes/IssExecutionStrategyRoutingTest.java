@@ -50,14 +50,17 @@ public class IssExecutionStrategyRoutingTest extends AbstractTest {
 
     assertTrue(normalTcgNames.contains("VSETVLI"));
     assertTrue(normalTcgNames.contains("VADD_VV"));
-    assertFalse(normalTcgNames.contains("VADD_VX"));
+    assertTrue(normalTcgNames.contains("VADD_VX"));
+    assertTrue(normalTcgNames.contains("VADD_VI"));
 
     assertTrue(directGvecNames.contains("VADD_VV"));
     assertTrue(directGvecNames.contains("VSUB_VV"));
-    assertFalse(directGvecNames.contains("VADD_VX"));
+    assertTrue(directGvecNames.contains("VADD_VX"));
+    assertTrue(directGvecNames.contains("VADD_VI"));
     assertFalse(directGvecNames.contains("VSETVLI"));
 
-    assertTrue(helperNames.contains("VADD_VX"));
+    assertFalse(helperNames.contains("VADD_VX"));
+    assertFalse(helperNames.contains("VADD_VI"));
     assertFalse(helperNames.contains("VADD_VV"));
   }
 

@@ -39,6 +39,7 @@ import vadl.iss.passes.common.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.common.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
+import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssReadRegNode;
@@ -61,8 +62,8 @@ import vadl.iss.passes.tcg.lowering.nodes.TcgDepositNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGenException;
-import vadl.iss.passes.tcg.lowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGottoTb;
+import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLookupAndGotoPtr;
 import vadl.iss.passes.tcg.lowering.nodes.TcgMovCondNode;
@@ -783,6 +784,17 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   void handle(IssMoveNode moveNode) {
     var src = singleDestOf(moveNode.expr());
     replaceCurrent(new TcgMoveNode(moveNode.dest(), src));
+  }
+
+  @Handler
+  void handle(IssGvecOpNode toHandle) {
+    if (toHandle.immediateOperand() != null) {
+      toHandle.ensure(!isTcg(toHandle.immediateOperand()),
+          "Immediate gvec operand must be translation-time constant.");
+    }
+    var scalarOperand = toHandle.scalarOperand() == null ? null : singleDestOf(toHandle
+                                                                               .scalarOperand());
+    replaceCurrent(new TcgGvecOpNode(toHandle, scalarOperand));
   }
 
   @Handler

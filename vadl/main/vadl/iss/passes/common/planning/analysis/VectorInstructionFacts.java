@@ -98,6 +98,7 @@ public record VectorInstructionFacts(
   public record OperationFacts(
       boolean valueIsBuiltInCall,
       @Nullable BuiltInCall binaryOperation,
+      @Nullable ExpressionNode unaryOperand,
       @Nullable OperationKind operationKind
   ) {
   }
@@ -108,6 +109,7 @@ public record VectorInstructionFacts(
   public record OperandAccessFacts(
       ExpressionNode expression,
       @Nullable IssReadRegNode read,
+      OperandShape operandShape,
       AccessBaseKind baseKind,
       AccessWindowKind windowKind,
       boolean elementShapeMatches,
@@ -119,6 +121,16 @@ public record VectorInstructionFacts(
     public boolean usesSupportedWindowKind() {
       return windowKind == AccessWindowKind.CHUNK || windowKind == AccessWindowKind.FULL;
     }
+  }
+
+  /**
+   * Neutralized operand classification used by later strategy evaluators.
+   */
+  public enum OperandShape {
+    VECTOR_REGISTER,
+    SCALAR_EXPRESSION,
+    IMMEDIATE,
+    OTHER
   }
 
   /**
@@ -196,6 +208,7 @@ public record VectorInstructionFacts(
    * Neutralized vector-operation classification.
    */
   public enum OperationKind {
+    MOV,
     ADD,
     SUB,
     AND,

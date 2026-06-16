@@ -25,6 +25,7 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.InstrInfo;
+import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgNode;
@@ -139,6 +140,11 @@ class TcgTranslateGenerator implements InstructionTranslateGenerator,
   @Handler
   void handle(CGenContext<Node> ctx, IssRegBitfieldWriteNode toHandle) {
     throwNotAllowed(toHandle, "bitfield register writes should be lowered to TCG before codegen");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssGvecOpNode toHandle) {
+    throwNotAllowed(toHandle, "ISS gvec nodes should be lowered to TCG before codegen");
   }
 
   @Handler

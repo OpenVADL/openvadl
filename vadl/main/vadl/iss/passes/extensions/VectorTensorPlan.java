@@ -29,6 +29,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  */
 public record VectorTensorPlan(
     VectorOp op,
+    OperandForm operandForm,
     VectorShape shape,
     VectorRegisterBinding destination,
     OverlapPolicy overlapPolicy,
@@ -39,12 +40,14 @@ public record VectorTensorPlan(
    * Creates a direct-gvec candidate plan.
    */
   public static VectorTensorPlan directGvecCandidate(VectorOp op,
+                                                     OperandForm operandForm,
                                                      VectorShape shape,
                                                      VectorRegisterBinding destination,
                                                      OverlapPolicy overlapPolicy,
                                                      List<VectorOperand> operands) {
     return new VectorTensorPlan(
         op,
+        operandForm,
         shape,
         destination,
         overlapPolicy,
@@ -65,16 +68,28 @@ public record VectorTensorPlan(
   }
 
   /**
-   * Vector operation recognized by the first matcher.
+   * Base vector operation recognized by the current matcher.
    */
   public enum VectorOp {
-    NONE,
+    MOV,
     ADD,
     SUB,
     AND,
     OR,
     XOR,
     MUL
+  }
+
+  /**
+   * Direct-gvec operand shape selected by the planner.
+   */
+  public enum OperandForm {
+    VECTOR_VECTOR,
+    VECTOR_SCALAR,
+    VECTOR_IMMEDIATE,
+    VECTOR_MOVE,
+    SCALAR_BROADCAST,
+    IMMEDIATE_BROADCAST
   }
 
   /**
@@ -107,10 +122,19 @@ public record VectorTensorPlan(
    * Operand binding for recognized vector plans.
    */
   public record VectorOperand(OperandKind kind,
-                              @Nullable VectorRegisterBinding registerBinding) {
+                              @Nullable VectorRegisterBinding registerBinding,
+                              @Nullable ExpressionNode valueExpression) {
 
     public static VectorOperand vectorRegister(VectorRegisterBinding binding) {
-      return new VectorOperand(OperandKind.VECTOR_REGISTER, binding);
+      return new VectorOperand(OperandKind.VECTOR_REGISTER, binding, null);
+    }
+
+    public static VectorOperand scalar(ExpressionNode valueExpression) {
+      return new VectorOperand(OperandKind.SCALAR_REGISTER, null, valueExpression);
+    }
+
+    public static VectorOperand immediate(ExpressionNode valueExpression) {
+      return new VectorOperand(OperandKind.IMMEDIATE, null, valueExpression);
     }
   }
 

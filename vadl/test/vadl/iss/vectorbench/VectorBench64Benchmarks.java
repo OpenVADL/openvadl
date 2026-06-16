@@ -114,7 +114,8 @@ public final class VectorBench64Benchmarks {
       0x5AA5CC33
   };
 
-  private static final double ITERATION_SCALE = readIterationScale();
+  private static final double DEFAULT_ITERATION_SCALE = readIterationScale();
+  private static final ThreadLocal<Double> ITERATION_SCALE_OVERRIDE = new ThreadLocal<>();
 
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_DO = profile(83_218, 4);
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_TENSOR = profile(75_949, 4);
@@ -240,22 +241,31 @@ public final class VectorBench64Benchmarks {
   /**
    * Reusable sizing profile for one generated benchmark case.
    *
-   * @param iterations  outer loop trip count in the generated guest program
+   * @param baseIterations outer loop trip count in the generated guest program before scaling
    * @param chainRounds number of repeated same-shape chains per outer loop iteration
    */
-  private record BenchmarkProfile(int iterations, int chainRounds) {
+  private record BenchmarkProfile(int baseIterations, int chainRounds) {
+    int iterations() {
+      return scaleIterations(baseIterations);
+    }
+
     int bodyInstructions(int chainLength) {
       return chainRounds * chainLength;
     }
   }
 
   private static BenchmarkProfile profile(int iterations, int chainRounds) {
-    return new BenchmarkProfile(scaleIterations(iterations), chainRounds);
+    return new BenchmarkProfile(iterations, chainRounds);
   }
 
   private static int scaleIterations(int iterations) {
-    long scaled = Math.round(iterations * ITERATION_SCALE);
+    long scaled = Math.round(iterations * currentIterationScale());
     return (int) Math.max(1L, scaled);
+  }
+
+  private static double currentIterationScale() {
+    var override = ITERATION_SCALE_OVERRIDE.get();
+    return override == null ? DEFAULT_ITERATION_SCALE : override;
   }
 
   /**
@@ -644,11 +654,32 @@ public final class VectorBench64Benchmarks {
    */
   public static GeneratedBenchmarks generate(Path outputDir, @Nullable Disassembler disassembler)
       throws IOException {
+    return generate(outputDir, disassembler, null);
+  }
+
+  /**
+   * Generates the benchmark corpus with an optional per-call iteration-scale override.
+   *
+   * <p>This is used by fast smoke coverage so the full corpus can be exercised without mutating the
+   * published benchmark sizing.
+   */
+  public static GeneratedBenchmarks generate(Path outputDir,
+                                             @Nullable Disassembler disassembler,
+                                             @Nullable Double iterationScaleOverride)
+      throws IOException {
     DISASSEMBLER.set(disassembler);
+    if (iterationScaleOverride != null) {
+      if (!(iterationScaleOverride > 0.0d)) {
+        throw new IllegalArgumentException(
+            "iterationScaleOverride must be > 0, got " + iterationScaleOverride);
+      }
+      ITERATION_SCALE_OVERRIDE.set(iterationScaleOverride);
+    }
     try {
       return generateImpl(outputDir);
     } finally {
       DISASSEMBLER.remove();
+      ITERATION_SCALE_OVERRIDE.remove();
     }
   }
 

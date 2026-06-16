@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.iss.passes.TcgPassUtils;
+import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
@@ -187,6 +188,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     @Handler
     List<TcgVRefNode> destOf(IssMoveNode toHandle) {
       return List.of(toHandle.dest());
+    }
+
+    @Handler
+    List<TcgVRefNode> destOf(IssGvecOpNode toHandle) {
+      return List.of();
     }
 
     @Handler

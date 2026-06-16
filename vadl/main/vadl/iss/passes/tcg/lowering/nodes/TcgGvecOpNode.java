@@ -22,7 +22,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import vadl.iss.passes.extensions.VectorTensorPlan;
+import javax.annotation.Nullable;
+import vadl.iss.passes.extensions.VectorTensorPlan.OperandForm;
+import vadl.iss.passes.extensions.VectorTensorPlan.VectorOp;
+import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -39,7 +42,9 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class TcgGvecOpNode extends TcgNode {
 
   @DataValue
-  private VectorTensorPlan.VectorOp op;
+  private VectorOp op;
+  @DataValue
+  private OperandForm operandForm;
   @DataValue
   private int elementBits;
   @DataValue
@@ -53,76 +58,158 @@ public class TcgGvecOpNode extends TcgNode {
   private NodeList<ExpressionNode> destinationAccessorIndices;
 
   @DataValue
+  @Nullable
   private RegisterTensor lhsRegister;
   @Input
   private NodeList<ExpressionNode> lhsAccessorIndices;
 
   @DataValue
+  @Nullable
   private RegisterTensor rhsRegister;
   @Input
   private NodeList<ExpressionNode> rhsAccessorIndices;
 
+  @Input
+  @Nullable
+  private TcgVRefNode scalarOperand;
+
+  @Input
+  @Nullable
+  private ExpressionNode immediateOperand;
+
   /**
-   * Creates one backend gvec operation node from the selected direct-gvec plan payload.
+   * Creates one backend gvec operation node from the ISS-level gvec canonical node.
    */
-  public TcgGvecOpNode(VectorTensorPlan plan) {
+  public TcgGvecOpNode(IssGvecOpNode node, @Nullable TcgVRefNode scalarOperand) {
     this(
-        plan.op(),
-        plan.elementBits(),
-        plan.shape().oprszBytes(),
-        plan.shape().maxszBytes(),
-        plan.destination().registerTensor(),
-        new NodeList<>(plan.destination().accessorIndices()),
-        requireRegisterOperand(plan, 0),
-        new NodeList<>(requireRegisterOperand(plan, 0).accessorIndices()),
-        requireRegisterOperand(plan, 1),
-        new NodeList<>(requireRegisterOperand(plan, 1).accessorIndices())
+        node.op(),
+        node.operandForm(),
+        node.elementBits(),
+        node.oprszBytes(),
+        node.maxszBytes(),
+        node.destinationRegister(),
+        node.destinationAccessorIndices().copy(),
+        node.lhsRegister(),
+        node.lhsAccessorIndices().copy(),
+        node.rhsRegister(),
+        node.rhsAccessorIndices().copy(),
+        scalarOperand,
+        node.immediateOperand() == null ? null : node.immediateOperand().copy()
     );
   }
 
-  private TcgGvecOpNode(VectorTensorPlan.VectorOp op,
+  private TcgGvecOpNode(VectorOp op,
+                        OperandForm operandForm,
                         int elementBits,
                         int oprszBytes,
                         int maxszBytes,
                         RegisterTensor destinationRegister,
                         NodeList<ExpressionNode> destinationAccessorIndices,
-                        VectorTensorPlan.VectorRegisterBinding lhsBinding,
+                        @Nullable RegisterTensor lhsRegister,
                         NodeList<ExpressionNode> lhsAccessorIndices,
-                        VectorTensorPlan.VectorRegisterBinding rhsBinding,
-                        NodeList<ExpressionNode> rhsAccessorIndices) {
+                        @Nullable RegisterTensor rhsRegister,
+                        NodeList<ExpressionNode> rhsAccessorIndices,
+                        @Nullable TcgVRefNode scalarOperand,
+                        @Nullable ExpressionNode immediateOperand) {
     this.op = op;
+    this.operandForm = operandForm;
     this.elementBits = elementBits;
     this.oprszBytes = oprszBytes;
     this.maxszBytes = maxszBytes;
     this.destinationRegister = destinationRegister;
     this.destinationAccessorIndices = destinationAccessorIndices;
-    this.lhsRegister = lhsBinding.registerTensor();
+    this.lhsRegister = lhsRegister;
     this.lhsAccessorIndices = lhsAccessorIndices;
-    this.rhsRegister = rhsBinding.registerTensor();
+    this.rhsRegister = rhsRegister;
     this.rhsAccessorIndices = rhsAccessorIndices;
+    this.scalarOperand = scalarOperand;
+    this.immediateOperand = immediateOperand;
   }
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return gvecFunctionName()
-        + "("
-        + memOp()
-        + ", "
-        + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
-        + ", "
-        + offsetExpr(lhsRegister, lhsAccessorIndices, nodeToCCode)
-        + ", "
-        + offsetExpr(rhsRegister, rhsAccessorIndices, nodeToCCode)
-        + ", "
-        + oprszBytes
-        + ", "
-        + maxszBytes
-        + ");";
+    return switch (operandForm) {
+      case VECTOR_VECTOR -> gvecFunctionName()
+          + "("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + offsetExpr(requireRegister(lhsRegister, "lhs"), lhsAccessorIndices, nodeToCCode)
+          + ", "
+          + offsetExpr(requireRegister(rhsRegister, "rhs"), rhsAccessorIndices, nodeToCCode)
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ");";
+      case VECTOR_MOVE -> "tcg_gen_gvec_mov("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + offsetExpr(requireRegister(lhsRegister, "lhs"), lhsAccessorIndices, nodeToCCode)
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ");";
+      case VECTOR_SCALAR -> gvecScalarFunctionName()
+          + "("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + offsetExpr(requireRegister(lhsRegister, "lhs"), lhsAccessorIndices, nodeToCCode)
+          + ", "
+          + requireScalarOperand().cCode()
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ");";
+      case VECTOR_IMMEDIATE -> gvecImmediateFunctionName()
+          + "("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + offsetExpr(requireRegister(lhsRegister, "lhs"), lhsAccessorIndices, nodeToCCode)
+          + ", "
+          + nodeToCCode.apply(requireImmediateOperand())
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ");";
+      case SCALAR_BROADCAST -> "tcg_gen_gvec_dup_i64("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ", "
+          + requireScalarOperand().cCode()
+          + ");";
+      case IMMEDIATE_BROADCAST -> "tcg_gen_gvec_dup_imm("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ", "
+          + nodeToCCode.apply(requireImmediateOperand())
+          + ");";
+    };
   }
 
   @Override
   public Set<TcgVRefNode> usedVars() {
-    return Set.of();
+    return scalarOperand == null ? Set.of() : Set.of(scalarOperand);
   }
 
   @Override
@@ -134,15 +221,18 @@ public class TcgGvecOpNode extends TcgNode {
   public Node copy() {
     return new TcgGvecOpNode(
         op,
+        operandForm,
         elementBits,
         oprszBytes,
         maxszBytes,
         destinationRegister,
         destinationAccessorIndices.copy(),
-        new VectorTensorPlan.VectorRegisterBinding(lhsRegister, lhsAccessorIndices),
+        lhsRegister,
         lhsAccessorIndices.copy(),
-        new VectorTensorPlan.VectorRegisterBinding(rhsRegister, rhsAccessorIndices),
-        rhsAccessorIndices.copy()
+        rhsRegister,
+        rhsAccessorIndices.copy(),
+        scalarOperand == null ? null : scalarOperand.copy(),
+        immediateOperand == null ? null : immediateOperand.copy()
     );
   }
 
@@ -150,15 +240,18 @@ public class TcgGvecOpNode extends TcgNode {
   public Node shallowCopy() {
     return new TcgGvecOpNode(
         op,
+        operandForm,
         elementBits,
         oprszBytes,
         maxszBytes,
         destinationRegister,
         destinationAccessorIndices,
-        new VectorTensorPlan.VectorRegisterBinding(lhsRegister, lhsAccessorIndices),
+        lhsRegister,
         lhsAccessorIndices,
-        new VectorTensorPlan.VectorRegisterBinding(rhsRegister, rhsAccessorIndices),
-        rhsAccessorIndices
+        rhsRegister,
+        rhsAccessorIndices,
+        scalarOperand,
+        immediateOperand
     );
   }
 
@@ -168,12 +261,19 @@ public class TcgGvecOpNode extends TcgNode {
     collection.addAll(destinationAccessorIndices);
     collection.addAll(lhsAccessorIndices);
     collection.addAll(rhsAccessorIndices);
+    if (this.scalarOperand != null) {
+      collection.add(scalarOperand);
+    }
+    if (this.immediateOperand != null) {
+      collection.add(immediateOperand);
+    }
   }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(op);
+    collection.add(operandForm);
     collection.add(elementBits);
     collection.add(oprszBytes);
     collection.add(maxszBytes);
@@ -189,17 +289,42 @@ public class TcgGvecOpNode extends TcgNode {
         rewriteNodeList(destinationAccessorIndices, visitor, ExpressionNode.class);
     lhsAccessorIndices = rewriteNodeList(lhsAccessorIndices, visitor, ExpressionNode.class);
     rhsAccessorIndices = rewriteNodeList(rhsAccessorIndices, visitor, ExpressionNode.class);
+    scalarOperand = visitor.applyNullable(this, scalarOperand, TcgVRefNode.class);
+    immediateOperand = visitor.applyNullable(this, immediateOperand, ExpressionNode.class);
   }
 
   private String gvecFunctionName() {
     return switch (op) {
+      case MOV -> "tcg_gen_gvec_mov";
       case ADD -> "tcg_gen_gvec_add";
       case SUB -> "tcg_gen_gvec_sub";
       case AND -> "tcg_gen_gvec_and";
       case OR -> "tcg_gen_gvec_or";
       case XOR -> "tcg_gen_gvec_xor";
       case MUL -> "tcg_gen_gvec_mul";
-      case NONE -> throw unsupported("unsupported gvec op NONE");
+    };
+  }
+
+  private String gvecScalarFunctionName() {
+    return switch (op) {
+      case ADD -> "tcg_gen_gvec_adds";
+      case SUB -> "tcg_gen_gvec_subs";
+      case AND -> "tcg_gen_gvec_ands";
+      case OR -> "tcg_gen_gvec_ors";
+      case XOR -> "tcg_gen_gvec_xors";
+      case MUL -> "tcg_gen_gvec_muls";
+      case MOV -> throw unsupported("unsupported scalar gvec op " + op);
+    };
+  }
+
+  private String gvecImmediateFunctionName() {
+    return switch (op) {
+      case ADD -> "tcg_gen_gvec_addi";
+      case AND -> "tcg_gen_gvec_andi";
+      case OR -> "tcg_gen_gvec_ori";
+      case XOR -> "tcg_gen_gvec_xori";
+      case MUL -> "tcg_gen_gvec_muli";
+      case MOV, SUB -> throw unsupported("unsupported immediate gvec op " + op);
     };
   }
 
@@ -226,16 +351,26 @@ public class TcgGvecOpNode extends TcgNode {
     return helperName + "(ctx, " + args + ")";
   }
 
-  private static VectorTensorPlan.VectorRegisterBinding requireRegisterOperand(
-      VectorTensorPlan plan,
-      int operandIndex
-  ) {
-    var operand = plan.operands().get(operandIndex);
-    var binding = operand.registerBinding();
-    if (binding == null) {
-      throw new ViamGraphError("Missing vector-register binding for operand %s", operandIndex);
+  private RegisterTensor requireRegister(@Nullable RegisterTensor registerTensor,
+                                         String role) {
+    if (registerTensor == null) {
+      throw unsupported("missing " + role + " register operand");
     }
-    return binding;
+    return registerTensor;
+  }
+
+  private TcgVRefNode requireScalarOperand() {
+    if (scalarOperand == null) {
+      throw unsupported("missing scalar operand");
+    }
+    return scalarOperand;
+  }
+
+  private ExpressionNode requireImmediateOperand() {
+    if (immediateOperand == null) {
+      throw unsupported("missing immediate operand");
+    }
+    return immediateOperand;
   }
 
   private ViamGraphError unsupported(String message) {

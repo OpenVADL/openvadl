@@ -21,6 +21,7 @@ import vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport;
 import vadl.iss.passes.common.planning.analysis.VectorFactStep;
 import vadl.iss.passes.common.planning.analysis.VectorFactsBuilder;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperationFacts;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperationKind;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -36,12 +37,14 @@ public final class VectorOperationStep implements VectorFactStep {
     var valueExpression = builder.region().valueExpression();
     var valueIsBuiltInCall = valueExpression instanceof BuiltInCall;
     var operationCall = binaryOperation(valueExpression);
+    var unaryOperand = unaryVectorOperand(valueExpression);
     builder.setOperationFacts(new OperationFacts(
         valueIsBuiltInCall,
         operationCall,
-        operationCall == null
-            ? null
-            : VectorAnalysisSupport.operationKindOf(operationCall.builtIn())
+        unaryOperand,
+        operationCall != null
+            ? VectorAnalysisSupport.operationKindOf(operationCall.builtIn())
+            : unaryOperand != null ? OperationKind.MOV : null
     ));
   }
 
@@ -52,5 +55,12 @@ public final class VectorOperationStep implements VectorFactStep {
       return null;
     }
     return call;
+  }
+
+  private @Nullable ExpressionNode unaryVectorOperand(ExpressionNode node) {
+    if (node instanceof BuiltInCall) {
+      return null;
+    }
+    return node;
   }
 }

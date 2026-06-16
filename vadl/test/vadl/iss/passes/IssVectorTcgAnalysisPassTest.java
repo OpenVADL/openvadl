@@ -27,6 +27,8 @@ import static vadl.iss.passes.TcgPassUtils.instrInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
@@ -37,6 +39,7 @@ import vadl.iss.passes.extensions.InstrExecPlan;
 import vadl.iss.passes.extensions.InstrExecPlan.DirectGvecSupport;
 import vadl.iss.passes.extensions.InstrExecPlan.ExecutionPath;
 import vadl.iss.passes.extensions.VectorTensorPlan;
+import vadl.iss.passes.extensions.VectorTensorPlan.OperandForm;
 import vadl.iss.passes.extensions.VectorTensorPlan.OperandKind;
 import vadl.iss.passes.extensions.VectorTensorPlan.OverlapPolicy;
 import vadl.iss.passes.extensions.VectorTensorPlan.VectorOp;
@@ -48,6 +51,10 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ParamNode;
 
 public class IssVectorTcgAnalysisPassTest extends AbstractTest {
+
+  private static final IssConfiguration CONFIG =
+      new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+  private static final Map<String, Specification> SPEC_CACHE = new ConcurrentHashMap<>();
 
   @Test
   void recognizesRv64vVaddVv()
@@ -62,6 +69,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     assertEquals("forall-write-0", directGvec.region().regionId());
     assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
     assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_VECTOR, plan.operandForm());
     assertEquals(32, plan.elementBits());
     assertEquals(32, plan.laneCount());
     assertEquals(128, plan.opBytes());
@@ -94,24 +102,45 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
 
     assertTrue(directGvec.isViable(), directGvec::toString);
     assertEquals(VectorOp.SUB, plan.op());
+    assertEquals(OperandForm.VECTOR_VECTOR, plan.operandForm());
     assertEquals(32, plan.elementBits());
     assertEquals(32, plan.laneCount());
   }
 
   @Test
-    void keepsVectorScalarInstructionOnFallbackPlan()
+    void recognizesRv64vVaddVx()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
     var executionPlan = executionPlan(findInstruction(viam, "RV64IMV::VADD_VX"));
     var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
 
-    assertEquals(ExecutionPath.HELPER_CALL, executionPlan.selectedPath());
-    assertTrue(!directGvec.isViable(), directGvec::toString);
-    assertTrue(directGvec.hasIssue("OPERAND_NOT_VECTOR_READ"), directGvec::toString);
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_SCALAR, plan.operandForm());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertEquals(OperandKind.SCALAR_REGISTER, plan.operands().get(1).kind());
   }
 
   @Test
-    void recognizesVectorBenchAliasVaddDoVv()
+    void recognizesRv64vVaddVi()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/risc-v/rv64v.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "RV64IMV::VADD_VI"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_IMMEDIATE, plan.operandForm());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertEquals(OperandKind.IMMEDIATE, plan.operands().get(1).kind());
+  }
+
+  @Test
+  void recognizesVectorBenchAliasVaddDoVv()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/vectorbench/vectorbench64.vadl");
     var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_DO_VV"));
@@ -121,6 +150,7 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
     assertTrue(directGvec.isViable(), directGvec::toString);
     assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_VECTOR, plan.operandForm());
     assertEquals(32, plan.elementBits());
     assertEquals(32, plan.laneCount());
     assertEquals("Z", plan.destination().registerTensor().simpleName());
@@ -129,6 +159,42 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
         bindingParamNames(plan.operands().get(0).registerBinding().accessorIndices()));
     assertEquals(List.of("vs2"),
         bindingParamNames(plan.operands().get(1).registerBinding().accessorIndices()));
+  }
+
+  @Test
+  void recognizesVectorBenchVmovVv()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VMOV_VV"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.MOV, plan.op());
+    assertEquals(OperandForm.VECTOR_MOVE, plan.operandForm());
+    assertEquals(1, plan.operands().size());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().getFirst().kind());
+    assertEquals(List.of("vd"), bindingParamNames(plan.destination().accessorIndices()));
+    assertEquals(List.of("vs1"),
+        bindingParamNames(plan.operands().getFirst().registerBinding().accessorIndices()));
+  }
+
+  @Test
+  void recognizesVectorBenchVbcastX()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VBCAST_X"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.MOV, plan.op());
+    assertEquals(OperandForm.SCALAR_BROADCAST, plan.operandForm());
+    assertEquals(1, plan.operands().size());
+    assertEquals(OperandKind.SCALAR_REGISTER, plan.operands().getFirst().kind());
+    assertEquals(List.of("vd"), bindingParamNames(plan.destination().accessorIndices()));
   }
 
   @Test
@@ -144,11 +210,25 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
-    var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
-    return setupPassManagerAndRunSpec(specPath,
-        PassOrders.iss(config).untilFirst(IssExecStrategyPass.class)
-    ).specification();
+    try {
+      return SPEC_CACHE.computeIfAbsent(specPath, path -> {
+        try {
+          return setupPassManagerAndRunSpec(path,
+              PassOrders.iss(CONFIG).untilFirst(IssExecStrategyPass.class)
+          ).specification();
+        } catch (IOException | DuplicatedPassKeyException e) {
+          throw new CachedSpecException(e);
+        }
+      });
+    } catch (CachedSpecException e) {
+      if (e.getCause() instanceof IOException ioException) {
+        throw ioException;
+      }
+      if (e.getCause() instanceof DuplicatedPassKeyException duplicatedPassKeyException) {
+        throw duplicatedPassKeyException;
+      }
+      throw e;
+    }
   }
 
   private Instruction findInstruction(Specification viam, String name) {
@@ -177,5 +257,11 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     return indices.stream()
         .map(index -> assertInstanceOf(ParamNode.class, index).definition().simpleName())
         .toList();
+  }
+
+  private static final class CachedSpecException extends RuntimeException {
+    private CachedSpecException(Exception cause) {
+      super(cause);
+    }
   }
 }

@@ -20,6 +20,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
+import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.iss.passes.nodes.IssRegBitfieldWriteNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStaticReadRegNode;
@@ -121,6 +122,11 @@ public class IssTbStaticExpressionCodeGen implements
   @Handler
   void handle(CGenContext<Node> ctx, IssRegBitfieldWriteNode toHandle) {
     throw new UnsupportedOperationException("Type IssRegBitfieldWriteNode not allowed");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, IssGvecOpNode toHandle) {
+    throw new UnsupportedOperationException("Type IssGvecOpNode not allowed");
   }
 
   @Handler
