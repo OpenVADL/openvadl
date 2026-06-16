@@ -531,6 +531,12 @@ instruction set architecture VectorBench64 = {
   encoding VADD_VX = { funct6 = 0b000011, funct3 = 0b001, mode = 0b000, opcode = 0b010'0010 }
   assembly VADD_VX = ( mnemonic, " v", udec(vd), ", v", udec(vs2), ", ", register(xs1) )
 
+  instruction VADD_VX_INC : VOpType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs2)(i) + xElem(X(xs1) + 1 as Word)) as Bits<VecBits> as Vec
+  encoding VADD_VX_INC = { funct6 = 0b000100, funct3 = 0b001, mode = 0b000, opcode = 0b010'0010 }
+  assembly VADD_VX_INC = ( mnemonic, " v", udec(vd), ", v", udec(vs2), ", ", register(xs1) )
+
   instruction VMOV_VV : VOpType =
     V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
       V(vs1)(i)) as Bits<VecBits> as Vec

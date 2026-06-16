@@ -120,6 +120,7 @@ public final class VectorBench64Benchmarks {
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_DO = profile(83_218, 4);
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_TENSOR = profile(75_949, 4);
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_VX = profile(40_921, 8);
+  private static final BenchmarkProfile PROFILE_VECTOR_VADD_VX_INC = profile(40_921, 8);
   private static final BenchmarkProfile PROFILE_VECTOR_VMOV = profile(28_362, 12);
   private static final BenchmarkProfile PROFILE_VECTOR_VBCAST = profile(28_429, 12);
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_VL_08 = profile(48_376, 6);
@@ -690,6 +691,7 @@ public final class VectorBench64Benchmarks {
     artifacts.add(buildVaddDo(outputDir));
     artifacts.add(buildVaddTensor(outputDir));
     artifacts.add(buildVaddVx(outputDir));
+    artifacts.add(buildVaddVxInc(outputDir));
     artifacts.add(buildVmov(outputDir));
     artifacts.add(buildVbcast(outputDir));
     artifacts.add(buildVaddVl(outputDir, "vector-vadd-vl-08", 8));
@@ -782,6 +784,36 @@ public final class VectorBench64Benchmarks {
     writeElfAndAsm(asm, elfPath);
     return new BenchmarkArtifact("vector-vadd-vx", "vector-scalar", profile.iterations(),
         profile.bodyInstructions(4), 32, resultBytes.length, elfPath);
+  }
+
+  private static BenchmarkArtifact buildVaddVxInc(Path outputDir) throws IOException {
+    var profile = PROFILE_VECTOR_VADD_VX_INC;
+    var regs = initialVectorRegs();
+    var computedScalars = Arrays.stream(VECTOR_SCALARS).map(x -> x + 1).toArray();
+    var finalRegs = applyVectorScalarChain(
+        regs,
+        profile.iterations() * profile.chainRounds(),
+        computedScalars,
+        (destOld, src, scalar, lane) -> src + scalar);
+    byte[] resultBytes = intsToBytes(finalRegs[3]);
+
+    var asm = newProgram();
+    emitVectorChainSetup(asm, regs);
+    loadScalarRegs(asm, VECTOR_SCALARS);
+    long resultAddr = reserveData(asm, "result", resultBytes.length, 16);
+    long expectedAddr = addData(asm,
+        "expected_checksum",
+        longToBytes(checksum(resultBytes)),
+        8);
+    emitLoop(asm, profile.iterations(), () ->
+        emitVectorScalarChain(asm, profile.chainRounds(),
+            (innerAsm, vd, vs, scalarOp) -> emitInstruction(innerAsm, "VADD_VX_INC",
+                operand("vd", vd), operand("vs2", vs), operand("xs1", scalarOp))));
+    storeSingleVectorRegAndExit(asm, resultAddr, expectedAddr, 3);
+    var elfPath = outputDir.resolve("vector-vadd-vx-inc.elf");
+    writeElfAndAsm(asm, elfPath);
+    return new BenchmarkArtifact("vector-vadd-vx-inc", "vector-scalar-computed",
+        profile.iterations(), profile.bodyInstructions(4), 32, resultBytes.length, elfPath);
   }
 
   private static BenchmarkArtifact buildVmov(Path outputDir) throws IOException {
