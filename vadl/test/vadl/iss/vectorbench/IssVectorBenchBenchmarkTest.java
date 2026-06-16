@@ -17,12 +17,18 @@
 package vadl.iss.vectorbench;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
+import javax.annotation.Nullable;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -47,8 +53,22 @@ public class IssVectorBenchBenchmarkTest extends QemuIssTest {
       LoggerFactory.getLogger(IssVectorBenchBenchmarkTest.class);
   private static final String VADL_SPEC = "sys/vectorbench/vectorbench64.vadl";
   private static final String OUTPUT_SUBDIR = "vectorbench64";
+  private static final String SMOKE_OUTPUT_SUBDIR = "vectorbench64-smoke";
   private static final String LOCAL_QEMU_ENV = "VECTORBENCH64_QEMU_BIN";
   private static final String FILTER_ENV = "VECTORBENCH64_FILTER";
+  private static final String WARMUP_RUNS_ENV = "VECTORBENCH64_WARMUP_RUNS";
+  private static final String MEASURED_RUNS_ENV = "VECTORBENCH64_MEASURED_RUNS";
+  private static final double SMOKE_ITERATION_SCALE = 1.0e-9;
+
+  private record BenchmarkRunConfig(
+      Path benchmarkInputDir,
+      String outputSubdir,
+      @Nullable Double iterationScaleOverride,
+      int warmupRuns,
+      int measuredRuns,
+      String filter
+  ) {
+  }
 
   /**
    * Generates the benchmark inputs and executes the full suite with either the local or
@@ -57,49 +77,54 @@ public class IssVectorBenchBenchmarkTest extends QemuIssTest {
   @Tag("BenchmarkTest")
   @Test
   void vectorBenchBenchmark() throws IOException {
-    var benchmarkInputDir = resolveProjectPath("vadl-test/resources/vectorbench64");
-    Files.createDirectories(benchmarkInputDir);
+    runBenchmarks(new BenchmarkRunConfig(
+        resolveProjectPath("vadl-test/resources/vectorbench64"),
+        OUTPUT_SUBDIR,
+        null,
+        envIntOrDefault(WARMUP_RUNS_ENV, 1),
+        envIntOrDefault(MEASURED_RUNS_ENV, 3),
+        readFilterFromEnvironment()
+    ));
+  }
+
+  @Test
+  void vectorBenchSmokeBenchmark() throws IOException {
+    var benchmarkInputDir = Files.createTempDirectory("vectorbench64-smoke");
+    try {
+      runBenchmarks(new BenchmarkRunConfig(
+          benchmarkInputDir,
+          SMOKE_OUTPUT_SUBDIR,
+          SMOKE_ITERATION_SCALE,
+          0,
+          1,
+          ""
+      ));
+    } finally {
+      deleteTree(benchmarkInputDir);
+    }
+  }
+
+  private void runBenchmarks(BenchmarkRunConfig config) throws IOException {
+    Files.createDirectories(config.benchmarkInputDir());
     var isa = runAndGetViamSpecification(VADL_SPEC).isa().get();
     var disassembler =
         new Disassembler(isa, new RegularDecodeTreeGenerator(), ByteOrder.LITTLE_ENDIAN);
-    var generated = VectorBench64Benchmarks.generate(benchmarkInputDir, disassembler);
-    var runnerPath = writeRunnerScript(benchmarkInputDir);
+    var generated = VectorBench64Benchmarks.generate(
+        config.benchmarkInputDir(),
+        disassembler,
+        config.iterationScaleOverride()
+    );
+    var runnerPath = writeRunnerScript(config.benchmarkInputDir());
     var localQemu = System.getenv(LOCAL_QEMU_ENV);
-    var filter = System.getenv(FILTER_ENV);
-    if (filter == null) {
-      filter = "";
-    }
+    var selectedFilter = config.filter().isBlank() ? "" : config.filter();
 
     if (localQemu != null && !localQemu.isBlank()) {
-      runLocalBenchmarks(generated, runnerPath, resolveProjectPath(localQemu), filter);
-      return;
+      runLocalBenchmarks(generated, runnerPath, resolveProjectPath(localQemu), config);
+    } else {
+      runContainerBenchmarks(generated, runnerPath, config, selectedFilter);
     }
 
-    var image = generateIssSimulator(VADL_SPEC);
-
-    var guestInputDir = "/work/vectorbench";
-    var guestOutputDir = "/work/vectorbench-out";
-    var qemuBin = "/qemu/build/qemu-system-vectorbench64";
-    var filterArg = filter.isBlank() ? "" : " " + filter;
-
-    runContainer(image,
-        container -> container
-            .withCopyFileToContainer(MountableFile.forHostPath(benchmarkInputDir), guestInputDir)
-            .withCommand("/bin/bash", "-c",
-                "mkdir -p " + guestOutputDir + " && "
-                    + "python3 " + guestInputDir + "/" + runnerPath.getFileName() + " "
-                    + guestInputDir + "/manifest.csv "
-                    + qemuBin + " "
-                    + guestOutputDir + filterArg),
-        container -> {
-          try {
-            var hostOutputDir = resolveHostResultsDir().resolve(OUTPUT_SUBDIR);
-            Files.createDirectories(hostOutputDir.getParent());
-            copyPathFromContainer(container, guestOutputDir, hostOutputDir);
-          } catch (IOException e) {
-            throw new RuntimeException("Failed to copy vector benchmark results", e);
-          }
-        });
+    assertNormalizedResults(generated, config);
   }
 
   /**
@@ -111,13 +136,13 @@ public class IssVectorBenchBenchmarkTest extends QemuIssTest {
   private void runLocalBenchmarks(VectorBench64Benchmarks.GeneratedBenchmarks generated,
                                   Path runnerPath,
                                   Path qemuBin,
-                                  String filter) throws IOException {
+                                  BenchmarkRunConfig config) throws IOException {
     if (!Files.isRegularFile(qemuBin)) {
       throw new IllegalStateException(
           LOCAL_QEMU_ENV + " points to a non-existent QEMU binary: " + qemuBin);
     }
 
-    var hostOutputDir = resolveHostResultsDir().resolve(OUTPUT_SUBDIR);
+    var hostOutputDir = resolveHostResultsDir().resolve(config.outputSubdir());
     Files.createDirectories(hostOutputDir);
 
     var cmd = new java.util.ArrayList<>(java.util.List.of(
@@ -126,15 +151,16 @@ public class IssVectorBenchBenchmarkTest extends QemuIssTest {
         generated.manifestPath().toString(),
         qemuBin.toString(),
         hostOutputDir.toString()));
-    if (!filter.isBlank()) {
-      cmd.add(filter);
+    if (!config.filter().isBlank()) {
+      cmd.add(config.filter());
     }
 
-    var process = new ProcessBuilder()
+    var processBuilder = new ProcessBuilder()
         .directory(Path.of(System.getenv("PROJECT_ROOT")).toFile())
         .command(cmd)
-        .redirectErrorStream(true)
-        .start();
+        .redirectErrorStream(true);
+    processBuilder.environment().putAll(runnerEnvironment(config));
+    var process = processBuilder.start();
 
     var outputThread = new Thread(() -> {
       try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
@@ -354,5 +380,105 @@ public class IssVectorBenchBenchmarkTest extends QemuIssTest {
           "Neither ISS_BENCHMARK_RESULT_HOST_DIR nor PROJECT_ROOT is set.");
     }
     return Path.of(projectRoot).resolve(path).normalize();
+  }
+
+  private void runContainerBenchmarks(VectorBench64Benchmarks.GeneratedBenchmarks generated,
+                                      Path runnerPath,
+                                      BenchmarkRunConfig config,
+                                      String filter) {
+    var image = generateIssSimulator(VADL_SPEC);
+
+    var guestInputDir = "/work/vectorbench";
+    var guestOutputDir = "/work/vectorbench-out";
+    var qemuBin = "/qemu/build/qemu-system-vectorbench64";
+    var filterArg = filter.isBlank() ? "" : " " + filter;
+
+    runContainer(image,
+        container -> {
+          var configured = container
+              .withCopyFileToContainer(
+                  MountableFile.forHostPath(config.benchmarkInputDir()), guestInputDir)
+              .withEnv(WARMUP_RUNS_ENV, Integer.toString(config.warmupRuns()))
+              .withEnv(MEASURED_RUNS_ENV, Integer.toString(config.measuredRuns()))
+              .withCommand("/bin/bash", "-c",
+                  "mkdir -p " + guestOutputDir + " && "
+                      + "python3 " + guestInputDir + "/" + runnerPath.getFileName() + " "
+                      + guestInputDir + "/manifest.csv "
+                      + qemuBin + " "
+                      + guestOutputDir + filterArg);
+          return configured;
+        },
+        container -> {
+          try {
+            var hostOutputDir = resolveHostResultsDir().resolve(config.outputSubdir());
+            Files.createDirectories(hostOutputDir.getParent());
+            copyPathFromContainer(container, guestOutputDir, hostOutputDir);
+          } catch (IOException e) {
+            throw new RuntimeException("Failed to copy vector benchmark results", e);
+          }
+        });
+  }
+
+  private Map<String, String> runnerEnvironment(BenchmarkRunConfig config) {
+    return Map.of(
+        WARMUP_RUNS_ENV, Integer.toString(config.warmupRuns()),
+        MEASURED_RUNS_ENV, Integer.toString(config.measuredRuns())
+    );
+  }
+
+  private void assertNormalizedResults(VectorBench64Benchmarks.GeneratedBenchmarks generated,
+                                       BenchmarkRunConfig config) throws IOException {
+    var resultsCsv = resolveHostResultsDir()
+        .resolve(config.outputSubdir())
+        .resolve("normalized-results")
+        .resolve("vectorbench64-open-vadl.csv");
+    Assertions.assertTrue(Files.isRegularFile(resultsCsv),
+        "Missing normalized results: " + resultsCsv);
+
+    long dataRows;
+    try (var lines = Files.lines(resultsCsv, StandardCharsets.UTF_8)) {
+      dataRows = lines.skip(1).count();
+    }
+
+    Assertions.assertEquals(selectedBenchmarkCount(generated, config.filter()), dataRows,
+        "Unexpected number of normalized benchmark rows in " + resultsCsv);
+  }
+
+  private long selectedBenchmarkCount(VectorBench64Benchmarks.GeneratedBenchmarks generated,
+                                      String filter) {
+    if (filter.isBlank()) {
+      return generated.artifacts().size();
+    }
+
+    var selectedIds = Arrays.stream(filter.split(","))
+        .map(String::trim)
+        .filter(id -> !id.isEmpty())
+        .collect(java.util.stream.Collectors.toSet());
+    return generated.artifacts().stream()
+        .map(VectorBench64Benchmarks.BenchmarkArtifact::id)
+        .filter(selectedIds::contains)
+        .count();
+  }
+
+  private String readFilterFromEnvironment() {
+    var filter = System.getenv(FILTER_ENV);
+    return filter == null ? "" : filter;
+  }
+
+  private int envIntOrDefault(String name, int defaultValue) {
+    var value = System.getenv(name);
+    if (value == null || value.isBlank()) {
+      return defaultValue;
+    }
+    return Integer.parseInt(value.trim());
+  }
+
+  private void deleteTree(Path root) throws IOException {
+    if (!Files.exists(root)) {
+      return;
+    }
+    try (var stream = Files.walk(root)) {
+      stream.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+    }
   }
 }
