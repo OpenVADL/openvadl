@@ -58,6 +58,7 @@ public class TcgGvecOpNode extends TcgNode {
   private NodeList<ExpressionNode> destinationAccessorIndices;
 
   @DataValue
+  @Nullable
   private RegisterTensor lhsRegister;
   @Input
   private NodeList<ExpressionNode> lhsAccessorIndices;
@@ -104,7 +105,7 @@ public class TcgGvecOpNode extends TcgNode {
                         int maxszBytes,
                         RegisterTensor destinationRegister,
                         NodeList<ExpressionNode> destinationAccessorIndices,
-                        RegisterTensor lhsRegister,
+                        @Nullable RegisterTensor lhsRegister,
                         NodeList<ExpressionNode> lhsAccessorIndices,
                         @Nullable RegisterTensor rhsRegister,
                         NodeList<ExpressionNode> rhsAccessorIndices,
@@ -134,7 +135,7 @@ public class TcgGvecOpNode extends TcgNode {
           + ", "
           + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
           + ", "
-          + offsetExpr(lhsRegister, lhsAccessorIndices, nodeToCCode)
+          + offsetExpr(requireRegister(lhsRegister, "lhs"), lhsAccessorIndices, nodeToCCode)
           + ", "
           + offsetExpr(requireRegister(rhsRegister, "rhs"), rhsAccessorIndices, nodeToCCode)
           + ", "
@@ -147,7 +148,7 @@ public class TcgGvecOpNode extends TcgNode {
           + ", "
           + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
           + ", "
-          + offsetExpr(lhsRegister, lhsAccessorIndices, nodeToCCode)
+          + offsetExpr(requireRegister(lhsRegister, "lhs"), lhsAccessorIndices, nodeToCCode)
           + ", "
           + oprszBytes
           + ", "
@@ -159,7 +160,7 @@ public class TcgGvecOpNode extends TcgNode {
           + ", "
           + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
           + ", "
-          + offsetExpr(lhsRegister, lhsAccessorIndices, nodeToCCode)
+          + offsetExpr(requireRegister(lhsRegister, "lhs"), lhsAccessorIndices, nodeToCCode)
           + ", "
           + requireScalarOperand().cCode()
           + ", "
@@ -173,7 +174,7 @@ public class TcgGvecOpNode extends TcgNode {
           + ", "
           + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
           + ", "
-          + offsetExpr(lhsRegister, lhsAccessorIndices, nodeToCCode)
+          + offsetExpr(requireRegister(lhsRegister, "lhs"), lhsAccessorIndices, nodeToCCode)
           + ", "
           + nodeToCCode.apply(requireImmediateOperand())
           + ", "
@@ -181,8 +182,28 @@ public class TcgGvecOpNode extends TcgNode {
           + ", "
           + maxszBytes
           + ");";
-      case SCALAR_BROADCAST, IMMEDIATE_BROADCAST ->
-          throw unsupported("unsupported gvec operand form " + operandForm);
+      case SCALAR_BROADCAST -> "tcg_gen_gvec_dup_i64("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ", "
+          + requireScalarOperand().cCode()
+          + ");";
+      case IMMEDIATE_BROADCAST -> "tcg_gen_gvec_dup_imm("
+          + memOp()
+          + ", "
+          + offsetExpr(destinationRegister, destinationAccessorIndices, nodeToCCode)
+          + ", "
+          + oprszBytes
+          + ", "
+          + maxszBytes
+          + ", "
+          + nodeToCCode.apply(requireImmediateOperand())
+          + ");";
     };
   }
 

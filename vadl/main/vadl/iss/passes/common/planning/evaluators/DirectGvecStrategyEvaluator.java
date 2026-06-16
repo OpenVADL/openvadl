@@ -191,7 +191,7 @@ public final class DirectGvecStrategyEvaluator {
       List<PlanningIssue> issues
   ) {
     if (vectorOp == VectorTensorPlan.VectorOp.MOV) {
-      return evaluateVectorMoveOperands(operandFactsList, issues);
+      return evaluateMoveLikeOperands(operandFactsList, issues);
     }
 
     if (operandFactsList.size() != 2) {
@@ -212,7 +212,7 @@ public final class DirectGvecStrategyEvaluator {
     };
   }
 
-  private @Nullable OperandEvaluation evaluateVectorMoveOperands(
+  private @Nullable OperandEvaluation evaluateMoveLikeOperands(
       List<OperandAccessFacts> operandFactsList,
       List<PlanningIssue> issues
   ) {
@@ -222,17 +222,51 @@ public final class DirectGvecStrategyEvaluator {
     }
 
     var operandFacts = operandFactsList.getFirst();
-    if (operandFacts.operandShape() != OperandShape.VECTOR_REGISTER) {
-      issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
-      return null;
-    }
+    return switch (operandFacts.operandShape()) {
+      case VECTOR_REGISTER -> evaluateVectorMoveOperand(operandFacts, issues);
+      case SCALAR_EXPRESSION -> evaluateScalarBroadcastOperand(operandFacts, issues);
+      case IMMEDIATE -> evaluateImmediateBroadcastOperand(operandFacts, issues);
+      case OTHER -> {
+        issues.add(PlanningIssue.of(VectorStrategyIssueCode.OPERAND_NOT_VECTOR_READ));
+        yield null;
+      }
+    };
+  }
 
+  private @Nullable OperandEvaluation evaluateVectorMoveOperand(
+      OperandAccessFacts operandFacts,
+      List<PlanningIssue> issues
+  ) {
     var operands = new ArrayList<VectorOperand>();
     recordVectorRegisterOperand(operandFacts, issues, operands);
     if (!issues.isEmpty()) {
       return null;
     }
     return new OperandEvaluation(OperandForm.VECTOR_MOVE, List.copyOf(operands));
+  }
+
+  private @Nullable OperandEvaluation evaluateScalarBroadcastOperand(
+      OperandAccessFacts operandFacts,
+      List<PlanningIssue> issues
+  ) {
+    var operands = new ArrayList<VectorOperand>();
+    recordScalarOperand(operandFacts, issues, operands);
+    if (!issues.isEmpty()) {
+      return null;
+    }
+    return new OperandEvaluation(OperandForm.SCALAR_BROADCAST, List.copyOf(operands));
+  }
+
+  private @Nullable OperandEvaluation evaluateImmediateBroadcastOperand(
+      OperandAccessFacts operandFacts,
+      List<PlanningIssue> issues
+  ) {
+    var operands = new ArrayList<VectorOperand>();
+    recordImmediateOperand(operandFacts, issues, operands);
+    if (!issues.isEmpty()) {
+      return null;
+    }
+    return new OperandEvaluation(OperandForm.IMMEDIATE_BROADCAST, List.copyOf(operands));
   }
 
   private @Nullable OperandEvaluation evaluateVectorVectorOperands(OperandAccessFacts lhs,

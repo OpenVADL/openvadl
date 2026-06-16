@@ -181,6 +181,23 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
+  void recognizesVectorBenchVbcastX()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VBCAST_X"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.MOV, plan.op());
+    assertEquals(OperandForm.SCALAR_BROADCAST, plan.operandForm());
+    assertEquals(1, plan.operands().size());
+    assertEquals(OperandKind.SCALAR_REGISTER, plan.operands().getFirst().kind());
+    assertEquals(List.of("vd"), bindingParamNames(plan.destination().accessorIndices()));
+  }
+
+  @Test
   void keepsScalarInstructionOnNormalTcgPathWithoutDirectGvecPlan()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");

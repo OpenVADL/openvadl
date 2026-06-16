@@ -16,8 +16,6 @@
 
 package vadl.iss.passes.common.planning.analysis.steps;
 
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.vectorRead;
-
 import javax.annotation.Nullable;
 import vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport;
 import vadl.iss.passes.common.planning.analysis.VectorFactStep;
@@ -60,6 +58,9 @@ public final class VectorOperationStep implements VectorFactStep {
   }
 
   private @Nullable ExpressionNode unaryVectorOperand(ExpressionNode node) {
-    return vectorRead(node) == null ? null : node;
+    if (node instanceof BuiltInCall) {
+      return null;
+    }
+    return node;
   }
 }

@@ -54,6 +54,7 @@ public class IssGvecOpNode extends DependencyNode {
   private NodeList<ExpressionNode> destinationAccessorIndices;
 
   @DataValue
+  @Nullable
   private RegisterTensor lhsRegister;
   @Input
   private NodeList<ExpressionNode> lhsAccessorIndices;
@@ -84,10 +85,8 @@ public class IssGvecOpNode extends DependencyNode {
         plan.shape().maxszBytes(),
         plan.destination().registerTensor(),
         new NodeList<>(plan.destination().accessorIndices()),
-        requireRegisterBinding(requireOperand(plan, 0), plan, 0),
-        new NodeList<>(
-            requireRegisterBinding(requireOperand(plan, 0), plan, 0).accessorIndices()
-        ),
+        lhsRegisterBindingOf(plan),
+        lhsAccessorIndicesOf(plan),
         optionalRegisterBinding(optionalOperand(plan, 1)),
         rhsAccessorIndicesOf(plan),
         scalarExpressionOf(plan),
@@ -102,7 +101,7 @@ public class IssGvecOpNode extends DependencyNode {
                         int maxszBytes,
                         RegisterTensor destinationRegister,
                         NodeList<ExpressionNode> destinationAccessorIndices,
-                        VectorTensorPlan.VectorRegisterBinding lhsBinding,
+                        @Nullable VectorTensorPlan.VectorRegisterBinding lhsBinding,
                         NodeList<ExpressionNode> lhsAccessorIndices,
                         @Nullable VectorTensorPlan.VectorRegisterBinding rhsBinding,
                         NodeList<ExpressionNode> rhsAccessorIndices,
@@ -115,7 +114,7 @@ public class IssGvecOpNode extends DependencyNode {
     this.maxszBytes = maxszBytes;
     this.destinationRegister = destinationRegister;
     this.destinationAccessorIndices = destinationAccessorIndices;
-    this.lhsRegister = lhsBinding.registerTensor();
+    this.lhsRegister = lhsBinding == null ? null : lhsBinding.registerTensor();
     this.lhsAccessorIndices = lhsAccessorIndices;
     this.rhsRegister = rhsBinding == null ? null : rhsBinding.registerTensor();
     this.rhsAccessorIndices = rhsAccessorIndices;
@@ -152,7 +151,7 @@ public class IssGvecOpNode extends DependencyNode {
     return destinationAccessorIndices;
   }
 
-  public RegisterTensor lhsRegister() {
+  public @Nullable RegisterTensor lhsRegister() {
     return lhsRegister;
   }
 
@@ -186,7 +185,10 @@ public class IssGvecOpNode extends DependencyNode {
         maxszBytes,
         destinationRegister,
         destinationAccessorIndices.copy(),
-        new VectorTensorPlan.VectorRegisterBinding(lhsRegister, lhsAccessorIndices),
+        lhsRegister == null ? null : new VectorTensorPlan.VectorRegisterBinding(
+            lhsRegister,
+            lhsAccessorIndices
+        ),
         lhsAccessorIndices.copy(),
         rhsRegister == null ? null : new VectorTensorPlan.VectorRegisterBinding(
             rhsRegister,
@@ -208,7 +210,10 @@ public class IssGvecOpNode extends DependencyNode {
         maxszBytes,
         destinationRegister,
         destinationAccessorIndices,
-        new VectorTensorPlan.VectorRegisterBinding(lhsRegister, lhsAccessorIndices),
+        lhsRegister == null ? null : new VectorTensorPlan.VectorRegisterBinding(
+            lhsRegister,
+            lhsAccessorIndices
+        ),
         lhsAccessorIndices,
         rhsRegister == null ? null : new VectorTensorPlan.VectorRegisterBinding(
             rhsRegister,
@@ -277,10 +282,28 @@ public class IssGvecOpNode extends DependencyNode {
       case VECTOR_IMMEDIATE -> ensure(rhsRegister == null && scalarOperand == null
               && immediateOperand != null,
           "VECTOR_IMMEDIATE requires exactly one immediate operand expression.");
-      case SCALAR_BROADCAST, IMMEDIATE_BROADCAST ->
-          throw new ViamGraphError("unsupported ISS gvec operand form %s", operandForm)
-              .addContext(this);
+      case SCALAR_BROADCAST -> ensure(lhsRegister == null && rhsRegister == null
+              && scalarOperand != null && immediateOperand == null,
+          "SCALAR_BROADCAST requires exactly one scalar operand expression.");
+      case IMMEDIATE_BROADCAST -> ensure(lhsRegister == null && rhsRegister == null
+              && scalarOperand == null && immediateOperand != null,
+          "IMMEDIATE_BROADCAST requires exactly one immediate operand expression.");
     }
+  }
+
+  private static @Nullable VectorTensorPlan.VectorRegisterBinding lhsRegisterBindingOf(
+      VectorTensorPlan plan
+  ) {
+    if (plan.operandForm() == OperandForm.SCALAR_BROADCAST
+        || plan.operandForm() == OperandForm.IMMEDIATE_BROADCAST) {
+      return null;
+    }
+    return requireRegisterBinding(requireOperand(plan, 0), plan, 0);
+  }
+
+  private static NodeList<ExpressionNode> lhsAccessorIndicesOf(VectorTensorPlan plan) {
+    var lhsBinding = lhsRegisterBindingOf(plan);
+    return lhsBinding == null ? new NodeList<>() : new NodeList<>(lhsBinding.accessorIndices());
   }
 
   private static VectorOperand requireOperand(VectorTensorPlan plan, int operandIndex) {
@@ -328,7 +351,11 @@ public class IssGvecOpNode extends DependencyNode {
   }
 
   private static @Nullable ExpressionNode scalarExpressionOf(VectorTensorPlan plan) {
-    return scalarExpressionOf(optionalOperand(plan, 1));
+    return switch (plan.operandForm()) {
+      case VECTOR_SCALAR -> scalarExpressionOf(optionalOperand(plan, 1));
+      case SCALAR_BROADCAST -> scalarExpressionOf(optionalOperand(plan, 0));
+      default -> null;
+    };
   }
 
   private static @Nullable ExpressionNode scalarExpressionOf(@Nullable VectorOperand operand) {
@@ -339,7 +366,11 @@ public class IssGvecOpNode extends DependencyNode {
   }
 
   private static @Nullable ExpressionNode immediateExpressionOf(VectorTensorPlan plan) {
-    return immediateExpressionOf(optionalOperand(plan, 1));
+    return switch (plan.operandForm()) {
+      case VECTOR_IMMEDIATE -> immediateExpressionOf(optionalOperand(plan, 1));
+      case IMMEDIATE_BROADCAST -> immediateExpressionOf(optionalOperand(plan, 0));
+      default -> null;
+    };
   }
 
   private static @Nullable ExpressionNode immediateExpressionOf(@Nullable VectorOperand operand) {

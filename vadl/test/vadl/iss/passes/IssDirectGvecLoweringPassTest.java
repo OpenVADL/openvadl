@@ -104,6 +104,16 @@ public class IssDirectGvecLoweringPassTest extends AbstractTest {
     assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
   }
 
+  @Test
+  void lowersVectorBenchBroadcastLoopIntoBackendGvecNode()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var instr = findInstruction(viam, "VectorBench64::VBCAST_X");
+
+    assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
+  }
+
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
     try {
       return SPEC_CACHE.computeIfAbsent(specPath, path -> {
