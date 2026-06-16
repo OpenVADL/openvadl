@@ -29,9 +29,7 @@ import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperandSh
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperationKind;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.SizeFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.StorageFacts;
-import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssReadRegNode;
-import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.types.BuiltInTable;
 import vadl.viam.ArtificialResource;
@@ -286,7 +284,7 @@ public final class VectorAnalysisSupport {
         || !TcgPassUtils.mustBeScheduled(expression)) {
       return false;
     }
-    return isScalarOperandCore(stripScalarOperandWrappers(expression));
+    return isScalarOperandCore(expression);
   }
 
   private static boolean isScalarOperandCore(ExpressionNode expression) {
@@ -302,28 +300,6 @@ public final class VectorAnalysisSupport {
     }
     return expression.inputs()
         .allMatch(input -> input instanceof ExpressionNode expr && isScalarOperandCore(expr));
-  }
-
-  /**
-   * Strips wrappers that disappear before TCG op lowering from a scalar operand expression.
-   */
-  private static ExpressionNode stripScalarOperandWrappers(ExpressionNode expression) {
-    if (expression instanceof IssGhostCastNode ghostCast) {
-      return stripScalarOperandWrappers(ghostCast.value());
-    }
-    if (expression instanceof IssValExtractNode valExtract) {
-      return stripScalarOperandWrappers(valExtract.value());
-    }
-    if (expression instanceof SignExtendNode signExtend) {
-      return stripScalarOperandWrappers(signExtend.value());
-    }
-    if (expression instanceof ZeroExtendNode zeroExtend) {
-      return stripScalarOperandWrappers(zeroExtend.value());
-    }
-    if (expression instanceof TruncateNode truncate) {
-      return stripScalarOperandWrappers(truncate.value());
-    }
-    return expression;
   }
 
   private static boolean matchesLoopMul(Node maybeIdx,
