@@ -35,6 +35,8 @@ jobs:
            name: openvadl
            path: vadl-cli/build/native/nativeCompile/openvadl
            retention-days: 1
+           compression-level: 0
+           if-no-files-found: error
 
   aarch64:
     needs: build
