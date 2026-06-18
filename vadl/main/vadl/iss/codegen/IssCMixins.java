@@ -49,9 +49,13 @@ import vadl.iss.passes.tcg.lowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgFreeTemp;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGenException;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGenLabel;
-import vadl.iss.passes.tcg.lowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgHelperCall;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpDirectJmp;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpHelperCall;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpIndirectJmp;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpStateProlog;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpTbStateWrite;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLookupAndGotoPtr;
 import vadl.iss.passes.tcg.lowering.nodes.TcgMovCondNode;
@@ -99,7 +103,7 @@ public interface IssCMixins {
 
   /**
    * ISS specific expressions (subtypes of
-   * {@link vadl.iss.passes.opDecomposition.nodes.IssExprNode}).
+   * {@link vadl.iss.passes.common.opDecomposition.nodes.IssExprNode}).
    */
   interface IssExpr {
     @Handler
@@ -481,13 +485,37 @@ public interface IssCMixins {
     }
 
     @Handler
+    default void handle(CGenContext<Node> ctx, TcgIsJmpStateProlog toHandle) {
+      internalError(toHandle,
+          "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
+    }
+
+    @Handler
     default void handle(CGenContext<Node> ctx, TcgSetIsJmp toHandle) {
       internalError(toHandle,
           "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
     }
 
     @Handler
-    default void handle(CGenContext<Node> ctx, TcgGottoTb toHandle) {
+    default void handle(CGenContext<Node> ctx, TcgIsJmpTbStateWrite toHandle) {
+      internalError(toHandle,
+          "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, TcgIsJmpDirectJmp toHandle) {
+      internalError(toHandle,
+          "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, TcgIsJmpIndirectJmp toHandle) {
+      internalError(toHandle,
+          "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, TcgIsJmpHelperCall toHandle) {
       internalError(toHandle,
           "[IssCMixins] The node %s is not handled to be generated as a C function.", toHandle);
     }

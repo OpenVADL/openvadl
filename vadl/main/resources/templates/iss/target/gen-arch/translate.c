@@ -181,6 +181,76 @@ static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
 }
 
 /*
+ *  Helpers for TB chaining/exiting
+ *
+ *    - is_jmp_create_state()
+ *    - is_jmp_direct_jmp()
+ *    - is_jmp_indirect_jmp()
+ *    - is_jmp_static_tb_state_write()
+ *    - is_jmp_dynamic_tb_state_write()
+ *    - is_jmp_set()
+ *
+ */
+
+typedef struct IsJmpState {
+	bool end_tb;
+	bool can_chain;
+	bool jmpslt_free;
+} IsJmpState;
+
+IsJmpState is_jmp_create_state() {
+  IsJmpState state = {
+    .end_tb = false,
+    .can_chain = true,
+    .jmpslt_free = true
+  };
+  return state;
+}
+
+void is_jmp_direct_jmp(DisasContext *ctx, IsJmpState *s, bool use_jmpslt, target_ulong addr) {
+	if (use_jmpslt && s->can_chain && s->jmpslt_free) {
+		s->jmpslt_free = false;
+		gen_goto_tb(ctx, 1, addr);
+	} else {
+		// generates tcg_gen_lookup_and_goto_ptr()
+		gen_goto_tb(ctx, -1, addr);
+	}
+	s->end_tb = true;
+}
+
+void is_jmp_indirect_jmp(IsJmpState *s) {
+  // pc update happens in translation function
+	tcg_gen_lookup_and_goto_ptr();
+	s->end_tb = true;
+}
+
+void is_jmp_static_tb_state_write(IsJmpState *s) {
+	s->end_tb = true;
+}
+
+void is_jmp_dynamic_tb_state_write(IsJmpState *s) {
+	s->end_tb = true;
+	s->can_chain = false;
+}
+
+void is_jmp_helper_call(IsJmpState *s) {
+  s->end_tb = true;
+}
+
+void is_jmp_set(DisasContext *ctx, IsJmpState* s) {
+	if (s->end_tb) {
+		if (s->can_chain) {
+			// the TB must end, but we can chain
+			ctx->base.is_jmp = DISAS_CHAIN;
+		} else {
+			// the TB must end and there may be no jump instr
+			// -> need to generate TCG exit TB instr
+			ctx->base.is_jmp = DISAS_EXIT;
+		}
+	}
+}
+
+/*
  * Instruction translation functions.
  * Called by decode_insn() function produced by insn.deocde decode-tree.
  */

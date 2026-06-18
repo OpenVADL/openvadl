@@ -62,10 +62,13 @@ import vadl.iss.passes.tcg.lowering.nodes.TcgDepositNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGenException;
-import vadl.iss.passes.tcg.lowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpDirectJmp;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpHelperCall;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpIndirectJmp;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpStateProlog;
+import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpTbStateWrite;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLoadMemory;
-import vadl.iss.passes.tcg.lowering.nodes.TcgLookupAndGotoPtr;
 import vadl.iss.passes.tcg.lowering.nodes.TcgMovCondNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgMul2Node;
@@ -91,14 +94,12 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
-import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
-import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -121,7 +122,6 @@ import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -223,9 +223,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   Tcg_32_64 targetSize;
 
-  // indicates whether jump slot 1 is already
-  // used by some branch (instr exit)
-  boolean isJumpSlotTaken = false;
+  // indicates whether we decided in setJmp() that a TcgIsJmpStateProlog operation
+  // will be generated and thus the IsJmpState will be declared in the translate function
+  boolean isJmpStateExists = false;
   // indicates if we want to optimize jumps with jump slots.
   // only false if `--skip opt-jmp-slots` was passed.
   boolean optJumpSlot = true;
@@ -266,58 +266,62 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Set {@code ctx->is_jmp} to {@code DISAS_CHAIN} if there are InstrExits or
-   * WriteRegTensorNodes (to regs that are part of the TB-state) in the instruction
-   * that are not in the default branch.
-   * This allows chaining of instructions.
-   * Set {@code ctx->is_jmp} to {@code DISAS_NORETURN} if any exits or writes
-   * are on the default branch.
+   * Analyzes the behavior and generates operations that set {@code ctx->is_jmp} to one of:
+   * <li>{@code DISAS_NORETURN}</li>
+   * <li>{@code DISAS_CHAIN}</li>
+   * <li>{@code DISAS_EXIT}</li>
+   * or leaves it as {@code DISAS_NEXT}.
+   *
+   * <p>The decision which of the above is used is either done here or deferred to
+   * TCG translation time, when more information about the instruction and the translation
+   * context is present.
+   *
+   * <p>{@link TcgIsJmpStateProlog} declares IsJmpState, which is read by:
+   * <li>{@link TcgIsJmpDirectJmp}</li>
+   * <li>{@link TcgSetIsJmp} (if no unconditional jump is present)</li>
+   * and written by:
+   * <li>{@link TcgIsJmpDirectJmp}</li>
+   * <li>{@link TcgIsJmpIndirectJmp}</li>
+   * <li>{@link TcgIsJmpTbStateWrite}</li>
    */
   private void setJmp(Graph graph) {
-    var instrEnd = getSingleNode(graph, InstrEndNode.class);
-
-    var containsJmps = graph.getNodes(InstrExitNode.class).findAny().isPresent();
+    var containsJumps = graph.getNodes(InstrExitNode.class).findAny().isPresent();
 
     var containsWrites = graph.getNodes(WriteRegTensorNode.class).anyMatch(
         WriteRegTensorNode::writeAffectsTbState);
 
-    if (!containsJmps && !containsWrites) {
+    if (!containsJumps && !containsWrites) {
       // if there are no jumps, we don't have to chain any instructions
       // if there are no writes to the tb state, we don't have to end the tb
       return;
     }
 
+    var instrStart = getSingleNode(graph, StartNode.class);
+    var instrEnd = getSingleNode(graph, InstrEndNode.class);
+
     // check if there is an unconditional jump (InstrExit) at the default branch.
     // this is the case if there is some side effect of at the instrEnd that
     // is used by some InstrExit node.
     var unconditionalJump = instrEnd.sideEffects().stream()
-        .anyMatch(s -> s.usages().anyMatch(u -> u instanceof InstrExitNode));
+        .anyMatch(s -> s.usages().anyMatch(InstrExitNode.class::isInstance));
 
-    if (unconditionalJump) {
-      // if the jump is unconditional we must exit the tb loop
-      // goto_tb or tb lookup is inserted after PcChange
-      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
-    } else if (containsWrites) {
-      // if any writes to the tb state exist, we cannot chain, because they may write
-      // data that is not statically known at TCG gen time (eg writes from registers)
+    instrEnd.addBefore(new TcgSetIsJmp(unconditionalJump ? TcgSetIsJmp.Type.NORETURN : null));
 
-      // if there is no jump beforehand, we must exit the tb
-      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.EXIT));
-    } else {
-      // if there is no unconditional jump or non-static write, we must chain
-      // the instruction with the next one by setting the jmp type to chain.
-      // the tcg_stop_tb method will take care about the instruction chaining.
-      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.CHAIN));
+    var noDirectJumps = graph.getNodes(InstrExitNode.PcChange.class).noneMatch(this::isDirectJmp);
+
+    if (unconditionalJump && noDirectJumps) {
+      // in this case, the IsJmpState is never read,
+      // so we do not generate TcgIsJmpStateProlog
+      return;
     }
 
-    // TODO: the behaviour above is currently very conservative. If a write writes data
-    //  known at tcg gen time, then we can use CHAIN instead of NORETURN.
+    instrStart.addAfter(new TcgIsJmpStateProlog());
 
-    // TODO: what if a write/jump is conditional, but the condition is statically evaluated
-    //  ie at TCG generation time? -> in that case the jmp/chain behaviour does not have
-    //  to be set at the end for all paths, but can be set per branch. Eg if a raise is only
-    //  executed if a tb-state reg bit is set (eg a privilege mode bit), then the decision
-    //  whether or not to raise is made at gen time (if raise, then end TB; if not, DISAS_NEXT)
+    // we determined that TcgIsJmpStateProlog is necessary (some operations need the IsJmpState
+    // it declares). Hence, we also need to tell the other instructions to write to it.
+    // - TcgIndirectJmp generates different code based on this value
+    // - TcgIsJmpTbStateWrite is only generated when this is true
+    isJmpStateExists = true;
   }
 
   /**
@@ -397,16 +401,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     return TcgPassUtils.isTcg(node);
   }
 
-  /**
-   * Returns whether any writes to registers that are part of the TB state are side
-   * effects of the branch and write non-statically known data (e.g. data that was
-   * previously read from a register).
-   */
-  private boolean hasNonStaticTBStateRegWrites(AbstractEndNode node) {
-    return node.sideEffects().stream()
-        .anyMatch(s -> s instanceof WriteRegTensorNode w
-            && w.writeAffectsTbState()
-            && GraphUtils.hasDependencies(w, n -> n instanceof ReadResourceNode));
+  private boolean isDirectJmp(InstrExitNode.PcChange node) {
+    return !isTcg(node.cause());
   }
 
   /**
@@ -441,32 +437,20 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Handles the {@link InstrExitNode} by replacing it with a TCG goto operation.
+   * Handles the {@link InstrExitNode.PcChange} by replacing it with a TCG jump helper call
+   * (either direct or indirect).
    *
    * @param node The instruction exit node to handle.
    */
   void handle(InstrExitNode.PcChange node) {
-    if (isTcg(node.cause()) || hasNonStaticTBStateRegWrites(GraphUtils.branchEnd(node))) {
-      // if the pc or any preceding writes to TB state regs are not statically defined,
-      // we must do a TCG lookup and jump to the current PC
-      node.replaceAndLink(
-          new TcgLookupAndGotoPtr()
-      );
+    if (isDirectJmp(node)) {
+      // TODO: Currently we decide during translation time if a jump slot is free. We also
+      //  always use it as soon as possible.
+      // TODO: We could use heuristic to find the best slot assignment.
+      //  (other than just the first one)
+      node.replaceAndLink(new TcgIsJmpDirectJmp(node.cause().value(), optJumpSlot));
     } else {
-      var pcWrite = node.cause();
-
-      var jmpSlot = TcgGottoTb.JmpSlot.LOOK_UP;
-      if (!this.isJumpSlotTaken && optJumpSlot) {
-        // if the jumpslot (1) is not yet taken, we take it.
-        // TODO: We could use heuristic to find the best slot assignment.
-        //  (other than just the first one)
-        this.isJumpSlotTaken = true;
-        jmpSlot = TcgGottoTb.JmpSlot.BRANCH_OUT;
-      }
-
-      // Address jump to value
-      node.replaceAndLink(
-          new TcgGottoTb(pcWrite.value(), jmpSlot));
+      node.replaceAndLink(new TcgIsJmpIndirectJmp(isJmpStateExists));
     }
   }
 
@@ -477,6 +461,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @param node The instruction exit node to handle.
    */
   void handle(InstrExitNode.Raise node) {
+    if (isJmpStateExists) {
+      node.addBefore(new TcgIsJmpHelperCall());
+    }
     var args = node.cause().arguments().stream()
         .map(this::singleDestOf)
         .collect(Collectors.toCollection(NodeList::new));
@@ -639,7 +626,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Handles the {@link IssLoadNode}, which was created from a {@link ReadMemNode}
-   * in the {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   * in the {@link vadl.iss.passes.common.IssMemoryAccessTransformationPass}.
    */
   @Handler
   void handle(IssLoadNode toHandle) {
@@ -658,6 +645,10 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(WriteRegTensorNode toHandle) {
+    if (isJmpStateExists && toHandle.writeAffectsTbState()) {
+      var isStatic = toHandle instanceof IssWriteRegNode issWrite && issWrite.isStatic();
+      addBeforeCurrent(new TcgIsJmpTbStateWrite(isStatic));
+    }
     var destVar = singleDestOf(toHandle);
     var srcVar = singleDestOf(toHandle.value());
     if (toHandle instanceof IssWriteRegNode issWrite
@@ -692,7 +683,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Handles the {@link IssStoreNode}, which was created from a {@link WriteMemNode}
-   * in the {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   * in the {@link vadl.iss.passes.common.IssMemoryAccessTransformationPass}.
    */
   @Handler
   void handle(IssStoreNode toHandle) {
@@ -933,7 +924,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Handles the {@link ReadMemNode}. Should be replaced by a {@link IssLoadNode} in the
-   * {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   * {@link vadl.iss.passes.common.IssMemoryAccessTransformationPass}.
    */
   @Handler
   void handle(ReadMemNode toHandle) {
@@ -942,7 +933,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Handles the {@link WriteMemNode}. Should be replaced by a {@link IssStoreNode} in the
-   * {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   * {@link vadl.iss.passes.common.IssMemoryAccessTransformationPass}.
    */
   @Handler
   void handle(WriteMemNode toHandle) {
@@ -1010,7 +1001,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * The {@link IssGhostCastNode} is removed in the {@link vadl.iss.passes.IssTcgSchedulingPass}
+   * The {@link IssGhostCastNode} is removed in the {@link vadl.iss.passes.tcg.IssTcgSchedulingPass}
    * if it had been scheduled.
    * So it cannot occur during op lowering.
    */

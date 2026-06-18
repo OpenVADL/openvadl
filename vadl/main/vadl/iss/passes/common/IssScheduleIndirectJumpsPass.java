@@ -80,10 +80,7 @@ class IssIndirectJumpScheduler {
     var targetPcStaticallyKnown =
         !GraphUtils.hasDependencies(node.cause(), n -> n instanceof ReadResourceNode);
 
-    // determine if the write is already scheduled
-    var alreadyScheduled = GraphUtils.hasUser(node.cause(), n -> n instanceof ScheduledNode);
-
-    if (!alreadyScheduled && !targetPcStaticallyKnown) {
+    if (!targetPcStaticallyKnown) {
       // if the target is not statically known, we must schedule the PC write
       // before the instr exit
       node.addBefore(new ScheduledNode(node.cause()));

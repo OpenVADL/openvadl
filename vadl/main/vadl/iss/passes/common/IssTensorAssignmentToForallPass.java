@@ -148,7 +148,8 @@ public class IssTensorAssignmentToForallPass extends AbstractIssPass {
         new NodeList<>(write.accessorIndices().stream().map(ExpressionNode::copy).toList()),
         IssWriteRegNode.WindowKind.CHUNK,
         bitOffset,
-        bitWidth
+        bitWidth,
+        write.isStatic()
     );
     elementWrite.setSourceLocationIfNotSet(write.location());
 

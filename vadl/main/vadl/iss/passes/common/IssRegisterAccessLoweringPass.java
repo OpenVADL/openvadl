@@ -63,6 +63,7 @@ import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -110,6 +111,8 @@ public class IssRegisterAccessLoweringPass extends AbstractIssPass {
         .map(Memory::biEndianCondition)
         .filter(Objects::nonNull)
         .forEach(c -> new IssStaticRegisterAccessConverter(c).run());
+    // Note: IssRegisterAccessLowering must run after IssStaticRegisterAccessConverter because
+    //       it relies on the conversion of static reads
     ViamUtils.findAllBehaviors(viam).forEach(behavior ->
         new IssRegisterAccessLowering(behavior).run());
     return null;
@@ -227,7 +230,8 @@ class IssRegisterAccessLowering {
         guardKind,
         null,
         null,
-        write.indices().copy()
+        write.indices().copy(),
+        isStaticWrite(write)
     );
     replacement.setSourceLocationIfNotSet(write.location());
     write.replaceAndDelete(replacement);
@@ -355,6 +359,10 @@ class IssRegisterAccessLowering {
 
     lowerGeneralAliasWrite(write, semantics, baseTensor, aliasIndices, baseIndices,
         baseIndexCount, userCondition, guardKind);
+  }
+
+  private boolean isStaticWrite(WriteResourceNode write) {
+    return !GraphUtils.hasDependencies(write, ReadResourceNode.class::isInstance);
   }
 
   private boolean isSimpleAliasReadAccessor(ArtificialResource.Semantics semantics,
@@ -501,7 +509,8 @@ class IssRegisterAccessLowering {
         guardKind,
         write.resourceDefinition().simpleName().toLowerCase(),
         write.resourceDefinition(),
-        write.indices().copy()
+        write.indices().copy(),
+        isStaticWrite(write)
     );
     replacement.setSourceLocationIfNotSet(write.location());
     write.replaceAndDelete(replacement);
@@ -530,7 +539,8 @@ class IssRegisterAccessLowering {
         write.indices().copy(),
         IssWriteRegNode.WindowKind.CHUNK,
         intU(aliasSlice.lsb(), 32).toNode(),
-        intU(aliasSlice.bitSize(), 32).toNode()
+        intU(aliasSlice.bitSize(), 32).toNode(),
+        isStaticWrite(write)
     );
     replacement.setSourceLocationIfNotSet(write.location());
     write.replaceAndDelete(replacement);
@@ -570,7 +580,8 @@ class IssRegisterAccessLowering {
         baseIndices.copy(),
         IssWriteRegNode.WindowKind.CHUNK,
         msbLsb.right(),
-        intU(resultType.bitWidth(), 32).toNode()
+        intU(resultType.bitWidth(), 32).toNode(),
+        isStaticWrite(write)
     );
     replacement.setSourceLocationIfNotSet(write.location());
     write.replaceAndDelete(replacement);
@@ -635,7 +646,8 @@ class IssRegisterAccessLowering {
           guardKind,
           write.resourceDefinition().simpleName().toLowerCase(),
           write.resourceDefinition(),
-          write.indices().copy()
+          write.indices().copy(),
+          isStaticWrite(write)
       );
       replacement.setSourceLocationIfNotSet(write.location());
       write.replaceAndDelete(replacement);
@@ -651,7 +663,8 @@ class IssRegisterAccessLowering {
         guardKind,
         null,
         null,
-        baseIndices.copy());
+        baseIndices.copy(),
+        isStaticWrite(write));
     replacement.setSourceLocationIfNotSet(write.location());
     write.replaceAndDelete(replacement);
   }

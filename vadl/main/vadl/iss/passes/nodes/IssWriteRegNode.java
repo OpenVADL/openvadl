@@ -90,6 +90,8 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   private ExpressionNode bitOffset;
   @Input
   private ExpressionNode bitWidth;
+  @DataValue
+  private final boolean isStatic;
 
   /**
    * Creates a base full-window write node.
@@ -97,11 +99,12 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   public IssWriteRegNode(RegisterTensor regTensor,
                          NodeList<ExpressionNode> resourceIndices,
                          ExpressionNode value,
-                         @Nullable ExpressionNode condition) {
+                         @Nullable ExpressionNode condition,
+                         boolean isStatic) {
     this(regTensor, resourceIndices, value, null, condition,
         AccessKind.BASE, WriteGuardKind.NONE, null, null,
         new NodeList<>(resourceIndices), WindowKind.FULL, intConst(0),
-        intConst(value.type().asDataType().bitWidth()));
+        intConst(value.type().asDataType().bitWidth()), isStatic);
   }
 
   /**
@@ -115,10 +118,11 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          WriteGuardKind writeGuardKind,
                          @Nullable String accessorName,
                          @Nullable ArtificialResource aliasResource,
-                         NodeList<ExpressionNode> accessorIndices) {
+                         NodeList<ExpressionNode> accessorIndices,
+                         boolean isStatic) {
     this(regTensor, resourceIndices, value, null, condition, accessKind, writeGuardKind,
         accessorName, aliasResource, accessorIndices, WindowKind.FULL, intConst(0),
-        intConst(value.type().asDataType().bitWidth()));
+        intConst(value.type().asDataType().bitWidth()), isStatic);
   }
 
   /**
@@ -133,10 +137,11 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          WriteGuardKind writeGuardKind,
                          @Nullable String accessorName,
                          @Nullable ArtificialResource aliasResource,
-                         NodeList<ExpressionNode> accessorIndices) {
+                         NodeList<ExpressionNode> accessorIndices,
+                         boolean isStatic) {
     this(regTensor, resourceIndices, value, staticCounterAccess, condition, accessKind,
         writeGuardKind, accessorName, aliasResource, accessorIndices, WindowKind.FULL, intConst(0),
-        intConst(value.type().asDataType().bitWidth()));
+        intConst(value.type().asDataType().bitWidth()), isStatic);
   }
 
   /**
@@ -154,7 +159,8 @@ public class IssWriteRegNode extends WriteRegTensorNode {
                          NodeList<ExpressionNode> accessorIndices,
                          WindowKind windowKind,
                          ExpressionNode bitOffset,
-                         ExpressionNode bitWidth) {
+                         ExpressionNode bitWidth,
+                         boolean isStatic) {
     super(regTensor, resourceIndices, value, staticCounterAccess, condition);
     this.accessKind = accessKind;
     this.writeGuardKind = writeGuardKind;
@@ -164,6 +170,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
     this.windowKind = windowKind;
     this.bitOffset = bitOffset;
     this.bitWidth = bitWidth;
+    this.isStatic = isStatic;
   }
 
   public AccessKind accessKind() {
@@ -196,6 +203,10 @@ public class IssWriteRegNode extends WriteRegTensorNode {
 
   public ExpressionNode bitWidth() {
     return bitWidth;
+  }
+
+  public boolean isStatic() {
+    return isStatic;
   }
 
   @Override
@@ -280,7 +291,8 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         new NodeList<>(accessorIndices),
         windowKind,
         bitOffset.copy(),
-        bitWidth.copy()
+        bitWidth.copy(),
+        isStatic
     );
   }
 
@@ -299,7 +311,8 @@ public class IssWriteRegNode extends WriteRegTensorNode {
         accessorIndices,
         windowKind,
         bitOffset,
-        bitWidth
+        bitWidth,
+        isStatic
     );
   }
 
@@ -327,6 +340,7 @@ public class IssWriteRegNode extends WriteRegTensorNode {
     collection.add(accessorName);
     collection.add(aliasResource);
     collection.add(windowKind);
+    collection.add(isStatic);
   }
 
   private static ExpressionNode intConst(int value) {
