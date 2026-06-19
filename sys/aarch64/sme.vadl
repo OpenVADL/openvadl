@@ -160,6 +160,31 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
     $SMEAddVerticallyInstr ($i ; D ; ZRegD)
     }
 
+// SME array vector load/store models ******************************************
+
+  format SMEArrayLoadStoreFormat: Instr =  // SME array load store format
+    { op       [31..22]      : Bits10      // opcode
+    , opc      [21..15]      : Bits7       // opcode second part
+    , rv       [14..13]      : Bits2       // vector select register
+    , zero     [12..10,4]    : Bits4       // opcode zeroes
+    , rn       [9..5]        : Index       // base address register
+    , off4     [3..0]        : Bits4       // vector select / memory offset
+    , rv12   = rv as Index + 12            // adjusted vector select register
+    , offset = off4 as BitsX * NumElementsB // zero extended shifted offset
+    }
+
+  model SMEArraLoadStoreInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id : SMEArrayLoadStoreFormat =
+      let addr = S(rn) + offset in
+        let vec = (W(rv12) + off4 as BitsW) % NumElementsB in
+          match: Stat ($i.funct = str
+               => MEM<NumElementsB>(addr) := ZA(vec)
+            ;_ => ZA(vec) := MEM<NumElementsB>(addr) )
+    encoding    $i.id = { op = 0b11'1000'0100, opc = $i.opcode, zero = 0 }
+    assembly    $i.id = ( $i.mnemo, ' [', WSize(rv12), ',', udec(off4), '], [', XSizeSP(rn), ',#', udec(off4), ',mul vl]')
+    }
+
+
 // sme start / stop models *****************************************************
 
   model SMEImmToSysRegOffInstr (i: InstrWithFunct, off: Int): IsaDefs = {
@@ -185,6 +210,9 @@ instruction set architecture AArch64SME extending AArch64SVEandSME = {
   $SMEIntOutProd4WaySInstr (                     (SMESMOPA4S    ; "smopa" ; 0b0100'000       ; smull    ))
   $SMEIntOutProd4WaySInstr (                     (SMESUMOPA4S   ; "sumopa"; 0b0101'000       ; sumull   ))
   $SMEIntOutProd4WaySInstr (                     (SMEUMOPA4S    ; "umopa" ; 0b1101'000       ; umull    ))
+
+  $SMEArraLoadStoreInstr   (                     (SMELDR        ; "ldr"   ; 0b000'0000       ; ldr      ))
+  $SMEArraLoadStoreInstr   (                     (SMESTR        ; "str"   ; 0b100'0000       ; str      ))
 
   }
 
