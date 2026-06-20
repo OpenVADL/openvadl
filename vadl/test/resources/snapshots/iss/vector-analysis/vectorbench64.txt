@@ -41,6 +41,7 @@ VectorBench64::VADD_TENSOR_VV | normal-tcg | forall-write-0:gvec
 VectorBench64::VADD_VL | helper-call | forall-write-0:rejected[OPERAND_NOT_VECTOR_READ]
 VectorBench64::VADD_VX | normal-tcg | forall-write-0:gvec
 VectorBench64::VADD_VX_INC | normal-tcg | forall-write-0:gvec
+VectorBench64::VADD_VX_INC_XINC | normal-tcg | forall-write-0:gvec
 VectorBench64::VADD_XINC | normal-tcg | forall-write-0:gvec
 VectorBench64::VBCAST_X | normal-tcg | forall-write-0:gvec
 VectorBench64::VCMPLT_PVV | helper-call | -

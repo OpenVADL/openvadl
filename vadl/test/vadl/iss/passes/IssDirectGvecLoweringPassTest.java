@@ -31,6 +31,7 @@ import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssGvecOpNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.vector.IssDirectGvecLoweringPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -124,6 +125,19 @@ public class IssDirectGvecLoweringPassTest extends AbstractTest {
 
     assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
     assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
+    assertTrue(containsBuiltInCall(gvecNode.scalarOperand()));
+  }
+
+  @Test
+  void lowersVectorBenchComputedScalarLoopWithScalarSideEffectIntoBackendGvecNode()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var instr = findInstruction(viam, "VectorBench64::VADD_VX_INC_XINC");
+    var gvecNode = instr.behavior().getNodes(IssGvecOpNode.class).findFirst().orElseThrow();
+
+    assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
+    assertEquals(1, instr.behavior().getNodes(IssWriteRegNode.class).count());
     assertTrue(containsBuiltInCall(gvecNode.scalarOperand()));
   }
 

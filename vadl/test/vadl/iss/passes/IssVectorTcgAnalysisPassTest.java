@@ -233,6 +233,23 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
+  void recognizesVectorBenchVaddVxIncXinc()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_VX_INC_XINC"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_SCALAR, plan.operandForm());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertEquals(OperandKind.SCALAR_REGISTER, plan.operands().get(1).kind());
+    assertTrue(containsBuiltInCall(plan.operands().get(1).valueExpression()));
+  }
+
+  @Test
   void keepsScalarInstructionOnNormalTcgPathWithoutDirectGvecPlan()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");

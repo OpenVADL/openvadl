@@ -77,6 +77,9 @@ public class IssExecutionStrategyRoutingTest extends AbstractTest {
     assertTrue(normalTcgNames.contains("VADD_XINC"));
     assertTrue(directGvecNames.contains("VADD_XINC"));
     assertFalse(helperNames.contains("VADD_XINC"));
+    assertTrue(normalTcgNames.contains("VADD_VX_INC_XINC"));
+    assertTrue(directGvecNames.contains("VADD_VX_INC_XINC"));
+    assertFalse(helperNames.contains("VADD_VX_INC_XINC"));
   }
 
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
