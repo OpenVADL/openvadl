@@ -166,23 +166,22 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleMULS(BuiltInCall input) {
-    // TODO: required for aarch32.vadl
-    throwNotImplemented(input);
+    new ArithmeticInliner.MulS(input).inline();
   }
 
   @Override
   public void handleSMULLS(BuiltInCall input) {
-    throwNotImplemented(input);
+    new ArithmeticInliner.SMullS(input).inline();
   }
 
   @Override
   public void handleUMULLS(BuiltInCall input) {
-    throwNotImplemented(input);
+    new ArithmeticInliner.UMullS(input).inline();
   }
 
   @Override
   public void handleSUMULLS(BuiltInCall input) {
-    throwNotImplemented(input);
+    new ArithmeticInliner.SUMullS(input).inline();
   }
 
   @Override

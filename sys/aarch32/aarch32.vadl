@@ -319,19 +319,13 @@ instruction set architecture AArch32v6 = {
     , rn       [3..0]                 // 1st source register
     }
 
-  // TODO: re-enable once inlining for muls works
-  //       see StatusBuiltInInlinePass
-  //model Mul()    : Ex = {VADL::muls  (R(rn), R(rm))}
+  model Mul()    : Ex = {VADL::muls  (R(rn), R(rm))}
   model MulAcc() : Ex = {VADL::adds  (R(rn) * R(rm), R(ra))}
   model MulSub() : Ex = {VADL::subsc (R(rn) * R(rm), R(ra))}
-  // TODO: re-enable once inlining for smulls works
-  //model SMull()  : Ex = {VADL::smulls(R(rn), R(rm))}
-  // TODO: re-enable once inlining for umulls works
-  //model UMull()  : Ex = {VADL::umulls(R(rn), R(rm))}
-  // TODO: re-enable once ISS supports smull/umull result size > 32 bits
-  //       see IssOpDecompositionPass::checkUserSliceOrTruncate
-  //model SMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::smull(R(rn), R(rm)))}
-  //model UMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::umull(R(rn), R(rm)))}
+  model SMull()  : Ex = {VADL::smulls(R(rn), R(rm))}
+  model UMull()  : Ex = {VADL::umulls(R(rn), R(rm))}
+  model SMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::smull(R(rn), R(rm)))}
+  model UMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::umull(R(rn), R(rm)))}
 
   model MultiplyInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
     instruction AsId ($i.id, $f.flagExt, $c.condStr) : MultiplyDivideFormat =
@@ -877,17 +871,13 @@ instruction set architecture AArch32v6 = {
   $CondInstr3Flags    (ArithmeticImmInstr   ; (BICI  ; "bic"   ; AndNot; 0b001'1110 )) // TODO set correct carry
   $CondInstr3Flags    (ArithMovImmInstr     ; (MOVI  ; "mov"   ; MovImm; 0b001'1101 ))
 
-  // TODO: re-enable once inlining for muls works
-  //$CondInstr2Flags    (MultiplyInstr        ; (MUL   ; "mul"   ; Mul   ; 0b000'0000 ))
+  $CondInstr2Flags    (MultiplyInstr        ; (MUL   ; "mul"   ; Mul   ; 0b000'0000 ))
   $CondInstr2Flags    (MultiplyAccInstr     ; (MLA   ; "mla"   ; MulAcc; 0b000'0001 ))
   $CondInstr          (MultiplySubInstr     ; (MLS   ; "mls"   ; MulSub; 0b000'0011 ))
-  // TODO: re-enable once inlining for umulls works
-  //$CondInstr2Flags    (MultiplyLongInstr    ; (UMULL ; "umull" ; UMull ; 0b000'0100 ))
-  // TODO: re-enable once inlining for smulls works
-  //$CondInstr2Flags    (MultiplyLongInstr    ; (SMULL ; "smull" ; SMull ; 0b000'0110 ))
-  // TODO: re-enable once ISS supports smull/umull result size > 32 bits
-  //$CondInstr2Flags    (MultiplyLongInstr    ; (UMLAL ; "umlal" ; UMlAl ; 0b000'0101 ))
-  //$CondInstr2Flags    (MultiplyLongInstr    ; (SMLAL ; "smlal" ; SMlAl ; 0b000'0111 ))
+  $CondInstr2Flags    (MultiplyLongInstr    ; (UMULL ; "umull" ; UMull ; 0b000'0100 ))
+  $CondInstr2Flags    (MultiplyLongInstr    ; (SMULL ; "smull" ; SMull ; 0b000'0110 ))
+  $CondInstr2Flags    (MultiplyLongInstr    ; (UMLAL ; "umlal" ; UMlAl ; 0b000'0101 ))
+  $CondInstr2Flags    (MultiplyLongInstr    ; (SMLAL ; "smlal" ; SMlAl ; 0b000'0111 ))
 
   $CondInstr          (DivideInstr          ; (SDIV  ; "sdiv"  ; SDiv  ; 0b011'1000 ))
   $CondInstr          (DivideInstr          ; (UDIV  ; "udiv"  ; UDiv  ; 0b011'1001 ))
