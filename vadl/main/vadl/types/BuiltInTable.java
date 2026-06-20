@@ -856,6 +856,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn ROL =
       func("VADL::rol", "<<>", Type.relation(BitsType.class, UIntType.class, BitsType.class))
+          .compute(Constant.Value::rol)
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
           .build();

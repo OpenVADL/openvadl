@@ -270,7 +270,7 @@ class ResultInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
 
   @Override
   public void handleLSLS(BuiltInCall input) {
-    throwNotImplemented(input);
+    inlineDefault(input, BuiltInTable.LSL);
   }
 
   @Override
@@ -280,12 +280,12 @@ class ResultInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
 
   @Override
   public void handleASRS(BuiltInCall input) {
-    throwNotImplemented(input);
+    inlineDefault(input, BuiltInTable.ASR);
   }
 
   @Override
   public void handleLSRS(BuiltInCall input) {
-    throwNotImplemented(input);
+    inlineDefault(input, BuiltInTable.LSR);
   }
 
   @Override

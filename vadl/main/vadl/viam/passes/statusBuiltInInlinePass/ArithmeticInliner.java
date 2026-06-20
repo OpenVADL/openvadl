@@ -27,6 +27,7 @@ import static vadl.utils.GraphUtils.zeroExtend;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.math.BigInteger;
+import vadl.error.Diagnostic;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
@@ -593,6 +594,117 @@ abstract class ArithmeticInliner {
     ExpressionNode checkCarry() {
       return Constant.Value.of(false).toNode();
     }
+  }
+
+  static class MulS extends Inliner {
+
+    MulS(BuiltInCall builtInCall) {
+      super(builtInCall);
+    }
+
+    @Override
+    ExpressionNode createResult() {
+      var a = arg0();
+      var b = arg1();
+      return BuiltInTable.MUL.call(a, b);
+    }
+
+    @Override
+    ExpressionNode checkOverflow() {
+      // TODO: how is ov defined? If the high bits are non-zero?
+      throw throwNotImplemented(builtInCall, "overflow");
+    }
+
+    @Override
+    ExpressionNode checkCarry() {
+      // TODO: how is carry defined? Undefined? Equal to ov?
+      throw throwNotImplemented(builtInCall, "carry");
+    }
+  }
+
+  static class SMullS extends Inliner {
+
+    SMullS(BuiltInCall builtInCall) {
+      super(builtInCall);
+    }
+
+    @Override
+    ExpressionNode createResult() {
+      var a = arg0();
+      var b = arg1();
+      return BuiltInTable.SMULL.call(a, b);
+    }
+
+    @Override
+    ExpressionNode checkOverflow() {
+      // TODO: how is ov defined? If the high bits are non-zero?
+      throw throwNotImplemented(builtInCall, "overflow");
+    }
+
+    @Override
+    ExpressionNode checkCarry() {
+      // TODO: how is carry defined? Undefined? Equal to ov?
+      throw throwNotImplemented(builtInCall, "carry");
+    }
+  }
+
+  static class UMullS extends Inliner {
+
+    UMullS(BuiltInCall builtInCall) {
+      super(builtInCall);
+    }
+
+    @Override
+    ExpressionNode createResult() {
+      var a = arg0();
+      var b = arg1();
+      return BuiltInTable.UMULL.call(a, b);
+    }
+
+    @Override
+    ExpressionNode checkOverflow() {
+      // TODO: how is ov defined? If the high bits are non-zero?
+      throw throwNotImplemented(builtInCall, "overflow");
+    }
+
+    @Override
+    ExpressionNode checkCarry() {
+      // TODO: how is carry defined? Undefined? Equal to ov?
+      throw throwNotImplemented(builtInCall, "carry");
+    }
+  }
+
+  static class SUMullS extends Inliner {
+
+    SUMullS(BuiltInCall builtInCall) {
+      super(builtInCall);
+    }
+
+    @Override
+    ExpressionNode createResult() {
+      var a = arg0();
+      var b = arg1();
+      return BuiltInTable.SUMULL.call(a, b);
+    }
+
+    @Override
+    ExpressionNode checkOverflow() {
+      // TODO: how is ov defined? If the high bits are non-zero?
+      throw throwNotImplemented(builtInCall, "overflow");
+    }
+
+    @Override
+    ExpressionNode checkCarry() {
+      // TODO: how is carry defined? Undefined? Equal to ov?
+      throw throwNotImplemented(builtInCall, "carry");
+    }
+  }
+
+  private static Diagnostic throwNotImplemented(BuiltInCall input, String flag) {
+    return Diagnostic.error("Built-In Status-Flag Not Implemented", input)
+        .description("OpenVADL does not yet implement the %s flag of the %s built-in.",
+            flag, input.builtIn().name())
+        .build();
   }
 
 }

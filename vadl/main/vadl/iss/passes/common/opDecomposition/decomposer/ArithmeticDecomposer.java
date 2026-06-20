@@ -16,7 +16,16 @@
 
 package vadl.iss.passes.common.opDecomposition.decomposer;
 
+import static vadl.types.BuiltInTable.LSL;
+import static vadl.types.BuiltInTable.MUL;
+import static vadl.types.BuiltInTable.SMULL;
+import static vadl.types.BuiltInTable.SUMULL;
+
 import java.math.BigInteger;
+import java.util.List;
+import vadl.iss.passes.common.opDecomposition.nodes.IssMul2Node;
+import vadl.iss.passes.common.opDecomposition.nodes.IssMulKind;
+import vadl.iss.passes.common.opDecomposition.nodes.IssMulhNode;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -25,6 +34,7 @@ import vadl.viam.Constant;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.StructGetFieldNode;
 
 /**
  * Decomposes arithmetic operations (SUB) that require carry/borrow handling.
@@ -225,6 +235,126 @@ public interface ArithmeticDecomposer extends IDecomposer {
 
     src.ensure(result != null, "No result generated for SUB decomposition");
     return result;
+  }
+
+  /**
+   * Decomposes a long multiplication call to extract only the bit-range [hi:lo] of the result.
+   *
+   * <p>The original result bit width of the operation may not be twice as large as the target
+   * size, as that would imply that the input operands are larger than the target size, which
+   * cannot be decomposed. Also, the bit width of the requested slice may not exceed the target
+   * size.
+   *
+   * <p>If the slice covers both the high and low part of the result, the long multiplication is
+   * decomposed into a {@link IssMul2Node}. Otherwise, it is either replaced by a
+   * {@link IssMulhNode} or a call to {@link BuiltInTable#MUL}.
+   *
+   * @param src built-in UMULL, SMULL or SUMULL call
+   * @param hi  most-significant bit of the slice (inclusive, 0 = LSB)
+   * @param lo  least-significant bit of the slice
+   * @return graph expression that equals {@code (a * b)[hi:lo]}
+   */
+  default ExpressionNode mullDecompose(BuiltInCall src, int hi, int lo) {
+    src.ensure(
+        List.of(BuiltInTable.SMULL, BuiltInTable.UMULL, BuiltInTable.SUMULL)
+            .contains(src.builtIn()),
+        "Not a UMULL, SMULL or SUMULL built-in call"
+    );
+    src.ensure(hi >= lo, "Expected hi >= lo");
+    checkMullSlice(src, hi, lo);
+
+    var kind = src.builtIn() == SUMULL
+        ? IssMulKind.SIGNED_UNSIGNED
+        : src.builtIn() == SMULL
+          ? IssMulKind.SIGNED_SIGNED
+          : IssMulKind.UNSIGNED_UNSIGNED;
+
+    if (hi < targetSize() || lo >= targetSize()) {
+      // the slice does not use parts from both, the upper half and lower half.
+      return handleSliceWithinUpperOrLowerBoundary(src, kind, hi, lo);
+    } else {
+      // the slice crosses the middle point, so we have to compute upper and lower halves.
+      return handleSliceAcrossUpperLowerBoundary(src, kind, hi, lo);
+    }
+  }
+
+  private ExpressionNode handleSliceWithinUpperOrLowerBoundary(BuiltInCall src, IssMulKind kind,
+                                                               int hi, int lo) {
+    var a = src.arg(0);
+    var b = src.arg(1);
+    var targetType = a.type();
+
+    ExpressionNode result;
+    if (hi >= targetSize()) {
+      // if upper half, we use the mulh operation.
+      result = new IssMulhNode(a, b, kind, targetType);
+
+      // adjust the slice by targetSize bit, as we are now handling the upper half only.
+      hi -= targetSize();
+      lo -= targetSize();
+    } else {
+      // if lower half, we just use the normal mul built-in.
+      result = new BuiltInCall(MUL, src.arguments(), targetType);
+    }
+    if (lo == 0 && hi == targetSize() - 1) {
+      return result;
+    }
+    return GraphUtils.slice(result, hi, lo);
+  }
+
+  private ExpressionNode handleSliceAcrossUpperLowerBoundary(BuiltInCall src, IssMulKind kind,
+                                                             int hi, int lo) {
+    var a = src.arg(0);
+    var b = src.arg(1);
+
+    var targetType = a.type();
+    var structType = Type.struct(
+        "low", targetType,
+        "high", targetType
+    );
+
+    var mul2 = new IssMul2Node(a, b, kind, structType);
+    // lower and upper half in target type size (not final expected size yet)
+    var lowerHalf = new StructGetFieldNode("low", mul2, targetType);
+    var upperHalf = new StructGetFieldNode("high", mul2, targetType);
+
+    // lower half sub slice [targetSize - 1 ... lsb]
+    var lhMsb = targetSize() - 1;
+    var lhLsb = lo;
+    // +1 because msb and lsb are inclusive
+    var lhSize = lhMsb - lhLsb + 1;
+
+    // upper half sub slice [msb - targetSize ... 0]
+    var uhMsb = hi - targetSize();
+    var uhLsb = 0;
+    var uhSize = uhMsb - uhLsb + 1;
+
+    var finalType = Type.bits(uhSize + lhSize);
+
+    var lhSlice = GraphUtils.zeroExtend(GraphUtils.slice(lowerHalf, lhMsb, lhLsb), finalType);
+    var uhSlice = GraphUtils.zeroExtend(GraphUtils.slice(upperHalf, uhMsb, uhLsb), finalType);
+
+    // now we shift the upper half to the correct position uhSlice << lhSize.
+    var shiftAmount = new ConstantNode(Constant.Value.of(lhSize, Type.bits(16)));
+    var upperHalfShifted = LSL.call(uhSlice, shiftAmount);
+
+    // now we merge both halves into a single value
+    return GraphUtils.or(upperHalfShifted, lhSlice);
+  }
+
+  private void checkMullSlice(BuiltInCall src, int hi, int lo) {
+    var mullSize = src.type().asDataType().bitWidth();
+    var sliceSize = hi - lo + 1;
+    src.ensure(
+        mullSize <= targetSize() * 2,
+        "Long multiplication result size (%s) cannot be larger than twice the target size (2 * %s)",
+        mullSize, targetSize()
+    );
+    src.ensure(
+        sliceSize <= targetSize(),
+        "Long multiplication result size (%s) must be sliced to less than the target size (%s)",
+        sliceSize, targetSize()
+    );
   }
 
   private static ExpressionNode boolToWord(ExpressionNode bit, DataType chunkType) {

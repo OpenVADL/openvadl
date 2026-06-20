@@ -2,8 +2,8 @@ import asyncio
 import os
 from pathlib import Path
 
-CC="aarch64-none-linux-gnu-gcc"
-NM="aarch64-none-linux-gnu-nm"
+CC="arm-linux-gnueabihf-gcc"
+NM="arm-linux-gnueabihf-nm"
 
 async def compile(id: str, asm: str, compargs: str) -> dict:
   asm_path = await build_assembly(id, asm)
@@ -48,37 +48,42 @@ async def build_assembly(id: str, core: str) -> Path:
   content = f"""
   .section .text.init
   .global _start
+  
+  .arm                         @ only A32, no T32
+  .syntax unified
+  
   _start:
       {core}
-
+  
   exit:
-      # exit VADL virt (HTIF)
-      mov     x0, #1           // cmd: exit 0
-      ldr     x1, =tohost      // Load address of 'tohost' into x1
-      str     x0, [x1]         // Store a0 to 'tohost'
+      @ exit VADL virt (HTIF)
+      mov     r0, #1           @ cmd: exit 0
+      ldr     r1, =tohost      @ load addr of 'tohost' into r1
+      str     r0, [r1]         @ store r0 to 'tohost'
+      
+      @ exit upstream (semihosting)
+      ldr     r1, =args
+      mov     r0, #0x20        @ SYS_EXIT_EXTENDED operation
+      svc     #0x123456        @ Trigger semihosting call
 
-      # exit upstream virt (semihosting)
-      ldr     x1, =args
-      mov     w0, #0x20        // SYS_EXIT_EXTENDED operation
-      hlt     #0xF000          // Trigger semihosting call
-
-  1:  b       1b               // Infinite loop
-
+  1:  b       1b               @ Infinite loop
+  
   .section .data
   .align 3
+  
   args:
-  .xword 0x20026     // ADP_Stopped_ApplicationExit command
-  .xword 0x0         // Exit Code (0)
-
-  .section .tohost, "aw", @progbits
+  .word 0x20026                @ ADP_Stopped_ApplicationExit command
+  .word 0x0                    @ Exit Code (0)
+  
+  .section .tohost, "aw", %progbits
   .align 6
   .global tohost
-  tohost: .xword 0
+  tohost: .quad 0
   .size tohost, 8
 
   .align 6
   .global fromhost
-  fromhost: .xword 0
+  fromhost: .quad 0
   .size fromhost, 8
   """
   with open(asm_out, "w") as f:
@@ -90,7 +95,7 @@ async def build_linker_script(id: str) -> Path:
   linker_out = _tmp_file(id, f"linker-{id}.ld")
 
   content = """
-  OUTPUT_ARCH("aarch64")
+  OUTPUT_ARCH("arm")
   ENTRY(_start)
 
   SECTIONS

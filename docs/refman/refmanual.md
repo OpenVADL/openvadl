@@ -384,7 +384,7 @@ zeros for logical shifts (`UInt`).
 `M` has to be smaller or equal to `N`.
 
 For instructions which set the status register (`*s`, `*c`, `rrx`) the carry flag is set to the last bit shifted out.
-The carry flag is unchanged if the shift/rotate amount is `0`.
+The carry flag is set to `0` if `b` is `0`.
 
 Rotate left (right) provides the operand `a` rotated by a variable number of bits.
 The bits that are rotated off the left (right) end are inserted into the vacated bit positions on the right (left).

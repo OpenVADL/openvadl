@@ -463,6 +463,21 @@ class Decomposer
   }
 
   @Override
+  public void handleUMULL(Request rq) {
+    rq.result = mullDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleSMULL(Request rq) {
+    rq.result = mullDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
+  public void handleSUMULL(Request rq) {
+    rq.result = mullDecompose(currCall, rq.slice.hi(), rq.slice.lo());
+  }
+
+  @Override
   public void handleUDIV(Request rq) {
     rq.result = udivDecompose(currCall, rq.slice.hi(), rq.slice.lo());
   }

@@ -31,8 +31,7 @@ instruction set architecture AArch32v6 = {
   register R : Index -> Word          // general purpose register file
 
   [next next]                         // PC points to the end of the following instruction
-  program counter PC : Addr           // program counter TODO alias R(15)
-//alias program counter PC : Addr = R(15)  // program counter
+  alias program counter PC : Addr = R(15)  // program counter
   alias register LR : Addr = R(14)    // link register
   alias register SP : Addr = R(13)    // stack pointer
 
