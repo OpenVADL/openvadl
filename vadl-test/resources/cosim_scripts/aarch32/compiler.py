@@ -2,9 +2,9 @@ import os
 import subprocess
 from pathlib import Path
 
-AS = "arm-linux-gnueabihf-as"
-LD = "arm-linux-gnueabihf-ld"
-OBJDUMP = "arm-linux-gnueabihf-objdump"
+AS = "arm-none-linux-gnueabihf-as"
+LD = "arm-none-linux-gnueabihf-ld"
+OBJDUMP = "arm-none-linux-gnueabihf-objdump"
 
 def compile(id: str, asm: str, debug: bool = True) -> dict:
     asm_path = build_assembly(id, asm)

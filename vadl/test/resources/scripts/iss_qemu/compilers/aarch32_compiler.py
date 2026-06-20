@@ -2,8 +2,8 @@ import asyncio
 import os
 from pathlib import Path
 
-CC="arm-linux-gnueabihf-gcc"
-NM="arm-linux-gnueabihf-nm"
+CC="arm-none-linux-gnueabihf-gcc"
+NM="arm-none-linux-gnueabihf-nm"
 
 async def compile(id: str, asm: str, compargs: str) -> dict:
   asm_path = await build_assembly(id, asm)
@@ -59,7 +59,9 @@ async def build_assembly(id: str, core: str) -> Path:
       @ exit VADL virt (HTIF)
       mov     r0, #1           @ cmd: exit 0
       ldr     r1, =tohost      @ load addr of 'tohost' into r1
-      str     r0, [r1]         @ store r0 to 'tohost'
+      str     r0, [r1]         @ write low 32 bits of 'tohost'
+      mov     r2, #0
+      str     r2, [r1, #4]     @ write high 32 bits of 'tohost'
       
       @ exit upstream (semihosting)
       ldr     r1, =args
@@ -120,4 +122,3 @@ def _tmp_file(id: str, name: str) -> Path:
   build_dir = f"/tmp/build-{id}/"
   os.makedirs(build_dir, exist_ok=True)
   return Path(f"{build_dir}/{name}")
-

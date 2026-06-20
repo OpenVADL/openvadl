@@ -14,11 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss;
+package vadl.iss.aarch32;
 
-class TestConstants {
+import java.io.IOException;
+import java.util.List;
+import org.junit.jupiter.api.Tag;
+import vadl.iss.IssEmbenchBenchmark;
 
-  static final String TEST_BASE_IMAGE =
-      "ghcr.io/openvadl/iss-test-base@sha256:b06d35aac32965ef48e1e6c8aced83af1bfc2253eccac44e079053f7021d5e3a";
+public class IssAarch32EmbenchBenchmarkTest extends IssEmbenchBenchmark {
 
+  @Override
+  protected List<String> withUpstreamTargets() {
+    return List.of("arm-softmmu");
+  }
+
+  // @Test
+  @Tag("BenchmarkTest")
+  void a32BenchmarkTest() throws IOException {
+    runBenchmark(benchmarkSpec(
+        "a32",
+        "sys/aarch32/virt.vadl",
+        "benchmark-extras/run-benchmarks-a32-iss.sh",
+        "benchmark-extras/results-a32-iss"
+    ));
+  }
 }

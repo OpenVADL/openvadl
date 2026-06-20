@@ -1,6 +1,7 @@
 # The QEMU (ISS) test base image comes with the required architecture toolchains, QEMU source code and sccache
 
-FROM ghcr.io/openvadl/merged-toolchain@sha256:5577337b65538b01dfe5e4032c3e9dc1d66b943990c73e586b2b1e55e4bfd492 AS toolchains
+ARG MERGED_TOOLCHAIN_IMAGE=ghcr.io/openvadl/merged-toolchain:latest
+FROM ${MERGED_TOOLCHAIN_IMAGE} AS toolchains
 
 FROM ubuntu:22.04 AS base
 
@@ -72,8 +73,17 @@ RUN cargo chef cook --release --recipe-path recipe.json
 FROM cosim-chef-deps AS iss-test-base
 COPY --from=toolchains /opt/riscv /opt/riscv
 COPY --from=toolchains /opt/ppc64 /opt/ppc64
+COPY --from=toolchains /opt/aarch32-linux /opt/aarch32-linux
+COPY --from=toolchains /opt/aarch32-elf /opt/aarch32-elf
 COPY --from=toolchains /opt/aarch64-linux /opt/aarch64-linux
 COPY --from=toolchains /opt/aarch64-elf /opt/aarch64-elf
 
 # Add toolchains to PATH
-ENV PATH=/opt/riscv/bin:/opt/ppc64/bin:/opt/aarch64-elf/bin:/opt/aarch64-linux/bin:$PATH
+ENV TOOLCHAIN_PATH=/opt/riscv/bin:\
+/opt/ppc64/bin:\
+/opt/aarch32-elf/bin:\
+/opt/aarch32-linux/bin:\
+/opt/aarch64-elf/bin:\
+/opt/aarch64-linux/bin
+
+ENV PATH=${TOOLCHAIN_PATH}:$PATH
