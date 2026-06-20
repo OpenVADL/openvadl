@@ -153,9 +153,9 @@ public class IssTensorAssignmentToForallPassTest extends AbstractTest {
     var tensor = new TensorNode(Type.bits(regBitWidth), idx,
         BuiltInTable.ADD.call(widenedIdx,
             Constant.Value.of(1, tensorElementType.asDataType()).toNode()));
-    var tensorWrite = new IssWriteRegNode(reg, new NodeList<>(), tensor, null);
+    var tensorWrite = new IssWriteRegNode(reg, new NodeList<>(), tensor, null, false);
     var otherWrite = new IssWriteRegNode(otherReg, new NodeList<>(),
-        Constant.Value.zero(Type.bits(64).asDataType()).toNode(), null);
+        Constant.Value.zero(Type.bits(64).asDataType()).toNode(), null, false);
 
     var graph = instruction.behavior();
     var end = graph.addWithInputs(new InstrEndNode(
