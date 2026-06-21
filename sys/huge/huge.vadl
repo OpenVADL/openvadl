@@ -15,7 +15,7 @@
 
 // huge instruction set specification for stress tests of the OpenVADL tool chain
 
-instruction set architecture HUGE = {
+instruction set architecture HUGEI = {
 
   using Index    = Bits<5>              // register file index for 32 registers
   using IndexC   = Bits<4>              // register file index for the lower 16 registers
@@ -316,15 +316,8 @@ instruction set architecture HUGE = {
   $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (LSR     ; "lsr"   ; lsr    ; 0b00'0000'0000'0110))
   $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (ASR     ; "asr"   ; asr    ; 0b00'0000'0000'0111))
 
-  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SDIV    ; "sdiv"  ; sdiv   ; 0b00'0000'0000'1000))
-  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (UDIV    ; "udiv"  ; udiv   ; 0b00'0000'0000'1001))
-  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SMOD    ; "smod"  ; smod   ; 0b00'0000'0000'1010))
-  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (UMOD    ; "umod"  ; umod   ; 0b00'0000'0000'1011))
-
-  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (MUL     ; "mul"   ; mul    ; 0b00'0000'0000'1100))
-
   $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SEQ     ; "seq"   ; equ    ; 0b00'0000'0000'1110))
-  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SNE     ; "seq"   ; equ    ; 0b00'0000'0000'1111))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SNE     ; "sne"   ; neq    ; 0b00'0000'0000'1111))
   $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SSLT    ; "sslt"  ; slth   ; 0b00'0000'0001'0000))
   $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SSLE    ; "ssle"  ; sleq   ; 0b00'0000'0001'0001))
   $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SSGT    ; "ssgt"  ; sgth   ; 0b00'0000'0001'0010))
@@ -343,15 +336,8 @@ instruction set architecture HUGE = {
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (LSR     ; "lsr"   ; lsr    ;            0b0'0110))
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (ASR     ; "asr"   ; asr    ;            0b0'0111))
 
-  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SDIV    ; "sdiv"  ; sdiv   ;            0b0'1000))
-  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (UDIV    ; "udiv"  ; udiv   ;            0b0'1001))
-  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SMOD    ; "smod"  ; smod   ;            0b0'1010))
-  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (UMOD    ; "umod"  ; umod   ;            0b0'1011))
-
-  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (MUL     ; "mul"   ; mul    ;            0b0'1100))
-
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SEQ     ; "seq"   ; equ    ;            0b0'1110))
-  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SNE     ; "seq"   ; equ    ;            0b0'1111))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SNE     ; "sne"   ; neq    ;            0b0'1111))
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SSLT    ; "sslt"  ; slth   ;            0b1'0000))
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SSLE    ; "ssle"  ; sleq   ;            0b1'0001))
   $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SSGT    ; "ssgt"  ; sgth   ;            0b1'0010))
@@ -367,4 +353,23 @@ instruction set architecture HUGE = {
 
   $DoubleCondInstr  (BranchInstr        ; NoOperand  ;  (BR      ; "br"    ; none   ;          0b111'1110))
   $SizeCondInstr    (JumpInstr          ; OpShiftReg ;  (JMP     ; "jmp"   ; none   ; 0b11'1111'1111'1111))
+  }
+
+instruction set architecture HUGEIM extending HUGEI = {
+
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SDIV    ; "sdiv"  ; sdiv   ; 0b00'0000'0000'1000))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (UDIV    ; "udiv"  ; udiv   ; 0b00'0000'0000'1001))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (SMOD    ; "smod"  ; smod   ; 0b00'0000'0000'1010))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (UMOD    ; "umod"  ; umod   ; 0b00'0000'0000'1011))
+  $SizeCondInstr    (ArithmeticRegInstr ; OpShiftReg ;  (MUL     ; "mul"   ; mul    ; 0b00'0000'0000'1100))
+
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SDIV    ; "sdiv"  ; sdiv   ;            0b0'1000))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (UDIV    ; "udiv"  ; udiv   ;            0b0'1001))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (SMOD    ; "smod"  ; smod   ;            0b0'1010))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (UMOD    ; "umod"  ; umod   ;            0b0'1011))
+  $SizeCondInstr    (ArithmeticImmInstr ; OpShiftImm ;  (MUL     ; "mul"   ; mul    ;            0b0'1100))
+  }
+
+instruction set architecture HUGE extending HUGEIM = {
+
   }
