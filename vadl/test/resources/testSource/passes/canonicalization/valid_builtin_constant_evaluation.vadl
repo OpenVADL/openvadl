@@ -20,12 +20,18 @@
 #set($s4 = "SInt<4>")
 #set($u4 = "UInt<4>")
 #set($b4 = "Bits<4>")
+#set($s7 = "SInt<7>")
+#set($u7 = "UInt<7>")
+#set($b7 = "Bits<7>")
 #set($s8 = "SInt<8>")
 #set($u8 = "UInt<8>")
 #set($b8 = "Bits<8>")
 #set($s16 = "SInt<16>")
 #set($u16 = "UInt<16>")
 #set($b16 = "Bits<16>")
+#set($s17 = "SInt<17>")
+#set($u17 = "UInt<17>")
+#set($b17 = "Bits<17>")
 #set($u32 = "UInt<32>")
 #set($s32 = "SInt<32>")
 #set($b32 = "Bits<32>")
@@ -216,6 +222,12 @@
 
 #rrx_(27075, $b16, 0, 13537, $b16)
 #rrx_(27075, $b16, 1, 46305, $b16)
+
+#rrx_(53, $b7, 0, 26, $b7)
+#rrx_(53, $b7, 1, 90, $b7)
+
+#rrx_(111785, $b17, 0, 55892, $b17)
+#rrx_(111785, $b17, 1, 121428, $b17)
 
 
 ///////// TEST MACROS Implementation ///////////
