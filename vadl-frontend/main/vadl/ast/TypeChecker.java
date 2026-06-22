@@ -294,7 +294,7 @@ public class TypeChecker
       if (expr.type instanceof InternalErrorType) {
         throw new StopPartialCheckingSignal();
       }
-      return requireNonNull(expr.type);
+      return expr.type();
     }
 
     if (currentlyVisiting.contains(expr)) {
@@ -310,7 +310,7 @@ public class TypeChecker
       expr.accept(this);
     } catch (StopPartialCheckingSignal signal) {
       if (expr.type == null) {
-        expr.type = new InternalErrorType();
+        expr.type = InternalErrorType.INSTANCE;
       }
       throw signal;
     } catch (EvaluationError error) {
@@ -320,7 +320,7 @@ public class TypeChecker
               .build()
       );
       if (expr.type == null) {
-        expr.type = new InternalErrorType();
+        expr.type = InternalErrorType.INSTANCE;
       }
       throw new StopPartialCheckingSignal();
     } finally {
@@ -616,6 +616,8 @@ public class TypeChecker
     }
   }
 
+  private Map<Pair<Type, Type>, Boolean> explicitTypeCache = new HashMap<>();
+
   /**
    * Tests whether a type can explicit be cast to another.
    *
@@ -623,7 +625,15 @@ public class TypeChecker
    * @param to   is the target type.
    * @return true if the cast can happen explicitly, false otherwise.
    */
-  private static boolean canExplicitCast(Type from, Type to) {
+  private boolean canExplicitCast(Type from, Type to) {
+    if (from.equals(to)) {
+      return true;
+    }
+
+    return explicitTypeCache.computeIfAbsent(Pair.of(from, to), k -> uncachedCanExplicitCast(k.left(), k.right()));
+  }
+
+  private boolean uncachedCanExplicitCast(Type from, Type to) {
     if (from.equals(to)) {
       return true;
     }
@@ -753,7 +763,7 @@ public class TypeChecker
    * @param to    which the expression should be casted.
    * @return the original expression, possibly wrapped.
    */
-  private static Expr wrapExplicitCast(Expr inner, Type to) {
+  private Expr wrapExplicitCast(Expr inner, Type to) {
     var innerType = requireNonNull(inner.type);
     if (innerType.equals(to)) {
       return inner;
@@ -779,7 +789,7 @@ public class TypeChecker
    * @return the original expression, possibly wrapped.
    */
   private static Expr wrapImplicitCast(Expr inner, Type to) {
-    var innerType = requireNonNull(inner.type);
+    var innerType = inner.type();
     if (innerType.equals(to)) {
       return inner;
     }
@@ -890,12 +900,9 @@ public class TypeChecker
 
   /// Check if the built-in function call, but doesn't care which kind of expression it arises from
   /// binary expressions, unary expressions or direct calls.
-  /// The passed arguments don't have to already cecked.
+  /// The passed arguments have to be already checked!
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
-    // Check all incoming arguments
-    args.forEach(this::check);
-
     if (!(args.size() == builtIn.argTypeClasses().size() || (builtIn.signature().hasVarArgs()
         && args.size() >= builtIn.argTypeClasses().size()))) {
       throw addErrorAndStopChecking(
@@ -1223,18 +1230,18 @@ public class TypeChecker
       switch (field) {
         case TypedFormatField typedField -> {
           if (typedField.typeLiteral.type == null) {
-            typedField.typeLiteral.type = new InternalErrorType();
+            typedField.typeLiteral.type = InternalErrorType.INSTANCE;
           }
         }
         case RangeFormatField rangeField -> {
           if (rangeField.type == null) {
-            rangeField.type = new InternalErrorType();
+            rangeField.type = InternalErrorType.INSTANCE;
           }
         }
 
         case DerivedFormatField derivedField -> {
           if (derivedField.expr.type == null) {
-            derivedField.expr.type = new InternalErrorType();
+            derivedField.expr.type = InternalErrorType.INSTANCE;
           }
         }
 
@@ -1249,7 +1256,7 @@ public class TypeChecker
   public Void visit(FormatDefinition definition) {
     var type = check(definition.typeLiteral);
     if (!(type instanceof BitsType bitsType)) {
-      definition.typeLiteral.type = new InternalErrorType();
+      definition.typeLiteral.type = InternalErrorType.INSTANCE;
       setFormatDefinitionEmptyFieldsToError(definition);
       // Not actually thrown here but used to signal that this if will never suceed.
       throw addErrorAndStopChecking(typeMismatchError(definition.typeLiteral, "bits type", type));

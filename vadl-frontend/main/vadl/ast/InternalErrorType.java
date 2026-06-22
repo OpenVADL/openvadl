@@ -23,6 +23,11 @@ import vadl.types.Type;
  * expression. This differes from null, which means we haven't visited the expression yet.
  */
 public class InternalErrorType extends Type {
+
+  private InternalErrorType() {}
+
+  public static final InternalErrorType INSTANCE = new InternalErrorType();
+
   @Override
   public String name() {
     return "InternalErrorType";
