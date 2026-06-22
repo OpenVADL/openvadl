@@ -925,13 +925,6 @@ public class TypeChecker
   /// The passed arguments have to be already checked!
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
-    boolean hasNonConst = false;
-    for (var arg : args) {
-      if (!(arg.type() instanceof ConstantType)) {
-        hasNonConst = true;
-      }
-    }
-
     var key = Pair.of(builtIn, args.stream().map(Expr::type).toList());
     if (builtInCheckCache.containsKey(key)) {
       return builtInCheckCache.get(key);
@@ -3380,10 +3373,6 @@ public class TypeChecker
     return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
   }
 
-  private record BinaryExprCacheKey(Operator operator, @Nullable Type expectedType, Type leftType,
-                                    Type rightType) {
-  }
-
   @Override
   public Void visit(BinaryExpr expr) {
     checkWith(expr.left, expectedType);
@@ -3556,11 +3545,11 @@ public class TypeChecker
    * @return the parsed type.
    */
   private Type parseTypeLiteral(TypeLiteral expr, @Nullable Integer preferredBitWidth) {
-    var result = internalParseTypeLiteral(expr, preferredBitWidth);
-    if (result.isRight()) {
-      throw addErrorAndStopChecking(result.right());
+    var result = internalParseTypeLiteral(expr, preferredBitWidth, false);
+    if (result.isError()) {
+      throw addErrorAndStopChecking(requireNonNull(result.error()));
     }
-    return result.left();
+    return requireNonNull(result.type());
   }
 
   /**
@@ -3590,16 +3579,41 @@ public class TypeChecker
       return null;
     }
 
-    var result = internalParseTypeLiteral(expr, null);
-    return result.isLeft() ? result.left() : null;
+    var result = internalParseTypeLiteral(expr, null, true);
+    return result.isType() ? result.type() : null;
+  }
+
+  private record ParsedTypeLiteralResult(@Nullable Type type, @Nullable Diagnostic error) {
+    static ParsedTypeLiteralResult success(Type type) {
+      return new ParsedTypeLiteralResult(type, null);
+    }
+
+    static ParsedTypeLiteralResult error(@Nullable Diagnostic error) {
+      return new ParsedTypeLiteralResult(null, error);
+    }
+
+    boolean isType() {
+      return type != null;
+    }
+
+    boolean isError() {
+      return type == null;
+    }
   }
 
   /**
    * Sometimes we want to throw when parsing a type literal and sometimes we want to ignore errors
    * so this returns a either type and the caller can decide how to handle them.
+   *
+   * @param skipErrorConstruction Whether to skip constructing the error diagnostic, will return
+   *                              null instead of the either. This is a performance optimization
+   *                              because in some cases we don't care about the diagnostics and
+   *                              constructing them was expensive.
    */
-  private Either<Type, Diagnostic> internalParseTypeLiteral(TypeLiteral expr,
-                                                            @Nullable Integer preferredBitWidth) {
+  private ParsedTypeLiteralResult internalParseTypeLiteral(TypeLiteral expr,
+                                                            @Nullable Integer preferredBitWidth,
+                                                                      boolean skipErrorConstruction
+  ) {
     var base = expr.baseType.pathToString();
 
     // 1. Check whether the base exists.
@@ -3615,10 +3629,11 @@ public class TypeChecker
       var suggestions =
           Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
 
-      return new Either(null, error("Unknown Type `%s`".formatted(base), expr)
-          .locationDescription(expr, "No type with that name exists.")
-          .suggestions(suggestions)
-          .build());
+      return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
+          error("Unknown Type `%s`".formatted(base), expr)
+              .locationDescription(expr, "No type with that name exists.")
+              .suggestions(suggestions)
+              .build());
     }
 
     // 2. Calculate the sizes
@@ -3640,7 +3655,7 @@ public class TypeChecker
     // Check for errors and return early if found
     for (var sizeOrError : sizesOrErrors) {
       if (sizeOrError.isRight()) {
-        return new Either<>(null, sizeOrError.right());
+        return ParsedTypeLiteralResult.error(sizeOrError.right());
       }
     }
 
@@ -3665,12 +3680,13 @@ public class TypeChecker
 
     if (unSizedBuiltins.containsKey(base)) {
       if (!sizes.isEmpty()) {
-        return new Either(null, error("Invalid Type Notation", expr.location())
-            .description("The `%s` type doesn't use the size notation.", base)
-            .help("Try removing the size parameter here.")
-            .build());
+        return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
+            error("Invalid Type Notation", expr.location())
+                .description("The `%s` type doesn't use the size notation.", base)
+                .help("Try removing the size parameter here.")
+                .build());
       }
-      return new Either(unSizedBuiltins.get(base).get(), null);
+      return ParsedTypeLiteralResult.success(unSizedBuiltins.get(base).get());
     }
 
     Map<String, Function<Integer, BitsType>> sizedBuiltins = Map.of(
@@ -3681,21 +3697,22 @@ public class TypeChecker
 
     if (sizedBuiltins.containsKey(base)) {
       if (sizes.isEmpty()) {
-        return new Either(null, error("Invalid Type Notation", expr.location())
-            .description(
-                "Unsized `%s` can only be used in special places when it's obvious what the bit"
-                    + " width should be.",
-                base)
-            .help("Try adding a size parameter here.")
-            .build());
+        return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
+            error("Invalid Type Notation", expr.location())
+                .description(
+                    "Unsized `%s` can only be used in special places when it's obvious what the bit"
+                        + " width should be.",
+                    base)
+                .help("Try adding a size parameter here.")
+                .build());
       }
 
       if (sizes.size() == 1) {
-        return new Either(sizedBuiltins.get(base).apply(sizes.getFirst()), null);
+        return ParsedTypeLiteralResult.success(sizedBuiltins.get(base).apply(sizes.getFirst()));
       }
 
-      return new Either(new TensorType(sizes.subList(0, sizes.size() - 1),
-          sizedBuiltins.get(base).apply(sizes.getLast())), null);
+      return ParsedTypeLiteralResult.success(new TensorType(sizes.subList(0, sizes.size() - 1),
+          sizedBuiltins.get(base).apply(sizes.getLast())));
     }
 
     // 4. Create the custom types
@@ -3709,21 +3726,22 @@ public class TypeChecker
     };
 
     if (sizes.isEmpty()) {
-      return new Either(customTargetType, null);
+      return ParsedTypeLiteralResult.success(customTargetType);
     }
 
     // Only some types can be used to create a tensor.
     if (customTargetType instanceof BitsType customBits) {
-      return new Either(new TensorType(sizes, customBits), null);
+      return ParsedTypeLiteralResult.success(new TensorType(sizes, customBits));
     }
 
     if (customTargetType instanceof TensorType customTensor) {
-      return new Either(new TensorType(sizes, customTensor), null);
+      return ParsedTypeLiteralResult.success(new TensorType(sizes, customTensor));
     }
 
-    return new Either(null, error("Invalid Tensor Type", expr)
-        .locationDescription(expr, "You can only create tensors from data types.")
-        .build());
+    return ParsedTypeLiteralResult.error(
+        skipErrorConstruction ? null : error("Invalid Tensor Type", expr)
+            .locationDescription(expr, "You can only create tensors from data types.")
+            .build());
   }
 
   @Override
