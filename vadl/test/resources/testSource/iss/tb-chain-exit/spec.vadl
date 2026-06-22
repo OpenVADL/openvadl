@@ -1,0 +1,142 @@
+instruction set architecture Test = {
+
+  using B8  = Bits<8 >
+  using B16 = Bits<16>
+  using B32 = Bits<32>
+
+  [ execution state ] register ESR1 : B16
+  [ execution state ] register ESR2 : B16
+
+  register R1 : B16
+  register R2 : B16
+
+  format INSTR_F : B32 = { op : B8, a : B8, b : B8, c : B8 }
+  format INSTR_HTIF : B32 = { op : B8, addr : Bits<24> }
+
+  instruction NOP : INSTR_F = { }
+  encoding NOP = { op = 0, a = 0, b = 0, c = 0 }
+  assembly NOP = "nop"
+
+  instruction SET : INSTR_F = {
+    if a = 0 then {
+      R1 := b as B16
+    } else if a = 1 then {
+      R2 := b as B16
+    } else if a = 2 then {
+      PC := PC + b as B32
+    }
+  }
+  encoding SET = { op = 1 }
+  assembly SET = ("set ", udec(a), ' ', udec(b), ' ', udec(c))
+
+  // -------------------------------- //
+  // Jump slot tests
+  // -------------------------------- //
+
+  instruction JMPSLT_2DJ_D : INSTR_F = {
+    // Two direct jumps + dynamic condition -> 1x goto and 1x lookup
+    if R1 = 0 then {
+      PC := PC + a as B32
+    } else {
+      PC := PC + b as B32
+    }
+  }
+  encoding JMPSLT_2DJ_D = { op = 2, c = 0 }
+  assembly JMPSLT_2DJ_D = ("jmpslt_2dj_d ", udec(a), ' ', udec(b))
+
+  instruction JMPSLT_2DJ_S : INSTR_F = {
+    // Two direct jumps + static condition -> always 1x goto
+    if a = 0 then {
+      PC := PC + b as B32
+    } else {
+      PC := PC + c as B32
+    }
+  }
+  encoding JMPSLT_2DJ_S = { op = 3 }
+  assembly JMPSLT_2DJ_S = ("jmpslt_2dj_s ", udec(a), ' ', udec(b), ' ', udec(c))
+
+  // -------------------------------- //
+  // Chaining/exiting tests
+  // -------------------------------- //
+
+  instruction ALL : INSTR_F = {
+    if a = 0 then {
+      /* nothing */
+    } else if a = 1 then {
+      /* direct jump */
+      PC := PC + b as B32
+    } else if a = 2 then {
+      /* indirect jump */
+      PC := PC + R2 as B32
+    } else if a = 3 then {
+      /* direct + indirect jump */
+      if R1 = 0 then PC := PC + b as B32 else PC := PC + R2 as B32
+    } else if a = 4 then {
+      /* raise */
+      raise E
+    } else if a = 5 then {
+      /* direct jump + raise */
+      if R1 = 0 then PC := PC + b as B32 else raise E
+    } else if a = 6 then {
+      /* indirect jump + raise */
+      if R1 = 0 then PC := PC + R2 as B32 else raise E
+    } else if a = 7 then {
+      /* direct + indirect jump + raise */
+      if R1 = 0 then PC := PC + b as B32 else if R1 = 1 then PC := PC + R2 as B32 else raise E
+    } else if a = 8 then {
+      /* static write */
+      ESR2 := 0
+    } else if a = 9 then {
+      /* direct jump + static write */
+      if R1 = 0 then PC := PC + b as B32 else ESR2 := c as B16
+    } else if a = 10 then {
+      /* indirect jump + static write */
+      if R1 = 0 then PC := PC + R2 as B32 else ESR2 := c as B16
+    } else if a = 11 then {
+      /* direct + indirect jump + static write */
+      if R1 = 0 then PC := PC + b as B32 else if R1 = 1 then PC := PC + R2 as B32 else ESR2 := c as B16
+    } else if a = 12 then {
+      /* dynamic write */
+      ESR2 := R2
+    } else if a = 13 then {
+      /* direct jump + dynamic write */
+      if R1 = 0 then PC := PC + b as B32 else ESR2 := R2
+    } else if a = 14 then {
+      /* indirect jump + dynamic write */
+      if R1 = 0 then PC := PC + R2 as B32 else ESR2 := R2
+    } else if a = 15 then {
+      /* direct + indirect jump + dynamic write */
+      if R1 = 0 then PC := PC + b as B32 else if R1 = 1 then PC := PC + R2 as B32 else ESR2 := R2
+    }
+  }
+  encoding ALL = { op = 4 }
+  assembly ALL = ("all ", udec(a), ' ', udec(b), ' ', udec(c))
+
+  instruction END : INSTR_HTIF = {
+    // cmd: exit 0
+    MEM<8>(addr as B32) := 1
+    // force tb end
+    ESR1 := 0
+  }
+  encoding END = { op = 32 }
+  assembly END = ("end ", udec(addr))
+
+  memory MEM : B32 -> B8
+  program counter PC : B32
+
+  exception E () = {
+    // go to next instruction
+    PC := PC + 4
+  }
+}
+
+[ htif ]
+processor TestProc implements Test = {
+  reset = {
+    PC := 0x0
+  }
+
+  [ firmware ]
+  [ base : 0x0 ]
+  memory region [RAM] DRAM in MEM
+}
