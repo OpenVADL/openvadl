@@ -14,7 +14,6 @@ on:
 
 permissions:
   contents: read
-  actions: write
   checks: write
 
 jobs:
@@ -29,22 +28,20 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: ./gradlew nativeBuild
-      - name: Verify native binary
-        run: test -x vadl-cli/build/native/nativeCompile/openvadl
-      - name: Cache native binary
-        uses: actions/cache/save@v5
-        with:
-          key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
-          path: vadl-cli/build/native/nativeCompile/openvadl
+      - name: Stage native binary on runner
+        run: |
+          set -euo pipefail
+          shared_dir="/tmp/openvadl-benchmark-frontend-${{ github.run_id }}-${{ github.run_attempt }}"
+          rm -rf "${shared_dir}"
+          mkdir -p "${shared_dir}"
+          install -m 0755 vadl-cli/build/native/nativeCompile/openvadl "${shared_dir}/openvadl"
 
   aarch64:
     needs: build
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
-      cache-path: vadl-cli/build/native/nativeCompile/openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/aarch64/aarch64.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=/tmp/openvadl-benchmark-frontend-${{ github.run_id }}-${{ github.run_attempt }}/openvadl sys/aarch64/aarch64.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/aarch64/native/results
       commit-message: 'data: Pushed frontend aarch64 native data'
@@ -55,9 +52,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
-      cache-path: vadl-cli/build/native/nativeCompile/openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/aarch32/aarch32.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=/tmp/openvadl-benchmark-frontend-${{ github.run_id }}-${{ github.run_attempt }}/openvadl sys/aarch32/aarch32.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/aarch32/native/results
       commit-message: 'data: Pushed frontend aarch32 native data'
@@ -68,9 +63,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
-      cache-path: vadl-cli/build/native/nativeCompile/openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/huge/huge.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=/tmp/openvadl-benchmark-frontend-${{ github.run_id }}-${{ github.run_attempt }}/openvadl sys/huge/huge.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/huge/native/results
       commit-message: 'data: Pushed frontend huge native data'
@@ -81,9 +74,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
-      cache-path: vadl-cli/build/native/nativeCompile/openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/risc-v/rv32i.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=/tmp/openvadl-benchmark-frontend-${{ github.run_id }}-${{ github.run_attempt }}/openvadl sys/risc-v/rv32i.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/rv32i/native/results
       commit-message: 'data: Pushed frontend rv32i native data'
@@ -94,9 +85,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
-      cache-path: vadl-cli/build/native/nativeCompile/openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/ppc64/ppc64.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=/tmp/openvadl-benchmark-frontend-${{ github.run_id }}-${{ github.run_attempt }}/openvadl sys/ppc64/ppc64.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/ppc64/native/results
       commit-message: 'data: Pushed frontend ppc64 native data'
@@ -107,10 +96,23 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
-      cache-path: vadl-cli/build/native/nativeCompile/openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/hexagon/hexagon.vadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=/tmp/openvadl-benchmark-frontend-${{ github.run_id }}-${{ github.run_attempt }}/openvadl sys/hexagon/hexagon.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/hexagon/native/results
       commit-message: 'data: Pushed frontend hexagon native data'
     secrets: inherit
+
+  cleanup:
+    needs:
+      - build
+      - aarch64
+      - aarch32
+      - huge
+      - rv32i
+      - ppc64
+      - hexagon
+    if: ${{ always() }}
+    runs-on: self-hosted-x64
+    steps:
+      - name: Remove staged native binary
+        run: rm -rf "/tmp/openvadl-benchmark-frontend-${{ github.run_id }}-${{ github.run_attempt }}"

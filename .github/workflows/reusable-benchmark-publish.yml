@@ -34,32 +34,12 @@ on:
         required: false
         default: ''
         type: string
-      cache-key:
-        description: 'Cache key for a pre-built artifact to restore before benchmarking (optional)'
-        required: false
-        default: ''
-        type: string
-      cache-path:
-        description: 'Path restored from the cache before benchmarking (required when cache-key is set)'
-        required: false
-        default: ''
-        type: string
 
 jobs:
   benchmark:
     runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v6
-      - name: Restore pre-built cache
-        if: ${{ inputs.cache-key != '' }}
-        uses: actions/cache/restore@v5
-        with:
-          key: ${{ inputs.cache-key }}
-          path: ${{ inputs.cache-path }}
-          fail-on-cache-miss: true
-      - name: Make cached artifact executable
-        if: ${{ inputs.cache-key != '' }}
-        run: chmod +x "${{ inputs.cache-path }}"
       - name: Download pre-built artifact
         if: ${{ inputs.download-artifact != '' }}
         uses: actions/download-artifact@v8
