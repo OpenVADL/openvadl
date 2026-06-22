@@ -917,10 +917,40 @@ public class TypeChecker
     }
   }
 
+  private Map<Pair<BuiltInTable.BuiltIn, List<Type>>, BuiltInCheckResult> builtInCheckCache =
+      new HashMap<>();
+
   /// Check if the built-in function call, but doesn't care which kind of expression it arises from
   /// binary expressions, unary expressions or direct calls.
   /// The passed arguments have to be already checked!
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
+                                          WithLocation location) {
+    boolean hasNonConst = false;
+    for (var arg : args) {
+      if (!(arg.type() instanceof ConstantType)) {
+        hasNonConst = true;
+      }
+    }
+
+    var key = Pair.of(builtIn, args.stream().map(Expr::type).toList());
+    if (builtInCheckCache.containsKey(key)) {
+      return builtInCheckCache.get(key);
+    }
+
+    var result = unCachedCheckBuiltin(builtIn, args, location);
+
+    // We cannot cache if the result is a constant but not all input types were also constant.
+    // This is quite rare but here we simply cannot determine the result type simply based on the
+    // input types.
+    if (result.returnType instanceof ConstantType) {
+      return result;
+    }
+
+    builtInCheckCache.put(key, result);
+    return result;
+  }
+
+  private BuiltInCheckResult unCachedCheckBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
     if (!(args.size() == builtIn.argTypeClasses().size() || (builtIn.signature().hasVarArgs()
         && args.size() >= builtIn.argTypeClasses().size()))) {
@@ -3354,28 +3384,10 @@ public class TypeChecker
                                     Type rightType) {
   }
 
-  private Map<BinaryExprCacheKey, BuiltInCheckResult> binaryExprCache = new HashMap<>();
-
   @Override
   public Void visit(BinaryExpr expr) {
     checkWith(expr.left, expectedType);
     checkWith(expr.right, expectedType);
-
-    //    var checkResult =
-//        binaryExprCache.computeIfAbsent(
-//            new BinaryExprCacheKey(expr.operator(), expectedType, leftType, rightType),
-//            k -> {
-//              var builtin =
-//                  AstUtils.getOperatorBuiltIn(expr.operator(),
-//                      List.of(expr.left.type(), expr.right.type()));
-//              if (Operator.logicalComparisions.contains(expr.operator())) {
-//                // Unfortunately we cannot do this in the checkBuiltin because this information is
-//                // only in the operator and not in the builtin function we want to call.
-//                return checkLogicalBuiltIn(expr.left, expr.right, expr);
-//              } else {
-//                return checkBuiltin(builtin, List.of(expr.left, expr.right), expr);
-//              }
-//            }
 
     var builtin =
         AstUtils.getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
