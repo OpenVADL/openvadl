@@ -29,22 +29,22 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: ./gradlew nativeBuild
-      - name: Upload native binary
-        uses: actions/upload-artifact@v7
+      - name: Verify native binary
+        run: test -x vadl-cli/build/native/nativeCompile/openvadl
+      - name: Cache native binary
+        uses: actions/cache/save@v5
         with:
-           name: openvadl
-           path: vadl-cli/build/native/nativeCompile/openvadl
-           retention-days: 1
-           compression-level: 0
-           if-no-files-found: error
+          key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: vadl-cli/build/native/nativeCompile/openvadl
 
   aarch64:
     needs: build
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      download-artifact: openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/aarch64/aarch64.vadl
+      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
+      cache-path: vadl-cli/build/native/nativeCompile/openvadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/aarch64/aarch64.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/aarch64/native/results
       commit-message: 'data: Pushed frontend aarch64 native data'
@@ -55,8 +55,9 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      download-artifact: openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/aarch32/aarch32.vadl
+      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
+      cache-path: vadl-cli/build/native/nativeCompile/openvadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/aarch32/aarch32.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/aarch32/native/results
       commit-message: 'data: Pushed frontend aarch32 native data'
@@ -67,8 +68,9 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      download-artifact: openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/huge/huge.vadl
+      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
+      cache-path: vadl-cli/build/native/nativeCompile/openvadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/huge/huge.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/huge/native/results
       commit-message: 'data: Pushed frontend huge native data'
@@ -79,8 +81,9 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      download-artifact: openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/risc-v/rv32i.vadl
+      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
+      cache-path: vadl-cli/build/native/nativeCompile/openvadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/risc-v/rv32i.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/rv32i/native/results
       commit-message: 'data: Pushed frontend rv32i native data'
@@ -91,8 +94,9 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      download-artifact: openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/ppc64/ppc64.vadl
+      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
+      cache-path: vadl-cli/build/native/nativeCompile/openvadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/ppc64/ppc64.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/ppc64/native/results
       commit-message: 'data: Pushed frontend ppc64 native data'
@@ -103,8 +107,9 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      download-artifact: openvadl
-      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=./openvadl sys/hexagon/hexagon.vadl
+      cache-key: openvadl-native-${{ github.run_id }}-${{ github.run_attempt }}
+      cache-path: vadl-cli/build/native/nativeCompile/openvadl
+      benchmark-command: python3 scripts/benchmark/benchmark_frontend.py --openvadl-binary=vadl-cli/build/native/nativeCompile/openvadl sys/hexagon/hexagon.vadl
       artifact-source: output/timings-mean.csv
       destination-folder: data/frontend/hexagon/native/results
       commit-message: 'data: Pushed frontend hexagon native data'
