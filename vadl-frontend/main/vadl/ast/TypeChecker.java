@@ -630,7 +630,8 @@ public class TypeChecker
       return true;
     }
 
-    return explicitTypeCache.computeIfAbsent(Pair.of(from, to), k -> uncachedCanExplicitCast(k.left(), k.right()));
+    return explicitTypeCache.computeIfAbsent(Pair.of(from, to),
+        k -> uncachedCanExplicitCast(k.left(), k.right()));
   }
 
   private boolean uncachedCanExplicitCast(Type from, Type to) {
@@ -894,8 +895,26 @@ public class TypeChecker
     return null;
   }
 
-  record BuiltInCheckResult(Type type, @Nullable List<Expr> castedArgs) {
+  record BuiltInCheckResult(@Nullable List<Type> castedArgTypes, Type returnType) {
+    List<Expr> applyCastToArgs(List<Expr> args) {
+      if (castedArgTypes == null) {
+        return args;
+      }
 
+      var result = new ArrayList<Expr>(args.size());
+      for (int i = 0; i < args.size(); i++) {
+        var arg = args.get(i);
+        var type = castedArgTypes.get(i);
+
+        if (arg.type() == type) {
+          result.add(arg);
+        } else {
+          result.add(new CastExpr(arg, type));
+        }
+
+      }
+      return result;
+    }
   }
 
   /// Check if the built-in function call, but doesn't care which kind of expression it arises from
@@ -925,11 +944,11 @@ public class TypeChecker
       if (args.get(0).type() instanceof ConstantType) {
         var type = constantEvaluator.evalBuiltin(builtIn,
             args.stream().map(a -> constantEvaluator.eval(a)).toList(), location).type();
-        return new BuiltInCheckResult(type, null);
+        return new BuiltInCheckResult(null, type);
       }
 
       if (List.of(BuiltInTable.NEG, BuiltInTable.NOT).contains(builtIn)) {
-        return new BuiltInCheckResult(args.getFirst().type(), null);
+        return new BuiltInCheckResult(null, args.getFirst().type());
       }
     }
 
@@ -954,7 +973,8 @@ public class TypeChecker
             .build());
 
       } else {
-        return new BuiltInCheckResult(Type.bool(), args);
+        var argTypes = args.stream().map(a -> a.type()).toList();
+        return new BuiltInCheckResult(argTypes, Type.bool());
       }
     }
 
@@ -974,7 +994,7 @@ public class TypeChecker
 
       // Special concat on strings
       if (builtIn == BuiltInTable.CONCATENATE_STRINGS) {
-        return new BuiltInCheckResult(Type.string(), List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), Type.string());
       }
 
       if (!(left.type() instanceof BitsType) && !(left.type() instanceof ConstantType)) {
@@ -1031,7 +1051,7 @@ public class TypeChecker
             var result = constantEvaluator.evalBuiltin(builtIn,
                 List.of(left, right).stream().map(a -> constantEvaluator.eval(a)).toList(),
                 location);
-            return new BuiltInCheckResult(result.type(), List.of(left, right));
+            return new BuiltInCheckResult(List.of(left.type(), right.type()), result.type());
           }
 
           // The left side is constant but the right isn't
@@ -1047,14 +1067,14 @@ public class TypeChecker
               .build());
         }
 
-        return new BuiltInCheckResult(left.type(), List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), left.type());
       }
 
       // Const types are a special case
       if (left.type() instanceof ConstantType && right.type() instanceof ConstantType) {
         var result = constantEvaluator.evalBuiltin(builtIn,
             List.of(left, right).stream().map(a -> constantEvaluator.eval(a)).toList(), location);
-        return new BuiltInCheckResult(result.type(), List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), result.type());
       }
 
       // If only one type is const, cast it to it's partner (or as close as possible)
@@ -1087,13 +1107,13 @@ public class TypeChecker
         // Bits<N> +# Bits<N> -> Bits<2*N>
         if (left.type() instanceof SIntType || right.type() instanceof SIntType) {
           var type = Type.signedInt(leftBitWidth * 2);
-          return new BuiltInCheckResult(type, List.of(left, right));
+          return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
         } else if (left.type() instanceof UIntType || right.type() instanceof UIntType) {
           var type = Type.unsignedInt(leftBitWidth * 2);
-          return new BuiltInCheckResult(type, List.of(left, right));
+          return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
         }
         var type = Type.bits(leftBitWidth * 2);
-        return new BuiltInCheckResult(type, List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
       }
 
       var bitWidth = ((BitsType) left.type()).bitWidth();
@@ -1133,12 +1153,12 @@ public class TypeChecker
       if (BuiltInTable.arithmeticComparisons.contains(builtIn)) {
         // Output type depends on type of operation
         var type = Type.bool();
-        return new BuiltInCheckResult(type, List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
       }
       if (BuiltInTable.arithmeticOperators.contains(builtIn)) {
         // Note: No that isn't the same as leftTyp
         var type = left.type();
-        return new BuiltInCheckResult(type, List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
       }
 
       // Fallback: This concludes all the special handling we do on functions with two arguments.
@@ -1151,7 +1171,7 @@ public class TypeChecker
       var type = constantEvaluator
           .evalBuiltin(builtIn, args.stream().map(constantEvaluator::eval).toList(), location)
           .type();
-      return new BuiltInCheckResult(type, null);
+      return new BuiltInCheckResult(null, type);
     }
 
     // There are vararg functions so let's assume the last type is used for all additional args like
@@ -1184,7 +1204,7 @@ public class TypeChecker
               .build());
     }
 
-    return new BuiltInCheckResult(builtIn.returns(argTypes), args);
+    return new BuiltInCheckResult(argTypes, builtIn.returns(argTypes));
   }
 
   @Override
@@ -3327,13 +3347,35 @@ public class TypeChecker
 
     // Return is always boolean
     var type = Type.bool();
-    return new BuiltInCheckResult(type, List.of(left, right));
+    return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
   }
+
+  private record BinaryExprCacheKey(Operator operator, @Nullable Type expectedType, Type leftType,
+                                    Type rightType) {
+  }
+
+  private Map<BinaryExprCacheKey, BuiltInCheckResult> binaryExprCache = new HashMap<>();
 
   @Override
   public Void visit(BinaryExpr expr) {
     checkWith(expr.left, expectedType);
     checkWith(expr.right, expectedType);
+
+    //    var checkResult =
+//        binaryExprCache.computeIfAbsent(
+//            new BinaryExprCacheKey(expr.operator(), expectedType, leftType, rightType),
+//            k -> {
+//              var builtin =
+//                  AstUtils.getOperatorBuiltIn(expr.operator(),
+//                      List.of(expr.left.type(), expr.right.type()));
+//              if (Operator.logicalComparisions.contains(expr.operator())) {
+//                // Unfortunately we cannot do this in the checkBuiltin because this information is
+//                // only in the operator and not in the builtin function we want to call.
+//                return checkLogicalBuiltIn(expr.left, expr.right, expr);
+//              } else {
+//                return checkBuiltin(builtin, List.of(expr.left, expr.right), expr);
+//              }
+//            }
 
     var builtin =
         AstUtils.getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
@@ -3347,11 +3389,12 @@ public class TypeChecker
       checkResult = checkBuiltin(builtin, List.of(expr.left, expr.right), expr);
     }
 
-    if (checkResult.castedArgs != null) {
-      expr.left = checkResult.castedArgs.get(0);
-      expr.right = checkResult.castedArgs.get(1);
+    if (checkResult.castedArgTypes != null) {
+      var castedArgs = checkResult.applyCastToArgs(List.of(expr.left, expr.right));
+      expr.left = castedArgs.get(0);
+      expr.right = castedArgs.get(1);
     }
-    expr.type = checkResult.type;
+    expr.type = checkResult.returnType;
     return null;
   }
 
@@ -3710,10 +3753,10 @@ public class TypeChecker
     expr.computedTarget = builtin;
 
     var result = checkBuiltin(builtin, List.of(expr.operand), expr);
-    if (result.castedArgs != null) {
-      expr.operand = result.castedArgs.get(0);
+    if (result.castedArgTypes != null) {
+      expr.operand = result.applyCastToArgs(List.of(expr.operand)).get(0);
     }
-    expr.type = result.type();
+    expr.type = result.returnType();
 
     return null;
   }
@@ -4121,11 +4164,11 @@ public class TypeChecker
     expr.computedBuiltIn = builtin;
 
     var checkResult = checkBuiltin(builtin, args, expr);
-    if (checkResult.castedArgs != null) {
-      expr.replaceArgsFor(0, checkResult.castedArgs);
+    if (checkResult.castedArgTypes != null) {
+      expr.replaceArgsFor(0, checkResult.applyCastToArgs(args));
     }
-    expr.typeBeforeSlice = checkResult.type;
-    expr.argsIndices.get(0).type = checkResult.type;
+    expr.typeBeforeSlice = checkResult.returnType;
+    expr.argsIndices.get(0).type = checkResult.returnType;
   }
 
   private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
