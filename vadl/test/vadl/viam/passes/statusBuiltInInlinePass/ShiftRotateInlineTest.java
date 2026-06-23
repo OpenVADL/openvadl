@@ -65,7 +65,20 @@ public class ShiftRotateInlineTest extends StatusBuiltinInlineTest {
 
         // shift large amount
         lsls(0xFFFFFFFFL, 32, 0xFFFF, 32, 0x0, false, true, true),
-        lsls(0x0,         32, 0xFFFF, 32, 0x0, false, true, false)
+        lsls(0x0,         32, 0xFFFF, 32, 0x0, false, true, false),
+
+        // odd sizes
+        lsls(0b0101110, 7, 1, 1, 0b1011100, true, false, false),
+        lsls(0b0101110, 7, 3, 2, 0b1110000, true, false, false),
+        lsls(0b0101111, 7, 6, 3, 0b1000000, true, false, true),
+        lsls(0b0101111, 7, 7, 3, 0, false, true, true),
+        lsls(0b0101110, 7, 0xFFFF, 32, 0, false, true, false),
+
+        lsls(0b01011101011010110, 17, 1, 1, 0b10111010110101100, true, false, false),
+        lsls(0b01011101011010110, 17, 3, 2, 0b11101011010110000, true, false, false),
+        lsls(0b01011101011010111, 17, 16, 8, 0b10000000000000000, true, false, true),
+        lsls(0b01011101011010110, 17, 17, 8, 0, false, true, false),
+        lsls(0b01011101011010111, 17, 0xFFFF, 32, 0, false, true, true)
     );
   }
 
@@ -108,7 +121,20 @@ public class ShiftRotateInlineTest extends StatusBuiltinInlineTest {
 
         // rotate large amount
         rors(0xFFFFFFFFL, 32, 0xFFFF, 32, 0xFFFFFFFFL, true, false, true),
-        rors(0x0,         32, 0xFFFF, 32, 0x0,         false, true, false)
+        rors(0x0,         32, 0xFFFF, 32, 0x0,         false, true, false),
+
+        // odd sizes
+        rors(0b0101110, 7, 1, 1, 0b0010111, false, false, false),
+        rors(0b0101110, 7, 3, 2, 0b1100101, true, false, true),
+        rors(0b0101111, 7, 6, 3, 0b1011110, true, false, true),
+        rors(0b0101111, 7, 7, 3, 0b0101111, false, false, false),
+        rors(0b0101110, 7, 0xFFFF, 32, 0b0010111, false, false, false),
+
+        rors(0b01011101011010110, 17, 1, 1, 0b00101110101101011, false, false, false),
+        rors(0b01011101011010110, 17, 3, 2, 0b11001011101011010, true, false, true),
+        rors(0b01011101011010111, 17, 16, 8, 0b10111010110101110, true, false, true),
+        rors(0b01011101011010110, 17, 17, 8, 0b01011101011010110, false, false, false),
+        rors(0b01011101011010111, 17, 0xFFFF, 32, 0b01011101011010111, false, false, false)
     );
   }
 
