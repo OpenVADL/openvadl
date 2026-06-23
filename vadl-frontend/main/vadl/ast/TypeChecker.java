@@ -294,7 +294,7 @@ public class TypeChecker
       if (expr.type instanceof InternalErrorType) {
         throw new StopPartialCheckingSignal();
       }
-      return requireNonNull(expr.type);
+      return expr.type();
     }
 
     if (currentlyVisiting.contains(expr)) {
@@ -310,7 +310,7 @@ public class TypeChecker
       expr.accept(this);
     } catch (StopPartialCheckingSignal signal) {
       if (expr.type == null) {
-        expr.type = new InternalErrorType();
+        expr.type = InternalErrorType.INSTANCE;
       }
       throw signal;
     } catch (EvaluationError error) {
@@ -320,7 +320,7 @@ public class TypeChecker
               .build()
       );
       if (expr.type == null) {
-        expr.type = new InternalErrorType();
+        expr.type = InternalErrorType.INSTANCE;
       }
       throw new StopPartialCheckingSignal();
     } finally {
@@ -616,6 +616,8 @@ public class TypeChecker
     }
   }
 
+  private Map<Pair<Type, Type>, Boolean> explicitTypeCache = new HashMap<>();
+
   /**
    * Tests whether a type can explicit be cast to another.
    *
@@ -623,7 +625,16 @@ public class TypeChecker
    * @param to   is the target type.
    * @return true if the cast can happen explicitly, false otherwise.
    */
-  private static boolean canExplicitCast(Type from, Type to) {
+  private boolean canExplicitCast(Type from, Type to) {
+    if (from.equals(to)) {
+      return true;
+    }
+
+    return explicitTypeCache.computeIfAbsent(Pair.of(from, to),
+        k -> uncachedCanExplicitCast(k.left(), k.right()));
+  }
+
+  private boolean uncachedCanExplicitCast(Type from, Type to) {
     if (from.equals(to)) {
       return true;
     }
@@ -753,7 +764,7 @@ public class TypeChecker
    * @param to    which the expression should be casted.
    * @return the original expression, possibly wrapped.
    */
-  private static Expr wrapExplicitCast(Expr inner, Type to) {
+  private Expr wrapExplicitCast(Expr inner, Type to) {
     var innerType = requireNonNull(inner.type);
     if (innerType.equals(to)) {
       return inner;
@@ -779,7 +790,7 @@ public class TypeChecker
    * @return the original expression, possibly wrapped.
    */
   private static Expr wrapImplicitCast(Expr inner, Type to) {
-    var innerType = requireNonNull(inner.type);
+    var innerType = inner.type();
     if (innerType.equals(to)) {
       return inner;
     }
@@ -884,18 +895,56 @@ public class TypeChecker
     return null;
   }
 
-  record BuiltInCheckResult(Type type, @Nullable List<Expr> castedArgs) {
+  record BuiltInCheckResult(@Nullable List<Type> castedArgTypes, Type returnType) {
+    List<Expr> applyCastToArgs(List<Expr> args) {
+      if (castedArgTypes == null) {
+        return args;
+      }
 
+      var result = new ArrayList<Expr>(args.size());
+      for (int i = 0; i < args.size(); i++) {
+        var arg = args.get(i);
+        var type = castedArgTypes.get(i);
+
+        if (arg.type() == type) {
+          result.add(arg);
+        } else {
+          result.add(new CastExpr(arg, type));
+        }
+
+      }
+      return result;
+    }
   }
+
+  private Map<Pair<BuiltInTable.BuiltIn, List<Type>>, BuiltInCheckResult> builtInCheckCache =
+      new HashMap<>();
 
   /// Check if the built-in function call, but doesn't care which kind of expression it arises from
   /// binary expressions, unary expressions or direct calls.
-  /// The passed arguments don't have to already cecked.
+  /// The passed arguments have to be already checked!
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
-    // Check all incoming arguments
-    args.forEach(this::check);
+    var key = Pair.of(builtIn, args.stream().map(Expr::type).toList());
+    if (builtInCheckCache.containsKey(key)) {
+      return builtInCheckCache.get(key);
+    }
 
+    var result = unCachedCheckBuiltin(builtIn, args, location);
+
+    // We cannot cache if the result is a constant but not all input types were also constant.
+    // This is quite rare but here we simply cannot determine the result type simply based on the
+    // input types.
+    if (result.returnType instanceof ConstantType) {
+      return result;
+    }
+
+    builtInCheckCache.put(key, result);
+    return result;
+  }
+
+  private BuiltInCheckResult unCachedCheckBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
+                                          WithLocation location) {
     if (!(args.size() == builtIn.argTypeClasses().size() || (builtIn.signature().hasVarArgs()
         && args.size() >= builtIn.argTypeClasses().size()))) {
       throw addErrorAndStopChecking(
@@ -918,11 +967,11 @@ public class TypeChecker
       if (args.get(0).type() instanceof ConstantType) {
         var type = constantEvaluator.evalBuiltin(builtIn,
             args.stream().map(a -> constantEvaluator.eval(a)).toList(), location).type();
-        return new BuiltInCheckResult(type, null);
+        return new BuiltInCheckResult(null, type);
       }
 
       if (List.of(BuiltInTable.NEG, BuiltInTable.NOT).contains(builtIn)) {
-        return new BuiltInCheckResult(args.getFirst().type(), null);
+        return new BuiltInCheckResult(null, args.getFirst().type());
       }
     }
 
@@ -947,7 +996,8 @@ public class TypeChecker
             .build());
 
       } else {
-        return new BuiltInCheckResult(Type.bool(), args);
+        var argTypes = args.stream().map(a -> a.type()).toList();
+        return new BuiltInCheckResult(argTypes, Type.bool());
       }
     }
 
@@ -967,7 +1017,7 @@ public class TypeChecker
 
       // Special concat on strings
       if (builtIn == BuiltInTable.CONCATENATE_STRINGS) {
-        return new BuiltInCheckResult(Type.string(), List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), Type.string());
       }
 
       if (!(left.type() instanceof BitsType) && !(left.type() instanceof ConstantType)) {
@@ -1024,7 +1074,7 @@ public class TypeChecker
             var result = constantEvaluator.evalBuiltin(builtIn,
                 List.of(left, right).stream().map(a -> constantEvaluator.eval(a)).toList(),
                 location);
-            return new BuiltInCheckResult(result.type(), List.of(left, right));
+            return new BuiltInCheckResult(List.of(left.type(), right.type()), result.type());
           }
 
           // The left side is constant but the right isn't
@@ -1040,14 +1090,14 @@ public class TypeChecker
               .build());
         }
 
-        return new BuiltInCheckResult(left.type(), List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), left.type());
       }
 
       // Const types are a special case
       if (left.type() instanceof ConstantType && right.type() instanceof ConstantType) {
         var result = constantEvaluator.evalBuiltin(builtIn,
             List.of(left, right).stream().map(a -> constantEvaluator.eval(a)).toList(), location);
-        return new BuiltInCheckResult(result.type(), List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), result.type());
       }
 
       // If only one type is const, cast it to it's partner (or as close as possible)
@@ -1080,13 +1130,13 @@ public class TypeChecker
         // Bits<N> +# Bits<N> -> Bits<2*N>
         if (left.type() instanceof SIntType || right.type() instanceof SIntType) {
           var type = Type.signedInt(leftBitWidth * 2);
-          return new BuiltInCheckResult(type, List.of(left, right));
+          return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
         } else if (left.type() instanceof UIntType || right.type() instanceof UIntType) {
           var type = Type.unsignedInt(leftBitWidth * 2);
-          return new BuiltInCheckResult(type, List.of(left, right));
+          return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
         }
         var type = Type.bits(leftBitWidth * 2);
-        return new BuiltInCheckResult(type, List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
       }
 
       var bitWidth = ((BitsType) left.type()).bitWidth();
@@ -1126,12 +1176,12 @@ public class TypeChecker
       if (BuiltInTable.arithmeticComparisons.contains(builtIn)) {
         // Output type depends on type of operation
         var type = Type.bool();
-        return new BuiltInCheckResult(type, List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
       }
       if (BuiltInTable.arithmeticOperators.contains(builtIn)) {
         // Note: No that isn't the same as leftTyp
         var type = left.type();
-        return new BuiltInCheckResult(type, List.of(left, right));
+        return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
       }
 
       // Fallback: This concludes all the special handling we do on functions with two arguments.
@@ -1144,7 +1194,7 @@ public class TypeChecker
       var type = constantEvaluator
           .evalBuiltin(builtIn, args.stream().map(constantEvaluator::eval).toList(), location)
           .type();
-      return new BuiltInCheckResult(type, null);
+      return new BuiltInCheckResult(null, type);
     }
 
     // There are vararg functions so let's assume the last type is used for all additional args like
@@ -1177,7 +1227,7 @@ public class TypeChecker
               .build());
     }
 
-    return new BuiltInCheckResult(builtIn.returns(argTypes), args);
+    return new BuiltInCheckResult(argTypes, builtIn.returns(argTypes));
   }
 
   @Override
@@ -1223,18 +1273,18 @@ public class TypeChecker
       switch (field) {
         case TypedFormatField typedField -> {
           if (typedField.typeLiteral.type == null) {
-            typedField.typeLiteral.type = new InternalErrorType();
+            typedField.typeLiteral.type = InternalErrorType.INSTANCE;
           }
         }
         case RangeFormatField rangeField -> {
           if (rangeField.type == null) {
-            rangeField.type = new InternalErrorType();
+            rangeField.type = InternalErrorType.INSTANCE;
           }
         }
 
         case DerivedFormatField derivedField -> {
           if (derivedField.expr.type == null) {
-            derivedField.expr.type = new InternalErrorType();
+            derivedField.expr.type = InternalErrorType.INSTANCE;
           }
         }
 
@@ -1249,7 +1299,7 @@ public class TypeChecker
   public Void visit(FormatDefinition definition) {
     var type = check(definition.typeLiteral);
     if (!(type instanceof BitsType bitsType)) {
-      definition.typeLiteral.type = new InternalErrorType();
+      definition.typeLiteral.type = InternalErrorType.INSTANCE;
       setFormatDefinitionEmptyFieldsToError(definition);
       // Not actually thrown here but used to signal that this if will never suceed.
       throw addErrorAndStopChecking(typeMismatchError(definition.typeLiteral, "bits type", type));
@@ -3320,7 +3370,7 @@ public class TypeChecker
 
     // Return is always boolean
     var type = Type.bool();
-    return new BuiltInCheckResult(type, List.of(left, right));
+    return new BuiltInCheckResult(List.of(left.type(), right.type()), type);
   }
 
   @Override
@@ -3340,11 +3390,12 @@ public class TypeChecker
       checkResult = checkBuiltin(builtin, List.of(expr.left, expr.right), expr);
     }
 
-    if (checkResult.castedArgs != null) {
-      expr.left = checkResult.castedArgs.get(0);
-      expr.right = checkResult.castedArgs.get(1);
+    if (checkResult.castedArgTypes != null) {
+      var castedArgs = checkResult.applyCastToArgs(List.of(expr.left, expr.right));
+      expr.left = castedArgs.get(0);
+      expr.right = castedArgs.get(1);
     }
-    expr.type = checkResult.type;
+    expr.type = checkResult.returnType;
     return null;
   }
 
@@ -3494,11 +3545,11 @@ public class TypeChecker
    * @return the parsed type.
    */
   private Type parseTypeLiteral(TypeLiteral expr, @Nullable Integer preferredBitWidth) {
-    var result = internalParseTypeLiteral(expr, preferredBitWidth);
-    if (result.isRight()) {
-      throw addErrorAndStopChecking(result.right());
+    var result = internalParseTypeLiteral(expr, preferredBitWidth, false);
+    if (result.isError()) {
+      throw addErrorAndStopChecking(requireNonNull(result.error()));
     }
-    return result.left();
+    return requireNonNull(result.type());
   }
 
   /**
@@ -3528,16 +3579,41 @@ public class TypeChecker
       return null;
     }
 
-    var result = internalParseTypeLiteral(expr, null);
-    return result.isLeft() ? result.left() : null;
+    var result = internalParseTypeLiteral(expr, null, true);
+    return result.isType() ? result.type() : null;
+  }
+
+  private record ParsedTypeLiteralResult(@Nullable Type type, @Nullable Diagnostic error) {
+    static ParsedTypeLiteralResult success(Type type) {
+      return new ParsedTypeLiteralResult(type, null);
+    }
+
+    static ParsedTypeLiteralResult error(@Nullable Diagnostic error) {
+      return new ParsedTypeLiteralResult(null, error);
+    }
+
+    boolean isType() {
+      return type != null;
+    }
+
+    boolean isError() {
+      return type == null;
+    }
   }
 
   /**
    * Sometimes we want to throw when parsing a type literal and sometimes we want to ignore errors
    * so this returns a either type and the caller can decide how to handle them.
+   *
+   * @param skipErrorConstruction Whether to skip constructing the error diagnostic, will return
+   *                              null instead of the either. This is a performance optimization
+   *                              because in some cases we don't care about the diagnostics and
+   *                              constructing them was expensive.
    */
-  private Either<Type, Diagnostic> internalParseTypeLiteral(TypeLiteral expr,
-                                                            @Nullable Integer preferredBitWidth) {
+  private ParsedTypeLiteralResult internalParseTypeLiteral(TypeLiteral expr,
+                                                            @Nullable Integer preferredBitWidth,
+                                                                      boolean skipErrorConstruction
+  ) {
     var base = expr.baseType.pathToString();
 
     // 1. Check whether the base exists.
@@ -3553,10 +3629,11 @@ public class TypeChecker
       var suggestions =
           Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
 
-      return new Either(null, error("Unknown Type `%s`".formatted(base), expr)
-          .locationDescription(expr, "No type with that name exists.")
-          .suggestions(suggestions)
-          .build());
+      return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
+          error("Unknown Type `%s`".formatted(base), expr)
+              .locationDescription(expr, "No type with that name exists.")
+              .suggestions(suggestions)
+              .build());
     }
 
     // 2. Calculate the sizes
@@ -3578,7 +3655,7 @@ public class TypeChecker
     // Check for errors and return early if found
     for (var sizeOrError : sizesOrErrors) {
       if (sizeOrError.isRight()) {
-        return new Either<>(null, sizeOrError.right());
+        return ParsedTypeLiteralResult.error(sizeOrError.right());
       }
     }
 
@@ -3603,12 +3680,13 @@ public class TypeChecker
 
     if (unSizedBuiltins.containsKey(base)) {
       if (!sizes.isEmpty()) {
-        return new Either(null, error("Invalid Type Notation", expr.location())
-            .description("The `%s` type doesn't use the size notation.", base)
-            .help("Try removing the size parameter here.")
-            .build());
+        return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
+            error("Invalid Type Notation", expr.location())
+                .description("The `%s` type doesn't use the size notation.", base)
+                .help("Try removing the size parameter here.")
+                .build());
       }
-      return new Either(unSizedBuiltins.get(base).get(), null);
+      return ParsedTypeLiteralResult.success(unSizedBuiltins.get(base).get());
     }
 
     Map<String, Function<Integer, BitsType>> sizedBuiltins = Map.of(
@@ -3619,21 +3697,22 @@ public class TypeChecker
 
     if (sizedBuiltins.containsKey(base)) {
       if (sizes.isEmpty()) {
-        return new Either(null, error("Invalid Type Notation", expr.location())
-            .description(
-                "Unsized `%s` can only be used in special places when it's obvious what the bit"
-                    + " width should be.",
-                base)
-            .help("Try adding a size parameter here.")
-            .build());
+        return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
+            error("Invalid Type Notation", expr.location())
+                .description(
+                    "Unsized `%s` can only be used in special places when it's obvious what the bit"
+                        + " width should be.",
+                    base)
+                .help("Try adding a size parameter here.")
+                .build());
       }
 
       if (sizes.size() == 1) {
-        return new Either(sizedBuiltins.get(base).apply(sizes.getFirst()), null);
+        return ParsedTypeLiteralResult.success(sizedBuiltins.get(base).apply(sizes.getFirst()));
       }
 
-      return new Either(new TensorType(sizes.subList(0, sizes.size() - 1),
-          sizedBuiltins.get(base).apply(sizes.getLast())), null);
+      return ParsedTypeLiteralResult.success(new TensorType(sizes.subList(0, sizes.size() - 1),
+          sizedBuiltins.get(base).apply(sizes.getLast())));
     }
 
     // 4. Create the custom types
@@ -3647,21 +3726,22 @@ public class TypeChecker
     };
 
     if (sizes.isEmpty()) {
-      return new Either(customTargetType, null);
+      return ParsedTypeLiteralResult.success(customTargetType);
     }
 
     // Only some types can be used to create a tensor.
     if (customTargetType instanceof BitsType customBits) {
-      return new Either(new TensorType(sizes, customBits), null);
+      return ParsedTypeLiteralResult.success(new TensorType(sizes, customBits));
     }
 
     if (customTargetType instanceof TensorType customTensor) {
-      return new Either(new TensorType(sizes, customTensor), null);
+      return ParsedTypeLiteralResult.success(new TensorType(sizes, customTensor));
     }
 
-    return new Either(null, error("Invalid Tensor Type", expr)
-        .locationDescription(expr, "You can only create tensors from data types.")
-        .build());
+    return ParsedTypeLiteralResult.error(
+        skipErrorConstruction ? null : error("Invalid Tensor Type", expr)
+            .locationDescription(expr, "You can only create tensors from data types.")
+            .build());
   }
 
   @Override
@@ -3703,10 +3783,10 @@ public class TypeChecker
     expr.computedTarget = builtin;
 
     var result = checkBuiltin(builtin, List.of(expr.operand), expr);
-    if (result.castedArgs != null) {
-      expr.operand = result.castedArgs.get(0);
+    if (result.castedArgTypes != null) {
+      expr.operand = result.applyCastToArgs(List.of(expr.operand)).get(0);
     }
-    expr.type = result.type();
+    expr.type = result.returnType();
 
     return null;
   }
@@ -4114,11 +4194,11 @@ public class TypeChecker
     expr.computedBuiltIn = builtin;
 
     var checkResult = checkBuiltin(builtin, args, expr);
-    if (checkResult.castedArgs != null) {
-      expr.replaceArgsFor(0, checkResult.castedArgs);
+    if (checkResult.castedArgTypes != null) {
+      expr.replaceArgsFor(0, checkResult.applyCastToArgs(args));
     }
-    expr.typeBeforeSlice = checkResult.type;
-    expr.argsIndices.get(0).type = checkResult.type;
+    expr.typeBeforeSlice = checkResult.returnType;
+    expr.argsIndices.get(0).type = checkResult.returnType;
   }
 
   private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
