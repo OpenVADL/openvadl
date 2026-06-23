@@ -47,6 +47,7 @@ import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ParamNode;
 
@@ -198,6 +199,57 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
+  void recognizesVectorBenchVaddXinc()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_XINC"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_VECTOR, plan.operandForm());
+    assertEquals(2, plan.operands().size());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(1).kind());
+  }
+
+  @Test
+  void recognizesVectorBenchVaddVxInc()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_VX_INC"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_SCALAR, plan.operandForm());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertEquals(OperandKind.SCALAR_REGISTER, plan.operands().get(1).kind());
+    assertTrue(containsBuiltInCall(plan.operands().get(1).valueExpression()));
+  }
+
+  @Test
+  void recognizesVectorBenchVaddVxIncXinc()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var executionPlan = executionPlan(findInstruction(viam, "VectorBench64::VADD_VX_INC_XINC"));
+    var directGvec = singleDirectGvecRegion(executionPlan);
+    var plan = vectorPlan(directGvec);
+
+    assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath());
+    assertTrue(directGvec.isViable(), directGvec::toString);
+    assertEquals(VectorOp.ADD, plan.op());
+    assertEquals(OperandForm.VECTOR_SCALAR, plan.operandForm());
+    assertEquals(OperandKind.VECTOR_REGISTER, plan.operands().get(0).kind());
+    assertEquals(OperandKind.SCALAR_REGISTER, plan.operands().get(1).kind());
+    assertTrue(containsBuiltInCall(plan.operands().get(1).valueExpression()));
+  }
+
+  @Test
   void keepsScalarInstructionOnNormalTcgPathWithoutDirectGvecPlan()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
@@ -233,6 +285,16 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
 
   private Instruction findInstruction(Specification viam, String name) {
     return findDefinitionByNameIn(name, viam, Instruction.class);
+  }
+
+  private boolean containsBuiltInCall(ExpressionNode expression) {
+    if (expression instanceof BuiltInCall) {
+      return true;
+    }
+    return expression.inputs()
+        .filter(ExpressionNode.class::isInstance)
+        .map(ExpressionNode.class::cast)
+        .anyMatch(this::containsBuiltInCall);
   }
 
   private InstrExecPlan executionPlan(Instruction instr) {

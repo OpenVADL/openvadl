@@ -120,6 +120,7 @@ public final class VectorBench64Benchmarks {
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_DO = profile(83_218, 4);
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_TENSOR = profile(75_949, 4);
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_VX = profile(40_921, 8);
+  private static final BenchmarkProfile PROFILE_VECTOR_VADD_VX_INC = profile(40_921, 8);
   private static final BenchmarkProfile PROFILE_VECTOR_VMOV = profile(28_362, 12);
   private static final BenchmarkProfile PROFILE_VECTOR_VBCAST = profile(28_429, 12);
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_VL_08 = profile(48_376, 6);
@@ -131,6 +132,7 @@ public final class VectorBench64Benchmarks {
   private static final BenchmarkProfile PROFILE_VECTOR_VREDSUM = profile(903_048, 12);
   private static final BenchmarkProfile PROFILE_VECTOR_VMAC_VVV = profile(37_965, 8);
   private static final BenchmarkProfile PROFILE_VECTOR_VADD_XINC = profile(27_441, 12);
+  private static final BenchmarkProfile PROFILE_VECTOR_VADD_VX_INC_XINC = profile(27_441, 12);
   private static final BenchmarkProfile PROFILE_PREDICATE_PTRUE = profile(31_396, 64);
   private static final BenchmarkProfile PROFILE_PREDICATE_PWHILELT = profile(60_616, 32);
   private static final BenchmarkProfile PROFILE_PREDICATE_PAND = profile(38_320, 32);
@@ -690,6 +692,7 @@ public final class VectorBench64Benchmarks {
     artifacts.add(buildVaddDo(outputDir));
     artifacts.add(buildVaddTensor(outputDir));
     artifacts.add(buildVaddVx(outputDir));
+    artifacts.add(buildVaddVxInc(outputDir));
     artifacts.add(buildVmov(outputDir));
     artifacts.add(buildVbcast(outputDir));
     artifacts.add(buildVaddVl(outputDir, "vector-vadd-vl-08", 8));
@@ -701,6 +704,7 @@ public final class VectorBench64Benchmarks {
     artifacts.add(buildVredSum(outputDir));
     artifacts.add(buildVmac(outputDir));
     artifacts.add(buildVaddXinc(outputDir));
+    artifacts.add(buildVaddVxIncXinc(outputDir));
     artifacts.add(buildPtrue(outputDir));
     artifacts.add(buildPwhilelt(outputDir));
     artifacts.add(buildPand(outputDir));
@@ -782,6 +786,36 @@ public final class VectorBench64Benchmarks {
     writeElfAndAsm(asm, elfPath);
     return new BenchmarkArtifact("vector-vadd-vx", "vector-scalar", profile.iterations(),
         profile.bodyInstructions(4), 32, resultBytes.length, elfPath);
+  }
+
+  private static BenchmarkArtifact buildVaddVxInc(Path outputDir) throws IOException {
+    var profile = PROFILE_VECTOR_VADD_VX_INC;
+    var regs = initialVectorRegs();
+    var computedScalars = Arrays.stream(VECTOR_SCALARS).map(x -> x + 1).toArray();
+    var finalRegs = applyVectorScalarChain(
+        regs,
+        profile.iterations() * profile.chainRounds(),
+        computedScalars,
+        (destOld, src, scalar, lane) -> src + scalar);
+    byte[] resultBytes = intsToBytes(finalRegs[3]);
+
+    var asm = newProgram();
+    emitVectorChainSetup(asm, regs);
+    loadScalarRegs(asm, VECTOR_SCALARS);
+    long resultAddr = reserveData(asm, "result", resultBytes.length, 16);
+    long expectedAddr = addData(asm,
+        "expected_checksum",
+        longToBytes(checksum(resultBytes)),
+        8);
+    emitLoop(asm, profile.iterations(), () ->
+        emitVectorScalarChain(asm, profile.chainRounds(),
+            (innerAsm, vd, vs, scalarOp) -> emitInstruction(innerAsm, "VADD_VX_INC",
+                operand("vd", vd), operand("vs2", vs), operand("xs1", scalarOp))));
+    storeSingleVectorRegAndExit(asm, resultAddr, expectedAddr, 3);
+    var elfPath = outputDir.resolve("vector-vadd-vx-inc.elf");
+    writeElfAndAsm(asm, elfPath);
+    return new BenchmarkArtifact("vector-vadd-vx-inc", "vector-scalar-computed",
+        profile.iterations(), profile.bodyInstructions(4), 32, resultBytes.length, elfPath);
   }
 
   private static BenchmarkArtifact buildVmov(Path outputDir) throws IOException {
@@ -967,6 +1001,40 @@ public final class VectorBench64Benchmarks {
     var elfPath = outputDir.resolve("vector-vadd-xinc.elf");
     writeElfAndAsm(asm, elfPath);
     return new BenchmarkArtifact("vector-vadd-xinc", "vector-scalar-composite",
+        profile.iterations(), profile.bodyInstructions(4), 32, resultBytes.length, elfPath);
+  }
+
+  private static BenchmarkArtifact buildVaddVxIncXinc(Path outputDir) throws IOException {
+    var profile = PROFILE_VECTOR_VADD_VX_INC_XINC;
+    var regs = initialVectorRegs();
+    var computedScalars = Arrays.stream(VECTOR_SCALARS).map(x -> x + 1).toArray();
+    var finalRegs = applyVectorScalarChain(
+        regs,
+        profile.iterations() * profile.chainRounds(),
+        computedScalars,
+        (destOld, src, scalar, lane) -> src + scalar);
+    long scalarResult = (long) profile.iterations() * profile.bodyInstructions(4);
+    byte[] resultBytes = concat(intsToBytes(finalRegs[3]), longToBytes(scalarResult));
+
+    var asm = newProgram();
+    emitVectorChainSetup(asm, regs);
+    loadScalarRegs(asm, VECTOR_SCALARS);
+    loadImm(asm, REG_SCALAR4, 0);
+    long resultAddr = reserveData(asm, "result", resultBytes.length, 16);
+    long expectedAddr = addData(asm, "expected_checksum", longToBytes(checksum(resultBytes)), 8);
+    emitLoop(asm, profile.iterations(), () ->
+        emitVectorScalarChain(asm, profile.chainRounds(),
+            (innerAsm, vd, vs, scalarOp) -> emitInstruction(innerAsm, "VADD_VX_INC_XINC",
+                operand("vd", vd), operand("vs2", vs), operand("xs1", scalarOp),
+                operand("rd", REG_SCALAR4))));
+    loadAddress(asm, REG_PTR0, resultAddr);
+    vst(asm, 3, REG_PTR0);
+    loadAddress(asm, REG_PTR1, resultAddr + VEC_BYTES);
+    store64(asm, REG_SCALAR4, REG_PTR1, 0);
+    emitChecksumAndExit(asm, resultAddr, resultBytes.length, expectedAddr);
+    var elfPath = outputDir.resolve("vector-vadd-vx-inc-xinc.elf");
+    writeElfAndAsm(asm, elfPath);
+    return new BenchmarkArtifact("vector-vadd-vx-inc-xinc", "vector-scalar-computed-composite",
         profile.iterations(), profile.bodyInstructions(4), 32, resultBytes.length, elfPath);
   }
 

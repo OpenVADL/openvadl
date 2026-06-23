@@ -2,6 +2,7 @@ id,category,iterations,body_repeats,active_elements,result_bytes,file
 vector-vadd-do,vector-do,83218,16,32,128,vector-vadd-do.elf
 vector-vadd-tensor,vector-tensor,75949,16,32,128,vector-vadd-tensor.elf
 vector-vadd-vx,vector-scalar,40921,32,32,128,vector-vadd-vx.elf
+vector-vadd-vx-inc,vector-scalar-computed,40921,32,32,128,vector-vadd-vx-inc.elf
 vector-vmov,vector-move,28362,48,32,128,vector-vmov.elf
 vector-vbcast,vector-broadcast,28429,48,32,512,vector-vbcast.elf
 vector-vadd-vl-08,vector-variable-vl,48376,24,8,128,vector-vadd-vl-08.elf
@@ -13,6 +14,7 @@ predicate-vcmplt-pvv,predicate-vector-compare,512821,24,32,16,predicate-vcmplt-p
 vector-vredsum,vector-fold-sum,903048,48,32,32,vector-vredsum.elf
 vector-vmac-vvv,vector-composite-expression,37965,32,32,128,vector-vmac-vvv.elf
 vector-vadd-xinc,vector-scalar-composite,27441,48,32,136,vector-vadd-xinc.elf
+vector-vadd-vx-inc-xinc,vector-scalar-computed-composite,27441,48,32,136,vector-vadd-vx-inc-xinc.elf
 predicate-ptrue,predicate-constant,31396,256,32,32,predicate-ptrue.elf
 predicate-pwhilelt,predicate-generate-while,60616,128,32,32,predicate-pwhilelt.elf
 predicate-pand,predicate-logic,38320,128,32,32,predicate-pand.elf

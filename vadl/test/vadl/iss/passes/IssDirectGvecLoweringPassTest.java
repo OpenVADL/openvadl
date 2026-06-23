@@ -31,12 +31,14 @@ import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssGvecOpNode;
+import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.iss.passes.vector.IssDirectGvecLoweringPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.ForallNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 
 public class IssDirectGvecLoweringPassTest extends AbstractTest {
 
@@ -114,6 +116,31 @@ public class IssDirectGvecLoweringPassTest extends AbstractTest {
     assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
   }
 
+  @Test
+  void lowersVectorBenchComputedScalarLoopIntoBackendGvecNode()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var instr = findInstruction(viam, "VectorBench64::VADD_VX_INC");
+    var gvecNode = instr.behavior().getNodes(IssGvecOpNode.class).findFirst().orElseThrow();
+
+    assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
+    assertTrue(containsBuiltInCall(gvecNode.scalarOperand()));
+  }
+
+  @Test
+  void lowersVectorBenchComputedScalarLoopWithScalarSideEffectIntoBackendGvecNode()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/vectorbench/vectorbench64.vadl");
+    var instr = findInstruction(viam, "VectorBench64::VADD_VX_INC_XINC");
+    var gvecNode = instr.behavior().getNodes(IssGvecOpNode.class).findFirst().orElseThrow();
+
+    assertFalse(instr.behavior().getNodes(ForallNode.class).findAny().isPresent());
+    assertEquals(1, instr.behavior().getNodes(IssGvecOpNode.class).count());
+    assertEquals(1, instr.behavior().getNodes(IssWriteRegNode.class).count());
+    assertTrue(containsBuiltInCall(gvecNode.scalarOperand()));
+  }
+
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
     try {
       return SPEC_CACHE.computeIfAbsent(specPath, path -> {
@@ -138,6 +165,16 @@ public class IssDirectGvecLoweringPassTest extends AbstractTest {
 
   private Instruction findInstruction(Specification viam, String name) {
     return findDefinitionByNameIn(name, viam, Instruction.class);
+  }
+
+  private boolean containsBuiltInCall(vadl.viam.graph.dependency.ExpressionNode expression) {
+    if (expression instanceof BuiltInCall) {
+      return true;
+    }
+    return expression.inputs()
+        .filter(vadl.viam.graph.dependency.ExpressionNode.class::isInstance)
+        .map(vadl.viam.graph.dependency.ExpressionNode.class::cast)
+        .anyMatch(this::containsBuiltInCall);
   }
 
   private static final class CachedSpecException extends RuntimeException {

@@ -221,6 +221,17 @@ instruction set architecture VectorBench64 = {
     , opcode [6..0]   : Bits<7>
     }
 
+  format VScalarXSideType : Inst =
+    { funct4 [31..28] : Bits<4>
+    , vs2    [27..24] : VReg
+    , src1   [23..20]
+    , rd     [19..15] : GReg
+    , vd     [14..11] : VReg
+    , mode   [10..7]  : Bits<4>
+    , opcode [6..0]   : Bits<7>
+    , xs1 = src1 as GReg
+    }
+
   format PPredType : Inst =
     { funct7 [31..25] : Bits<7>
     , ps2    [24..23] : PReg
@@ -531,6 +542,12 @@ instruction set architecture VectorBench64 = {
   encoding VADD_VX = { funct6 = 0b000011, funct3 = 0b001, mode = 0b000, opcode = 0b010'0010 }
   assembly VADD_VX = ( mnemonic, " v", udec(vd), ", v", udec(vs2), ", ", register(xs1) )
 
+  instruction VADD_VX_INC : VOpType =
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs2)(i) + xElem(X(xs1) + 1 as Word)) as Bits<VecBits> as Vec
+  encoding VADD_VX_INC = { funct6 = 0b000100, funct3 = 0b001, mode = 0b000, opcode = 0b010'0010 }
+  assembly VADD_VX_INC = ( mnemonic, " v", udec(vd), ", v", udec(vs2), ", ", register(xs1) )
+
   instruction VMOV_VV : VOpType =
     V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
       V(vs1)(i)) as Bits<VecBits> as Vec
@@ -601,6 +618,14 @@ instruction set architecture VectorBench64 = {
   }
   encoding VADD_XINC = { funct4 = 0b0010, mode = 0b0000, opcode = 0b010'0111 }
   assembly VADD_XINC = ( mnemonic, " v", udec(vd), ", v", udec(vs1), ", v", udec(vs2), ", x", udec(rd) )
+
+  instruction VADD_VX_INC_XINC : VScalarXSideType = {
+    V(vd) := (forall i : Bits<6> in 0..VecLanes - 1 tensor
+      V(vs2)(i) + xElem(X(xs1) + 1 as Word)) as Bits<VecBits> as Vec
+    X(rd) := X(rd) + 1
+  }
+  encoding VADD_VX_INC_XINC = { funct4 = 0b0011, mode = 0b0000, opcode = 0b010'0111 }
+  assembly VADD_VX_INC_XINC = ( mnemonic, " v", udec(vd), ", v", udec(vs2), ", x", udec(src1), ", x", udec(rd) )
 
   instruction VZIP_LO : VPermType = {
     V(vd)( 0) := V(vs1)( 0)
