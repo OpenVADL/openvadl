@@ -173,6 +173,23 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
     return b.toTestCase();
   }
 
+  private IssTestUtils.TestCase createUnpredicatedExactOverlapTest(A64SVETestBuilder b) {
+    var zdAndZn = "z5";
+    var zm = "z6";
+    b.configureCpuForSveOps("x1", vlBits);
+
+    b.fillMemory64(VECTOR_SRC_1_ADDR, vectorChunkCount, "x1", "x2");
+    b.loadZFromMemory(zdAndZn, VECTOR_SRC_1_ADDR, "x1");
+
+    b.fillMemory64(VECTOR_SRC_2_ADDR, vectorChunkCount, "x1", "x2");
+    b.loadZFromMemory(zm, VECTOR_SRC_2_ADDR, "x1");
+
+    b.add("add %s.b, %s.b, %s.b", zdAndZn, zdAndZn, zm);
+    b.storeZToMemory(zdAndZn, VECTOR_DEST_ADDR, "x1");
+    b.loadMemory64ToRegs(VECTOR_DEST_ADDR, vectorChunkCount, RESULT_REG_START, "x1");
+    return b.toTestCase();
+  }
+
   private IssTestUtils.TestCase createReductionInstrTest(A64SVETestBuilder b,
                                                          String instruction,
                                                          String elemSuffix,
@@ -278,6 +295,10 @@ public class IssA64SVEInstrTest extends AbstractIssAarch64InstrTest {
         instructionGroup("sveUnpredAdd", unpredicatedBinaryInstrTests("add", "b", "h", "s", "d")),
         instructionGroup("sveUnpredSub", unpredicatedBinaryInstrTests("sub", "b", "h", "s", "d")),
         instructionGroup("sveUnpredMul", unpredicatedBinaryInstrTests("mul", "b", "h", "s", "d")),
+        instructionGroup("sveUnpredAddExactOverlap",
+            buildTestsWith(id -> createUnpredicatedExactOverlapTest(
+                getBuilder("SVE.UNPRED.ADD.OVERLAP", id)
+            ))),
         instructionGroup("sveFoldSaddv", reductionInstrTests("saddv", true, "b", "h", "s")),
         instructionGroup("sveFoldUaddv", reductionInstrTests("uaddv", true, "b", "h", "s")),
         instructionGroup("sveFoldAndv", reductionInstrTests("andv", false, "b", "h", "s", "d")),

@@ -16,11 +16,14 @@
 
 package vadl.iss.codegen;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vadl.TestUtils.findDefinitionByNameIn;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
@@ -76,8 +79,8 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
 
     var code = IssTranslateCodeGenerator.fetch(instr, config());
 
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_gvec_add("), code);
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("ofs_v(ctx, a->vd)"), code);
+    assertTrue(code.contains("tcg_gen_gvec_add("), code);
+    assertTrue(code.contains("ofs_v(ctx, a->vd)"), code);
   }
 
   @Test
@@ -88,8 +91,8 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
 
     var code = IssTranslateCodeGenerator.fetch(instr, config());
 
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_gvec_add("), code);
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("ofs_z(ctx, a->vd)"), code);
+    assertTrue(code.contains("tcg_gen_gvec_add("), code);
+    assertTrue(code.contains("ofs_z(ctx, a->vd)"), code);
   }
 
   @Test
@@ -100,9 +103,9 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
 
     var code = IssTranslateCodeGenerator.fetch(instr, config());
 
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_gvec_adds("), code);
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_extract_i64("), code);
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("reg_x_rs1"), code);
+    assertTrue(code.contains("tcg_gen_gvec_adds("), code);
+    assertTrue(code.contains("tcg_gen_extract_i64("), code);
+    assertTrue(code.contains("reg_x_rs1"), code);
   }
 
   @Test
@@ -113,8 +116,40 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
 
     var code = IssTranslateCodeGenerator.fetch(instr, config());
 
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("tcg_gen_gvec_addi("), code);
-    org.junit.jupiter.api.Assertions.assertTrue(code.contains("a->imm"), code);
+    assertTrue(code.contains("tcg_gen_gvec_addi("), code);
+    assertTrue(code.contains("a->imm"), code);
+  }
+
+  @Test
+  void emitsAarch64SveUnpredicatedGvecCalls()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyzeWithLowering("sys/aarch64/vprocessor.vadl");
+    var cases = List.of(
+        new SveCodegenCase("SVEunprADDB", "tcg_gen_gvec_add(", "MO_8"),
+        new SveCodegenCase("SVEunprADDH", "tcg_gen_gvec_add(", "MO_16"),
+        new SveCodegenCase("SVEunprADDS", "tcg_gen_gvec_add(", "MO_32"),
+        new SveCodegenCase("SVEunprADDD", "tcg_gen_gvec_add(", "MO_64"),
+        new SveCodegenCase("SVEunprSUBB", "tcg_gen_gvec_sub(", "MO_8"),
+        new SveCodegenCase("SVEunprMULB", "tcg_gen_gvec_mul(", "MO_8")
+    );
+
+    for (var sveCase : cases) {
+      var instr = findInstruction(
+          viam,
+          "AArch64SVEandSME::" + sveCase.instruction()
+      );
+      var code = IssTranslateCodeGenerator.fetch(instr, config());
+
+      assertTrue(
+          code.contains(sveCase.function()),
+          code
+      );
+      assertTrue(code.contains(sveCase.memOp()), code);
+      assertTrue(code.contains("ofs_z(ctx, a->zd)"), code);
+      assertTrue(code.contains("ofs_z(ctx, a->zn)"), code);
+      assertTrue(code.contains("ofs_z(ctx, a->zm)"), code);
+      assertFalse(code.contains("gen_helper_"), code);
+    }
   }
 
   private Specification analyze(String specPath) throws IOException, DuplicatedPassKeyException {
@@ -138,5 +173,12 @@ public class IssTranslateCodeGeneratorTest extends AbstractTest {
 
   private Instruction findInstruction(Specification viam, String name) {
     return findDefinitionByNameIn(name, viam, Instruction.class);
+  }
+
+  private record SveCodegenCase(
+      String instruction,
+      String function,
+      String memOp
+  ) {
   }
 }

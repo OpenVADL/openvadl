@@ -49,9 +49,9 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
    * A ergonomic constructor that will select the either {@link DirectLocation} or
    * {@link ExpandedLocation} based on the provided arguments.
    *
-   * @param path of the source file
-   * @param begin position
-   * @param end position
+   * @param path         of the source file
+   * @param begin        position
+   * @param end          position
    * @param expandedFrom stack of expanded locations
    * @return a source location instance
    */
@@ -366,9 +366,9 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
   /**
    * A direct location that wasn't expanded from anywhere.
    *
-   * @param path of the file.
+   * @param path  of the file.
    * @param begin position.
-   * @param end position.
+   * @param end   position.
    */
   record DirectLocation(@Nullable Path path, Position begin, Position end)
       implements SourceLocation {
@@ -385,6 +385,11 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
       this(path, new Position(line));
     }
 
+    @Nonnull
+    @Override
+    public String toString() {
+      return toConciseString();
+    }
   }
 
   /**
