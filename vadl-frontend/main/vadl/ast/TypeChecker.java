@@ -330,6 +330,16 @@ public class TypeChecker
     return expr.type();
   }
 
+  /// A tiny helper to check a list of expressions.
+  /// This is faster than the more intuitive way with streams.
+  private List<Type> checkExpressions(List<Expr> exprs) {
+    var types = new ArrayList<Type>(exprs.size());
+    for (var expr : exprs) {
+      types.add(check(expr));
+    }
+    return types;
+  }
+
   /**
    * Typecheck the statement, if not yet checked.
    *
@@ -616,8 +626,6 @@ public class TypeChecker
     }
   }
 
-  private Map<Pair<Type, Type>, Boolean> explicitTypeCache = new HashMap<>();
-
   /**
    * Tests whether a type can explicit be cast to another.
    *
@@ -630,41 +638,40 @@ public class TypeChecker
       return true;
     }
 
-    return explicitTypeCache.computeIfAbsent(Pair.of(from, to),
-        k -> uncachedCanExplicitCast(k.left(), k.right()));
-  }
-
-  private boolean uncachedCanExplicitCast(Type from, Type to) {
-    if (from.equals(to)) {
-      return true;
-    }
+    // Note: This code already was fancy, functional but it is on the hot path, so now it is fast.
 
     // Tensors need special rules for casting
-    if (from instanceof TensorType fromTensor && to instanceof TensorType toTensor) {
-      return fromTensor.flattenBitsType().equals(toTensor.flattenBitsType());
-    }
-    if (from instanceof TensorType fromTensor && to instanceof BitsType toBits) {
-      return fromTensor.flattenBitsType().equals(toBits);
-    }
-    if (from instanceof BitsType fromBits && to instanceof TensorType toTensor) {
-      return toTensor.flattenBitsType().bitWidth() == fromBits.bitWidth();
+    if (from instanceof TensorType fromTensor) {
+      if (to instanceof TensorType toTensor) {
+        return fromTensor.flattenBitsType().equals(toTensor.flattenBitsType());
+      }
+      if (to instanceof BitsType toBits) {
+        return fromTensor.flattenBitsType().equals(toBits);
+      }
     }
 
-    // Casting rules for basic types
-    var castTable = Map.of(
-        ConstantType.class, List.of(BitsType.class, BoolType.class),
-        BitsType.class, List.of(BitsType.class, BoolType.class),
-        BoolType.class, List.of(BoolType.class, BitsType.class),
-        StringType.class, List.of(StringType.class)
-    );
-
-    var key =
-        castTable.keySet().stream().filter(k -> k.isInstance(from)).findFirst().orElse(null);
-    if (key == null) {
-      return false;
+    // All the Basic types
+    if (from instanceof BitsType fromBits) {
+      if (to instanceof TensorType toTensor) {
+        return toTensor.flattenBitsType().bitWidth() == fromBits.bitWidth();
+      }
+      return to instanceof BitsType || to instanceof BoolType;
     }
-    var allowedTargets = requireNonNull(castTable.get(key));
-    return allowedTargets.stream().anyMatch(t -> t.isInstance(to));
+
+    if (from instanceof ConstantType) {
+      return to instanceof BitsType || to instanceof BoolType;
+    }
+
+    if (from instanceof BoolType) {
+      return to instanceof BoolType || to instanceof BitsType;
+    }
+
+
+    if (from instanceof StringType) {
+      return to instanceof StringType;
+    }
+
+    return false;
   }
 
   /**
@@ -917,17 +924,41 @@ public class TypeChecker
     }
   }
 
-  private Map<Pair<BuiltInTable.BuiltIn, List<Type>>, BuiltInCheckResult> builtInCheckCache =
-      new HashMap<>();
+  /// A tiny custom cache for built-in function type checking.
+  private static class BuiltInCheckCache {
+    private Map<BuiltInTable.BuiltIn, Map<List<Type>, BuiltInCheckResult>> store =
+        new HashMap<>();
+
+    @Nullable
+    private BuiltInCheckResult get(BuiltInTable.BuiltIn builtIn, List<Type> argTypes) {
+      var inner = store.get(builtIn);
+      if (inner == null) {
+        return null;
+      }
+      return inner.get(argTypes);
+    }
+
+    private void put(BuiltInTable.BuiltIn builtIn, List<Type> argTypes, BuiltInCheckResult result) {
+      var inner = store.computeIfAbsent(builtIn, k -> new HashMap<>());
+      inner.put(argTypes, result);
+    }
+  }
+
+  private BuiltInCheckCache builtInCheckCache = new BuiltInCheckCache();
+
 
   /// Check if the built-in function call, but doesn't care which kind of expression it arises from
   /// binary expressions, unary expressions or direct calls.
   /// The passed arguments have to be already checked!
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
-    var key = Pair.of(builtIn, args.stream().map(Expr::type).toList());
-    if (builtInCheckCache.containsKey(key)) {
-      return builtInCheckCache.get(key);
+    List<Type> argTypes = new ArrayList<>(args.size());
+    for (var arg : args) {
+      argTypes.add(arg.type());
+    }
+    var cached = builtInCheckCache.get(builtIn, argTypes);
+    if (cached != null) {
+      return cached;
     }
 
     var result = unCachedCheckBuiltin(builtIn, args, location);
@@ -939,7 +970,7 @@ public class TypeChecker
       return result;
     }
 
-    builtInCheckCache.put(key, result);
+    builtInCheckCache.put(builtIn, argTypes, result);
     return result;
   }
 
@@ -3408,7 +3439,7 @@ public class TypeChecker
       return null;
     }
 
-    var types = expr.expressions.stream().map(this::check).toList();
+    var types = checkExpressions(expr.expressions);
 
     // String concatination
     if (types.stream().allMatch(x -> x instanceof StringType)) {
@@ -3442,7 +3473,7 @@ public class TypeChecker
       }
 
       expr.expressions.replaceAll(e -> wrapImplicitCast(e, concreteTypes.get(0)));
-      types = expr.expressions.stream().map(this::check).toList();
+      types = checkExpressions(expr.expressions);
     }
 
     if (types.stream().allMatch(x -> x instanceof DataType)) {
@@ -4181,7 +4212,7 @@ public class TypeChecker
     // Builtin function
     List<Expr> args =
         !expr.argsIndices.isEmpty() ? expr.argsIndices.getFirst().values : new ArrayList<>();
-    var argTypes = args.stream().map(this::check).toList();
+    var argTypes = checkExpressions(args);
     var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
 
     if (builtin == null) {
