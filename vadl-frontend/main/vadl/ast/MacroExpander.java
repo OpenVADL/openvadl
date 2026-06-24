@@ -549,7 +549,7 @@ class MacroExpander
 
   @Nullable
   private String concatStringifyExpressions(Expr origin, List<Expr> expressions) {
-    var nameBuilder = new StringBuilder();
+    var nameBuilder = new StringBuilder(expressions.size());
     for (var inner : expressions) {
       if (inner instanceof Identifier id) {
         nameBuilder.append(id.name);
