@@ -184,7 +184,6 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
-import vadl.utils.Either;
 import vadl.utils.IdentityDeque;
 import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
@@ -953,8 +952,8 @@ public class TypeChecker
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
     List<Type> argTypes = new ArrayList<>(args.size());
-    for (var arg : args) {
-      argTypes.add(arg.type());
+    for (int i = 0; i < args.size(); i++) {
+      argTypes.add(args.get(i).type());
     }
     var cached = builtInCheckCache.get(builtIn, argTypes);
     if (cached != null) {
@@ -3668,30 +3667,21 @@ public class TypeChecker
     }
 
     // 2. Calculate the sizes
-    var sizesOrErrors = expr.sizeIndices.stream().map(sizeExpr -> {
+    List<Integer> sizes = new ArrayList<>(expr.sizeIndices.size());
+    for (var sizeExpr : expr.sizeIndices) {
       check(sizeExpr);
       var size = constantEvaluator.eval(sizeExpr).value().intValueExact();
 
       if (size < 1) {
-        return new Either<Integer, Diagnostic>(null,
+        return ParsedTypeLiteralResult.error(
             error("Invalid Type Notation", sizeExpr.location())
                 .locationDescription(sizeExpr.location(),
                     "Width must of a %s must be greater or equal 1 but was %d", base, size)
                 .build());
       }
 
-      return new Either<Integer, Diagnostic>(size, null);
-    }).toList();
-
-    // Check for errors and return early if found
-    for (var sizeOrError : sizesOrErrors) {
-      if (sizeOrError.isRight()) {
-        return ParsedTypeLiteralResult.error(sizeOrError.right());
-      }
+      sizes.add(size);
     }
-
-    var sizes = sizesOrErrors.stream().map(Either::left).toList();
-
 
     // For the builtin bits types we can infer the size (sometimes)
     if (List.of("Bits", "SInt", "UInt").contains(base)

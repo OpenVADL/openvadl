@@ -246,11 +246,13 @@ public class Ungrouper
   @Override
   public Expr visit(CallIndexExpr expr) {
     expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
-    for (var entry : expr.argsIndices) {
+    for (int i = 0; i < expr.argsIndices.size(); i++) {
+      var entry = expr.argsIndices.get(i);
       entry.values.replaceAll(e -> e.accept(this));
     }
 
-    for (var subCall : expr.subCalls) {
+    for (int i = 0; i < expr.subCalls.size(); i++) {
+      var subCall = expr.subCalls.get(i);
       for (var entry : subCall.argsIndices) {
         entry.values.replaceAll(e -> e.accept(this));
       }
@@ -889,7 +891,8 @@ public class Ungrouper
   }
 
   private void ungroupAnnotations(Definition definition) {
-    for (var annotation : definition.annotations) {
+    for (var i = 0; i < definition.annotations.size(); i++) {
+      var annotation = definition.annotations.get(i);
       visit(annotation);
     }
   }
