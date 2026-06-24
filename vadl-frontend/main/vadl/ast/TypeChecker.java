@@ -630,41 +630,40 @@ public class TypeChecker
       return true;
     }
 
-    return explicitTypeCache.computeIfAbsent(Pair.of(from, to),
-        k -> uncachedCanExplicitCast(k.left(), k.right()));
-  }
-
-  private boolean uncachedCanExplicitCast(Type from, Type to) {
-    if (from.equals(to)) {
-      return true;
-    }
+    // Note: This code already was fancy, functional but it is on the hot path, so now it is fast.
 
     // Tensors need special rules for casting
-    if (from instanceof TensorType fromTensor && to instanceof TensorType toTensor) {
-      return fromTensor.flattenBitsType().equals(toTensor.flattenBitsType());
-    }
-    if (from instanceof TensorType fromTensor && to instanceof BitsType toBits) {
-      return fromTensor.flattenBitsType().equals(toBits);
-    }
-    if (from instanceof BitsType fromBits && to instanceof TensorType toTensor) {
-      return toTensor.flattenBitsType().bitWidth() == fromBits.bitWidth();
+    if (from instanceof TensorType fromTensor ) {
+      if(to instanceof TensorType toTensor) {
+        return fromTensor.flattenBitsType().equals(toTensor.flattenBitsType());
+      }
+      if (to instanceof BitsType toBits) {
+        return fromTensor.flattenBitsType().equals(toBits);
+      }
     }
 
-    // Casting rules for basic types
-    var castTable = Map.of(
-        ConstantType.class, List.of(BitsType.class, BoolType.class),
-        BitsType.class, List.of(BitsType.class, BoolType.class),
-        BoolType.class, List.of(BoolType.class, BitsType.class),
-        StringType.class, List.of(StringType.class)
-    );
-
-    var key =
-        castTable.keySet().stream().filter(k -> k.isInstance(from)).findFirst().orElse(null);
-    if (key == null) {
-      return false;
+    // All the Basic types
+    if (from instanceof BitsType fromBits) {
+      if (to instanceof TensorType toTensor) {
+        return toTensor.flattenBitsType().bitWidth() == fromBits.bitWidth();
+      }
+      return to instanceof BitsType || to instanceof BoolType;
     }
-    var allowedTargets = requireNonNull(castTable.get(key));
-    return allowedTargets.stream().anyMatch(t -> t.isInstance(to));
+
+    if (from instanceof ConstantType) {
+      return to instanceof BitsType || to instanceof BoolType;
+    }
+
+    if (from instanceof BoolType) {
+      return to instanceof BoolType || to instanceof BitsType;
+    }
+
+
+    if (from instanceof StringType) {
+      return to instanceof StringType;
+    }
+
+    return false;
   }
 
   /**
