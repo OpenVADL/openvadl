@@ -330,6 +330,16 @@ public class TypeChecker
     return expr.type();
   }
 
+  /// A tiny helper to check a list of expressions.
+  /// This is faster than the more intuitive way with streams.
+  private List<Type> checkExpressions(List<Expr> exprs) {
+    var types = new ArrayList<Type>(exprs.size());
+    for (var expr : exprs) {
+      types.add(check(expr));
+    }
+    return types;
+  }
+
   /**
    * Typecheck the statement, if not yet checked.
    *
@@ -616,8 +626,6 @@ public class TypeChecker
     }
   }
 
-  private Map<Pair<Type, Type>, Boolean> explicitTypeCache = new HashMap<>();
-
   /**
    * Tests whether a type can explicit be cast to another.
    *
@@ -633,8 +641,8 @@ public class TypeChecker
     // Note: This code already was fancy, functional but it is on the hot path, so now it is fast.
 
     // Tensors need special rules for casting
-    if (from instanceof TensorType fromTensor ) {
-      if(to instanceof TensorType toTensor) {
+    if (from instanceof TensorType fromTensor) {
+      if (to instanceof TensorType toTensor) {
         return fromTensor.flattenBitsType().equals(toTensor.flattenBitsType());
       }
       if (to instanceof BitsType toBits) {
@@ -930,7 +938,6 @@ public class TypeChecker
       return inner.get(argTypes);
     }
 
-    @Nullable
     private void put(BuiltInTable.BuiltIn builtIn, List<Type> argTypes, BuiltInCheckResult result) {
       var inner = store.computeIfAbsent(builtIn, k -> new HashMap<>());
       inner.put(argTypes, result);
@@ -946,7 +953,7 @@ public class TypeChecker
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
     List<Type> argTypes = new ArrayList<>(args.size());
-    for (var arg: args) {
+    for (var arg : args) {
       argTypes.add(arg.type());
     }
     var cached = builtInCheckCache.get(builtIn, argTypes);
@@ -3432,7 +3439,7 @@ public class TypeChecker
       return null;
     }
 
-    var types = expr.expressions.stream().map(this::check).toList();
+    var types = checkExpressions(expr.expressions);
 
     // String concatination
     if (types.stream().allMatch(x -> x instanceof StringType)) {
@@ -3466,7 +3473,7 @@ public class TypeChecker
       }
 
       expr.expressions.replaceAll(e -> wrapImplicitCast(e, concreteTypes.get(0)));
-      types = expr.expressions.stream().map(this::check).toList();
+      types = checkExpressions(expr.expressions);
     }
 
     if (types.stream().allMatch(x -> x instanceof DataType)) {
@@ -4205,7 +4212,7 @@ public class TypeChecker
     // Builtin function
     List<Expr> args =
         !expr.argsIndices.isEmpty() ? expr.argsIndices.getFirst().values : new ArrayList<>();
-    var argTypes = args.stream().map(this::check).toList();
+    var argTypes = checkExpressions(args);
     var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
 
     if (builtin == null) {
