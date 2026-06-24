@@ -916,17 +916,42 @@ public class TypeChecker
     }
   }
 
-  private Map<Pair<BuiltInTable.BuiltIn, List<Type>>, BuiltInCheckResult> builtInCheckCache =
-      new HashMap<>();
+  /// A tiny custom cache for built-in function type checking.
+  private static class BuiltInCheckCache {
+    private Map<BuiltInTable.BuiltIn, Map<List<Type>, BuiltInCheckResult>> store =
+        new HashMap<>();
+
+    @Nullable
+    private BuiltInCheckResult get(BuiltInTable.BuiltIn builtIn, List<Type> argTypes) {
+      var inner = store.get(builtIn);
+      if (inner == null) {
+        return null;
+      }
+      return inner.get(argTypes);
+    }
+
+    @Nullable
+    private void put(BuiltInTable.BuiltIn builtIn, List<Type> argTypes, BuiltInCheckResult result) {
+      var inner = store.computeIfAbsent(builtIn, k -> new HashMap<>());
+      inner.put(argTypes, result);
+    }
+  }
+
+  private BuiltInCheckCache builtInCheckCache = new BuiltInCheckCache();
+
 
   /// Check if the built-in function call, but doesn't care which kind of expression it arises from
   /// binary expressions, unary expressions or direct calls.
   /// The passed arguments have to be already checked!
   private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                           WithLocation location) {
-    var key = Pair.of(builtIn, args.stream().map(Expr::type).toList());
-    if (builtInCheckCache.containsKey(key)) {
-      return builtInCheckCache.get(key);
+    List<Type> argTypes = new ArrayList<>(args.size());
+    for (var arg: args) {
+      argTypes.add(arg.type());
+    }
+    var cached = builtInCheckCache.get(builtIn, argTypes);
+    if (cached != null) {
+      return cached;
     }
 
     var result = unCachedCheckBuiltin(builtIn, args, location);
@@ -938,7 +963,7 @@ public class TypeChecker
       return result;
     }
 
-    builtInCheckCache.put(key, result);
+    builtInCheckCache.put(builtIn, argTypes, result);
     return result;
   }
 
