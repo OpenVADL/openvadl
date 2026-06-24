@@ -80,7 +80,7 @@ public final class IdentifierPath extends Expr implements IsId {
 
   //  @Override
   public List<String> pathToSegments() {
-    var result = new ArrayList<String>();
+    var result = new ArrayList<String>(segments.size());
     for (var segment : segments) {
       result.add(((Identifier) segment).name);
     }

@@ -156,14 +156,17 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
     if (target != null) {
       action.accept((Node) target);
     }
-    for (var a : argsIndices) {
-      for (var v : a.values) {
-        if (v != null) {
-          action.accept(v);
+    for (var i = 0; i < argsIndices.size(); i++) {
+      var args = argsIndices.get(i);
+      for (var j = 0; j < args.values.size(); j++) {
+        var value = args.values.get(j);
+        if (value != null) {
+          action.accept(value);
         }
       }
     }
-    for (var subCall : subCalls) {
+    for (var i = 0; i < subCalls.size(); i++) {
+      var subCall = subCalls.get(i);
       for (var a : subCall.argsIndices) {
         for (var v : a.values) {
           if (v != null) {

@@ -424,7 +424,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   static <T> List<T> append(List<T> list, T... elements) {
-    var newList = new ArrayList<T>(list);
+    var newList = new ArrayList<T>(list.size() + elements.length);
+    newList.addAll(list);
     for (T element : elements) {
       newList.add(element);
     }

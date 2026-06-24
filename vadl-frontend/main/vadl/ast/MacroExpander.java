@@ -222,8 +222,8 @@ class MacroExpander
 
   private <T> List<T> expandExprs(List<T> expressions) {
     var result = new ArrayList<T>(expressions.size());
-    for (var expr : expressions) {
-      result.add(expandExpr(expr));
+    for (var i = 0; i < expressions.size(); i++) {
+      result.add(expandExpr(expressions.get(i)));
     }
     return result;
   }
@@ -285,7 +285,8 @@ class MacroExpander
 
   private CallIndexExpr.Arguments expandArgs(CallIndexExpr.Arguments args) {
     var values = new ArrayList<Expr>(args.values.size());
-    for (var value : args.values) {
+    for (var i = 0; i < args.values.size(); i++) {
+      var value = args.values.get(i);
       values.add(expandExpr(value));
     }
     return new CallIndexExpr.Arguments(values, copyLoc(args.location));
@@ -473,11 +474,13 @@ class MacroExpander
   @Override
   public Expr visit(CallIndexExpr expr) {
     var argsIndices = new ArrayList<CallIndexExpr.Arguments>(expr.argsIndices.size());
-    for (var argsIndex : expr.argsIndices) {
+    for (var i = 0; i < expr.argsIndices.size(); i++) {
+      var argsIndex = expr.argsIndices.get(i);
       argsIndices.add(expandArgs(argsIndex));
     }
     var subCalls = new ArrayList<CallIndexExpr.SubCall>(expr.subCalls.size());
-    for (var subCall : expr.subCalls) {
+    for (var i = 0; i < expr.subCalls.size(); i++) {
+      var subCall = expr.subCalls.get(i);
       var subCallArgsIndices = new ArrayList<CallIndexExpr.Arguments>(subCall.argsIndices.size());
       for (var argsIndex : subCall.argsIndices) {
         subCallArgsIndices.add(expandArgs(argsIndex));
@@ -549,7 +552,7 @@ class MacroExpander
 
   @Nullable
   private String concatStringifyExpressions(Expr origin, List<Expr> expressions) {
-    var nameBuilder = new StringBuilder();
+    var nameBuilder = new StringBuilder(expressions.size());
     for (var inner : expressions) {
       if (inner instanceof Identifier id) {
         nameBuilder.append(id.name);
