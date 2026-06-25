@@ -250,6 +250,61 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
   }
 
   @Test
+  void recognizesAarch64UnpredicatedSveArithmetic()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/aarch64/vprocessor.vadl");
+    var cases = List.of(
+        new SveCase("SVEunprADDB", VectorOp.ADD, 8, 16),
+        new SveCase("SVEunprADDH", VectorOp.ADD, 16, 8),
+        new SveCase("SVEunprADDS", VectorOp.ADD, 32, 4),
+        new SveCase("SVEunprADDD", VectorOp.ADD, 64, 2),
+        new SveCase("SVEunprSUBB", VectorOp.SUB, 8, 16),
+        new SveCase("SVEunprSUBH", VectorOp.SUB, 16, 8),
+        new SveCase("SVEunprSUBS", VectorOp.SUB, 32, 4),
+        new SveCase("SVEunprSUBD", VectorOp.SUB, 64, 2),
+        new SveCase("SVEunprMULB", VectorOp.MUL, 8, 16),
+        new SveCase("SVEunprMULH", VectorOp.MUL, 16, 8),
+        new SveCase("SVEunprMULS", VectorOp.MUL, 32, 4),
+        new SveCase("SVEunprMULD", VectorOp.MUL, 64, 2)
+    );
+
+    for (var sveCase : cases) {
+      var executionPlan = executionPlan(
+          findInstruction(viam, "AArch64SVEandSME::" + sveCase.instruction())
+      );
+      var directGvec = singleDirectGvecRegion(executionPlan);
+
+      assertTrue(directGvec.isViable(), directGvec::toString);
+      assertEquals(ExecutionPath.NORMAL_TCG, executionPlan.selectedPath(), sveCase.instruction());
+      var plan = vectorPlan(directGvec);
+      assertEquals(sveCase.op(), plan.op(), sveCase.instruction());
+      assertEquals(OperandForm.VECTOR_VECTOR, plan.operandForm(), sveCase.instruction());
+      assertEquals(sveCase.elementBits(), plan.elementBits(), sveCase.instruction());
+      assertEquals(sveCase.laneCount(), plan.laneCount(), sveCase.instruction());
+      assertEquals(16, plan.opBytes(), sveCase.instruction());
+      assertEquals(16, plan.shape().maxszBytes(), sveCase.instruction());
+      assertEquals("Z", plan.destination().registerTensor().simpleName());
+      assertEquals(List.of("zd"), bindingParamNames(plan.destination().accessorIndices()));
+      assertEquals(List.of("zn"),
+          bindingParamNames(plan.operands().get(0).registerBinding().accessorIndices()));
+      assertEquals(List.of("zm"),
+          bindingParamNames(plan.operands().get(1).registerBinding().accessorIndices()));
+    }
+  }
+
+  @Test
+  void keepsPredicatedAarch64SveArithmeticOnHelperPath()
+      throws IOException, DuplicatedPassKeyException {
+    var viam = analyze("sys/aarch64/vprocessor.vadl");
+    var executionPlan = executionPlan(
+        findInstruction(viam, "AArch64SVEandSME::SVEpredADDB")
+    );
+
+    assertEquals(ExecutionPath.HELPER_CALL, executionPlan.selectedPath());
+    assertTrue(executionPlan.directGvecRegions().stream().noneMatch(DirectGvecSupport::isViable));
+  }
+
+  @Test
   void keepsScalarInstructionOnNormalTcgPathWithoutDirectGvecPlan()
       throws IOException, DuplicatedPassKeyException {
     var viam = analyze("sys/risc-v/rv64v.vadl");
@@ -319,6 +374,14 @@ public class IssVectorTcgAnalysisPassTest extends AbstractTest {
     return indices.stream()
         .map(index -> assertInstanceOf(ParamNode.class, index).definition().simpleName())
         .toList();
+  }
+
+  private record SveCase(
+      String instruction,
+      VectorOp op,
+      int elementBits,
+      int laneCount
+  ) {
   }
 
   private static final class CachedSpecException extends RuntimeException {

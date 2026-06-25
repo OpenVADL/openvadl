@@ -109,6 +109,7 @@ public record VectorInstructionFacts(
   public record OperandAccessFacts(
       ExpressionNode expression,
       @Nullable IssReadRegNode read,
+      ReadView readView,
       OperandShape operandShape,
       AccessBaseKind baseKind,
       AccessWindowKind windowKind,
@@ -121,6 +122,15 @@ public record VectorInstructionFacts(
     public boolean usesSupportedWindowKind() {
       return windowKind == AccessWindowKind.CHUNK || windowKind == AccessWindowKind.FULL;
     }
+  }
+
+  /**
+   * Normalized source view used to obtain one vector lane.
+   */
+  public enum ReadView {
+    NONE,
+    DIRECT_ELEMENT,
+    FULL_REGISTER_LANE_SLICE
   }
 
   /**

@@ -90,6 +90,11 @@ public final class NormalTcgPathEvaluator {
     coveredNodes.add(region.forallEnd());
     coveredNodes.add(region.write());
     coveredNodes.add(region.valueExpression());
+    // Accepted region values may depend on loop-invariant vector reads. SVE-style lane access,
+    // for example, slices a full-register read using the loop index, so walking only transient
+    // usages of the index covers the slice but not its register-read input.
+    GraphUtils.getInputNodes(region.valueExpression(), dependency -> true)
+        .forEach(coveredNodes::add);
 
     collectLoopBodyControlNodes(region, coveredNodes);
     GraphUtils.getTransientUsages(region.idx())

@@ -27,6 +27,7 @@ import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.BindingFa
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.LayoutFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperandShape;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperationKind;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.ReadView;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.SizeFacts;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.StorageFacts;
 import vadl.iss.passes.nodes.IssReadRegNode;
@@ -36,6 +37,7 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -52,10 +54,40 @@ public final class VectorAnalysisSupport {
   }
 
   /**
-   * Returns the read node when the expression is a lowered vector register read.
+   * Normalizes the expression that produces one lane from a vector register.
+   *
+   * <p>The original expression remains available to later planners while this match exposes the
+   * underlying register read and the proof that the selected value is the current loop lane.</p>
    */
-  public static @Nullable IssReadRegNode vectorRead(ExpressionNode node) {
-    return node instanceof IssReadRegNode read ? read : null;
+  public static @Nullable LaneReadMatch laneRead(ExpressionNode expression,
+                                                 ForIdxNode idx,
+                                                 int elementBits) {
+    if (expression instanceof IssReadRegNode read) {
+      return new LaneReadMatch(
+          read,
+          ReadView.DIRECT_ELEMENT,
+          matchesDirectElementRead(read, idx, elementBits)
+      );
+    }
+    if (!(expression instanceof DynSliceNode slice)
+        || !(slice.value() instanceof IssReadRegNode read)
+        || read.windowKind() != IssReadRegNode.WindowKind.FULL
+        || slice.type().bitWidth() != elementBits
+        || !isLoopElementOffset(slice.lsb(), idx, elementBits)
+        || !isLaneUpperBound(slice.msb(), slice.lsb(), elementBits)) {
+      return null;
+    }
+    return new LaneReadMatch(read, ReadView.FULL_REGISTER_LANE_SLICE, true);
+  }
+
+  /**
+   * One proven vector-register source view.
+   */
+  public record LaneReadMatch(
+      IssReadRegNode read,
+      ReadView readView,
+      boolean elementShapeMatches
+  ) {
   }
 
   /**
@@ -264,6 +296,44 @@ public final class VectorAnalysisSupport {
    */
   public static boolean isConstantInt(ExpressionNode expr, int expected) {
     return expr instanceof ConstantNode c && c.constant().asVal().intValue() == expected;
+  }
+
+  private static boolean matchesDirectElementRead(IssReadRegNode read,
+                                                  ForIdxNode idx,
+                                                  int elementBits) {
+    if (read.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
+      return isLoopElementOffset(read.bitOffset(), idx, elementBits)
+          && isConstantInt(read.bitWidth(), elementBits);
+    }
+    if (read.windowKind() == IssReadRegNode.WindowKind.FULL) {
+      return isFullyIndexedElementAccess(read.accessorIndices(), idx);
+    }
+    return false;
+  }
+
+  private static boolean isLaneUpperBound(ExpressionNode msb,
+                                          ExpressionNode lsb,
+                                          int elementBits) {
+    if (!(msb instanceof BuiltInCall call)
+        || call.builtIn() != BuiltInTable.ADD
+        || call.arguments().size() != 2) {
+      return false;
+    }
+    return matchesLaneUpperBound(call.arg(0), call.arg(1), lsb, elementBits)
+        || matchesLaneUpperBound(call.arg(1), call.arg(0), lsb, elementBits);
+  }
+
+  private static boolean matchesLaneUpperBound(ExpressionNode maybeLsb,
+                                               ExpressionNode maybeWidth,
+                                               ExpressionNode lsb,
+                                               int elementBits) {
+    // Tensor indexing currently represents the dynamic upper boundary as lsb + lane width,
+    // whereas register-alias lowering constructs the inclusive form lsb + lane width - 1.
+    // The result type fixes the extracted width, so accepting these two producer conventions is
+    // still an exact same-lane proof.
+    return maybeLsb == lsb
+        && (isConstantInt(maybeWidth, elementBits)
+        || isConstantInt(maybeWidth, elementBits - 1));
   }
 
   /**

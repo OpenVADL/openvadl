@@ -19,18 +19,16 @@ package vadl.iss.passes.common.planning.analysis.steps;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.accessWindowKind;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.bindingFacts;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.gvecAccessBaseKind;
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isConstantInt;
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isFullyIndexedElementAccess;
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.isLoopElementOffset;
+import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.laneRead;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.operandShape;
 import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.storageFacts;
-import static vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.vectorRead;
 
 import javax.annotation.Nullable;
+import vadl.iss.passes.common.planning.analysis.VectorAnalysisSupport.LaneReadMatch;
 import vadl.iss.passes.common.planning.analysis.VectorFactStep;
 import vadl.iss.passes.common.planning.analysis.VectorFactsBuilder;
 import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.OperandAccessFacts;
-import vadl.iss.passes.nodes.IssReadRegNode;
+import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.ReadView;
 
 /**
  * Extracts operand-side access and binding facts from the matched vector operation.
@@ -52,7 +50,7 @@ public final class VectorOperandStep implements VectorFactStep {
         // Each operand is recorded independently so different strategies can make different
         // decisions about vector, scalar, immediate, alias, or broadcast forms from the same fact
         // set.
-        var read = vectorRead(arg);
+        var read = laneRead(arg, region.idx(), writeFacts.size().elementBits());
         builder.addOperandFact(operandFact(
             arg,
             read,
@@ -65,7 +63,7 @@ public final class VectorOperandStep implements VectorFactStep {
 
     var unaryOperand = operationFacts.unaryOperand();
     if (unaryOperand != null) {
-      var read = vectorRead(unaryOperand);
+      var read = laneRead(unaryOperand, region.idx(), writeFacts.size().elementBits());
       builder.addOperandFact(operandFact(
           unaryOperand,
           read,
@@ -76,15 +74,16 @@ public final class VectorOperandStep implements VectorFactStep {
   }
 
   private OperandAccessFacts operandFact(vadl.viam.graph.dependency.ExpressionNode expression,
-                                         @Nullable IssReadRegNode read,
+                                         @Nullable LaneReadMatch laneRead,
                                          vadl.viam.graph.dependency.ForIdxNode idx,
                                          int elementBits) {
     // Non-register operands are kept as explicit facts rather than dropped so evaluators can
     // distinguish scalar/immediate rejection from "no analysis result".
-    if (read == null) {
+    if (laneRead == null) {
       return new OperandAccessFacts(
           expression,
           null,
+          ReadView.NONE,
           operandShape(expression, null, elementBits),
           vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessBaseKind.OTHER,
           vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.AccessWindowKind.OTHER,
@@ -96,32 +95,20 @@ public final class VectorOperandStep implements VectorFactStep {
       );
     }
 
+    var read = laneRead.read();
     var storage = storageFacts(read.regTensor());
     return new OperandAccessFacts(
         expression,
         read,
+        laneRead.readView(),
         operandShape(expression, read, elementBits),
         gvecAccessBaseKind(read),
         accessWindowKind(read.windowKind()),
-        matchesElementShape(read, idx, elementBits),
+        laneRead.elementShapeMatches(),
         storage,
-        read.readBitWidth() == elementBits,
+        expression.type().isDataType()
+            && expression.type().asDataType().bitWidth() == elementBits,
         bindingFacts(read, idx)
     );
-  }
-
-  private boolean matchesElementShape(IssReadRegNode read,
-                                      vadl.viam.graph.dependency.ForIdxNode idx,
-                                      int elementBits) {
-    // Read-side shape matching mirrors the write side so later evaluators can reason about exact
-    // lane correspondence without duplicating offset decoding.
-    if (read.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
-      return isLoopElementOffset(read.bitOffset(), idx, elementBits)
-          && isConstantInt(read.bitWidth(), elementBits);
-    }
-    if (read.windowKind() == IssReadRegNode.WindowKind.FULL) {
-      return isFullyIndexedElementAccess(read.accessorIndices(), idx);
-    }
-    return false;
   }
 }
