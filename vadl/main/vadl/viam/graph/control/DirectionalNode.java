@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 package vadl.viam.graph.control;
 
-import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Successor;
@@ -149,10 +149,10 @@ public abstract class DirectionalNode extends ControlNode {
   }
 
   @Override
-  public void collectSuccessors(List<Node> collection) {
-    super.collectSuccessors(collection);
+  public void forEachSuccessor(Consumer<Node> consumer) {
+    super.forEachSuccessor(consumer);
     if (this.next != null) {
-      collection.add(next);
+      consumer.accept(next);
     }
   }
 

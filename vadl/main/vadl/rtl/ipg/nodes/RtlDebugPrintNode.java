@@ -18,6 +18,7 @@ package vadl.rtl.ipg.nodes;
 
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
@@ -75,9 +76,9 @@ public class RtlDebugPrintNode extends SideEffectNode implements RtlConditionalN
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(values);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    values.forEach(consumer);
   }
 
   /**

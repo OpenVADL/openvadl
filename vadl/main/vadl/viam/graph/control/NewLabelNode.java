@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 package vadl.viam.graph.control;
 
-import java.util.List;
+import java.util.function.Consumer;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -37,9 +37,9 @@ public class NewLabelNode extends DirectionalNode {
   }
 
   @Override
-  public void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(label);
+  public void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(label);
   }
 
   @Override

@@ -16,7 +16,7 @@
 
 package vadl.viam.graph.control;
 
-import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Input;
 import vadl.utils.GraphUtils;
@@ -75,9 +75,9 @@ public class MergeNode extends AbstractBeginNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(branchEnds);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    branchEnds.forEach(consumer);
   }
 
   @Override

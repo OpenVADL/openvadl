@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
-import java.util.List;
+import java.util.function.Consumer;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.types.BuiltInTable;
@@ -70,8 +70,8 @@ public class LlvmUnlowerableSD extends BuiltInCall {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
   }
 
   @Override

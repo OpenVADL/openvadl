@@ -43,7 +43,7 @@ public class NodeList<T extends Node> extends ArrayList<T> {
 
   @SafeVarargs
   public NodeList(@Nonnull T... c) {
-    this(Arrays.stream(c).toList());
+   super(Arrays.asList(c));
   }
 
   /**

@@ -16,7 +16,7 @@
 
 package vadl.iss.passes.common.safeResourceRead.nodes;
 
-import java.util.List;
+import java.util.function.Consumer;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
@@ -70,9 +70,9 @@ public class ExprSaveNode extends ExpressionNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(value);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(value);
   }
 
   @Override

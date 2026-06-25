@@ -228,10 +228,8 @@ public class Graph {
     // TODO: We should differ between leafs and none-leafs, and also maintain a leafs cache
     node.ensure(node instanceof UniqueNode, "Only UniqueNodes might be used to find duplicates");
 
-    var inputs = node.inputList();
-
     // if it is leaf
-    if (inputs.isEmpty()) {
+    if (node.isLeaf()) {
       //noinspection unchecked
       return (T) getNodes(node.getClass())
           .filter(node::equalData)
@@ -244,7 +242,7 @@ public class Graph {
     var minCount = Integer.MAX_VALUE;
     Node minNode = null;
 
-    for (Node input : inputs) {
+    for (Node input : node.inputList()) {
       if (input.usageCount() <= minUsageNumber) {
         // there will be no duplicated node, as only this
         // node is user of some of its inputs
@@ -367,7 +365,7 @@ public class Graph {
       return;
     }
     node.safeDelete();
-    node.inputs().forEach(this::deleteIfUnusedRecursively);
+    node.forEachInput(this::deleteIfUnusedRecursively);
   }
 
   // helper method to add node to graph
@@ -409,7 +407,7 @@ public class Graph {
    * Checks if all inputs were added to the graph.
    */
   private void ensureInputsAdded(Node node) {
-    for (var input : node.inputList()) {
+    node.forEachInput(input -> {
       if (!input.isActive()) {
         throw new ViamGraphError(
             "Failed to add `%s` as its input node `%s` is not yet initialized. %s",
@@ -430,7 +428,7 @@ public class Graph {
             .addContext("graphOfInput", requireNonNull(input.graph()))
             .shrinkStacktrace(1);
       }
-    }
+    });
   }
 
   public SourceLocation sourceLocation() {
@@ -504,7 +502,7 @@ public class Graph {
     // In this step we replace all inputs and successors by the corresponding new nodes.
     cache.values().forEach(newNode -> {
       // replace shallow copied input by new uninitialized one
-      newNode.inputs().forEach(oldInput -> {
+      newNode.forEachInput(oldInput -> {
         var newInput = cache.get(oldInput);
         // replace inputs
         newNode.applyOnInputsUnsafe((self, input) -> {
@@ -516,7 +514,7 @@ public class Graph {
       });
 
       // replace shallow copied successor by new uninitialized one
-      newNode.successors().forEach(oldSuccessor -> {
+      newNode.forEachSuccessor(oldSuccessor -> {
         var newSuccessor = cache.get(oldSuccessor);
         // replace successor
         newNode.applyOnSuccessorsUnsafe((self, succ) -> {
@@ -566,7 +564,7 @@ public class Graph {
       });
 
       // replace shallow copied successor by new uninitialized one
-      newNode.successors().forEach(oldSuccessor -> {
+      newNode.forEachSuccessor(oldSuccessor -> {
         var newSuccessor = copies.get(oldSuccessor);
         if (newSuccessor == null) {
           return;

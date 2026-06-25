@@ -17,6 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.iss.passes.extensions.VectorTensorPlan;
 import vadl.iss.passes.extensions.VectorTensorPlan.OperandForm;
@@ -231,16 +232,16 @@ public class IssGvecOpNode extends DependencyNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(destinationAccessorIndices);
-    collection.addAll(lhsAccessorIndices);
-    collection.addAll(rhsAccessorIndices);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    destinationAccessorIndices.forEach(consumer);
+    lhsAccessorIndices.forEach(consumer);
+    rhsAccessorIndices.forEach(consumer);
     if (this.scalarOperand != null) {
-      collection.add(scalarOperand);
+      consumer.accept(scalarOperand);
     }
     if (this.immediateOperand != null) {
-      collection.add(immediateOperand);
+      consumer.accept(immediateOperand);
     }
   }
 

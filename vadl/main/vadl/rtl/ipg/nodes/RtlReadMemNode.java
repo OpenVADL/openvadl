@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 package vadl.rtl.ipg.nodes;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -81,11 +82,11 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(words);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(words);
     if (this.condition != null) {
-      collection.add(condition);
+      consumer.accept(condition);
     }
   }
 

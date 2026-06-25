@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import java.util.List;
+import java.util.function.Consumer;
 import vadl.javaannotations.viam.Input;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
@@ -73,9 +74,9 @@ public class LlvmBrSD extends ExpressionNode implements LlvmNodeLowerable {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(bb);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(bb);
   }
 
   @Override

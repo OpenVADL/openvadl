@@ -17,6 +17,7 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.function.Consumer;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
@@ -71,10 +72,10 @@ public class OperationForAllNode extends ExpressionNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(indices);
-    collection.add(body);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    indices.forEach(consumer);
+    consumer.accept(body);
   }
 
   @Override

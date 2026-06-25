@@ -16,7 +16,7 @@
 
 package vadl.iss.passes.tcg.lowering.nodes;
 
-import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.Input;
@@ -97,10 +97,10 @@ public class TcgDepositNode extends TcgBinaryOpNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(pos);
-    collection.add(len);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(pos);
+    consumer.accept(len);
   }
 
   @Override

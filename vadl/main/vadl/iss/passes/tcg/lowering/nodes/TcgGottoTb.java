@@ -18,6 +18,7 @@ package vadl.iss.passes.tcg.lowering.nodes;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
@@ -116,9 +117,9 @@ public class TcgGottoTb extends TcgNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(targetPc);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(targetPc);
   }
 
   @Override

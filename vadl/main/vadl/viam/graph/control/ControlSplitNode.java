@@ -17,7 +17,7 @@
 package vadl.viam.graph.control;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
-import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphVisitor;
@@ -69,9 +69,9 @@ public abstract class ControlSplitNode extends ControlNode {
   }
 
   @Override
-  protected void collectSuccessors(List<Node> collection) {
-    super.collectSuccessors(collection);
-    collection.addAll(branches);
+  protected void forEachSuccessor(Consumer<Node> consumer) {
+    super.forEachSuccessor(consumer);
+    branches.forEach(consumer);
   }
 
   @Override

@@ -17,6 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
+import java.util.function.Consumer;
 import vadl.iss.passes.common.opDecomposition.nodes.IssExprNode;
 import vadl.iss.passes.tcg.lowering.TcgExtend;
 import vadl.javaannotations.viam.DataValue;
@@ -153,9 +154,9 @@ public class IssConstExtractNode extends IssExprNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(value);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(value);
   }
 
   @Override

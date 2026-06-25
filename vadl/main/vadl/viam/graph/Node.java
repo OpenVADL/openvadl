@@ -114,9 +114,7 @@ public abstract class Node implements WithLocation {
       return;
     }
     this.sourceLocation = sourceLocation;
-    for (Node input : inputList()) {
-      input.setSourceLocationRecursively(sourceLocation);
-    }
+    forEachInput(input -> input.setSourceLocationRecursively(sourceLocation));
     if (this instanceof ControlNode controlNode) {
       var predecessor = controlNode.predecessor();
       if (predecessor != null) {
@@ -136,7 +134,12 @@ public abstract class Node implements WithLocation {
       return false;
     }
 
-    return inputList().isEmpty();
+    try {
+      forEachInput(i -> {throw FoundSignal.INSTANCE;});
+      return true;
+    } catch (FoundSignal ignored) {
+      return false;
+    }
   }
 
   /**
@@ -154,20 +157,39 @@ public abstract class Node implements WithLocation {
   }
 
   /**
-   * Collects all successors in the provided list.
+   * Collects all inputs in the provided list.
    *
    * <p><b>IMPORTANT</b>:
    * <li>This must be overridden by every node that has inputs
    * (annotated with {@link vadl.javaannotations.viam.Input}).</li>
-   * <li>The subclass must call {@code super.collectInputs(collection)} before
+   * <li>The subclass must call {@code super.forEachInput(consumer)} before
    * adding its own inputs!</li>
-   * <li>Optional successors must only be added if they are non-null</li>
+   * <li>Optional inputs must only be added if they are non-null</li>
    *
-   * @param collection to add the successors to.
+   * @param consumer to add the inputs to.
    */
-  protected void collectInputs(List<Node> collection) { /* nothing to add */
+  protected void forEachInput(Consumer<Node> consumer) { /* nothing to add */
   }
 
+  private static class FoundSignal extends RuntimeException {
+    @SuppressWarnings("StaticAssignmentOfThrowable")
+    static final FoundSignal INSTANCE = new FoundSignal();
+
+    private FoundSignal() {
+      super(null, null, false, false);
+    }
+  }
+
+  public final boolean containsInput(Node needle) {
+    try {
+      forEachInput(input -> {if (input.equals(needle))
+        throw FoundSignal.INSTANCE;
+      });
+      return false;
+    } catch (FoundSignal signal) {
+      return true;
+    }
+  }
 
   /**
    * Collects all successors in the provided list and it's children's successors.
@@ -176,7 +198,7 @@ public abstract class Node implements WithLocation {
    */
   public final void collectInputsWithChildren(List<Node> collection) {
     var sublist = new ArrayList<Node>();
-    this.collectInputs(sublist);
+    this.forEachInput(sublist::add);
     collection.addAll(sublist);
 
     // Only iterate over the newly visited inputs and ignore the rest.
@@ -192,7 +214,7 @@ public abstract class Node implements WithLocation {
    */
   public final <T> void collectInputsWithChildren(List<T> collection, Class<T> clazz) {
     var sublist = new ArrayList<Node>();
-    this.collectInputs(sublist);
+    this.forEachInput(sublist::add);
     collection.addAll(
         sublist.stream()
             .filter(clazz::isInstance)
@@ -205,7 +227,7 @@ public abstract class Node implements WithLocation {
 
   protected final List<Node> inputList() {
     var collection = new ArrayList<Node>();
-    collectInputs(collection);
+    forEachInput(collection::add);
     return collection;
   }
 
@@ -218,24 +240,24 @@ public abstract class Node implements WithLocation {
 
 
   /**
-   * Collects all successors in the provided list.
+   * Applies a consumer to all successors.
    *
    * <p><b>IMPORTANT</b>:
    * <li>This must be overridden by every node that has successors
    * (annotated with {@link vadl.javaannotations.viam.Successor})</li>
-   * <li>The subclass must call {@code super.collectSuccessors(collection)} before
+   * <li>The subclass must call {@code super.forEachSuccessor(consumer)} before
    * adding its own successors!</li>
    * <li>Optional successors must only be added if they are non-null</li>
    *
-   * @param collection to add the successors to.
+   * @param consumer to apply to the successors.
    */
-  protected void collectSuccessors(List<Node> collection) { /* nothing to add */
+  protected void forEachSuccessor(Consumer<Node> consumer) { /* nothing to add */
   }
 
 
   protected final List<Node> successorList() {
     var collection = new ArrayList<Node>();
-    collectSuccessors(collection);
+    forEachSuccessor(collection::add);
     return collection;
   }
 
@@ -433,9 +455,7 @@ public abstract class Node implements WithLocation {
    * @param visitor the visitor that gets visited
    */
   public final <T> void visitInputs(GraphVisitor<T> visitor) {
-    for (var input : inputs().toList()) {
-      visitor.visit(this, input);
-    }
+    forEachInput(input -> visitor.visit(this, input));
   }
 
   /**
@@ -444,9 +464,7 @@ public abstract class Node implements WithLocation {
    * @param visitor the visitor that gets visited
    */
   public final <T> void visitSuccessors(GraphVisitor<T> visitor) {
-    for (var succ : successors().toList()) {
-      visitor.visit(this, succ);
-    }
+    forEachSuccessor(succ -> visitor.visit(this, succ));
   }
 
   /**
@@ -456,8 +474,8 @@ public abstract class Node implements WithLocation {
   protected void initialize(Graph graph) {
     graph.include(this);
     this.graph = graph;
-    inputs().forEach(e -> e.addUsage(this));
-    successors().forEach(e -> e.setPredecessor(this));
+    forEachInput(e -> e.addUsage(this));
+    forEachSuccessor(e -> e.setPredecessor(this));
   }
 
   /**
@@ -808,7 +826,7 @@ public abstract class Node implements WithLocation {
    */
   private void clearSuccessorsUsageOfThis() {
     ensure(isActive(), "node must be active on successor clear");
-    successors().forEach(e -> e.setPredecessor(null));
+    forEachSuccessor(e -> e.setPredecessor(null));
   }
 
   /// GRAPH VERIFICATION METHODS
@@ -875,15 +893,11 @@ public abstract class Node implements WithLocation {
   }
 
   private void verifyAllEdges() {
-    for (var input : inputList()) {
-      verifyInput(input);
-    }
+    forEachInput(this::verifyInput);
     for (var usage : usages) {
       verifyUsage(usage);
     }
-    for (var successor : successorList()) {
-      verifySuccessor(successor);
-    }
+    forEachSuccessor(this::verifySuccessor);
     verifyPredecessor();
   }
 
@@ -926,9 +940,7 @@ public abstract class Node implements WithLocation {
     ensure(usage.isActive(), "usage is not active %s", usage);
     ensure(usage.graph() == graph, "usage is in other graph %s", usage);
 
-    var usageContainsThis = usage
-        .inputList()
-        .contains(this);
+    var usageContainsThis = usage.containsInput(this);
 
     ensure(usageContainsThis, "user does not contain this node as input %s", usage);
   }
@@ -1030,7 +1042,7 @@ public abstract class Node implements WithLocation {
      * a different graph.
      *
      * @deprecated as it leaves the node in an inconsistent state within the graph.
-     *     Take a look at {@link Graph#deinitializeNodes()} for more information.
+     *     Take a look at {@link Graph()} for more information.
      */
     @Deprecated
     public void deactivate() {

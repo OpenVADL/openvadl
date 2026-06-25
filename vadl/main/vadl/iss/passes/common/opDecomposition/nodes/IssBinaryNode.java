@@ -16,7 +16,7 @@
 
 package vadl.iss.passes.common.opDecomposition.nodes;
 
-import java.util.List;
+import java.util.function.Consumer;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
@@ -64,9 +64,9 @@ public abstract class IssBinaryNode extends IssExprNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(arg1);
-    collection.add(arg2);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(arg1);
+    consumer.accept(arg2);
   }
 }

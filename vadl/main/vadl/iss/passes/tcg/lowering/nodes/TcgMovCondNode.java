@@ -18,6 +18,7 @@ package vadl.iss.passes.tcg.lowering.nodes;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcg.lowering.TcgCondition;
@@ -97,12 +98,12 @@ public class TcgMovCondNode extends TcgOpNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(c1);
-    collection.add(c2);
-    collection.add(v1);
-    collection.add(v2);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(c1);
+    consumer.accept(c2);
+    consumer.accept(v1);
+    consumer.accept(v2);
   }
 
   @Override

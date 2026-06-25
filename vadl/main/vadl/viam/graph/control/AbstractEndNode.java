@@ -17,6 +17,7 @@
 package vadl.viam.graph.control;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
@@ -62,9 +63,9 @@ public abstract class AbstractEndNode extends ControlNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(sideEffects);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    sideEffects.forEach(consumer);
   }
 
   @Override

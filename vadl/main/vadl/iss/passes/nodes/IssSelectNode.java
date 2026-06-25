@@ -17,6 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
+import java.util.function.Consumer;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.tcg.lowering.TcgCondition;
 import vadl.javaannotations.viam.DataValue;
@@ -152,12 +153,12 @@ public class IssSelectNode extends ExpressionNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(c1);
-    collection.add(c2);
-    collection.add(trueCase);
-    collection.add(falseCase);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(c1);
+    consumer.accept(c2);
+    consumer.accept(trueCase);
+    consumer.accept(falseCase);
   }
 
   @Override

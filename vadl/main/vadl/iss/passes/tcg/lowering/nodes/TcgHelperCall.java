@@ -20,6 +20,7 @@ import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -113,12 +114,12 @@ public class TcgHelperCall extends TcgNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
     if (this.result != null) {
-      collection.add(result);
+      consumer.accept(result);
     }
-    collection.addAll(args);
+    args.forEach(consumer);
   }
 
   @Override

@@ -19,6 +19,7 @@ package vadl.iss.passes.nodes;
 import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -28,6 +29,7 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -290,11 +292,11 @@ public class IssReadRegNode extends ReadRegTensorNode {
   }
 
   @Override
-  protected void collectInputs(List<vadl.viam.graph.Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(accessorIndices);
-    collection.add(bitOffset);
-    collection.add(bitWidth);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    accessorIndices.forEach(consumer);
+    consumer.accept(bitOffset);
+    consumer.accept(bitWidth);
   }
 
   @Override
