@@ -158,9 +158,8 @@ public class ViamEnricherCollection {
               CollectBehaviorDotGraphPass.class,
               CollectBehaviorDotGraphPass.Result.class
           )
-          .flatMap(r -> r.map().stream())
+          .flatMap(r -> r.mapFor(def).stream())
           // only filter for affected definitions
-          .filter(dotGraphResult -> dotGraphResult.definition() == def)
           // Downcast because Java doesn't support Higher Order Subtyping
           .map(x -> (BehaviorTimelineDisplay) x)
           .toList();
