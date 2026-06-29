@@ -18,6 +18,7 @@ package vadl.template;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -246,7 +247,7 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
     return Path.of(configuration.outputPath().toString(), subDir, outputPath);
   }
 
-  private FileWriter createFileWriter(Path filePath)
+  private Writer createFileWriter(Path filePath)
       throws IOException {
     var file = filePath.toFile();
 
@@ -258,7 +259,7 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
       ensure(file.createNewFile(), "Cannot create new file %s", file);
     }
 
-    return new FileWriter(file, Charset.defaultCharset());
+    return new BufferedWriter(new FileWriter(file, Charset.defaultCharset()));
   }
 
   @SuppressWarnings("LineLength")
@@ -292,7 +293,7 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
     templateResolver.setTemplateMode(TemplateMode.TEXT);
     templateResolver.setCharacterEncoding("UTF8");
     templateResolver.setCheckExistence(true);
-    templateResolver.setCacheable(false);
+    templateResolver.setCacheable(true);
     return templateResolver;
   }
 

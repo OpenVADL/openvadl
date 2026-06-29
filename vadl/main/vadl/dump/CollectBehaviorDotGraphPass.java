@@ -19,6 +19,7 @@ package vadl.dump;
 import static vadl.utils.ViamUtils.findDefinitionsByFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,17 +67,26 @@ public class CollectBehaviorDotGraphPass extends Pass {
      * the rendering. It returns a list where each entry is separate pass result which contains
      * the dot graph.
      */
-    public List<PassResults.DotGraphResult> map() {
-      return behaviors.entrySet().stream()
-          .flatMap(x -> x.getValue().stream()
-              .map(behaviorDotGraph -> new PassResults.DotGraphResult(
-                  prevPass.passKey(),
-                  prevPass().pass(),
-                  prevPass().durationNs(),
-                  behaviorDotGraph,
-                  prevPass().skipped(),
-                  x.getKey())))
-          .toList();
+    public List<PassResults.DotGraphResult> mapFor(Definition def) {
+      var results = new ArrayList<PassResults.DotGraphResult>();
+      var graphList = behaviors.get(def);
+
+      if (graphList == null) {
+        return results;
+      }
+
+      for (int i = 0; i < graphList.size(); i++) {
+        results.add(new PassResults.DotGraphResult(
+            prevPass.passKey(),
+            prevPass.pass(),
+            prevPass.durationNs(),
+            graphList.get(i),
+            prevPass.skipped(),
+            def));
+      }
+
+
+      return results;
     }
   }
 
