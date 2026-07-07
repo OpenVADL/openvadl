@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.ast.ConstantType;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -892,7 +891,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     var graph = new Graph("predicateCall");
 
     var id = Identifier.noLocation(semPredCondition);
-    var parsedConstantParam = new Parameter(id, ConstantType.string(), 0);
+    var parsedConstantParam = new Parameter(id, Type.string(), 0);
     var funcParam = new FuncParamNode(parsedConstantParam);
     var returnNode = new ReturnNode(funcParam);
     graph.addWithInputs(returnNode);
