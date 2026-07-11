@@ -120,6 +120,37 @@ public abstract class Type {
         .computeIfAbsent(bitWidth, k -> new UIntType(bitWidth));
   }
 
+  private static final HashMap<FloatType.Size, FloatType> floatTyps = new HashMap<>();
+
+  /**
+   * Retrieves the instance of FloatType with the specified size.
+   *
+   * @param size the size of the FloatType object
+   * @return the FloatType object with the specified size
+   */
+  public static FloatType floatType(FloatType.Size size) {
+    return floatTyps
+        .computeIfAbsent(size, k -> new FloatType(size));
+  }
+
+  /**
+   * Retrieves the instance of FloatType with size 32.
+   *
+   * @return the FloatType object with size 32
+   */
+  public static FloatType float32() {
+    return floatType(FloatType.Size.FP32);
+  }
+
+  /**
+   * Retrieves the instance of FloatType with size 64.
+   *
+   * @return the FloatType object with size 64
+   */
+  public static FloatType float64() {
+    return floatType(FloatType.Size.FP64);
+  }
+
   /**
    * Returns a DummyType object.
    *
@@ -188,6 +219,25 @@ public abstract class Type {
     return struct(fields);
   }
 
+  /**
+   * Retrieves the struct type with the specified subtypes.
+   *
+   * @return the struct type with the specified subtypes
+   */
+  public static StructType struct(String field1, Type type1,
+                                  String field2, Type type2,
+                                  String field3, Type type3,
+                                  String field4, Type type4,
+                                  String field5, Type type5) {
+    var fields = new LinkedHashMap<String, Type>();
+    fields.put(field1, type1);
+    fields.put(field2, type2);
+    fields.put(field3, type3);
+    fields.put(field4, type4);
+    fields.put(field5, type5);
+    return struct(fields);
+  }
+
   private static @Nullable StatusType statusType = null;
 
   /**
@@ -200,6 +250,20 @@ public abstract class Type {
       statusType = new StatusType();
     }
     return statusType;
+  }
+
+  private static @Nullable FloatStatusType floatStatusType = null;
+
+  /**
+   * Retrieves the float status type instance.
+   *
+   * @return the float status type instance
+   */
+  public static FloatStatusType floatStatus() {
+    if (floatStatusType == null) {
+      floatStatusType = new FloatStatusType();
+    }
+    return floatStatusType;
   }
 
   private static @Nullable VoidType voidType = null;
@@ -374,6 +438,14 @@ public abstract class Type {
       return Type.signedInt(bitWidth);
     } else if (typeClass == UIntType.class) {
       return Type.unsignedInt(bitWidth);
+    } else if (typeClass == FloatType.class) {
+      if (bitWidth == FloatType.Size.FP32.bitWidth) {
+        return Type.float32();
+      } else if (bitWidth == FloatType.Size.FP64.bitWidth) {
+        return Type.float64();
+      } else {
+        return null;
+      }
     } else {
       return null;
     }
@@ -403,6 +475,7 @@ public abstract class Type {
   /// These are all the builtin types that exist in the language.
   /// Some of them cannot be initialized like them since they require a size, like `SInt<16>`
   /// which is why they are named bases.
-  public static final Set<String> builtinTypeBases =
-      Set.of("Bool", "String", "Bits", "UInt", "SInt", "Instruction", "FetchResult");
+  public static final Set<String> builtinTypeBases = Set.of(
+      "Bool", "String", "Bits", "UInt", "SInt", "FP32", "FP64", "Instruction", "FetchResult"
+  );
 }

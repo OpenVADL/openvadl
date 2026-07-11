@@ -1,0 +1,363 @@
+
+import rv64csr::{RV64IMZicsr}
+
+instruction set architecture RV64IMF extending RV64IMZicsr = {
+
+  model FSize() : Id = {FSize32}
+
+  using ConstTy = UInt<8>
+  constant FLEN     : ConstTy = $FSize
+  constant FSize32  : ConstTy = 32
+  constant FSize64  : ConstTy = 64
+  constant FSize128 : ConstTy = 128
+
+  // TODO: these need to be built-in types
+  using FP16  = Bits<16>
+  using FP128 = Bits<128>
+
+  using SIntH = SInt<16>
+  using UIntH = UInt<16>
+  using SIntD = SInt<64>
+  using UIntD = UInt<64>
+  using SIntQ = SInt<128>
+  using UIntQ = UInt<128>
+
+  using FRegs = Bits<FLEN>
+
+  using Bits2 = Bits<2>
+
+  register F : Index -> FRegs
+
+  register FCSR : FCsrFormat
+
+  format FCsrFormat : Bits<32> =
+  { reserved [31..8]
+  , frm      [7..5]      // Rounding mode
+  , fflags   [4..0]      // Float exception flags
+  , nv       = fflags(4) // Float exception flag: Invalid operation
+  , dz       = fflags(3) // Float exception flag: Division by zero
+  , of       = fflags(2) // Float exception flag: Overflow
+  , uf       = fflags(1) // Float exception flag: Underflow
+  , nx       = fflags(0) // Float exception flag: Inexact
+  }
+
+  // rounding modes
+  enumeration Frm : Bits3 =
+  { rne = 0b000   // Round to Nearest, ties to Even
+  , rtz = 0b001   // Round to Zero
+  , rdn = 0b010   // Round Down (towards -infinity)
+  , rup = 0b011   // Round UP   (towards  infinity)
+  , rmm = 0b100   // Round to Nearest, ties to Max Magnitude
+  //      0b101   // reserved in FRtype.funct3
+  //      0b110   // reserved in FRtype.funct3
+  , dyn = 0b111   // reserved in FRtype.funct3; in instruction: Dynamic rounding (uses FRtype.funct3)
+  }
+
+  // format (precision)
+  enumeration Fmt : Bits2 =
+  { s = 0b00  // single precision (32 -bit)
+  , d = 0b01  // double precision (64 -bit)
+  , h = 0b10  // half   precision (16 -bit)
+  , q = 0b11  // quad   precision (128-bit)
+  }
+
+  function FrmName(frm : Bits3) -> String =
+    match frm with
+     { Frm::rne => "rne"
+     , Frm::rtz => "rtz"
+     , Frm::rdn => "rdn"
+     , Frm::rup => "rup"
+     , Frm::rmm => "rmm"
+     , _ => ""
+     }
+
+  format FRtype : Inst =                  // Rtype register 3 operand instruction format (for float ops)
+    { funct5 : Bits5                      // [31..27] 5 bit function code
+    , fmt    : Bits2                      // [26..25] 2 bit format code
+    , rs2    : Index                      // [24..20] 2nd source register index / shamt
+    , rs1    : Index                      // [19..15] 1st source register index
+    , funct3 : Bits3                      // [14..12] 3 bit function code
+    , rd     : Index                      // [11..7]  destination register index
+    , opcode : Bits7                      // [6..0]   7 bit operation code
+    , shamt  = rs2 as UInt                // 5 bit unsigned shift ammount
+    }
+
+  format R4type : Inst =                  // R4type register 4 operand instruction format
+    { rs3    : Bits5                      // [31..27] 3rd source register index
+    , fmt    : Bits2                      // [26..25] 2 bit format
+    , rs2    : Index                      // [24..20] 2nd source register index
+    , rs1    : Index                      // [19..15] 1st source register index
+    , funct3 : Bits3                      // [14..12] 3 bit function code
+    , rd     : Index                      // [11..7]  destination register index
+    , opcode : Bits7                      // [6..0]   7 bit operation code
+    }
+
+  record FRtypeRec (name : Id, mne : Str, rm : Ex, fmt : Ex, funct5 : Bin, instr : Stat)
+
+  model FRtypeInstr (c : FRtypeRec, enc : Encs, asm : IsaDefs) : IsaDefs = {
+    instruction $c.name : FRtype = $c.instr
+    encoding $c.name = {opcode = 0b101'0011, funct3 = $c.rm, fmt = $c.fmt, funct5 = $c.funct5, $enc}
+    $asm
+  }
+
+  model FRtypeInstr1 (c : FRtypeRec, rs2 : Bin) : IsaDefs = {
+    $FRtypeInstr($c; rs2 = $rs2; assembly $c.name = ($c.mne, " ", register(rd), ",", register(rs1)))
+  }
+
+  model FRtypeInstr1rm (c : FRtypeRec, rs2 : Bin) : IsaDefs = {
+    $FRtypeInstr($c; rs2 = $rs2; assembly $c.name = ($c.mne, " ", register(rd), ",", register(rs1), ",", FrmName($c.rm)))
+  }
+
+  model FRtypeInstr2 (c : FRtypeRec) : IsaDefs = {
+    $FRtypeInstr($c; none; assembly $c.name = ($c.mne, " ", register(rd), ",", register(rs1), ",", register(rs2)))
+  }
+
+  model FRtypeInstr2rm (c : FRtypeRec) : IsaDefs = {
+    $FRtypeInstr($c; none; assembly $c.name = ($c.mne, " ", register(rd), ",", register(rs1), ",", register(rs2), ",", FrmName($c.rm)))
+  }
+
+  record FSizeRec (suffix : Id, iSuffix : Id, fmt : Ex, ty : Id, sTy : Id, uTy : Id, size : Int)
+
+  model FSize16  () : FSizeRec = {(H ; H ; Fmt::h ; FP16  ; SIntH ; UIntH ; 16 )}
+  model FSize32  () : FSizeRec = {(S ; W ; Fmt::s ; FP32  ; SIntW ; UIntW ; 32 )}
+  model FSize64  () : FSizeRec = {(D ; D ; Fmt::d ; FP64  ; SIntD ; UIntD ; 64 )}
+  model FSize128 () : FSizeRec = {(Q ; Q ; Fmt::q ; FP128 ; SIntQ ; UIntQ ; 128)}
+
+  function NaNBoxHS(val : FP16) -> FP32  = (0xffff               , val) as FP32
+  function NaNBoxSD(val : FP32) -> FP64  = (0xffff'ffff          , val) as FP64
+  function NaNBoxDQ(val : FP64) -> FP128 = (0xffff'ffff'ffff'ffff, val) as FP128
+
+  model NaNBoxQ (val : Ex) : Ex = { $val }
+  model NaNBoxD (val : Ex) : Ex = { match : Ex ($FSize = FSize64 => $val; _ => $NaNBoxQ(NaNBoxDQ($val))) }
+  model NaNBoxS (val : Ex) : Ex = { match : Ex ($FSize = FSize32 => $val; _ => $NaNBoxD(NaNBoxSD($val))) }
+  model NaNBoxH (val : Ex) : Ex = { $NaNBoxS(NaNBoxHS($val)) }
+
+  model NaNBox (size : FSizeRec, val : Ex) : Ex = {
+    match : Ex (
+      $size.size = 16 => $NaNBoxH($val);
+      $size.size = 32 => $NaNBoxS($val);
+      $size.size = 64 => $NaNBoxD($val);
+      _               => $NaNBoxQ($val)
+    )
+  }
+
+  model-type BoolModel = (Ex, Ex) -> Ex
+  model Unsigned (t : Ex, f : Ex) : Ex = { t }
+  model Signed   (t : Ex, f : Ex) : Ex = { t }
+
+  model FRtypeInstrBiArith (name : Id, size : FSizeRec, fun : SymEx, funct5 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr2rm ((
+      AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
+      $rm ; $size.fmt ; $funct5 ;
+      let result, flags = $fun(F(rs1) as $size.ty, F(rs2) as $size.ty, FCSR.fflags /* , $rm */) in {
+        F(rd) := $NaNBox($size ; result)
+        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
+      }
+    ))
+  }
+
+  model FRtypeInstrMinMax (name : Id, size : FSizeRec, fun : SymEx, funct5 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr2 ((
+      AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
+      $rm ; $size.fmt ; $funct5 ;
+      let result, flags = $fun(F(rs1) as $size.ty, F(rs2) as $size.ty, FCSR.fflags) in {
+        F(rd) := $NaNBox($size ; result)
+        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
+      }
+    ))
+  }
+
+  model FRtypeInstrSqrt (name : Id, size : FSizeRec, fun : SymEx, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr1rm ((
+      AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
+      $rm ; $size.fmt ; $funct5 ;
+      let result, flags = $fun(F(rs1) as $size.ty, FCSR.fflags /* , $rm */) in {
+        F(rd) := $NaNBox($size ; result)
+        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
+      }
+    ) ; $rs2 )
+  }
+
+  model FRtypeInstrCmp (name : Id, size : FSizeRec, fun : SymEx, funct5 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr2 ((
+      AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
+      $rm ; $size.fmt ; $funct5 ;
+      let result, flags = $fun(F(rs1) as $size.ty, F(rs2) as $size.ty, (FCSR.nv, 0b1111)) in {
+        X(rd) := result as UIntR // zero extend
+        FCSR.nv := flags.nv
+      }
+    ))
+  }
+
+  model FRtypeInstrSgn (name : Id, size : FSizeRec, sgn : Ex, funct5 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr2 ((
+      AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
+      $rm ; $size.fmt ; $funct5 ;
+      let lower = F(rs1)(($size.size-2)..0) in
+        let rs1Sgn = F(rs1)($size.size-1) in
+          let rs2Sgn = F(rs2)($size.size-1) in
+            F(rd) := $NaNBox($size ; ($sgn, lower) as $size.ty)
+    ))
+  }
+
+  model FRtypeInstrMvF2X (name : Id, size : FSizeRec, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr1 ((
+      AsId($name, "X", $size.iSuffix) ; AsStr($name, ".X.", $size.iSuffix) ;
+      $rm ; $size.fmt ; $funct5 ;
+      // first cast to the correct float type and then sign extend
+      X(rd) := F(rs1) as $size.ty as SIntR
+    ) ; $rs2 )
+  }
+
+  model FRtypeInstrMvX2F (name : Id, size : FSizeRec, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr1 ((
+      AsId($name, $size.iSuffix, "X") ; AsStr($name, ".", $size.iSuffix, ".X") ;
+      $rm ; $size.fmt ; $funct5 ;
+      F(rd) := $NaNBox($size ; X(rs1) as $size.ty)
+    ) ; $rs2 )
+  }
+
+  model FRtypeInstrCvtX2F (name : Id, fSize : FSizeRec, iSize : FSizeRec, u : BoolModel, fun : SymEx, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr1rm ((
+      AsId($name, $fSize.suffix, $iSize.iSuffix, $u("U" ; "")) ;
+      AsStr($name, ".", $fSize.suffix, ".", $iSize.iSuffix, $u("U" ; "")) ;
+      $rm ; $fSize.fmt ; $funct5 ;
+      let result, flags = $fun(X(rs1) as $u(iSize.uTy ; iSize.sTy), FCSR.fflags /* , $rm */) in {
+        F(rd) := $NaNBox($fSize ; result)
+        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
+      }
+    ) ; $rs2 )
+  }
+
+  model FRtypeInstrCvtF2X (name : Id, fSize : FSizeRec, iSize : FSizeRec, u : BoolModel, fun : SymEx, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
+    $FRtypeInstr1rm ((
+      AsId($name, $iSize.iSuffix, $u("U" ; ""), $fSize.suffix) ;
+      AsStr($name, ".", $iSize.iSuffix, $u("U" ; ""), ".", $fSize.suffix) ;
+      $rm ; $fSize.fmt ; $funct5 ;
+      // TODO: we must make sure the builtin understands what type to convert to
+      let result, flags = $fun(F(rs1) as $fSize.ty, FCSR.fflags /* , $rm */) in {
+        // will this affect result type of builtin? It should for it to work!
+        X(rd) := result as $u(iSize.uTy ; iSize.sTy)
+        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
+      }
+    ) ; $rs2 )
+  }
+
+  model FRtypeInstrClass (name : Id, suffix : Id, ty : Id) : IsaDefs = {
+    instruction AsId($name, $suffix) : Rtype =
+      let f = F(rs1) as ty in
+        // TODO: this is from QEMU's risc-v vector_helper.c fclass_s(...)
+        //       what predicates should we implement?
+        let neg = VADL::fisneg(f) in
+          X(rd) := if VADL::fisinf   (f) then ( if neg then 1 << 0 else 1 << 7 ) else
+                   if VADL::fiszero  (f) then ( if neg then 1 << 3 else 1 << 4 ) else
+                   if VADL::fisdenorm(f) then ( if neg then 1 << 2 else 1 << 5 ) else
+                   if VADL::fissnan  (f) then 1 << 8 else
+                   if VADL::fisqnan  (f) then 1 << 9 else
+                                              ( if neg then 1 << 1 else 1 << 6 )
+    encoding AsId($name, $suffix) = {opcode = 0b101'0011, funct3 = 0b001, rs2 = 0b0'0000, funct7 = 0b111'0000}
+    assembly AsId($name, $suffix) = (AsStr($name), ".", AsStr($suffix), " ", register(rd), ",", register(rs1))
+  }
+
+  model FLtypeInstr (name : Id, size : FSizeRec, funct3 : Bin) : IsaDefs = {
+    instruction $name : Itype =
+      let addr = X(rs1) + immS in
+        let bytes = $size.size / 8 in
+          F(rd) := $NaNBox($size ; MEM<bytes>(addr) as $size.ty)
+    encoding $name = {opcode = 0b000'0111, funct3 = $funct3}
+    assembly $name = (mnemonic, " ", register(rd), ",", decimal(imm as SInt<12>), "(", register(rs1), ")")
+  }
+
+  model FStypeInstr (name : Id, size : FSizeRec, funct3 : Bin) : IsaDefs = {
+    instruction $name : Stype =
+      let addr = X(rs1) + immS in
+        let bytes = $size.size / 8 in
+          MEM<bytes>(addr) := F(rs2) as $size.ty
+    encoding $name = {opcode = 0b010'0111, funct3 = $funct3}
+    assembly $name = (mnemonic, " ", register(rs2), ",", decimal(imm as SInt<12>), "(", register(rs1), ")")
+  }
+
+  model FR4typeInstr (name : Id, size : FSizeRec, fun : SymEx, rm : Ex) : IsaDefs = {
+    instruction AsId($name, $size.suffix) : R4type =
+      let result, flags = $fun(F(rs1), F(rs2), F(rs3), FCSR.fflags /* , $rm */) in {
+        F(rd) := $NaNBox($size ; result)
+        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
+      }
+    encoding AsId($name, $size.suffix) = {opcode = 0b100'0011, funct3 = $rm, fmt = $size.fmt}
+    assembly AsId($name, $size.suffix) = (AsStr($name, ".", $size.suffix), " ", register(rd), ",", register(rs1), ",", register(rs2), ",", FrmName($rm))
+  }
+
+  $FLtypeInstr (FLW ; $FSize32 ; 0b010)
+  $FStypeInstr (FSW ; $FSize32 ; 0b010)
+
+  $FRtypeInstrBiArith (FADD  ; $FSize32 ; VADL::fadds  ; 0b0'0000 ; Frm::rne)
+  //$FRtypeInstrBiArith (FSUB  ; $FSize32 ; VADL::fsubs  ; 0b0'0001 ; Frm::rne)
+  //$FRtypeInstrBiArith (FMUL  ; $FSize32 ; VADL::fmuls  ; 0b0'0010 ; Frm::rne)
+  //$FRtypeInstrBiArith (FDIV  ; $FSize32 ; VADL::fdivs  ; 0b0'0011 ; Frm::rne)
+
+  //$FRtypeInstrMinMax  (FMIN  ; $FSize32 ; VADL::fmins  ; 0b0'0101 ; 0b000)
+  //$FRtypeInstrMinMax  (FMAX  ; $FSize32 ; VADL::fmaxs  ; 0b0'0101 ; 0b001)
+
+  //$FRtypeInstrSqrt    (FSQRT ; $FSize32 ; VADL::fsqrts ; 0b0'1011 ; 0b0'0000 ; Frm::rne)
+
+  //// TODO: specify somehow that lt, le are signaling and eq is a quiet comparison
+  //$FRtypeInstrCmp     (FLE   ; $FSize32 ; VADL::fles   ; 0b1'0100 ; 0b000)
+  //$FRtypeInstrCmp     (FLT   ; $FSize32 ; VADL::flts   ; 0b1'0100 ; 0b001)
+  //$FRtypeInstrCmp     (FEQ   ; $FSize32 ; VADL::feqs   ; 0b1'0100 ; 0b010)
+
+  $FRtypeInstrSgn     (FSGNJ  ; $FSize32 ; (         rs2Sgn) ; 0b0'0100 ; 0b000)
+  $FRtypeInstrSgn     (FSGNJN ; $FSize32 ; (     1 - rs2Sgn) ; 0b0'0100 ; 0b001)
+  $FRtypeInstrSgn     (FSGNJX ; $FSize32 ; (rs1Sgn ^ rs2Sgn) ; 0b0'0100 ; 0b010)
+
+  $FRtypeInstrMvF2X   (FMV ; $FSize32 ; 0b1'1100 ; 0b000 ; 0b0'0000)
+  $FRtypeInstrMvX2F   (FMV ; $FSize32 ; 0b1'1110 ; 0b000 ; 0b0'0000)
+
+  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; Signed   ; VADL::fcvts ; 0b1'1010 ; 0b0'0000 ; Frm::rne)
+  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; Unsigned ; VADL::fcvts ; 0b1'1010 ; 0b0'0001 ; Frm::rne)
+  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; Signed   ; VADL::fcvts ; 0b1'1010 ; 0b0'0010 ; Frm::rne)
+  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; Unsigned ; VADL::fcvts ; 0b1'1010 ; 0b0'0011 ; Frm::rne)
+
+  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; Signed   ; VADL::fcvts ; 0b1'1000 ; 0b0'0000 ; Frm::rne)
+  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; Unsigned ; VADL::fcvts ; 0b1'1000 ; 0b0'0001 ; Frm::rne)
+  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; Signed   ; VADL::fcvts ; 0b1'1000 ; 0b0'0010 ; Frm::rne)
+  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; Unsigned ; VADL::fcvts ; 0b1'1000 ; 0b0'0011 ; Frm::rne)
+
+  //$FR4typeInstr (FMADD  ; $FSize32 ; VADL::fmadds  ; Frm::rne)
+  //$FR4typeInstr (FMSUB  ; $FSize32 ; VADL::fmsubs  ; Frm::rne)
+  //$FR4typeInstr (FNMADD ; $FSize32 ; VADL::fnmadds ; Frm::rne)
+  //$FR4typeInstr (FNMSUB ; $FSize32 ; VADL::fnmsubs ; Frm::rne)
+
+  //$FRtypeInstrClass (FCLASS ; S ; FP32)
+
+}
+
+[ htif ]
+processor Spike implements RV64IMF = {
+    constant reset_vec_addr = 0x1000
+
+    reset = {
+      PC := reset_vec_addr
+    }
+
+    [ firmware ]
+    [ base: 0x80000000 ]
+    memory region [RAM] DRAM in MEM
+
+    memory region [ROM] MROM in MEM = {
+      MEM<4>(0x1000) := 0x00000297  // auipc t0, 0x0
+      MEM<4>(0x1004) := 0x02828613  // addi a2, t0, 40
+      // TODO: this is not quite right:
+      // this processor has no zicsr extension
+      MEM<4>(0x1008) := 0x00000013  // addi x0, x0, 0
+      MEM<4>(0x100c) := 0x0202b583  // ld   a1, 32(t0)
+      MEM<4>(0x1010) := 0x0182b283  // ld   t0, 24(t0)
+      MEM<4>(0x1014) := 0x00028067  // jr   t0
+      // store start_addr in memory (0x80000000)
+      MEM<4>(0x1018) := 0x80000000  // lo32(start_addr)
+      MEM<4>(0x101c) := 0x00000000  // hi32(start_addr)
+      // we do not yet support a fdt, but we set the address,
+      // to keep the registers consistent with upstream
+      MEM<4>(0x1020) := 0x87e00000  // lo32(fdt_addr)
+      MEM<4>(0x1024) := 0x00000000  // hi32(fdt_addr)
+    }
+}

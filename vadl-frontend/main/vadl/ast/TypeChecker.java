@@ -175,6 +175,8 @@ import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.FetchResultType;
+import vadl.types.FloatStatusType;
+import vadl.types.FloatType;
 import vadl.types.GroupType;
 import vadl.types.InstructionType;
 import vadl.types.MicroArchitectureType;
@@ -750,6 +752,13 @@ public class TypeChecker
         var fromUInt = (UIntType) from;
         var toBitsType = (BitsType) from;
         return fromUInt.bitWidth() == toBitsType.bitWidth();
+      }
+    }
+
+    // FPn => Bits<n>
+    if (from.getClass() == FloatType.class) {
+      if (to.getClass() == BitsType.class) {
+        return ((FloatType) from).bitWidth() == ((BitsType) to).bitWidth();
       }
     }
 
@@ -3730,6 +3739,8 @@ public class TypeChecker
     Map<String, Supplier<Type>> unSizedBuiltins = Map.of(
         "Bool", Type::bool,
         "String", Type::string,
+        "FP32", Type::float32,
+        "FP64", Type::float64,
         "Instruction", MicroArchitectureType::instruction,
         "FetchResult", MicroArchitectureType::fetchResult
     );
@@ -4192,6 +4203,17 @@ public class TypeChecker
         if (!allowedStatusfields.contains(fieldName)) {
           var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
           addErrorAndStopChecking(error("Unknown status field `%s`".formatted(fieldName), expr)
+              .suggestions(suggestions)
+              .build());
+        }
+        var fieldType = Type.bool();
+        visitSliceIndexCall(expr, fieldType, subCall.argsIndices);
+        type = expr.type;
+      } else if (type instanceof FloatStatusType) {
+        var allowedStatusfields = List.of("nv", "dz", "of", "uf", "nx");
+        if (!allowedStatusfields.contains(fieldName)) {
+          var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
+          addErrorAndStopChecking(error("Unknown float status field `%s`".formatted(fieldName), expr)
               .suggestions(suggestions)
               .build());
         }

@@ -1039,6 +1039,19 @@ public class BuiltInTable {
           .build();
 
 
+  ///// FLOAT ARITHMETIC //////
+
+
+  public static final BuiltIn FADDS =
+      func("VADL::fadds",
+          Type.relation(
+              List.of(FloatType.class, FloatType.class, BitsType.class), StructType.class))
+          .takesData(args -> args.get(0).bitWidth() == args.get(1).bitWidth()
+              && args.get(2).bitWidth() == 5)
+          .returnsFirstFloatAndStatus()
+          .build();
+
+
   ///// FUNCTIONS //////
 
   /**
@@ -1409,6 +1422,10 @@ public class BuiltInTable {
       CTO
   );
 
+  public static final List<BuiltIn> FLOAT_ARITHMETIC_BUILT_INS = List.of(
+      FADDS
+  );
+
   public static final List<BuiltIn> FUNCTION_BUILT_INS = List.of(
       MNEMONIC,
       CONCATENATE_STRINGS,
@@ -1445,6 +1462,7 @@ public class BuiltInTable {
       COMPARISON_BUILT_INS.stream(),
       SHIFTING_BUILT_INS.stream(),
       BITWISE_COUNTING_BUILT_INS.stream(),
+      FLOAT_ARITHMETIC_BUILT_INS.stream(),
       FUNCTION_BUILT_INS.stream(),
       ASM_PARSER_BUILT_INS_LIST.stream(),
       MICRO_ARCHITECTURE_BUILT_INS.stream()
@@ -1854,6 +1872,18 @@ public class BuiltInTable {
         return Type.struct(
             BUILTIN_RESULT, valType,
             BUILTIN_STATUS, Type.status()
+        );
+      });
+      return this;
+    }
+
+    public BuiltInBuilder returnsFirstFloatAndStatus() {
+      returnsFromFirstAsDataType((firstDataType) -> {
+        var valType = constructDataType(FloatType.class, firstDataType.bitWidth());
+        Objects.requireNonNull(valType);
+        return Type.struct(
+            BUILTIN_RESULT, valType,
+            BUILTIN_STATUS, Type.floatStatus()
         );
       });
       return this;
