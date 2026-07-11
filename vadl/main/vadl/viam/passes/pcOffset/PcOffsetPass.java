@@ -17,8 +17,8 @@
 package vadl.viam.passes.pcOffset;
 
 import static vadl.error.Diagnostic.error;
+import static vadl.utils.GraphUtils.intUNode;
 import static vadl.viam.ViamError.ensure;
-import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -27,18 +27,21 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
-import vadl.utils.GraphUtils;
 import vadl.utils.ViamUtils;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Memory;
 import vadl.viam.Specification;
 import vadl.viam.annotations.PcOffsetAnnotation;
-import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.passes.staticCounterAccess.CounterAccessResolvingPass;
 
 /**
- * Applies program counter offsets to program counter reads.
+ * Applies program counter offsets to program counter reads and resolves
+ * {@link InstructionWidthNode}s.
  *
  * <p>When reading a program counter that has been annotated with
  * {@code [current]}, {@code [next]} or {@code [next next]}, the
@@ -48,6 +51,13 @@ import vadl.viam.passes.staticCounterAccess.CounterAccessResolvingPass;
  *
  * <p>This pass looks for {@link PcOffsetAnnotation}s and applies them to
  * {@link ReadRegTensorNode}s, which have access the program counter.
+ *
+ * <p>Inside {@link Instruction} behaviors, we can replace {@link InstructionWidthNode}s with the
+ * constant value of the width of the instruction they are in. In other behaviors, such as
+ * exceptions, this is not as trivial. The artifacts will have to implement special treatment in
+ * these cases. Currently, {@link InstructionWidthNode}s outside instruction behaviors are replaced
+ * with the width of the first found instruction in the ISA. This a temporary solution and only
+ * works for ISAs with only one instruction length.
  *
  * <p><strong>Note</strong>: This pass must run after {@link CounterAccessResolvingPass}.
  */
@@ -64,17 +74,14 @@ public class PcOffsetPass extends Pass {
 
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam) throws IOException {
-    var isa = viam.isa().get();
-    ViamUtils.findAllBehaviors(viam).forEach(behavior -> {
-      var instruction = behavior.parentDefinition() instanceof Instruction instr ? instr : null;
-      behavior.getNodes(ReadRegTensorNode.class)
-          .forEach(n -> handleRead(n, instruction, isa));
-    });
+    ViamUtils.findAllBehaviors(viam).forEach(
+        behavior -> behavior.getNodes(ReadRegTensorNode.class).toList().forEach(this::handleRead)
+    );
+    new InstructionWidthNodeConverter(viam).run();
     return null;
   }
 
-  private void handleRead(ReadRegTensorNode read, @Nullable Instruction instruction,
-                          InstructionSetArchitecture isa) {
+  private void handleRead(ReadRegTensorNode read) {
     if (read.staticCounterAccess() == null) {
       // this is not a pc access
       return;
@@ -85,24 +92,66 @@ public class PcOffsetPass extends Pass {
     }
     var offset = offsetAnn.offset();
     if (offset != 0) {
-      instruction = ensureNonNull(instruction, () -> error(
-          "Program counter read with offset can only happen in instruction behavior", read)
-          .locationHelp(offsetAnn, "The program counter offset")
+      var pcType = read.type();
+      ExpressionNode offsetNode = BuiltInTable.MUL.call(
+          intUNode(offset, pcType.bitWidth()), new InstructionWidthNode(pcType)
       );
-
-      var memories = isa.ownMemories();
-      ensure(memories.size() == 1, () -> error(
-          "Exactly one memory definition required for reading program counter with offset", isa)
-          .locationHelp(read, "The program counter read")
-          .locationHelp(offsetAnn, "The program counter offset")
-      );
-      var memory = memories.getFirst();
-
-      var instrBytes = instruction.format().type().bitWidth() / memory.resultType().bitWidth();
-      read.replace(BuiltInCall.of(
-          BuiltInTable.ADD, read,
-          GraphUtils.intUNode((long) offset * instrBytes, read.type().bitWidth())
-      ));
+      offsetNode.setSourceLocationRecursively(read.location());
+      read.replace(BuiltInTable.ADD.call(read.shallowCopy(), offsetNode));
     }
   }
+}
+
+class InstructionWidthNodeConverter {
+
+  Specification viam;
+  InstructionSetArchitecture isa;
+
+  @Nullable
+  Memory memory;
+
+  @Nullable
+  Instruction anyInstruction;
+
+  public InstructionWidthNodeConverter(Specification viam) {
+    this.viam = viam;
+    this.isa = viam.isa().get();
+  }
+
+  void run() {
+    anyInstruction = isa.ownInstructions().stream().findAny().orElse(null);
+
+    // FIXME: If the InstructionWidthNode is not in an instruction, we cannot resolve it here.
+    //        For now, we use the width of the first instruction found in the ISA. If not
+    //        instruction is present, we have to leave the InstructionWidthNode
+    var firstInstr = isa.ownInstructions().stream().findFirst().orElse(null);
+
+    ViamUtils.findAllBehaviors(viam).forEach(b -> {
+      var instruction = b.parentDefinition() instanceof Instruction instr ? instr : firstInstr;
+      if (instruction == null) {
+        return;
+      }
+      var nodes = b.getNodes(InstructionWidthNode.class).toList();
+      if (nodes.isEmpty()) {
+        return;
+      }
+      var instrBytes = instruction.format().type().bitWidth()
+          / memory(nodes.getFirst()).resultType().bitWidth();
+      nodes.forEach(
+          n -> n.replaceAndDelete(intUNode(instrBytes, n.type().asDataType().bitWidth())));
+    });
+  }
+
+  private Memory memory(InstructionWidthNode node) {
+    if (memory == null) {
+      var memories = isa.ownMemories();
+      ensure(memories.size() == 1, () ->
+          error("Exactly one memory definition required to infer how many bits are in a byte", isa)
+              .locationDescription(node, "Byte size required here")
+      );
+      memory = memories.getFirst();
+    }
+    return memory;
+  }
+
 }
