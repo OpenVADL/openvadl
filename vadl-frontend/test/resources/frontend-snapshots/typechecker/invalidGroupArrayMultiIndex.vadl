@@ -37,15 +37,7 @@ instruction set architecture ISA = {
 //    27 │   [assert : VLIW(1)(2).a = 0b0]
 //       │             ^^^^^^^
 //       │
-//       Type `a: Bits<20>, b: Bits<5>` cannot be indexed or sliced
-//
-//  error: Invalid annotation expression
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupArrayMultiIndex.vadl:27:13
-//       │
-//    27 │   [assert : VLIW(1)(2).a = 0b0]
-//       │             ^^^^^^^^^^^^^^^^^^ Unable to determine type
-//       │
-//       help: Check additional errors which may have caused the type to be missing
+//       Type `(AType ∩ BType)` cannot be indexed or sliced
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

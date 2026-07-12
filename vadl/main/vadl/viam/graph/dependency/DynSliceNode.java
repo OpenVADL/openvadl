@@ -19,6 +19,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
+import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -60,7 +61,7 @@ public class DynSliceNode extends ExpressionNode implements Canonicalizable {
    * @param lsb   The lsb bit index expression to slice the value from.
    * @param type  The result type of the node.
    */
-  public DynSliceNode(ExpressionNode value, ExpressionNode msb, ExpressionNode lsb, DataType type) {
+  public DynSliceNode(ExpressionNode value, ExpressionNode msb, ExpressionNode lsb, Type type) {
     super(type);
 
     this.value = value;
@@ -78,11 +79,6 @@ public class DynSliceNode extends ExpressionNode implements Canonicalizable {
 
   public ExpressionNode lsb() {
     return lsb;
-  }
-
-  @Override
-  public DataType type() {
-    return (DataType) super.type();
   }
 
   @Override
@@ -118,6 +114,11 @@ public class DynSliceNode extends ExpressionNode implements Canonicalizable {
 
   @Override
   public Node canonical() {
+    if (!(type() instanceof DataType dataType)) {
+      // No canonical representation
+      return this;
+    }
+
     if (msb.isConstant() && lsb.isConstant()) {
       // if the slice range is constant we can convert it to a SliceNode
       var msbVal = ((ConstantNode) msb).constant().asVal().unsignedInteger().intValue();
@@ -129,7 +130,7 @@ public class DynSliceNode extends ExpressionNode implements Canonicalizable {
         lsbVal = tmp;
       }
 
-      var sliceNode = new SliceNode(value, Constant.BitSlice.of(msbVal, lsbVal), type());
+      var sliceNode = new SliceNode(value, Constant.BitSlice.of(msbVal, lsbVal), dataType);
       // if the value itself is constant, it can be constant folded.
       return sliceNode.canonical();
     }

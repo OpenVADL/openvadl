@@ -23,7 +23,7 @@ package vadl.types;
  * group VLIW = O1.O2
  * </pre>
  */
-public class ArrayType extends Type {
+public class GroupType extends Type {
 
   private final Type elementType;
 
@@ -31,13 +31,13 @@ public class ArrayType extends Type {
   private final UIntType bitLengthType;
 
   /**
-   * Construct an array type.
+   * Construct a group expression type.
    *
-   * @param elementType   the type of the elements of the array.
-   * @param lengthType    the type of the length of the array. Must be an unsigned integer type.
-   * @param bitLengthType the type of the bitlength of the array.
+   * @param elementType   the type of the elements of the group.
+   * @param lengthType    the type of the length of the group. Must be an unsigned integer type.
+   * @param bitLengthType the type of the bitlength of the group.
    */
-  public ArrayType(Type elementType, UIntType lengthType, UIntType bitLengthType) {
+  public GroupType(Type elementType, UIntType lengthType, UIntType bitLengthType) {
     this.elementType = elementType;
     this.lengthType = lengthType;
     this.bitLengthType = bitLengthType;

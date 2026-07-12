@@ -40,13 +40,5 @@ instruction set architecture ISA = {
 //       Intersection format `(AType ∩ BType)` doesn't have any field with this name
 //       help: Did you maybe mean one of: a, b
 //
-//  error: Invalid annotation expression
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupElemField.vadl:27:13
-//       │
-//    27 │   [assert : VLIW(0).c = 0b0]
-//       │             ^^^^^^^^^^^^^^^ Unable to determine type
-//       │
-//       help: Check additional errors which may have caused the type to be missing
-//
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

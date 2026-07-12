@@ -52,6 +52,7 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
@@ -641,6 +642,11 @@ class Decomposer
   @Handler
   void handle(Request rq, LabelNode toHandle) {
     throw new UnsupportedOperationException("Type LabelNode not yet implemented");
+  }
+
+  @Handler
+  void handle(Request rq, GroupRef toHandle) {
+    throw new UnsupportedOperationException("Type GroupRef not yet implemented");
   }
 
   @Handler

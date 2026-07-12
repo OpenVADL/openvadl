@@ -112,6 +112,7 @@ import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
@@ -744,6 +745,10 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     throw new UnsupportedOperationException("Type ExistsNode not supported");
   }
 
+  @Handler
+  void handle(GroupRef node) {
+    throw new UnsupportedOperationException("Type GroupRef not supported");
+  }
 
   /// / Nodes that are already considered lowered ////
 

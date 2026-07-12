@@ -31,20 +31,12 @@ instruction set architecture ISA = {
 
 //  Reported Diagnostics:
 //
-//  error: Invalid Array Indexing
+//  error: Invalid Group Indexing
 //       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupArraySlicing.vadl:27:18
 //       │
 //    27 │   [assert : VLIW(2..1).a = 0b0]
-//       │                  ^^^^ Arrays cannot be sliced.
+//       │                  ^^^^ Groups cannot be sliced.
 //       │
-//
-//  error: Invalid annotation expression
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupArraySlicing.vadl:27:13
-//       │
-//    27 │   [assert : VLIW(2..1).a = 0b0]
-//       │             ^^^^^^^^^^^^^^^^^^ Unable to determine type
-//       │
-//       help: Check additional errors which may have caused the type to be missing
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

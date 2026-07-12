@@ -90,6 +90,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
@@ -1174,6 +1175,11 @@ class InstructionFieldExpansionCodeGenerator implements CDefaultMixins.AllExpres
   protected void handle(CGenContext<Node> ctx, ReadSignalNode toHandle) {
     throwNotAllowed(toHandle, "read  signal node");
   }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, GroupRef toHandle) {
+    throwNotAllowed(toHandle, "group reference node");
+  }
 }
 
 /**
@@ -1313,6 +1319,11 @@ class InstructionFieldAccessExpansionCodeGeneratorForImmediateCase
   @Handler
   protected void handle(CGenContext<Node> ctx, ReadSignalNode toHandle) {
     throwNotAllowed(toHandle, "read signal node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, GroupRef toHandle) {
+    throwNotAllowed(toHandle, "group reference node");
   }
 }
 
@@ -1457,6 +1468,11 @@ class InstructionFieldAccessExpansionCodeGeneratorForLabelCase
   @Handler
   protected void handle(CGenContext<Node> ctx, ReadSignalNode toHandle) {
     throwNotAllowed(toHandle, "read signal node");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, GroupRef toHandle) {
+    throwNotAllowed(toHandle, "group reference node");
   }
 }
 

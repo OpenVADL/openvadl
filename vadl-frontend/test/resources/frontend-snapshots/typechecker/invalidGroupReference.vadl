@@ -33,21 +33,13 @@ instruction set architecture ISA = {
 
 //  Reported Diagnostics:
 //
-//  error: Unknown array access `a`
+//  error: Unknown group access `a`
 //       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupReference.vadl:27:13
 //       │
 //    27 │   [assert : VLIW.a = 0b0]
 //       │             ^^^^^^
 //       │
-//       Arrays only have the fields `length` or `bitLength`
-//
-//  error: Invalid annotation expression
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidGroupReference.vadl:27:13
-//       │
-//    27 │   [assert : VLIW.a = 0b0]
-//       │             ^^^^^^^^^^^^ Unable to determine type
-//       │
-//       help: Check additional errors which may have caused the type to be missing
+//       Groups only have the fields `length` or `bitLength`
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

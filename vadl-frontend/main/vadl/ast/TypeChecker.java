@@ -169,13 +169,13 @@ import vadl.ast.nodes.WildcardLiteral;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
-import vadl.types.ArrayType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.FetchResultType;
+import vadl.types.GroupType;
 import vadl.types.InstructionType;
 import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
@@ -478,6 +478,13 @@ public class TypeChecker
     if (!checker.errors.isEmpty()) {
       throw new DiagnosticList(checker.errors);
     }
+  }
+
+  /**
+   * Return current state of recoverable errors.
+   */
+  public List<Diagnostic> getErrors() {
+    return errors;
   }
 
   /**
@@ -3361,7 +3368,7 @@ public class TypeChecker
       final int maxBitLength = maxBitLength(constantEvaluator, group.expr());
       final var bitLengthType = UIntType.minimalTypeFor(maxBitLength);
 
-      expr.type = Type.array(elemType, lengthType, bitLengthType);
+      expr.type = Type.group(elemType, lengthType, bitLengthType);
       return;
     }
 
@@ -3919,14 +3926,14 @@ public class TypeChecker
     }
 
     Type currType = typeBeforeSlice;
-    SourceLocation targetLoc = expr.location();
+    SourceLocation targetLoc = null;
     for (var slice : sliceGroups) {
 
       if (!(currType instanceof BitsType) && !(currType instanceof TensorType)
-          && !(currType instanceof ArrayType)) {
-        var loc = expr.target.location().join(targetLoc.location());
+          && !(currType instanceof GroupType)) {
+        var loc = expr.target.location().join(targetLoc != null ? targetLoc : expr.location());
         throw addErrorAndStopChecking(error("Type Mismatch", loc)
-            .description("Type `%s` cannot be indexed or sliced", currType)
+            .description("Type `%s` cannot be indexed or sliced", currType.name())
             .build());
       }
 
@@ -4040,19 +4047,19 @@ public class TypeChecker
           slice.type = currType;
         }
       }
-      if (currType instanceof ArrayType currArrayType) {
+      if (currType instanceof GroupType currGroupType) {
         if (slice.values.size() != 1) {
           var loc = slice.values.getFirst().location()
               .join(slice.values.getLast().location());
-          throw addErrorAndStopChecking(error("Invalid Array Indexing", loc)
-              .locationDescription(loc, "Indexing arrays only allows one argument.")
+          throw addErrorAndStopChecking(error("Invalid Group Indexing", loc)
+              .locationDescription(loc, "Indexing groups only allows one argument.")
               .build());
         }
 
         var indexExpr = slice.values.getFirst();
         if (indexExpr instanceof RangeExpr) {
-          throw addErrorAndStopChecking(error("Invalid Array Indexing", indexExpr)
-              .locationDescription(indexExpr, "Arrays cannot be sliced.")
+          throw addErrorAndStopChecking(error("Invalid Group Indexing", indexExpr)
+              .locationDescription(indexExpr, "Groups cannot be sliced.")
               .build());
         }
         check(indexExpr);
@@ -4072,7 +4079,8 @@ public class TypeChecker
 
         }
 
-        currType = currArrayType.elementType();
+        currType = currGroupType.elementType();
+        slice.type = currType;
         expr.type = currType;
       }
 
@@ -4230,11 +4238,11 @@ public class TypeChecker
         }
 
         expr.type = output.get().type();
-      } else if (type instanceof ArrayType arrayType) {
+      } else if (type instanceof GroupType groupType) {
         if (!fieldName.equals("length") && !fieldName.equals("bitLength")) {
           throw addErrorAndStopChecking(
-              error("Unknown array access `%s`".formatted(fieldName), expr)
-                  .description("Arrays only have the fields `length` or `bitLength`").build());
+              error("Unknown group access `%s`".formatted(fieldName), expr)
+                  .description("Groups only have the fields `length` or `bitLength`").build());
         }
         if (!subCall.argsIndices.isEmpty()) {
           throw addErrorAndStopChecking(
@@ -4245,10 +4253,10 @@ public class TypeChecker
         }
 
         expr.type = switch (fieldName) {
-          case "length" -> arrayType.lengthType();
-          case "bitLength" -> arrayType.bitLengthType();
+          case "length" -> groupType.lengthType();
+          case "bitLength" -> groupType.bitLengthType();
           default ->
-              throw new IllegalArgumentException("Unknown array field: `%s`".formatted(fieldName));
+              throw new IllegalArgumentException("Unknown group field: `%s`".formatted(fieldName));
         };
       } else {
         throw addErrorAndStopChecking(error("Cannot resolve `%s`".formatted(fieldName), expr)

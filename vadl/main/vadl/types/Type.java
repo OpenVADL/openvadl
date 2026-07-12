@@ -379,20 +379,25 @@ public abstract class Type {
     }
   }
 
-  private static final HashMap<Integer, ArrayType> arrayTypes = new HashMap<>();
+  private record GroupTypeKey(Type elementType, UIntType lengthType, UIntType bitLengthType) {
+  }
+
+  private static final HashMap<GroupTypeKey, GroupType> groupTypes = new HashMap<>();
 
   /**
-   * Returns an array type with the given element type.
+   * Returns a group type with the given element type. The element is the common pseudo format of
+   * the operations occurring in the group expression.
    *
-   * @param elementType   the type of the elements of the array.
+   * @param elementType   the type of the group elements.
    * @param lengthType    the type of the length of the array. Must be an unsigned integer type.
    * @param bitLengthType the type of the bit length of the array. Must be an unsigned integer type.
-   * @return the array type.
+   * @return the group type.
    */
-  public static ArrayType array(Type elementType, UIntType lengthType, UIntType bitLengthType) {
-    var hash = Objects.hash(elementType, lengthType, bitLengthType);
-    return arrayTypes
-        .computeIfAbsent(hash, k -> new ArrayType(elementType, lengthType, bitLengthType));
+  public static GroupType group(Type elementType, UIntType lengthType, UIntType bitLengthType) {
+    final var key = new GroupTypeKey(elementType, lengthType, bitLengthType);
+    return groupTypes
+        .computeIfAbsent(key,
+            k -> new GroupType(k.elementType(), k.lengthType(), k.bitLengthType()));
   }
 
   /// These are all the builtin types that exist in the language.
