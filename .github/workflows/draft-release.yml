@@ -118,7 +118,7 @@ jobs:
 
       - name: Build jlink Images for All Platforms
         run: |
-          ./gradlew vadl-cli:jlink -PjlinkAllPlatforms
+          VERSIONING_GIT_TAG=v${{ needs.update-draft-release.outputs.version }} ./gradlew vadl-cli:jlink -PjlinkAllPlatforms
 
       - name: Package jlink Images
         run: |
