@@ -52,6 +52,7 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
@@ -655,6 +656,11 @@ class Decomposer
     var val = toHandle.constant().asVal();
     var sliced = val.slice(Constant.BitSlice.of(rq.slice.hi(), rq.slice.lo()));
     rq.result = sliced.toNode();
+  }
+
+  @Handler
+  void handle(Request rq, InstructionWidthNode toHandle) {
+    throw new UnsupportedOperationException("Type InstructionWidthNode not yet implemented");
   }
 
   @Handler
