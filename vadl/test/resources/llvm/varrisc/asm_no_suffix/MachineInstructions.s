@@ -70,7 +70,7 @@ BEQ r1, r2, 0x1
 # CHECK: <MCInst #{{[0-9]+}} BEQ
 # CHECK-NEXT: <MCOperand Reg:3>
 # CHECK-NEXT: <MCOperand Reg:4>
-# CHECK-NEXT: <MCOperand Imm:1>>
+# CHECK-NEXT: <MCOperand Imm:2>>
 
 BEQ r1, r2, 2048
 # CHECK: <MCInst #{{[0-9]+}} BEQ_L

@@ -173,7 +173,7 @@ instruction set architecture VarRISC32 = {
     instruction AsId ( $name, '_S' ) : TYPE_B =
       PC := PC + offsetS
     encoding AsId ( $name, '_S' ) = { opcode = $code }
-    assembly AsId ( $name, '_S' ) = ( $Mnemonic ($name), ' ', sdec (offsetS) )
+    assembly AsId ( $name, '_S' ) = ( $Mnemonic ($name), ' ', sdec (offset) )
   }
 
   model JumpLinkInstruction ( name : Id, code : Val ) : IsaDefs = {
@@ -190,12 +190,12 @@ instruction set architecture VarRISC32 = {
     instruction $name : TYPE_I =
       let a = R(rs1) + immU in $memstmt
     encoding $name = { opcode = MemCode, func5 = $code }
-    assembly $name = ( mnemonic, ' ', register(rd), ',', sdec(immU), '(', register(rs1), ')' )
+    assembly $name = ( mnemonic, ' ', register(rd), ',', sdec(imm), '(', register(rs1), ')' )
 
     instruction AsId ( $name, '_L') : TYPE_L =
       let a = R(func5) + immU in $memstmt
     encoding AsId ( $name, '_L') = { opcode = MemLOff + $code }
-    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(immU), '(', register(func5), ')' )
+    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(imm), '(', register(func5), ')' )
   }
 
   model ShortMemInstruction ( name : Id, memstmt : Stat, code : Val ) : IsaDefs = {
@@ -211,14 +211,14 @@ instruction set architecture VarRISC32 = {
       if R(rd) as $reltype $op R(rs1) then
         PC := PC + offsetS
     encoding $name = { opcode = MemCode, func5 = $code }
-    assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', sdec(offsetS) )
+    assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', sdec(imm) )
 
     instruction AsId ( $name, '_L') : TYPE_L = {
       if R(rd) as $reltype $op R(func5) then
         PC := PC + offsetS
     }
     encoding AsId ( $name, '_L') = { opcode = BraLOff + $code }
-    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', register(func5), ',', sdec(offsetS) )
+    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', register(func5), ',', sdec(imm) )
   }
 
   model CondImmInstruction ( name : Id, op : BinOp, reltype: Id, imm: Id, code : Val ) : IsaDefs = {
@@ -248,14 +248,14 @@ instruction set architecture VarRISC32 = {
       PC := PC + offsetS
       }
     encoding $name = { opcode = ImmCode, func5 = $code }
-    assembly $name = ( mnemonic, ' ', register(rd), ',', sdec(offsetS))
+    assembly $name = ( mnemonic, ' ', register(rd), ',', sdec(imm))
 
     instruction AsId ( $name, '_L' ) : TYPE_L = {
         R(rd) := PC.next
         PC := PC + offsetS
         }
     encoding AsId ( $name, '_L') = { opcode = CodeI_L, func5 = $code }
-    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(offsetS))
+    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(imm))
   }
 
 /* instruction encoding and opcode space of opcode and func5/func9

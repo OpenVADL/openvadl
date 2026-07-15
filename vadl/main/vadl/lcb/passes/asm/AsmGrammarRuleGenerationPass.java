@@ -43,6 +43,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.types.asmTypes.ConstantAsmType;
@@ -739,7 +740,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
 
   private AsmAlternatives buildConstantAlternatives(
       List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> tripleOfKind,
-      ArrayList<AsmLocalVarUse> localVarUsages, int immediatePositionInRule,
+      List<AsmLocalVarUse> localVarUsages, int immediatePositionInRule,
       AsmAlternative labelAlternative) {
 
     var constantLocalVarDefinition = new AsmLocalVarDefinition(mergingConstantLocalVar,
@@ -850,13 +851,21 @@ public class AsmGrammarRuleGenerationPass extends Pass {
       var fieldAccess = getFieldAccessFromField(inst, tableGenInstruction, field);
       var immOperand = getImmOperand(tableGenInstruction, fieldAccess);
 
-      // FIXME: Decode method sign extends from field size,
-      //        so predicate is always true if called after decode
-      // semPredCondition += immOperand.immediateOperand().predicateMethod().lower() + "(";
-      // semPredCondition +=
-      //    immOperand.immediateOperand().rawDecoderMethod().lower() + "(" + localVarAccess + "))";
+
+      // If type is raw Bits type remove use bitwidth -1 to assume signed immediates.
+      // This matches the assumption in predicate generation.
+      int bitWidth = field.type().bitWidth();
+      if (field.type() instanceof BitsType) {
+        bitWidth -= 1;
+      } else if (field.type().isSigned()) {
+        bitWidth -= 1;
+      }
+
+      semPredCondition += "VADL_fits_in_bit_width(" + localVarAccess + ", " + bitWidth + ") && ";
+
+      semPredCondition += immOperand.immediateOperand().predicateMethod().lower() + "(";
       semPredCondition +=
-          immOperand.immediateOperand().predicateMethod().lower() + "(" + localVarAccess + ")";
+          immOperand.immediateOperand().rawDecoderMethod().lower() + "(" + localVarAccess + "))";
     } else {
       // operand assigned to fieldAccess
       var immOperand = getImmOperand(tableGenInstruction, fieldOrAccess.right());
