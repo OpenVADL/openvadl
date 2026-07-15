@@ -15,7 +15,7 @@ OPEN_VADL_DOC_INPUT_REFMAN=\
 ./refman/introduction.md \
 ./refman/tutorial.md \
 ./refman/refmanual.md \
-../vadl/main/vadl/ast/vadl.ATG \
+../vadl-frontend/main/vadl/ast/vadl.ATG \
 ./refman/acronyms.md
 
 
@@ -26,7 +26,7 @@ refman/refmanual.md \
 handbook/iss.md \
 handbook/lcb.md \
 handbook/cosim.md \
-../vadl/main/vadl/ast/vadl.ATG \
+../vadl-frontend/main/vadl/ast/vadl.ATG \
 refman/acronyms.md
 
 html: open-vadl-html-docs
