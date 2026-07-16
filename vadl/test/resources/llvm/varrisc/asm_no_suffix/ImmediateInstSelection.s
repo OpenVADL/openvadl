@@ -114,18 +114,12 @@ BEQ r1, r2, -1025
 # CHECK-NEXT: <MCOperand Imm:-1025>>
 
 
+
 LDB r1, 1023 (r2)
 # CHECK: <MCInst #{{[0-9]+}} LDB
 # CHECK-NEXT: <MCOperand Reg:3>
 # CHECK-NEXT: <MCOperand Reg:4>
 # CHECK-NEXT: <MCOperand Imm:1023>>
-
-# FIXME: Fix parsing
-LDB r1, -1024 (r2)
-# CHECK-DISABLED: <MCInst #{{[0-9]+}} LDB
-# CHECK-NEXT-DISABLED: <MCOperand Reg:3>
-# CHECK-NEXT-DISABLED: <MCOperand Reg:4>
-# CHECK-NEXT-DISABLED: <MCOperand Imm:-1024>>
 
 LDB r1, 1024 (r2)
 # CHECK: <MCInst #{{[0-9]+}} LDB_L
@@ -133,9 +127,10 @@ LDB r1, 1024 (r2)
 # CHECK-NEXT: <MCOperand Reg:4>
 # CHECK-NEXT: <MCOperand Imm:1024>>
 
-# FIXME: Fix parsing
-LDB r1, -1025 (r2)
-# CHECK-DISABLED: <MCInst #{{[0-9]+}} LDB
-# CHECK-NEXT-DISABLED: <MCOperand Reg:3>
-# CHECK-NEXT-DISABLED: <MCOperand Reg:4>
-# CHECK-NEXT-DISABLED: <MCOperand Imm:-1025>>
+# operand of LBD is unsigned, therefore -1 is 4294967295
+# and LDB_L is selected
+LDB r1, -1 (r2)
+# CHECK: <MCInst #{{[0-9]+}} LDB_L
+# CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:4>
+# CHECK-NEXT: <MCOperand Imm:4294967295>>

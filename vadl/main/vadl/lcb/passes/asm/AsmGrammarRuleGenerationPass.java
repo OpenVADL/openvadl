@@ -43,9 +43,9 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.types.asmTypes.ConstantAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.OperandAsmType;
@@ -503,6 +503,12 @@ public class AsmGrammarRuleGenerationPass extends Pass {
         Constant.Value.fromInteger(BigInteger.valueOf(lookupIndex),
             Type.unsignedInt(64)));
 
+    // Also check index+1 to consider the possibility of a negative integer,
+    // where  the additional MINUS token is in the token stream.
+    var laNextIndexNode = new ConstantNode(
+        Constant.Value.fromInteger(BigInteger.valueOf(lookupIndex + 1),
+            Type.unsignedInt(64)));
+
     // Use the LA_ID_IN builtin for string literal tokens
     var laIdInArgsList = nonOverlapTokens.stream().map(AsmToken::getStringLiteral)
         .filter(Objects::nonNull).map(arg -> new ConstantNode(new Constant.Str(arg)))
@@ -516,7 +522,8 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     var graph = new Graph("generated_sem_pred_behavior" + namingSequence++);
 
     // Build the expression based on which token types are present
-    var returnExpression = buildSemPredExpression(laIndexNode, laIdInArgsList, laKindInArgsList);
+    var returnExpression =
+        buildSemPredExpression(laIndexNode, laNextIndexNode, laIdInArgsList, laKindInArgsList);
     graph.addWithInputs(new ReturnNode(returnExpression));
 
     return new Function(Identifier.noLocation("sem_pred_" + namingSequence++),
@@ -526,18 +533,29 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   // If there is only one type of arguments, use the corresponding builtin call as expression
   // If there are both types of arguments use both builtins in an OR expression
   private ExpressionNode buildSemPredExpression(ConstantNode laIndexNode,
+                                                ConstantNode laNextIndexNode,
                                                 List<ConstantNode> laIdInArgsList,
                                                 List<ConstantNode> laKindInArgsList) {
+    var stringIndexCall = buildStringLiteralBuiltinCall(laIndexNode, laIdInArgsList);
+    var stringNextIndexCall = buildStringLiteralBuiltinCall(laNextIndexNode, laIdInArgsList);
+    var stringOrCall = buildOrExpressionCall(stringIndexCall, stringNextIndexCall);
+
+    var kindIndexCall = buildKindBuiltinCall(laIndexNode, laKindInArgsList);
+    var kindNextIndexCall = buildKindBuiltinCall(laNextIndexNode, laKindInArgsList);
+    var kindOrCall = buildOrExpressionCall(kindIndexCall, kindNextIndexCall);
+
     if (laKindInArgsList.isEmpty()) {
-      return buildStringLiteralBuiltinCall(laIndexNode, laIdInArgsList);
+      return stringOrCall;
     } else if (laIdInArgsList.isEmpty()) {
-      return buildKindBuiltinCall(laIndexNode, laKindInArgsList);
+      return kindOrCall;
     } else {
-      var stringCall = buildStringLiteralBuiltinCall(laIndexNode, laIdInArgsList);
-      var kindCall = buildKindBuiltinCall(laIndexNode, laKindInArgsList);
-      return new BuiltInCall(BuiltInTable.OR,
-          new NodeList<>(stringCall, kindCall), Type.bool());
+      return new BuiltInCall(BuiltInTable.OR, new NodeList<>(stringOrCall, kindOrCall),
+          Type.bool());
     }
+  }
+
+  private ExpressionNode buildOrExpressionCall(ExpressionNode left, ExpressionNode right) {
+    return new BuiltInCall(BuiltInTable.OR, new NodeList<>(left, right), Type.bool());
   }
 
   private AsmBuiltInCall buildStringLiteralBuiltinCall(ConstantNode laIndexNode,
@@ -838,6 +856,9 @@ public class AsmGrammarRuleGenerationPass extends Pass {
       return null;
     }
 
+    // TODO: Make pseudo insts work, prbly use function as given
+    // also refactor functions to one place
+
     String semPredCondition = "";
 
     //  std::optional<llvm::ParsedValue<int64_t>>
@@ -852,12 +873,11 @@ public class AsmGrammarRuleGenerationPass extends Pass {
       var immOperand = getImmOperand(tableGenInstruction, fieldAccess);
 
 
-      // If type is raw Bits type remove use bitwidth -1 to assume signed immediates.
+      // If type is not unsigned use bitwidth -1 to assume signed immediates.
       // This matches the assumption in predicate generation.
+      var accessType = fieldAccess.type().asDataType();
       int bitWidth = field.type().bitWidth();
-      if (field.type() instanceof BitsType) {
-        bitWidth -= 1;
-      } else if (field.type().isSigned()) {
+      if (!(accessType instanceof UIntType)) {
         bitWidth -= 1;
       }
 
