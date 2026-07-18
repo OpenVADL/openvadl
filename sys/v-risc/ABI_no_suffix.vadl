@@ -80,45 +80,4 @@ application binary interface ABI for VarRISC32 = {
 }
 
 [ generate rules ]
-assembly description AD for ABI = {
-    function l_suffix(baseMnemonic: String) -> String = baseMnemonic + "_L"
-
-    function l_suffix_if_large_val(baseMnemonic: String, val: SInt<64>) -> String = if val > -1025 && val < 1024
-                                                                                    then baseMnemonic
-                                                                                    else ( baseMnemonic, "_L" )
-    grammar = {
-
-      Reg @register:
-        reg = Register ","
-      ;
-
-      BranchPseudoIds: "BEQZ" | "BNEZ" | "BLTZ" | "BLEZ" | "BGEZ" | "BGTZ" ;
-
-      BranchPseudoInstruction @instruction:
-        var mnemonicTmp = BranchPseudoIds
-        var rdTmp = Reg @operand
-        inst = (
-            var offsetTmp = Integer
-            mnemonic = l_suffix_if_large_val< mnemonicTmp, offsetTmp > @operand
-            rd = rdTmp
-            offset = offsetTmp @operand
-          |
-            mnemonic = l_suffix< mnemonicTmp > @operand
-            rd = rdTmp
-            offset = Label @operand
-        ) @instruction
-      ;
-
-      BraPseudoInstruction :
-        var mnemonicTmp = "BRA"
-        inst = (
-            var offsetTmp = Integer
-            mnemonic = l_suffix_if_large_val< mnemonicTmp, offsetTmp > @operand
-            offset = offsetTmp @operand
-          |
-            mnemonic = l_suffix< mnemonicTmp > @operand
-            offset = Label @operand
-        ) @instruction
-      ;
-    }
-}
+assembly description AD for ABI = {}

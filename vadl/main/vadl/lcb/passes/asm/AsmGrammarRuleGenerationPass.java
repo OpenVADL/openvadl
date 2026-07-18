@@ -34,6 +34,8 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.GenerateValueRangeImmediatePass;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
@@ -43,6 +45,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -856,9 +859,6 @@ public class AsmGrammarRuleGenerationPass extends Pass {
       return null;
     }
 
-    // TODO: Make pseudo insts work, prbly use function as given
-    // also refactor functions to one place
-
     String semPredCondition = "";
 
     //  std::optional<llvm::ParsedValue<int64_t>>
@@ -870,6 +870,20 @@ public class AsmGrammarRuleGenerationPass extends Pass {
       // operand assigned to field
       var field = fieldOrAccess.left();
       var fieldAccess = getFieldAccessFromField(inst, tableGenInstruction, field);
+
+      // If there is no fieldAccess it is a pseudo instruction, which just has symbol operands.
+      // In this case just check that the operand is in the value range of the declared type.
+      if (fieldAccess == null) {
+        var symbolOperand = getSymbolOperand(tableGenInstruction, immediateElemName);
+        var type = ((FuncParamNode) symbolOperand.origin()).type().asDataType();
+
+        var lowest = GenerateValueRangeImmediatePass.lowestPossibleValue((BitsType) type);
+        var highest = GenerateValueRangeImmediatePass.highestPossibleValue((BitsType) type);
+        semPredCondition +=
+            localVarAccess + " >= " + lowest + " && " + localVarAccess + " <= " + highest;
+        return buildPredicateCall(semPredCondition);
+      }
+
       var immOperand = getImmOperand(tableGenInstruction, fieldAccess);
 
 
@@ -896,6 +910,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     return buildPredicateCall(semPredCondition);
   }
 
+  @Nullable
   private Format.FieldAccess getFieldAccessFromField(PrintableInstruction instruction,
                                                      TableGenInstruction tableGenInstruction,
                                                      Format.Field field) {
@@ -904,9 +919,9 @@ public class AsmGrammarRuleGenerationPass extends Pass {
         instruction.formats().stream().flatMap(format -> format.fieldAccesses().stream())
             .filter(fa -> tableGenOperands.stream().anyMatch(
                 tgOp -> tgOp instanceof GcbInstructionImmediateOperand imm && imm.fieldAccess()
-                    .equals(fa)));
+                    .equals(fa))).filter(fa -> fa.fieldRefs().contains(field));
 
-    return fieldAccessCandidates.filter(fa -> fa.fieldRefs().contains(field)).findFirst().get();
+    return fieldAccessCandidates.findFirst().orElse(null);
   }
 
   private GcbInstructionImmediateOperand getImmOperand(TableGenInstruction inst,
@@ -914,6 +929,13 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     return (GcbInstructionImmediateOperand) inst.getInOperands().stream().filter(
         op -> op instanceof GcbInstructionImmediateOperand imm && imm.fieldAccess()
             .equals(fieldAccess)).findFirst().get();
+  }
+
+  private GcbInstructionBareSymbolOperand getSymbolOperand(TableGenInstruction inst,
+                                                           String immediateName) {
+    return (GcbInstructionBareSymbolOperand) inst.getInOperands().stream().filter(
+        op -> op instanceof GcbInstructionBareSymbolOperand sym && sym.name().equals(immediateName)
+    ).findFirst().get();
   }
 
   private Function buildPredicateCall(String semPredCondition) {
