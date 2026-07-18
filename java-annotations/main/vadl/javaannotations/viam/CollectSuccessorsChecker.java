@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,26 +19,28 @@ package vadl.javaannotations.viam;
 import com.google.auto.service.AutoService;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.bugpatterns.BugChecker;
+import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.VariableTree;
+import java.util.ArrayList;
 import java.util.List;
 import vadl.javaannotations.AbstractAnnotationChecker;
 
 /**
  * The CollectSuccessorsChecker class is a bug checker that checks for classes with @Successor
- * annotated fields that must override the collectSuccessors method.
+ * annotated fields that must override the forEachSuccessor method.
  * It will fail if the method implementation is not as expected.
  */
 @AutoService(BugChecker.class)
 @BugPattern(
     name = "CollectSuccessors",
-    summary = "Classes with @Successor annotated fields must override the collectSuccessors method",
+    summary = "Classes with @Successor annotated fields must override the forEachSuccessor method",
     severity = BugPattern.SeverityLevel.ERROR
 )
 @SuppressWarnings("BugPatternNaming")
-public class CollectSuccessorsChecker extends AbstractAnnotationChecker
-    implements DefaultCollectMixin {
+public class CollectSuccessorsChecker extends AbstractAnnotationChecker {
 
-  private static final String PARAM_TYPE = "java.util.List<" + CheckerUtils.NODE + ">";
+  private static final String PARAM_TYPE =
+      "java.util.function.Consumer" + "<" + CheckerUtils.NODE + ">";
 
   /**
    * Constructs the bug checker.
@@ -46,7 +48,7 @@ public class CollectSuccessorsChecker extends AbstractAnnotationChecker
   public CollectSuccessorsChecker() {
     super(
         Successor.class,
-        "collectSuccessors",
+        "forEachSuccessor",
         "void",
         List.of(PARAM_TYPE)
     );
@@ -55,6 +57,27 @@ public class CollectSuccessorsChecker extends AbstractAnnotationChecker
   @Override
   protected List<String> expectedMethodStatements(List<String> paramNames,
                                                   List<VariableTree> fields) {
-    return defaultCollectStatements(methodName, paramNames, fields, true);
+    var stmts = new ArrayList<String>();
+    var consumerName = paramNames.get(0);
+
+    stmts.add("super.%s(%s);".formatted(methodName, consumerName));
+    for (var field : fields) {
+      var type = ASTHelpers.getType(field);
+      assert type != null;
+
+      var hasAnnotation = ASTHelpers
+          .hasDirectAnnotationWithSimpleName(field, "Nullable");
+
+      var stmt = type.toString().startsWith(CheckerUtils.NODELIST)
+          ? "%s.forEach(%s);".formatted(field.getName(), consumerName)
+          : "%s.accept(%s);".formatted(consumerName, field.getName());
+
+      if (hasAnnotation) {
+        stmt = "if (this.%s != null) { %s }".formatted(field.getName(), stmt);
+      }
+
+      stmts.add(stmt);
+    }
+    return stmts;
   }
 }

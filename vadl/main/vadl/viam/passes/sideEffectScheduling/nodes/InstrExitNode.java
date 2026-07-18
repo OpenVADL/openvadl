@@ -16,7 +16,7 @@
 
 package vadl.viam.passes.sideEffectScheduling.nodes;
 
-import java.util.List;
+import java.util.function.Consumer;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
@@ -86,9 +86,9 @@ public abstract sealed class InstrExitNode extends DirectionalNode permits Instr
     }
 
     @Override
-    protected void collectInputs(List<Node> collection) {
-      super.collectInputs(collection);
-      collection.add(cause);
+    protected void forEachInput(Consumer<Node> consumer) {
+      super.forEachInput(consumer);
+      consumer.accept(cause);
     }
 
     @Override
@@ -144,9 +144,9 @@ public abstract sealed class InstrExitNode extends DirectionalNode permits Instr
     }
 
     @Override
-    protected void collectInputs(List<Node> collection) {
-      super.collectInputs(collection);
-      collection.add(cause);
+    protected void forEachInput(Consumer<Node> consumer) {
+      super.forEachInput(consumer);
+      consumer.accept(cause);
     }
 
     @Override

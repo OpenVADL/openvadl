@@ -18,6 +18,7 @@ package vadl.iss.passes.tcg.lowering.nodes;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import vadl.iss.passes.nodes.TcgVRefNode;
@@ -106,10 +107,10 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
 
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(arg1);
-    collection.add(arg2);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(arg1);
+    consumer.accept(arg2);
   }
 
   @Override

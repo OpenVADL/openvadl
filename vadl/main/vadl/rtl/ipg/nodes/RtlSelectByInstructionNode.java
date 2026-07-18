@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -249,12 +250,12 @@ public class RtlSelectByInstructionNode extends ExpressionNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
     if (this.selection != null) {
-      collection.add(selection);
+      consumer.accept(selection);
     }
-    collection.addAll(values);
+    values.forEach(consumer);
   }
 
   @Override

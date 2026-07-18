@@ -16,7 +16,7 @@
 
 package vadl.viam.graph.dependency;
 
-import java.util.List;
+import java.util.function.Consumer;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
@@ -56,9 +56,9 @@ public abstract class AbstractFunctionCallNode extends ExpressionNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(args);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    args.forEach(consumer);
   }
 
   @Override

@@ -17,7 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 import vadl.iss.passes.tcg.lowering.TcgV;
 import vadl.iss.passes.tcg.lowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
@@ -93,9 +93,9 @@ public class TcgVRefNode extends DependencyNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(indices);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    indices.forEach(consumer);
   }
 
   @Override

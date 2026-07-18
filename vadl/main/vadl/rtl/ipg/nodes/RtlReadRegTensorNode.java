@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 package vadl.rtl.ipg.nodes;
 
-import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
@@ -56,10 +56,10 @@ public class RtlReadRegTensorNode extends ReadRegTensorNode implements RtlCondit
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
     if (this.condition != null) {
-      collection.add(condition);
+      consumer.accept(condition);
     }
   }
 

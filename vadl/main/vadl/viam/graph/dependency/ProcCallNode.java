@@ -17,6 +17,7 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
@@ -101,9 +102,9 @@ public class ProcCallNode extends SideEffectNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(arguments);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    arguments.forEach(consumer);
   }
 
   @Override

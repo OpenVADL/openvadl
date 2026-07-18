@@ -17,8 +17,8 @@
 package vadl.viam.graph.dependency;
 
 import com.google.common.collect.Streams;
-import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
@@ -133,10 +133,10 @@ public abstract class WriteResourceNode extends SideEffectNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(indices);
-    collection.add(value);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    indices.forEach(consumer);
+    consumer.accept(value);
   }
 
   @Override

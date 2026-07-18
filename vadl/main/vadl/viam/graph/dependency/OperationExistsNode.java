@@ -17,8 +17,8 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
@@ -88,11 +88,11 @@ public class OperationExistsNode extends ExpressionNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(indices);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    indices.forEach(consumer);
     if (this.body != null) {
-      collection.add(body);
+      consumer.accept(body);
     }
   }
 

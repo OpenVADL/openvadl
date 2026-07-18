@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 package vadl.viam.helper;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -110,9 +111,9 @@ public class TestNodes {
     }
 
     @Override
-    protected void collectInputs(List<Node> collection) {
-      super.collectInputs(collection);
-      collection.add(input);
+    protected void forEachInput(Consumer<Node> consumer) {
+      super.forEachInput(consumer);
+      consumer.accept(input);
     }
 
     @Override
@@ -164,9 +165,9 @@ public class TestNodes {
     }
 
     @Override
-    protected void collectSuccessors(List<Node> collection) {
-      super.collectSuccessors(collection);
-      collection.add(successor);
+    protected void forEachSuccessor(Consumer<Node> consumer) {
+      super.forEachSuccessor(consumer);
+      consumer.accept(successor);
     }
 
     @Override
@@ -212,10 +213,10 @@ public class TestNodes {
     }
 
     @Override
-    protected void collectInputs(List<Node> collection) {
-      super.collectInputs(collection);
-      collection.add(input1);
-      collection.add(input2);
+    protected void forEachInput(Consumer<Node> consumer) {
+      super.forEachInput(consumer);
+      consumer.accept(input1);
+      consumer.accept(input2);
     }
 
     @Override
@@ -267,9 +268,9 @@ public class TestNodes {
     }
 
     @Override
-    protected void collectInputs(List<Node> collection) {
-      super.collectInputs(collection);
-      collection.addAll(inputs);
+    protected void forEachInput(Consumer<Node> consumer) {
+      super.forEachInput(consumer);
+      inputs.forEach(consumer);
     }
 
     @Override

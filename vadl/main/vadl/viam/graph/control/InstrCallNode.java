@@ -18,6 +18,7 @@ package vadl.viam.graph.control;
 
 import com.google.common.collect.Streams;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.javaannotations.viam.DataValue;
@@ -192,9 +193,9 @@ public class InstrCallNode extends DirectionalNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(arguments);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    arguments.forEach(consumer);
   }
 
   @Override

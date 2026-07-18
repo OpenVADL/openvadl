@@ -20,6 +20,7 @@ import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -256,16 +257,16 @@ public class TcgGvecOpNode extends TcgNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(destinationAccessorIndices);
-    collection.addAll(lhsAccessorIndices);
-    collection.addAll(rhsAccessorIndices);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    destinationAccessorIndices.forEach(consumer);
+    lhsAccessorIndices.forEach(consumer);
+    rhsAccessorIndices.forEach(consumer);
     if (this.scalarOperand != null) {
-      collection.add(scalarOperand);
+      consumer.accept(scalarOperand);
     }
     if (this.immediateOperand != null) {
-      collection.add(immediateOperand);
+      consumer.accept(immediateOperand);
     }
   }
 

@@ -19,6 +19,7 @@ package vadl.iss.passes.nodes;
 import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -304,11 +305,11 @@ public class IssWriteRegNode extends WriteRegTensorNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(accessorIndices);
-    collection.add(bitOffset);
-    collection.add(bitWidth);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    accessorIndices.forEach(consumer);
+    consumer.accept(bitOffset);
+    consumer.accept(bitWidth);
   }
 
   @Override

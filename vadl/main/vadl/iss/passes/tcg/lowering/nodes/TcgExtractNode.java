@@ -17,6 +17,7 @@
 package vadl.iss.passes.tcg.lowering.nodes;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcg.lowering.TcgExtend;
@@ -117,10 +118,10 @@ public class TcgExtractNode extends TcgUnaryOpNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(offset);
-    collection.add(len);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    consumer.accept(offset);
+    consumer.accept(len);
   }
 
   @Override

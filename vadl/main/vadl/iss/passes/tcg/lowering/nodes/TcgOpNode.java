@@ -19,6 +19,7 @@ package vadl.iss.passes.tcg.lowering.nodes;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcg.lowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
@@ -103,8 +104,8 @@ public abstract class TcgOpNode extends TcgNode {
   }
 
   @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.addAll(destinations);
+  protected void forEachInput(Consumer<Node> consumer) {
+    super.forEachInput(consumer);
+    destinations.forEach(consumer);
   }
 }
