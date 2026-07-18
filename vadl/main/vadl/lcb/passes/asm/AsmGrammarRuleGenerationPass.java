@@ -42,6 +42,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -924,9 +925,9 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     return fieldAccessCandidates.findFirst().orElse(null);
   }
 
-  private GcbInstructionImmediateOperand getImmOperand(TableGenInstruction inst,
-                                                       Format.FieldAccess fieldAccess) {
-    return (GcbInstructionImmediateOperand) inst.getInOperands().stream().filter(
+  private ReferencesImmediateOperand getImmOperand(TableGenInstruction inst,
+                                                   Format.FieldAccess fieldAccess) {
+    return (ReferencesImmediateOperand) inst.getInOperands().stream().filter(
         op -> op instanceof GcbInstructionImmediateOperand imm && imm.fieldAccess()
             .equals(fieldAccess)).findFirst().get();
   }

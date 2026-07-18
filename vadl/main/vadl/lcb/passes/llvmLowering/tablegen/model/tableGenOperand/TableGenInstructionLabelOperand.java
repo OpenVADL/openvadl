@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -36,6 +36,8 @@ public class TableGenInstructionLabelOperand extends GcbInstructionImmediateOper
     implements ReferencesFormatField, ReferencesImmediateOperand {
   private static final String AS_LABEL = "AsLabel";
 
+  private final TableGenImmediateRecord immediate;
+
   private TableGenInstructionLabelOperand(Node origin,
                                           TableGenImmediateRecord immediateRecord,
                                           Format.FieldAccess fieldAccess) {
@@ -45,8 +47,8 @@ public class TableGenInstructionLabelOperand extends GcbInstructionImmediateOper
   public TableGenInstructionLabelOperand(Node origin,
                                          TableGenImmediateRecord immediateRecord,
                                          String variableName) {
-    super((FieldAccessRefNode) origin, immediateRecord, immediateRecord.rawName() + AS_LABEL,
-        variableName);
+    super((FieldAccessRefNode) origin, immediateRecord.rawName() + AS_LABEL, variableName);
+    this.immediate = immediateRecord;
   }
 
   /**
@@ -69,6 +71,11 @@ public class TableGenInstructionLabelOperand extends GcbInstructionImmediateOper
 
   @Override
   public List<Format.Field> formatFields() {
-    return immediateOperand().fieldAccessRef().fieldRefs();
+    return immediate.fieldAccessRef().fieldRefs();
+  }
+
+  @Override
+  public TableGenImmediateRecord immediateOperand() {
+    return immediate;
   }
 }
