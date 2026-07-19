@@ -43,7 +43,7 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
         case EXCP_ATOMIC:
             cpu_exec_step_atomic(cs);
             break;
-        case [(${gen_arch_upper})]_EXCP_EXC:
+        case [(${gen_arch_upper})]_EXCP_SYSCALL:
             env->[(${pc_info.accessor})] += [(${config.insn_width_bytes})];
                 ret = do_syscall(env,
                                   env->[(${config.sysRegFile})][ [(${config.sysReg})] ],
@@ -58,6 +58,7 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
             if (cs->singlestep_enabled) {
                 goto gdbstep;
             }
+            break;
         case EXCP_DEBUG:
         gdbstep:
              force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_info.accessor})]);
