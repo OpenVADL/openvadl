@@ -64,6 +64,7 @@ import vadl.iss.passes.tcg.lowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGenException;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgHelperCall;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcg.lowering.nodes.TcgLookupAndGotoPtr;
 import vadl.iss.passes.tcg.lowering.nodes.TcgMovCondNode;
@@ -641,7 +642,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Handles the {@link IssLoadNode}, which was created from a {@link ReadMemNode}
-   * in the {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   * in the {@link vadl.iss.passes.common.IssMemoryAccessTransformationPass}.
    */
   @Handler
   void handle(IssLoadNode toHandle) {
@@ -694,7 +695,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Handles the {@link IssStoreNode}, which was created from a {@link WriteMemNode}
-   * in the {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   * in the {@link vadl.iss.passes.common.IssMemoryAccessTransformationPass}.
    */
   @Handler
   void handle(IssStoreNode toHandle) {
@@ -949,7 +950,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Handles the {@link ReadMemNode}. Should be replaced by a {@link IssLoadNode} in the
-   * {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   * {@link vadl.iss.passes.common.IssMemoryAccessTransformationPass}.
    */
   @Handler
   void handle(ReadMemNode toHandle) {
@@ -958,7 +959,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Handles the {@link WriteMemNode}. Should be replaced by a {@link IssStoreNode} in the
-   * {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   * {@link vadl.iss.passes.common.IssMemoryAccessTransformationPass}.
    */
   @Handler
   void handle(WriteMemNode toHandle) {
@@ -1026,7 +1027,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * The {@link IssGhostCastNode} is removed in the {@link vadl.iss.passes.IssTcgSchedulingPass}
+   * The {@link IssGhostCastNode} is removed in the {@link vadl.iss.passes.tcg.IssTcgSchedulingPass}
    * if it had been scheduled.
    * So it cannot occur during op lowering.
    */
@@ -1252,6 +1253,15 @@ class BuiltInTcgLoweringExecutor {
                   intU(pos, 32).toNode(), intU(len, 32).toNode())
           );
         })
+
+        //// Float Arithmetic ////
+
+        .set(BuiltInTable.FADD, (ctx) -> out(
+            new TcgHelperCall(
+                ctx.dest(), new NodeList<>(ctx.src(0), ctx.src(1)), true,
+                "fadd_ieee32"
+            )
+        ))
 
         .build();
   }

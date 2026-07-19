@@ -73,6 +73,7 @@ import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ExprVisitor;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallIndex;
 import vadl.ast.nodes.ForallStatement;
@@ -703,6 +704,14 @@ class MacroExpander
         expandExpr(definition.identifier),
         definition.typeLiteral != null ? expandExpr(definition.typeLiteral) : null,
         expandExpr(definition.value),
+        copyLoc(definition.loc)
+    );
+  }
+
+  @Override
+  public Definition visit(FloatTypeDefinition definition) {
+    return new FloatTypeDefinition(
+        expandExpr(definition.identifier),
         copyLoc(definition.loc)
     );
   }

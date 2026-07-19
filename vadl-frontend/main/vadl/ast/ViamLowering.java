@@ -78,6 +78,7 @@ import vadl.ast.nodes.ExceptionDefinition;
 import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.FormatDefinition;
 import vadl.ast.nodes.FormatField;
 import vadl.ast.nodes.FunctionDefinition;
@@ -141,6 +142,7 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Encoding;
 import vadl.viam.ExceptionDef;
+import vadl.viam.FloatFormat;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Group;
@@ -1096,6 +1098,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
+  public Optional<vadl.viam.Definition> visit(FloatTypeDefinition definition) {
+    var identifier =
+        new vadl.viam.Identifier(definition.viamId, definition.identifier().location());
+    return Optional.of(new FloatFormat(identifier));
+  }
+
+  @Override
   public Optional<vadl.viam.Definition> visit(ConstantDefinition definition) {
     // Do nothing on purpose.
     // Constants are folded in the lowering and are not translated to VIAM.
@@ -1391,7 +1400,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
-   * Get the field encoding for the {@link vadl.ast.EncodingFormatField}
+   * Get the field encoding for the {@link EncodingFormatField}
    * with the kind {@code ENCODING}.
    */
   @SuppressWarnings("LineLength")

@@ -191,6 +191,10 @@ public interface VadlBuiltInEmptyNoStatusDispatcher<T> extends VadlBuiltInNoStat
   }
 
   @Override
+  default void handleFADD(T input) {
+  }
+
+  @Override
   default void handleConcat(T input) {
   }
 }

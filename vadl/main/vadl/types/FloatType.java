@@ -16,52 +16,15 @@
 
 package vadl.types;
 
-import javax.annotation.CheckForNull;
-
 /**
- * An IEEE-754 32/64-bit float.
+ * A class that represents the VADL float type.
  */
-public class FloatType extends BitsType {
+public class FloatType extends Type {
 
-  /**
-   * The size of the float.
-   */
-  public enum Size {
-    FP32(32),
-    FP64(64);
-
-    final int bitWidth;
-
-    Size(int bitWidth) {
-      this.bitWidth = bitWidth;
-    }
-  }
-
-  protected final Size size;
-
-  protected FloatType(Size size) {
-    super(size.bitWidth);
-    this.size = size;
-  }
+  protected FloatType() { }
 
   @Override
   public String name() {
-    return "FP%s".formatted(size.bitWidth);
-  }
-
-  @CheckForNull
-  @Override
-  public DataType fittingCppType() {
-    return null;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return this.getClass() == obj.getClass() && this.size == ((FloatType) obj).size;
-  }
-
-  @Override
-  public int hashCode() {
-    return super.hashCode();
+    return "FloatType";
   }
 }

@@ -63,6 +63,7 @@ import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ExprVisitor;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -132,6 +133,7 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Definition;
 import vadl.viam.ExceptionDef;
+import vadl.viam.FloatFormat;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
@@ -165,6 +167,7 @@ import vadl.viam.graph.dependency.DynSliceNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FloatBuiltInCall;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -1387,7 +1390,19 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var argGroups = expr.args();
     final var args = new NodeList<ExpressionNode>(AstUtils.argumentCount(argGroups));
-    AstUtils.forEachArgument(argGroups, arg -> args.add(this.fetch(arg)));
+    final var floatTypeArgs = new ArrayList<FloatFormat>();
+    AstUtils.forEachArgument(argGroups, arg -> {
+      var target = switch (arg) {
+        case Identifier identifier -> identifier.target();
+        case IdentifierPath path -> path.target();
+        default -> null;
+      };
+      if (target instanceof FloatTypeDefinition floatTypeDef) {
+        floatTypeArgs.add((FloatFormat) viamLowering.fetch(floatTypeDef).orElseThrow());
+      } else {
+        args.add(this.fetch(arg));
+      }
+    });
     var typeBeforeSlice = getViamType(expr.typeBeforeSlice());
 
     ExpressionNode exprBeforeSlice;
@@ -1397,6 +1412,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, args,
             typeBeforeSlice);
+      } else if (BuiltInTable.FLOAT_BUILT_INS.contains(expr.computedBuiltIn)) {
+        exprBeforeSlice = new FloatBuiltInCall(expr.computedBuiltIn, args,
+            floatTypeArgs, typeBeforeSlice);
       } else {
         exprBeforeSlice = new BuiltInCall(expr.computedBuiltIn, args,
             typeBeforeSlice);

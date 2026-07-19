@@ -102,6 +102,9 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
     [# th:each="access : ${base_clear_cpu_accessors}"]
     [(${access.name})](env); [/]
 
+    // disable NaN propagation
+    set_default_nan_mode(1, &env->fp_status);
+
 [(${reset})]
 }
 

@@ -63,6 +63,7 @@ import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ExprVisitor;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -358,6 +359,12 @@ public class Ungrouper
   @Override
   public Expr visit(ResourceReferenceExression expr) {
     return expr;
+  }
+
+  @Override
+  public Void visit(FloatTypeDefinition definition) {
+    ungroupAnnotations(definition);
+    return null;
   }
 
   @Override

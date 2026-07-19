@@ -33,3 +33,8 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
 [(${instr})]
 [/]
 
+// float helpers
+
+uint32_t helper_fadd_ieee32(CPU[(${gen_arch_upper})]State *env, uint32_t rs1, uint32_t rs2) {
+  return float32_add(rs1, rs2, &env->fp_status);
+}

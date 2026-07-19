@@ -47,6 +47,7 @@ import vadl.ast.nodes.EncodingDefinition;
 import vadl.ast.nodes.EncodingFormatField;
 import vadl.ast.nodes.EnumerationDefinition;
 import vadl.ast.nodes.ExceptionDefinition;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.FormatDefinition;
 import vadl.ast.nodes.FunctionDefinition;
 import vadl.ast.nodes.GroupDefinition;
@@ -109,6 +110,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
 
   @Override
   public Definition visit(ConstantDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(FloatTypeDefinition definition) {
     return definition;
   }
 

@@ -181,6 +181,7 @@ TOKENS
   FALSE        = "false".
   FETCH        = "fetch".
   FILE         = "file".
+  FLOAT_TYPE   = "float-type".
   FOLD         = "fold".
   FOR          = "for".
   FORALL       = "forall".
@@ -417,6 +418,7 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
 
   commonDefinition<out Definition def>    (. def = DUMMY_DEF; .)
   = constantDefinition<out def>
+  | floatTypeDefinition<out def>
   | formatDefinition<out def>
   | enumerationDefinition<out def>
   | usingDefinition<out def>
@@ -514,6 +516,11 @@ elements. A single annotation is described in the #annotation production rule.
     [ SYM_COLON typeLiteral<out type> ]
     SYM_EQ
     expression<out Expr expr, BIN_OPS>           (. def = new ConstantDefinition(id, type, expr, startLocation.join(lastTokenLoc())); .)
+  .
+
+  floatTypeDefinition<out FloatTypeDefinition def>          (. var startLocation = nextTokenLoc(); .)
+  = FLOAT_TYPE
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. def = new FloatTypeDefinition(id, startLocation.join(lastTokenLoc())); .)
   .
 
   formatDefinition<out FormatDefinition def>                                      (. var startLoc = nextTokenLoc(); var fields = new ArrayList<FormatField>(); .)

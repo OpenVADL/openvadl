@@ -248,6 +248,14 @@ public class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
+  public Void visit(FloatTypeDefinition definition) {
+    beforeTravel(definition);
+    definition.forEachChild(this::travel);
+    afterTravel(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(FormatDefinition definition) {
     beforeTravel(definition);
     definition.forEachChild(this::travel);

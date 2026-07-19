@@ -811,6 +811,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Override
+  public void handleFADD(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
   public void handleConcat(BuiltInCall input) {
     // do nothing (result is already fine)
   }

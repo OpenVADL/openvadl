@@ -90,6 +90,7 @@ import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ExprVisitor;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -755,13 +756,6 @@ public class TypeChecker
       }
     }
 
-    // FPn => Bits<n>
-    if (from.getClass() == FloatType.class) {
-      if (to.getClass() == BitsType.class) {
-        return ((FloatType) from).bitWidth() == ((BitsType) to).bitWidth();
-      }
-    }
-
     // Bits<1> => Bool
     if (from.getClass() == BitsType.class) {
       if (to.getClass() == BoolType.class) {
@@ -995,8 +989,9 @@ public class TypeChecker
 
   private BuiltInCheckResult unCachedCheckBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> args,
                                                   WithLocation location) {
-    if (!(args.size() == builtIn.argTypeClasses().size() || (builtIn.signature().hasVarArgs()
-        && args.size() >= builtIn.argTypeClasses().size()))) {
+    int minArgCount = builtIn.argTypeClasses().size() + builtIn.signature().floatTypeArgCount();
+    if (!(args.size() == minArgCount
+        || (builtIn.signature().hasVarArgs() && args.size() >= minArgCount))) {
       throw addErrorAndStopChecking(
           error("Type Mismatch", location)
               .locationDescription(location,
@@ -1238,6 +1233,9 @@ public class TypeChecker
       // Now revert to the generic handling of functions.
     }
 
+    var ftArgCnt = builtIn.signature().floatTypeArgCount();
+    args = args.stream().skip(ftArgCnt).toList();
+
     var argTypes = args.stream().map(Expr::type).toList();
     var areAllConst = argTypes.stream().allMatch(ConstantType.class::isInstance);
     if (areAllConst) {
@@ -1263,21 +1261,32 @@ public class TypeChecker
     var originalArgTypes = argTypes;
     argTypes = args.stream().map(Expr::type).toList();
 
-
-    if (!builtIn.takes(argTypes)) {
+    var ftArgs = args.stream().limit(ftArgCnt).toList();
+    var ftTypes = ftArgs.stream().map(Expr::type).toList();
+    var ftTypesInvalid = !ftTypes.stream().allMatch(FloatType.class::isInstance);
+    if (ftTypesInvalid || !builtIn.takes(argTypes)) {
       // FIXME: Further improve these error messages.
       var areSomeConst = originalArgTypes.stream().anyMatch(ConstantType.class::isInstance);
-      var calledTypes = String.join(", ", argTypes.stream().map(Type::toString).toList());
+      var calledTypes = Stream.concat(ftTypes.stream(), argTypes.stream())
+          .map(Type::toString).collect(Collectors.joining(", "));
       addErrorAndStopChecking(
           error("Type Mismatch", location)
               .locationDescription(location, "The builtin has the signature `%s` but got `%s`.",
-                  builtIn.signature(), calledTypes)
+                  builtIn.signature().nameWithFloatTypes(), calledTypes)
               .applyIf(areSomeConst, b -> b.locationHelp(location,
                   "Try casting some of the constant arguments to explicit types."))
+              .applyIf(ftTypesInvalid, b ->
+                  b.help("The first %d arguments must be float-type.", ftArgCnt))
               .build());
     }
 
     return new BuiltInCheckResult(argTypes, builtIn.returns(argTypes));
+  }
+
+  @Override
+  public Void visit(FloatTypeDefinition definition) {
+    // Nothing to do
+    return null;
   }
 
   @Override
@@ -3225,6 +3234,12 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof FloatTypeDefinition floatTypeDef) {
+      check(floatTypeDef);
+      expr.type = floatTypeDef.type();
+      return;
+    }
+
     if (origin instanceof RangeFormatField field) {
       // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
       expr.type = field.type;
@@ -3739,8 +3754,6 @@ public class TypeChecker
     Map<String, Supplier<Type>> unSizedBuiltins = Map.of(
         "Bool", Type::bool,
         "String", Type::string,
-        "FP32", Type::float32,
-        "FP64", Type::float64,
         "Instruction", MicroArchitectureType::instruction,
         "FetchResult", MicroArchitectureType::fetchResult
     );
@@ -4213,9 +4226,10 @@ public class TypeChecker
         var allowedStatusfields = List.of("nv", "dz", "of", "uf", "nx");
         if (!allowedStatusfields.contains(fieldName)) {
           var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
-          addErrorAndStopChecking(error("Unknown float status field `%s`".formatted(fieldName), expr)
-              .suggestions(suggestions)
-              .build());
+          addErrorAndStopChecking(
+              error("Unknown float status field `%s`".formatted(fieldName), expr)
+                  .suggestions(suggestions)
+                  .build());
         }
         var fieldType = Type.bool();
         visitSliceIndexCall(expr, fieldType, subCall.argsIndices);
@@ -4341,7 +4355,12 @@ public class TypeChecker
 
     var checkResult = checkBuiltin(builtin, args, expr);
     if (checkResult.castedArgTypes != null) {
-      expr.replaceArgsFor(0, checkResult.applyCastToArgs(args));
+      var ftArgCnt = builtin.signature().floatTypeArgCount();
+      var newArgs = Stream.concat(
+          args.stream().limit(ftArgCnt),
+          checkResult.applyCastToArgs(args.stream().skip(ftArgCnt).toList()).stream()
+      ).toList();
+      expr.replaceArgsFor(0, newArgs);
     }
     expr.typeBeforeSlice = checkResult.returnType;
     expr.argsIndices.get(0).type = checkResult.returnType;

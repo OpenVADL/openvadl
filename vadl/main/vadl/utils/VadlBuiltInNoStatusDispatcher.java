@@ -113,6 +113,8 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleCTZ(input);
     } else if (builtIn == BuiltInTable.CTO) {
       handleCTO(input);
+    } else if (builtIn == BuiltInTable.FADD) {
+      handleFADD(input);
     } else if (builtIn == BuiltInTable.CONCATENATE_BITS) {
       handleConcat(input);
     } else {
@@ -204,6 +206,8 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
   void handleCTZ(T input);
 
   void handleCTO(T input);
+
+  void handleFADD(T input);
 
   void handleConcat(T input);
 

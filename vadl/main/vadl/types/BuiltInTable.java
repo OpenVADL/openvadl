@@ -1041,14 +1041,30 @@ public class BuiltInTable {
 
   ///// FLOAT ARITHMETIC //////
 
+  /**
+   * {@code function fadd( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   */
+  public static final BuiltIn FADD =
+      func("VADL::fadd",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstTwoWithSameBitWidthsAndFrm(2)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
 
+  // TODO: I think we want a status variant for float built-ins, similar to other built-ins.
+  //       But how to handle these for ISS?
+  //       When doing 64- or even 128-bit ops, returning the status from helpers is afaik not
+  //       possible. So we'd need to store them in a reg or an env variable and load them later.
+  //       But we have to make sure that other float ops are not scheduled in between!
+  /**
+   * {@code function fadds( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) ->
+   *   ( Bits<N>, FloatStatus ) }
+   */
   public static final BuiltIn FADDS =
-      func("VADL::fadds",
-          Type.relation(
-              List.of(FloatType.class, FloatType.class, BitsType.class), StructType.class))
-          .takesData(args -> args.get(0).bitWidth() == args.get(1).bitWidth()
-              && args.get(2).bitWidth() == 5)
-          .returnsFirstFloatAndStatus()
+      func("VADL::fadds", Type.relation(
+          List.of(BitsType.class, BitsType.class, BitsType.class), 1, StructType.class))
+          .takesFirstTwoWithSameBitWidthsAndFrm(2)
+          .returnsFirstBitWidthAndFloatStatus()
           .build();
 
 
@@ -1202,7 +1218,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn LA_ID_IN =
       func("LaIdIn", null,
-          Type.relation(List.of(UIntType.class, StringType.class), true, BoolType.class))
+          Type.relation(List.of(UIntType.class, StringType.class), true, 0, BoolType.class))
           .takesDefault()
           .noCompute()
           .returns(Type.bool())
@@ -1216,7 +1232,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn LA_KIND_IN =
       func("LaKindIn", null,
-          Type.relation(List.of(UIntType.class, StringType.class), true, BoolType.class))
+          Type.relation(List.of(UIntType.class, StringType.class), true, 0, BoolType.class))
           .takesDefault()
           .noCompute()
           .returns(Type.bool())
@@ -1423,7 +1439,7 @@ public class BuiltInTable {
   );
 
   public static final List<BuiltIn> FLOAT_ARITHMETIC_BUILT_INS = List.of(
-      FADDS
+      FADD
   );
 
   public static final List<BuiltIn> FUNCTION_BUILT_INS = List.of(
@@ -1456,13 +1472,17 @@ public class BuiltInTable {
       INSTRUCTION_WRITE
   );
 
+  public static final List<BuiltIn> FLOAT_BUILT_INS = Stream.of(
+      FLOAT_ARITHMETIC_BUILT_INS.stream()
+  ).flatMap(s -> s).toList();
+
   public static final List<BuiltIn> BUILT_INS = Stream.of(
       ARITHMETIC_BUILT_INS.stream(),
       LOGICAL_BUILT_INS.stream(),
       COMPARISON_BUILT_INS.stream(),
       SHIFTING_BUILT_INS.stream(),
       BITWISE_COUNTING_BUILT_INS.stream(),
-      FLOAT_ARITHMETIC_BUILT_INS.stream(),
+      FLOAT_BUILT_INS.stream(),
       FUNCTION_BUILT_INS.stream(),
       ASM_PARSER_BUILT_INS_LIST.stream(),
       MICRO_ARCHITECTURE_BUILT_INS.stream()
@@ -1844,6 +1864,15 @@ public class BuiltInTable {
       return this;
     }
 
+    public BuiltInBuilder takesFirstTwoWithSameBitWidthsAndFrm(int roundingModeArgIdx) {
+      takesData((args) -> args.size() > roundingModeArgIdx
+          && args.get(0).bitWidth() == args.get(1).bitWidth()
+          && args.get(roundingModeArgIdx).bitWidth() == 3
+      );
+      this.hasSameBitWidth = true;
+      return this;
+    }
+
     public BuiltInBuilder returns(Type returnType) {
       returns((args) -> returnType);
       return this;
@@ -1877,9 +1906,9 @@ public class BuiltInTable {
       return this;
     }
 
-    public BuiltInBuilder returnsFirstFloatAndStatus() {
+    public BuiltInBuilder returnsFirstBitWidthAndFloatStatus() {
       returnsFromFirstAsDataType((firstDataType) -> {
-        var valType = constructDataType(FloatType.class, firstDataType.bitWidth());
+        var valType = constructDataType(BitsType.class, firstDataType.bitWidth());
         Objects.requireNonNull(valType);
         return Type.struct(
             BUILTIN_RESULT, valType,

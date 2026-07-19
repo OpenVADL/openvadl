@@ -11,8 +11,9 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
   constant FSize64  : ConstTy = 64
   constant FSize128 : ConstTy = 128
 
-  // TODO: these need to be built-in types
   using FP16  = Bits<16>
+  using FP32  = Bits<32>
+  using FP64  = Bits<64>
   using FP128 = Bits<128>
 
   using SIntH = SInt<16>
@@ -30,6 +31,11 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
 
   register FCSR : FCsrFormat
 
+  //[ sticky float flag : invalid,        nv ]
+  //[ sticky float flag : divide_by_zero, dz ]
+  //[ sticky float flag : overflow,       of ]
+  //[ sticky float flag : underflow,      uf ]
+  //[ sticky float flag : inexact,        nx ]
   format FCsrFormat : Bits<32> =
   { reserved [31..8]
   , frm      [7..5]      // Rounding mode
@@ -116,12 +122,23 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     $FRtypeInstr($c; none; assembly $c.name = ($c.mne, " ", register(rd), ",", register(rs1), ",", register(rs2), ",", FrmName($c.rm)))
   }
 
-  record FSizeRec (suffix : Id, iSuffix : Id, fmt : Ex, ty : Id, sTy : Id, uTy : Id, size : Int)
+  record FSizeRec (suffix : Id, iSuffix : Id, fmt : Ex, ty : Id, sTy : Id, uTy : Id, fTy : Id, size : Int)
 
-  model FSize16  () : FSizeRec = {(H ; H ; Fmt::h ; FP16  ; SIntH ; UIntH ; 16 )}
-  model FSize32  () : FSizeRec = {(S ; W ; Fmt::s ; FP32  ; SIntW ; UIntW ; 32 )}
-  model FSize64  () : FSizeRec = {(D ; D ; Fmt::d ; FP64  ; SIntD ; UIntD ; 64 )}
-  model FSize128 () : FSizeRec = {(Q ; Q ; Fmt::q ; FP128 ; SIntQ ; UIntQ ; 128)}
+  //[ canonical sNaN : 0x7fa00000 ]
+  //[ canonical qNaN : 0x7fc00000 ]
+  //[ IEEE float : 32 ]
+  float-type IEEE32
+
+  //[ canonical sNaN : 0x7fa00000'00000000 ]
+  //[ canonical qNaN : 0x7fc00000'00000000 ]
+  //[ IEEE float : 64 ]
+  float-type IEEE64
+
+  // TODO: IEEE16 and IEEE128 are not yet implemented
+  model FSize16  () : FSizeRec = {(H ; H ; Fmt::h ; FP16  ; SIntH ; UIntH ; IEEE16  ; 16 )}
+  model FSize32  () : FSizeRec = {(S ; W ; Fmt::s ; FP32  ; SIntW ; UIntW ; IEEE32  ; 32 )}
+  model FSize64  () : FSizeRec = {(D ; D ; Fmt::d ; FP64  ; SIntD ; UIntD ; IEEE64  ; 64 )}
+  model FSize128 () : FSizeRec = {(Q ; Q ; Fmt::q ; FP128 ; SIntQ ; UIntQ ; IEEE128 ; 128)}
 
   function NaNBoxHS(val : FP16) -> FP32  = (0xffff               , val) as FP32
   function NaNBoxSD(val : FP32) -> FP64  = (0xffff'ffff          , val) as FP64
@@ -149,9 +166,8 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     $FRtypeInstr2rm ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; $funct5 ;
-      let result, flags = $fun(F(rs1) as $size.ty, F(rs2) as $size.ty, FCSR.fflags /* , $rm */) in {
+      let result = $fun($size.fTy, F(rs1) as $size.ty, F(rs2) as $size.ty, $rm) in {
         F(rd) := $NaNBox($size ; result)
-        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
       }
     ))
   }
@@ -160,9 +176,8 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     $FRtypeInstr2 ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; $funct5 ;
-      let result, flags = $fun(F(rs1) as $size.ty, F(rs2) as $size.ty, FCSR.fflags) in {
+      let result = $fun($size.fTy, F(rs1) as $size.ty, F(rs2) as $size.ty) in {
         F(rd) := $NaNBox($size ; result)
-        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
       }
     ))
   }
@@ -171,9 +186,8 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     $FRtypeInstr1rm ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; $funct5 ;
-      let result, flags = $fun(F(rs1) as $size.ty, FCSR.fflags /* , $rm */) in {
+      let result = $fun($size.fTy, F(rs1) as $size.ty, $rm) in {
         F(rd) := $NaNBox($size ; result)
-        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
       }
     ) ; $rs2 )
   }
@@ -182,9 +196,8 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     $FRtypeInstr2 ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; $funct5 ;
-      let result, flags = $fun(F(rs1) as $size.ty, F(rs2) as $size.ty, (FCSR.nv, 0b1111)) in {
+      let result = $fun($size.fTy, F(rs1) as $size.ty, F(rs2) as $size.ty) in {
         X(rd) := result as UIntR // zero extend
-        FCSR.nv := flags.nv
       }
     ))
   }
@@ -222,9 +235,8 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
       AsId($name, $fSize.suffix, $iSize.iSuffix, $u("U" ; "")) ;
       AsStr($name, ".", $fSize.suffix, ".", $iSize.iSuffix, $u("U" ; "")) ;
       $rm ; $fSize.fmt ; $funct5 ;
-      let result, flags = $fun(X(rs1) as $u(iSize.uTy ; iSize.sTy), FCSR.fflags /* , $rm */) in {
+      let result = $fun($fSize.fTy, X(rs1) as $u(iSize.uTy ; iSize.sTy), $rm) in {
         F(rd) := $NaNBox($fSize ; result)
-        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
       }
     ) ; $rs2 )
   }
@@ -235,8 +247,7 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
       AsStr($name, ".", $iSize.iSuffix, $u("U" ; ""), ".", $fSize.suffix) ;
       $rm ; $fSize.fmt ; $funct5 ;
       // TODO: we must make sure the builtin understands what type to convert to
-      let result, flags = $fun(F(rs1) as $fSize.ty, FCSR.fflags /* , $rm */) in {
-        // will this affect result type of builtin? It should for it to work!
+      let result, flags = $fun($fSize.fTy, F(rs1) as $fSize.ty, $rm) in {
         X(rd) := result as $u(iSize.uTy ; iSize.sTy)
         FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
       }
@@ -279,7 +290,7 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
 
   model FR4typeInstr (name : Id, size : FSizeRec, fun : SymEx, rm : Ex) : IsaDefs = {
     instruction AsId($name, $size.suffix) : R4type =
-      let result, flags = $fun(F(rs1), F(rs2), F(rs3), FCSR.fflags /* , $rm */) in {
+      let result, flags = $fun($size.fTy, F(rs1), F(rs2), F(rs3), $rm) in {
         F(rd) := $NaNBox($size ; result)
         FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
       }
@@ -290,20 +301,20 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
   $FLtypeInstr (FLW ; $FSize32 ; 0b010)
   $FStypeInstr (FSW ; $FSize32 ; 0b010)
 
-  $FRtypeInstrBiArith (FADD  ; $FSize32 ; VADL::fadds  ; 0b0'0000 ; Frm::rne)
-  //$FRtypeInstrBiArith (FSUB  ; $FSize32 ; VADL::fsubs  ; 0b0'0001 ; Frm::rne)
-  //$FRtypeInstrBiArith (FMUL  ; $FSize32 ; VADL::fmuls  ; 0b0'0010 ; Frm::rne)
-  //$FRtypeInstrBiArith (FDIV  ; $FSize32 ; VADL::fdivs  ; 0b0'0011 ; Frm::rne)
+  $FRtypeInstrBiArith (FADD  ; $FSize32 ; VADL::fadd  ; 0b0'0000 ; Frm::rne)
+  //$FRtypeInstrBiArith (FSUB  ; $FSize32 ; VADL::fsub  ; 0b0'0001 ; Frm::rne)
+  //$FRtypeInstrBiArith (FMUL  ; $FSize32 ; VADL::fmul  ; 0b0'0010 ; Frm::rne)
+  //$FRtypeInstrBiArith (FDIV  ; $FSize32 ; VADL::fdiv  ; 0b0'0011 ; Frm::rne)
 
-  //$FRtypeInstrMinMax  (FMIN  ; $FSize32 ; VADL::fmins  ; 0b0'0101 ; 0b000)
-  //$FRtypeInstrMinMax  (FMAX  ; $FSize32 ; VADL::fmaxs  ; 0b0'0101 ; 0b001)
+  //$FRtypeInstrMinMax  (FMIN  ; $FSize32 ; VADL::fmin  ; 0b0'0101 ; 0b000)
+  //$FRtypeInstrMinMax  (FMAX  ; $FSize32 ; VADL::fmax  ; 0b0'0101 ; 0b001)
 
-  //$FRtypeInstrSqrt    (FSQRT ; $FSize32 ; VADL::fsqrts ; 0b0'1011 ; 0b0'0000 ; Frm::rne)
+  //$FRtypeInstrSqrt    (FSQRT ; $FSize32 ; VADL::fsqrt ; 0b0'1011 ; 0b0'0000 ; Frm::rne)
 
   //// TODO: specify somehow that lt, le are signaling and eq is a quiet comparison
-  //$FRtypeInstrCmp     (FLE   ; $FSize32 ; VADL::fles   ; 0b1'0100 ; 0b000)
-  //$FRtypeInstrCmp     (FLT   ; $FSize32 ; VADL::flts   ; 0b1'0100 ; 0b001)
-  //$FRtypeInstrCmp     (FEQ   ; $FSize32 ; VADL::feqs   ; 0b1'0100 ; 0b010)
+  //$FRtypeInstrCmp     (FLE   ; $FSize32 ; VADL::fle   ; 0b1'0100 ; 0b000)
+  //$FRtypeInstrCmp     (FLT   ; $FSize32 ; VADL::flt   ; 0b1'0100 ; 0b001)
+  //$FRtypeInstrCmp     (FEQ   ; $FSize32 ; VADL::feq   ; 0b1'0100 ; 0b010)
 
   $FRtypeInstrSgn     (FSGNJ  ; $FSize32 ; (         rs2Sgn) ; 0b0'0100 ; 0b000)
   $FRtypeInstrSgn     (FSGNJN ; $FSize32 ; (     1 - rs2Sgn) ; 0b0'0100 ; 0b001)
@@ -312,20 +323,20 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
   $FRtypeInstrMvF2X   (FMV ; $FSize32 ; 0b1'1100 ; 0b000 ; 0b0'0000)
   $FRtypeInstrMvX2F   (FMV ; $FSize32 ; 0b1'1110 ; 0b000 ; 0b0'0000)
 
-  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; Signed   ; VADL::fcvts ; 0b1'1010 ; 0b0'0000 ; Frm::rne)
-  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; Unsigned ; VADL::fcvts ; 0b1'1010 ; 0b0'0001 ; Frm::rne)
-  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; Signed   ; VADL::fcvts ; 0b1'1010 ; 0b0'0010 ; Frm::rne)
-  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; Unsigned ; VADL::fcvts ; 0b1'1010 ; 0b0'0011 ; Frm::rne)
+  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; Signed   ; VADL::fcvt ; 0b1'1010 ; 0b0'0000 ; Frm::rne)
+  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; Unsigned ; VADL::fcvt ; 0b1'1010 ; 0b0'0001 ; Frm::rne)
+  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; Signed   ; VADL::fcvt ; 0b1'1010 ; 0b0'0010 ; Frm::rne)
+  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; Unsigned ; VADL::fcvt ; 0b1'1010 ; 0b0'0011 ; Frm::rne)
 
-  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; Signed   ; VADL::fcvts ; 0b1'1000 ; 0b0'0000 ; Frm::rne)
-  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; Unsigned ; VADL::fcvts ; 0b1'1000 ; 0b0'0001 ; Frm::rne)
-  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; Signed   ; VADL::fcvts ; 0b1'1000 ; 0b0'0010 ; Frm::rne)
-  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; Unsigned ; VADL::fcvts ; 0b1'1000 ; 0b0'0011 ; Frm::rne)
+  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; Signed   ; VADL::fcvt ; 0b1'1000 ; 0b0'0000 ; Frm::rne)
+  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; Unsigned ; VADL::fcvt ; 0b1'1000 ; 0b0'0001 ; Frm::rne)
+  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; Signed   ; VADL::fcvt ; 0b1'1000 ; 0b0'0010 ; Frm::rne)
+  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; Unsigned ; VADL::fcvt ; 0b1'1000 ; 0b0'0011 ; Frm::rne)
 
-  //$FR4typeInstr (FMADD  ; $FSize32 ; VADL::fmadds  ; Frm::rne)
-  //$FR4typeInstr (FMSUB  ; $FSize32 ; VADL::fmsubs  ; Frm::rne)
-  //$FR4typeInstr (FNMADD ; $FSize32 ; VADL::fnmadds ; Frm::rne)
-  //$FR4typeInstr (FNMSUB ; $FSize32 ; VADL::fnmsubs ; Frm::rne)
+  //$FR4typeInstr (FMADD  ; $FSize32 ; VADL::fmadd  ; Frm::rne)
+  //$FR4typeInstr (FMSUB  ; $FSize32 ; VADL::fmsub  ; Frm::rne)
+  //$FR4typeInstr (FNMADD ; $FSize32 ; VADL::fnmadd ; Frm::rne)
+  //$FR4typeInstr (FNMSUB ; $FSize32 ; VADL::fnmsub ; Frm::rne)
 
   //$FRtypeInstrClass (FCLASS ; S ; FP32)
 

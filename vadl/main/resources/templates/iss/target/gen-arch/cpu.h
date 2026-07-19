@@ -32,6 +32,8 @@ typedef struct CPUArchState {
   [# th:each="exc : ${exc_info.exceptions}"] [# th:each="p : ${exc.params}"]
   [(${p.c_type})] [(${p.name_in_cpu})];
   [/][/]
+
+  float_status fp_status;
 } CPU[(${gen_arch_upper})]State;
 
 

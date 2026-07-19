@@ -120,35 +120,18 @@ public abstract class Type {
         .computeIfAbsent(bitWidth, k -> new UIntType(bitWidth));
   }
 
-  private static final HashMap<FloatType.Size, FloatType> floatTyps = new HashMap<>();
+  private static @Nullable FloatType floatType = null;
 
   /**
-   * Retrieves the instance of FloatType with the specified size.
+   * Retrieves the instance of FloatType.
    *
-   * @param size the size of the FloatType object
-   * @return the FloatType object with the specified size
+   * @return the FloatType object
    */
-  public static FloatType floatType(FloatType.Size size) {
-    return floatTyps
-        .computeIfAbsent(size, k -> new FloatType(size));
-  }
-
-  /**
-   * Retrieves the instance of FloatType with size 32.
-   *
-   * @return the FloatType object with size 32
-   */
-  public static FloatType float32() {
-    return floatType(FloatType.Size.FP32);
-  }
-
-  /**
-   * Retrieves the instance of FloatType with size 64.
-   *
-   * @return the FloatType object with size 64
-   */
-  public static FloatType float64() {
-    return floatType(FloatType.Size.FP64);
+  public static FloatType floatType() {
+    if (floatType == null) {
+      floatType = new FloatType();
+    }
+    return floatType;
   }
 
   /**
@@ -303,7 +286,20 @@ public abstract class Type {
    */
   public static RelationType relation(List<Class<? extends Type>> argTypes,
                                       Class<? extends Type> returnType) {
-    return relation(argTypes, false, returnType);
+    return relation(argTypes, false, 0, returnType);
+  }
+
+  /**
+   * Retrieves the generic relation type.
+   *
+   * @param argTypes   the list of argument type classes
+   * @param returnType the return type class
+   * @return the RelationType instance
+   */
+  public static RelationType relation(List<Class<? extends Type>> argTypes,
+                                      int floatTypeArgCount,
+                                      Class<? extends Type> returnType) {
+    return relation(argTypes, false, floatTypeArgCount, returnType);
   }
 
   /**
@@ -316,10 +312,11 @@ public abstract class Type {
    */
   public static RelationType relation(List<Class<? extends Type>> argTypes,
                                       boolean hasVarArgs,
+                                      int floatTypeArgCount,
                                       Class<? extends Type> returnType) {
     var hashCode = Objects.hash(argTypes, hasVarArgs, returnType);
-    return relationTypes
-        .computeIfAbsent(hashCode, k -> new RelationType(argTypes, hasVarArgs, returnType));
+    return relationTypes.computeIfAbsent(hashCode, k ->
+        new RelationType(argTypes, hasVarArgs, floatTypeArgCount, returnType));
   }
 
   /**
@@ -329,7 +326,7 @@ public abstract class Type {
    * @return the RelationType instance
    */
   public static RelationType relation(Class<? extends Type> returnType) {
-    return relation(List.of(), false, returnType);
+    return relation(List.of(), false, 0, returnType);
   }
 
   /**
@@ -355,7 +352,7 @@ public abstract class Type {
   public static RelationType relation(Class<? extends Type> firstArg,
                                       Class<? extends Type> secondArg,
                                       Class<? extends Type> returnType) {
-    return relation(List.of(firstArg, secondArg), false, returnType);
+    return relation(List.of(firstArg, secondArg), false, 0, returnType);
   }
 
   private static final HashMap<Integer, ConcreteRelationType> concreteRelationTypes =
@@ -438,14 +435,6 @@ public abstract class Type {
       return Type.signedInt(bitWidth);
     } else if (typeClass == UIntType.class) {
       return Type.unsignedInt(bitWidth);
-    } else if (typeClass == FloatType.class) {
-      if (bitWidth == FloatType.Size.FP32.bitWidth) {
-        return Type.float32();
-      } else if (bitWidth == FloatType.Size.FP64.bitWidth) {
-        return Type.float64();
-      } else {
-        return null;
-      }
     } else {
       return null;
     }
@@ -476,6 +465,6 @@ public abstract class Type {
   /// Some of them cannot be initialized like them since they require a size, like `SInt<16>`
   /// which is why they are named bases.
   public static final Set<String> builtinTypeBases = Set.of(
-      "Bool", "String", "Bits", "UInt", "SInt", "FP32", "FP64", "Instruction", "FetchResult"
+      "Bool", "String", "Bits", "UInt", "SInt", "Instruction", "FetchResult"
   );
 }

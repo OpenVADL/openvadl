@@ -44,6 +44,8 @@ public interface DefinitionVisitor {
 
   void visit(Group group);
 
+  void visit(FloatFormat floatFormat);
+
   void visit(Format format);
 
   void visit(Format.Field formatField);
@@ -196,6 +198,12 @@ public interface DefinitionVisitor {
     public void visit(Group group) {
       beforeTraversal(group);
       afterTraversal(group);
+    }
+
+    @Override
+    public void visit(FloatFormat floatFormat) {
+      beforeTraversal(floatFormat);
+      afterTraversal(floatFormat);
     }
 
     @Override
@@ -480,6 +488,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Group group) {
+
+    }
+
+    @Override
+    public void visit(FloatFormat floatFormat) {
 
     }
 
