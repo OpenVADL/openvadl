@@ -4062,7 +4062,15 @@ public class TypeChecker
               .locationDescription(indexExpr, "Groups cannot be sliced.")
               .build());
         }
-        check(indexExpr);
+
+        final Type lenType = currGroupType.lengthType();
+        Type indexType = checkWith(indexExpr, lenType);
+
+        if (!indexType.equals(lenType) && canImplicitCast(indexType, lenType)) {
+          indexExpr = new CastExpr(indexExpr, lenType);
+          slice.values = List.of(indexExpr);
+          indexType = lenType;
+        }
 
         if (constantEvaluator.isConstant(indexExpr)
             && expr.path().target() instanceof GroupDefinition group) {
