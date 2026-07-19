@@ -285,7 +285,7 @@ static void translate(DisasContext *ctx)
         return;
     }
 
-    error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
+    error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04 , insn: 0x%04x\n", ctx->base.pc_next, insn);
 
     gen_update_pc_diff(ctx, 0);
     gen_helper_unsupported(tcg_env);
