@@ -9,6 +9,7 @@
 #define LINUX_USER_[(${gen_arch_upper})]_TARGET_SYSCALL_H
 
 struct target_pt_regs {
+    abi_long pc;
     abi_long sepc;
     abi_long ra;
     abi_long sp;
