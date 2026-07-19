@@ -16,6 +16,7 @@
 
 package vadl.ast;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -88,7 +89,7 @@ class AstUtils {
     }
 
     String finalOperatorSymbol = symbol;
-    var builtIns = operatorLookupTable.getOrDefault(finalOperatorSymbol, List.of());
+    var builtIns = operatorLookupTable.getOrDefault(finalOperatorSymbol, new ArrayList<>());
     builtIns.removeIf(b -> b.signature().argTypeClasses().size() != argTypes.size());
 
     // Sometimes there are a signed and unsigned version of builtin operation

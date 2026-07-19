@@ -41,6 +41,7 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
+import vadl.viam.graph.dependency.OperationRef;
 
 /**
  * Emits direct non-helper translation functions.
@@ -161,5 +162,10 @@ class TcgTranslateGenerator implements InstructionTranslateGenerator,
   @Handler
   void handle(CGenContext<Node> ctx, GroupRef toHandle) {
     throwNotAllowed(toHandle, "group reference expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, OperationRef toHandle) {
+    throwNotAllowed(toHandle, "operation reference expressions");
   }
 }

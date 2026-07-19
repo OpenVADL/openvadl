@@ -34,7 +34,7 @@ final class FrontendBuiltIns {
    */
   static final BuiltInTable.BuiltIn OP_EQU =
       BuiltInTable.func("VADL::opequ", "=",
-          Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
+              Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
           .takesDefault()
           .returns(Type.bool())
           .build();
@@ -46,16 +46,57 @@ final class FrontendBuiltIns {
    */
   static final BuiltInTable.BuiltIn OP_NEQ =
       BuiltInTable.func("VADL::opneq", "!=",
-          Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
+              Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
           .takesDefault()
           .returns(Type.bool())
           .build();
 
   static final List<BuiltInTable.BuiltIn> operationEqualityPredicates = List.of(OP_EQU, OP_NEQ);
 
-  private FrontendBuiltIns() {}
+  /**
+   * Element-of check for operations. Check if the actual instruction, matched by the group
+   * expression is an element of the given operation.
+   * <br>
+   * Example:
+   * <pre>
+   *   instruction A : IType = ...
+   *   instruction B : IType = ...
+   *
+   *   operation O1 = {A}
+   *   operation O1 = {B}
+   *
+   *   [assert : VLIW(0) ∈ O1]
+   *   group VLIW = (O1|O2)
+   * </pre>
+   */
+  static final BuiltInTable.BuiltIn OP_ELEM_OF =
+      BuiltInTable.func("VADL::elemof", "∈",
+              Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * Negation of the element-of check for operation, see {@link #OP_ELEM_OF}.
+   *
+   */
+  static final BuiltInTable.BuiltIn OP_NOT_ELEM_OF =
+      BuiltInTable.func("VADL::nelemof", "∉",
+              Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  static final List<BuiltInTable.BuiltIn> operationElementOfPredicates =
+      List.of(OP_ELEM_OF, OP_NOT_ELEM_OF);
+
+  private FrontendBuiltIns() {
+  }
 
   static Stream<BuiltInTable.BuiltIn> builtIns() {
-    return Stream.concat(BuiltInTable.builtIns(), operationEqualityPredicates.stream());
+    return Stream.concat(BuiltInTable.builtIns(), Stream.concat(
+        operationEqualityPredicates.stream(),
+        operationElementOfPredicates.stream()
+    ));
   }
 }

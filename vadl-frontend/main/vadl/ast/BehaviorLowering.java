@@ -176,6 +176,7 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
+import vadl.viam.graph.dependency.OperationRef;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -1068,6 +1069,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Reference to a Group Definition
     if (computedTarget instanceof GroupDefinition) {
       return new GroupRef(expr.type());
+    }
+
+    // Reference to an Operation Definition
+    if (computedTarget instanceof OperationDefinition) {
+      return new OperationRef(expr.type());
     }
 
     // Function call without arguments (and no parenthesis)

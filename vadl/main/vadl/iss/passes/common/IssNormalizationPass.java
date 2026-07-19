@@ -80,6 +80,7 @@ import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
+import vadl.viam.graph.dependency.OperationRef;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -1031,6 +1032,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(GroupRef toHandle) {
+    // do nothing
+  }
+
+  @Handler
+  void handle(OperationRef toHandle) {
     // do nothing
   }
 }

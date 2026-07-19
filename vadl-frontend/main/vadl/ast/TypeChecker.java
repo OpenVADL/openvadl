@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.FrontendBuiltIns.OP_NOT_ELEM_OF;
 import static vadl.ast.GroupDefUtils.GroupExprBitLengthCollector.maxBitLength;
 import static vadl.ast.GroupDefUtils.GroupExprLengthCollector.maxLength;
 import static vadl.error.Diagnostic.error;
@@ -1049,6 +1050,28 @@ public class TypeChecker
       } else {
         var argTypes = args.stream().map(a -> a.type()).toList();
         return new BuiltInCheckResult(argTypes, Type.bool());
+      }
+    }
+
+    if (args.size() == 2 && FrontendBuiltIns.operationElementOfPredicates.contains(builtIn)) {
+      // Static checks for operation element predicates
+      final PseudoFormatType l = (PseudoFormatType) args.getFirst().type();
+      final PseudoFormatType r = (PseudoFormatType) args.getLast().type();
+
+      final Set<InstructionDefinition> commonInsns = new LinkedHashSet<>(l.instructions());
+      commonInsns.retainAll(r.instructions());
+
+      if (commonInsns.isEmpty()) {
+        // If there is no static overlap, we can emit some diagnostics. For ∈, the expr is always
+        // false, and for ∉ it's always true.
+        final boolean constVal = builtIn == OP_NOT_ELEM_OF;
+        final var op = Objects.requireNonNull(r.operations().stream().findFirst().orElse(null));
+        DeferredDiagnosticStore.add(
+            warning("This expression is always %s".formatted(constVal), location)
+                .description(
+                    "None of the possible concrete instructions matched by the left side "
+                        + "are part of operation `%s`.", op.identifier().name)
+                .build());
       }
     }
 
@@ -3421,6 +3444,22 @@ public class TypeChecker
       final var bitLengthType = UIntType.minimalTypeFor(maxBitLength);
 
       expr.type = Type.group(elemType, lengthType, bitLengthType);
+      return;
+    }
+
+    if (origin instanceof OperationDefinition op) {
+      check(op);
+
+      var def = getCurrentlyVisitingDefinition();
+      if (!(def instanceof AnnotationDefinition annotation)
+          || !(annotation.target instanceof GroupDefinition)) {
+        final var diagnostic = error("Invalid Reference", expr)
+            .description("Reference to an `operation` definition is only allowed within "
+                + "`group` annotations.");
+        addErrorAndContinueChecking(diagnostic.build());
+      }
+
+      expr.type = PseudoFormatType.of(List.of(op));
       return;
     }
 

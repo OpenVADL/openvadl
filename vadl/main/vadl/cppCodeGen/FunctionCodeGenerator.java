@@ -36,6 +36,7 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
+import vadl.viam.graph.dependency.OperationRef;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -114,6 +115,11 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
     throwNotAllowed(toHandle, "group reference expressions");
   }
 
+  @Handler
+  protected void handle(CGenContext<Node> ctx, OperationRef toHandle) {
+    throwNotAllowed(toHandle, "operation reference expressions");
+  }
+
   public String genReturnExpression() {
     var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
     return context.genToString(returnNode.value());
@@ -124,5 +130,3 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
     return context;
   }
 }
-
-

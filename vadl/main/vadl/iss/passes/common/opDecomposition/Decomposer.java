@@ -59,6 +59,7 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
+import vadl.viam.graph.dependency.OperationRef;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -651,6 +652,11 @@ class Decomposer
   @Handler
   void handle(Request rq, GroupRef toHandle) {
     throw new UnsupportedOperationException("Type GroupRef not yet implemented");
+  }
+
+  @Handler
+  void handle(Request rq, OperationRef toHandle) {
+    throw new UnsupportedOperationException("Type OperationRef not yet implemented");
   }
 
   @Handler
