@@ -22,7 +22,6 @@ import static vadl.utils.GraphUtils.add;
 import static vadl.utils.GraphUtils.bits;
 import static vadl.utils.GraphUtils.intU;
 import static vadl.utils.GraphUtils.intUNode;
-import static vadl.utils.GraphUtils.or;
 import static vadl.utils.GraphUtils.sub;
 import static vadl.utils.StreamUtils.only;
 
@@ -54,6 +53,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInNoStatusDispatcher;
@@ -74,6 +74,7 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
@@ -384,6 +385,9 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
             "DynSliceNode msb or lsb depends on a ResourceReadNode. "
                 + "This isn't handled by the ISS."));
 
+    node.ensure(node.type() instanceof DataType, "Dynamic slice nodes with type %s not supported",
+        node.type());
+
     var offset = node.lsb();
     var one = intUNode(1, offset.type().asDataType().bitWidth());
     // length = msb - lsb + 1
@@ -393,7 +397,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
             node.value(),
             offset,
             len,
-            node.type().toBitsType()
+            ((DataType) node.type()).toBitsType()
         )
     );
   }
@@ -897,6 +901,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(OperationExistsNode toHandle) {
+    // do nothing
+  }
+
+  @Handler
+  void handle(GroupRef toHandle) {
     // do nothing
   }
 }

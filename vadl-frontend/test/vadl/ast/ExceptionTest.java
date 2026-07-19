@@ -88,7 +88,7 @@ public class ExceptionTest {
     var diagnostics = assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     org.assertj.core.api.Assertions.assertThat(diagnostics.items.getFirst().getMessage())
-        .contains("Only bit types can be sliced but the target was a `void`");
+        .contains("Type `void` cannot be indexed or sliced");
   }
 
   @Test

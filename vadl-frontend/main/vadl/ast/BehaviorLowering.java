@@ -67,6 +67,7 @@ import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
 import vadl.ast.nodes.FunctionDefinition;
+import vadl.ast.nodes.GroupDefinition;
 import vadl.ast.nodes.GroupedExpr;
 import vadl.ast.nodes.Identifier;
 import vadl.ast.nodes.IdentifierPath;
@@ -115,6 +116,7 @@ import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
+import vadl.types.GroupType;
 import vadl.types.MicroArchitectureType;
 import vadl.types.SIntType;
 import vadl.types.StructType;
@@ -123,6 +125,7 @@ import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
 import vadl.utils.Either;
 import vadl.utils.Pair;
+import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
@@ -166,6 +169,7 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
@@ -885,7 +889,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   /**
    * Identifier and IdentifierPath are quite similar in what they do, so let's resolve both here.
    */
-  private ExpressionNode visitIdentifyable(Expr expr) {
+  private ExpressionNode visitIdentifiable(Expr expr) {
 
     Node computedTarget;
     String innerName;
@@ -1055,6 +1059,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new OperationForAllNode.Index(getViamType(format), ops);
     }
 
+    // Reference to a Group Definition
+    if (computedTarget instanceof GroupDefinition) {
+      return new GroupRef(expr.type());
+    }
+
     // Function call without arguments (and no parenthesis)
     if (computedTarget instanceof FunctionDefinition functionDefinition) {
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
@@ -1069,8 +1078,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         .toList();
 
     if (matchingBuiltins.size() == 1) {
-      var builtin = matchingBuiltins.get(0);
-      return new BuiltInCall(builtin, new NodeList<ExpressionNode>(),
+      var builtin = matchingBuiltins.getFirst();
+      return new BuiltInCall(builtin, new NodeList<>(),
           getViamType(expr.type()));
     }
 
@@ -1082,7 +1091,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(Identifier expr) {
-    return visitIdentifyable(expr);
+    return visitIdentifiable(expr);
   }
 
   @Override
@@ -1190,7 +1199,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(IdentifierPath expr) {
-    return visitIdentifyable(expr);
+    return visitIdentifiable(expr);
   }
 
   @Override
@@ -1223,9 +1232,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
                 (DataType) getViamType(requireNonNull(subCall.formatFieldType)));
         resultExpr =
             visitSliceIndexCall(slice, subCall.formatFieldType, subCall.argsIndices);
-      } else if (exprBeforeSubcall.type() instanceof StructType) {
-        var indexing = new StructGetFieldNode(subCall.identifier().name, resultExpr, Type.bool());
-        resultExpr = visitSliceIndexCall(indexing, Type.bool(), subCall.argsIndices);
+      } else if (exprBeforeSubcall.type() instanceof StructType structType) {
+        var fieldName = subCall.identifier().name;
+        var fieldType = structType.get(fieldName);
+        var indexing = new StructGetFieldNode(fieldName, resultExpr, fieldType);
+        resultExpr = visitSliceIndexCall(indexing, fieldType, subCall.argsIndices);
       } else if (exprBeforeSubcall.type() == MicroArchitectureType.instruction()) {
         // There is weired way to call functions on instructions
         var builtin =
@@ -1287,6 +1298,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             resultExpr = BuiltInTable.ADD.call(resRead, offsetNode);
           }
         }
+      } else if (exprBeforeSubcall instanceof GroupRef groupRef) {
+        var fieldName = subCall.identifier().name;
+        resultExpr = switch (fieldName) {
+          case "length" -> {
+            final var resType = ((GroupType) groupRef.type()).lengthType();
+            yield new StructGetFieldNode("length", groupRef, resType);
+          }
+          case "bitLength" -> {
+            final var resType = ((GroupType) groupRef.type()).bitLengthType();
+            yield new StructGetFieldNode("bitLength", groupRef, resType);
+          }
+          default ->
+              throw error("Unknown group field: `%s`".formatted(fieldName), subCall).build();
+        };
       } else {
         throw new IllegalStateException();
       }
@@ -1332,8 +1357,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           lsb = msb;
         }
 
-        result = new DynSliceNode(exprBeforeSlice, msb, lsb, (DataType) getViamType(slice.type()));
-        typeBefore = (DataType) slice.type();
+        result = new DynSliceNode(exprBeforeSlice, msb, lsb, getViamType(slice.type()));
+        typeBefore = slice.type();
       }
     }
 

@@ -33,6 +33,7 @@ import vadl.iss.passes.common.planning.analysis.VectorInstructionFacts.StorageFa
 import vadl.iss.passes.nodes.IssReadRegNode;
 import vadl.iss.passes.nodes.IssWriteRegNode;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.viam.ArtificialResource;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -72,7 +73,8 @@ public final class VectorAnalysisSupport {
     if (!(expression instanceof DynSliceNode slice)
         || !(slice.value() instanceof IssReadRegNode read)
         || read.windowKind() != IssReadRegNode.WindowKind.FULL
-        || slice.type().bitWidth() != elementBits
+        || !(slice.type() instanceof DataType dataType)
+        || dataType.bitWidth() != elementBits
         || !isLoopElementOffset(slice.lsb(), idx, elementBits)
         || !isLaneUpperBound(slice.msb(), slice.lsb(), elementBits)) {
       return null;

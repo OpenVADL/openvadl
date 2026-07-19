@@ -54,6 +54,13 @@ public class DeferredDiagnosticStore {
     return diagnosticList.stream().toList();
   }
 
+  /**
+   * Check whether the diagnostic store already contains an error.
+   */
+  public static boolean hasError() {
+    return diagnosticList.stream().anyMatch(d -> d.level == Diagnostic.Level.ERROR);
+  }
+
   public static boolean isEmpty() {
     return diagnosticList.isEmpty();
   }

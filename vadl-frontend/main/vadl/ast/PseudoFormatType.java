@@ -181,7 +181,7 @@ public class PseudoFormatType extends StructType {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder("PseudoFormat<");
     boolean first = true;
     for (Map.Entry<String, Type> field : fields().entrySet()) {
       if (!first) {
@@ -192,6 +192,7 @@ public class PseudoFormatType extends StructType {
       sb.append(": ");
       sb.append(field.getValue());
     }
+    sb.append(">");
     return sb.toString();
   }
 }
