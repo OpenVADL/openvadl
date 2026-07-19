@@ -10,7 +10,6 @@
 
 struct target_pt_regs {
     abi_long pc;
-    abi_long sepc;
     abi_long ra;
     abi_long sp;
     abi_long gp;
