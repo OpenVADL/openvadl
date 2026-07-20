@@ -1665,6 +1665,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         mergedDef.definitions.stream().map(this::fetch).flatMap(Optional::stream)
             .toList();
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
+    var floatFormats = filterAndCastToInstance(allDefinitions, FloatFormat.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
     var operations = filterAndCastToInstance(allDefinitions, Operation.class);
     var relocations = filterAndCastToInstance(allDefinitions, Relocation.class);
@@ -1709,6 +1710,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         programCounter,
         memories,
         artificialResources,
+        floatFormats,
         group
     );
 

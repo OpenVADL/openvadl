@@ -24,6 +24,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,6 +48,7 @@ import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.DerivedFormatField;
 import vadl.ast.nodes.EncodingDefinition;
 import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.FormatField;
 import vadl.ast.nodes.GroupDefinition;
 import vadl.ast.nodes.Identifier;
@@ -77,6 +79,8 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Encoding;
 import vadl.viam.Endianness;
+import vadl.viam.FloatExceptionFlag;
+import vadl.viam.FloatFormat;
 import vadl.viam.Format;
 import vadl.viam.Group;
 import vadl.viam.Instruction;
@@ -328,6 +332,59 @@ public class AnnotationTable {
           graph.setParentDefinition(group);
           group.addAnnotation(new StopAnnotation(graph));
         })
+        .build();
+
+    /// FLOAT RELATED ///
+
+    annotationOn(FloatTypeDefinition.class, "IEEE", ConstantAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var encoding = FloatFormat.Encoding.ieee(annotation.constant.value().intValue());
+          ensure(encoding != null,
+              () -> error("Invalid IEEE encoding size", annotation)
+                  .description("The following sizes are supported: %s",
+                      Arrays.stream(FloatFormat.Encoding.values())
+                          .map(e -> Integer.toString(e.size)).collect(Collectors.joining(", ")))
+          );
+          ((FloatFormat) def).setEncoding(encoding);
+        }).build();
+
+    annotationOn(FloatTypeDefinition.class, "canonical sNaN", ConstantAnnotation::new)
+        .applyViam((def, annotation, lowering) ->
+            ((FloatFormat) def).setCanonicalSNaN(annotation.constant.toViamConstant())).build();
+
+    annotationOn(FloatTypeDefinition.class, "canonical qNaN", ConstantAnnotation::new)
+        .applyViam((def, annotation, lowering) ->
+            ((FloatFormat) def).setCanonicalQNaN(annotation.constant.toViamConstant())).build();
+
+    TriConsumer<RegisterTensor, FloatFlagAnnotation, Boolean> applyViamFloatFlag;
+    applyViamFloatFlag = (reg, annotation, sticky) -> {
+      var idx = annotation.index;
+      if (reg.hasAnnotation(vadl.viam.annotations.FloatFlagAnnotation.class)) {
+        var ann = reg.expectAnnotation(vadl.viam.annotations.FloatFlagAnnotation.class);
+        var flag = ann.get(idx);
+        ensure(flag == null, () -> error(
+            "Bit already mapped as " + (ann.isSticky(idx) ? "" : "non ")
+                + "sticky " + requireNonNull(flag).name + " flag",
+            annotation
+        ));
+        ann.set(idx, sticky, annotation.flag);
+      } else {
+        var ann = new vadl.viam.annotations.FloatFlagAnnotation();
+        ann.set(idx, sticky, annotation.flag);
+        reg.addAnnotation(ann);
+      }
+    };
+
+    annotationOn(RegisterDefinition.class, "float flag", FloatFlagAnnotation::new)
+        .check((def, annotation, lowering) -> annotation.typeCheckTarget(def))
+        .applyViam((def, annotation, lowering) ->
+            applyViamFloatFlag.accept((RegisterTensor) def, annotation, false))
+        .build();
+
+    annotationOn(RegisterDefinition.class, "sticky float flag", FloatFlagAnnotation::new)
+        .check((def, annotation, lowering) -> annotation.typeCheckTarget(def))
+        .applyViam((def, annotation, lowering) ->
+            applyViamFloatFlag.accept((RegisterTensor) def, annotation, true))
         .build();
 
     /// PROCESSOR RELATED ///
@@ -1100,6 +1157,70 @@ class EnableAnnotation extends Annotation {
   @Override
   public String usageString() {
     return "[ " + name + " ]";
+  }
+}
+
+class FloatFlagAnnotation extends Annotation {
+
+  @LazyInit
+  FloatExceptionFlag flag;
+
+  @LazyInit
+  Identifier field;
+
+  @LazyInit
+  int index;
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    verifyValuesCnt(definition, 2);
+    definition.values.forEach(def -> {
+      Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
+          .description("An identifier was expected.")
+      );
+    });
+    var flagName = ((Identifier) definition.values.get(0)).name;
+    flag = FloatExceptionFlag.from(flagName).orElseThrow(() ->
+        error("Invalid float flag", definition)
+            .description("Given flag is %s, but must be one of %s", flagName,
+                Arrays.stream(FloatExceptionFlag.values()).map(f -> f.name)
+                    .collect(Collectors.joining(", "))
+            ).build()
+    );
+    field = (Identifier) definition.values.get(1);
+  }
+
+  void typeCheckTarget(TypedNode target) {
+    Diagnostic.ensure(target.type() instanceof FormatType,
+        () -> error("Annotation target has invalid type", this).description("""
+            Float flag annotation can only be applied to \
+            register definitions with a format type"""));
+
+    var format = ((FormatType) target.type()).format;
+    Function<String, DiagnosticBuilder> errBuilder = (String err) ->
+        error(err, field).description("Must be one of: %s",
+            format.fields.stream()
+                .filter(f -> !(f instanceof DerivedFormatField))
+                .map(f -> f.identifier().name)
+                .collect(Collectors.joining(", "))
+        );
+    Diagnostic.ensure(format.hasField(field.name),
+        () -> errBuilder.apply("Unknown field name"));
+    Diagnostic.ensure(!(format.getField(field.name) instanceof DerivedFormatField),
+        () -> errBuilder.apply("Cannot annotate derived field"));
+    var range = requireNonNull(format.getFieldRange(field.name));
+    Diagnostic.ensure(range.from() == range.to(), () ->
+        error("Float flag can only be one bit", field));
+    index = range.from();
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <float-flag>, <format-field> ]";
   }
 }
 

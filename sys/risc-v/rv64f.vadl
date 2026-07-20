@@ -29,22 +29,22 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
 
   register F : Index -> FRegs
 
+  //[ sticky float flag : invalid,     nv ]
+  //[ sticky float flag : div_by_zero, dz ]
+  //[ sticky float flag : overflow,    of ]
+  //[ sticky float flag : underflow,   uf ]
+  [ sticky float flag : inexact,     nx ]
   register FCSR : FCsrFormat
+  //alias register fcsr : FCsrFormat = CSR(CsrDefToImpl(CsrDef::fcsr))
 
-  //[ sticky float flag : invalid,        nv ]
-  //[ sticky float flag : divide_by_zero, dz ]
-  //[ sticky float flag : overflow,       of ]
-  //[ sticky float flag : underflow,      uf ]
-  //[ sticky float flag : inexact,        nx ]
   format FCsrFormat : Bits<32> =
   { reserved [31..8]
-  , frm      [7..5]      // Rounding mode
-  , fflags   [4..0]      // Float exception flags
-  , nv       = fflags(4) // Float exception flag: Invalid operation
-  , dz       = fflags(3) // Float exception flag: Division by zero
-  , of       = fflags(2) // Float exception flag: Overflow
-  , uf       = fflags(1) // Float exception flag: Underflow
-  , nx       = fflags(0) // Float exception flag: Inexact
+  , frm      [7..5]  // Rounding mode
+  , nv       [4]     // Float exception flag: Invalid operation
+  , dz       [3]     // Float exception flag: Division by zero
+  , of       [2]     // Float exception flag: Overflow
+  , uf       [1]     // Float exception flag: Underflow
+  , nx       [0]     // Float exception flag: Inexact
   }
 
   // rounding modes
@@ -124,14 +124,14 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
 
   record FSizeRec (suffix : Id, iSuffix : Id, fmt : Ex, ty : Id, sTy : Id, uTy : Id, fTy : Id, size : Int)
 
-  //[ canonical sNaN : 0x7fa00000 ]
-  //[ canonical qNaN : 0x7fc00000 ]
-  //[ IEEE float : 32 ]
+  [ canonical sNaN : 0x7fa00000 ]
+  [ canonical qNaN : 0x7fc00000 ]
+  [ IEEE : 32 ]
   float-type IEEE32
 
-  //[ canonical sNaN : 0x7fa00000'00000000 ]
-  //[ canonical qNaN : 0x7fc00000'00000000 ]
-  //[ IEEE float : 64 ]
+  [ canonical sNaN : 0x7fa00000'00000000 ]
+  [ canonical qNaN : 0x7fc00000'00000000 ]
+  [ IEEE : 64 ]
   float-type IEEE64
 
   // TODO: IEEE16 and IEEE128 are not yet implemented
@@ -247,9 +247,8 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
       AsStr($name, ".", $iSize.iSuffix, $u("U" ; ""), ".", $fSize.suffix) ;
       $rm ; $fSize.fmt ; $funct5 ;
       // TODO: we must make sure the builtin understands what type to convert to
-      let result, flags = $fun($fSize.fTy, F(rs1) as $fSize.ty, $rm) in {
+      let result = $fun($fSize.fTy, F(rs1) as $fSize.ty, $rm) in {
         X(rd) := result as $u(iSize.uTy ; iSize.sTy)
-        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
       }
     ) ; $rs2 )
   }
@@ -290,9 +289,8 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
 
   model FR4typeInstr (name : Id, size : FSizeRec, fun : SymEx, rm : Ex) : IsaDefs = {
     instruction AsId($name, $size.suffix) : R4type =
-      let result, flags = $fun($size.fTy, F(rs1), F(rs2), F(rs3), $rm) in {
+      let result = $fun($size.fTy, F(rs1), F(rs2), F(rs3), $rm) in {
         F(rd) := $NaNBox($size ; result)
-        FCSR.fflags := (flags.nv, flags.dz, flags.of, flags.uf, flags.nx)
       }
     encoding AsId($name, $size.suffix) = {opcode = 0b100'0011, funct3 = $rm, fmt = $size.fmt}
     assembly AsId($name, $size.suffix) = (AsStr($name, ".", $size.suffix), " ", register(rd), ",", register(rs1), ",", register(rs2), ",", FrmName($rm))

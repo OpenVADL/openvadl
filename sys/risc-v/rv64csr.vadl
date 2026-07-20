@@ -4,7 +4,8 @@ import rv3264im::{RV3264Base, RV3264M} with ("ArchSize=Arch64")
 instruction set architecture RV64IZicsr extending RV3264Base = {
 
   enumeration CsrDef : Bits<12> = // defined control and status register indices
-    { mstatus  = 0x300  // 768 Machine STATUS
+    { fcsr     = 0x003  // 003 Floating-Point Control and Status Register (frm + fflags)
+    , mstatus  = 0x300  // 768 Machine STATUS
     , misa     = 0x301  // 769 Machine ISA
     , mie      = 0x304  // 772 Machine Interrupt Enable register
     , mtvec    = 0x305  // 773 Machine Trap VECtor base address
@@ -20,7 +21,8 @@ instruction set architecture RV64IZicsr extending RV3264Base = {
   using    CsrImplIndex = Bits<CsrIndexSize>   // index type for implemented CSR registers
 
   enumeration CsrImpl : CsrImplIndex =  // implemented control and status register indices
-    { mstatus        // 0x300  Machine STATUS
+    { fcsr           // 0x003  003 Floating-Point Control and Status Register (frm + fflags)
+    , mstatus        // 0x300  Machine STATUS
     , misa           // 0x301  Machine ISA
     , mie            // 0x304  Machine Interrupt Enable
     , mtvec          // 0x305  Machine Trap VECtor base address
@@ -35,7 +37,8 @@ instruction set architecture RV64IZicsr extending RV3264Base = {
 
   function CsrDefToImpl (csr : Bits<12>) -> CsrImplIndex = // map defined CSR index to implemented CSR index
     match csr with
-      { CsrDef::mstatus  => CsrImpl::mstatus        // 0x300  Machine STATUS
+      { CsrDef::fcsr     => CsrImpl::fcsr           // 0x003  Floating-Point Control and Status Register (frm + fflags)
+      , CsrDef::mstatus  => CsrImpl::mstatus        // 0x300  Machine STATUS
       , CsrDef::misa     => CsrImpl::misa           // 0x301  Machine ISA
       , CsrDef::mie      => CsrImpl::mie            // 0x304  Machine Interrupt Enable
       , CsrDef::mtvec    => CsrImpl::mtvec          // 0x305  Machine Trap VECtor base address
@@ -50,7 +53,8 @@ instruction set architecture RV64IZicsr extending RV3264Base = {
 
   function CsrName(index : Bits<12>) -> String =
     match index with
-      { CsrDef::mstatus  => "mstatus"        // Machine STATUS
+      { CsrDef::fcsr     => "fcsr"           // Floating-Point Control and Status Register (frm + fflags)
+      , CsrDef::mstatus  => "mstatus"        // Machine STATUS
       , CsrDef::misa     => "misa"           // Machine ISA
       , CsrDef::mie      => "mie"            // Machine Interrupt Enable
       , CsrDef::mtvec    => "mtvec"          // Machine Trap VECtor base address

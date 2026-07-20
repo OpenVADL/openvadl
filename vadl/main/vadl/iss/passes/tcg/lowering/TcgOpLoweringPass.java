@@ -95,6 +95,7 @@ import vadl.types.Type;
 import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.ExceptionDef;
+import vadl.viam.FloatFormat;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -110,6 +111,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.DynSliceNode;
+import vadl.viam.graph.dependency.FloatBuiltInCall;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -1259,7 +1261,7 @@ class BuiltInTcgLoweringExecutor {
         .set(BuiltInTable.FADD, (ctx) -> out(
             new TcgHelperCall(
                 ctx.dest(), new NodeList<>(ctx.src(0), ctx.src(1)), true,
-                "fadd_ieee32"
+                "fadd_" + ctx.floatFormat(0).nameLower()
             )
         ))
 
@@ -1323,6 +1325,20 @@ class BuiltInTcgLoweringExecutor {
       call.ensure(call.arguments().size() > index, "Tried to access arg %s", index);
       var arg = call.arguments().get(index);
       return assignments.singleDestOf(arg);
+    }
+
+    /**
+     * Retrieves the float format of a float built-in call with the given index.
+     *
+     * @param index The index of the float format.
+     * @return The float format.
+     */
+    private FloatFormat floatFormat(int index) {
+      call.ensure(call instanceof FloatBuiltInCall, "Call is not float built-in");
+      var floatCall = (FloatBuiltInCall) call;
+      floatCall.ensure(floatCall.formats().size() > index,
+          "Tried to access float format %s", index);
+      return floatCall.formats().get(index);
     }
 
     /**

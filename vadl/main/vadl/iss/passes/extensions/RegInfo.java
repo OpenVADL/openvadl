@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -38,8 +39,10 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
+import vadl.viam.FloatExceptionFlag;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.annotations.FloatFlagAnnotation;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -186,6 +189,18 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     );
   }
 
+  private List<Map<String, String>> feFlags(
+      Function<FloatFlagAnnotation, Map<Integer, FloatExceptionFlag>> flags) {
+    if (!reg().hasAnnotation(FloatFlagAnnotation.class)) {
+      return List.of();
+    }
+    var ann = reg().expectAnnotation(FloatFlagAnnotation.class);
+    return flags.apply(ann).entrySet().stream().map(e -> Map.of(
+        "idx", Integer.toString(e.getKey()),
+        "flag_idx", Integer.toString(e.getValue().qemuFlagOffset)
+    )).toList();
+  }
+
   /**
    * Returns the execution class used for backend selection.
    */
@@ -291,6 +306,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("is_gvec_capable", isGvecCapable());
       renderObj.put("is_tb_state", isTbState());
       renderObj.put("tb_state_parts", tbStateParts());
+      renderObj.put("sticky_fe_flags", feFlags(FloatFlagAnnotation::stickyFlags));
+      renderObj.put("non_sticky_fe_flags", feFlags(FloatFlagAnnotation::nonStickyFlags));
       renderObj.put("exec_class", execClass().name());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);

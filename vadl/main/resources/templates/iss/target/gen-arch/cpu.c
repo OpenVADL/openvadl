@@ -8,6 +8,7 @@
 #include "trace.h"
 #include "tcg/debug-assert.h"
 #include "hw/qdev-properties.h"
+#include "fpu/softfloat-helpers.h"
 #include "vadl-builtins.h"
 #include "vadl-iss-builtins.h"
 
@@ -100,10 +101,11 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
     }
 
     [# th:each="access : ${base_clear_cpu_accessors}"]
-    [(${access.name})](env); [/]
+    [(${access.name})](env);[/]
 
-    // disable NaN propagation
-    set_default_nan_mode(1, &env->fp_status);
+    // TODO: this disables nan-propagation. but this should be specified per-instruction
+    [# th:each="fmt : ${float_formats}"]
+    set_default_nan_mode(1, &env->fp_status_[(${fmt.name})]);[/]
 
 [(${reset})]
 }

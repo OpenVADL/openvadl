@@ -16,6 +16,7 @@
 
 package vadl.iss.template;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.iss.template.IssRenderUtils.mapRegTensors;
@@ -23,6 +24,7 @@ import static vadl.iss.template.IssRenderUtils.mapRegTensors;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FilenameUtils;
@@ -37,6 +39,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Endianness;
+import vadl.viam.FloatFormat;
 import vadl.viam.Memory;
 import vadl.viam.Specification;
 
@@ -130,6 +133,8 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_machine_upper", configuration().machineName().toUpperCase());
     vars.put("gen_machine_lower", configuration().machineName().toLowerCase());
     vars.put("register_tensors", mapRegTensors(specification));
+    vars.put("float_formats", getFloatFormats(specification));
+    vars.put("float_ieee_sizes", getFloatIEEESizes(specification));
     vars.put("pc_info", getPcInfo(specification));
     vars.put("target_size", configuration().targetSize().width);
     vars.put("mem_regions", memRegions(specification));
@@ -146,6 +151,22 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
 
   private ExceptionInfo getExceptionInfo(Specification viam) {
     return viam.processor().get().isa().expectExtension(ExceptionInfo.class);
+  }
+
+  private List<Map<String, String>> getFloatFormats(Specification viam) {
+    return viam.isa().get().ownFloatFormats().stream().map(fmt -> Map.of(
+        "name", fmt.nameLower(),
+        "bit_size", Integer.toString(requireNonNull(fmt.encoding()).size)
+    )).toList();
+  }
+
+  private List<String> getFloatIEEESizes(Specification viam) {
+    return viam.isa().get().ownFloatFormats().stream()
+        .map(fmt -> requireNonNull(fmt.encoding()))
+        .filter(e -> e.ieee).map(e -> e.size)
+        .distinct()
+        .map(size -> Integer.toString(size))
+        .toList();
   }
 
   private Map<String, String> getPcInfo(Specification viam) {

@@ -176,6 +176,7 @@ public class IssTensorAssignmentToForallPassTest extends AbstractTest {
         null,
         Collections.emptyList(),
         Collections.emptyList(),
+        Collections.emptyList(),
         null
     ));
 

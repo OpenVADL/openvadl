@@ -140,6 +140,7 @@ public interface DefinitionVisitor {
       isa.ownMemories().forEach(e -> e.accept(this));
       isa.artificialResources().forEach(e -> e.accept(this));
       isa.ownInstructions().forEach(e -> e.accept(this));
+      isa.ownFloatFormats().forEach(e -> e.accept(this));
       isa.ownPseudoInstructions().forEach(e -> e.accept(this));
       var pc = isa.pc();
       if (pc != null) {

@@ -1234,13 +1234,13 @@ public class TypeChecker
     }
 
     var ftArgCnt = builtIn.signature().floatTypeArgCount();
-    args = args.stream().skip(ftArgCnt).toList();
+    var normalArgs = args.stream().skip(ftArgCnt).toList();
 
-    var argTypes = args.stream().map(Expr::type).toList();
+    var argTypes = normalArgs.stream().map(Expr::type).toList();
     var areAllConst = argTypes.stream().allMatch(ConstantType.class::isInstance);
     if (areAllConst) {
       var type = constantEvaluator
-          .evalBuiltin(builtIn, args.stream().map(constantEvaluator::eval).toList(), location)
+          .evalBuiltin(builtIn, normalArgs.stream().map(constantEvaluator::eval).toList(), location)
           .type();
       return new BuiltInCheckResult(null, type);
     }
@@ -1256,10 +1256,10 @@ public class TypeChecker
     // Inject implicit casts for constant types
     // NOTE: There might be functions that operate on bit patterns where this implicit cast might
     // not be intended and should be disallowed.
-    args = Streams.zip(args.stream(), declaredTypes, TypeChecker::wrapImplicitCastConstToTypeClass)
-        .toList();
+    normalArgs = Streams.zip(normalArgs.stream(), declaredTypes,
+        TypeChecker::wrapImplicitCastConstToTypeClass).toList();
     var originalArgTypes = argTypes;
-    argTypes = args.stream().map(Expr::type).toList();
+    argTypes = normalArgs.stream().map(Expr::type).toList();
 
     var ftArgs = args.stream().limit(ftArgCnt).toList();
     var ftTypes = ftArgs.stream().map(Expr::type).toList();

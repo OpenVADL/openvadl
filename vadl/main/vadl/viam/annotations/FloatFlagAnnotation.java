@@ -16,23 +16,48 @@
 
 package vadl.viam.annotations;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
+import vadl.viam.Annotation;
 import vadl.viam.Constant;
+import vadl.viam.FloatExceptionFlag;
+import vadl.viam.RegisterTensor;
 
 /**
  * Annotation for registers that are saved in the translation block state. Contains a
  * {@link Constant.BitSlice} that specifies what bits of the register are saved.
  */
-public class TbStateRegisterAnnotation extends RegisterSliceAnnotation {
+public class FloatFlagAnnotation extends Annotation<RegisterTensor> {
 
-  /**
-   * Constructs a new annotation for a register (or register alias) that is saved
-   * in the translation block state. If the given bit slice is `null`, then the
-   * whole register is considered. Otherwise, only the bits in the slice are
-   * marked as saved.
-   */
-  public TbStateRegisterAnnotation(int registerBitWidth, @Nullable Constant.BitSlice slice) {
-    super(registerBitWidth, slice);
+  private final Map<Integer, FloatExceptionFlag> sticky = new HashMap<>();
+  private final Map<Integer, FloatExceptionFlag> nonSticky = new HashMap<>();
+
+  @Override
+  public Class<RegisterTensor> parentDefinitionClass() {
+    return RegisterTensor.class;
+  }
+
+  public boolean isSticky(int index) {
+    return sticky.containsKey(index);
+  }
+
+  @Nullable
+  public FloatExceptionFlag get(int index) {
+    return isSticky(index) ? sticky.get(index) : nonSticky.get(index);
+  }
+
+  public void set(int index, boolean isSticky, FloatExceptionFlag flag) {
+    (isSticky ? sticky : nonSticky).put(index, flag);
+  }
+
+  public Map<Integer, FloatExceptionFlag> stickyFlags() {
+    return sticky;
+  }
+
+  public Map<Integer, FloatExceptionFlag> nonStickyFlags() {
+    return nonSticky;
   }
 
 }

@@ -16,6 +16,8 @@
 
 package vadl.viam;
 
+import static java.util.Objects.requireNonNull;
+
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import vadl.types.Type;
@@ -25,7 +27,35 @@ import vadl.types.Type;
  */
 public class FloatFormat extends Definition implements DefProp.WithType {
 
-  private int size = 0;
+  /**
+   * Represents all supported float encodings.
+   */
+  public enum Encoding {
+    IEEE32(32, true),
+    IEEE64(64, true);
+
+    public final int size;
+    public final boolean ieee;
+
+    Encoding(int size, boolean ieee) {
+      this.size = size;
+      this.ieee = ieee;
+    }
+
+    /**
+     * Returns the IEEE encoding for the given bit-size.
+     */
+    public static @Nullable Encoding ieee(int size) {
+      return switch (size) {
+        case 32 -> IEEE32;
+        case 64 -> IEEE64;
+        default -> null;
+      };
+    }
+  }
+
+  @Nullable
+  private Encoding encoding = null;
 
   @Nullable
   private Constant canonicalSNaN = null;
@@ -36,8 +66,8 @@ public class FloatFormat extends Definition implements DefProp.WithType {
     super(identifier);
   }
 
-  public void setSize(int size) {
-    this.size = size;
+  public void setEncoding(@CheckForNull Encoding encoding) {
+    this.encoding = encoding;
   }
 
   public void setCanonicalSNaN(@CheckForNull Constant canonicalSNaN) {
@@ -49,10 +79,11 @@ public class FloatFormat extends Definition implements DefProp.WithType {
   }
 
   /**
-   * The bit-size of the float format.
+   * The encoding of the float format.
    */
-  public int size() {
-    return size;
+  @Nullable
+  public Encoding encoding() {
+    return encoding;
   }
 
   /**
@@ -71,6 +102,13 @@ public class FloatFormat extends Definition implements DefProp.WithType {
     return canonicalQNaN;
   }
 
+  /**
+   * The name of the float format in lower case.
+   */
+  public String nameLower() {
+    return simpleName().toLowerCase();
+  }
+
   @Override
   public Type type() {
     return Type.floatType();
@@ -79,6 +117,24 @@ public class FloatFormat extends Definition implements DefProp.WithType {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public void verify() {
+    super.verify();
+    // FIXME: for now this is checked here, but this should create a diagnostic instead of ViamError
+    ensure(encoding != null, "Encoding not specified");
+    checkNaN(canonicalSNaN, "sNaN");
+    checkNaN(canonicalQNaN, "qNaN");
+  }
+
+  private void checkNaN(@Nullable Constant value, String kind) {
+    ensure(value != null, "Canonical %s not specified", kind);
+    var valueBits = value.asVal().integer().bitLength();
+    var givenBits = requireNonNull(encoding).size;
+    ensure(valueBits <= givenBits,
+        "Canonical %s value cannot require more bits (%d) than the encoding size (%d)",
+        kind, valueBits, givenBits);
   }
 
   @Override
