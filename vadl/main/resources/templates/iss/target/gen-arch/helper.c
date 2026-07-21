@@ -37,7 +37,6 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
 // float helpers
 
 void prep_float_status_fe_flags(CPU[(${gen_arch_upper})]State *env, float_status *s) {
-  // DEV NOTE: this is generated from float flag annotations
   uint16_t flags = 0xffff;
   // un-set non sticky flags
   [# th:each="reg : ${register_tensors}"][# th:each="flag : ${reg.non_sticky_fe_flags}"]
@@ -58,24 +57,26 @@ void set_float_status_fe_flags(CPU[(${gen_arch_upper})]State *env, float_status 
   env->[(${reg.name_lower})] &= ~((1 - (flags >> [(${flag.flag_idx})] & 1)) << [(${flag.idx})]);[/][/]
 }
 
+#define FLOAT_FN_IEEE_FE_HELPER(S) \
+  typedef uint##S##_t (*f##S##_fn)(uint##S##_t a, uint##S##_t b, float_status *s);  \
+  uint##S##_t f##S##_fn_with_fe_flags(CPU[(${gen_arch_upper})]State *env,           \
+                                      f##S##_fn fn, float_status *s,                \
+                                      uint##S##_t rs1, uint##S##_t rs2) {           \
+    prep_float_status_fe_flags(env, s);                                             \
+    uint##S##_t result = fn(rs1, rs2, s);                                           \
+    set_float_status_fe_flags(env, s);                                              \
+    return result;                                                                  \
+  }
+
+#define FLOAT_HELPER_2(S, NAME, FUN) \
+  uint##S##_t helper_fadd_##NAME(CPU[(${gen_arch_upper})]State *env,    \
+                                   uint##S##_t rs1, uint##S##_t rs2) {  \
+    return f##S##_fn_with_fe_flags(env, float##S##_##FUN,               \
+                                   &env->fp_status_##NAME, rs1, rs2);   \
+  }
+
 [# th:each="size : ${float_ieee_sizes}"]
-typedef uint[(${size})]_t (*f[(${size})]_fn)(uint[(${size})]_t a, uint[(${size})]_t b, float_status *s);
-uint[(${size})]_t f[(${size})]_fn_with_fe_flags(CPU[(${gen_arch_upper})]State *env, f[(${size})]_fn fn, float_status *s, uint[(${size})]_t rs1, uint[(${size})]_t rs2) {
-  // DEV NOTE: flag stuff can be simplified when no flags present. But is that necessary? The flag functions
-  //           should set all flags, if none are present in the spec.
-  // DEV NOTE: lets have a separate float_status for each float-type in the spec. but some things (e.g. rounding mode)
-  //           are specified per call, so the float_status will be modified here either way (also because of flags).
-  //           We could scratch that and rebuild a float_status from scratch every time -> env not affected.
-  prep_float_status_fe_flags(env, s);
-  uint[(${size})]_t result = fn(rs1, rs2, s);
-  set_float_status_fe_flags(env, s);
-  return result;
-}
-[/]
+FLOAT_FN_IEEE_FE_HELPER([(${size})])[/]
 
 [# th:each="fmt : ${float_formats}"]
-uint[(${fmt.bit_size})]_t helper_fadd_[(${fmt.name})](CPU[(${gen_arch_upper})]State *env, uint[(${fmt.bit_size})]_t rs1, uint[(${fmt.bit_size})]_t rs2) {
-  // TODO: float[(${fmt.bit_size})]_add can only be used for ieee formats. other formats will need other functions
-  return f[(${fmt.bit_size})]_fn_with_fe_flags(env, float[(${fmt.bit_size})]_add, &env->fp_status_[(${fmt.name})], rs1, rs2);
-}
-[/]
+FLOAT_HELPER_2([(${fmt.bit_size})], [(${fmt.name})], add)[/]

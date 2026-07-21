@@ -71,6 +71,7 @@ import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.BitsType;
 import vadl.types.Type;
 import vadl.utils.Pair;
+import vadl.utils.functionInterfaces.QuadConsumer;
 import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
@@ -208,7 +209,7 @@ public class AnnotationTable {
         // this handled in the VIAM lowering when constructing the ArtificialResource
         .build();
 
-    annotationOn(RegisterDefinition.class, "execution state", FormatFieldAnnotation::new)
+    annotationOn(RegisterDefinition.class, "execution state", ExecutionStateAnnotation::new)
         .check((def, annotation, lowering) -> annotation.typeCheckTarget(def))
         .applyAst((def, annotation) -> annotation.calcBitSlice(def))
         .applyViam((def, annotation, lowering) -> {
@@ -356,36 +357,39 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) ->
             ((FloatFormat) def).setCanonicalQNaN(annotation.constant.toViamConstant())).build();
 
-    TriConsumer<RegisterTensor, FloatFlagAnnotation, Boolean> applyViamFloatFlag;
-    applyViamFloatFlag = (reg, annotation, sticky) -> {
+    QuadConsumer<RegisterTensor, FloatFlagAnnotation, Boolean, FloatExceptionFlag> applyViamFloatFlag;
+    applyViamFloatFlag = (reg, annotation, sticky, flag) -> {
       var idx = annotation.index;
       if (reg.hasAnnotation(vadl.viam.annotations.FloatFlagAnnotation.class)) {
         var ann = reg.expectAnnotation(vadl.viam.annotations.FloatFlagAnnotation.class);
-        var flag = ann.get(idx);
-        ensure(flag == null, () -> error(
+        var setFlag = ann.get(idx);
+        ensure(setFlag == null, () -> error(
             "Bit already mapped as " + (ann.isSticky(idx) ? "" : "non ")
-                + "sticky " + requireNonNull(flag).name + " flag",
+                + "sticky " + requireNonNull(setFlag).name + " flag",
             annotation
         ));
-        ann.set(idx, sticky, annotation.flag);
+        ann.set(idx, sticky, flag);
       } else {
         var ann = new vadl.viam.annotations.FloatFlagAnnotation();
-        ann.set(idx, sticky, annotation.flag);
+        ann.set(idx, sticky, flag);
         reg.addAnnotation(ann);
       }
     };
 
-    annotationOn(RegisterDefinition.class, "float flag", FloatFlagAnnotation::new)
-        .check((def, annotation, lowering) -> annotation.typeCheckTarget(def))
-        .applyViam((def, annotation, lowering) ->
-            applyViamFloatFlag.accept((RegisterTensor) def, annotation, false))
-        .build();
+    for (var flag : FloatExceptionFlag.values()) {
+      annotationOn(RegisterDefinition.class, "fe flag " + flag.name, FloatFlagAnnotation::new)
+          .check((def, annotation, lowering) -> annotation.typeCheckTarget(def))
+          .applyViam((def, annotation, lowering) ->
+              applyViamFloatFlag.accept((RegisterTensor) def, annotation, false, flag))
+          .build();
 
-    annotationOn(RegisterDefinition.class, "sticky float flag", FloatFlagAnnotation::new)
-        .check((def, annotation, lowering) -> annotation.typeCheckTarget(def))
-        .applyViam((def, annotation, lowering) ->
-            applyViamFloatFlag.accept((RegisterTensor) def, annotation, true))
-        .build();
+      annotationOn(RegisterDefinition.class, "sticky fe flag " + flag.name,
+          FloatFlagAnnotation::new)
+          .check((def, annotation, lowering) -> annotation.typeCheckTarget(def))
+          .applyViam((def, annotation, lowering) ->
+              applyViamFloatFlag.accept((RegisterTensor) def, annotation, true, flag))
+          .build();
+    }
 
     /// PROCESSOR RELATED ///
 
@@ -1160,10 +1164,7 @@ class EnableAnnotation extends Annotation {
   }
 }
 
-class FloatFlagAnnotation extends Annotation {
-
-  @LazyInit
-  FloatExceptionFlag flag;
+class FloatFlagAnnotation extends FormatFieldAnnotation {
 
   @LazyInit
   Identifier field;
@@ -1172,46 +1173,15 @@ class FloatFlagAnnotation extends Annotation {
   int index;
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-  }
-
-  @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    verifyValuesCnt(definition, 2);
-    definition.values.forEach(def -> {
-      Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
-          .description("An identifier was expected.")
-      );
-    });
-    var flagName = ((Identifier) definition.values.get(0)).name;
-    flag = FloatExceptionFlag.from(flagName).orElseThrow(() ->
-        error("Invalid float flag", definition)
-            .description("Given flag is %s, but must be one of %s", flagName,
-                Arrays.stream(FloatExceptionFlag.values()).map(f -> f.name)
-                    .collect(Collectors.joining(", "))
-            ).build()
-    );
-    field = (Identifier) definition.values.get(1);
+    super.typeCheck(definition, typeChecker);
+    verifyValuesCnt(definition, 1);
+    field = (Identifier) definition.values.getFirst();
   }
 
   void typeCheckTarget(TypedNode target) {
-    Diagnostic.ensure(target.type() instanceof FormatType,
-        () -> error("Annotation target has invalid type", this).description("""
-            Float flag annotation can only be applied to \
-            register definitions with a format type"""));
-
+    super.typeCheckTarget(target);
     var format = ((FormatType) target.type()).format;
-    Function<String, DiagnosticBuilder> errBuilder = (String err) ->
-        error(err, field).description("Must be one of: %s",
-            format.fields.stream()
-                .filter(f -> !(f instanceof DerivedFormatField))
-                .map(f -> f.identifier().name)
-                .collect(Collectors.joining(", "))
-        );
-    Diagnostic.ensure(format.hasField(field.name),
-        () -> errBuilder.apply("Unknown field name"));
-    Diagnostic.ensure(!(format.getField(field.name) instanceof DerivedFormatField),
-        () -> errBuilder.apply("Cannot annotate derived field"));
     var range = requireNonNull(format.getFieldRange(field.name));
     Diagnostic.ensure(range.from() == range.to(), () ->
         error("Float flag can only be one bit", field));
@@ -1219,8 +1189,55 @@ class FloatFlagAnnotation extends Annotation {
   }
 
   @Override
+  String annotationName() {
+    return "Float exception flag annotation";
+  }
+
+  @Override
   public String usageString() {
-    return "[ " + name + " : <float-flag>, <format-field> ]";
+    return "[ " + name + " : <format-field> ]";
+  }
+}
+
+/**
+ * An annotation that can be applied to registers of type {@link BitsType}. If the register's
+ * type is a {@link FormatType}, then this annotation can be used to reference its format fields.
+ *
+ * <p>Usage examples:
+ * <pre>
+ * [ execution state ]
+ * register reg : Bits<8>
+ *
+ * [ execution state : f0, f1 ]
+ * register reg : Format
+ * format Format : Bits<8> { f0 [7], f1 [6], ... }
+ * </pre>
+ */
+class ExecutionStateAnnotation extends FormatFieldAnnotation {
+
+  void calcBitSlice(TypedNode target) {
+    if (fields.isEmpty()) {
+      var width = ((BitsType) target.type()).bitWidth();
+      slice = Constant.BitSlice.of(width - 1, 0);
+      return;
+    }
+    var format = requireNonNull((FormatType) target.type()).format;
+    slice = new Constant.BitSlice(
+        fields.stream()
+            .map(field -> requireNonNull(format.getFieldRange(field.name)))
+            .map(range -> new Constant.BitSlice.Part(range.from(), range.to()))
+            .toArray(Constant.BitSlice.Part[]::new)
+    );
+  }
+
+  @Override
+  String annotationName() {
+    return "Execution state annotation";
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <ident>, ... ]";
   }
 }
 
@@ -1239,7 +1256,7 @@ class FloatFlagAnnotation extends Annotation {
  * format Format : Bits<8> { f0 [7], f1 [6], ... }
  * </pre>
  */
-class FormatFieldAnnotation extends Annotation {
+abstract class FormatFieldAnnotation extends Annotation {
 
   @LazyInit
   List<Identifier> fields;
@@ -1266,14 +1283,14 @@ class FormatFieldAnnotation extends Annotation {
     if (fields.isEmpty()) {
       Diagnostic.ensure(target.type() instanceof BitsType,
           () -> error("Annotation target has invalid type", this).description("""
-              Execution state annotation can only be applied to simple \
-              register definitions (no register files or tensors)"""));
+              %s can only be applied to simple register \
+              definitions (no register files or tensors)""", annotationName()));
       return;
     }
     Diagnostic.ensure(target.type() instanceof FormatType,
         () -> error("Annotation target has invalid type", this).description("""
-            Execution state annotation with format fields can only \
-            be applied to register definitions with a format type"""));
+            %s with format fields can only be applied \
+            to register definitions with a format type""", annotationName()));
 
     var format = ((FormatType) target.type()).format;
     fields.forEach(field -> {
@@ -1291,25 +1308,7 @@ class FormatFieldAnnotation extends Annotation {
     });
   }
 
-  void calcBitSlice(TypedNode target) {
-    if (fields.isEmpty()) {
-      var width = ((BitsType) target.type()).bitWidth();
-      slice = Constant.BitSlice.of(width - 1, 0);
-      return;
-    }
-    var format = requireNonNull((FormatType) target.type()).format;
-    slice = new Constant.BitSlice(
-        fields.stream()
-            .map(field -> requireNonNull(format.getFieldRange(field.name)))
-            .map(range -> new Constant.BitSlice.Part(range.from(), range.to()))
-            .toArray(Constant.BitSlice.Part[]::new)
-    );
-  }
-
-  @Override
-  public String usageString() {
-    return "[ " + name + " : <ident>, ... ]";
-  }
+  abstract String annotationName();
 }
 
 /**

@@ -29,11 +29,11 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
 
   register F : Index -> FRegs
 
-  //[ sticky float flag : invalid,     nv ]
-  //[ sticky float flag : div_by_zero, dz ]
-  //[ sticky float flag : overflow,    of ]
-  //[ sticky float flag : underflow,   uf ]
-  [ sticky float flag : inexact,     nx ]
+  [ sticky fe flag invalid     : nv ]
+  [ sticky fe flag div_by_zero : dz ]
+  [ sticky fe flag overflow    : of ]
+  [ sticky fe flag underflow   : uf ]
+  [ sticky fe flag inexact     : nx ]
   register FCSR : FCsrFormat
   //alias register fcsr : FCsrFormat = CSR(CsrDefToImpl(CsrDef::fcsr))
 
