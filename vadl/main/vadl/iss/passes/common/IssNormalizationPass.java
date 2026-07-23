@@ -816,6 +816,46 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Override
+  public void handleFCVTFSS(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTFSD(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTFUS(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTFUD(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTSSF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTSDF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTUSF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTUDF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
   public void handleConcat(BuiltInCall input) {
     // do nothing (result is already fine)
   }

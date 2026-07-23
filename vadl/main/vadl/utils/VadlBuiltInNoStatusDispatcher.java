@@ -115,6 +115,22 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleCTO(input);
     } else if (builtIn == BuiltInTable.FADD) {
       handleFADD(input);
+    } else if (builtIn == BuiltInTable.FCVTFSS) {
+      handleFCVTFSS(input);
+    } else if (builtIn == BuiltInTable.FCVTFSD) {
+      handleFCVTFSD(input);
+    } else if (builtIn == BuiltInTable.FCVTFUS) {
+      handleFCVTFUS(input);
+    } else if (builtIn == BuiltInTable.FCVTFUD) {
+      handleFCVTFUD(input);
+    } else if (builtIn == BuiltInTable.FCVTSSF) {
+      handleFCVTSSF(input);
+    } else if (builtIn == BuiltInTable.FCVTSDF) {
+      handleFCVTSDF(input);
+    } else if (builtIn == BuiltInTable.FCVTUSF) {
+      handleFCVTUSF(input);
+    } else if (builtIn == BuiltInTable.FCVTUDF) {
+      handleFCVTUDF(input);
     } else if (builtIn == BuiltInTable.CONCATENATE_BITS) {
       handleConcat(input);
     } else {
@@ -208,6 +224,22 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
   void handleCTO(T input);
 
   void handleFADD(T input);
+
+  void handleFCVTFSS(T input);
+
+  void handleFCVTFSD(T input);
+
+  void handleFCVTFUS(T input);
+
+  void handleFCVTFUD(T input);
+
+  void handleFCVTSSF(T input);
+
+  void handleFCVTSDF(T input);
+
+  void handleFCVTUSF(T input);
+
+  void handleFCVTUDF(T input);
 
   void handleConcat(T input);
 

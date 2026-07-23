@@ -122,8 +122,6 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     $FRtypeInstr($c; none; assembly $c.name = ($c.mne, " ", register(rd), ",", register(rs1), ",", register(rs2), ",", FrmName($c.rm)))
   }
 
-  record FSizeRec (suffix : Id, iSuffix : Id, fmt : Ex, ty : Id, sTy : Id, uTy : Id, fTy : Id, size : Int)
-
   [ canonical sNaN : 0x7fa00000 ]
   [ canonical qNaN : 0x7fc00000 ]
   [ IEEE : 32 ]
@@ -133,6 +131,8 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
   [ canonical qNaN : 0x7fc00000'00000000 ]
   [ IEEE : 64 ]
   float-type IEEE64
+
+  record FSizeRec (suffix : Id, iSuffix : Id, fmt : Ex, ty : Id, sTy : Id, uTy : Id, fTy : Id, size : Int)
 
   // TODO: IEEE16 and IEEE128 are not yet implemented
   model FSize16  () : FSizeRec = {(H ; H ; Fmt::h ; FP16  ; SIntH ; UIntH ; IEEE16  ; 16 )}
@@ -151,16 +151,22 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
 
   model NaNBox (size : FSizeRec, val : Ex) : Ex = {
     match : Ex (
-      $size.size = 16 => $NaNBoxH($val);
-      $size.size = 32 => $NaNBoxS($val);
-      $size.size = 64 => $NaNBoxD($val);
-      _               => $NaNBoxQ($val)
+      $size.fTy = IEEE16 => $NaNBoxH($val);
+      $size.fTy = IEEE32 => $NaNBoxS($val);
+      $size.fTy = IEEE64 => $NaNBoxD($val);
+      _                  => $NaNBoxQ($val)
     )
   }
 
-  model-type BoolModel = (Ex, Ex) -> Ex
-  model Unsigned (t : Ex, f : Ex) : Ex = { t }
-  model Signed   (t : Ex, f : Ex) : Ex = { t }
+  model-type BoolModelId  = (Id,  Id)  -> Id
+  model-type BoolModelStr = (Str, Str) -> Str
+  model UnsignedId  (u : Id,  s : Id)  : Id =  { $u }
+  model SignedId    (u : Id,  s : Id)  : Id =  { $s }
+  model UnsignedStr (u : Str, s : Str) : Str = { $u }
+  model SignedStr   (u : Str, s : Str) : Str = { $s }
+  record BoolModelRec (id : BoolModelId, str : BoolModelStr)
+  model Unsigned () : BoolModelRec = {(UnsignedId ; UnsignedStr)}
+  model Signed   () : BoolModelRec = {(SignedId   ; SignedStr  )}
 
   model FRtypeInstrBiArith (name : Id, size : FSizeRec, fun : SymEx, funct5 : Bin, rm : Ex) : IsaDefs = {
     $FRtypeInstr2rm ((
@@ -230,25 +236,25 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     ) ; $rs2 )
   }
 
-  model FRtypeInstrCvtX2F (name : Id, fSize : FSizeRec, iSize : FSizeRec, u : BoolModel, fun : SymEx, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
+  model FRtypeInstrCvtX2F (name : Id, size : FSizeRec, iSize : FSizeRec, u : BoolModelRec, fun : SymEx, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
     $FRtypeInstr1rm ((
-      AsId($name, $fSize.suffix, $iSize.iSuffix, $u("U" ; "")) ;
-      AsStr($name, ".", $fSize.suffix, ".", $iSize.iSuffix, $u("U" ; "")) ;
-      $rm ; $fSize.fmt ; $funct5 ;
-      let result = $fun($fSize.fTy, X(rs1) as $u(iSize.uTy ; iSize.sTy), $rm) in {
-        F(rd) := $NaNBox($fSize ; result)
+      AsId($name, $size.suffix, $iSize.iSuffix, $u.str("U" ; "")) ;
+      AsStr($name, ".", $size.suffix, ".", $iSize.iSuffix, $u.str("U" ; "")) ;
+      $rm ; $size.fmt ; $funct5 ;
+      let result = $fun($size.fTy, X(rs1) as $u.id($iSize.uTy ; $iSize.sTy), $rm) in {
+        F(rd) := $NaNBox($size ; result)
       }
     ) ; $rs2 )
   }
 
-  model FRtypeInstrCvtF2X (name : Id, fSize : FSizeRec, iSize : FSizeRec, u : BoolModel, fun : SymEx, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
+  model FRtypeInstrCvtF2X (name : Id, size : FSizeRec, iSize : FSizeRec, u : BoolModelRec, fun : SymEx, funct5 : Bin, rs2 : Bin, rm : Ex) : IsaDefs = {
     $FRtypeInstr1rm ((
-      AsId($name, $iSize.iSuffix, $u("U" ; ""), $fSize.suffix) ;
-      AsStr($name, ".", $iSize.iSuffix, $u("U" ; ""), ".", $fSize.suffix) ;
-      $rm ; $fSize.fmt ; $funct5 ;
-      // TODO: we must make sure the builtin understands what type to convert to
-      let result = $fun($fSize.fTy, F(rs1) as $fSize.ty, $rm) in {
-        X(rd) := result as $u(iSize.uTy ; iSize.sTy)
+      AsId($name, $iSize.iSuffix, $u.str("U" ; ""), $size.suffix) ;
+      AsStr($name, ".", $iSize.iSuffix, $u.str("U" ; ""), ".", $size.suffix) ;
+      $rm ; $size.fmt ; $funct5 ;
+      let result = $fun($size.fTy, F(rs1) as $size.ty, $rm) in {
+        // always sign extend the result, even unsigned results
+        X(rd) := result as SIntR
       }
     ) ; $rs2 )
   }
@@ -321,15 +327,15 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
   $FRtypeInstrMvF2X   (FMV ; $FSize32 ; 0b1'1100 ; 0b000 ; 0b0'0000)
   $FRtypeInstrMvX2F   (FMV ; $FSize32 ; 0b1'1110 ; 0b000 ; 0b0'0000)
 
-  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; Signed   ; VADL::fcvt ; 0b1'1010 ; 0b0'0000 ; Frm::rne)
-  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; Unsigned ; VADL::fcvt ; 0b1'1010 ; 0b0'0001 ; Frm::rne)
-  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; Signed   ; VADL::fcvt ; 0b1'1010 ; 0b0'0010 ; Frm::rne)
-  //$FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; Unsigned ; VADL::fcvt ; 0b1'1010 ; 0b0'0011 ; Frm::rne)
+  $FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; (SignedId   ; SignedStr)   ; VADL::fcvtssf ; 0b1'1010 ; 0b0'0000 ; Frm::rne)
+  $FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize32 ; (UnsignedId ; UnsignedStr) ; VADL::fcvtusf ; 0b1'1010 ; 0b0'0001 ; Frm::rne)
+  $FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; (SignedId   ; SignedStr)   ; VADL::fcvtsdf ; 0b1'1010 ; 0b0'0010 ; Frm::rne)
+  $FRtypeInstrCvtX2F (FCVT ; $FSize32 ; $FSize64 ; (UnsignedId ; UnsignedStr) ; VADL::fcvtudf ; 0b1'1010 ; 0b0'0011 ; Frm::rne)
 
-  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; Signed   ; VADL::fcvt ; 0b1'1000 ; 0b0'0000 ; Frm::rne)
-  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; Unsigned ; VADL::fcvt ; 0b1'1000 ; 0b0'0001 ; Frm::rne)
-  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; Signed   ; VADL::fcvt ; 0b1'1000 ; 0b0'0010 ; Frm::rne)
-  //$FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; Unsigned ; VADL::fcvt ; 0b1'1000 ; 0b0'0011 ; Frm::rne)
+  $FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; (SignedId   ; SignedStr)   ; VADL::fcvtfss ; 0b1'1000 ; 0b0'0000 ; Frm::rne)
+  $FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize32 ; (UnsignedId ; UnsignedStr) ; VADL::fcvtfus ; 0b1'1000 ; 0b0'0001 ; Frm::rne)
+  $FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; (SignedId   ; SignedStr)   ; VADL::fcvtfsd ; 0b1'1000 ; 0b0'0010 ; Frm::rne)
+  $FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; (UnsignedId ; UnsignedStr) ; VADL::fcvtfud ; 0b1'1000 ; 0b0'0011 ; Frm::rne)
 
   //$FR4typeInstr (FMADD  ; $FSize32 ; VADL::fmadd  ; Frm::rne)
   //$FR4typeInstr (FMSUB  ; $FSize32 ; VADL::fmsub  ; Frm::rne)

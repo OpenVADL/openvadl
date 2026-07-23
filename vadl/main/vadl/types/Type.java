@@ -307,6 +307,7 @@ public abstract class Type {
    *
    * @param argTypes   the list of argument type classes
    * @param hasVarArgs the flag indicating if the last argument of kind varargs
+   * @param floatTypeArgCount the amount of float-type arguments preceding other args
    * @param returnType the return type class
    * @return the RelationType instance
    */
@@ -314,7 +315,7 @@ public abstract class Type {
                                       boolean hasVarArgs,
                                       int floatTypeArgCount,
                                       Class<? extends Type> returnType) {
-    var hashCode = Objects.hash(argTypes, hasVarArgs, returnType);
+    var hashCode = Objects.hash(argTypes, hasVarArgs, floatTypeArgCount, returnType);
     return relationTypes.computeIfAbsent(hashCode, k ->
         new RelationType(argTypes, hasVarArgs, floatTypeArgCount, returnType));
   }

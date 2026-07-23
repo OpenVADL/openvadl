@@ -17,7 +17,9 @@
 package vadl.types;
 
 import static org.slf4j.LoggerFactory.getLogger;
+import static vadl.types.Type.bits;
 import static vadl.types.Type.constructDataType;
+import static vadl.types.Type.signedInt;
 
 import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
@@ -1067,6 +1069,103 @@ public class BuiltInTable {
           .returnsFirstBitWidthAndFloatStatus()
           .build();
 
+  ///// FLOAT TO INT CONVERSION //////
+
+  /**
+   * Float conversion from float to signed single.
+   * {@code function fcvtfss( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> SInt<32> }
+   */
+  public static final BuiltIn FCVTFSS =
+      func("VADL::fcvtfss",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, SIntType.class))
+          .takesFrm(1)
+          .returns(signedInt(32))
+          .build();
+
+  /**
+   * Float conversion from float to signed double.
+   * {@code function fcvtfsd( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> SInt<64> }
+   */
+  public static final BuiltIn FCVTFSD =
+      func("VADL::fcvtfsd",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, SIntType.class))
+          .takesFrm(1)
+          .returns(signedInt(64))
+          .build();
+
+  /**
+   * Float conversion from float to unsigned single.
+   * {@code function fcvtfus( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> UInt<32> }
+   */
+  public static final BuiltIn FCVTFUS =
+      func("VADL::fcvtfus",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, UIntType.class))
+          .takesFrm(1)
+          .returns(signedInt(32))
+          .build();
+
+  /**
+   * Float conversion from float to unsigned double.
+   * {@code function fcvtfud( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> UInt<64> }
+   */
+  public static final BuiltIn FCVTFUD =
+      func("VADL::fcvtfud",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, UIntType.class))
+          .takesFrm(1)
+          .returns(signedInt(64))
+          .build();
+
+  ///// INT TO FLOAT CONVERSION //////
+
+  // FIXME: here there is a problem: how does the type system infer how large the returned
+  //        float type is? For now, its hardcoded at 32 bits, but it should actually be determined
+  //        by the passed float-type. Idea: can the type-checker handle this special case?
+  //        We could use type parameters...
+
+  /**
+   * Float conversion from signed single to float.
+   * {@code function fcvtssf( t : FloatType, a : SInt<32>, rm : Bits<3> ) -> Bits<32> }
+   */
+  public static final BuiltIn FCVTSSF =
+      func("VADL::fcvtssf",
+          Type.relation(List.of(SIntType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(32))
+          .build();
+
+  /**
+   * Float conversion from signed double to float.
+   * {@code function fcvtsdf( t : FloatType, a : SInt<64>, rm : Bits<3> ) -> Bits<32> }
+   */
+  public static final BuiltIn FCVTSDF =
+      func("VADL::fcvtsdf",
+          Type.relation(List.of(SIntType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(32))
+          .build();
+
+  /**
+   * Float conversion from unsigned single to float.
+   * {@code function fcvtusf( t : FloatType, a : UInt<32>, rm : Bits<3> ) -> Bits<32> }
+   */
+  public static final BuiltIn FCVTUSF =
+      func("VADL::fcvtusf",
+          Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(32))
+          .build();
+
+  /**
+   * Float conversion from unsigned double to float.
+   * {@code function fcvtudf( t : FloatType, a : UInt<64>, rm : Bits<3> ) -> Bits<32> }
+   */
+  public static final BuiltIn FCVTUDF =
+      func("VADL::fcvtudf",
+          Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(32))
+          .build();
+
 
   ///// FUNCTIONS //////
 
@@ -1442,6 +1541,17 @@ public class BuiltInTable {
       FADD
   );
 
+  public static final List<BuiltIn> FLOAT_CONVERSION_BUILT_INS = List.of(
+      FCVTFSS,
+      FCVTFSD,
+      FCVTFUS,
+      FCVTFUD,
+      FCVTSSF,
+      FCVTSDF,
+      FCVTUSF,
+      FCVTUDF
+  );
+
   public static final List<BuiltIn> FUNCTION_BUILT_INS = List.of(
       MNEMONIC,
       CONCATENATE_STRINGS,
@@ -1473,7 +1583,8 @@ public class BuiltInTable {
   );
 
   public static final List<BuiltIn> FLOAT_BUILT_INS = Stream.of(
-      FLOAT_ARITHMETIC_BUILT_INS.stream()
+      FLOAT_ARITHMETIC_BUILT_INS.stream(),
+      FLOAT_CONVERSION_BUILT_INS.stream()
   ).flatMap(s -> s).toList();
 
   public static final List<BuiltIn> BUILT_INS = Stream.of(
@@ -1861,6 +1972,13 @@ public class BuiltInTable {
       takesData((args) -> args.size() >= 2
           && args.get(0).bitWidth() == args.get(1).bitWidth());
       this.hasSameBitWidth = true;
+      return this;
+    }
+
+    public BuiltInBuilder takesFrm(int roundingModeArgIdx) {
+      takesData((args) -> args.size() > roundingModeArgIdx
+          && args.get(roundingModeArgIdx).bitWidth() == 3
+      );
       return this;
     }
 

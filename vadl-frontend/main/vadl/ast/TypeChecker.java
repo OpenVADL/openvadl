@@ -995,7 +995,7 @@ public class TypeChecker
       throw addErrorAndStopChecking(
           error("Type Mismatch", location)
               .locationDescription(location,
-                  "Expected %d arguments but got %d.", builtIn.argTypeClasses().size(), args.size())
+                  "Expected %d arguments but got %d.", minArgCount, args.size())
               .build());
     }
 
