@@ -1044,6 +1044,16 @@ public class BuiltInTable {
   ///// FLOAT ARITHMETIC //////
 
   /**
+   * {@code function fsqrt( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   */
+  public static final BuiltIn FSQRT =
+      func("VADL::fsqrt",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
    * {@code function fadd( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
    */
   public static final BuiltIn FADD =
@@ -1067,6 +1077,136 @@ public class BuiltInTable {
           List.of(BitsType.class, BitsType.class, BitsType.class), 1, StructType.class))
           .takesFirstTwoWithSameBitWidthsAndFrm(2)
           .returnsFirstBitWidthAndFloatStatus()
+          .build();
+
+  /**
+   * {@code function fsub( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   */
+  public static final BuiltIn FSUB =
+      func("VADL::fsub",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstTwoWithSameBitWidthsAndFrm(2)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
+   * {@code function fmul( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   */
+  public static final BuiltIn FMUL =
+      func("VADL::fmul",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstTwoWithSameBitWidthsAndFrm(2)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
+   * {@code function fdiv( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   */
+  public static final BuiltIn FDIV =
+      func("VADL::fdiv",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstTwoWithSameBitWidthsAndFrm(2)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
+   * {@code function fmadd( t : FloatType, a : Bits<N>, b : Bits<N>, c : Bits<N>, rm : Bits<3> )
+   * -> Bits<N> }
+   */
+  public static final BuiltIn FMADD =
+      func("VADL::fmadd",
+          Type.relation(List.of(
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstThreeWithSameBitWidthsAndFrm(3)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
+   * {@code function fmsub( t : FloatType, a : Bits<N>, b : Bits<N>, c : Bits<N>, rm : Bits<3> )
+   * -> Bits<N> }
+   */
+  public static final BuiltIn FMSUB =
+      func("VADL::fmsub",
+          Type.relation(List.of(
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstThreeWithSameBitWidthsAndFrm(3)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
+   * {@code function fnmadd( t : FloatType, a : Bits<N>, b : Bits<N>, c : Bits<N>, rm : Bits<3> )
+   * -> Bits<N> }
+   */
+  public static final BuiltIn FNMADD =
+      func("VADL::fnmadd",
+          Type.relation(List.of(
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstThreeWithSameBitWidthsAndFrm(3)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
+   * {@code function fnmsub( t : FloatType, a : Bits<N>, b : Bits<N>, c : Bits<N>, rm : Bits<3> )
+   * -> Bits<N> }
+   */
+  public static final BuiltIn FNMSUB =
+      func("VADL::fnmsub",
+          Type.relation(List.of(
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstThreeWithSameBitWidthsAndFrm(3)
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
+   * {@code function fmin( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bits<N> }
+   */
+  public static final BuiltIn FMIN =
+      func("VADL::fmin",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  /**
+   * {@code function fmax( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bits<N> }
+   */
+  public static final BuiltIn FMAX =
+      func("VADL::fmax",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, BitsType.class))
+          .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidth(BitsType.class)
+          .build();
+
+  ///// FLOAT COMPARISON //////
+
+  /**
+   * {@code function flt( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FLT =
+      func("VADL::flt",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, BoolType.class))
+          .takesFirstTwoWithSameBitWidths()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fle( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FLE =
+      func("VADL::fle",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, BoolType.class))
+          .takesFirstTwoWithSameBitWidths()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function feq( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FEQ =
+      func("VADL::feq",
+          Type.relation(List.of(BitsType.class, BitsType.class), 1, BoolType.class))
+          .takesFirstTwoWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
   ///// FLOAT TO INT CONVERSION //////
@@ -1164,6 +1304,68 @@ public class BuiltInTable {
           Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
           .takesFrm(1)
           .returns(bits(32))
+          .build();
+
+  ///// FLOAT CLASSIFICATION //////
+
+  /**
+   * {@code function fisinf( t : FloatType, a : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FISINF =
+      func("VADL::fisinf",
+          Type.relation(List.of(BitsType.class), 1, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fiszero( t : FloatType, a : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FISZERO =
+      func("VADL::fiszero",
+          Type.relation(List.of(BitsType.class), 1, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fisneg( t : FloatType, a : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FISNEG =
+      func("VADL::fisneg",
+          Type.relation(List.of(BitsType.class), 1, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fisdenorm( t : FloatType, a : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FISDENORM =
+      func("VADL::fisdenorm",
+          Type.relation(List.of(BitsType.class), 1, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fissnan( t : FloatType, a : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FISSNAN =
+      func("VADL::fissnan",
+          Type.relation(List.of(BitsType.class), 1, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fisqnan( t : FloatType, a : Bits<N> ) -> Bool }
+   */
+  public static final BuiltIn FISQNAN =
+      func("VADL::fisqnan",
+          Type.relation(List.of(BitsType.class), 1, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
           .build();
 
 
@@ -1538,7 +1740,23 @@ public class BuiltInTable {
   );
 
   public static final List<BuiltIn> FLOAT_ARITHMETIC_BUILT_INS = List.of(
-      FADD
+      FSQRT,
+      FADD,
+      FSUB,
+      FMUL,
+      FDIV,
+      FMADD,
+      FMSUB,
+      FNMADD,
+      FNMSUB,
+      FMIN,
+      FMAX
+  );
+
+  public static final List<BuiltIn> FLOAT_COMPARISON_BUILT_INS = List.of(
+      FLT,
+      FLE,
+      FEQ
   );
 
   public static final List<BuiltIn> FLOAT_CONVERSION_BUILT_INS = List.of(
@@ -1550,6 +1768,15 @@ public class BuiltInTable {
       FCVTSDF,
       FCVTUSF,
       FCVTUDF
+  );
+
+  public static final List<BuiltIn> FLOAT_CLASSIFICATION_BUILT_INS = List.of(
+      FISINF,
+      FISZERO,
+      FISNEG,
+      FISDENORM,
+      FISSNAN,
+      FISQNAN
   );
 
   public static final List<BuiltIn> FUNCTION_BUILT_INS = List.of(
@@ -1584,7 +1811,9 @@ public class BuiltInTable {
 
   public static final List<BuiltIn> FLOAT_BUILT_INS = Stream.of(
       FLOAT_ARITHMETIC_BUILT_INS.stream(),
-      FLOAT_CONVERSION_BUILT_INS.stream()
+      FLOAT_COMPARISON_BUILT_INS.stream(),
+      FLOAT_CONVERSION_BUILT_INS.stream(),
+      FLOAT_CLASSIFICATION_BUILT_INS.stream()
   ).flatMap(s -> s).toList();
 
   public static final List<BuiltIn> BUILT_INS = Stream.of(
@@ -1985,6 +2214,16 @@ public class BuiltInTable {
     public BuiltInBuilder takesFirstTwoWithSameBitWidthsAndFrm(int roundingModeArgIdx) {
       takesData((args) -> args.size() > roundingModeArgIdx
           && args.get(0).bitWidth() == args.get(1).bitWidth()
+          && args.get(roundingModeArgIdx).bitWidth() == 3
+      );
+      this.hasSameBitWidth = true;
+      return this;
+    }
+
+    public BuiltInBuilder takesFirstThreeWithSameBitWidthsAndFrm(int roundingModeArgIdx) {
+      takesData((args) -> args.size() > roundingModeArgIdx
+          && args.get(0).bitWidth() == args.get(1).bitWidth()
+          && args.get(0).bitWidth() == args.get(2).bitWidth()
           && args.get(roundingModeArgIdx).bitWidth() == 3
       );
       this.hasSameBitWidth = true;

@@ -259,20 +259,20 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     ) ; $rs2 )
   }
 
-  model FRtypeInstrClass (name : Id, suffix : Id, ty : Id) : IsaDefs = {
-    instruction AsId($name, $suffix) : Rtype =
-      let f = F(rs1) as ty in
+  model FRtypeInstrClass (name : Id, size : FSizeRec) : IsaDefs = {
+    instruction AsId($name, $size.suffix) : Rtype =
+      let f = F(rs1) as $size.ty in
         // TODO: this is from QEMU's risc-v vector_helper.c fclass_s(...)
         //       what predicates should we implement?
-        let neg = VADL::fisneg(f) in
-          X(rd) := if VADL::fisinf   (f) then ( if neg then 1 << 0 else 1 << 7 ) else
-                   if VADL::fiszero  (f) then ( if neg then 1 << 3 else 1 << 4 ) else
-                   if VADL::fisdenorm(f) then ( if neg then 1 << 2 else 1 << 5 ) else
-                   if VADL::fissnan  (f) then 1 << 8 else
-                   if VADL::fisqnan  (f) then 1 << 9 else
+        let neg = VADL::fisneg($size.fTy, f) in
+          X(rd) := if VADL::fisinf   ($size.fTy, f) then ( if neg then 1 << 0 else 1 << 7 ) else
+                   if VADL::fiszero  ($size.fTy, f) then ( if neg then 1 << 3 else 1 << 4 ) else
+                   if VADL::fisdenorm($size.fTy, f) then ( if neg then 1 << 2 else 1 << 5 ) else
+                   if VADL::fissnan  ($size.fTy, f) then 1 << 8 else
+                   if VADL::fisqnan  ($size.fTy, f) then 1 << 9 else
                                               ( if neg then 1 << 1 else 1 << 6 )
-    encoding AsId($name, $suffix) = {opcode = 0b101'0011, funct3 = 0b001, rs2 = 0b0'0000, funct7 = 0b111'0000}
-    assembly AsId($name, $suffix) = (AsStr($name), ".", AsStr($suffix), " ", register(rd), ",", register(rs1))
+    encoding AsId($name, $size.suffix) = {opcode = 0b101'0011, funct3 = 0b001, rs2 = 0b0'0000, funct7 = 0b111'0000}
+    assembly AsId($name, $size.suffix) = (AsStr($name), ".", AsStr($size.suffix), " ", register(rd), ",", register(rs1))
   }
 
   model FLtypeInstr (name : Id, size : FSizeRec, funct3 : Bin) : IsaDefs = {
@@ -293,12 +293,12 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
     assembly $name = (mnemonic, " ", register(rs2), ",", decimal(imm as SInt<12>), "(", register(rs1), ")")
   }
 
-  model FR4typeInstr (name : Id, size : FSizeRec, fun : SymEx, rm : Ex) : IsaDefs = {
+  model FR4typeInstr (name : Id, size : FSizeRec, fun : SymEx, rm : Ex, opcode : Bin) : IsaDefs = {
     instruction AsId($name, $size.suffix) : R4type =
       let result = $fun($size.fTy, F(rs1), F(rs2), F(rs3), $rm) in {
         F(rd) := $NaNBox($size ; result)
       }
-    encoding AsId($name, $size.suffix) = {opcode = 0b100'0011, funct3 = $rm, fmt = $size.fmt}
+    encoding AsId($name, $size.suffix) = {opcode = $opcode, funct3 = $rm, fmt = $size.fmt}
     assembly AsId($name, $size.suffix) = (AsStr($name, ".", $size.suffix), " ", register(rd), ",", register(rs1), ",", register(rs2), ",", FrmName($rm))
   }
 
@@ -306,19 +306,19 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
   $FStypeInstr (FSW ; $FSize32 ; 0b010)
 
   $FRtypeInstrBiArith (FADD  ; $FSize32 ; VADL::fadd  ; 0b0'0000 ; Frm::rne)
-  //$FRtypeInstrBiArith (FSUB  ; $FSize32 ; VADL::fsub  ; 0b0'0001 ; Frm::rne)
-  //$FRtypeInstrBiArith (FMUL  ; $FSize32 ; VADL::fmul  ; 0b0'0010 ; Frm::rne)
-  //$FRtypeInstrBiArith (FDIV  ; $FSize32 ; VADL::fdiv  ; 0b0'0011 ; Frm::rne)
+  $FRtypeInstrBiArith (FSUB  ; $FSize32 ; VADL::fsub  ; 0b0'0001 ; Frm::rne)
+  $FRtypeInstrBiArith (FMUL  ; $FSize32 ; VADL::fmul  ; 0b0'0010 ; Frm::rne)
+  $FRtypeInstrBiArith (FDIV  ; $FSize32 ; VADL::fdiv  ; 0b0'0011 ; Frm::rne)
 
-  //$FRtypeInstrMinMax  (FMIN  ; $FSize32 ; VADL::fmin  ; 0b0'0101 ; 0b000)
-  //$FRtypeInstrMinMax  (FMAX  ; $FSize32 ; VADL::fmax  ; 0b0'0101 ; 0b001)
+  $FRtypeInstrMinMax  (FMIN  ; $FSize32 ; VADL::fmin  ; 0b0'0101 ; 0b000)
+  $FRtypeInstrMinMax  (FMAX  ; $FSize32 ; VADL::fmax  ; 0b0'0101 ; 0b001)
 
-  //$FRtypeInstrSqrt    (FSQRT ; $FSize32 ; VADL::fsqrt ; 0b0'1011 ; 0b0'0000 ; Frm::rne)
+  $FRtypeInstrSqrt    (FSQRT ; $FSize32 ; VADL::fsqrt ; 0b0'1011 ; 0b0'0000 ; Frm::rne)
 
   //// TODO: specify somehow that lt, le are signaling and eq is a quiet comparison
-  //$FRtypeInstrCmp     (FLE   ; $FSize32 ; VADL::fle   ; 0b1'0100 ; 0b000)
-  //$FRtypeInstrCmp     (FLT   ; $FSize32 ; VADL::flt   ; 0b1'0100 ; 0b001)
-  //$FRtypeInstrCmp     (FEQ   ; $FSize32 ; VADL::feq   ; 0b1'0100 ; 0b010)
+  $FRtypeInstrCmp     (FLE   ; $FSize32 ; VADL::fle   ; 0b1'0100 ; 0b000)
+  $FRtypeInstrCmp     (FLT   ; $FSize32 ; VADL::flt   ; 0b1'0100 ; 0b001)
+  $FRtypeInstrCmp     (FEQ   ; $FSize32 ; VADL::feq   ; 0b1'0100 ; 0b010)
 
   $FRtypeInstrSgn     (FSGNJ  ; $FSize32 ; (         rs2Sgn) ; 0b0'0100 ; 0b000)
   $FRtypeInstrSgn     (FSGNJN ; $FSize32 ; (     1 - rs2Sgn) ; 0b0'0100 ; 0b001)
@@ -337,12 +337,12 @@ instruction set architecture RV64IMF extending RV64IMZicsr = {
   $FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; (SignedId   ; SignedStr)   ; VADL::fcvtfsd ; 0b1'1000 ; 0b0'0010 ; Frm::rne)
   $FRtypeInstrCvtF2X (FCVT ; $FSize32 ; $FSize64 ; (UnsignedId ; UnsignedStr) ; VADL::fcvtfud ; 0b1'1000 ; 0b0'0011 ; Frm::rne)
 
-  //$FR4typeInstr (FMADD  ; $FSize32 ; VADL::fmadd  ; Frm::rne)
-  //$FR4typeInstr (FMSUB  ; $FSize32 ; VADL::fmsub  ; Frm::rne)
-  //$FR4typeInstr (FNMADD ; $FSize32 ; VADL::fnmadd ; Frm::rne)
-  //$FR4typeInstr (FNMSUB ; $FSize32 ; VADL::fnmsub ; Frm::rne)
+  $FR4typeInstr (FMADD  ; $FSize32 ; VADL::fmadd  ; Frm::rne ; 0b100'0011)
+  $FR4typeInstr (FMSUB  ; $FSize32 ; VADL::fmsub  ; Frm::rne ; 0b100'0111)
+  $FR4typeInstr (FNMADD ; $FSize32 ; VADL::fnmadd ; Frm::rne ; 0b100'1111)
+  $FR4typeInstr (FNMSUB ; $FSize32 ; VADL::fnmsub ; Frm::rne ; 0b100'1011)
 
-  //$FRtypeInstrClass (FCLASS ; S ; FP32)
+  $FRtypeInstrClass (FCLASS ; $FSize32)
 
 }
 

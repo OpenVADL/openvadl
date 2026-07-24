@@ -357,7 +357,8 @@ public class AnnotationTable {
         .applyViam((def, annotation, lowering) ->
             ((FloatFormat) def).setCanonicalQNaN(annotation.constant.toViamConstant())).build();
 
-    QuadConsumer<RegisterTensor, FloatFlagAnnotation, Boolean, FloatExceptionFlag> applyViamFloatFlag;
+    QuadConsumer<RegisterTensor, FloatFlagAnnotation, Boolean, FloatExceptionFlag>
+        applyViamFloatFlag;
     applyViamFloatFlag = (reg, annotation, sticky, flag) -> {
       var idx = annotation.index;
       if (reg.hasAnnotation(vadl.viam.annotations.FloatFlagAnnotation.class)) {
@@ -1179,6 +1180,7 @@ class FloatFlagAnnotation extends FormatFieldAnnotation {
     field = (Identifier) definition.values.getFirst();
   }
 
+  @Override
   void typeCheckTarget(TypedNode target) {
     super.typeCheckTarget(target);
     var format = ((FormatType) target.type()).format;

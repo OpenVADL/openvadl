@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
@@ -1258,12 +1259,43 @@ class BuiltInTcgLoweringExecutor {
 
         //// Float Arithmetic ////
 
-        .set(BuiltInTable.FADD, (ctx) -> out(
-            new TcgHelperCall(
-                ctx.dest(), new NodeList<>(ctx.src(0), ctx.src(1)), true,
-                "fadd_" + ctx.floatFormat(0).nameLower()
-            )
-        ))
+        .set(BuiltInTable.FSQRT,  (ctx) -> floatHelperCall(ctx, 1, "fsqrt"))
+        .set(BuiltInTable.FADD,   (ctx) -> floatHelperCall(ctx, 2, "fadd"))
+        .set(BuiltInTable.FSUB,   (ctx) -> floatHelperCall(ctx, 2, "fsub"))
+        .set(BuiltInTable.FMUL,   (ctx) -> floatHelperCall(ctx, 2, "fmul"))
+        .set(BuiltInTable.FDIV,   (ctx) -> floatHelperCall(ctx, 2, "fdiv"))
+        .set(BuiltInTable.FMADD,  (ctx) -> floatHelperCall(ctx, 3, "fmadd"))
+        .set(BuiltInTable.FMSUB,  (ctx) -> floatHelperCall(ctx, 3, "fmsub"))
+        .set(BuiltInTable.FNMADD, (ctx) -> floatHelperCall(ctx, 3, "fnmadd"))
+        .set(BuiltInTable.FNMSUB, (ctx) -> floatHelperCall(ctx, 3, "fnmsub"))
+        .set(BuiltInTable.FMIN,   (ctx) -> floatHelperCall(ctx, 2, "fmin"))
+        .set(BuiltInTable.FMAX,   (ctx) -> floatHelperCall(ctx, 2, "fmax"))
+
+        //// Float Comparison ////
+
+        .set(BuiltInTable.FLT, (ctx) -> floatHelperCall(ctx, 2, "flt"))
+        .set(BuiltInTable.FLE, (ctx) -> floatHelperCall(ctx, 2, "fle"))
+        .set(BuiltInTable.FEQ, (ctx) -> floatHelperCall(ctx, 2, "feq"))
+
+        //// Float to Int Conversion ////
+
+        .set(BuiltInTable.FCVTFSS, (ctx) -> floatHelperCall(ctx, 1, "fcvtfss"))
+        .set(BuiltInTable.FCVTFSD, (ctx) -> floatHelperCall(ctx, 1, "fcvtfsd"))
+        .set(BuiltInTable.FCVTFUS, (ctx) -> floatHelperCall(ctx, 1, "fcvtfus"))
+        .set(BuiltInTable.FCVTFUD, (ctx) -> floatHelperCall(ctx, 1, "fcvtfud"))
+        .set(BuiltInTable.FCVTSSF, (ctx) -> floatHelperCall(ctx, 1, "fcvtssf"))
+        .set(BuiltInTable.FCVTSDF, (ctx) -> floatHelperCall(ctx, 1, "fcvtsdf"))
+        .set(BuiltInTable.FCVTUSF, (ctx) -> floatHelperCall(ctx, 1, "fcvtusf"))
+        .set(BuiltInTable.FCVTUDF, (ctx) -> floatHelperCall(ctx, 1, "fcvtudf"))
+
+        //// Float Classification ////
+
+        .set(BuiltInTable.FISINF,    (ctx) -> floatHelperCall(ctx, 1, "fisinf"))
+        .set(BuiltInTable.FISZERO,   (ctx) -> floatHelperCall(ctx, 1, "fiszero"))
+        .set(BuiltInTable.FISNEG,    (ctx) -> floatHelperCall(ctx, 1, "fisneg"))
+        .set(BuiltInTable.FISDENORM, (ctx) -> floatHelperCall(ctx, 1, "fisdenorm"))
+        .set(BuiltInTable.FISSNAN,   (ctx) -> floatHelperCall(ctx, 1, "fissnan"))
+        .set(BuiltInTable.FISQNAN,   (ctx) -> floatHelperCall(ctx, 1, "fisqnan"))
 
         .build();
   }
@@ -1295,6 +1327,21 @@ class BuiltInTcgLoweringExecutor {
    */
   private static BuiltInResult out(TcgNode... nodes) {
     return new BuiltInResult(List.of(nodes));
+  }
+
+  /**
+   * Helper method to create a {@link BuiltInResult} from a helper call for a float built-in.
+   *
+   * @param ctx  The built-in lowering context.
+   * @param argc The number of arguments the float built-in takes.
+   * @return A {@link BuiltInResult} containing the helper call.
+   */
+  private static BuiltInResult floatHelperCall(BuiltInTcgLoweringExecutor.Context ctx, int argc,
+                                               String name) {
+    return out(new TcgHelperCall(
+        ctx.dest(), new NodeList<>(IntStream.range(0, argc).mapToObj(ctx::src).toList()),
+        true, ctx.floatFormat(0).nameLower() + "_" + name
+    ));
   }
 
   /**
