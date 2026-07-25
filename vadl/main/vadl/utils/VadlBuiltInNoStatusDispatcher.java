@@ -141,6 +141,10 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleFLE(input);
     } else if (builtIn == BuiltInTable.FEQ) {
       handleFEQ(input);
+    } else if (builtIn == BuiltInTable.FCVTFF) {
+      handleFCVTFF(input);
+    } else if (builtIn == BuiltInTable.FCVTFF2) {
+      handleFCVTFF2(input);
     } else if (builtIn == BuiltInTable.FCVTFSS) {
       handleFCVTFSS(input);
     } else if (builtIn == BuiltInTable.FCVTFSD) {
@@ -157,6 +161,14 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleFCVTUSF(input);
     } else if (builtIn == BuiltInTable.FCVTUDF) {
       handleFCVTUDF(input);
+    } else if (builtIn == BuiltInTable.FCVTSSF2) {
+      handleFCVTSSF2(input);
+    } else if (builtIn == BuiltInTable.FCVTSDF2) {
+      handleFCVTSDF2(input);
+    } else if (builtIn == BuiltInTable.FCVTUSF2) {
+      handleFCVTUSF2(input);
+    } else if (builtIn == BuiltInTable.FCVTUDF2) {
+      handleFCVTUDF2(input);
     } else if (builtIn == BuiltInTable.FISINF) {
       handleFISINF(input);
     } else if (builtIn == BuiltInTable.FISZERO) {
@@ -289,6 +301,10 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
 
   void handleFEQ(T input);
 
+  void handleFCVTFF(T input);
+
+  void handleFCVTFF2(T input);
+
   void handleFCVTFSS(T input);
 
   void handleFCVTFSD(T input);
@@ -304,6 +320,14 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
   void handleFCVTUSF(T input);
 
   void handleFCVTUDF(T input);
+
+  void handleFCVTSSF2(T input);
+
+  void handleFCVTSDF2(T input);
+
+  void handleFCVTUSF2(T input);
+
+  void handleFCVTUDF2(T input);
 
   void handleFISINF(T input);
 

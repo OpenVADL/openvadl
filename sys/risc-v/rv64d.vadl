@@ -1,10 +1,10 @@
 
-import rv64fd::{RV64IFD}
+import rv64fd::{RV64IFD} with ("ExtensionFD=D")
 
-instruction set architecture RV64IF extending RV64IFD = {}
+instruction set architecture RV64ID extending RV64IFD = {}
 
 [ htif ]
-processor Spike implements RV64IF = {
+processor Spike implements RV64ID = {
     constant reset_vec_addr = 0x1000
 
     reset = {

@@ -104,8 +104,8 @@ void set_float_status_fe_flags(CPU[(${gen_arch_upper})]State *env, float_status 
 #define FLOAT_HELPER_3(S, FMT, NAME, QEMU_FUN, FLAGS) \
   uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                  \
                                    uint##S##_t rs1, uint##S##_t rs2, uint##S##_t rs3) {  \
-    return f64_fn_3_with_fe_flags(env, float##S##_##QEMU_FUN, FLAGS,                     \
-                                   &env->fp_status_##FMT, rs1, rs2, rs3);                \
+    return f64_fn_3_with_fe_flags(env, float##S##_##QEMU_FUN,                            \
+                                   &env->fp_status_##FMT, FLAGS, rs1, rs2, rs3);         \
   }
 
 #define FLOAT_HELPER_F2I(S, FMT, INT_FMT, NAME) \
@@ -120,6 +120,13 @@ void set_float_status_fe_flags(CPU[(${gen_arch_upper})]State *env, float_status 
                                    INT_FMT##_t rs1) {                    \
     return f64_fn_1_with_fe_flags(env, INT_FMT##_to_##float##S,          \
                                    &env->fp_status_##FMT, rs1);          \
+  }
+
+#define FLOAT_HELPER_F2F(S, S2, FMT, FMT2, NAME) \
+  uint##S2##_t helper_##FMT##_##FMT2##_##NAME(CPU[(${gen_arch_upper})]State *env,  \
+                                   uint##S##_t rs1) {                              \
+    return f64_fn_1_with_fe_flags(env, float##S##_to_##float##S2,                  \
+                                   &env->fp_status_##FMT, rs1);                    \
   }
 
 // TODO: optimize fe flags (maybe prep can be omitted; or flags set to avoid recomputation)
@@ -167,10 +174,23 @@ FLOAT_HELPER_F2I([(${fmt.bit_size})], [(${fmt.name})], uint64, fcvtfsd)
 FLOAT_HELPER_F2I([(${fmt.bit_size})], [(${fmt.name})], uint32, fcvtfus)
 FLOAT_HELPER_F2I([(${fmt.bit_size})], [(${fmt.name})], uint64, fcvtfud)
 
-FLOAT_HELPER_I2F([(${fmt.bit_size})], [(${fmt.name})], uint32, fcvtssf)
-FLOAT_HELPER_I2F([(${fmt.bit_size})], [(${fmt.name})], uint64, fcvtsdf)
-FLOAT_HELPER_I2F([(${fmt.bit_size})], [(${fmt.name})], uint32, fcvtusf)
-FLOAT_HELPER_I2F([(${fmt.bit_size})], [(${fmt.name})], uint64, fcvtudf)
+// FIXME: this is currently very complex and will change
+[# th:if="${fmt.bit_size != 64}"]
+FLOAT_HELPER_I2F(32, [(${fmt.name})], uint32, fcvtssf)
+FLOAT_HELPER_I2F(32, [(${fmt.name})], uint64, fcvtsdf)
+FLOAT_HELPER_I2F(32, [(${fmt.name})], uint32, fcvtusf)
+FLOAT_HELPER_I2F(32, [(${fmt.name})], uint64, fcvtudf)
+[/]
+[# th:if="${fmt.bit_size != 32}"]
+FLOAT_HELPER_I2F(64, [(${fmt.name})], uint32, fcvtssf2)
+FLOAT_HELPER_I2F(64, [(${fmt.name})], uint64, fcvtsdf2)
+FLOAT_HELPER_I2F(64, [(${fmt.name})], uint32, fcvtusf2)
+FLOAT_HELPER_I2F(64, [(${fmt.name})], uint64, fcvtudf2)
+[/]
+[# th:each="fmt2 : ${float_formats}"][# th:if="${fmt.name != fmt2.name}"]
+[# th:if="${fmt.bit_size != 32}"]FLOAT_HELPER_F2F([(${fmt.bit_size})], 32, [(${fmt.name})], [(${fmt2.name})], fcvtff)[/]
+[# th:if="${fmt.bit_size != 64}"]FLOAT_HELPER_F2F([(${fmt.bit_size})], 64, [(${fmt.name})], [(${fmt2.name})], fcvtff2)[/]
+[/][/]
 
 FLOAT_HELPER_CLASS([(${fmt.bit_size})], [(${fmt.name})], fisinf, is_infinity)
 FLOAT_HELPER_CLASS([(${fmt.bit_size})], [(${fmt.name})], fiszero, is_zero)

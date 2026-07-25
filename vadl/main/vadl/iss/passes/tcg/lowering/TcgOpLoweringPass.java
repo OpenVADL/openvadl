@@ -1279,14 +1279,20 @@ class BuiltInTcgLoweringExecutor {
 
         //// Float to Int Conversion ////
 
-        .set(BuiltInTable.FCVTFSS, (ctx) -> floatHelperCall(ctx, 1, "fcvtfss"))
-        .set(BuiltInTable.FCVTFSD, (ctx) -> floatHelperCall(ctx, 1, "fcvtfsd"))
-        .set(BuiltInTable.FCVTFUS, (ctx) -> floatHelperCall(ctx, 1, "fcvtfus"))
-        .set(BuiltInTable.FCVTFUD, (ctx) -> floatHelperCall(ctx, 1, "fcvtfud"))
-        .set(BuiltInTable.FCVTSSF, (ctx) -> floatHelperCall(ctx, 1, "fcvtssf"))
-        .set(BuiltInTable.FCVTSDF, (ctx) -> floatHelperCall(ctx, 1, "fcvtsdf"))
-        .set(BuiltInTable.FCVTUSF, (ctx) -> floatHelperCall(ctx, 1, "fcvtusf"))
-        .set(BuiltInTable.FCVTUDF, (ctx) -> floatHelperCall(ctx, 1, "fcvtudf"))
+        .set(BuiltInTable.FCVTFF,   (ctx) -> floatHelperCall(ctx, 1, "fcvtff"))
+        .set(BuiltInTable.FCVTFF2,  (ctx) -> floatHelperCall(ctx, 1, "fcvtff2"))
+        .set(BuiltInTable.FCVTFSS,  (ctx) -> floatHelperCall(ctx, 1, "fcvtfss"))
+        .set(BuiltInTable.FCVTFSD,  (ctx) -> floatHelperCall(ctx, 1, "fcvtfsd"))
+        .set(BuiltInTable.FCVTFUS,  (ctx) -> floatHelperCall(ctx, 1, "fcvtfus"))
+        .set(BuiltInTable.FCVTFUD,  (ctx) -> floatHelperCall(ctx, 1, "fcvtfud"))
+        .set(BuiltInTable.FCVTSSF,  (ctx) -> floatHelperCall(ctx, 1, "fcvtssf"))
+        .set(BuiltInTable.FCVTSDF,  (ctx) -> floatHelperCall(ctx, 1, "fcvtsdf"))
+        .set(BuiltInTable.FCVTUSF,  (ctx) -> floatHelperCall(ctx, 1, "fcvtusf"))
+        .set(BuiltInTable.FCVTUDF,  (ctx) -> floatHelperCall(ctx, 1, "fcvtudf"))
+        .set(BuiltInTable.FCVTSSF2, (ctx) -> floatHelperCall(ctx, 1, "fcvtssf2"))
+        .set(BuiltInTable.FCVTSDF2, (ctx) -> floatHelperCall(ctx, 1, "fcvtsdf2"))
+        .set(BuiltInTable.FCVTUSF2, (ctx) -> floatHelperCall(ctx, 1, "fcvtusf2"))
+        .set(BuiltInTable.FCVTUDF2, (ctx) -> floatHelperCall(ctx, 1, "fcvtudf2"))
 
         //// Float Classification ////
 
@@ -1339,8 +1345,9 @@ class BuiltInTcgLoweringExecutor {
   private static BuiltInResult floatHelperCall(BuiltInTcgLoweringExecutor.Context ctx, int argc,
                                                String name) {
     return out(new TcgHelperCall(
-        ctx.dest(), new NodeList<>(IntStream.range(0, argc).mapToObj(ctx::src).toList()),
-        true, ctx.floatFormat(0).nameLower() + "_" + name
+        ctx.dest(), new NodeList<>(IntStream.range(0, argc).mapToObj(ctx::src).toList()), true,
+        ctx.floatFormats().stream().map(FloatFormat::nameLower).collect(Collectors.joining("_"))
+            + "_" + name
     ));
   }
 
@@ -1375,17 +1382,14 @@ class BuiltInTcgLoweringExecutor {
     }
 
     /**
-     * Retrieves the float format of a float built-in call with the given index.
+     * Retrieves the float formats of a float built-in call.
      *
-     * @param index The index of the float format.
-     * @return The float format.
+     * @return A list of the float formats.
      */
-    private FloatFormat floatFormat(int index) {
+    private List<FloatFormat> floatFormats() {
       call.ensure(call instanceof FloatBuiltInCall, "Call is not float built-in");
       var floatCall = (FloatBuiltInCall) call;
-      floatCall.ensure(floatCall.formats().size() > index,
-          "Tried to access float format %s", index);
-      return floatCall.formats().get(index);
+      return floatCall.formats();
     }
 
     /**

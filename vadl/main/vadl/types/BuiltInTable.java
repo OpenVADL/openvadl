@@ -1209,6 +1209,34 @@ public class BuiltInTable {
           .returns(Type.bool())
           .build();
 
+  ///// FLOAT TO FLOAT CONVERSION //////
+
+  // FIXME: here the same problem as with int-to-float built-ins
+
+  /**
+   * Float conversion from float of type t to float of type u.
+   * {@code function fcvtff( t : FloatType, u : FloatType, a : Bits<N>, rm : Bits<3> )
+   * -> Bits<32> }
+   */
+  public static final BuiltIn FCVTFF =
+      func("VADL::fcvtff",
+          Type.relation(List.of(BitsType.class, BitsType.class), 2, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(32))
+          .build();
+
+  /**
+   * Float conversion from float of type t to float of type u.
+   * {@code function fcvtff2( t : FloatType, u : FloatType, a : Bits<N>, rm : Bits<3> )
+   * -> Bits<64> }
+   */
+  public static final BuiltIn FCVTFF2 =
+      func("VADL::fcvtff2",
+          Type.relation(List.of(BitsType.class, BitsType.class), 2, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(64))
+          .build();
+
   ///// FLOAT TO INT CONVERSION //////
 
   /**
@@ -1261,6 +1289,7 @@ public class BuiltInTable {
   //        float type is? For now, its hardcoded at 32 bits, but it should actually be determined
   //        by the passed float-type. Idea: can the type-checker handle this special case?
   //        We could use type parameters...
+  //        -> for now the following 4 built-ins use hard-coded return-sizes
 
   /**
    * Float conversion from signed single to float.
@@ -1304,6 +1333,50 @@ public class BuiltInTable {
           Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
           .takesFrm(1)
           .returns(bits(32))
+          .build();
+
+  /**
+   * Float conversion from signed single to float.
+   * {@code function fcvtssf2( t : FloatType, a : SInt<32>, rm : Bits<3> ) -> Bits<64> }
+   */
+  public static final BuiltIn FCVTSSF2 =
+      func("VADL::fcvtssf2",
+          Type.relation(List.of(SIntType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(64))
+          .build();
+
+  /**
+   * Float conversion from signed double to float.
+   * {@code function fcvtsdf2( t : FloatType, a : SInt<64>, rm : Bits<3> ) -> Bits<64> }
+   */
+  public static final BuiltIn FCVTSDF2 =
+      func("VADL::fcvtsdf2",
+          Type.relation(List.of(SIntType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(64))
+          .build();
+
+  /**
+   * Float conversion from unsigned single to float.
+   * {@code function fcvtusf2( t : FloatType, a : UInt<32>, rm : Bits<3> ) -> Bits<64> }
+   */
+  public static final BuiltIn FCVTUSF2 =
+      func("VADL::fcvtusf2",
+          Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(64))
+          .build();
+
+  /**
+   * Float conversion from unsigned double to float.
+   * {@code function fcvtudf2( t : FloatType, a : UInt<64>, rm : Bits<3> ) -> Bits<64> }
+   */
+  public static final BuiltIn FCVTUDF2 =
+      func("VADL::fcvtudf2",
+          Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
+          .takesFrm(1)
+          .returns(bits(64))
           .build();
 
   ///// FLOAT CLASSIFICATION //////
@@ -1760,6 +1833,8 @@ public class BuiltInTable {
   );
 
   public static final List<BuiltIn> FLOAT_CONVERSION_BUILT_INS = List.of(
+      FCVTFF,
+      FCVTFF2,
       FCVTFSS,
       FCVTFSD,
       FCVTFUS,
@@ -1767,7 +1842,11 @@ public class BuiltInTable {
       FCVTSSF,
       FCVTSDF,
       FCVTUSF,
-      FCVTUDF
+      FCVTUDF,
+      FCVTSSF2,
+      FCVTSDF2,
+      FCVTUSF2,
+      FCVTUDF2
   );
 
   public static final List<BuiltIn> FLOAT_CLASSIFICATION_BUILT_INS = List.of(

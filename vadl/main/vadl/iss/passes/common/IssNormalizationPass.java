@@ -881,6 +881,16 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Override
+  public void handleFCVTFF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTFF2(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
   public void handleFCVTFSS(BuiltInCall input) {
     // do nothing (float ops are done by helper function, which handle everything)
   }
@@ -917,6 +927,26 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleFCVTUDF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTSSF2(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTSDF2(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTUSF2(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTUDF2(BuiltInCall input) {
     // do nothing (float ops are done by helper function, which handle everything)
   }
 
