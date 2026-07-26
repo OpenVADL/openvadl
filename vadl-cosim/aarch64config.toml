@@ -40,7 +40,7 @@ ignore_registers = [ "pc", "x0" ]
 name = "VADL"
 
 # The executable of the ISS
-exec = "qemu-system-a64"
+exec = "custom-qemu-system-a64"
 
 # The path to the compiled file to use for testing
 # This file will be passed to all clients
@@ -82,7 +82,7 @@ name = "UPSTREAM"
 
 endian = "little"
 
-exec = "qemu-system-aarch64"
+exec = "custom-qemu-system-aarch64"
 
 test_exec="./test-execs/embench/edn"
 
@@ -237,7 +237,7 @@ with_memory_checks = true
 mode = "lockstep" 
 
 # Execute all remaining instructions (overrides `stop_after_n_instructions` if set to true)
-execute_all_remaining_instructions = false
+execute_all_remaining_instructions = true
 
 # Execute the next (after skipped) n instructions
 stop_after_n_instructions = 10000
