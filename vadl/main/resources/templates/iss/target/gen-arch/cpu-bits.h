@@ -7,7 +7,7 @@ typedef enum [(${gen_arch_upper})]Exception {
   [# th:each="exc, iterState : ${exc_info.exceptions}"]
   [[${exc.enum_name}]],
   [/]
-  [(${gen_arch_upper})]_EXCP_SYSCALL = 0xFFFF,
+  [(${gen_arch_upper})]_EXCP_SYSCALL = 0x10000,
 } [(${gen_arch_upper})]Exception;
 
 #endif //[(${gen_arch_upper})]_CPU_BITS_H

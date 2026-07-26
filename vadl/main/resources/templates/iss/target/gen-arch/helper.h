@@ -6,6 +6,8 @@ DEF_HELPER_1(unsupported, noreturn, env)
 [(${exc.helper_def})]
 [/]
 
+DEF_HELPER_1(raise_syscall, void, env)
+
 // helper definitions for instructions
 [# th:each="instr : ${instr_helper_defs}"]
 [(${instr})]

@@ -78,7 +78,7 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     TaskState *ts = get_task_state(cpu);
     struct image_info *info = ts->info;
 
-    env->[(${pc_info.accessor})] = regs->[(${pc_info.accessor})];
+    env->[(${pc_info.accessor})] = regs->sepc;
     env->[(${config.spRegFile})][ [(${config.spReg})] ] = regs->[(${config.spRegName})];
 
     ts->stack_base = info->start_stack;
