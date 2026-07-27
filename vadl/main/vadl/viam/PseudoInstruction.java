@@ -72,8 +72,6 @@ public class PseudoInstruction extends CompilerInstruction implements PrintableI
   @Override
   @Nullable
   public Either<Format.Field, Format.FieldAccess> getFieldOrAccess(String operandName) {
-
-    // First get field or fieldAccess which operand is assigned to
     var pair = this.behavior().getNodes(InstrCallNode.class)
         .flatMap(InstrCallNode::getZippedArgumentsWithParameters).filter(p -> {
           var arg = p.right();

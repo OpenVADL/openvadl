@@ -771,73 +771,8 @@ public class AsmGrammarRuleGenerationPass extends Pass {
         ConstantAsmType.instance());
 
     var constantAlternatives = new ArrayList<AsmAlternative>();
-
-    // Add alternative per instruction variant, predicated with check on parsed Integer value
-    for (int i = 0; i < tripleOfKind.size(); i++) {
-      var generatedElems = tripleOfKind.get(i).right().getElements();
-
-      var instructionRuleElements = new ArrayList<AsmGrammarElement>();
-
-      // At index 0: mnemonic = mnemonic_function<>
-      instructionRuleElements.add(generatedElems.getFirst());
-
-      // Add already parsed operands
-      var attributeElements = generatedElems.stream().filter(
-              e -> e instanceof HasAssignTo hat && hat.assignToElement() != null
-                  && !requireNonNull(hat.assignToElement()).getAssignToName().equals("mnemonic"))
-          .map(e -> (HasAssignTo) e).toList();
-
-      var localVarUsesForInstruction = new ArrayList<AsmGrammarElement>();
-      for (int j = 0; j < localVarUsages.size(); j++) {
-        var instructionAssignTo = attributeElements.get(j).assignToElement();
-        localVarUsesForInstruction.add(
-            localVarUsages.get(j).copyAndOverwriteAssignTo(requireNonNull(instructionAssignTo)));
-      }
-      instructionRuleElements.addAll(localVarUsesForInstruction);
-
-      // Get elem from index to assign to concrete instruction attribute
-      var immediateElem = generatedElems.get(immediatePositionInRule);
-      var attributeName =
-          requireNonNull(((HasAssignTo) immediateElem).assignToElement()).getAssignToName();
-      var constantLocalVarUse =
-          new AsmLocalVarUse(new AsmAssignToAttribute(attributeName, false),
-              mergingConstantLocalVar,
-              ConstantAsmType.instance(), OperandAsmType.instance());
-
-      instructionRuleElements.add(constantLocalVarUse);
-      instructionRuleElements.addAll(
-          generatedElems.subList(immediatePositionInRule + 1, generatedElems.size()));
-
-      // Last alternative with longest instruction is the default case (not guarded by predicate)
-      Function semPred = null;
-      if (i != tripleOfKind.size() - 1) {
-        semPred =
-            buildMergingSemanticPredicate(tripleOfKind.get(i).left(), tripleOfKind.get(i).middle(),
-                attributeName);
-      }
-
-      // Get tokens from the next elem in the AsmSyntax
-      var generatedElements = tripleOfKind.get(i).right().elements;
-      Set<AsmToken> nextTokens = Set.of(new AsmToken("EOL", null));
-      if (generatedElements.size() > immediatePositionInRule + 1) {
-        nextTokens = generatedElements.get(immediatePositionInRule + 1).right();
-      }
-
-      var instructionAlternative =
-          AsmGrammarRuleGenerator.createInstructionAlternative(null, instructionRuleElements,
-              nextTokens);
-
-      var castToInstruction = new AsmGroup(
-          new AsmAssignToAttribute("inst", false),
-          new AsmAlternatives(List.of(instructionAlternative), instructionAlternative.asmType()),
-          false,
-          InstructionAsmType.instance()
-      );
-
-      constantAlternatives.add(
-          new AsmAlternative(semPred, nextTokens, InstructionAsmType.instance(), false,
-              List.of(castToInstruction)));
-    }
+    buildAlternativePerInstructionVariant(tripleOfKind, localVarUsages, immediatePositionInRule,
+        constantAlternatives);
 
     var constantAlternativesElement =
         new AsmAlternatives(constantAlternatives, InstructionAsmType.instance());
@@ -849,6 +784,94 @@ public class AsmGrammarRuleGenerationPass extends Pass {
 
     var outerAlternativeList = List.of(labelAlternative, outerConstantAlternative);
     return new AsmAlternatives(outerAlternativeList, InstructionAsmType.instance());
+  }
+
+  /**
+   * Add alternative per instruction variant, predicated with check on parsed Integer value.
+   */
+  private void buildAlternativePerInstructionVariant(
+      List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> tripleOfKind,
+      List<AsmLocalVarUse> localVarUsages, int immediatePositionInRule,
+      List<AsmAlternative> constantAlternatives) {
+    for (int i = 0; i < tripleOfKind.size(); i++) {
+      var generatedElems = tripleOfKind.get(i).right().getElements();
+
+      var instructionRuleElements = new ArrayList<AsmGrammarElement>();
+
+      addElementsBeforeImmediate(localVarUsages, instructionRuleElements, generatedElems);
+
+      // Get elem from index to assign to immediate attribute of current instruction variant
+      var immediateElem = generatedElems.get(immediatePositionInRule);
+      var attributeName =
+          requireNonNull(((HasAssignTo) immediateElem).assignToElement()).getAssignToName();
+      var constantLocalVarUse =
+          new AsmLocalVarUse(new AsmAssignToAttribute(attributeName, false),
+              mergingConstantLocalVar,
+              ConstantAsmType.instance(), OperandAsmType.instance());
+
+      instructionRuleElements.add(constantLocalVarUse);
+
+      // Add remaining elements after immediate
+      instructionRuleElements.addAll(
+          generatedElems.subList(immediatePositionInRule + 1, generatedElems.size()));
+
+      // Last alternative with longest instruction is the default case (not guarded by predicate)
+      Function semPred = null;
+      if (i != tripleOfKind.size() - 1) {
+        semPred =
+            buildMergingSemanticPredicate(tripleOfKind.get(i).left(), tripleOfKind.get(i).middle(),
+                attributeName);
+      }
+
+      // Get tokens from the next elem in the AsmSyntax to guide parser with nextTokens
+      var generatedElementTokenPairs = tripleOfKind.get(i).right().elements;
+      Set<AsmToken> nextTokens = Set.of(new AsmToken("EOL", null));
+      if (generatedElems.size() > immediatePositionInRule + 1) {
+        nextTokens = generatedElementTokenPairs.get(immediatePositionInRule + 1).right();
+      }
+
+      wrapAlternativeInGroup(constantAlternatives, instructionRuleElements, nextTokens, semPred);
+    }
+  }
+
+  private static void addElementsBeforeImmediate(List<AsmLocalVarUse> localVarUsages,
+                                                 List<AsmGrammarElement> instructionRuleElements,
+                                                 List<AsmGrammarElement> generatedElems) {
+    // At index 0: mnemonic = mnemonic_function<>
+    instructionRuleElements.add(generatedElems.getFirst());
+
+    // Add already parsed operands
+    var attributeElements = generatedElems.stream().filter(
+            e -> e instanceof HasAssignTo hat && hat.assignToElement() != null
+                && !requireNonNull(hat.assignToElement()).getAssignToName().equals("mnemonic"))
+        .map(e -> (HasAssignTo) e).toList();
+
+    var localVarUsesForInstruction = new ArrayList<AsmGrammarElement>();
+    for (int j = 0; j < localVarUsages.size(); j++) {
+      var instructionAssignTo = attributeElements.get(j).assignToElement();
+      localVarUsesForInstruction.add(
+          localVarUsages.get(j).copyAndOverwriteAssignTo(requireNonNull(instructionAssignTo)));
+    }
+    instructionRuleElements.addAll(localVarUsesForInstruction);
+  }
+
+  private static void wrapAlternativeInGroup(List<AsmAlternative> constantAlternatives,
+                                             List<AsmGrammarElement> instructionRuleElements,
+                                             Set<AsmToken> nextTokens, @Nullable Function pred) {
+    var instructionAlternative =
+        AsmGrammarRuleGenerator.createInstructionAlternative(null, instructionRuleElements,
+            nextTokens);
+
+    var castToInstruction = new AsmGroup(
+        new AsmAssignToAttribute("inst", false),
+        new AsmAlternatives(List.of(instructionAlternative), instructionAlternative.asmType()),
+        false,
+        InstructionAsmType.instance()
+    );
+
+    constantAlternatives.add(
+        new AsmAlternative(pred, nextTokens, InstructionAsmType.instance(), false,
+            List.of(castToInstruction)));
   }
 
   @Nullable
@@ -868,7 +891,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     String localVarAccess = mergingConstantLocalVar + ".value().Value";
 
     if (fieldOrAccess.isLeft()) {
-      // operand assigned to field
+      // Operand assigned to field
       var field = fieldOrAccess.left();
       var fieldAccess = getFieldAccessFromField(inst, tableGenInstruction, field);
 
@@ -902,7 +925,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
       semPredCondition +=
           immOperand.immediateOperand().rawDecoderMethod().lower() + "(" + localVarAccess + "))";
     } else {
-      // operand assigned to fieldAccess
+      // Operand assigned to fieldAccess
       var immOperand = getImmOperand(tableGenInstruction, fieldOrAccess.right());
       semPredCondition +=
           immOperand.immediateOperand().predicateMethod().lower() + "(" + localVarAccess + ")";
