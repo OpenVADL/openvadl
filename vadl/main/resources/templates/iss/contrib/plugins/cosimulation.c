@@ -34,7 +34,10 @@
 #include <time.h>
 #include <unistd.h>
 
+
 QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
+
+// TODO(perf): generate the defines in the iis generator to properly match the sizes
 
 // adjust as needed
 // NOTE: try to keep these values as small as possible to minimize memory usage
@@ -83,6 +86,7 @@ static qemu_plugin_id_t plugin_id;
     }                                                                          \
   } while (0)
 
+
 typedef struct {
   struct qemu_plugin_register *handle;
   const char *name;
@@ -97,6 +101,8 @@ typedef struct {
   size_t len;
   char value[SHMSTRING_MAX_LEN];
 } SHMString;
+
+// TODO(perf): try SOA representation
 
 typedef struct {
   int size;
@@ -231,6 +237,7 @@ static GPtrArray *registers_init(int vcpu_index) {
     reg->handle = rd->handle;
     reg->feature = rd->feature;
     reg->name = rd->name;
+
     g_ptr_array_add(registers, (gpointer)reg);
   }
 
@@ -242,7 +249,12 @@ static GPtrArray *registers_init(int vcpu_index) {
   return registers;
 }
 
+static GByteArray *buf;
 static void get_cpu_state(unsigned int cpu_index, SHMCPU *cpu) {
+  if (buf == NULL) {
+    buf = g_byte_array_sized_new(MAX_REGISTER_DATA_SIZE);
+  }
+
   CPU *c = get_cpu(cpu_index);
 
   cpu->idx = cpu_index;
@@ -253,9 +265,18 @@ static void get_cpu_state(unsigned int cpu_index, SHMCPU *cpu) {
   for (int reg_idx = 0; reg_idx < c->registers->len; reg_idx++) {
     Register *reg = c->registers->pdata[reg_idx];
     SHMRegister *shm_reg = &cpu->registers[reg_idx];
-    GByteArray *buf = g_byte_array_new();
+
+    // NOTE(perf): 
+    //  This is a bit of a hack to make the `GByteArray *buf` use the pre-allocated shm_reg data buffer.
+    //  This way, there is
+    //    a) no need to reallocate a GByteArray more than once
+    //    b) no need to copy the bytes read from the QEMU API to the shm_reg buffer
+    //  both leading to a bit of a performance boost.
+    buf->data = &shm_reg->data[0];
+    buf->len = 0;
 
     shm_reg->size = qemu_plugin_read_register(reg->handle, buf);
+
     PLUGIN_ASSERT(shm_reg->size != -1,
                   "failed to read size of register at idx: %d", reg_idx);
 
@@ -263,12 +284,6 @@ static void get_cpu_state(unsigned int cpu_index, SHMCPU *cpu) {
       strncpy(shm_reg->name.value, reg->name, SHMSTRING_MAX_LEN - 1);
       shm_reg->name.len = strlen(shm_reg->name.value);
     }
-
-    if (buf->data != NULL) {
-      memcpy(shm_reg->data, buf->data, shm_reg->size);
-    }
-
-    g_byte_array_unref(buf);
   }
 };
 
@@ -404,8 +419,6 @@ static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
   shm->shm_insn.insn_info = *tbinsn_info;
 
   commit_shm_write();
-
-  // ringbuf_write(shm);
 
   // TODO: we cannot free here because the same callback might be used multiple
   // times when a tb gets reused g_free(tbinsn_info);
