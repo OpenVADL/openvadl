@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
@@ -112,7 +113,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.DynSliceNode;
-import vadl.viam.graph.dependency.FloatBuiltInCall;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -1279,20 +1279,11 @@ class BuiltInTcgLoweringExecutor {
 
         //// Float to Int Conversion ////
 
-        .set(BuiltInTable.FCVTFF,   (ctx) -> floatHelperCall(ctx, 1, "fcvtff"))
-        .set(BuiltInTable.FCVTFF2,  (ctx) -> floatHelperCall(ctx, 1, "fcvtff2"))
-        .set(BuiltInTable.FCVTFSS,  (ctx) -> floatHelperCall(ctx, 1, "fcvtfss"))
-        .set(BuiltInTable.FCVTFSD,  (ctx) -> floatHelperCall(ctx, 1, "fcvtfsd"))
-        .set(BuiltInTable.FCVTFUS,  (ctx) -> floatHelperCall(ctx, 1, "fcvtfus"))
-        .set(BuiltInTable.FCVTFUD,  (ctx) -> floatHelperCall(ctx, 1, "fcvtfud"))
-        .set(BuiltInTable.FCVTSSF,  (ctx) -> floatHelperCall(ctx, 1, "fcvtssf"))
-        .set(BuiltInTable.FCVTSDF,  (ctx) -> floatHelperCall(ctx, 1, "fcvtsdf"))
-        .set(BuiltInTable.FCVTUSF,  (ctx) -> floatHelperCall(ctx, 1, "fcvtusf"))
-        .set(BuiltInTable.FCVTUDF,  (ctx) -> floatHelperCall(ctx, 1, "fcvtudf"))
-        .set(BuiltInTable.FCVTSSF2, (ctx) -> floatHelperCall(ctx, 1, "fcvtssf2"))
-        .set(BuiltInTable.FCVTSDF2, (ctx) -> floatHelperCall(ctx, 1, "fcvtsdf2"))
-        .set(BuiltInTable.FCVTUSF2, (ctx) -> floatHelperCall(ctx, 1, "fcvtusf2"))
-        .set(BuiltInTable.FCVTUDF2, (ctx) -> floatHelperCall(ctx, 1, "fcvtudf2"))
+        .set(BuiltInTable.FCVT,   (ctx) -> floatHelperCall(ctx, 1, "fcvt"))
+        .set(BuiltInTable.FCVTFS, (ctx) -> floatHelperCall(ctx, 1, "fcvtfs"))
+        .set(BuiltInTable.FCVTFU, (ctx) -> floatHelperCall(ctx, 1, "fcvtfu"))
+        .set(BuiltInTable.FCVTSF, (ctx) -> floatHelperCall(ctx, 1, "fcvtsf"))
+        .set(BuiltInTable.FCVTUF, (ctx) -> floatHelperCall(ctx, 1, "fcvtuf"))
 
         //// Float Classification ////
 
@@ -1346,8 +1337,10 @@ class BuiltInTcgLoweringExecutor {
                                                String name) {
     return out(new TcgHelperCall(
         ctx.dest(), new NodeList<>(IntStream.range(0, argc).mapToObj(ctx::src).toList()), true,
-        ctx.floatFormats().stream().map(FloatFormat::nameLower).collect(Collectors.joining("_"))
-            + "_" + name
+        Stream.concat(
+            ctx.floatFormats().stream().map(FloatFormat::nameLower),
+            ctx.constIntArgs().stream().map(Object::toString)
+        ).collect(Collectors.joining("_")) + "_" + name
     ));
   }
 
@@ -1387,9 +1380,23 @@ class BuiltInTcgLoweringExecutor {
      * @return A list of the float formats.
      */
     private List<FloatFormat> floatFormats() {
-      call.ensure(call instanceof FloatBuiltInCall, "Call is not float built-in");
-      var floatCall = (FloatBuiltInCall) call;
-      return floatCall.formats();
+      return call.constArgs().stream()
+          .filter(Constant.FloatType.class::isInstance)
+          .map(c -> requireNonNull((Constant.FloatType) c).format())
+          .toList();
+    }
+
+    /**
+     * Retrieves the constant arguments that are integers. I.e. all {@link Constant.Value}
+     * passed via the angle brackets `VADL::builtin<...>()`.
+     *
+     * @return A list of the constant integer arguments.
+     */
+    private List<Integer> constIntArgs() {
+      return call.constArgs().stream()
+          .filter(Constant.Value.class::isInstance)
+          .map(c -> requireNonNull((Constant.Value) c).intValue())
+          .toList();
     }
 
     /**

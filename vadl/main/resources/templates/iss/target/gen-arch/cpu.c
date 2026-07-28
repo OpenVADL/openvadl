@@ -103,10 +103,6 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
     [# th:each="access : ${base_clear_cpu_accessors}"]
     [(${access.name})](env);[/]
 
-    // TODO: this disables nan-propagation. but this should be specified per-instruction
-    [# th:each="fmt : ${float_formats}"]
-    set_default_nan_mode(1, &env->fp_status_[(${fmt.name})]);[/]
-
 [(${reset})]
 }
 

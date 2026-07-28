@@ -1800,16 +1800,23 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   // Symbol expressions of form "a::b<3>".
   // Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   // Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)
+  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; boolean multipleTerms = false; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.ID))
     identifierPath<out IsId path>
     [
       IF (la.kind == _SYM_LT)
       SYM_LT                                                 (. var lessLoc = lastTokenLoc(); .)
-      term<out Expr term, BIN_OPS>
+      term<out Expr term, BIN_OPS>                           (. var values = new ArrayList<Expr>(); values.add(term); .)
+      // problem: here is ambiguity. E.g.:
+      // id(id<id, id>, id)
+      //      ^^^^ is this "id < id" and then "," or is it "id<id,id>" and then ","?
+      {
+        SYM_COMMA
+        term<out Expr nextTerm, BIN_OPS>                     (. values.add(nextTerm); multipleTerms = true; .)
+      }
       [
-        IF (!allowLtOp || la.kind == _SYM_GT)
-        SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(lastTokenLoc())); .)
+        IF (!allowLtOp || multipleTerms || la.kind == _SYM_GT)
+        SYM_GT                                               (. expr = new SymbolExpr(path, values, path.location().join(lastTokenLoc())); .)
       ]                                                      (. if (expr.equals(DUMMY_EXPR)) expr = new BinaryExpr((Expr) path, new BinOp(Operator.Less, lessLoc), term); .)
     ]                                                        (. if (expr.equals(DUMMY_EXPR)) expr = (Expr) path; .)
   | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)

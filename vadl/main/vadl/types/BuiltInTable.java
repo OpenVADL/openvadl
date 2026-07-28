@@ -16,6 +16,7 @@
 
 package vadl.types;
 
+import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 import static vadl.types.Type.bits;
 import static vadl.types.Type.constructDataType;
@@ -1044,23 +1045,27 @@ public class BuiltInTable {
   ///// FLOAT ARITHMETIC //////
 
   /**
-   * {@code function fsqrt( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   * {@code function fsqrt< t : FloatType >( a : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size> }
    */
   public static final BuiltIn FSQRT =
       func("VADL::fsqrt",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returnsFirstBitWidth(BitsType.class)
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(1)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fadd( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   * {@code function fadd< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<t.size> }
    */
   public static final BuiltIn FADD =
       func("VADL::fadd",
-          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstTwoWithSameBitWidthsAndFrm(2)
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(2)
           .returnsFirstBitWidth(BitsType.class)
+          .returnsFirstFloatType()
           .build();
 
   // TODO: I think we want a status variant for float built-ins, similar to other built-ins.
@@ -1069,375 +1074,294 @@ public class BuiltInTable {
   //       possible. So we'd need to store them in a reg or an env variable and load them later.
   //       But we have to make sure that other float ops are not scheduled in between!
   /**
-   * {@code function fadds( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) ->
-   *   ( Bits<N>, FloatStatus ) }
+   * {@code function fadds< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   ( Bits<t.size>, FloatStatus ) }
    */
   public static final BuiltIn FADDS =
-      func("VADL::fadds", Type.relation(
-          List.of(BitsType.class, BitsType.class, BitsType.class), 1, StructType.class))
-          .takesFirstTwoWithSameBitWidthsAndFrm(2)
-          .returnsFirstBitWidthAndFloatStatus()
+      func("VADL::fadds",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), StructType.class))
+          .takesFloatArgsAndFrm(2)
+          // TODO: returns function
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fsub( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   * {@code function fsub< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<t.size> }
    */
   public static final BuiltIn FSUB =
       func("VADL::fsub",
-          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstTwoWithSameBitWidthsAndFrm(2)
-          .returnsFirstBitWidth(BitsType.class)
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(2)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fmul( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   * {@code function fmul< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<t.size> }
    */
   public static final BuiltIn FMUL =
       func("VADL::fmul",
-          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstTwoWithSameBitWidthsAndFrm(2)
-          .returnsFirstBitWidth(BitsType.class)
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(2)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fdiv( t : FloatType, a : Bits<N>, b : Bits<N>, rm : Bits<3> ) -> Bits<N> }
+   * {@code function fdiv< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<t.size> }
    */
   public static final BuiltIn FDIV =
       func("VADL::fdiv",
-          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstTwoWithSameBitWidthsAndFrm(2)
-          .returnsFirstBitWidth(BitsType.class)
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(2)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fmadd( t : FloatType, a : Bits<N>, b : Bits<N>, c : Bits<N>, rm : Bits<3> )
-   * -> Bits<N> }
+   * {@code function fmadd< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>,
+   * rm : Bits<3> ) -> Bits<t.size> }
    */
   public static final BuiltIn FMADD =
       func("VADL::fmadd",
           Type.relation(List.of(
-              BitsType.class, BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstThreeWithSameBitWidthsAndFrm(3)
-          .returnsFirstBitWidth(BitsType.class)
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(3)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fmsub( t : FloatType, a : Bits<N>, b : Bits<N>, c : Bits<N>, rm : Bits<3> )
-   * -> Bits<N> }
+   * {@code function fmsub< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>,
+   * rm : Bits<3> ) -> Bits<t.size> }
    */
   public static final BuiltIn FMSUB =
       func("VADL::fmsub",
           Type.relation(List.of(
-              BitsType.class, BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstThreeWithSameBitWidthsAndFrm(3)
-          .returnsFirstBitWidth(BitsType.class)
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(3)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fnmadd( t : FloatType, a : Bits<N>, b : Bits<N>, c : Bits<N>, rm : Bits<3> )
-   * -> Bits<N> }
+   * {@code function fnmadd< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>,
+   * rm : Bits<3> ) -> Bits<t.size> }
    */
   public static final BuiltIn FNMADD =
       func("VADL::fnmadd",
           Type.relation(List.of(
-              BitsType.class, BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstThreeWithSameBitWidthsAndFrm(3)
-          .returnsFirstBitWidth(BitsType.class)
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(3)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fnmsub( t : FloatType, a : Bits<N>, b : Bits<N>, c : Bits<N>, rm : Bits<3> )
-   * -> Bits<N> }
+   * {@code function fnmsub< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>,
+   * rm : Bits<3> ) -> Bits<t.size> }
    */
   public static final BuiltIn FNMSUB =
       func("VADL::fnmsub",
           Type.relation(List.of(
-              BitsType.class, BitsType.class, BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstThreeWithSameBitWidthsAndFrm(3)
-          .returnsFirstBitWidth(BitsType.class)
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(3)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fmin( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bits<N> }
+   * {@code function fmin< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bits<t.size> }
    */
   public static final BuiltIn FMIN =
       func("VADL::fmin",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstTwoWithSameBitWidths()
-          .returnsFirstBitWidth(BitsType.class)
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgs(2)
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * {@code function fmax( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bits<N> }
+   * {@code function fmax< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bits<t.size> }
    */
   public static final BuiltIn FMAX =
       func("VADL::fmax",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, BitsType.class))
-          .takesFirstTwoWithSameBitWidths()
-          .returnsFirstBitWidth(BitsType.class)
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgs(2)
+          .returnsFirstFloatType()
           .build();
 
   ///// FLOAT COMPARISON //////
 
   /**
-   * {@code function flt( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bool }
+   * {@code function flt< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FLT =
       func("VADL::flt",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, BoolType.class))
-          .takesFirstTwoWithSameBitWidths()
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(2)
           .returns(Type.bool())
           .build();
 
   /**
-   * {@code function fle( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bool }
+   * {@code function fle< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FLE =
       func("VADL::fle",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, BoolType.class))
-          .takesFirstTwoWithSameBitWidths()
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(2)
           .returns(Type.bool())
           .build();
 
   /**
-   * {@code function feq( t : FloatType, a : Bits<N>, b : Bits<N> ) -> Bool }
+   * {@code function feq< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FEQ =
       func("VADL::feq",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, BoolType.class))
-          .takesFirstTwoWithSameBitWidths()
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(2)
           .returns(Type.bool())
           .build();
 
-  ///// FLOAT TO FLOAT CONVERSION //////
+  ///// FLOAT CONVERSION //////
 
-  // FIXME: here the same problem as with int-to-float built-ins
+  // TODO: currently the system allows conversion between all float types. We need to restrict
+  //       that to a set of supported conversions (currently ieee 32->64 and 64->32). Should this
+  //       happen during type-checking or in the backend? Different backends might be at different
+  //       stages of implementation and may not support everything other backends do...
 
   /**
-   * Float conversion from float of type t to float of type u.
-   * {@code function fcvtff( t : FloatType, u : FloatType, a : Bits<N>, rm : Bits<3> )
-   * -> Bits<32> }
+   * Float to float conversion.
+   * {@code function fcvt< t : FloatType, u : FloatType >( a : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<u.type> }
    */
-  public static final BuiltIn FCVTFF =
-      func("VADL::fcvtff",
-          Type.relation(List.of(BitsType.class, BitsType.class), 2, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(32))
+  public static final BuiltIn FCVT =
+      func("VADL::fcvt",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class, FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(1)
+          .returnsSecondFloatType()
+          .build();
+
+  // TODO: Integer results have to be truncated by the IssNormalizationPass
+
+  /**
+   * Float to signed int conversion.
+   * {@code function fcvtfs< t : FloatType, s : UInt >( a : Bits<t.size>, rm : Bits<3> ) ->
+   *   SInt<s> }
+   */
+  public static final BuiltIn FCVTFS =
+      func("VADL::fcvtfs",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class, UIntType.class), SIntType.class))
+          .takesFloatArgsAndFrm(1)
+          .returnsFromSecondConstSize(SIntType.class)
           .build();
 
   /**
-   * Float conversion from float of type t to float of type u.
-   * {@code function fcvtff2( t : FloatType, u : FloatType, a : Bits<N>, rm : Bits<3> )
-   * -> Bits<64> }
+   * Float to unsigned int conversion.
+   * {@code function fcvtfu< t : FloatType, s : UInt >( a : Bits<t.size>, rm : Bits<3> ) ->
+   *   UInt<s> }
    */
-  public static final BuiltIn FCVTFF2 =
-      func("VADL::fcvtff2",
-          Type.relation(List.of(BitsType.class, BitsType.class), 2, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(64))
-          .build();
-
-  ///// FLOAT TO INT CONVERSION //////
-
-  /**
-   * Float conversion from float to signed single.
-   * {@code function fcvtfss( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> SInt<32> }
-   */
-  public static final BuiltIn FCVTFSS =
-      func("VADL::fcvtfss",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, SIntType.class))
-          .takesFrm(1)
-          .returns(signedInt(32))
+  public static final BuiltIn FCVTFU =
+      func("VADL::fcvtfu",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class, UIntType.class), UIntType.class))
+          .takesFloatArgsAndFrm(1)
+          .returnsFromSecondConstSize(UIntType.class)
           .build();
 
   /**
-   * Float conversion from float to signed double.
-   * {@code function fcvtfsd( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> SInt<64> }
+   * Signed int to float conversion.
+   * {@code function fcvtsf< t : FloatType >( a : SInt<N>, rm : Bits<3> ) -> Bits<t.size> }
    */
-  public static final BuiltIn FCVTFSD =
-      func("VADL::fcvtfsd",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, SIntType.class))
+  public static final BuiltIn FCVTSF =
+      func("VADL::fcvtsf",
+          Type.relation(List.of(SIntType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
           .takesFrm(1)
-          .returns(signedInt(64))
+          .returnsFirstFloatType()
           .build();
 
   /**
-   * Float conversion from float to unsigned single.
-   * {@code function fcvtfus( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> UInt<32> }
+   * Unsigned int to float conversion.
+   * {@code function fcvtuf< t : FloatType >( a : UInt<N>, rm : Bits<3> ) -> Bits<t.size> }
    */
-  public static final BuiltIn FCVTFUS =
-      func("VADL::fcvtfus",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, UIntType.class))
+  public static final BuiltIn FCVTUF =
+      func("VADL::fcvtuf",
+          Type.relation(List.of(UIntType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
           .takesFrm(1)
-          .returns(signedInt(32))
-          .build();
-
-  /**
-   * Float conversion from float to unsigned double.
-   * {@code function fcvtfud( t : FloatType, a : Bits<N>, rm : Bits<3> ) -> UInt<64> }
-   */
-  public static final BuiltIn FCVTFUD =
-      func("VADL::fcvtfud",
-          Type.relation(List.of(BitsType.class, BitsType.class), 1, UIntType.class))
-          .takesFrm(1)
-          .returns(signedInt(64))
-          .build();
-
-  ///// INT TO FLOAT CONVERSION //////
-
-  // FIXME: here there is a problem: how does the type system infer how large the returned
-  //        float type is? For now, its hardcoded at 32 bits, but it should actually be determined
-  //        by the passed float-type. Idea: can the type-checker handle this special case?
-  //        We could use type parameters...
-  //        -> for now the following 4 built-ins use hard-coded return-sizes
-
-  /**
-   * Float conversion from signed single to float.
-   * {@code function fcvtssf( t : FloatType, a : SInt<32>, rm : Bits<3> ) -> Bits<32> }
-   */
-  public static final BuiltIn FCVTSSF =
-      func("VADL::fcvtssf",
-          Type.relation(List.of(SIntType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(32))
-          .build();
-
-  /**
-   * Float conversion from signed double to float.
-   * {@code function fcvtsdf( t : FloatType, a : SInt<64>, rm : Bits<3> ) -> Bits<32> }
-   */
-  public static final BuiltIn FCVTSDF =
-      func("VADL::fcvtsdf",
-          Type.relation(List.of(SIntType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(32))
-          .build();
-
-  /**
-   * Float conversion from unsigned single to float.
-   * {@code function fcvtusf( t : FloatType, a : UInt<32>, rm : Bits<3> ) -> Bits<32> }
-   */
-  public static final BuiltIn FCVTUSF =
-      func("VADL::fcvtusf",
-          Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(32))
-          .build();
-
-  /**
-   * Float conversion from unsigned double to float.
-   * {@code function fcvtudf( t : FloatType, a : UInt<64>, rm : Bits<3> ) -> Bits<32> }
-   */
-  public static final BuiltIn FCVTUDF =
-      func("VADL::fcvtudf",
-          Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(32))
-          .build();
-
-  /**
-   * Float conversion from signed single to float.
-   * {@code function fcvtssf2( t : FloatType, a : SInt<32>, rm : Bits<3> ) -> Bits<64> }
-   */
-  public static final BuiltIn FCVTSSF2 =
-      func("VADL::fcvtssf2",
-          Type.relation(List.of(SIntType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(64))
-          .build();
-
-  /**
-   * Float conversion from signed double to float.
-   * {@code function fcvtsdf2( t : FloatType, a : SInt<64>, rm : Bits<3> ) -> Bits<64> }
-   */
-  public static final BuiltIn FCVTSDF2 =
-      func("VADL::fcvtsdf2",
-          Type.relation(List.of(SIntType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(64))
-          .build();
-
-  /**
-   * Float conversion from unsigned single to float.
-   * {@code function fcvtusf2( t : FloatType, a : UInt<32>, rm : Bits<3> ) -> Bits<64> }
-   */
-  public static final BuiltIn FCVTUSF2 =
-      func("VADL::fcvtusf2",
-          Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(64))
-          .build();
-
-  /**
-   * Float conversion from unsigned double to float.
-   * {@code function fcvtudf2( t : FloatType, a : UInt<64>, rm : Bits<3> ) -> Bits<64> }
-   */
-  public static final BuiltIn FCVTUDF2 =
-      func("VADL::fcvtudf2",
-          Type.relation(List.of(UIntType.class, BitsType.class), 1, BitsType.class))
-          .takesFrm(1)
-          .returns(bits(64))
+          .returnsFirstFloatType()
           .build();
 
   ///// FLOAT CLASSIFICATION //////
 
   /**
-   * {@code function fisinf( t : FloatType, a : Bits<N> ) -> Bool }
+   * {@code function fisinf< t : FloatType >( a : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FISINF =
       func("VADL::fisinf",
-          Type.relation(List.of(BitsType.class), 1, BoolType.class))
-          .takesDefault()
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
           .returns(Type.bool())
           .build();
 
   /**
-   * {@code function fiszero( t : FloatType, a : Bits<N> ) -> Bool }
+   * {@code function fiszero< t : FloatType >( a : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FISZERO =
       func("VADL::fiszero",
-          Type.relation(List.of(BitsType.class), 1, BoolType.class))
-          .takesDefault()
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
           .returns(Type.bool())
           .build();
 
   /**
-   * {@code function fisneg( t : FloatType, a : Bits<N> ) -> Bool }
+   * {@code function fisneg< t : FloatType >( a : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FISNEG =
       func("VADL::fisneg",
-          Type.relation(List.of(BitsType.class), 1, BoolType.class))
-          .takesDefault()
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
           .returns(Type.bool())
           .build();
 
   /**
-   * {@code function fisdenorm( t : FloatType, a : Bits<N> ) -> Bool }
+   * {@code function fisdenorm< t : FloatType >( a : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FISDENORM =
       func("VADL::fisdenorm",
-          Type.relation(List.of(BitsType.class), 1, BoolType.class))
-          .takesDefault()
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
           .returns(Type.bool())
           .build();
 
   /**
-   * {@code function fissnan( t : FloatType, a : Bits<N> ) -> Bool }
+   * {@code function fissnan< t : FloatType >( a : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FISSNAN =
       func("VADL::fissnan",
-          Type.relation(List.of(BitsType.class), 1, BoolType.class))
-          .takesDefault()
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
           .returns(Type.bool())
           .build();
 
   /**
-   * {@code function fisqnan( t : FloatType, a : Bits<N> ) -> Bool }
+   * {@code function fisqnan< t : FloatType >( a : Bits<t.size> ) -> Bool }
    */
   public static final BuiltIn FISQNAN =
       func("VADL::fisqnan",
-          Type.relation(List.of(BitsType.class), 1, BoolType.class))
-          .takesDefault()
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
           .returns(Type.bool())
           .build();
 
@@ -1592,7 +1516,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn LA_ID_IN =
       func("LaIdIn", null,
-          Type.relation(List.of(UIntType.class, StringType.class), true, 0, BoolType.class))
+          Type.relation(List.of(UIntType.class, StringType.class), true, BoolType.class))
           .takesDefault()
           .noCompute()
           .returns(Type.bool())
@@ -1606,7 +1530,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn LA_KIND_IN =
       func("LaKindIn", null,
-          Type.relation(List.of(UIntType.class, StringType.class), true, 0, BoolType.class))
+          Type.relation(List.of(UIntType.class, StringType.class), true, BoolType.class))
           .takesDefault()
           .noCompute()
           .returns(Type.bool())
@@ -1833,20 +1757,11 @@ public class BuiltInTable {
   );
 
   public static final List<BuiltIn> FLOAT_CONVERSION_BUILT_INS = List.of(
-      FCVTFF,
-      FCVTFF2,
-      FCVTFSS,
-      FCVTFSD,
-      FCVTFUS,
-      FCVTFUD,
-      FCVTSSF,
-      FCVTSDF,
-      FCVTUSF,
-      FCVTUDF,
-      FCVTSSF2,
-      FCVTSDF2,
-      FCVTUSF2,
-      FCVTUDF2
+      FCVT,
+      FCVTFS,
+      FCVTFU,
+      FCVTSF,
+      FCVTUF
   );
 
   public static final List<BuiltIn> FLOAT_CLASSIFICATION_BUILT_INS = List.of(
@@ -2039,7 +1954,7 @@ public class BuiltInTable {
       return hasSameBitWidth;
     }
 
-    public Optional<Constant> compute(List<Constant> args) {
+    public Optional<Constant> compute(List<Constant> constArgs, List<Constant> args) {
       logger.atWarn().log("Computation of constants for built-in {} is not implemented", this);
       return Optional.empty();
     }
@@ -2057,10 +1972,11 @@ public class BuiltInTable {
      * in the built-in definition, and if not, if it is possible to produce a type of the
      * parameter type class that can be trivially cast from the argument type.
      *
-     * @param argTypes of the concrete arguments
+     * @param constArgs the concrete constant arguments
+     * @param argTypes  of the concrete arguments
      * @return true if argument types are correct, false otherwise
      */
-    public boolean takes(List<Type> argTypes) {
+    public boolean takes(List<Constant> constArgs, List<Type> argTypes) {
 
       if (this.signature().hasVarArgs()) {
         if (argTypes.size() < argTypeClasses().size()) {
@@ -2086,7 +2002,13 @@ public class BuiltInTable {
         return false;
       }
 
-      return argsCompatible(argTypes, argTypeClasses());
+      if (constArgTypeClasses().size() != constArgs.size()) {
+        // if the number of constant arguments is not correct, this can't be true
+        return false;
+      }
+
+      return argsCompatible(argTypes, argTypeClasses())
+          && argsCompatible(constArgs.stream().map(Constant::type).toList(), constArgTypeClasses());
     }
 
     private boolean argsCompatible(List<Type> argTypes,
@@ -2124,14 +2046,28 @@ public class BuiltInTable {
     }
 
     /**
+     * Returns the result type of the built-in when called with the given argument types and
+     * constant arguments.
+     * It assumes that the argument types are valid, such as a call to
+     * {@link #takes(List, List)} would return true.
+     *
+     * @param constArgs concrete constant arguments.
+     * @param argTypes  concrete types of argument for call.
+     * @return the concrete type that is return by this built-in
+     */
+    public abstract Type returns(List<Constant> constArgs, List<Type> argTypes);
+
+    /**
      * Returns the result type of the built-in when called with the given argument types.
      * It assumes that the argument types are valid, such as a call to
-     * {@link #takes(List)} would return true.
+     * {@link #takes(List, List)} would return true.
      *
      * @param argTypes concrete types of argument for call.
      * @return the concrete type that is return by this built-in
      */
-    public abstract Type returns(List<Type> argTypes);
+    public Type returns(List<Type> argTypes) {
+      return returns(List.of(), argTypes);
+    }
 
 
     public final boolean matches(RelationType type) {
@@ -2141,6 +2077,10 @@ public class BuiltInTable {
     @Override
     public String toString() {
       return name + signature;
+    }
+
+    public List<Class<? extends Type>> constArgTypeClasses() {
+      return signature.constArgTypeClass();
     }
 
     public List<Class<? extends Type>> argTypeClasses() {
@@ -2203,11 +2143,11 @@ public class BuiltInTable {
     private RelationType signature;
     private BuiltIn.Kind kind;
     @Nullable
-    private Function<List<Constant>, Optional<Constant>> computeFunction;
+    private BiFunction<List<Constant>, List<Constant>, Optional<Constant>> computeFunction;
     @Nullable
-    private Function<List<Type>, Boolean> takesFunction;
+    private BiFunction<List<Constant>, List<Type>, Boolean> takesFunction;
     @Nullable
-    private Function<List<Type>, Type> returnsFunction;
+    private BiFunction<List<Constant>, List<Type>, Type> returnsFunction;
     private boolean hasSameBitWidth = false;
 
     BuiltInBuilder(String name, @Nullable String operator, RelationType signature,
@@ -2220,52 +2160,74 @@ public class BuiltInTable {
 
     public <T extends Constant, R extends Constant> BuiltInBuilder computeUnary(
         Function<T, R> computeFunction) {
-      this.computeFunction =
-          (args) -> Optional.of(computeFunction.apply((T) args.get(0)));
+      this.computeFunction = (constArgs, args) ->
+          Optional.of(computeFunction.apply((T) args.get(0)));
       return this;
     }
 
     public <T extends Constant, R extends Constant> BuiltInBuilder compute(
         Function<List<T>, R> computeFunction) {
-      this.computeFunction =
-          (args) -> Optional.of(computeFunction.apply(args.stream().map(a -> (T) a).toList()));
+      this.computeFunction = (constArgs, args) ->
+          Optional.of(computeFunction.apply(args.stream().map(a -> (T) a).toList()));
       return this;
     }
 
     public <A extends Constant, B extends Constant, R extends Constant> BuiltInBuilder compute(
         BiFunction<A, B, R> computeFunction) {
-      this.computeFunction =
-          (args) -> Optional.of(computeFunction.apply((A) args.get(0), (B) args.get(1)));
+      this.computeFunction = (constArgs, args) ->
+          Optional.of(computeFunction.apply((A) args.get(0), (B) args.get(1)));
       return this;
     }
 
     @SuppressWarnings("LineLength")
     public <A extends Constant, B extends Constant, C extends Constant, R extends Constant> BuiltInBuilder compute(
         TriFunction<A, B, C, R> computeFunction) {
-      this.computeFunction =
-          (args) -> Optional.of(
-              computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2)));
+      this.computeFunction = (constArgs, args) ->
+          Optional.of(computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2)));
       return this;
     }
 
     public BuiltInBuilder noCompute() {
-      this.computeFunction = (args) -> Optional.empty();
+      this.computeFunction = (constArgs, args) -> Optional.empty();
+      return this;
+    }
+
+    public BuiltInBuilder takesData(
+        BiFunction<List<Constant>, List<DataType>, Boolean> takesFunction) {
+      this.takesFunction = (constArgs, args) -> args.stream().allMatch(DataType.class::isInstance)
+          && takesFunction.apply(constArgs, args.stream().map(DataType.class::cast).toList());
       return this;
     }
 
     public BuiltInBuilder takesData(Function<List<DataType>, Boolean> takesFunction) {
-      this.takesFunction = (args) -> args.stream().allMatch(DataType.class::isInstance)
-          && takesFunction.apply(args.stream().map(DataType.class::cast).toList());
-      return this;
+      return takesData((constArgs, args) -> takesFunction.apply(args));
+    }
+
+    public BuiltInBuilder takesDataFromFirstFloatSize(
+        BiFunction<Integer, List<DataType>, Boolean> takesFunction) {
+      return takesData((constArgs, args) -> {
+        ensure(!constArgs.isEmpty(), "Expected at least one constant argument, but found none.");
+        return takesFunction.apply(floatTypeSize(constArgs.get(0)), args);
+      });
+    }
+
+    public BuiltInBuilder takesDataFromFirstTwoFloatSizes(
+        TriFunction<Integer, Integer, List<DataType>, Boolean> takesFunction) {
+      return takesData((constArgs, args) -> {
+        ensure(constArgs.size() >= 2, "Expected at least two constant argument, but found %d.",
+            constArgs.size());
+        return takesFunction.apply(
+            floatTypeSize(constArgs.get(0)), floatTypeSize(constArgs.get(1)), args);
+      });
     }
 
     /**
-     * This will use the default implementation of {@link BuiltIn#takes(List)}.
+     * This will use the default implementation of {@link BuiltIn#takes(List, List)}.
      * So it will compare type classes and checks if an argument is trivially cast
      * to a parameter's type class.
      */
     public BuiltInBuilder takesDefault() {
-      this.takesFunction = (args) -> true;
+      this.takesFunction = (constArgs, args) -> true;
       return this;
     }
 
@@ -2283,30 +2245,19 @@ public class BuiltInTable {
       return this;
     }
 
-    public BuiltInBuilder takesFrm(int roundingModeArgIdx) {
-      takesData((args) -> args.size() > roundingModeArgIdx
-          && args.get(roundingModeArgIdx).bitWidth() == 3
-      );
-      return this;
+    public BuiltInBuilder takesFloatArgs(int floatArgCount) {
+      return takesDataFromFirstFloatSize((size, args) -> args.size() == floatArgCount
+          && args.stream().limit(floatArgCount).allMatch(a -> a.bitWidth() == size));
     }
 
-    public BuiltInBuilder takesFirstTwoWithSameBitWidthsAndFrm(int roundingModeArgIdx) {
-      takesData((args) -> args.size() > roundingModeArgIdx
-          && args.get(0).bitWidth() == args.get(1).bitWidth()
-          && args.get(roundingModeArgIdx).bitWidth() == 3
-      );
-      this.hasSameBitWidth = true;
-      return this;
+    public BuiltInBuilder takesFloatArgsAndFrm(int floatArgCount) {
+      return takesDataFromFirstFloatSize((size, args) -> args.size() == floatArgCount + 1
+          && args.stream().limit(floatArgCount).allMatch(a -> a.bitWidth() == size)
+          && args.get(floatArgCount).bitWidth() == 3);
     }
 
-    public BuiltInBuilder takesFirstThreeWithSameBitWidthsAndFrm(int roundingModeArgIdx) {
-      takesData((args) -> args.size() > roundingModeArgIdx
-          && args.get(0).bitWidth() == args.get(1).bitWidth()
-          && args.get(0).bitWidth() == args.get(2).bitWidth()
-          && args.get(roundingModeArgIdx).bitWidth() == 3
-      );
-      this.hasSameBitWidth = true;
-      return this;
+    public BuiltInBuilder takesFrm(int frmArgIdx) {
+      return takesData(args -> args.size() == frmArgIdx + 1 && args.get(frmArgIdx).bitWidth() == 3);
     }
 
     public BuiltInBuilder returns(Type returnType) {
@@ -2315,6 +2266,11 @@ public class BuiltInTable {
     }
 
     public BuiltInBuilder returns(Function<List<Type>, Type> returnsFunction) {
+      returns((constArgs, args) -> returnsFunction.apply(args));
+      return this;
+    }
+
+    public BuiltInBuilder returns(BiFunction<List<Constant>, List<Type>, Type> returnsFunction) {
       this.returnsFunction = returnsFunction;
       return this;
     }
@@ -2323,32 +2279,28 @@ public class BuiltInTable {
       returnsFromFirstAsDataType(
           (firstDataType) -> {
             var result = constructDataType(returnTypeClass, firstDataType.bitWidth());
-            Objects.requireNonNull(result);
+            requireNonNull(result);
             return result;
           });
       return this;
+    }
+
+    public BuiltInBuilder returnsFirstFloatType() {
+      return returnsFromFirstFloatSize(BitsType::bits);
+    }
+
+    public BuiltInBuilder returnsSecondFloatType() {
+      return returnsFromFirstTwoFloatSizes((s0, s1) -> BitsType.bits(s1));
     }
 
     public <T extends DataType> BuiltInBuilder returnsFirstBitWidthAndStatus(
         Class<T> returnTypeClass) {
       returnsFromFirstAsDataType((firstDataType) -> {
         var valType = constructDataType(returnTypeClass, firstDataType.bitWidth());
-        Objects.requireNonNull(valType);
+        requireNonNull(valType);
         return Type.struct(
             BUILTIN_RESULT, valType,
             BUILTIN_STATUS, Type.status()
-        );
-      });
-      return this;
-    }
-
-    public BuiltInBuilder returnsFirstBitWidthAndFloatStatus() {
-      returnsFromFirstAsDataType((firstDataType) -> {
-        var valType = constructDataType(BitsType.class, firstDataType.bitWidth());
-        Objects.requireNonNull(valType);
-        return Type.struct(
-            BUILTIN_RESULT, valType,
-            BUILTIN_STATUS, Type.floatStatus()
         );
       });
       return this;
@@ -2374,6 +2326,42 @@ public class BuiltInTable {
       return this;
     }
 
+    public <T extends DataType> BuiltInBuilder returnsFromSecondConstSize(
+        Class<T> returnTypeClass) {
+      return returns((constArgs, args) -> {
+        ensure(constArgs.size() >= 2, "Expected at least two constant argument, but found %d.",
+            constArgs.size());
+        return requireNonNull(constructDataType(returnTypeClass, constInt(constArgs.get(1))));
+      });
+    }
+
+    public BuiltInBuilder returnsFromFirstFloatSize(Function<Integer, Type> returnFunction) {
+      return returns((constArgs, args) -> {
+        ensure(!constArgs.isEmpty(), "Expected at least one constant argument, but found none.");
+        return returnFunction.apply(floatTypeSize(constArgs.get(0)));
+      });
+    }
+
+    public BuiltInBuilder returnsFromFirstTwoFloatSizes(
+        BiFunction<Integer, Integer, Type> returnFunction) {
+      return returns((constArgs, args) -> {
+        ensure(constArgs.size() >= 2, "Expected at least two constant argument, but found %d.",
+            constArgs.size());
+        return returnFunction.apply(
+            floatTypeSize(constArgs.get(0)), floatTypeSize(constArgs.get(1)));
+      });
+    }
+
+    private int floatTypeSize(Constant arg) {
+      ensure(arg instanceof Constant.FloatType, "Expected a float type, but found %s", arg);
+      return ((Constant.FloatType) arg).size();
+    }
+
+    private int constInt(Constant arg) {
+      ensure(arg instanceof Constant.Value, "Expected a value type, but found %s", arg);
+      return ((Constant.Value) arg).intValue();
+    }
+
 
     public BuiltIn build() {
 
@@ -2389,39 +2377,37 @@ public class BuiltInTable {
 
       return new BuiltIn(name, operator, signature, kind, hasSameBitWidth) {
         @Override
-        public Optional<Constant> compute(List<Constant> args) {
+        public Optional<Constant> compute(List<Constant> constArgs, List<Constant> args) {
           if (computeFunction == null) {
-            return super.compute(args);
+            return super.compute(constArgs, args);
           }
 
-          var argTypes = args.stream()
-              .map(Constant::type)
-              .toList();
-          if (!takes(argTypes)) {
+          var argTypes = args.stream().map(Constant::type).toList();
+          if (!takes(constArgs, argTypes)) {
             throw new ViamError("Types of arguments does not match type signature of " + signature)
                 .addContext("built-in", this)
-                .addContext("constants", List.of(args));
+                .addContext("constants", List.of(constArgs, args));
           }
-          return computeFunction.apply(args)
+          return computeFunction.apply(constArgs, args)
               .map(result -> result instanceof Constant.Value value
-                  ? value.trivialCastTo(returns(argTypes))
+                  ? value.trivialCastTo(returns(constArgs, argTypes))
                   : result);
         }
 
         @Override
-        public boolean takes(List<Type> argTypes) {
+        public boolean takes(List<Constant> constArgs, List<Type> argTypes) {
           // always check general case first
-          var generalConstraintsValid = super.takes(argTypes);
+          var generalConstraintsValid = super.takes(constArgs, argTypes);
           if (generalConstraintsValid) {
             // if general case doesn't fail, then test specific constraints
-            return takesFunction.apply(argTypes);
+            return takesFunction.apply(constArgs, argTypes);
           }
           return false;
         }
 
         @Override
-        public Type returns(List<Type> argTypes) {
-          return returnsFunction.apply(argTypes);
+        public Type returns(List<Constant> constArgs, List<Type> argTypes) {
+          return returnsFunction.apply(constArgs, argTypes);
         }
       };
     }

@@ -16,6 +16,7 @@
 
 package vadl.ast.nodes;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import vadl.utils.WithLocation;
 
@@ -24,7 +25,7 @@ public sealed interface IsCallExpr extends WithLocation permits CallIndexExpr, I
   public IsId path();
 
   @Nullable
-  public Expr size();
+  public List<Expr> symbolArgs();
 
   public void prettyPrint(int indent, StringBuilder builder);
 }

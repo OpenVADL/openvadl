@@ -523,7 +523,12 @@ class MacroExpander
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    return new SymbolExpr(expandExpr(expr.path), expandExpr(expr.size), copyLoc(expr.location));
+    var symbolArgs = new ArrayList<Expr>(expr.symbolArgs.size());
+    for (var i = 0; i < expr.symbolArgs.size(); i++) {
+      var symbolArg = expr.symbolArgs.get(i);
+      symbolArgs.add(expandExpr(symbolArg));
+    }
+    return new SymbolExpr(expandExpr(expr.path), symbolArgs, copyLoc(expr.location));
   }
 
   @Override

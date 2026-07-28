@@ -49,8 +49,8 @@ public final class TypeLiteral extends Expr {
 
   public TypeLiteral(IsSymExpr symExpr) {
     this.baseType = symExpr.path();
-    var size = symExpr.size();
-    this.sizeIndices = size == null ? List.of() : List.of(size);
+    var symbolArgs = symExpr.symbolArgs();
+    this.sizeIndices = symbolArgs == null ? List.of() : List.of(symbolArgs.getFirst());
     this.loc = symExpr.location();
   }
 

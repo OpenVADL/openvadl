@@ -45,6 +45,8 @@ void prep_float_status_fe_flags(CPU[(${gen_arch_upper})]State *env, float_status
   [# th:each="reg : ${register_tensors}"][# th:each="flag : ${reg.sticky_fe_flags}"]
   flags &= ~((1 - ((env->[(${reg.name_lower})] >> [(${flag.idx})]) & 1)) << [(${flag.flag_idx})]);[/][/]
   set_float_exception_flags(flags, s);
+  // TODO: this disables nan-propagation. this will be configurable via the vadl spec at some point
+  set_default_nan_mode(1, s);
 }
 
 void set_float_status_fe_flags(CPU[(${gen_arch_upper})]State *env, float_status *s) {
@@ -57,145 +59,93 @@ void set_float_status_fe_flags(CPU[(${gen_arch_upper})]State *env, float_status 
   env->[(${reg.name_lower})] &= ~((1 - (flags >> [(${flag.flag_idx})] & 1)) << [(${flag.idx})]);[/][/]
 }
 
-#define FLOAT_FN_IEEE_FE_HELPER(S) \
-  typedef uint##S##_t (*f##S##_fn_1)(uint##S##_t rs1, float_status *s);                     \
-  typedef uint##S##_t (*f##S##_fn_2)(uint##S##_t rs1, uint##S##_t rs2, float_status *s);    \
-  typedef uint##S##_t (*f##S##_fn_3)(uint##S##_t rs1, uint##S##_t rs2, uint##S##_t rs3,     \
-                                     int flags, float_status *s);                           \
-  uint##S##_t f##S##_fn_1_with_fe_flags(CPU[(${gen_arch_upper})]State *env,                 \
-                                      f##S##_fn_1 fn, float_status *s,                      \
-                                      uint##S##_t rs1) {                                    \
-    prep_float_status_fe_flags(env, s);                                                     \
-    uint##S##_t result = fn(rs1, s);                                                        \
-    set_float_status_fe_flags(env, s);                                                      \
-    return result;                                                                          \
-  }                                                                                         \
-  uint##S##_t f##S##_fn_2_with_fe_flags(CPU[(${gen_arch_upper})]State *env,                 \
-                                      f##S##_fn_2 fn, float_status *s,                      \
-                                      uint##S##_t rs1, uint##S##_t rs2) {                   \
-    prep_float_status_fe_flags(env, s);                                                     \
-    uint##S##_t result = fn(rs1, rs2, s);                                                   \
-    set_float_status_fe_flags(env, s);                                                      \
-    return result;                                                                          \
-  }                                                                                         \
-  uint##S##_t f##S##_fn_3_with_fe_flags(CPU[(${gen_arch_upper})]State *env,                 \
-                                      f##S##_fn_3 fn, float_status *s, int flags,           \
-                                      uint##S##_t rs1, uint##S##_t rs2, uint##S##_t rs3) {  \
-    prep_float_status_fe_flags(env, s);                                                     \
-    uint##S##_t result = fn(rs1, rs2, rs3, flags, s);                                       \
-    set_float_status_fe_flags(env, s);                                                      \
-    return result;                                                                          \
-  }
+#define FLOAT_HELPER_BODY(RET_TY, CALL, FMT) \
+  float_status *s = &env->fp_status_##FMT;                                                  \
+  prep_float_status_fe_flags(env, s);                                                       \
+  RET_TY result = CALL;                                                                     \
+  set_float_status_fe_flags(env, s);                                                        \
+  return result;
 
 #define FLOAT_HELPER_1(S, FMT, NAME, QEMU_FUN) \
-  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,  \
-                                   uint##S##_t rs1) {                    \
-    return f64_fn_1_with_fe_flags(env, float##S##_##QEMU_FUN,            \
-                                   &env->fp_status_##FMT, rs1);          \
+  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                     \
+                                   uint##S##_t rs1) {                                       \
+    FLOAT_HELPER_BODY(uint##S##_t, float##S##_##QEMU_FUN(rs1, s), FMT)                      \
   }
 
 #define FLOAT_HELPER_2(S, FMT, NAME, QEMU_FUN) \
-  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,  \
-                                   uint##S##_t rs1, uint##S##_t rs2) {   \
-    return f64_fn_2_with_fe_flags(env, float##S##_##QEMU_FUN,            \
-                                   &env->fp_status_##FMT, rs1, rs2);     \
+  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                     \
+                                   uint##S##_t rs1, uint##S##_t rs2) {                      \
+    FLOAT_HELPER_BODY(uint##S##_t, float##S##_##QEMU_FUN(rs1, rs2, s), FMT)                 \
   }
 
 #define FLOAT_HELPER_3(S, FMT, NAME, QEMU_FUN, FLAGS) \
-  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                  \
-                                   uint##S##_t rs1, uint##S##_t rs2, uint##S##_t rs3) {  \
-    return f64_fn_3_with_fe_flags(env, float##S##_##QEMU_FUN,                            \
-                                   &env->fp_status_##FMT, FLAGS, rs1, rs2, rs3);         \
+  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                     \
+                                   uint##S##_t rs1, uint##S##_t rs2, uint##S##_t rs3) {     \
+    FLOAT_HELPER_BODY(uint##S##_t, float##S##_##QEMU_FUN(rs1, rs2, rs3, FLAGS, s), FMT)     \
   }
 
-#define FLOAT_HELPER_F2I(S, FMT, INT_FMT, NAME) \
-  INT_FMT##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,  \
-                                   uint##S##_t rs1) {                    \
-    return f64_fn_1_with_fe_flags(env, float##S##_to_##INT_FMT,          \
-                                   &env->fp_status_##FMT, rs1);          \
+#define FLOAT_HELPER_F2I(S, FMT, INT_S, INT_FMT, NAME) \
+  uint##INT_S##_t helper_##FMT##_##INT_S##_##NAME(CPU[(${gen_arch_upper})]State *env,       \
+                                   uint##S##_t rs1) {                                       \
+    FLOAT_HELPER_BODY(uint##INT_S##_t, float##S##_to_##INT_FMT(rs1, s), FMT)                \
   }
 
-#define FLOAT_HELPER_I2F(S, FMT, INT_FMT, NAME) \
-  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,  \
-                                   INT_FMT##_t rs1) {                    \
-    return f64_fn_1_with_fe_flags(env, INT_FMT##_to_##float##S,          \
-                                   &env->fp_status_##FMT, rs1);          \
+#define FLOAT_HELPER_I2F(S, FMT, INT_S, INT_FMT, NAME) \
+  uint##S##_t helper_##FMT##_##INT_S##_##NAME(CPU[(${gen_arch_upper})]State *env,           \
+                                   uint##INT_S##_t rs1) {                                   \
+    FLOAT_HELPER_BODY(uint##S##_t, INT_FMT##_to_##float##S(rs1, s), FMT)                    \
   }
 
-#define FLOAT_HELPER_F2F(S, S2, FMT, FMT2, NAME) \
-  uint##S2##_t helper_##FMT##_##FMT2##_##NAME(CPU[(${gen_arch_upper})]State *env,  \
-                                   uint##S##_t rs1) {                              \
-    return f64_fn_1_with_fe_flags(env, float##S##_to_##float##S2,                  \
-                                   &env->fp_status_##FMT, rs1);                    \
+#define FLOAT_HELPER_F2F(S, FMT, S2, FMT2, NAME) \
+  uint##S2##_t helper_##FMT##_##FMT2##_##NAME(CPU[(${gen_arch_upper})]State *env,           \
+                                   uint##S##_t rs1) {                                       \
+    FLOAT_HELPER_BODY(uint##S2##_t, float##S##_to_##float##S2(rs1, s), FMT)                 \
   }
 
 // TODO: optimize fe flags (maybe prep can be omitted; or flags set to avoid recomputation)
 #define FLOAT_HELPER_CMP(S, FMT, NAME, QEMU_FUN) \
-  uint64_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,     \
-                                   uint##S##_t rs1, uint##S##_t rs2) {   \
-    return f64_fn_2_with_fe_flags(env, float##S##_##QEMU_FUN,            \
-                                   &env->fp_status_##FMT, rs1, rs2);     \
+  uint64_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                        \
+                                   uint##S##_t rs1, uint##S##_t rs2) {                      \
+    FLOAT_HELPER_BODY(bool, float##S##_##QEMU_FUN(rs1, rs2, s), FMT)                        \
+  }
+
+#define FLOAT_HELPER_CLASSS(S, FMT, NAME, QEMU_FUN) \
+  uint64_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                        \
+                                   uint##S##_t rs1) {                                       \
+    FLOAT_HELPER_BODY(bool, float##S##_##QEMU_FUN(rs1, s), FMT)                             \
   }
 
 #define FLOAT_HELPER_CLASS(S, FMT, NAME, QEMU_FUN) \
-  uint64_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,     \
-                                   uint##S##_t rs1) {                    \
-    return f64_fn_1_with_fe_flags(env, float##S##_##QEMU_FUN,            \
-                                   &env->fp_status_##FMT, rs1);          \
+  uint64_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                        \
+                                   uint##S##_t rs1) {                                       \
+    FLOAT_HELPER_BODY(bool, float##S##_##QEMU_FUN(rs1), FMT)                                \
   }
 
-// just use uint64_t for everything for now to keep things simple
-// the actual helper call signatures do contain the right sizes (and all unsigned)
-FLOAT_FN_IEEE_FE_HELPER(64)
-
-[# th:each="fmt : ${float_formats}"]
-FLOAT_HELPER_1([(${fmt.bit_size})], [(${fmt.name})], fsqrt, sqrt)
-
-FLOAT_HELPER_2([(${fmt.bit_size})], [(${fmt.name})], fadd, add)
-FLOAT_HELPER_2([(${fmt.bit_size})], [(${fmt.name})], fsub, sub)
-FLOAT_HELPER_2([(${fmt.bit_size})], [(${fmt.name})], fmul, mul)
-FLOAT_HELPER_2([(${fmt.bit_size})], [(${fmt.name})], fdiv, div)
-
-FLOAT_HELPER_3([(${fmt.bit_size})], [(${fmt.name})], fmadd, muladd, 0)
-FLOAT_HELPER_3([(${fmt.bit_size})], [(${fmt.name})], fmsub, muladd, float_muladd_negate_c)
-FLOAT_HELPER_3([(${fmt.bit_size})], [(${fmt.name})], fnmadd, muladd, float_muladd_negate_c | float_muladd_negate_product)
-FLOAT_HELPER_3([(${fmt.bit_size})], [(${fmt.name})], fnmsub, muladd, float_muladd_negate_product)
-
-FLOAT_HELPER_2([(${fmt.bit_size})], [(${fmt.name})], fmin, minimum_number)
-FLOAT_HELPER_2([(${fmt.bit_size})], [(${fmt.name})], fmax, maximum_number)
-
 // TODO: risc-v specifies eq as quiet. other ISAs might want to configure this
-FLOAT_HELPER_CMP([(${fmt.bit_size})], [(${fmt.name})], flt, lt)
-FLOAT_HELPER_CMP([(${fmt.bit_size})], [(${fmt.name})], fle, le)
-FLOAT_HELPER_CMP([(${fmt.bit_size})], [(${fmt.name})], feq, eq_quiet)
 
-FLOAT_HELPER_F2I([(${fmt.bit_size})], [(${fmt.name})], uint32, fcvtfss)
-FLOAT_HELPER_F2I([(${fmt.bit_size})], [(${fmt.name})], uint64, fcvtfsd)
-FLOAT_HELPER_F2I([(${fmt.bit_size})], [(${fmt.name})], uint32, fcvtfus)
-FLOAT_HELPER_F2I([(${fmt.bit_size})], [(${fmt.name})], uint64, fcvtfud)
-
-// FIXME: this is currently very complex and will change
-[# th:if="${fmt.bit_size != 64}"]
-FLOAT_HELPER_I2F(32, [(${fmt.name})], uint32, fcvtssf)
-FLOAT_HELPER_I2F(32, [(${fmt.name})], uint64, fcvtsdf)
-FLOAT_HELPER_I2F(32, [(${fmt.name})], uint32, fcvtusf)
-FLOAT_HELPER_I2F(32, [(${fmt.name})], uint64, fcvtudf)
-[/]
-[# th:if="${fmt.bit_size != 32}"]
-FLOAT_HELPER_I2F(64, [(${fmt.name})], uint32, fcvtssf2)
-FLOAT_HELPER_I2F(64, [(${fmt.name})], uint64, fcvtsdf2)
-FLOAT_HELPER_I2F(64, [(${fmt.name})], uint32, fcvtusf2)
-FLOAT_HELPER_I2F(64, [(${fmt.name})], uint64, fcvtudf2)
-[/]
-[# th:each="fmt2 : ${float_formats}"][# th:if="${fmt.name != fmt2.name}"]
-[# th:if="${fmt.bit_size != 32}"]FLOAT_HELPER_F2F([(${fmt.bit_size})], 32, [(${fmt.name})], [(${fmt2.name})], fcvtff)[/]
-[# th:if="${fmt.bit_size != 64}"]FLOAT_HELPER_F2F([(${fmt.bit_size})], 64, [(${fmt.name})], [(${fmt2.name})], fcvtff2)[/]
-[/][/]
-
-FLOAT_HELPER_CLASS([(${fmt.bit_size})], [(${fmt.name})], fisinf, is_infinity)
-FLOAT_HELPER_CLASS([(${fmt.bit_size})], [(${fmt.name})], fiszero, is_zero)
-FLOAT_HELPER_CLASS([(${fmt.bit_size})], [(${fmt.name})], fisneg, is_neg)
-FLOAT_HELPER_CLASS([(${fmt.bit_size})], [(${fmt.name})], fisdenorm, is_denormal) // TODO: less efficient than is_zero_or_denormal
-FLOAT_HELPER_CLASS([(${fmt.bit_size})], [(${fmt.name})], fissnan, is_signaling_nan)
-FLOAT_HELPER_CLASS([(${fmt.bit_size})], [(${fmt.name})], fisqnan, is_quiet_nan)
+[# th:each="c : ${float_builtins.fsqrt}"]FLOAT_HELPER_1([(${c[0].bit_size})], [(${c[0].name})], fsqrt, sqrt)
+[/][# th:each="c : ${float_builtins.fadd}"]FLOAT_HELPER_2([(${c[0].bit_size})], [(${c[0].name})], fadd, add)
+[/][# th:each="c : ${float_builtins.fsub}"]FLOAT_HELPER_2([(${c[0].bit_size})], [(${c[0].name})], fsub, sub)
+[/][# th:each="c : ${float_builtins.fmul}"]FLOAT_HELPER_2([(${c[0].bit_size})], [(${c[0].name})], fmul, mul)
+[/][# th:each="c : ${float_builtins.fdiv}"]FLOAT_HELPER_2([(${c[0].bit_size})], [(${c[0].name})], fdiv, div)
+[/][# th:each="c : ${float_builtins.fmadd}"]FLOAT_HELPER_3([(${c[0].bit_size})], [(${c[0].name})], fmadd, muladd, 0)
+[/][# th:each="c : ${float_builtins.fmsub}"]FLOAT_HELPER_3([(${c[0].bit_size})], [(${c[0].name})], fmsub, muladd, float_muladd_negate_c)
+[/][# th:each="c : ${float_builtins.fnmadd}"]FLOAT_HELPER_3([(${c[0].bit_size})], [(${c[0].name})], fnmadd, muladd, float_muladd_negate_c | float_muladd_negate_product)
+[/][# th:each="c : ${float_builtins.fnmsub}"]FLOAT_HELPER_3([(${c[0].bit_size})], [(${c[0].name})], fnmsub, muladd, float_muladd_negate_product)
+[/][# th:each="c : ${float_builtins.fmin}"]FLOAT_HELPER_2([(${c[0].bit_size})], [(${c[0].name})], fmin, minimum_number)
+[/][# th:each="c : ${float_builtins.fmax}"]FLOAT_HELPER_2([(${c[0].bit_size})], [(${c[0].name})], fmax, maximum_number)
+[/][# th:each="c : ${float_builtins.flt}"]FLOAT_HELPER_CMP([(${c[0].bit_size})], [(${c[0].name})], flt, lt)
+[/][# th:each="c : ${float_builtins.fle}"]FLOAT_HELPER_CMP([(${c[0].bit_size})], [(${c[0].name})], fle, le)
+[/][# th:each="c : ${float_builtins.feq}"]FLOAT_HELPER_CMP([(${c[0].bit_size})], [(${c[0].name})], feq, eq_quiet)
+[/][# th:each="c : ${float_builtins.fcvt}"]FLOAT_HELPER_F2F([(${c[0].bit_size})], [(${c[0].name})], [(${c[1].bit_size})], [(${c[1].name})], fcvt)
+[/][# th:each="c : ${float_builtins.fcvtfs}"]FLOAT_HELPER_F2I([(${c[0].bit_size})], [(${c[0].name})], [(${c[1]})], int[(${c[1]})], fcvtfs)
+[/][# th:each="c : ${float_builtins.fcvtfu}"]FLOAT_HELPER_F2I([(${c[0].bit_size})], [(${c[0].name})], [(${c[1]})], uint[(${c[1]})], fcvtfu)
+[/][# th:each="c : ${float_builtins.fcvtsf}"]FLOAT_HELPER_I2F([(${c[0].bit_size})], [(${c[0].name})], [(${c[1]})], int[(${c[1]})], fcvtsf)
+[/][# th:each="c : ${float_builtins.fcvtuf}"]FLOAT_HELPER_I2F([(${c[0].bit_size})], [(${c[0].name})], [(${c[1]})], uint[(${c[1]})], fcvtuf)
+[/][# th:each="c : ${float_builtins.fisinf}"]FLOAT_HELPER_CLASS([(${c[0].bit_size})], [(${c[0].name})], fisinf, is_infinity)
+[/][# th:each="c : ${float_builtins.fiszero}"]FLOAT_HELPER_CLASS([(${c[0].bit_size})], [(${c[0].name})], fiszero, is_zero)
+[/][# th:each="c : ${float_builtins.fisneg}"]FLOAT_HELPER_CLASS([(${c[0].bit_size})], [(${c[0].name})], fisneg, is_neg)
+[/][# th:each="c : ${float_builtins.fisdenorm}"]FLOAT_HELPER_CLASS([(${c[0].bit_size})], [(${c[0].name})], fisdenorm, is_denormal) // TODO: less efficient than is_zero_or_denormal
+[/][# th:each="c : ${float_builtins.fissnan}"]FLOAT_HELPER_CLASSS([(${c[0].bit_size})], [(${c[0].name})], fissnan, is_signaling_nan)
+[/][# th:each="c : ${float_builtins.fisqnan}"]FLOAT_HELPER_CLASSS([(${c[0].bit_size})], [(${c[0].name})], fisqnan, is_quiet_nan)
 [/]

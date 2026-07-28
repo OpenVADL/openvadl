@@ -17,12 +17,16 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class FloatTypeDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
+
+  @Nullable
+  public Integer size;
 
   public SourceLocation loc;
 

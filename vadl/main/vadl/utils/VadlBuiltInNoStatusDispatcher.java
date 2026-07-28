@@ -141,34 +141,16 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleFLE(input);
     } else if (builtIn == BuiltInTable.FEQ) {
       handleFEQ(input);
-    } else if (builtIn == BuiltInTable.FCVTFF) {
-      handleFCVTFF(input);
-    } else if (builtIn == BuiltInTable.FCVTFF2) {
-      handleFCVTFF2(input);
-    } else if (builtIn == BuiltInTable.FCVTFSS) {
-      handleFCVTFSS(input);
-    } else if (builtIn == BuiltInTable.FCVTFSD) {
-      handleFCVTFSD(input);
-    } else if (builtIn == BuiltInTable.FCVTFUS) {
-      handleFCVTFUS(input);
-    } else if (builtIn == BuiltInTable.FCVTFUD) {
-      handleFCVTFUD(input);
-    } else if (builtIn == BuiltInTable.FCVTSSF) {
-      handleFCVTSSF(input);
-    } else if (builtIn == BuiltInTable.FCVTSDF) {
-      handleFCVTSDF(input);
-    } else if (builtIn == BuiltInTable.FCVTUSF) {
-      handleFCVTUSF(input);
-    } else if (builtIn == BuiltInTable.FCVTUDF) {
-      handleFCVTUDF(input);
-    } else if (builtIn == BuiltInTable.FCVTSSF2) {
-      handleFCVTSSF2(input);
-    } else if (builtIn == BuiltInTable.FCVTSDF2) {
-      handleFCVTSDF2(input);
-    } else if (builtIn == BuiltInTable.FCVTUSF2) {
-      handleFCVTUSF2(input);
-    } else if (builtIn == BuiltInTable.FCVTUDF2) {
-      handleFCVTUDF2(input);
+    } else if (builtIn == BuiltInTable.FCVT) {
+      handleFCVT(input);
+    } else if (builtIn == BuiltInTable.FCVTFS) {
+      handleFCVTFS(input);
+    } else if (builtIn == BuiltInTable.FCVTFU) {
+      handleFCVTFU(input);
+    } else if (builtIn == BuiltInTable.FCVTSF) {
+      handleFCVTSF(input);
+    } else if (builtIn == BuiltInTable.FCVTUF) {
+      handleFCVTUF(input);
     } else if (builtIn == BuiltInTable.FISINF) {
       handleFISINF(input);
     } else if (builtIn == BuiltInTable.FISZERO) {
@@ -301,33 +283,15 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
 
   void handleFEQ(T input);
 
-  void handleFCVTFF(T input);
+  void handleFCVT(T input);
 
-  void handleFCVTFF2(T input);
+  void handleFCVTFS(T input);
 
-  void handleFCVTFSS(T input);
+  void handleFCVTFU(T input);
 
-  void handleFCVTFSD(T input);
+  void handleFCVTSF(T input);
 
-  void handleFCVTFUS(T input);
-
-  void handleFCVTFUD(T input);
-
-  void handleFCVTSSF(T input);
-
-  void handleFCVTSDF(T input);
-
-  void handleFCVTUSF(T input);
-
-  void handleFCVTUDF(T input);
-
-  void handleFCVTSSF2(T input);
-
-  void handleFCVTSDF2(T input);
-
-  void handleFCVTUSF2(T input);
-
-  void handleFCVTUDF2(T input);
+  void handleFCVTUF(T input);
 
   void handleFISINF(T input);
 

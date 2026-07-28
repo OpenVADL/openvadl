@@ -285,7 +285,7 @@ public class Ungrouper
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    expr.size = expr.size.accept(this);
+    expr.symbolArgs.replaceAll(e -> e.accept(this));
     return expr;
   }
 

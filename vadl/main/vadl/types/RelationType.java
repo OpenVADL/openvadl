@@ -18,8 +18,6 @@ package vadl.types;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * Represents a relation type in VADL's type system.
@@ -30,16 +28,16 @@ import java.util.stream.Stream;
 public class RelationType extends Type {
 
   private final List<Class<? extends Type>> argTypeClass;
+  private final List<Class<? extends Type>> constArgTypeClass;
   private final boolean hasVarArgs;
-  private final int floatTypeArgCount;
   private final Class<? extends Type> resultTypeClass;
 
-  protected RelationType(List<Class<? extends Type>> argTypes, boolean hasVarArgs,
-                         int floatTypeArgCount,
+  protected RelationType(List<Class<? extends Type>> argTypes,
+                         List<Class<? extends Type>> constArgTypeClass, boolean hasVarArgs,
                          Class<? extends Type> resultType) {
     this.argTypeClass = argTypes;
+    this.constArgTypeClass = constArgTypeClass;
     this.hasVarArgs = hasVarArgs;
-    this.floatTypeArgCount = floatTypeArgCount;
     this.resultTypeClass = resultType;
   }
 
@@ -47,12 +45,12 @@ public class RelationType extends Type {
     return argTypeClass;
   }
 
-  public boolean hasVarArgs() {
-    return hasVarArgs;
+  public List<Class<? extends Type>> constArgTypeClass() {
+    return constArgTypeClass;
   }
 
-  public int floatTypeArgCount() {
-    return floatTypeArgCount;
+  public boolean hasVarArgs() {
+    return hasVarArgs;
   }
 
   public Class<? extends Type> resultTypeClass() {
@@ -61,22 +59,18 @@ public class RelationType extends Type {
 
   @Override
   public String name() {
-    return "("
-        + argTypeClass.stream().map(Class::getSimpleName)
-        .collect(Collectors.joining(", "))
-        + ") -> "
-        + resultTypeClass.getSimpleName();
-  }
-
-  /**
-   * A readable representation of the type, with the {@link FloatType} arguments.
-   */
-  public String nameWithFloatTypes() {
-    return "("
-        + Stream.concat(
-        IntStream.range(0, floatTypeArgCount).mapToObj(i -> Type.floatType().name()),
-        argTypeClass.stream().map(Class::getSimpleName)).collect(Collectors.joining(", "))
-        + ") -> "
-        + resultTypeClass.getSimpleName();
+    var sb = new StringBuilder();
+    if (!constArgTypeClass.isEmpty()) {
+      sb.append("<");
+      sb.append(constArgTypeClass.stream().map(Class::getSimpleName)
+          .collect(Collectors.joining(", ")));
+      sb.append(">");
+    }
+    sb.append("(");
+    sb.append(argTypeClass.stream().map(Class::getSimpleName)
+        .collect(Collectors.joining(", ")));
+    sb.append(") -> ");
+    sb.append(resultTypeClass.getSimpleName());
+    return sb.toString();
   }
 }

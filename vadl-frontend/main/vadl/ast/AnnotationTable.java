@@ -338,6 +338,7 @@ public class AnnotationTable {
     /// FLOAT RELATED ///
 
     annotationOn(FloatTypeDefinition.class, "IEEE", ConstantAnnotation::new)
+        .applyAst((def, annotation) -> def.size = annotation.constant.value().intValue())
         .applyViam((def, annotation, lowering) -> {
           var encoding = FloatFormat.Encoding.ieee(annotation.constant.value().intValue());
           ensure(encoding != null,
