@@ -106,6 +106,61 @@ application binary interface ABI for RV64IM = {
    }
 }
 
+[ comment string: "#" ]
+[ generate rules ]
+assembly description ASM for ABI = {
+
+  modifiers = {
+    "hi" -> RV64IM::hi,
+    "lo" -> RV64IM::lo,
+    "pcrel_hi" -> RV64IM::pcrel_hi,
+    "pcrel_lo" -> RV64IM::pcrel_lo,
+    "got_pcrel_hi" -> RV64IM::got_pcrel_hi
+  }
+
+  directives = {
+    ".align" -> ALIGN_POW2,
+    ".dword" -> QUAD,
+    ".word" -> BYTE4
+  }
+
+  grammar = {
+    ImmediateOperand :
+      Expression @operand
+      | op = (
+          "%" mod = ("lo" | "hi" | "pcrel_lo" | "pcrel_hi" | "got_pcrel_hi") @modifier
+          "(" val = Expression ")"
+        ) @operand
+    ;
+
+    JalrInstruction @instruction:
+      var rdTmp = null @operand
+      var rs1Tmp = null @operand
+      var immTmp = null @operand
+      mnemonic = "JALR" @operand
+      ( ?(LaIdEq(1, ","))
+          rdTmp = Register@operand ","
+          ( ?(LaIdEq(1, ","))                     // jalr rd, rs, imm
+              rs1Tmp = Register@operand ","
+              immTmp = ImmediateOperand
+            |
+              immTmp = ImmediateOperand           // jalr rd, imm(rs)
+              "(" rs1Tmp = Register@operand  ")"
+          )
+      | rdTmp = (x1_string @register) @operand    // jalr rs
+        rs1Tmp = Register@operand
+        immTmp = zero_const @operand
+      )
+      rd = rdTmp
+      rs1 = rs1Tmp
+      immS = immTmp
+    ;
+  }
+
+  function x1_string -> String = "x1"
+  function zero_const -> SInt<64> = 0
+}
+
 [ htif ]
 processor Spike implements RV64IM with ABI = {
   constant reset_vec_addr = 0x1000
