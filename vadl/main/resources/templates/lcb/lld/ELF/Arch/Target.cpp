@@ -117,7 +117,11 @@ namespace lld
             }
             [/th:block]
 
-            default : llvm_unreachable("unknown relocation");
+            default:
+            {
+                std::string msg = "unknown relocation type: " + std::to_string(rel.type);
+                llvm_unreachable(msg.c_str());
+            }
             }
         }
 
