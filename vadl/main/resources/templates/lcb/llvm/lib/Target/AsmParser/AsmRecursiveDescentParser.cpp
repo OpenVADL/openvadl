@@ -11,6 +11,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "vadl-builtins.h"
 #include "vadl-builtins.hpp"
+#include "Utils/ImmediateUtils.h"
 #include <sstream>
 #include <set>
 #include <vector>

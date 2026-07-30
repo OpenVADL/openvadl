@@ -1,8 +1,8 @@
 # RUN: /src/llvm-final/build/bin/llvm-mc -arch=varrisc -show-inst < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 BRA 10
-# CHECK: <MCInst #{{[0-9]+}} BRA
-# CHECK-NEXT: <MCOperand Imm:10>>
+# CHECK: <MCInst #{{[0-9]+}} BRA_S
+# CHECK-NEXT: <MCOperand Imm:20>>
 
 BRA 0x12345678
 # CHECK: <MCInst #{{[0-9]+}} BRA_L
@@ -18,12 +18,12 @@ BEQZ r1, 0x12
 # CHECK-NEXT: <MCOperand Imm:18>>
 
 BEQZ r1, 1024
-# CHECK: <MCInst #{{[0-9]+}} BEQZ
+# CHECK: <MCInst #{{[0-9]+}} BEQZ_L
 # CHECK-NEXT: <MCOperand Reg:3>
 # CHECK-NEXT: <MCOperand Imm:1024>>
 
 BEQZ r1, .label
-# CHECK: <MCInst #{{[0-9]+}} BEQZ
+# CHECK: <MCInst #{{[0-9]+}} BEQZ_L
 # CHECK-NEXT: <MCOperand Reg:3>
 # CHECK-NEXT: <MCOperand Expr:(.label)>>
 

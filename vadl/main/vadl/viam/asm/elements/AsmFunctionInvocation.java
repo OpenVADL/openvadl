@@ -29,6 +29,12 @@ public record AsmFunctionInvocation(@Nullable AsmAssignTo assignToElement,
                                     List<AsmGrammarElement> parameters,
                                     AsmType asmType)
     implements AsmGrammarElement, HasAssignTo {
+
+  @Override
+  public AsmGrammarElement copyAndOverwriteAssignTo(AsmAssignTo assignToElement) {
+    return new AsmFunctionInvocation(assignToElement, function, parameters, asmType);
+  }
+
   @Override
   public AsmType getAsmType() {
     return asmType;
