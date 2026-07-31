@@ -1259,15 +1259,15 @@ class BuiltInTcgLoweringExecutor {
 
         //// Float Arithmetic ////
 
-        .set(BuiltInTable.FSQRT,  (ctx) -> floatHelperCall(ctx, 1, "fsqrt"))
-        .set(BuiltInTable.FADD,   (ctx) -> floatHelperCall(ctx, 2, "fadd"))
-        .set(BuiltInTable.FSUB,   (ctx) -> floatHelperCall(ctx, 2, "fsub"))
-        .set(BuiltInTable.FMUL,   (ctx) -> floatHelperCall(ctx, 2, "fmul"))
-        .set(BuiltInTable.FDIV,   (ctx) -> floatHelperCall(ctx, 2, "fdiv"))
-        .set(BuiltInTable.FMADD,  (ctx) -> floatHelperCall(ctx, 3, "fmadd"))
-        .set(BuiltInTable.FMSUB,  (ctx) -> floatHelperCall(ctx, 3, "fmsub"))
-        .set(BuiltInTable.FNMADD, (ctx) -> floatHelperCall(ctx, 3, "fnmadd"))
-        .set(BuiltInTable.FNMSUB, (ctx) -> floatHelperCall(ctx, 3, "fnmsub"))
+        .set(BuiltInTable.FSQRT,  (ctx) -> floatHelperCall(ctx, 2, "fsqrt"))
+        .set(BuiltInTable.FADD,   (ctx) -> floatHelperCall(ctx, 3, "fadd"))
+        .set(BuiltInTable.FSUB,   (ctx) -> floatHelperCall(ctx, 3, "fsub"))
+        .set(BuiltInTable.FMUL,   (ctx) -> floatHelperCall(ctx, 3, "fmul"))
+        .set(BuiltInTable.FDIV,   (ctx) -> floatHelperCall(ctx, 3, "fdiv"))
+        .set(BuiltInTable.FMADD,  (ctx) -> floatHelperCall(ctx, 4, "fmadd"))
+        .set(BuiltInTable.FMSUB,  (ctx) -> floatHelperCall(ctx, 4, "fmsub"))
+        .set(BuiltInTable.FNMADD, (ctx) -> floatHelperCall(ctx, 4, "fnmadd"))
+        .set(BuiltInTable.FNMSUB, (ctx) -> floatHelperCall(ctx, 4, "fnmsub"))
         .set(BuiltInTable.FMIN,   (ctx) -> floatHelperCall(ctx, 2, "fmin"))
         .set(BuiltInTable.FMAX,   (ctx) -> floatHelperCall(ctx, 2, "fmax"))
 
@@ -1279,11 +1279,11 @@ class BuiltInTcgLoweringExecutor {
 
         //// Float to Int Conversion ////
 
-        .set(BuiltInTable.FCVT,   (ctx) -> floatHelperCall(ctx, 1, "fcvt"))
-        .set(BuiltInTable.FCVTFS, (ctx) -> floatHelperCall(ctx, 1, "fcvtfs"))
-        .set(BuiltInTable.FCVTFU, (ctx) -> floatHelperCall(ctx, 1, "fcvtfu"))
-        .set(BuiltInTable.FCVTSF, (ctx) -> floatHelperCall(ctx, 1, "fcvtsf"))
-        .set(BuiltInTable.FCVTUF, (ctx) -> floatHelperCall(ctx, 1, "fcvtuf"))
+        .set(BuiltInTable.FCVT,   (ctx) -> floatHelperCall(ctx, 2, "fcvt"))
+        .set(BuiltInTable.FCVTFS, (ctx) -> floatHelperCall(ctx, 2, "fcvtfs"))
+        .set(BuiltInTable.FCVTFU, (ctx) -> floatHelperCall(ctx, 2, "fcvtfu"))
+        .set(BuiltInTable.FCVTSF, (ctx) -> floatHelperCall(ctx, 2, "fcvtsf"))
+        .set(BuiltInTable.FCVTUF, (ctx) -> floatHelperCall(ctx, 2, "fcvtuf"))
 
         //// Float Classification ////
 
@@ -1329,8 +1329,9 @@ class BuiltInTcgLoweringExecutor {
   /**
    * Helper method to create a {@link BuiltInResult} from a helper call for a float built-in.
    *
-   * @param ctx  The built-in lowering context.
-   * @param argc The number of arguments the float built-in takes.
+   * @param ctx    The built-in lowering context.
+   * @param argc   The number of arguments the float built-in takes.
+   * @param name   The name of the helper call to generate.
    * @return A {@link BuiltInResult} containing the helper call.
    */
   private static BuiltInResult floatHelperCall(BuiltInTcgLoweringExecutor.Context ctx, int argc,
