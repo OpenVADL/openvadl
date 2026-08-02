@@ -194,7 +194,7 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
     } else {
       sb.append(builtIn.name());
       if (!constArgs.isEmpty()) {
-        sb.append("<");
+        sb.append("::<");
         for (int i = 0; i < constArgs.size(); i++) {
           if (i > 0) {
             sb.append(", ");

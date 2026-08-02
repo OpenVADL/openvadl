@@ -193,7 +193,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
     $FRtypeInstr2rm ((
       AsId($name, $size.suffix, $FrmName($rm)) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; $funct5 ;
-      F(rd) := $NaNBox($size ; VADL::$fun<$size.fTy>(F(rs1) as $size.ty, F(rs2) as $size.ty, frm($rm)))
+      F(rd) := $NaNBox($size ; VADL::$fun::<$size.fTy>(F(rs1) as $size.ty, F(rs2) as $size.ty, frm($rm)))
     ))
   }
 
@@ -201,7 +201,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
     $FRtypeInstr2 ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b0'0101 ;
-      F(rd) := $NaNBox($size ; VADL::$fun<$size.fTy>(F(rs1) as $size.ty, F(rs2) as $size.ty))
+      F(rd) := $NaNBox($size ; VADL::$fun::<$size.fTy>(F(rs1) as $size.ty, F(rs2) as $size.ty))
     ))
   }
 
@@ -209,7 +209,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
     $FRtypeInstr1rm ((
       AsId($name, $size.suffix, $FrmName($rm)) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b0'1011 ;
-      F(rd) := $NaNBox($size ; VADL::$fun<$size.fTy>(F(rs1) as $size.ty, frm($rm)))
+      F(rd) := $NaNBox($size ; VADL::$fun::<$size.fTy>(F(rs1) as $size.ty, frm($rm)))
     ) ; 0b0'0000 )
   }
 
@@ -217,7 +217,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
     $FRtypeInstr2 ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b1'0100 ;
-      X(rd) := VADL::$fun<$size.fTy>(F(rs1) as $size.ty, F(rs2) as $size.ty) as UIntR // zero extend
+      X(rd) := VADL::$fun::<$size.fTy>(F(rs1) as $size.ty, F(rs2) as $size.ty) as UIntR // zero extend
     ))
   }
 
@@ -254,7 +254,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
       AsId($name, $size.suffix, $iSize.cvtSuffix, $u.str("U" ; ""), $FrmName($rm)) ;
       AsStr($name, ".", $size.suffix, ".", $iSize.mvSuffix, $u.str("U" ; "")) ;
       $rm ; $size.fmt ; 0b1'1010 ;
-      F(rd) := $NaNBox($size ; VADL::$u.id(fcvtuf ; fcvtsf)<$size.fTy>(X(rs1) as $u.id($iSize.uTy ; $iSize.sTy), frm($rm)))
+      F(rd) := $NaNBox($size ; VADL::$u.id(fcvtuf ; fcvtsf)::<$size.fTy>(X(rs1) as $u.id($iSize.uTy ; $iSize.sTy), frm($rm)))
     ) ; $rs2 )
   }
 
@@ -264,7 +264,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
       AsStr($name, ".", $iSize.mvSuffix, $u.str("U" ; ""), ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b1'1000 ;
       // always sign extend the result, even unsigned results
-      X(rd) := VADL::$u.id(fcvtfu ; fcvtfs)<$size.fTy, $iSize.size>(F(rs1) as $size.ty, frm($rm)) as SIntR
+      X(rd) := VADL::$u.id(fcvtfu ; fcvtfs)::<$size.fTy, $iSize.size>(F(rs1) as $size.ty, frm($rm)) as SIntR
     ) ; $rs2 )
   }
 
@@ -273,7 +273,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
       AsId($name, $size.suffix, $iSize.suffix, $FrmName($rm)) ;
       AsStr($name, ".", $size.suffix, ".", $iSize.suffix) ;
       $rm ; $size.fmt ; 0b0'1000 ;
-      F(rd) := $NaNBox($size ; VADL::fcvt<$iSize.fTy, $size.fTy>(F(rs1) as $iSize.ty, frm($rm)))
+      F(rd) := $NaNBox($size ; VADL::fcvt::<$iSize.fTy, $size.fTy>(F(rs1) as $iSize.ty, frm($rm)))
     ) ; $rs2 )
   }
 
@@ -282,12 +282,12 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
       let f = F(rs1) as $size.ty in
         // TODO: this is from QEMU's risc-v vector_helper.c fclass_s(...)
         //       what predicates should we implement?
-        let neg = VADL::fisneg<$size.fTy>(f) in
-          X(rd) := if VADL::fisinf   <$size.fTy>(f) then ( if neg then 1 << 0 else 1 << 7 ) else
-                   if VADL::fiszero  <$size.fTy>(f) then ( if neg then 1 << 3 else 1 << 4 ) else
-                   if VADL::fisdenorm<$size.fTy>(f) then ( if neg then 1 << 2 else 1 << 5 ) else
-                   if VADL::fissnan  <$size.fTy>(f) then 1 << 8 else
-                   if VADL::fisqnan  <$size.fTy>(f) then 1 << 9 else
+        let neg = VADL::fisneg::<$size.fTy>(f) in
+          X(rd) := if VADL::fisinf   ::<$size.fTy>(f) then ( if neg then 1 << 0 else 1 << 7 ) else
+                   if VADL::fiszero  ::<$size.fTy>(f) then ( if neg then 1 << 3 else 1 << 4 ) else
+                   if VADL::fisdenorm::<$size.fTy>(f) then ( if neg then 1 << 2 else 1 << 5 ) else
+                   if VADL::fissnan  ::<$size.fTy>(f) then 1 << 8 else
+                   if VADL::fisqnan  ::<$size.fTy>(f) then 1 << 9 else
                                            ( if neg then 1 << 1 else 1 << 6 )
     encoding AsId($name, $size.suffix) = {opcode = 0b101'0011, funct3 = 0b001, rs2 = 0b0'0000, fmt = $size.fmt, funct5 = 0b111'00}
     assembly AsId($name, $size.suffix) = (AsStr($name), ".", AsStr($size.suffix), " ", register(rd), ",", register(rs1))
@@ -313,7 +313,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
 
   model FR4typeInstr (name : Id, size : FSizeRec, fun : Id, rm : Ex, opcode : Bin) : IsaDefs = {
     instruction AsId($name, $size.suffix, $FrmName($rm)) : R4type =
-      F(rd) := $NaNBox($size ; VADL::$fun<$size.fTy>(F(rs1) as $size.ty, F(rs2) as $size.ty, F(rs3) as $size.ty, frm($rm)))
+      F(rd) := $NaNBox($size ; VADL::$fun::<$size.fTy>(F(rs1) as $size.ty, F(rs2) as $size.ty, F(rs3) as $size.ty, frm($rm)))
     encoding AsId($name, $size.suffix, $FrmName($rm)) = {opcode = $opcode, funct3 = $rm, fmt = $size.fmt}
     assembly AsId($name, $size.suffix, $FrmName($rm)) = (AsStr($name, ".", $size.suffix), " ", register(rd), ",", register(rs1), ",", register(rs2), ",", $FrmName($rm))
   }

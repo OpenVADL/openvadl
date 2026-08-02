@@ -22,7 +22,7 @@ import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
- * A representation of terms of form {@code MEM<9>} or {@code VADL::fcvts<IEEE32, 64>}.
+ * A representation of terms of form {@code MEM<9>} or {@code VADL::fcvts::<IEEE32, 64>}.
  * These terms always have at least one argument in the pointy brackets.
  */
 @SuppressWarnings("MissingJavadocMethod")
@@ -65,16 +65,25 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     path.prettyPrint(indent, builder);
-    builder.append("<");
+    if (symbolArgs.size() > 1) {
+      builder.append("::");
+    }
+    builder.append("< ");
     boolean first = true;
     for (var arg : symbolArgs) {
       if (!first) {
         builder.append(", ");
       }
+      if (arg instanceof BinaryExpr) {
+        builder.append("(");
+      }
       arg.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
+      if (arg instanceof BinaryExpr) {
+        builder.append(")");
+      }
       first = false;
     }
-    builder.append(">");
+    builder.append(" >");
   }
 
   @Override

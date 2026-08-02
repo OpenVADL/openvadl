@@ -1166,6 +1166,17 @@ class EnableAnnotation extends Annotation {
   }
 }
 
+/**
+ * An annotation that can be applied to registers of type {@link FormatType}. It can be used
+ * to reference one format field of the type. The bit-size of the format field must be 1.
+ *
+ * <p>Usage examples:
+ * <pre>
+ * [ sticky fe flag overflow : ov ]
+ * register reg : Format
+ * format Format : Bits<8> { ov [7], ... }
+ * </pre>
+ */
 class FloatFlagAnnotation extends FormatFieldAnnotation {
 
   @LazyInit
