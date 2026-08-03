@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,12 @@
 
 package vadl.viam;
 
+import java.util.List;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
+import vadl.utils.Either;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 
@@ -58,6 +62,27 @@ public class PseudoInstruction extends CompilerInstruction implements PrintableI
   @Override
   public Assembly assembly() {
     return assembly;
+  }
+
+  @Override
+  public List<Format> formats() {
+    return this.behavior().getNodes(InstrCallNode.class).map(n -> n.target().format()).toList();
+  }
+
+  @Override
+  @Nullable
+  public Either<Format.Field, Format.FieldAccess> getFieldOrAccess(String operandName) {
+    var pair = this.behavior().getNodes(InstrCallNode.class)
+        .flatMap(InstrCallNode::getZippedArgumentsWithParameters).filter(p -> {
+          var arg = p.right();
+          return arg instanceof FuncParamNode paramNode && paramNode.parameter().simpleName()
+              .equals(operandName);
+        }).findFirst().orElse(null);
+
+    if (pair != null) {
+      return pair.left();
+    }
+    return null;
   }
 
   @Override

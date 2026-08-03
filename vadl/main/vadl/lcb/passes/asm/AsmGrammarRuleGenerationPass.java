@@ -16,11 +16,14 @@
 
 package vadl.lcb.passes.asm;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,18 +34,34 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.GenerateValueRangeImmediatePass;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
+import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
+import vadl.types.UIntType;
+import vadl.types.asmTypes.ConstantAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
+import vadl.types.asmTypes.OperandAsmType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
+import vadl.utils.Triple;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
+import vadl.viam.Parameter;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
@@ -50,8 +69,13 @@ import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
 import vadl.viam.asm.elements.AsmAssignToAttribute;
+import vadl.viam.asm.elements.AsmAssignToLocalVar;
+import vadl.viam.asm.elements.AsmGrammarElement;
 import vadl.viam.asm.elements.AsmGroup;
+import vadl.viam.asm.elements.AsmLocalVarDefinition;
+import vadl.viam.asm.elements.AsmLocalVarUse;
 import vadl.viam.asm.elements.AsmRuleInvocation;
+import vadl.viam.asm.elements.HasAssignTo;
 import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
 import vadl.viam.graph.Graph;
@@ -61,6 +85,7 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * A pass that generates assembly grammar rules per instruction,
@@ -83,6 +108,12 @@ import vadl.viam.graph.dependency.ExpressionNode;
  */
 public class AsmGrammarRuleGenerationPass extends Pass {
 
+  @Nullable
+  private AssemblyDescription assemblyDescription;
+
+  private final String mergingConstantLocalVar = "constant_var";
+  private final String mergedRuleSuffix = "_MERGED_RULE";
+
   public AsmGrammarRuleGenerationPass(GeneralConfiguration configuration) {
     super(configuration);
   }
@@ -103,26 +134,33 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     if (viam.assemblyDescription().isEmpty()) {
       return null;
     }
-    var assemblyDescription = viam.assemblyDescription().get();
+    this.assemblyDescription = viam.assemblyDescription().get();
 
     var shouldGenerateRulesAnno = assemblyDescription.annotation(AsmGenerateRulesAnno.class);
     if (shouldGenerateRulesAnno == null || !shouldGenerateRulesAnno.shouldGenerateRules()) {
       return null;
     }
 
-    var generatedInstructionRules = viam.isa().get().ownInstructions().stream()
-        .map(instruction -> mapToGeneratedRuleContextPair(instruction, assemblyDescription));
+    var tableGenMachineInstructions =
+        (List<TableGenMachineInstruction>) passResults.lastResultOf(
+            GenerateTableGenMachineInstructionRecordPass.class);
+    var tableGenPseudoInstructions =
+        (List<TableGenPseudoInstruction>) passResults.lastResultOf(
+            GenerateTableGenPseudoInstructionRecordPass.class);
 
-    var generatedPseudoRules = viam.isa().get().ownPseudoInstructions().stream()
-        .map(instruction -> mapToGeneratedRuleContextPair(instruction, assemblyDescription));
+    var generatedInstructionRules = tableGenMachineInstructions.stream()
+        .map(this::mapToGeneratedRuleContextTriple);
 
-    var generatedPairs = Stream.concat(generatedInstructionRules, generatedPseudoRules).toList();
+    var generatedPseudoRules = tableGenPseudoInstructions.stream()
+        .map(this::mapToGeneratedRuleContextTriple);
 
-    var instructionRule = getNonTerminalRule(assemblyDescription, "Instruction");
+    var generatedTriples = Stream.concat(generatedInstructionRules, generatedPseudoRules).toList();
 
-    var conflictingRules = computeConflictingRules(instructionRule, generatedPairs);
+    var instructionRule = getNonTerminalRule("Instruction");
 
-    var nonConflictingRules = generatedPairs.stream()
+    var conflictingRules = computeConflictingRules(instructionRule, generatedTriples);
+
+    var nonConflictingRules = generatedTriples.stream()
         .filter(p -> !conflictingRules.contains(p))
         .toList();
 
@@ -152,25 +190,37 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     return null;
   }
 
-  private Pair<PrintableInstruction, AsmRuleContext> mapToGeneratedRuleContextPair(
-      PrintableInstruction instruction, AssemblyDescription assemblyDescription) {
+  private Triple<PrintableInstruction,
+      TableGenInstruction, AsmRuleContext> mapToGeneratedRuleContextTriple(
+      TableGenInstruction tableGenInstruction) {
+    PrintableInstruction instruction;
+    if (tableGenInstruction instanceof TableGenMachineInstruction machine) {
+      instruction = machine.instruction();
+    } else if (tableGenInstruction instanceof TableGenPseudoInstruction pseudo) {
+      instruction = pseudo.pseudoInstruction();
+    } else {
+      throw Diagnostic.error("%s is a TableGenInstruction".formatted(tableGenInstruction.getName()
+              + "but neither a TableGenMachineInstruction nor a TableGenPseudoInstruction"),
+          SourceLocation.INVALID_SOURCE_LOCATION).build();
+    }
+
     var returnNodes =
         instruction.assembly().function().behavior().getNodes(ReturnNode.class).toList();
     var returnNode = returnNodes.getFirst();
 
     var ruleGenerator = new AsmGrammarRuleGenerator(instruction,
-        getNonTerminalRule(assemblyDescription, "Register"),
-        getNonTerminalRule(assemblyDescription, "ImmediateOperand")
+        getNonTerminalRule("Register"),
+        getNonTerminalRule("ImmediateOperand")
     );
     var ctx = new AsmRuleContext();
     AsmGrammarRuleGeneratorDispatcher.dispatch(ruleGenerator, ctx, returnNode);
 
-    return new Pair<>(instruction, ctx);
+    return new Triple<>(instruction, tableGenInstruction, ctx);
   }
 
   /**
    * Compute LL(1) conflicts between user written grammar rules and rules generated in this pass.
-   * A conflict arises when the {@link vadl.viam.asm.elements.AsmAlternative#firstTokens()} sets
+   * A conflict arises when the {@link AsmAlternative#firstTokens()} sets
    * of two rules overlap, i.e. an {@link AsmToken} is contained in the firstToken sets of both
    * rules. We cannot add conflicting rules to the parser, since then the parser would not able
    * to decide which rule to apply based on the parsed first token.
@@ -194,14 +244,16 @@ public class AsmGrammarRuleGenerationPass extends Pass {
    * But the user written rule {@code AddInstruction} also has the first token set {"ADD"}.
    * Since the first token sets overlap, we have a conflict and discard the generated rule.
    */
-  private List<Pair<PrintableInstruction, AsmRuleContext>> computeConflictingRules(
+  private List<
+      Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> computeConflictingRules(
       AsmNonTerminalRule instructionRule,
-      List<Pair<PrintableInstruction, AsmRuleContext>> generated) {
-    var conflicting = new ArrayList<Pair<PrintableInstruction, AsmRuleContext>>();
+      List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> generated) {
+    var conflicting =
+        new ArrayList<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>>();
 
     for (var alternative : instructionRule.getAlternatives().alternatives()) {
-      for (var generatedPair : generated) {
-        var generatedRule = (AsmNonTerminalRule) generatedPair.right().builtRule;
+      for (var generatedTriple : generated) {
+        var generatedRule = (AsmNonTerminalRule) generatedTriple.right().builtRule;
         for (var generatedAlternative : generatedRule.getAlternatives()
             .alternatives()) {
 
@@ -211,9 +263,9 @@ public class AsmGrammarRuleGenerationPass extends Pass {
 
           if (!intersection.isEmpty()) {
             var conflictingRule = ((AsmRuleInvocation) alternative.elements().getFirst()).rule();
-            conflicting.add(generatedPair);
+            conflicting.add(generatedTriple);
 
-            reportWarningForConflictingRule(generatedPair.left(), intersection, conflictingRule);
+            reportWarningForConflictingRule(generatedTriple.left(), intersection, conflictingRule);
           }
         }
       }
@@ -243,9 +295,12 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     return new AsmAlternative(null, firstTokens, rule.getAsmType(), false, List.of(invocation));
   }
 
-  private AsmNonTerminalRule getNonTerminalRule(AssemblyDescription ad, String name) {
-    var nonTerminal = ad.rules().stream().filter(rule -> rule.simpleName().equals(name)).findFirst()
-        .orElseThrow();
+  private AsmNonTerminalRule getNonTerminalRule(String name) {
+    var nonTerminal =
+        requireNonNull(assemblyDescription).rules().stream()
+            .filter(rule -> rule.simpleName().equals(name))
+            .findFirst()
+            .orElseThrow();
     return (AsmNonTerminalRule) nonTerminal;
   }
 
@@ -262,7 +317,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
    * avoid LL(1) conflicts.
    */
   private List<AsmGrammarRule> mergeOverlappingRules(
-      List<Pair<PrintableInstruction, AsmRuleContext>> generated) {
+      List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> generated) {
 
     var groupedByFirstToken = groupByToken(generated);
     var groupedByFirstTokenThenBySyntax = groupByTokenThenBySyntax(groupedByFirstToken);
@@ -277,14 +332,16 @@ public class AsmGrammarRuleGenerationPass extends Pass {
    * Illustrating on the example above this method conceptually creates the mapping
    * {@code "addi" -> [ADDI_S,ADDI,ADDI_L]}.
    */
-  private Map<AsmToken, List<Pair<PrintableInstruction, AsmRuleContext>>> groupByToken(
-      List<Pair<PrintableInstruction, AsmRuleContext>> generated) {
+  private Map<AsmToken,
+      List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>>> groupByToken(
+      List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> generated) {
     var groupedByFirstToken =
-        new HashMap<AsmToken, List<Pair<PrintableInstruction, AsmRuleContext>>>();
+        new HashMap<AsmToken,
+            List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>>>();
 
-    generated.forEach(pair -> {
-      var inst = pair.left();
-      var builtCtx = pair.right();
+    generated.forEach(triple -> {
+      var inst = triple.left();
+      var builtCtx = triple.right();
       if (builtCtx.firstTokens.size() != 1) {
         throw Diagnostic.error("Instruction %s has multiple first tokens: [%s]".formatted(
                 inst.identifier().simpleName(),
@@ -292,9 +349,9 @@ public class AsmGrammarRuleGenerationPass extends Pass {
                     .collect(Collectors.joining(","))),
             inst.assembly()).build();
       }
-      var token = pair.right().firstTokens.iterator().next();
+      var token = triple.right().firstTokens.iterator().next();
       groupedByFirstToken.putIfAbsent(token, new ArrayList<>());
-      groupedByFirstToken.get(token).add(pair);
+      groupedByFirstToken.get(token).add(triple);
     });
     return groupedByFirstToken;
   }
@@ -309,23 +366,28 @@ public class AsmGrammarRuleGenerationPass extends Pass {
    */
   private Map<AsmToken,
       Map<AsmSyntax,
-          List<Pair<PrintableInstruction, AsmRuleContext>>>> groupByTokenThenBySyntax(
-      Map<AsmToken, List<Pair<PrintableInstruction, AsmRuleContext>>> groupedByFirstToken) {
+          List<Triple<PrintableInstruction,
+              TableGenInstruction, AsmRuleContext>>>> groupByTokenThenBySyntax(
+      Map<AsmToken,
+          List<Triple<PrintableInstruction,
+              TableGenInstruction, AsmRuleContext>>> groupedByFirstToken
+  ) {
     var groupedByFirstTokenThenBySyntax = new HashMap<AsmToken,
-        Map<AsmSyntax, List<Pair<PrintableInstruction, AsmRuleContext>>>>();
+        Map<AsmSyntax, List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>>>>();
 
-    groupedByFirstToken.forEach((token, pairs) -> {
+    groupedByFirstToken.forEach((token, triples) -> {
 
-      var pairsGroupedBySyntax =
-          new HashMap<AsmSyntax, List<Pair<PrintableInstruction, AsmRuleContext>>>();
+      var triplesGroupedBySyntax =
+          new HashMap<AsmSyntax,
+              List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>>>();
 
-      pairs.forEach(pair -> {
-        var syntax = syntaxOf(pair.right());
-        pairsGroupedBySyntax.putIfAbsent(syntax, new ArrayList<>());
-        pairsGroupedBySyntax.get(syntax).add(pair);
+      triples.forEach(triple -> {
+        var syntax = syntaxOf(triple.right());
+        triplesGroupedBySyntax.putIfAbsent(syntax, new ArrayList<>());
+        triplesGroupedBySyntax.get(syntax).add(triple);
       });
 
-      groupedByFirstTokenThenBySyntax.put(token, pairsGroupedBySyntax);
+      groupedByFirstTokenThenBySyntax.put(token, triplesGroupedBySyntax);
     });
     return groupedByFirstTokenThenBySyntax;
   }
@@ -346,18 +408,24 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   private List<AsmGrammarRule> mergeRulesPerToken(
       Map<AsmToken,
           Map<AsmSyntax,
-              List<Pair<PrintableInstruction, AsmRuleContext>>>> groupedByFirstTokenThenBySyntax) {
+              List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>>>>
+          groupedByFirstTokenThenBySyntax) {
     var rulesAfterMerging = new ArrayList<AsmGrammarRule>();
 
     groupedByFirstTokenThenBySyntax.forEach((token, syntaxKinds) -> {
 
       if (syntaxKinds.size() == 1) {
-        // TODO: Implement handling of cases where there is more than one generated instruction
-        //       per syntax kind
-        var generatedPairs = syntaxKinds.values().iterator().next();
-        if (generatedPairs.size() == 1) {
+        var generatedTriples = syntaxKinds.values().iterator().next();
+        if (generatedTriples.size() == 1) {
           rulesAfterMerging.addAll(
-              generatedPairs.stream().map(pair -> pair.right().builtRule).toList());
+              generatedTriples.stream().map(triple -> triple.right().builtRule).toList());
+        } else {
+          var mergedAlternative = semanticRuleMerge(generatedTriples, null);
+          var resultRule = new AsmNonTerminalRule(
+              Identifier.noLocation(token.getStringLiteral() + mergedRuleSuffix),
+              new AsmAlternatives(List.of(mergedAlternative), mergedAlternative.asmType()),
+              mergedAlternative.asmType(), SourceLocation.INVALID_SOURCE_LOCATION);
+          rulesAfterMerging.add(resultRule);
         }
         return;
       }
@@ -370,7 +438,8 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   }
 
   private List<AsmAlternative> buildAlternativePerSyntaxKind(
-      Map<AsmSyntax, List<Pair<PrintableInstruction, AsmRuleContext>>> syntaxKinds) {
+      Map<AsmSyntax,
+          List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>>> syntaxKinds) {
     var sortedByTokenSetSizeDesc = syntaxKinds.entrySet().stream().sorted(
         Comparator.comparingInt((Map.Entry<AsmSyntax, ?> e) -> e.getKey().numberOfTokenSets())
             .reversed()).toList();
@@ -385,13 +454,18 @@ public class AsmGrammarRuleGenerationPass extends Pass {
       var nonOverlapTokenSet = currentKind.getKey().getTokenSets().get(nonOverlapIndex);
       var semPredFunction = buildSemPredFunction(nonOverlapIndex, nonOverlapTokenSet);
 
-      // TODO: Implement handling of cases where there is more than one generated instruction
-      //       per syntax kind
-      var builtRuleAlternative = ((AsmNonTerminalRule) currentKind.getValue().getFirst()
-          .right().builtRule).getAlternatives().alternatives().getFirst();
+      AsmAlternative mergedAlternative;
+      var currentKindRules = currentKind.getValue();
 
-      alternatives.add(
-          wrapAlternativeInGroupWithInstructionAsmType(builtRuleAlternative, semPredFunction));
+      if (currentKindRules.size() == 1) {
+        mergedAlternative = ((AsmNonTerminalRule) currentKind.getValue().getFirst()
+            .right().builtRule).getAlternatives().alternatives().getFirst();
+        alternatives.add(
+            wrapAlternativeInGroupWithInstructionAsmType(mergedAlternative, semPredFunction));
+      } else {
+        mergedAlternative = semanticRuleMerge(currentKindRules, semPredFunction);
+        alternatives.add(mergedAlternative);
+      }
     }
 
     // Add last alternative without semantic predicate
@@ -420,7 +494,7 @@ public class AsmGrammarRuleGenerationPass extends Pass {
   private AsmGrammarRule buildRuleWithMergedAlternatives(AsmToken firstToken,
                                                          List<AsmAlternative> alternatives) {
     return new AsmNonTerminalRule(
-        Identifier.noLocation(firstToken.getStringLiteral() + "_MERGED_RULE"),
+        Identifier.noLocation(firstToken.getStringLiteral() + mergedRuleSuffix),
         new AsmAlternatives(alternatives, InstructionAsmType.instance()),
         InstructionAsmType.instance(),
         SourceLocation.INVALID_SOURCE_LOCATION
@@ -431,7 +505,13 @@ public class AsmGrammarRuleGenerationPass extends Pass {
                                         Set<AsmToken> nonOverlapTokens) {
     var laIndexNode = new ConstantNode(
         Constant.Value.fromInteger(BigInteger.valueOf(lookupIndex),
-            vadl.types.Type.unsignedInt(64)));
+            Type.unsignedInt(64)));
+
+    // Also check index+1 to consider the possibility of a negative integer,
+    // where  the additional MINUS token is in the token stream.
+    var laNextIndexNode = new ConstantNode(
+        Constant.Value.fromInteger(BigInteger.valueOf(lookupIndex + 1),
+            Type.unsignedInt(64)));
 
     // Use the LA_ID_IN builtin for string literal tokens
     var laIdInArgsList = nonOverlapTokens.stream().map(AsmToken::getStringLiteral)
@@ -446,28 +526,40 @@ public class AsmGrammarRuleGenerationPass extends Pass {
     var graph = new Graph("generated_sem_pred_behavior" + namingSequence++);
 
     // Build the expression based on which token types are present
-    var returnExpression = buildSemPredExpression(laIndexNode, laIdInArgsList, laKindInArgsList);
+    var returnExpression =
+        buildSemPredExpression(laIndexNode, laNextIndexNode, laIdInArgsList, laKindInArgsList);
     graph.addWithInputs(new ReturnNode(returnExpression));
 
     return new Function(Identifier.noLocation("sem_pred_" + namingSequence++),
-        new vadl.viam.Parameter[0], Type.bool(), graph);
+        new Parameter[0], Type.bool(), graph);
   }
 
   // If there is only one type of arguments, use the corresponding builtin call as expression
   // If there are both types of arguments use both builtins in an OR expression
   private ExpressionNode buildSemPredExpression(ConstantNode laIndexNode,
+                                                ConstantNode laNextIndexNode,
                                                 List<ConstantNode> laIdInArgsList,
                                                 List<ConstantNode> laKindInArgsList) {
+    var stringIndexCall = buildStringLiteralBuiltinCall(laIndexNode, laIdInArgsList);
+    var stringNextIndexCall = buildStringLiteralBuiltinCall(laNextIndexNode, laIdInArgsList);
+    var stringOrCall = buildOrExpressionCall(stringIndexCall, stringNextIndexCall);
+
+    var kindIndexCall = buildKindBuiltinCall(laIndexNode, laKindInArgsList);
+    var kindNextIndexCall = buildKindBuiltinCall(laNextIndexNode, laKindInArgsList);
+    var kindOrCall = buildOrExpressionCall(kindIndexCall, kindNextIndexCall);
+
     if (laKindInArgsList.isEmpty()) {
-      return buildStringLiteralBuiltinCall(laIndexNode, laIdInArgsList);
+      return stringOrCall;
     } else if (laIdInArgsList.isEmpty()) {
-      return buildKindBuiltinCall(laIndexNode, laKindInArgsList);
+      return kindOrCall;
     } else {
-      var stringCall = buildStringLiteralBuiltinCall(laIndexNode, laIdInArgsList);
-      var kindCall = buildKindBuiltinCall(laIndexNode, laKindInArgsList);
-      return new BuiltInCall(BuiltInTable.OR,
-          new NodeList<>(stringCall, kindCall), Type.bool());
+      return new BuiltInCall(BuiltInTable.OR, new NodeList<>(stringOrCall, kindOrCall),
+          Type.bool());
     }
+  }
+
+  private ExpressionNode buildOrExpressionCall(ExpressionNode left, ExpressionNode right) {
+    return new BuiltInCall(BuiltInTable.OR, new NodeList<>(left, right), Type.bool());
   }
 
   private AsmBuiltInCall buildStringLiteralBuiltinCall(ConstantNode laIndexNode,
@@ -483,5 +575,403 @@ public class AsmGrammarRuleGenerationPass extends Pass {
         Stream.concat(Stream.of(laIndexNode), laKindInArgsList.stream()).toList();
     return new AsmBuiltInCall(BuiltInTable.LA_KIND_IN, new NodeList<>(laKindInArgsNodes),
         Type.bool());
+  }
+
+  /**
+   * If there are multiple instructions of a single syntax kind, they are merged into a single
+   * rule by differentiating according to the first immediate operand.
+   * <p>As example say there are three versions of an ADDI instruction ADDI_S, ADDI and ADDI_L,
+   * but all with the same syntax: {@code addi rd, rs1, imm}. Upon parsing the assembler needs to
+   * decide which of version of ADDI should be emitted.
+   * </p>
+   * <p>
+   * To do this we create a merged rule where each version of the instruction is an alternative
+   * guarded by a semantic predicate calling the predicate of the respective immediate operand.
+   * The alternatives are ordered by instruction bit size ascending, such that the assembler
+   * chooses the smallest instruction for which the predicate holds. In the case that the
+   * immediate operand is a label, we fall back to the longest version of the instruction.
+   * </p>
+   * Conceptually the resulting merged rule then looks like this:
+   * <pre>{@code
+   * ADDI_MERGED_RULE @instruction :
+   *   // parse up until immediate operand in question
+   *   "ADDI"
+   *   // parse other operands up until immediate into local vars
+   *   // default case first
+   *   inst = (
+   *     // local var usages up to immediate
+   *     mnemonic = addi_l_mnemonic<> @operand
+   *     offset = Label @operand
+   *     // parse operands after immediate
+   *   ) @instrution
+   *   |(
+   *   var constant_var = Integer
+   *   inst = ( ?(addi_s_imm_predicate(constant_var))
+   *     // local var usages up to immediate
+   *     mnemonic = addi_s_mnemonic<> @operand
+   *     imm = constant_var @operand
+   *     // parse operands after immediate
+   *   ) @instruction
+   *   | inst = ( ?(addi_imm_predicate(constant_var))
+   *     // local var usages up to immediate
+   *     mnemonic = addi_mnemonic<> @operand
+   *     imm = constant_var @operand
+   *     // parse operands after immediate
+   *   ) @instruction
+   *   | inst = (
+   *     // local var usages up to immediate
+   *     mnemonic = addi_l_mnemonic<> @operand
+   *     imm = constant_var @operand // if val does not fit, error gets thrown in parser
+   *     // parse operands after immediate
+   *   ) @instruction
+   *   )
+   * ;
+   * }</pre>
+   */
+  private AsmAlternative semanticRuleMerge(
+      List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> tripleOfKind,
+      @Nullable Function syntaxKindPredicate) {
+    // Sort by total bitwidth ascending
+    tripleOfKind.sort(Comparator.comparingInt(p -> p.left().bitWidth()));
+
+    var resultGrammarElements = new ArrayList<AsmGrammarElement>();
+    var localVarUsages = new ArrayList<AsmLocalVarUse>();
+
+    // If immediate is a label, use the longest instruction
+    var longestInstruction = tripleOfKind.getLast();
+
+    var ruleElements = longestInstruction.right().getElements();
+    var immediatePositionInRule = ruleElements.indexOf(ruleElements.stream().filter(
+            e -> e instanceof AsmRuleInvocation r
+                && r.rule().simpleName().equals("ImmediateOperand"))
+        .findFirst().orElseThrow());
+
+    var mnemonicElementOfLongest =
+        buildElementsUpToImmediate(immediatePositionInRule, ruleElements,
+            resultGrammarElements, localVarUsages);
+
+    var labelAlternative =
+        buildLabelDefaultAlternative(ruleElements, immediatePositionInRule,
+            mnemonicElementOfLongest,
+            localVarUsages);
+
+    var constantAlternatives =
+        buildConstantAlternatives(tripleOfKind, localVarUsages, immediatePositionInRule,
+            labelAlternative);
+
+    resultGrammarElements.add(constantAlternatives);
+    var firstTokens = tripleOfKind.getFirst().right().firstTokens;
+
+    return AsmGrammarRuleGenerator.createInstructionAlternative(syntaxKindPredicate,
+        resultGrammarElements,
+        firstTokens);
+  }
+
+
+  /**
+   * Parse all elements up to immediate into local vars to later use in the concrete alternatives.
+   */
+  private AsmGrammarElement buildElementsUpToImmediate(
+      int immediatePositionInRule, List<AsmGrammarElement> ruleElements,
+      List<AsmGrammarElement> resultGrammarElements,
+      List<AsmLocalVarUse> localVarUsages) {
+    AsmGrammarElement mnemonicElementOfLongest = null;
+
+    for (int i = 0; i < immediatePositionInRule; i++) {
+      var elem = ruleElements.get(i);
+
+      if (elem instanceof HasAssignTo elemWithAssignTo) {
+        var assignTo = elemWithAssignTo.assignToElement();
+
+        if (assignTo != null) {
+          if (assignTo.getAssignToName().equals("mnemonic")) {
+            mnemonicElementOfLongest = (AsmGrammarElement) elemWithAssignTo;
+          } else {
+            var localVarName = assignTo.getAssignToName() + "Tmp";
+            var elementAsmType = elemWithAssignTo.getAsmType();
+            var localVarDefinition =
+                new AsmLocalVarDefinition(localVarName, elemWithAssignTo.copyAndOverwriteAssignTo(
+                    new AsmAssignToLocalVar(localVarName, false)), elementAsmType);
+
+            resultGrammarElements.add(localVarDefinition);
+            localVarUsages.add(
+                new AsmLocalVarUse(new AsmAssignToAttribute(assignTo.getAssignToName(), false),
+                    localVarName, elementAsmType, elementAsmType));
+          }
+
+        } else {
+          // If elem is not an attribute assignment use it as is in the merged rule
+          resultGrammarElements.add(elem);
+        }
+      } else {
+        // If elem is not an attribute assignment use it as is in the merged rule
+        resultGrammarElements.add(elem);
+      }
+    }
+    return requireNonNull(mnemonicElementOfLongest);
+  }
+
+  private AsmAlternative buildLabelDefaultAlternative(List<AsmGrammarElement> ruleElements,
+                                                      int immediatePositionInRule,
+                                                      AsmGrammarElement mnemonicElementOfLongest,
+                                                      List<AsmLocalVarUse> localVarUsages) {
+    var immediateOperandElement = ruleElements.get(immediatePositionInRule);
+    var immediateOperandName =
+        requireNonNull(((HasAssignTo) immediateOperandElement).assignToElement()).getAssignToName();
+
+    var labelAlternativeElements = new ArrayList<AsmGrammarElement>();
+    labelAlternativeElements.add(mnemonicElementOfLongest);
+
+    var labelOperand = new AsmRuleInvocation(new AsmAssignToAttribute(immediateOperandName, false),
+        getNonTerminalRule("Label"), List.of(), OperandAsmType.instance());
+
+    labelAlternativeElements.add(labelOperand);
+    labelAlternativeElements.addAll(localVarUsages);
+
+    var elemsAfterImmediate =
+        ruleElements.subList(immediatePositionInRule + 1, ruleElements.size());
+    labelAlternativeElements.addAll(elemsAfterImmediate);
+
+    var identifierTokenSet = Set.of(new AsmToken("IDENTIFIER", null));
+    var innerLabelAlternative =
+        AsmGrammarRuleGenerator.createInstructionAlternative(null, labelAlternativeElements,
+            identifierTokenSet);
+
+    var innerLabelAlternatives =
+        new AsmAlternatives(List.of(innerLabelAlternative), innerLabelAlternative.asmType());
+
+    var castLabelToInstruction = new AsmGroup(
+        new AsmAssignToAttribute("inst", false),
+        innerLabelAlternatives,
+        false,
+        InstructionAsmType.instance()
+    );
+
+    return new AsmAlternative(null, identifierTokenSet,
+        InstructionAsmType.instance(), false, List.of(castLabelToInstruction));
+  }
+
+  private Set<AsmToken> integerRuleFirstTokens() {
+    return getNonTerminalRule("Integer").getAlternatives().alternatives().stream().map(
+        AsmAlternative::firstTokens).reduce(new HashSet<>(), (acc, tokens) -> {
+          acc.addAll(tokens);
+          return acc;
+        }
+    );
+  }
+
+  private AsmAlternatives buildConstantAlternatives(
+      List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> tripleOfKind,
+      List<AsmLocalVarUse> localVarUsages, int immediatePositionInRule,
+      AsmAlternative labelAlternative) {
+
+    var constantLocalVarDefinition = new AsmLocalVarDefinition(mergingConstantLocalVar,
+        new AsmRuleInvocation(new AsmAssignToLocalVar(mergingConstantLocalVar, false),
+            getNonTerminalRule("Integer"), List.of(), ConstantAsmType.instance()),
+        ConstantAsmType.instance());
+
+    var constantAlternatives = new ArrayList<AsmAlternative>();
+    buildAlternativePerInstructionVariant(tripleOfKind, localVarUsages, immediatePositionInRule,
+        constantAlternatives);
+
+    var constantAlternativesElement =
+        new AsmAlternatives(constantAlternatives, InstructionAsmType.instance());
+
+    var outerConstantAlternative =
+        new AsmAlternative(null, integerRuleFirstTokens(), InstructionAsmType.instance(), false,
+            List.of(constantLocalVarDefinition, constantAlternativesElement));
+
+
+    var outerAlternativeList = List.of(labelAlternative, outerConstantAlternative);
+    return new AsmAlternatives(outerAlternativeList, InstructionAsmType.instance());
+  }
+
+  /**
+   * Add alternative per instruction variant, predicated with check on parsed Integer value.
+   */
+  private void buildAlternativePerInstructionVariant(
+      List<Triple<PrintableInstruction, TableGenInstruction, AsmRuleContext>> tripleOfKind,
+      List<AsmLocalVarUse> localVarUsages, int immediatePositionInRule,
+      List<AsmAlternative> constantAlternatives) {
+    for (int i = 0; i < tripleOfKind.size(); i++) {
+      var generatedElems = tripleOfKind.get(i).right().getElements();
+
+      var instructionRuleElements = new ArrayList<AsmGrammarElement>();
+
+      addElementsBeforeImmediate(localVarUsages, instructionRuleElements, generatedElems);
+
+      // Get elem from index to assign to immediate attribute of current instruction variant
+      var immediateElem = generatedElems.get(immediatePositionInRule);
+      var attributeName =
+          requireNonNull(((HasAssignTo) immediateElem).assignToElement()).getAssignToName();
+      var constantLocalVarUse =
+          new AsmLocalVarUse(new AsmAssignToAttribute(attributeName, false),
+              mergingConstantLocalVar,
+              ConstantAsmType.instance(), OperandAsmType.instance());
+
+      instructionRuleElements.add(constantLocalVarUse);
+
+      // Add remaining elements after immediate
+      instructionRuleElements.addAll(
+          generatedElems.subList(immediatePositionInRule + 1, generatedElems.size()));
+
+      // Last alternative with longest instruction is the default case (not guarded by predicate)
+      Function semPred = null;
+      if (i != tripleOfKind.size() - 1) {
+        semPred =
+            buildMergingSemanticPredicate(tripleOfKind.get(i).left(), tripleOfKind.get(i).middle(),
+                attributeName);
+      }
+
+      // Get tokens from the next elem in the AsmSyntax to guide parser with nextTokens
+      var generatedElementTokenPairs = tripleOfKind.get(i).right().elements;
+      Set<AsmToken> nextTokens = Set.of(new AsmToken("EOL", null));
+      if (generatedElems.size() > immediatePositionInRule + 1) {
+        nextTokens = generatedElementTokenPairs.get(immediatePositionInRule + 1).right();
+      }
+
+      wrapAlternativeInGroup(constantAlternatives, instructionRuleElements, nextTokens, semPred);
+    }
+  }
+
+  private static void addElementsBeforeImmediate(List<AsmLocalVarUse> localVarUsages,
+                                                 List<AsmGrammarElement> instructionRuleElements,
+                                                 List<AsmGrammarElement> generatedElems) {
+    // At index 0: mnemonic = mnemonic_function<>
+    instructionRuleElements.add(generatedElems.getFirst());
+
+    // Add already parsed operands
+    var attributeElements = generatedElems.stream().filter(
+            e -> e instanceof HasAssignTo hat && hat.assignToElement() != null
+                && !requireNonNull(hat.assignToElement()).getAssignToName().equals("mnemonic"))
+        .map(e -> (HasAssignTo) e).toList();
+
+    var localVarUsesForInstruction = new ArrayList<AsmGrammarElement>();
+    for (int j = 0; j < localVarUsages.size(); j++) {
+      var instructionAssignTo = attributeElements.get(j).assignToElement();
+      localVarUsesForInstruction.add(
+          localVarUsages.get(j).copyAndOverwriteAssignTo(requireNonNull(instructionAssignTo)));
+    }
+    instructionRuleElements.addAll(localVarUsesForInstruction);
+  }
+
+  private static void wrapAlternativeInGroup(List<AsmAlternative> constantAlternatives,
+                                             List<AsmGrammarElement> instructionRuleElements,
+                                             Set<AsmToken> nextTokens, @Nullable Function pred) {
+    var instructionAlternative =
+        AsmGrammarRuleGenerator.createInstructionAlternative(null, instructionRuleElements,
+            nextTokens);
+
+    var castToInstruction = new AsmGroup(
+        new AsmAssignToAttribute("inst", false),
+        new AsmAlternatives(List.of(instructionAlternative), instructionAlternative.asmType()),
+        false,
+        InstructionAsmType.instance()
+    );
+
+    constantAlternatives.add(
+        new AsmAlternative(pred, nextTokens, InstructionAsmType.instance(), false,
+            List.of(castToInstruction)));
+  }
+
+  @Nullable
+  private Function buildMergingSemanticPredicate(PrintableInstruction inst,
+                                                 TableGenInstruction tableGenInstruction,
+                                                 String immediateElemName) {
+    var fieldOrAccess = inst.getFieldOrAccess(immediateElemName);
+    if (fieldOrAccess == null) {
+      return null;
+    }
+
+    String semPredCondition = "";
+
+    //  std::optional<llvm::ParsedValue<int64_t>>
+    // .value() to get value from optional
+    // .Value to get the actual integer value from ParsedValue
+    String localVarAccess = mergingConstantLocalVar + ".value().Value";
+
+    if (fieldOrAccess.isLeft()) {
+      // Operand assigned to field
+      var field = fieldOrAccess.left();
+      var fieldAccess = getFieldAccessFromField(inst, tableGenInstruction, field);
+
+      // If there is no fieldAccess it is a pseudo instruction, which just has symbol operands.
+      // In this case just check that the operand is in the value range of the declared type.
+      if (fieldAccess == null) {
+        var symbolOperand = getSymbolOperand(tableGenInstruction, immediateElemName);
+        var type = ((FuncParamNode) symbolOperand.origin()).type().asDataType();
+
+        var lowest = GenerateValueRangeImmediatePass.lowestPossibleValue((BitsType) type);
+        var highest = GenerateValueRangeImmediatePass.highestPossibleValue((BitsType) type);
+        semPredCondition +=
+            localVarAccess + " >= " + lowest + " && " + localVarAccess + " <= " + highest;
+        return buildPredicateCall(semPredCondition);
+      }
+
+      var immOperand = getImmOperand(tableGenInstruction, fieldAccess);
+
+
+      // If type is not unsigned use bitwidth -1 to assume signed immediates.
+      // This matches the assumption in predicate generation.
+      var accessType = fieldAccess.type().asDataType();
+      int bitWidth = field.type().bitWidth();
+      if (!(accessType instanceof UIntType)) {
+        bitWidth -= 1;
+      }
+
+      semPredCondition += "VADL_fits_in_bit_width(" + localVarAccess + ", " + bitWidth + ") && ";
+
+      semPredCondition += immOperand.immediateOperand().predicateMethod().lower() + "(";
+      semPredCondition +=
+          immOperand.immediateOperand().rawDecoderMethod().lower() + "(" + localVarAccess + "))";
+    } else {
+      // Operand assigned to fieldAccess
+      var immOperand = getImmOperand(tableGenInstruction, fieldOrAccess.right());
+      semPredCondition +=
+          immOperand.immediateOperand().predicateMethod().lower() + "(" + localVarAccess + ")";
+    }
+
+    return buildPredicateCall(semPredCondition);
+  }
+
+  @Nullable
+  private Format.FieldAccess getFieldAccessFromField(PrintableInstruction instruction,
+                                                     TableGenInstruction tableGenInstruction,
+                                                     Format.Field field) {
+    var tableGenOperands = tableGenInstruction.getInOperands();
+    var fieldAccessCandidates =
+        instruction.formats().stream().flatMap(format -> format.fieldAccesses().stream())
+            .filter(fa -> tableGenOperands.stream().anyMatch(
+                tgOp -> tgOp instanceof GcbInstructionImmediateOperand imm && imm.fieldAccess()
+                    .equals(fa))).filter(fa -> fa.fieldRefs().contains(field));
+
+    return fieldAccessCandidates.findFirst().orElse(null);
+  }
+
+  private ReferencesImmediateOperand getImmOperand(TableGenInstruction inst,
+                                                   Format.FieldAccess fieldAccess) {
+    return (ReferencesImmediateOperand) inst.getInOperands().stream().filter(
+        op -> op instanceof GcbInstructionImmediateOperand imm && imm.fieldAccess()
+            .equals(fieldAccess)).findFirst().get();
+  }
+
+  private GcbInstructionBareSymbolOperand getSymbolOperand(TableGenInstruction inst,
+                                                           String immediateName) {
+    return (GcbInstructionBareSymbolOperand) inst.getInOperands().stream().filter(
+        op -> op instanceof GcbInstructionBareSymbolOperand sym && sym.name().equals(immediateName)
+    ).findFirst().get();
+  }
+
+  private Function buildPredicateCall(String semPredCondition) {
+    var graph = new Graph("predicateCall");
+
+    var id = Identifier.noLocation(semPredCondition);
+    var parsedConstantParam = new Parameter(id, Type.string(), 0);
+    var funcParam = new FuncParamNode(parsedConstantParam);
+    var returnNode = new ReturnNode(funcParam);
+    graph.addWithInputs(returnNode);
+
+    return new Function(Identifier.noLocation("sem_pred_" + namingSequence++), new Parameter[] {},
+        Type.bool(), graph);
   }
 }

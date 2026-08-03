@@ -190,12 +190,12 @@ instruction set architecture VarRISC32 = {
     instruction $name : TYPE_I =
       let a = R(rs1) + immU in $memstmt
     encoding $name = { opcode = MemCode, func5 = $code }
-    assembly $name = ( mnemonic, ' ', register(rd), ',', sdec(imm), '(', register(rs1), ')' )
+    assembly $name = ( mnemonic, ' ', register(rd), ',', udec(imm), '(', register(rs1), ')' )
 
     instruction AsId ( $name, '_L') : TYPE_L =
       let a = R(func5) + immU in $memstmt
     encoding AsId ( $name, '_L') = { opcode = MemLOff + $code }
-    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', sdec(imm), '(', register(func5), ')' )
+    assembly AsId ( $name, '_L') = ( $Mnemonic ($name), ' ', register(rd), ',', udec(imm), '(', register(func5), ')' )
   }
 
   model ShortMemInstruction ( name : Id, memstmt : Stat, code : Val ) : IsaDefs = {

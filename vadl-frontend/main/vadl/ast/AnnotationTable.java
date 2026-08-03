@@ -59,6 +59,7 @@ import vadl.ast.nodes.RegisterDefinition;
 import vadl.ast.nodes.RelocationDefinition;
 import vadl.ast.nodes.StringLiteral;
 import vadl.ast.nodes.TypedNode;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.gcb.annotations.OnlyNegativeNumbersAnnotation;
@@ -236,7 +237,7 @@ public class AnnotationTable {
         .build();
 
     annotationOn(EncodingDefinition.class, "select when", EncodingConstraintAnnotation::new)
-        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .check((def, annotation, tc) -> annotation.verifyExprType(tc, Type.bool()))
         .applyViam((def, annotation, lowering) -> {
           // The actual formular checks are done in the VdtEncodingConstraintValidationPass.
           var encoding = (Encoding) def;
@@ -248,7 +249,7 @@ public class AnnotationTable {
         .build();
 
     annotationOn(InstructionDefinition.class, "undefined when", InstructionUndefinedAnnotation::new)
-        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .check((def, annotation, tc) -> annotation.verifyExprType(tc, Type.bool()))
         .applyViam((def, annotation, lowering) -> {
           var instr = (Instruction) def;
           var graph = new BehaviorLowering(lowering).getFunctionGraph(annotation.expr,
@@ -308,7 +309,7 @@ public class AnnotationTable {
         }).build();
 
     annotationOn(GroupDefinition.class, "assert", () -> new ExprAnnotation(true))
-        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .check((def, annotation, tc) -> annotation.verifyExprType(tc, Type.bool()))
         .applyViam((def, annotation, lowering) -> {
           var group = (Group) def;
           var graph = new BehaviorLowering(lowering)
@@ -319,7 +320,7 @@ public class AnnotationTable {
         .build();
 
     annotationOn(GroupDefinition.class, "stop", () -> new ExprAnnotation(true))
-        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .check((def, annotation, tc) -> annotation.verifyExprType(tc, Type.bool()))
         .applyViam((def, annotation, lowering) -> {
           var group = (Group) def;
           var graph = new BehaviorLowering(lowering)
@@ -1532,9 +1533,18 @@ class ExprAnnotation extends Annotation {
     return "[ " + name + " : <expr> ]";
   }
 
-  public void verifyExprType(Type type) {
-    Diagnostic.ensure(expr.type() == type, () -> error("Invalid annotation expression", expr)
-        .locationDescription(expr, "Expression must be a %s", type));
+  public void verifyExprType(final TypeChecker tc, final Type type) {
+
+    // Suppress these generic error messages, in case more specific errors already exist.
+    // (this assumes that existing errors are related)
+    final var hasError =  !tc.getErrors().isEmpty() || DeferredDiagnosticStore.hasError();
+
+    Diagnostic.ensure(hasError || expr.type != null,
+        () -> error("Invalid annotation expression", expr)
+            .locationDescription(expr, "Unable to determine type"));
+    Diagnostic.ensure(hasError || expr.type() == type,
+        () -> error("Invalid annotation expression", expr)
+            .locationDescription(expr, "Expression must be a %s", type));
   }
 }
 

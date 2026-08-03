@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,24 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.asm.elements;
+package vadl.viam.graph.dependency;
 
-import javax.annotation.Nullable;
-import vadl.types.asmTypes.AsmType;
+import vadl.types.DataType;
+import vadl.viam.graph.Node;
 
 /**
- * Represents the usage of a string literal in a grammar rule.
+ * Represents the width of an instruction in bytes.
+ * Has the same type as the PC.
  */
-public record AsmStringLiteralUse(@Nullable AsmAssignTo assignToElement,
-                                  String value, AsmType asmType)
-    implements AsmGrammarElement, HasAssignTo {
-  @Override
-  public AsmGrammarElement copyAndOverwriteAssignTo(AsmAssignTo assignToElement) {
-    return new AsmStringLiteralUse(assignToElement, value, asmType);
+public class InstructionWidthNode extends ExpressionNode {
+
+  public InstructionWidthNode(DataType type) {
+    super(type);
   }
 
   @Override
-  public AsmType getAsmType() {
-    return asmType;
+  public ExpressionNode copy() {
+    return new InstructionWidthNode(type().asDataType());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return copy();
   }
 }

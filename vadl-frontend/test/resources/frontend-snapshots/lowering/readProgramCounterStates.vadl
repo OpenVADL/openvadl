@@ -99,11 +99,13 @@ instruction set architecture TEST = {
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
 //    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
-//    . : ' | n2 Constant             in: ()      succ: ()     type: i8   const: 0x4: SInt<8>
-//    . : ' | n3 BuiltInCall          in: (n1 n2) succ: ()     type: b8   builtin: VADL::add   operator: +
-//    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
-//    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
-//    . : ' | n6 Start                in: ()      succ: (n5)   next: set
+//    . : ' | n2 Constant             in: ()      succ: ()     type: i8   const: 0x1: SInt<8>
+//    . : ' | n3 InstructionWidth     in: ()      succ: ()     type: b8
+//    . : ' | n4 BuiltInCall          in: (n2 n3) succ: ()     type: b8   builtin: VADL::mul   operator: *
+//    . : ' | n5 BuiltInCall          in: (n1 n4) succ: ()     type: b8   builtin: VADL::add   operator: +
+//    . : ' | n6 WritesRegisterTensor in: (n0 n5) succ: ()     reg: X
+//    . : ' | n7 InstrEnd             in: (n6)    succ: ()     effects: 1
+//    . : ' | n8 Start                in: ()      succ: (n7)   next: set
 //    . : ' Assembly name: "assembly"
 //    . : ' | Function: func
 //    . : ' | FieldAccesses: []
@@ -133,11 +135,13 @@ instruction set architecture TEST = {
 //    . : ' Behavior Graph:
 //    . : ' | n0 Constant             in: ()      succ: ()     type: b3   const: 0x0: Bits<3>
 //    . : ' | n1 ReadsRegisterTensor  in: ()      succ: ()     type: b8   reg: PC
-//    . : ' | n2 Constant             in: ()      succ: ()     type: i8   const: 0x8: SInt<8>
-//    . : ' | n3 BuiltInCall          in: (n1 n2) succ: ()     type: b8   builtin: VADL::add   operator: +
-//    . : ' | n4 WritesRegisterTensor in: (n0 n3) succ: ()     reg: X
-//    . : ' | n5 InstrEnd             in: (n4)    succ: ()     effects: 1
-//    . : ' | n6 Start                in: ()      succ: (n5)   next: set
+//    . : ' | n2 Constant             in: ()      succ: ()     type: i8   const: 0x2: SInt<8>
+//    . : ' | n3 InstructionWidth     in: ()      succ: ()     type: b8
+//    . : ' | n4 BuiltInCall          in: (n2 n3) succ: ()     type: b8   builtin: VADL::mul   operator: *
+//    . : ' | n5 BuiltInCall          in: (n1 n4) succ: ()     type: b8   builtin: VADL::add   operator: +
+//    . : ' | n6 WritesRegisterTensor in: (n0 n5) succ: ()     reg: X
+//    . : ' | n7 InstrEnd             in: (n6)    succ: ()     effects: 1
+//    . : ' | n8 Start                in: ()      succ: (n7)   next: set
 //    . : ' Assembly name: "assembly"
 //    . : ' | Function: func
 //    . : ' | FieldAccesses: []

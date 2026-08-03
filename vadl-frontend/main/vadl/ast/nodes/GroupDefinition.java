@@ -16,8 +16,10 @@
 
 package vadl.ast.nodes;
 
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.ast.GroupDefUtils;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
@@ -32,7 +34,7 @@ public class GroupDefinition extends Definition implements IdentifiableNode {
   public SourceLocation loc;
 
   public GroupDefinition(IdentifierOrPlaceholder name, @Nullable TypeLiteral type,
-                  Group.Sequence groupSequence, SourceLocation loc) {
+                         Group.Sequence groupSequence, SourceLocation loc) {
     this.name = name;
     this.type = type;
     this.groupSequence = groupSequence;
@@ -69,6 +71,14 @@ public class GroupDefinition extends Definition implements IdentifiableNode {
     builder.append("\n");
   }
 
+  public Group expr() {
+    return groupSequence;
+  }
+
+  public List<OperationDefinition> operations() {
+    return GroupDefUtils.OperationCollector.operations(groupSequence);
+  }
+  
   @Override
   public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);

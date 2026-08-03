@@ -29,6 +29,7 @@ import vadl.pass.PassOrders;
 import vadl.types.BuiltInTable;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -122,8 +123,13 @@ public class PcOffsetTest extends AbstractTest {
   private void testOffset(Node usage, int offset) {
     var add = Assertions.assertInstanceOf(BuiltInCall.class, usage);
     Assertions.assertEquals(BuiltInTable.ADD, add.builtIn());
-    var offsetNode = Assertions.assertInstanceOf(ConstantNode.class, add.arg(1));
+    var offsetNode = switch (add.arg(1)) {
+      case ConstantNode constantNode -> constantNode;
+      case Canonicalizable canonicalizable -> canonicalizable.canonical();
+      default -> null;
+    };
+    var constOffsetNode = Assertions.assertInstanceOf(ConstantNode.class, offsetNode);
     Assertions.assertEquals(offset * TEST_INSTR_BYTE_LENGTH,
-        offsetNode.constant().asVal().intValue());
+        constOffsetNode.constant().asVal().intValue());
   }
 }

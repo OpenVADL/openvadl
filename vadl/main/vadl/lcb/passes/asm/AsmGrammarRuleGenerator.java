@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -43,6 +44,8 @@ import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
 import vadl.viam.asm.elements.AsmAssignToAttribute;
 import vadl.viam.asm.elements.AsmFunctionInvocation;
+import vadl.viam.asm.elements.AsmGrammarElement;
+import vadl.viam.asm.elements.AsmLocalVarDefinition;
 import vadl.viam.asm.elements.AsmRuleInvocation;
 import vadl.viam.asm.elements.AsmStringLiteralUse;
 import vadl.viam.asm.elements.HasAssignTo;
@@ -73,6 +76,8 @@ import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.GroupRef;
+import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.OperationExistsNode;
@@ -125,29 +130,33 @@ public class AsmGrammarRuleGenerator {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str && !isWhitespace(str.value())) {
-      var trimmedValue = str.value().trim();
-      var inferredRule = AsmToken.inferTerminalRule(trimmedValue);
+      addStringElement(ctx, str.value());
+    }
+  }
 
-      if (inferredRule != null) {
-        var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
-        ctx.addElementWithTokens(elem, Set.of(inferredRule));
-      } else {
-        // If no terminal rule can be inferred for a string it is likely because
-        // it consists of a combination of characters that are separate tokens.
-        // For example the string ":=" needs to be broken down to its parts ":" and "=",
-        // to be able to infer the terminal rules COLON and EQUAL.
-        for (int i = 0; i < trimmedValue.length(); i++) {
-          var partString = String.valueOf(trimmedValue.charAt(i));
-          inferredRule = AsmToken.inferTerminalRule(partString);
-          if (inferredRule == null) {
-            throw Diagnostic.error(
-                    "Assembly parser terminal rule cannot be inferred for symbol '%s'".formatted(
-                        partString), instruction.assembly())
-                .build();
-          }
-          var elem = new AsmStringLiteralUse(null, partString, StringAsmType.instance());
-          ctx.addElementWithTokens(elem, Set.of(inferredRule));
+  private void addStringElement(AsmRuleContext ctx, String str) {
+    var trimmedValue = str.trim();
+    var inferredRule = AsmToken.inferTerminalRule(trimmedValue);
+
+    if (inferredRule != null) {
+      var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
+      ctx.addElementWithTokens(elem, Set.of(inferredRule));
+    } else {
+      // If no terminal rule can be inferred for a string it is likely because
+      // it consists of a combination of characters that are separate tokens.
+      // For example the string ":=" needs to be broken down to its parts ":" and "=",
+      // to be able to infer the terminal rules COLON and EQUAL.
+      for (int i = 0; i < trimmedValue.length(); i++) {
+        var partString = String.valueOf(trimmedValue.charAt(i));
+        inferredRule = AsmToken.inferTerminalRule(partString);
+        if (inferredRule == null) {
+          throw Diagnostic.error(
+                  "Assembly parser terminal rule cannot be inferred for symbol '%s'".formatted(
+                      partString), instruction.assembly())
+              .build();
         }
+        var elem = new AsmStringLiteralUse(null, partString, StringAsmType.instance());
+        ctx.addElementWithTokens(elem, Set.of(inferredRule));
       }
     }
   }
@@ -170,14 +179,7 @@ public class AsmGrammarRuleGenerator {
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, BuiltInCall node) {
 
-    if (node.builtIn() == BuiltInTable.MNEMONIC) {
-      var instructionName = instruction.identifier().simpleName();
-      var elem = new AsmStringLiteralUse(
-          new AsmAssignToAttribute("mnemonic", false),
-          instructionName, OperandAsmType.instance());
-      ctx.addElementWithTokens(elem, Set.of(new AsmToken("IDENTIFIER", instructionName)));
-      return;
-    }
+    // MNEMONIC handled by addMnemonic method
 
     // Transform "register(rd)" to "rd = Register @operand"
     if (node.builtIn() == BuiltInTable.REGISTER) {
@@ -241,6 +243,7 @@ public class AsmGrammarRuleGenerator {
 
     if (node.builtIn() == BuiltInTable.INTEGRAL) {
       // Integral is a field used as register index, but printed as immediate not as register
+      // do an Integer to @register cast element
     }
 
   }
@@ -256,6 +259,12 @@ public class AsmGrammarRuleGenerator {
     return rule.getAlternatives().alternatives().stream()
         .flatMap(alterative -> alterative.firstTokens().stream())
         .collect(java.util.stream.Collectors.toSet());
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(AsmRuleContext ctx, InstructionWidthNode node) {
+
   }
 
   @Handler
@@ -279,19 +288,62 @@ public class AsmGrammarRuleGenerator {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ReturnNode node) {
-
-    addMnemonicIfNotInPrintingFunction(ctx);
+    addMnemonic(ctx);
 
     AsmGrammarRuleGeneratorDispatcher.dispatch(this, ctx, node.value());
 
+    var instructionAlternative =
+        createInstructionAlternative(null, ctx.getElements(), ctx.firstTokens);
+
+    ctx.builtRule = new AsmNonTerminalRule(instruction.identifier(),
+        new AsmAlternatives(List.of(instructionAlternative), instructionAlternative.asmType()),
+        InstructionAsmType.instance(),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+  }
+
+  private void addMnemonic(AsmRuleContext ctx) {
+    if (instruction.assembly().function().behavior().getNodes()
+        .noneMatch(behaviorNode -> behaviorNode instanceof BuiltInCall builtInCall
+            && builtInCall.builtIn() == BuiltInTable.MNEMONIC)) {
+      addMnemonicConstantFunction(ctx);
+    } else {
+      addMnemonicConstantFunction(ctx);
+      addStringElement(ctx, instruction.identifier().simpleName());
+    }
+  }
+
+  private void addMnemonicConstantFunction(AsmRuleContext ctx) {
+    var functionName = instruction.identifier().simpleName() + "_mnemonic";
+    var expressionNode =
+        new ConstantNode(new Constant.Str(instruction.identifier().simpleName()));
+    var returnNode = new ReturnNode(expressionNode);
+    var graph = new Graph(functionName);
+    graph.addWithInputs(returnNode);
+
+    var instructionNameConstantFunction = new Function(
+        new Identifier(functionName, SourceLocation.INVALID_SOURCE_LOCATION),
+        new Parameter[] {}, Type.string(), graph);
+    ctx.generatedFunctions.add(instructionNameConstantFunction);
+
+    var elem = new AsmFunctionInvocation(
+        new AsmAssignToAttribute("mnemonic", false),
+        instructionNameConstantFunction, List.of(), OperandAsmType.instance());
+    ctx.addElementWithTokens(elem, Set.of());
+  }
+
+  /**
+   * Build an {@link AsmAlternative} with a {@link GroupAsmType} according to the passed elements.
+   */
+  public static AsmAlternative createInstructionAlternative(@Nullable Function semanticPredicate,
+                                                            List<AsmGrammarElement> elements,
+                                                            Set<AsmToken> firstTokens) {
     AsmType ruleType;
+    var relevantElements = elements.stream()
+        .filter(e -> !(e instanceof AsmLocalVarDefinition)).toList();
 
-    // TODO: only use relevant elements in this check for now all elements are relevant
-    //       (e.g. semantic predicates are not supported yet)
-    var elements = ctx.getElements();
-    if (elements.size() > 1) {
-
-      var subtypeMap = elements.stream()
+    if (relevantElements.size() > 1) {
+      var subtypeMap = relevantElements.stream()
           .filter(e -> e instanceof HasAssignTo assignTo
               && assignTo.assignToElement() != null
               && assignTo.assignToElement() instanceof AsmAssignToAttribute)
@@ -304,39 +356,10 @@ public class AsmGrammarRuleGenerator {
           );
       ruleType = new GroupAsmType(subtypeMap);
     } else {
-      ruleType = elements.getFirst().getAsmType();
+      ruleType = relevantElements.getFirst().getAsmType();
     }
 
-    ctx.builtRule = new AsmNonTerminalRule(instruction.identifier(),
-        new AsmAlternatives(List.of(
-            new AsmAlternative(null, ctx.firstTokens, ruleType,
-                false, elements)
-        ), ruleType), InstructionAsmType.instance(),
-        SourceLocation.INVALID_SOURCE_LOCATION
-    );
-  }
-
-  private void addMnemonicIfNotInPrintingFunction(AsmRuleContext ctx) {
-    if (instruction.assembly().function().behavior().getNodes()
-        .noneMatch(behaviorNode -> behaviorNode instanceof BuiltInCall builtInCall
-            && builtInCall.builtIn() == BuiltInTable.MNEMONIC)) {
-      var functionName = instruction.identifier().simpleName() + "_mnemonic";
-      var expressionNode =
-          new ConstantNode(new Constant.Str(instruction.identifier().simpleName()));
-      var returnNode = new ReturnNode(expressionNode);
-      var graph = new Graph(functionName);
-      graph.addWithInputs(returnNode);
-
-      var instructionNameConstantFunction = new Function(
-          new Identifier(functionName, SourceLocation.INVALID_SOURCE_LOCATION),
-          new Parameter[] {}, Type.string(), graph);
-      ctx.generatedFunctions.add(instructionNameConstantFunction);
-
-      var elem = new AsmFunctionInvocation(
-          new AsmAssignToAttribute("mnemonic", false),
-          instructionNameConstantFunction, List.of(), OperandAsmType.instance());
-      ctx.addElementWithTokens(elem, Set.of());
-    }
+    return new AsmAlternative(semanticPredicate, firstTokens, ruleType, false, elements);
   }
 
   @Handler
@@ -589,6 +612,12 @@ public class AsmGrammarRuleGenerator {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, SliceNode node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  @SuppressWarnings("MissingJavadocMethod")
+  public void handle(AsmRuleContext ctx, GroupRef node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 }
