@@ -16,6 +16,7 @@
 
 package vadl.iss.template;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.iss.template.IssRenderUtils.mapRegTensors;
@@ -24,18 +25,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FilenameUtils;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.formatting.CodeFormatter;
 import vadl.iss.IssUtils;
 import vadl.iss.codegen.QemuClangFormatter;
+import vadl.iss.passes.common.IssFloatBuiltinCollectionPass;
 import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.iss.passes.extensions.MemoryRegionInfo;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.types.BuiltInTable;
+import vadl.viam.Constant;
 import vadl.viam.Endianness;
 import vadl.viam.Memory;
 import vadl.viam.Specification;
@@ -130,6 +135,11 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_machine_upper", configuration().machineName().toUpperCase());
     vars.put("gen_machine_lower", configuration().machineName().toLowerCase());
     vars.put("register_tensors", mapRegTensors(specification));
+    vars.put("float_builtins", getFloatBuiltins(passResults.lastResultOf(
+        IssFloatBuiltinCollectionPass.class,
+        IssFloatBuiltinCollectionPass.Output.class
+    )));
+    vars.put("float_formats", getFloatFormats(specification));
     vars.put("pc_info", getPcInfo(specification));
     vars.put("target_size", configuration().targetSize().width);
     vars.put("mem_regions", memRegions(specification));
@@ -146,6 +156,37 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
 
   private ExceptionInfo getExceptionInfo(Specification viam) {
     return viam.processor().get().isa().expectExtension(ExceptionInfo.class);
+  }
+
+  private Map<String, List<List<Object>>> getFloatBuiltins(
+      IssFloatBuiltinCollectionPass.Output config) {
+    var conf = config.floatBuiltIns().entrySet().stream().collect(Collectors.toMap(
+        e -> builtInName(e.getKey()),
+        e -> getFloatBuiltinConfigs(e.getValue())
+    ));
+    return conf;
+  }
+
+  private List<List<Object>> getFloatBuiltinConfigs(Set<List<Constant>> configs) {
+    return configs.stream().map(config -> config.stream().map(c -> switch (c) {
+      case Constant.FloatType ft -> Map.of(
+          "bit_size", ft.size(),
+          "name", requireNonNull(ft.format()).nameLower()
+      );
+      case Constant.Value v -> Integer.toString(v.intValue());
+      default -> throw new IllegalStateException();
+    }).toList()).toList();
+  }
+
+  private List<Map<String, String>> getFloatFormats(Specification viam) {
+    return viam.isa().get().ownFloatFormats().stream().map(fmt -> Map.of(
+        "name", fmt.nameLower(),
+        "bit_size", Integer.toString(requireNonNull(fmt.encoding()).size)
+    )).toList();
+  }
+
+  private String builtInName(BuiltInTable.BuiltIn builtin) {
+    return builtin.name().substring(builtin.name().lastIndexOf(':') + 1);
   }
 
   private Map<String, String> getPcInfo(Specification viam) {

@@ -8,6 +8,7 @@
 #include "trace.h"
 #include "tcg/debug-assert.h"
 #include "hw/qdev-properties.h"
+#include "fpu/softfloat-helpers.h"
 #include "vadl-builtins.h"
 #include "vadl-iss-builtins.h"
 
@@ -100,7 +101,7 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
     }
 
     [# th:each="access : ${base_clear_cpu_accessors}"]
-    [(${access.name})](env); [/]
+    [(${access.name})](env);[/]
 
 [(${reset})]
 }
