@@ -191,6 +191,106 @@ public interface VadlBuiltInEmptyNoStatusDispatcher<T> extends VadlBuiltInNoStat
   }
 
   @Override
+  default void handleFSQRT(T input) {
+  }
+
+  @Override
+  default void handleFADD(T input) {
+  }
+
+  @Override
+  default void handleFSUB(T input) {
+  }
+
+  @Override
+  default void handleFMUL(T input) {
+  }
+
+  @Override
+  default void handleFDIV(T input) {
+  }
+
+  @Override
+  default void handleFMADD(T input) {
+  }
+
+  @Override
+  default void handleFMSUB(T input) {
+  }
+
+  @Override
+  default void handleFNMADD(T input) {
+  }
+
+  @Override
+  default void handleFNMSUB(T input) {
+  }
+
+  @Override
+  default void handleFMIN(T input) {
+  }
+
+  @Override
+  default void handleFMAX(T input) {
+  }
+
+  @Override
+  default void handleFLT(T input) {
+  }
+
+  @Override
+  default void handleFLE(T input) {
+  }
+
+  @Override
+  default void handleFEQ(T input) {
+  }
+
+  @Override
+  default void handleFCVT(T input) {
+  }
+
+  @Override
+  default void handleFCVTFS(T input) {
+  }
+
+  @Override
+  default void handleFCVTFU(T input) {
+  }
+
+  @Override
+  default void handleFCVTSF(T input) {
+  }
+
+  @Override
+  default void handleFCVTUF(T input) {
+  }
+
+  @Override
+  default void handleFISINF(T input) {
+  }
+
+  @Override
+  default void handleFISZERO(T input) {
+  }
+
+  @Override
+  default void handleFISNEG(T input) {
+  }
+
+  @Override
+  default void handleFISDENORM(T input) {
+  }
+
+  @Override
+  default void handleFISSNAN(T input) {
+  }
+
+  @Override
+  default void handleFISQNAN(T input) {
+  }
+
+  @Override
   default void handleConcat(T input) {
   }
 }
