@@ -73,6 +73,7 @@ import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ExprVisitor;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallIndex;
 import vadl.ast.nodes.ForallStatement;
@@ -522,7 +523,12 @@ class MacroExpander
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    return new SymbolExpr(expandExpr(expr.path), expandExpr(expr.size), copyLoc(expr.location));
+    var symbolArgs = new ArrayList<Expr>(expr.symbolArgs.size());
+    for (var i = 0; i < expr.symbolArgs.size(); i++) {
+      var symbolArg = expr.symbolArgs.get(i);
+      symbolArgs.add(expandExpr(symbolArg));
+    }
+    return new SymbolExpr(expandExpr(expr.path), symbolArgs, copyLoc(expr.location));
   }
 
   @Override
@@ -703,6 +709,14 @@ class MacroExpander
         expandExpr(definition.identifier),
         definition.typeLiteral != null ? expandExpr(definition.typeLiteral) : null,
         expandExpr(definition.value),
+        copyLoc(definition.loc)
+    );
+  }
+
+  @Override
+  public Definition visit(FloatTypeDefinition definition) {
+    return new FloatTypeDefinition(
+        expandExpr(definition.identifier),
         copyLoc(definition.loc)
     );
   }

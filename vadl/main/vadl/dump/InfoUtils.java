@@ -16,6 +16,7 @@
 
 package vadl.dump;
 
+import com.google.common.html.HtmlEscapers;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -230,7 +231,7 @@ public class InfoUtils {
         """
             <pre><code class="text-sm text-gray-500 whitespace-pre">%s
             </code></pre>
-            """.formatted(code)
+            """.formatted(HtmlEscapers.htmlEscaper().escape(code))
     );
   }
 

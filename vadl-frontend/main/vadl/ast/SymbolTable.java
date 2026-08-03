@@ -52,6 +52,7 @@ import vadl.ast.nodes.EnumerationDefinition;
 import vadl.ast.nodes.ExistsInExpr;
 import vadl.ast.nodes.ExistsInThenExpr;
 import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -1174,6 +1175,16 @@ public class SymbolTable {
       }
 
       definition.forEachChild(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(FloatTypeDefinition definition) {
+      beforeTravel(definition);
+      // FloatTypeDefinition has no @Child fields, so it's not in NodeChildrenRegistry,
+      // and we need to manually visit annotations
+      definition.annotations.forEach(this::travel);
       afterTravel(definition);
       return null;
     }

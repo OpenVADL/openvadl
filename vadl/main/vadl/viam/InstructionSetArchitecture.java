@@ -34,6 +34,7 @@ public class InstructionSetArchitecture extends Definition {
   @Nullable
   private final Counter pc;
 
+  private final List<FloatFormat> floatFormats;
   private final List<Format> formats;
   private final List<Function> functions;
   private final List<Operation> operations;
@@ -72,6 +73,7 @@ public class InstructionSetArchitecture extends Definition {
                                     @Nullable Counter pc,
                                     List<Memory> memories,
                                     List<ArtificialResource> artificialResources,
+                                    List<FloatFormat> floatFormats,
                                     @Nullable Group group
   ) {
     super(identifier);
@@ -87,6 +89,7 @@ public class InstructionSetArchitecture extends Definition {
     this.pc = pc;
     this.memories = memories;
     this.artificialResources = artificialResources;
+    this.floatFormats = floatFormats;
     this.group = group;
 
     // set parent architecture of instructions
@@ -170,6 +173,14 @@ public class InstructionSetArchitecture extends Definition {
     return registers;
   }
 
+
+  /**
+   * Returns the {@link FloatFormat}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<FloatFormat> ownFloatFormats() {
+    return floatFormats;
+  }
 
   /**
    * Returns the {@link Format}s <b>owned</b> by this ISA.

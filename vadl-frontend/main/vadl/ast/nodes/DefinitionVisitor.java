@@ -68,6 +68,8 @@ public interface DefinitionVisitor<R> {
 
   public R visit(ExceptionDefinition definition);
 
+  public R visit(FloatTypeDefinition definition);
+
   public R visit(FormatDefinition definition);
 
   public R visit(DerivedFormatField definition);

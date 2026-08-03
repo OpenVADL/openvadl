@@ -16,24 +16,29 @@
 
 package vadl.ast.nodes;
 
+import java.util.List;
 import java.util.Objects;
 import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
- * A representation of terms of form {@code "MEM<9>"}.
+ * A representation of terms of form {@code MEM<9>} or {@code VADL::fcvts::<IEEE32, 64>}.
+ * These terms always have at least one argument in the pointy brackets.
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class SymbolExpr extends Expr implements IsSymExpr {
   @Child
   public IsId path;
+  /**
+   * The list of arguments in the pointy brackets. Always contains at least one element.
+   */
   @Child
-  public Expr size;
+  public List<Expr> symbolArgs;
   public SourceLocation location;
 
-  public SymbolExpr(IsId path, Expr size, SourceLocation location) {
+  public SymbolExpr(IsId path, List<Expr> symbolArgs, SourceLocation location) {
     this.path = path;
-    this.size = size;
+    this.symbolArgs = symbolArgs;
     this.location = location;
   }
 
@@ -43,8 +48,8 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
   }
 
   @Override
-  public Expr size() {
-    return size;
+  public List<Expr> symbolArgs() {
+    return symbolArgs;
   }
 
   @Override
@@ -60,11 +65,25 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     path.prettyPrint(indent, builder);
-    var prefix = size instanceof BinaryExpr ? "<( " : "< ";
-    var suffix = size instanceof BinaryExpr ? " )>" : " >";
-    builder.append(prefix);
-    size.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
-    builder.append(suffix);
+    if (symbolArgs.size() > 1) {
+      builder.append("::");
+    }
+    builder.append("< ");
+    boolean first = true;
+    for (var arg : symbolArgs) {
+      if (!first) {
+        builder.append(", ");
+      }
+      if (arg instanceof BinaryExpr) {
+        builder.append("(");
+      }
+      arg.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
+      if (arg instanceof BinaryExpr) {
+        builder.append(")");
+      }
+      first = false;
+    }
+    builder.append(" >");
   }
 
   @Override
@@ -83,13 +102,13 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
     }
 
     SymbolExpr that = (SymbolExpr) o;
-    return path.equals(that.path) && Objects.equals(size, that.size);
+    return path.equals(that.path) && symbolArgs.equals(that.symbolArgs);
   }
 
   @Override
   public int hashCode() {
     int result = path.hashCode();
-    result = 31 * result + Objects.hashCode(size);
+    result = 31 * result + Objects.hashCode(symbolArgs);
     return result;
   }
 }

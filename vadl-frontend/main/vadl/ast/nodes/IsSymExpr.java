@@ -16,6 +16,7 @@
 
 package vadl.ast.nodes;
 
+import java.util.List;
 import javax.annotation.Nullable;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
@@ -25,5 +26,5 @@ public sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
 
   @Override
   @Nullable
-  public Expr size();
+  public List<Expr> symbolArgs();
 }

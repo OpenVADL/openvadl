@@ -44,6 +44,8 @@ public interface DefinitionVisitor {
 
   void visit(Group group);
 
+  void visit(FloatFormat floatFormat);
+
   void visit(Format format);
 
   void visit(Format.Field formatField);
@@ -138,6 +140,7 @@ public interface DefinitionVisitor {
       isa.ownMemories().forEach(e -> e.accept(this));
       isa.artificialResources().forEach(e -> e.accept(this));
       isa.ownInstructions().forEach(e -> e.accept(this));
+      isa.ownFloatFormats().forEach(e -> e.accept(this));
       isa.ownPseudoInstructions().forEach(e -> e.accept(this));
       var pc = isa.pc();
       if (pc != null) {
@@ -196,6 +199,12 @@ public interface DefinitionVisitor {
     public void visit(Group group) {
       beforeTraversal(group);
       afterTraversal(group);
+    }
+
+    @Override
+    public void visit(FloatFormat floatFormat) {
+      beforeTraversal(floatFormat);
+      afterTraversal(floatFormat);
     }
 
     @Override
@@ -480,6 +489,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Group group) {
+
+    }
+
+    @Override
+    public void visit(FloatFormat floatFormat) {
 
     }
 

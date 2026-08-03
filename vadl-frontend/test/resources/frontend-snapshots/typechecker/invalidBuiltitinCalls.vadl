@@ -28,7 +28,7 @@ function abc(x: Bits<8>) -> Bits<8> = VADL::adds(1, x)
 //       ╭── test/resources/frontend-snapshots/typechecker/invalidBuiltitinCalls.vadl:8:39
 //       │
 //     8 │ function abc(x: Bits<8>) -> Bits<8> = VADL::adds(1, x)
-//       │                                       ^^^^^^^^^^^^^^^^ The builtin has the signature `(BitsType, BitsType) -> StructType` but got `Bits<1>, Bits<8>`.
+//       │                                       ^^^^^^^^^^^^^^^^ The builtin has the signature `(BitsType, BitsType) -> StructType` but got `(Bits<1>, Bits<8>)`.
 //       │                                                        help: Try casting some of the constant arguments to explicit types.
 //       │
 //

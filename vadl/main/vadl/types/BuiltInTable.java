@@ -16,6 +16,7 @@
 
 package vadl.types;
 
+import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 import static vadl.types.Type.constructDataType;
 
@@ -1582,7 +1583,7 @@ public class BuiltInTable {
       return hasSameBitWidth;
     }
 
-    public Optional<Constant> compute(List<Constant> args) {
+    public Optional<Constant> compute(List<Constant> constArgs, List<Constant> args) {
       logger.atWarn().log("Computation of constants for built-in {} is not implemented", this);
       return Optional.empty();
     }
@@ -1600,10 +1601,11 @@ public class BuiltInTable {
      * in the built-in definition, and if not, if it is possible to produce a type of the
      * parameter type class that can be trivially cast from the argument type.
      *
-     * @param argTypes of the concrete arguments
+     * @param constArgs the concrete constant arguments
+     * @param argTypes  of the concrete arguments
      * @return true if argument types are correct, false otherwise
      */
-    public boolean takes(List<Type> argTypes) {
+    public boolean takes(List<Constant> constArgs, List<Type> argTypes) {
 
       if (this.signature().hasVarArgs()) {
         if (argTypes.size() < argTypeClasses().size()) {
@@ -1629,7 +1631,13 @@ public class BuiltInTable {
         return false;
       }
 
-      return argsCompatible(argTypes, argTypeClasses());
+      if (constArgTypeClasses().size() != constArgs.size()) {
+        // if the number of constant arguments is not correct, this can't be true
+        return false;
+      }
+
+      return argsCompatible(argTypes, argTypeClasses())
+          && argsCompatible(constArgs.stream().map(Constant::type).toList(), constArgTypeClasses());
     }
 
     private boolean argsCompatible(List<Type> argTypes,
@@ -1667,14 +1675,28 @@ public class BuiltInTable {
     }
 
     /**
+     * Returns the result type of the built-in when called with the given argument types and
+     * constant arguments.
+     * It assumes that the argument types are valid, such as a call to
+     * {@link #takes(List, List)} would return true.
+     *
+     * @param constArgs concrete constant arguments.
+     * @param argTypes  concrete types of argument for call.
+     * @return the concrete type that is return by this built-in
+     */
+    public abstract Type returns(List<Constant> constArgs, List<Type> argTypes);
+
+    /**
      * Returns the result type of the built-in when called with the given argument types.
      * It assumes that the argument types are valid, such as a call to
-     * {@link #takes(List)} would return true.
+     * {@link #takes(List, List)} would return true.
      *
      * @param argTypes concrete types of argument for call.
      * @return the concrete type that is return by this built-in
      */
-    public abstract Type returns(List<Type> argTypes);
+    public Type returns(List<Type> argTypes) {
+      return returns(List.of(), argTypes);
+    }
 
 
     public final boolean matches(RelationType type) {
@@ -1684,6 +1706,10 @@ public class BuiltInTable {
     @Override
     public String toString() {
       return name + signature;
+    }
+
+    public List<Class<? extends Type>> constArgTypeClasses() {
+      return signature.constArgTypeClass();
     }
 
     public List<Class<? extends Type>> argTypeClasses() {
@@ -1746,11 +1772,11 @@ public class BuiltInTable {
     private RelationType signature;
     private BuiltIn.Kind kind;
     @Nullable
-    private Function<List<Constant>, Optional<Constant>> computeFunction;
+    private BiFunction<List<Constant>, List<Constant>, Optional<Constant>> computeFunction;
     @Nullable
-    private Function<List<Type>, Boolean> takesFunction;
+    private BiFunction<List<Constant>, List<Type>, Boolean> takesFunction;
     @Nullable
-    private Function<List<Type>, Type> returnsFunction;
+    private BiFunction<List<Constant>, List<Type>, Type> returnsFunction;
     private boolean hasSameBitWidth = false;
 
     BuiltInBuilder(String name, @Nullable String operator, RelationType signature,
@@ -1763,52 +1789,74 @@ public class BuiltInTable {
 
     public <T extends Constant, R extends Constant> BuiltInBuilder computeUnary(
         Function<T, R> computeFunction) {
-      this.computeFunction =
-          (args) -> Optional.of(computeFunction.apply((T) args.get(0)));
+      this.computeFunction = (constArgs, args) ->
+          Optional.of(computeFunction.apply((T) args.get(0)));
       return this;
     }
 
     public <T extends Constant, R extends Constant> BuiltInBuilder compute(
         Function<List<T>, R> computeFunction) {
-      this.computeFunction =
-          (args) -> Optional.of(computeFunction.apply(args.stream().map(a -> (T) a).toList()));
+      this.computeFunction = (constArgs, args) ->
+          Optional.of(computeFunction.apply(args.stream().map(a -> (T) a).toList()));
       return this;
     }
 
     public <A extends Constant, B extends Constant, R extends Constant> BuiltInBuilder compute(
         BiFunction<A, B, R> computeFunction) {
-      this.computeFunction =
-          (args) -> Optional.of(computeFunction.apply((A) args.get(0), (B) args.get(1)));
+      this.computeFunction = (constArgs, args) ->
+          Optional.of(computeFunction.apply((A) args.get(0), (B) args.get(1)));
       return this;
     }
 
     @SuppressWarnings("LineLength")
     public <A extends Constant, B extends Constant, C extends Constant, R extends Constant> BuiltInBuilder compute(
         TriFunction<A, B, C, R> computeFunction) {
-      this.computeFunction =
-          (args) -> Optional.of(
-              computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2)));
+      this.computeFunction = (constArgs, args) ->
+          Optional.of(computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2)));
       return this;
     }
 
     public BuiltInBuilder noCompute() {
-      this.computeFunction = (args) -> Optional.empty();
+      this.computeFunction = (constArgs, args) -> Optional.empty();
+      return this;
+    }
+
+    public BuiltInBuilder takesData(
+        BiFunction<List<Constant>, List<DataType>, Boolean> takesFunction) {
+      this.takesFunction = (constArgs, args) -> args.stream().allMatch(DataType.class::isInstance)
+          && takesFunction.apply(constArgs, args.stream().map(DataType.class::cast).toList());
       return this;
     }
 
     public BuiltInBuilder takesData(Function<List<DataType>, Boolean> takesFunction) {
-      this.takesFunction = (args) -> args.stream().allMatch(DataType.class::isInstance)
-          && takesFunction.apply(args.stream().map(DataType.class::cast).toList());
-      return this;
+      return takesData((constArgs, args) -> takesFunction.apply(args));
+    }
+
+    public BuiltInBuilder takesDataFromFirstFloatSize(
+        BiFunction<Integer, List<DataType>, Boolean> takesFunction) {
+      return takesData((constArgs, args) -> {
+        ensure(!constArgs.isEmpty(), "Expected at least one constant argument, but found none.");
+        return takesFunction.apply(floatTypeSize(constArgs.get(0)), args);
+      });
+    }
+
+    public BuiltInBuilder takesDataFromFirstTwoFloatSizes(
+        TriFunction<Integer, Integer, List<DataType>, Boolean> takesFunction) {
+      return takesData((constArgs, args) -> {
+        ensure(constArgs.size() >= 2, "Expected at least two constant argument, but found %d.",
+            constArgs.size());
+        return takesFunction.apply(
+            floatTypeSize(constArgs.get(0)), floatTypeSize(constArgs.get(1)), args);
+      });
     }
 
     /**
-     * This will use the default implementation of {@link BuiltIn#takes(List)}.
+     * This will use the default implementation of {@link BuiltIn#takes(List, List)}.
      * So it will compare type classes and checks if an argument is trivially cast
      * to a parameter's type class.
      */
     public BuiltInBuilder takesDefault() {
-      this.takesFunction = (args) -> true;
+      this.takesFunction = (constArgs, args) -> true;
       return this;
     }
 
@@ -1826,12 +1874,32 @@ public class BuiltInTable {
       return this;
     }
 
+    public BuiltInBuilder takesFloatArgs(int floatArgCount) {
+      return takesDataFromFirstFloatSize((size, args) -> args.size() == floatArgCount
+          && args.stream().limit(floatArgCount).allMatch(a -> a.bitWidth() == size));
+    }
+
+    public BuiltInBuilder takesFloatArgsAndFrm(int floatArgCount) {
+      return takesDataFromFirstFloatSize((size, args) -> args.size() == floatArgCount + 1
+          && args.stream().limit(floatArgCount).allMatch(a -> a.bitWidth() == size)
+          && args.get(floatArgCount).bitWidth() == 3);
+    }
+
+    public BuiltInBuilder takesFrm(int frmArgIdx) {
+      return takesData(args -> args.size() == frmArgIdx + 1 && args.get(frmArgIdx).bitWidth() == 3);
+    }
+
     public BuiltInBuilder returns(Type returnType) {
       returns((args) -> returnType);
       return this;
     }
 
     public BuiltInBuilder returns(Function<List<Type>, Type> returnsFunction) {
+      returns((constArgs, args) -> returnsFunction.apply(args));
+      return this;
+    }
+
+    public BuiltInBuilder returns(BiFunction<List<Constant>, List<Type>, Type> returnsFunction) {
       this.returnsFunction = returnsFunction;
       return this;
     }
@@ -1840,17 +1908,25 @@ public class BuiltInTable {
       returnsFromFirstAsDataType(
           (firstDataType) -> {
             var result = constructDataType(returnTypeClass, firstDataType.bitWidth());
-            Objects.requireNonNull(result);
+            requireNonNull(result);
             return result;
           });
       return this;
+    }
+
+    public BuiltInBuilder returnsFirstFloatType() {
+      return returnsFromFirstFloatSize(BitsType::bits);
+    }
+
+    public BuiltInBuilder returnsSecondFloatType() {
+      return returnsFromFirstTwoFloatSizes((s0, s1) -> BitsType.bits(s1));
     }
 
     public <T extends DataType> BuiltInBuilder returnsFirstBitWidthAndStatus(
         Class<T> returnTypeClass) {
       returnsFromFirstAsDataType((firstDataType) -> {
         var valType = constructDataType(returnTypeClass, firstDataType.bitWidth());
-        Objects.requireNonNull(valType);
+        requireNonNull(valType);
         return Type.struct(
             BUILTIN_RESULT, valType,
             BUILTIN_STATUS, Type.status()
@@ -1879,6 +1955,42 @@ public class BuiltInTable {
       return this;
     }
 
+    public <T extends DataType> BuiltInBuilder returnsFromSecondConstSize(
+        Class<T> returnTypeClass) {
+      return returns((constArgs, args) -> {
+        ensure(constArgs.size() >= 2, "Expected at least two constant argument, but found %d.",
+            constArgs.size());
+        return requireNonNull(constructDataType(returnTypeClass, constInt(constArgs.get(1))));
+      });
+    }
+
+    public BuiltInBuilder returnsFromFirstFloatSize(Function<Integer, Type> returnFunction) {
+      return returns((constArgs, args) -> {
+        ensure(!constArgs.isEmpty(), "Expected at least one constant argument, but found none.");
+        return returnFunction.apply(floatTypeSize(constArgs.get(0)));
+      });
+    }
+
+    public BuiltInBuilder returnsFromFirstTwoFloatSizes(
+        BiFunction<Integer, Integer, Type> returnFunction) {
+      return returns((constArgs, args) -> {
+        ensure(constArgs.size() >= 2, "Expected at least two constant argument, but found %d.",
+            constArgs.size());
+        return returnFunction.apply(
+            floatTypeSize(constArgs.get(0)), floatTypeSize(constArgs.get(1)));
+      });
+    }
+
+    private int floatTypeSize(Constant arg) {
+      ensure(arg instanceof Constant.FloatType, "Expected a float type, but found %s", arg);
+      return ((Constant.FloatType) arg).size();
+    }
+
+    private int constInt(Constant arg) {
+      ensure(arg instanceof Constant.Value, "Expected a value type, but found %s", arg);
+      return ((Constant.Value) arg).intValue();
+    }
+
 
     public BuiltIn build() {
 
@@ -1894,39 +2006,37 @@ public class BuiltInTable {
 
       return new BuiltIn(name, operator, signature, kind, hasSameBitWidth) {
         @Override
-        public Optional<Constant> compute(List<Constant> args) {
+        public Optional<Constant> compute(List<Constant> constArgs, List<Constant> args) {
           if (computeFunction == null) {
-            return super.compute(args);
+            return super.compute(constArgs, args);
           }
 
-          var argTypes = args.stream()
-              .map(Constant::type)
-              .toList();
-          if (!takes(argTypes)) {
+          var argTypes = args.stream().map(Constant::type).toList();
+          if (!takes(constArgs, argTypes)) {
             throw new ViamError("Types of arguments does not match type signature of " + signature)
                 .addContext("built-in", this)
-                .addContext("constants", List.of(args));
+                .addContext("constants", List.of(constArgs, args));
           }
-          return computeFunction.apply(args)
+          return computeFunction.apply(constArgs, args)
               .map(result -> result instanceof Constant.Value value
-                  ? value.trivialCastTo(returns(argTypes))
+                  ? value.trivialCastTo(returns(constArgs, argTypes))
                   : result);
         }
 
         @Override
-        public boolean takes(List<Type> argTypes) {
+        public boolean takes(List<Constant> constArgs, List<Type> argTypes) {
           // always check general case first
-          var generalConstraintsValid = super.takes(argTypes);
+          var generalConstraintsValid = super.takes(constArgs, argTypes);
           if (generalConstraintsValid) {
             // if general case doesn't fail, then test specific constraints
-            return takesFunction.apply(argTypes);
+            return takesFunction.apply(constArgs, argTypes);
           }
           return false;
         }
 
         @Override
-        public Type returns(List<Type> argTypes) {
-          return returnsFunction.apply(argTypes);
+        public Type returns(List<Constant> constArgs, List<Type> argTypes) {
+          return returnsFunction.apply(constArgs, argTypes);
         }
       };
     }

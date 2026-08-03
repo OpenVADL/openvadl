@@ -63,6 +63,7 @@ import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ExprVisitor;
+import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -125,13 +126,13 @@ import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
 import vadl.utils.Either;
 import vadl.utils.Pair;
-import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Definition;
 import vadl.viam.ExceptionDef;
+import vadl.viam.FloatFormat;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
@@ -912,6 +913,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new ConstantNode(value);
     }
 
+    if (computedTarget instanceof FloatTypeDefinition floatType) {
+      var format = (FloatFormat) viamLowering.fetch(floatType).orElseThrow();
+      return new ConstantNode(new Constant.FloatType(format));
+    }
+
     // Enum field
     if (computedTarget instanceof EnumerationDefinition.Entry enumField) {
       // Inline the value of the enum
@@ -1376,6 +1382,26 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new ReadStageOutputNode(output);
   }
 
+  private Constant visitConstArg(Expr expr) {
+    Node origin = null;
+    if (expr instanceof Identifier identifier) {
+      origin = requireNonNull(identifier.target());
+    } else if (expr instanceof IdentifierPath path) {
+      origin = requireNonNull(path.target());
+    }
+
+    // TODO: the constant evaluator can only evaluate integers currently. Once other stuff like
+    //       strings and float-types are supported, we do not need this function anymore and can
+    //       directly call the constant evaluator.
+    //       !!! There is a similar method in TypeChecker
+    if (origin instanceof FloatTypeDefinition floatType) {
+      var format = (FloatFormat) viamLowering.fetch(floatType).orElseThrow();
+      return new Constant.FloatType(format);
+    }
+
+    return constantEvaluator.eval(expr).toViamConstant();
+  }
+
   @Override
   public ExpressionNode visit(CallIndexExpr expr) {
 
@@ -1384,6 +1410,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         && expr.computedTarget() instanceof StageDefinition stageDefinition) {
       return visitStageCall(expr, stageDefinition);
     }
+
+    var symbolArgs = expr.symbolArgs();
+
+    var constArgs = symbolArgs != null
+        ? symbolArgs.stream().map(this::visitConstArg).toList()
+        : List.<Constant>of();
 
     var argGroups = expr.args();
     final var args = new NodeList<ExpressionNode>(AstUtils.argumentCount(argGroups));
@@ -1395,11 +1427,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Builtin Call
     if (expr.computedBuiltIn != null) {
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
-        exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, args,
-            typeBeforeSlice);
+        exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, args, typeBeforeSlice);
       } else {
-        exprBeforeSlice = new BuiltInCall(expr.computedBuiltIn, args,
-            typeBeforeSlice);
+        exprBeforeSlice = new BuiltInCall(expr.computedBuiltIn, constArgs, args, typeBeforeSlice);
       }
     } else {
       exprBeforeSlice = switch (expr.computedTarget()) {
@@ -1432,9 +1462,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         }
 
         case MemoryDefinition memDef -> {
-          var sizeExpr = expr.target.size();
-          var words = sizeExpr != null
-              ? constantEvaluator.eval(sizeExpr).value().intValueExact()
+          var words = symbolArgs != null
+              ? constantEvaluator.eval(symbolArgs.getFirst()).value().intValueExact()
               : 1;
           yield new ReadMemNode((Memory) viamLowering.fetch(memDef).orElseThrow(),
               words, args.getFirst(), typeBeforeSlice.asDataType());
@@ -1745,9 +1774,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         }
       });
 
-      var sizeExpr = callTarget.target.size();
-      callSize = sizeExpr != null
-          ? constantEvaluator.eval(sizeExpr).value().intValueExact()
+      var symbolArgs = callTarget.target.symbolArgs();
+      callSize = symbolArgs != null
+          ? constantEvaluator.eval(symbolArgs.getFirst()).value().intValueExact()
           : null;
     } else if (statement.target instanceof Identifier identTarget) {
       targetDef = (vadl.ast.nodes.Definition) requireNonNull(identTarget.target());

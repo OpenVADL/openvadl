@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,18 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.ast.nodes;
+package vadl.types;
 
-import java.util.List;
-import javax.annotation.Nullable;
-import vadl.utils.WithLocation;
+/**
+ * A class that represents the VADL float type.
+ */
+public class FloatType extends Type {
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsCallExpr extends WithLocation permits CallIndexExpr, IsSymExpr {
-  public IsId path();
+  protected FloatType() { }
 
-  @Nullable
-  public List<Expr> symbolArgs();
-
-  public void prettyPrint(int indent, StringBuilder builder);
+  @Override
+  public String name() {
+    return "FloatType";
+  }
 }

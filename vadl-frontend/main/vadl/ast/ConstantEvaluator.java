@@ -164,10 +164,18 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         }
       }
 
+      if (!builtin.signature().constArgTypeClass().isEmpty()) {
+        throw new EvaluationError(
+            "Built-in function `%s` cannot be constant evaluated (yet)."
+                .formatted(builtin.name()),
+            loc
+        );
+      }
+
       // NOTE: If you are seeing this issue, someone forgot to add the `compute` method for a
       // built-in function. Look to into BuiltInTable.
       var val = builtin
-          .compute(args.stream().map(c -> (Constant) c.toViamConstant()).toList())
+          .compute(List.of(), args.stream().map(c -> (Constant) c.toViamConstant()).toList())
           .orElseThrow(() -> new EvaluationError(
               "Built-in function `%s` cannot be constant evaluated (yet).".formatted(
                   builtin.name()),
