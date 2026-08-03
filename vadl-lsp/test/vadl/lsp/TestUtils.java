@@ -62,6 +62,19 @@ public class TestUtils {
    * @return given fileContent with range marked, formatted for use in a snapshot
    */
   public static String showRangeInFile(Range range, String fileContent) {
+    return showRangeInFile(range, fileContent, "RANGE");
+  }
+
+  /**
+   * Displays a range marker within the given file content.
+   *
+   * @param range the lsp range (with start and end position)
+   * @param fileContent the entire content of the file which should contain range
+   * @param name the name of this range, used as part of the marker. Should be uppercase for
+   *             aesthetic reasons.
+   * @return given fileContent with range marked, formatted for use in a snapshot
+   */
+  public static String showRangeInFile(Range range, String fileContent, String name) {
     String[] lines = fileContent.split("\n", -1);
     boolean startOutOfBounds = true;
     boolean endOutOfBounds = true;
@@ -88,7 +101,7 @@ public class TestUtils {
       startOutOfBounds = false;
       var line = lines[start.getLine()];
       lines[start.getLine()] = line.substring(0, start.getCharacter())
-          + "<RANGE>" + line.substring(start.getCharacter());
+          + "<" + name + ">" + line.substring(start.getCharacter());
     }
 
     return SEPARATOR_LINE + "\n  " + String.join("\n  ", lines)

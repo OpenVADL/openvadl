@@ -68,7 +68,7 @@ public class GotoDefinitionTest extends IntegrationTest {
         new TextDocumentIdentifier(inputUri), position
     )).get();
 
-    var rangesInFiles = processResult(result, snapshot);
+    var rangesInFiles = processResult(result, input, snapshot);
     snapshot.add("returned Goto Definition", result);
     snapshot.add("... which looks like this", rangesInFiles);
     snapshot.verify();
@@ -76,7 +76,7 @@ public class GotoDefinitionTest extends IntegrationTest {
 
   private String processResult(
       Either<List<? extends Location>, List<? extends LocationLink>> definitionResult,
-      TestSnapshot snapshot) {
+      String input, TestSnapshot snapshot) {
 
     List<String> rangesInFiles = new ArrayList<>();
 
@@ -89,8 +89,15 @@ public class GotoDefinitionTest extends IntegrationTest {
 
     } else {
       for (var link : definitionResult.getRight()) {
-        rangesInFiles.add(TestUtils.showRangeInFile(link.getTargetRange(),
-            snapshot.getInputData(snapshot.getInputNameFromUri(link.getTargetUri()))));
+        var inputData = snapshot.getInputData(snapshot.getInputNameFromUri(link.getTargetUri()));
+
+        rangesInFiles.add(TestUtils.showRangeInFile(link.getTargetSelectionRange(), inputData,
+            "TARGET SELECTION RANGE"));
+        rangesInFiles.add(TestUtils.showRangeInFile(link.getTargetRange(), inputData,
+            "TARGET RANGE"));
+        rangesInFiles.add(TestUtils.showRangeInFile(link.getOriginSelectionRange(), input,
+            "ORIGIN SELECTION RANGE"));
+
         link.setTargetUri(TestUtils.normalizeUri(link.getTargetUri()));
       }
     }

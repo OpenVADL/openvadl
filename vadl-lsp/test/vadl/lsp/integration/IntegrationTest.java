@@ -59,7 +59,7 @@ public abstract class IntegrationTest {
 
     // Client Capabilities - these may need to be adjusted if new features are added to the server
     var textDocumentCapabilities = new TextDocumentClientCapabilities();
-    textDocumentCapabilities.setDefinition(new DefinitionCapabilities());
+    textDocumentCapabilities.setDefinition(new DefinitionCapabilities(false, true));
     textDocumentCapabilities.setHover(new HoverCapabilities(
         List.of(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT), false));
     textDocumentCapabilities.setPublishDiagnostics(new PublishDiagnosticsCapabilities());
