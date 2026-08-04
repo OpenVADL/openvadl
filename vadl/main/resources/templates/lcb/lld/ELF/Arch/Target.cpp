@@ -33,9 +33,26 @@ namespace lld
                 RelExpr getRelExpr(RelType type, const Symbol &s,
                                    const uint8_t *loc) const override;
                 void relocate(uint8_t * loc, const Relocation &rel, uint64_t val) const override;
+                RelType getDynRel(RelType type) const override;
+
+                [(${namespace})]() {
+                  if (config->is64) {
+                    symbolicRel = R_[(${namespace})]_64;
+                    relativeRel = R_[(${namespace})]_64;
+                  } else {
+                    symbolicRel = R_[(${namespace})]_32;
+                    relativeRel = R_[(${namespace})]_32;
+                  }
+                }
             };
 
+
+
         } // end anonymous namespace
+
+        RelType [(${namespace})]::getDynRel(RelType type) const {
+            return type == symbolicRel ? type : static_cast<RelType>(R_rv64im_NONE);
+        }
 
         RelExpr [(${namespace})]::getRelExpr(const RelType type, const Symbol &s,
                                             const uint8_t *loc) const
