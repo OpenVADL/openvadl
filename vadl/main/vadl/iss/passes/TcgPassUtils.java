@@ -31,6 +31,7 @@ import vadl.types.BuiltInTable;
 import vadl.utils.GraphUtils;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.ScheduledNode;
@@ -80,8 +81,9 @@ public class TcgPassUtils {
    * @return {@code true} if the node must be scheduled, {@code false} otherwise
    */
   public static boolean mustBeScheduled(DependencyNode node) {
-    // pc reads can be done at translation time and are not translated to TCG
-    // pc reads are translated to IssStaticPcRegNode at this point -> no need to check
+    // pc and tb-state reg reads can be done at translation time and are not translated to TCG
+    // these are translated to IssStaticPcRegNode and IssStaticReadRegNode at this point
+    // -> no need to check
     return GraphUtils.hasDependencies(node, dep -> dep instanceof ReadResourceNode);
   }
 

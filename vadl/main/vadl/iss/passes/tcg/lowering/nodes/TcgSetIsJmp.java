@@ -19,6 +19,7 @@ package vadl.iss.passes.tcg.lowering.nodes;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
@@ -26,6 +27,7 @@ import vadl.viam.graph.Node;
 /**
  * Not really a TCG operation, but a context setter, that assigns some value to the
  * {@code ctx->base.is_jmp} variable.
+ * That is done either directly or via a call to a helper function.
  * This is required if the TCG translation should be stopped because the translation block
  * ends (e.g. because of some branching).
  */
@@ -53,24 +55,29 @@ public class TcgSetIsJmp extends TcgNode {
   }
 
   @DataValue
-  private Type type;
-
+  @Nullable
+  private final Type type;
 
   /**
    * Constructor for TcgSetIsJmp.
    *
-   * @param type Defines the behavior done by the translator. It can be NORETURN, NEXT, or CHAIN.
+   * @param type Defines the behavior done by the translator. It can be NORETURN, NEXT, CHAIN, EXIT
+   *             or {@code null}. {@code null} indicates, that the decision which type to use must
+   *             be done at translation time.
    */
-  public TcgSetIsJmp(Type type) {
+  public TcgSetIsJmp(@Nullable Type type) {
     this.type = type;
   }
 
-  public Type type() {
+  public @Nullable Type type() {
     return type;
   }
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
+    if (type == null) {
+      return "is_jmp_set(ctx, &s);";
+    }
     return "ctx->base.is_jmp = " + type.cCode() + ";";
   }
 

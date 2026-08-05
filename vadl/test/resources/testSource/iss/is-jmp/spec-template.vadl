@@ -1,0 +1,24 @@
+instruction set architecture Test = {
+  [ execution state ] register ESR1 : Bits<16>
+  [ execution state ] register ESR2 : Bits<16>
+
+  register R1 : Bits<32>
+  register R2 : Bits<32>
+
+  format INSTR_F : Bits<32> = { op : Bits<32> }
+
+  instruction INSTR : INSTR_F = { %s }
+  encoding INSTR = { op = 0 }
+  assembly INSTR = "INSTR"
+
+  memory MEM : Bits<32> -> Bits<8>
+  program counter PC : Bits<32>
+
+  exception E () = {}
+}
+
+processor TestProc implements Test = {
+  [ firmware ]
+  [ base: 0x00000000 ]
+  memory region [RAM] DRAM in MEM
+}

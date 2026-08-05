@@ -62,6 +62,7 @@ import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -335,7 +336,10 @@ class Decomposer
           writeAccessorIndices(write),
           IssWriteRegNode.WindowKind.CHUNK,
           Constant.Value.of(chunkOffset, Type.bits(32)).toNode(),
-          Constant.Value.of(chunkWidth, Type.bits(32)).toNode()
+          Constant.Value.of(chunkWidth, Type.bits(32)).toNode(),
+          write instanceof IssWriteRegNode issWrite
+              ? issWrite.isStatic()
+              : !GraphUtils.hasDependencies(write, ReadResourceNode.class::isInstance)
       ));
       chunkWrite.setSourceLocation(write.location());
 
