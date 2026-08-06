@@ -24,6 +24,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImm
 import vadl.pass.PassResults;
 import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.passes.functionInliner.Inliner;
 
 /**
  * Wrapper class for the visitor.
@@ -40,12 +41,12 @@ public class AssemblyInstructionPrinterCodeGenerator {
     // There are two cases
     // The first case is that all immediates are really immediates.
     // And the second case is that the immediate is actually a label.
-    var immediates = tableGenInstruction.getInOperands().stream()
+    final var immediates = tableGenInstruction.getInOperands().stream()
         .filter(x -> x instanceof ReferencesImmediateOperand
             || x instanceof GcbInstructionBareSymbolOperand)
         .toList();
 
-    var isImm = immediates.stream().map(x -> String.format("MI->getOperand(%s).isImm()",
+    final var isImm = immediates.stream().map(x -> String.format("MI->getOperand(%s).isImm()",
             tableGenInstruction.getInOperands().indexOf(x) + tableGenInstruction.getOutOperands()
                 .size()))
         .collect(Collectors.joining(" && "));
@@ -55,8 +56,10 @@ public class AssemblyInstructionPrinterCodeGenerator {
     var handler2 =
         new AssemblyInstructionPrinterLabelHandler(passResults, instruction, tableGenInstruction);
 
-    var returnNodes =
-        instruction.assembly().function().behavior().getNodes(ReturnNode.class).toList();
+    var assemblyBehaviorCopy = instruction.assembly().function().behavior().copy();
+    Inliner.inlineFuncs(assemblyBehaviorCopy);
+
+    var returnNodes = assemblyBehaviorCopy.getNodes(ReturnNode.class).toList();
     var returnNode = returnNodes.getFirst();
 
     AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(handler, handler.ctx(),
