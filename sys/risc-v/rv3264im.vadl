@@ -296,7 +296,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   relocation pcrel_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
   [relative]
   [syntax : "%{}({})"]
-  relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = (symbol + 4) as SInt<12>
+  relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
   [global offset]
   [syntax : "%{}({})"]
