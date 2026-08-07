@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -89,6 +89,7 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var namespace = lcbConfiguration().targetName().value().toLowerCase();
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
@@ -112,7 +113,7 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
           if (r instanceof AutomaticallyGeneratedRelocation) {
             var fun = encodingFunction(r, passResults);
             return new ElfRelocationInfo(r.elfRelocationName().value(),
-                r.kind().llvmKind(),
+                r.llvmKind(namespace),
                 r.valueRelocation().functionName().lower(),
                 r.fieldUpdateFunction().functionName().lower(),
                 fun.left(),
@@ -120,7 +121,7 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
             );
           } else {
             return new ElfRelocationInfo(r.elfRelocationName().value(),
-                r.kind().llvmKind(),
+                r.llvmKind(namespace),
                 r.valueRelocation().functionName().lower(),
                 r.fieldUpdateFunction().functionName().lower(),
                 "",
@@ -132,8 +133,7 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
     var elfInfo = createElfInfo();
 
-    return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().targetName().value().toLowerCase(),
+    return Map.of(CommonVarNames.NAMESPACE, namespace,
         CommonVarNames.MAX_INSTRUCTION_WORDSIZE, elfInfo.maxInstructionWordSize(),
         CommonVarNames.IS_BIG_ENDIAN, elfInfo.isBigEndian(),
         "elfRelocations", elfRelocations);
