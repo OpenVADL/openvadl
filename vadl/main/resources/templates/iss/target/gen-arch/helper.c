@@ -24,15 +24,6 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
     cpu_loop_exit(cs);
 }
 
-void helper_raise_syscall(CPU[(${gen_arch_upper})]State *env)
-{
-    CPUState *cs = env_cpu(env);
-
-    cs->exception_index = EXCP_SYSCALL;
-
-    cpu_loop_exit(cs);
-}
-
 [# th:each="exc : ${exc_info.exceptions}"]
 [(${exc.helper_impl})]
 [/]
