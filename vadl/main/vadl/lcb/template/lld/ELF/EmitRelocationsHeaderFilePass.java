@@ -24,6 +24,9 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Emit the LLD Relocations header file.
+ */
 public class EmitRelocationsHeaderFilePass extends LcbTemplateRenderingPass {
   public EmitRelocationsHeaderFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {

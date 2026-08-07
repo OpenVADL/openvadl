@@ -493,6 +493,11 @@ public class AnnotationTable {
           var lit = (StringLiteral) annotation.definition.values.getFirst();
           def.addAnnotation(new RelocationSyntaxAnnotation(lit.value));
         }).build();
+
+    annotationOn(RelocationDefinition.class, "paired", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          ((Relocation) def).setIsPaired(true);
+        }).build();
   }
 
   /**
@@ -1107,7 +1112,6 @@ interface AnnotationDeclaration {
 }
 
 
-
 // ---------- GENERAL ANNOTATION CLASSES ----------
 
 /**
@@ -1676,7 +1680,7 @@ class ExprAnnotation extends Annotation {
 
     // Suppress these generic error messages, in case more specific errors already exist.
     // (this assumes that existing errors are related)
-    final var hasError =  !tc.getErrors().isEmpty() || DeferredDiagnosticStore.hasError();
+    final var hasError = !tc.getErrors().isEmpty() || DeferredDiagnosticStore.hasError();
 
     Diagnostic.ensure(hasError || expr.type != null,
         () -> error("Invalid annotation expression", expr)

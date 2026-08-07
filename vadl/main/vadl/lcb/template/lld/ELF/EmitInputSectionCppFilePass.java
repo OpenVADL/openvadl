@@ -24,6 +24,9 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Emit the LLD InputSection file.
+ */
 public class EmitInputSectionCppFilePass extends LcbTemplateRenderingPass {
   public EmitInputSectionCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
