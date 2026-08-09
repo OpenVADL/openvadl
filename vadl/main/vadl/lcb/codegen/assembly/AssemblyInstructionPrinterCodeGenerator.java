@@ -56,10 +56,10 @@ public class AssemblyInstructionPrinterCodeGenerator {
     var handler2 =
         new AssemblyInstructionPrinterLabelHandler(passResults, instruction, tableGenInstruction);
 
-    var assemblyBehaviorCopy = instruction.assembly().function().behavior().copy();
-    Inliner.inlineFuncs(assemblyBehaviorCopy);
+    var assemblyBehavior = instruction.assembly().function().behavior();
+    Inliner.inlineFuncs(assemblyBehavior);
 
-    var returnNodes = assemblyBehaviorCopy.getNodes(ReturnNode.class).toList();
+    var returnNodes = assemblyBehavior.getNodes(ReturnNode.class).toList();
     var returnNode = returnNodes.getFirst();
 
     AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(handler, handler.ctx(),
