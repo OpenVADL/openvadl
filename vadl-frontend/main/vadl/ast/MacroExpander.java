@@ -157,6 +157,7 @@ import vadl.ast.nodes.SymbolExpr;
 import vadl.ast.nodes.TemplateParam;
 import vadl.ast.nodes.TypeLiteral;
 import vadl.ast.nodes.TypedFormatField;
+import vadl.ast.nodes.UnOp;
 import vadl.ast.nodes.UnaryExpr;
 import vadl.ast.nodes.UsingDefinition;
 import vadl.ast.nodes.WildcardLiteral;
@@ -316,12 +317,14 @@ class MacroExpander
         for (var entry : recordInstance.entries) {
           entries.add(expandNode(entry));
         }
-        yield new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
+        yield new RecordInstance(recordInstance.type, entries,
+            copyLoc(recordInstance.sourceLocation));
       }
       case EncodingDefinition.EncsNode encs -> expandEncs(encs);
       case PlaceholderNode placeholderNode -> expand(placeholderNode);
       case MacroInstanceNode macroInstanceNode -> expand(macroInstanceNode);
       case MacroMatchNode macroMatchNode -> expand(macroMatchNode);
+      case UnOp unOp -> new UnOp(unOp.operator, copyLoc(unOp.location));
       case null, default -> node;
     };
   }
@@ -1066,8 +1069,8 @@ class MacroExpander
   public Definition visit(ProcessDefinition processDefinition) {
     var templateParams = new ArrayList<TemplateParam>(processDefinition.templateParams.size());
     for (var templateParam : processDefinition.templateParams) {
-      templateParams.add(new TemplateParam(templateParam.identifier(),
-          templateParam.type,
+      templateParams.add(new TemplateParam(expandExpr(templateParam.identifier()),
+          expandExpr(templateParam.type),
           templateParam.value == null ? null : expandExpr(templateParam.value)));
     }
 
@@ -1128,7 +1131,7 @@ class MacroExpander
   public Definition visit(SpecialPurposeRegisterDefinition definition) {
     return new SpecialPurposeRegisterDefinition(
         definition.purpose,
-        definition.exprs,
+        expandExprs(definition.exprs),
         copyLoc(definition.loc)
     );
   }
@@ -1281,12 +1284,12 @@ class MacroExpander
   @Override
   public Definition visit(AsmDescriptionDefinition definition) {
     return new AsmDescriptionDefinition(
-        definition.id,
-        definition.abi,
-        definition.modifiers,
-        definition.directives,
-        definition.rules,
-        definition.commonDefinitions,
+        expandExpr(definition.id),
+        expandExpr(definition.abi),
+        expandDefinitions(definition.modifiers),
+        expandDefinitions(definition.directives),
+        expandDefinitions(definition.rules),
+        expandDefinitions(definition.commonDefinitions),
         copyLoc(definition.loc)
     );
   }
@@ -1729,14 +1732,14 @@ class MacroExpander
   private List<Parameter> expandParams(List<Parameter> params) {
     var expandedParams = new ArrayList<>(params);
     expandedParams.replaceAll(param ->
-        new Parameter(param.identifier(), expandExpr(param.typeLiteral)));
+        new Parameter(expandExpr(param.identifier()), expandExpr(param.typeLiteral)));
     return expandedParams;
   }
 
   private List<StageOutputDefinition> expandStageOutputs(List<StageOutputDefinition> outputs) {
     var expanded = new ArrayList<>(outputs);
     expanded.replaceAll(param ->
-        new StageOutputDefinition(param.identifier(), expandExpr(param.typeLiteral)));
+        new StageOutputDefinition(expandExpr(param.identifier()), expandExpr(param.typeLiteral)));
     return expanded;
   }
 
