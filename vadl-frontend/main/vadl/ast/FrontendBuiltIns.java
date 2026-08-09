@@ -87,8 +87,29 @@ final class FrontendBuiltIns {
           .returns(Type.bool())
           .build();
 
+  /**
+   * Element-of check for operations. Semantically equivalent to {@link #OP_ELEM_OF}.
+   */
+  static final BuiltInTable.BuiltIn OP_IN =
+      BuiltInTable.func("VADL::inop", "in",
+              Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * Negation of the element-of check for operation.
+   * Semantically equivalent to {@link #OP_NOT_ELEM_OF}.
+   */
+  static final BuiltInTable.BuiltIn OP_NOT_IN =
+      BuiltInTable.func("VADL::ninop", "!in",
+              Type.relation(PseudoFormatType.class, PseudoFormatType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
   static final List<BuiltInTable.BuiltIn> operationElementOfPredicates =
-      List.of(OP_ELEM_OF, OP_NOT_ELEM_OF);
+      List.of(OP_ELEM_OF, OP_NOT_ELEM_OF, OP_IN, OP_NOT_IN);
 
   private FrontendBuiltIns() {
   }

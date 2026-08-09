@@ -20,6 +20,7 @@ instruction set architecture ISA = {
 
   [stop : exists i in {O1}, j in {O2} then i = j]
   [assert : VLIW(0) ∈ O1 && VLIW(2) ∉ O2]
+  [assert : VLIW(0) in O1 && VLIW(2) !in O2]
   [assert : VLIW(0).opcode = 0b0]
   [assert : VLIW(VLIW.length - 1).opcode != 0b01]
   [assert : forall i in {O1, O2} then i.opcode(7..4,2) = 0b10101]

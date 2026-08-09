@@ -18,6 +18,7 @@ package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.ast.FrontendBuiltIns.OP_NOT_ELEM_OF;
+import static vadl.ast.FrontendBuiltIns.OP_NOT_IN;
 import static vadl.ast.GroupDefUtils.GroupExprBitLengthCollector.maxBitLength;
 import static vadl.ast.GroupDefUtils.GroupExprLengthCollector.maxLength;
 import static vadl.error.Diagnostic.error;
@@ -1062,9 +1063,9 @@ public class TypeChecker
       commonInsns.retainAll(r.instructions());
 
       if (commonInsns.isEmpty()) {
-        // If there is no static overlap, we can emit some diagnostics. For ∈, the expr is always
-        // false, and for ∉ it's always true.
-        final boolean constVal = builtIn == OP_NOT_ELEM_OF;
+        // If there is no static overlap, we can emit some diagnostics. For ∈ and `in`, the expr is
+        // always false, and for ∉ and `!in` it's always true.
+        final boolean constVal = builtIn == OP_NOT_ELEM_OF || builtIn == OP_NOT_IN;
         final var op = Objects.requireNonNull(r.operations().stream().findFirst().orElse(null));
         DeferredDiagnosticStore.add(
             warning("This expression is always %s".formatted(constVal), location)
