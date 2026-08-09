@@ -189,6 +189,17 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
     }
 
     @Override
+    public void visit(FloatFormat floatFormat) {
+      lineAt(atIndent, "Type: %s".formatted(compactType(floatFormat.type())));
+      var encoding = floatFormat.encoding();
+      lineAt(atIndent, "Encoding: %s".formatted(
+          encoding == null
+              ? "-"
+              : "%s(%s)".formatted(encoding.name(), encoding.size)
+      ));
+    }
+
+    @Override
     public void visit(Format.Field field) {
       lineAt(atIndent, "Type: %s".formatted(compactType(field.type())));
       lineAt(atIndent, "BitSlice: %s".formatted(field.bitSlice()));

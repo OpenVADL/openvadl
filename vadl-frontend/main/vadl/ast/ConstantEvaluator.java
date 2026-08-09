@@ -164,6 +164,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         }
       }
 
+      // NOTE: The semantics of a builtin function may depend on constant parameters. The built-in
+      // compute function does not account for these yet. Thus, constant-evaluating built-ins with
+      // constant parameters can not yet be done.
       if (!builtin.signature().constArgTypeClass().isEmpty()) {
         throw new EvaluationError(
             "Built-in function `%s` cannot be constant evaluated (yet)."

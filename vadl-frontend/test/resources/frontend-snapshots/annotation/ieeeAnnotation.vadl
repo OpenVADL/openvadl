@@ -1,0 +1,24 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ IEEE : 32 ]
+  float-type binary32
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . FloatTypeDefinition name: "binary32"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "IEEE" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

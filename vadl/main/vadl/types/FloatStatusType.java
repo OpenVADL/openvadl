@@ -16,6 +16,8 @@
 
 package vadl.types;
 
+import java.util.Map;
+
 /**
  * A class that represents the VADL float status type.
  *
@@ -37,13 +39,13 @@ public class FloatStatusType extends StructType {
   public static final String INEXACT = "nx";
 
   protected FloatStatusType() {
-    super(Type.struct(
+    super(Type.struct(Map.of(
         INVALID, Type.bool(),
         DIVISION_BY_ZERO, Type.bool(),
         OVERFLOW, Type.bool(),
         UNDERFLOW, Type.bool(),
         INEXACT, Type.bool()
-    ).fields());
+    )).fields());
   }
 
   @Override

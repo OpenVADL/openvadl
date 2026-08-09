@@ -1,0 +1,30 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST =
+{
+  [ IEEE : 7 ]
+  float-type invalid
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid IEEE encoding size
+//       ╭── test/resources/frontend-snapshots/annotation/invalidIeeeAnnotationInvalidSize.vadl:5:3
+//       │
+//     5 │   [ IEEE : 7 ]
+//       │   ^^^^^^^^^^^^
+//       │
+//       The following sizes are supported: 32, 64
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . FloatTypeDefinition name: "invalid"
+//    . : AnnotationDefinition
+//    . : ' Identifier name: "IEEE" type: null
+//    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -35,6 +35,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -196,6 +197,7 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
+import vadl.viam.InstructionSetArchitecture;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -944,15 +946,11 @@ public class TypeChecker
     @Nullable
     private BuiltInCheckResult get(BuiltInTable.BuiltIn builtIn, List<Constant> constArgs,
                                    List<Type> argTypes) {
-      var inner = store.get(builtIn);
-      if (inner == null) {
-        return null;
-      }
-      var innerInner = inner.get(constArgs);
-      if (innerInner == null) {
-        return null;
-      }
-      return innerInner.get(argTypes);
+      // unwrap the maps and propagate `null`
+      return Optional.ofNullable(store.get(builtIn))
+          .map(inner -> inner.get(constArgs))
+          .map(inner -> inner.get(argTypes))
+          .orElse(null);
     }
 
     private void put(BuiltInTable.BuiltIn builtIn, List<Constant> constArgs, List<Type> argTypes,
@@ -1268,19 +1266,15 @@ public class TypeChecker
 
     if (!builtIn.takes(constArgs, argTypes)) {
       // FIXME: Further improve these error messages.
+      var calledParamsAndTypes = String.join(", ", Stream.concat(
+          constArgs.stream().map(Constant::toString),
+          argTypes.stream().map(Type::toString)
+      ).toList());
       var areSomeConst = originalArgTypes.stream().anyMatch(ConstantType.class::isInstance);
-      var calledTypes = "(%s)".formatted(
-          String.join(", ", argTypes.stream().map(Type::toString).toList()));
-      if (!constArgs.isEmpty()) {
-        calledTypes = "<%s>%s".formatted(
-          String.join(", ", constArgs.stream().map(Constant::toString).toList()),
-            calledTypes
-        );
-      }
       addErrorAndStopChecking(
           error("Type Mismatch", location)
               .locationDescription(location, "The builtin has the signature `%s` but got `%s`.",
-                  builtIn.signature(), calledTypes)
+                  builtIn.signature(), calledParamsAndTypes)
               .applyIf(areSomeConst, b -> b.locationHelp(location,
                   "Try casting some of the constant arguments to explicit types."))
               .build());
@@ -1306,13 +1300,6 @@ public class TypeChecker
     //       !!! There is a similar method in BehaviorLowering
     if (origin instanceof FloatTypeDefinition floatType) {
       check(floatType);
-      if (floatType.size == null) {
-        addErrorAndStopChecking(
-            error("Missing float-type encoding size", floatType)
-                .help("Annotate with e.g. `[ IEEE : <size> ]`")
-                .build()
-        );
-      }
       return new Constant.FloatType(requireNonNull(floatType.size), requireNonNull(name));
     }
 
@@ -1321,6 +1308,12 @@ public class TypeChecker
 
   @Override
   public Void visit(FloatTypeDefinition definition) {
+    if (definition.annotations.stream().map(a -> a.annotation)
+        .noneMatch(FloatEncodingSizeAnnotation.class::isInstance)) {
+      addErrorAndStopChecking(error("Missing float-type encoding size", definition)
+          .help("Annotate with e.g. `[ IEEE : <size> ]`")
+          .build());
+    }
     return null;
   }
 

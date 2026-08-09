@@ -17,7 +17,21 @@
 package vadl.types;
 
 /**
- * A class that represents the VADL float type.
+ * A class that represents the built-in type for float-type expressions.
+ *
+ * <pre>{@code
+ * // This declares a float format
+ * [ IEEE : 32 ]
+ * float-type binary32
+ *
+ * // It can later be used as an expression
+ * VADL::fcvtfs::<binary32, 32>(...)
+ * //             ^^^^^^^^ this is an expression with the type `FloatType`
+ * }</pre>
+ *
+ * <strong>Note:</strong> FloatType is NOT a {@link DataType}. It is NOT the type of float
+ * expressions. Float expressions are {@link BitsType}. There exist no conversions between this
+ * and any other type.
  */
 public class FloatType extends Type {
 

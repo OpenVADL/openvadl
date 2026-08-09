@@ -28,7 +28,6 @@ import vadl.utils.SourceLocation;
  * float-type binary32
  * }</pre>
  */
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class FloatTypeDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
 

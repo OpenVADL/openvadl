@@ -202,25 +202,6 @@ public abstract class Type {
     return struct(fields);
   }
 
-  /**
-   * Retrieves the struct type with the specified subtypes.
-   *
-   * @return the struct type with the specified subtypes
-   */
-  public static StructType struct(String field1, Type type1,
-                                  String field2, Type type2,
-                                  String field3, Type type3,
-                                  String field4, Type type4,
-                                  String field5, Type type5) {
-    var fields = new LinkedHashMap<String, Type>();
-    fields.put(field1, type1);
-    fields.put(field2, type2);
-    fields.put(field3, type3);
-    fields.put(field4, type4);
-    fields.put(field5, type5);
-    return struct(fields);
-  }
-
   private static @Nullable StatusType statusType = null;
 
   /**
@@ -480,7 +461,6 @@ public abstract class Type {
   /// These are all the builtin types that exist in the language.
   /// Some of them cannot be initialized like them since they require a size, like `SInt<16>`
   /// which is why they are named bases.
-  public static final Set<String> builtinTypeBases = Set.of(
-      "Bool", "String", "Bits", "UInt", "SInt", "Instruction", "FetchResult"
-  );
+  public static final Set<String> builtinTypeBases =
+      Set.of("Bool", "String", "Bits", "UInt", "SInt", "Instruction", "FetchResult");
 }

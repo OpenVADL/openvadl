@@ -250,7 +250,11 @@ public class RecursiveAstVisitor implements AstVisitor<Void> {
   @Override
   public Void visit(FloatTypeDefinition definition) {
     beforeTravel(definition);
-    definition.forEachChild(this::travel);
+    // FIXME: FloatTypeDefinition has no fields annotated with @Child, therefore the
+    //        ChildNodeRegistry does not account for it. The children of the super type are
+    //        not checked (this seems wrong). So we manually visit the annotations.
+    definition.annotations.forEach(this::travel);
+    //definition.forEachChild(this::travel);
     afterTravel(definition);
     return null;
   }

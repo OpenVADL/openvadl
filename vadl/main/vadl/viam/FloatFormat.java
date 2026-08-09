@@ -91,8 +91,7 @@ public class FloatFormat extends Definition implements DefProp.WithType {
   @Override
   public void verify() {
     super.verify();
-    // FIXME: for now this is checked here, but this should create a diagnostic instead of ViamError
-    ensure(encoding != null, "Encoding not specified");
+    ensure(encoding != null, "Encoding missing");
   }
 
   @Override

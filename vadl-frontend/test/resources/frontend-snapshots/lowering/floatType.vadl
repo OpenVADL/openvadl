@@ -1,0 +1,37 @@
+// INCLUDE-VIAM-DUMP
+
+instruction set architecture ISA = {
+
+  [ IEEE : 32 ]
+  float-type binary32
+
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  VIAM Dump:
+//
+//    Specification name: "floatType"
+//    . Definitions: 1
+//    . InstructionSetArchitecture name: "ISA"
+//    . : PC: -
+//    . : InstructionCount: 0
+//    . : PseudoInstructionCount: 0
+//    . : FormatCount: 0
+//    . : FunctionCount: 0
+//    . : OperationCount: 0
+//    . : ExceptionCount: 0
+//    . : RelocationCount: 0
+//    . : RegisterCount: 0
+//    . : MemoryCount: 0
+//    . : ArtificialResourceCount: 0
+//    . : FloatFormat name: "binary32"
+//    . : ' Type: FloatType
+//    . : ' Encoding: IEEE32(32)
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

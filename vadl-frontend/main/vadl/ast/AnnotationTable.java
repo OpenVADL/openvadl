@@ -337,7 +337,7 @@ public class AnnotationTable {
 
     /// FLOAT RELATED ///
 
-    annotationOn(FloatTypeDefinition.class, "IEEE", ConstantAnnotation::new)
+    annotationOn(FloatTypeDefinition.class, "IEEE", IEEEFloatFormatAnnotation::new)
         .applyAst((def, annotation) -> def.size = annotation.constant.value().intValue())
         .applyViam((def, annotation, lowering) -> {
           var encoding = FloatFormat.Encoding.ieee(annotation.constant.value().intValue());
@@ -1315,6 +1315,19 @@ abstract class FormatFieldAnnotation extends Annotation {
   }
 
   abstract String annotationName();
+}
+
+/**
+ * Marker interface for all annotations that set the {@link FloatTypeDefinition#size} field.
+ */
+interface FloatEncodingSizeAnnotation {
+}
+
+/**
+ * An annotation which makes a {@link FloatTypeDefinition} use IEEE-754 encoding with a given
+ * size (32 or 64 bit).
+ */
+class IEEEFloatFormatAnnotation extends ConstantAnnotation implements FloatEncodingSizeAnnotation {
 }
 
 /**
