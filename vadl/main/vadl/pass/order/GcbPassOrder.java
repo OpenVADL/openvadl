@@ -29,6 +29,7 @@ import vadl.gcb.passes.InstructionPatternPruningPass;
 import vadl.gcb.passes.PredicateFunctionInlinerPass;
 import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
+import vadl.gcb.passes.assembly.AssemblyFunctionInlinerPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingAndPredicateFunctionsPass;
 import vadl.gcb.passes.operands.GenerateInstructionOperandsPass;
 import vadl.pass.PassOrder;
@@ -59,6 +60,7 @@ public final class GcbPassOrder {
     order.add(new GenerateValueRangeImmediatePass(configuration));
     order.add(new GenerateFieldAccessEncodingAndPredicateFunctionsPass(configuration));
     order.add(new PredicateFunctionInlinerPass(configuration));
+    order.add(new AssemblyFunctionInlinerPass(configuration));
     order.add(new AssemblyConcatBuiltinMergingPass(configuration));
     order.add(new DetermineRegisterUsesAndDefsPass(configuration));
     order.add(new GenerateInstructionOperandsPass(configuration));
