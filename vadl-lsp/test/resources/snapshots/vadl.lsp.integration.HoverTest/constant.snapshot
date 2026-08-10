@@ -41,7 +41,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: constant
   ================
     // HOVER POSITION 3:8 - Constant definition (within keyword)
     instruction set architecture TEST = {
-        <RANGE>constant Size = 32</>
+        <RANGE>constant Size = 32</RANGE>
     
         using Reg  = Bits<32*2>
         using Word = Bits<Size>

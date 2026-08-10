@@ -68,7 +68,7 @@ public class GotoDefinitionTest extends IntegrationTest {
         new TextDocumentIdentifier(inputUri), position
     )).get();
 
-    var rangesInFiles = processResult(result, snapshot);
+    var rangesInFiles = processResult(result, input, snapshot);
     snapshot.add("returned Goto Definition", result);
     snapshot.add("... which looks like this", rangesInFiles);
     snapshot.verify();
@@ -76,7 +76,7 @@ public class GotoDefinitionTest extends IntegrationTest {
 
   private String processResult(
       Either<List<? extends Location>, List<? extends LocationLink>> definitionResult,
-      TestSnapshot snapshot) {
+      String input, TestSnapshot snapshot) {
 
     List<String> rangesInFiles = new ArrayList<>();
 
@@ -89,8 +89,23 @@ public class GotoDefinitionTest extends IntegrationTest {
 
     } else {
       for (var link : definitionResult.getRight()) {
-        rangesInFiles.add(TestUtils.showRangeInFile(link.getTargetRange(),
-            snapshot.getInputData(snapshot.getInputNameFromUri(link.getTargetUri()))));
+        var targetFileName = snapshot.getInputNameFromUri(link.getTargetUri());
+        var targetFileContent = snapshot.getInputData(targetFileName);
+        var targetFileRanges = new ArrayList<>(List.of(
+            new TestUtils.NamedRange(link.getTargetSelectionRange(), "TARGET SELECTION RANGE"),
+            new TestUtils.NamedRange(link.getTargetRange(), "TARGET RANGE")
+        ));
+        var originSelectionRange = new TestUtils.NamedRange(link.getOriginSelectionRange(),
+            "ORIGIN SELECTION RANGE");
+
+        if (targetFileName.equals(INPUT_NAME)) {
+          targetFileRanges.add(originSelectionRange);
+          rangesInFiles.add(TestUtils.showRangesInFile(targetFileRanges, targetFileContent));
+        } else {
+          rangesInFiles.add(TestUtils.showRangesInFile(targetFileRanges, targetFileContent));
+          rangesInFiles.add(TestUtils.showRangesInFile(List.of(originSelectionRange), input));
+        }
+
         link.setTargetUri(TestUtils.normalizeUri(link.getTargetUri()));
       }
     }

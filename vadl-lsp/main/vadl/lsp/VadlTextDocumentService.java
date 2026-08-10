@@ -55,6 +55,8 @@ import org.slf4j.LoggerFactory;
 import vadl.ast.Ast;
 import vadl.ast.Frontend;
 import vadl.ast.VadlParser;
+import vadl.ast.nodes.IdentifiableNode;
+import vadl.ast.nodes.IsId;
 import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;
@@ -137,35 +139,63 @@ public class VadlTextDocumentService implements TextDocumentService {
       } catch (DiagnosticList dl) {
         log.debug("UNABLE definition: Parser produced diagnostics instead of AST for {}",
             document.uri);
-        return definitionResult(null);
+        return emptyDefinitionResult();
       }
 
       var position = document.calculateUtf8Position(params.getPosition(), false);
-      SourceLocation location = AstFinderByPosition.findIdentifierTargetLocation(
+      IsId identifier = AstFinderByPosition.findIdentifier(
           ast,
           toPath(document.uri),
           position
       );
-
-      if (location == null || location.path() == null) {
-        return definitionResult(null);
+      if (identifier == null) {
+        return emptyDefinitionResult();
       }
-      var targetDocument = snapshots.getFileBasedDocument(toUri(location.path()));
+      var target = identifier.target();
+      if (target == null || !target.location().isValid()) {
+        return emptyDefinitionResult();
+      }
+      var targetUri = toUri(Objects.requireNonNull(target.location().path()));
+      var targetDocument = snapshots.getFileBasedDocument(targetUri);
       if (targetDocument == null) {
-        log.debug("Unexpected: Definition target file {} does not exist", toUri(location.path()));
-        return definitionResult(null);
+        log.debug("Unexpected: Definition target file {} does not exist", targetUri);
+        return emptyDefinitionResult();
       }
 
-      var lspLocation = new Location(targetDocument.uri,
-          targetDocument.calculateUtf16Range(location));
-      return definitionResult(lspLocation);
+      // targetSelectionRange is the location the cursor jumps to, whereas targetRange refers to the
+      // whole definition we jump to.
+      // See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#locationLink
+      var targetRange = targetDocument.calculateUtf16Range(target.location());
+      Range targetSelectionRange = targetRange; // Fallback
+      if (target instanceof IdentifiableNode identifiableTarget) {
+        targetSelectionRange = targetDocument.calculateUtf16Range(
+            identifiableTarget.identifier().location());
+      }
+      var originSelectionRange = document.calculateUtf16Range(identifier.location());
+
+      return definitionResult(targetDocument.uri, targetRange, targetSelectionRange,
+          originSelectionRange);
     });
   }
 
   private Either<List<? extends Location>, List<? extends LocationLink>> definitionResult(
-      @Nullable Location lspLocation) {
-    log.debug("<<- definition: {}", lspLocation);
-    return Either.forLeft(lspLocation != null ? List.of(lspLocation) : List.of());
+      String targetUri, Range targetRange, Range targetSelectionRange, Range originSelectionRange) {
+
+    if (!clientSupportsDefinitionLink()) {
+      var location = new Location(targetUri, targetSelectionRange);
+      log.debug("<<- definition: {}", location);
+      return Either.forLeft(List.of(location));
+    }
+
+    var locationLink = new LocationLink(targetUri, targetRange, targetSelectionRange,
+        originSelectionRange);
+    log.debug("<<- definition: {}", locationLink);
+    return Either.forRight(List.of(locationLink));
+  }
+
+  private Either<List<? extends Location>, List<? extends LocationLink>> emptyDefinitionResult() {
+    log.debug("<<- definition: []");
+    return Either.forLeft(List.of());
   }
 
   @Override
@@ -220,15 +250,6 @@ public class VadlTextDocumentService implements TextDocumentService {
     return result;
   }
 
-  private List<String> getClientMarkupContent() {
-    var capabilities = server.params().getCapabilities().getTextDocument();
-    if (capabilities == null || capabilities.getHover() == null
-        || capabilities.getHover().getContentFormat() == null) {
-      return List.of();
-    }
-    return capabilities.getHover().getContentFormat();
-  }
-
   /**
    * Manages diagnostic publishing for a given document, incl. version checking, and
    * updating dependent documents.
@@ -237,10 +258,7 @@ public class VadlTextDocumentService implements TextDocumentService {
    * @param snapshots Must be fresh, i.e. not used in the VADL parser yet
    */
   private void publishDiagnostics(Document document, LspSnapshotFileSystem snapshots) {
-    var capabilities = server.params().getCapabilities().getTextDocument();
-    if (capabilities == null
-        || capabilities.getPublishDiagnostics() == null) {
-      // Don't push diagnostics if client doesn't support it
+    if (!clientSupportsPublishDiagnostics()) {
       return;
     }
 
@@ -354,6 +372,31 @@ public class VadlTextDocumentService implements TextDocumentService {
 
     return lspDiagnostic;
   }
+
+
+  private boolean clientSupportsDefinitionLink() {
+    var capabilities = server.params().getCapabilities().getTextDocument();
+    if (capabilities == null || capabilities.getDefinition() == null
+        || capabilities.getDefinition().getLinkSupport() == null) {
+      return false;
+    }
+    return capabilities.getDefinition().getLinkSupport();
+  }
+
+  private List<String> getClientMarkupContent() {
+    var capabilities = server.params().getCapabilities().getTextDocument();
+    if (capabilities == null || capabilities.getHover() == null
+        || capabilities.getHover().getContentFormat() == null) {
+      return List.of();
+    }
+    return capabilities.getHover().getContentFormat();
+  }
+
+  private boolean clientSupportsPublishDiagnostics() {
+    var capabilities = server.params().getCapabilities().getTextDocument();
+    return capabilities != null && capabilities.getPublishDiagnostics() != null;
+  }
+
 
   private boolean documentVersionIsCurrent(Document document) {
     Document currentDocument = getDocument(document.uri);

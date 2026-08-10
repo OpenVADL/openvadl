@@ -54,27 +54,6 @@ public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVi
   //        identifier nor a target
 
   /**
-   * Finds an Identifier or IdentifierPath at the given source code position, and returns its
-   * target's location.
-   *
-   * @param path The source code file to search in
-   * @param position The position to search for (within the file identified by {@code path})
-   * @return Null if no Identifier or IdentifierPath found at {@code position} or it has no target
-   */
-  public static @Nullable SourceLocation findIdentifierTargetLocation(
-      Ast ast, Path path, SourceLocation.Position position) {
-    var identifier = findIdentifier(ast, path, position);
-    if (identifier == null) {
-      return null;
-    }
-    var target = identifier.target();
-    if (target == null) {
-      return null;
-    }
-    return target.location();
-  }
-
-  /**
    * Finds an Identifier or IdentifierPath at the given source code position.
    *
    * @param path The source code file to search in

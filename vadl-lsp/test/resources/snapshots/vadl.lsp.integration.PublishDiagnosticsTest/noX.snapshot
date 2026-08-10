@@ -52,7 +52,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
     }
     
     application binary interface ABI for TEST = {
-      alias register hello = <RANGE>X</>(0)
+      alias register hello = <RANGE>X</RANGE>(0)
     }
   ================
 
