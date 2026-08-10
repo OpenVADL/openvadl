@@ -89,14 +89,22 @@ public class GotoDefinitionTest extends IntegrationTest {
 
     } else {
       for (var link : definitionResult.getRight()) {
-        var inputData = snapshot.getInputData(snapshot.getInputNameFromUri(link.getTargetUri()));
+        var targetFileName = snapshot.getInputNameFromUri(link.getTargetUri());
+        var targetFileContent = snapshot.getInputData(targetFileName);
+        var targetFileRanges = new ArrayList<>(List.of(
+            new TestUtils.NamedRange(link.getTargetSelectionRange(), "TARGET SELECTION RANGE"),
+            new TestUtils.NamedRange(link.getTargetRange(), "TARGET RANGE")
+        ));
+        var originSelectionRange = new TestUtils.NamedRange(link.getOriginSelectionRange(),
+            "ORIGIN SELECTION RANGE");
 
-        rangesInFiles.add(TestUtils.showRangeInFile(link.getTargetSelectionRange(), inputData,
-            "TARGET SELECTION RANGE"));
-        rangesInFiles.add(TestUtils.showRangeInFile(link.getTargetRange(), inputData,
-            "TARGET RANGE"));
-        rangesInFiles.add(TestUtils.showRangeInFile(link.getOriginSelectionRange(), input,
-            "ORIGIN SELECTION RANGE"));
+        if (targetFileName.equals(INPUT_NAME)) {
+          targetFileRanges.add(originSelectionRange);
+          rangesInFiles.add(TestUtils.showRangesInFile(targetFileRanges, targetFileContent));
+        } else {
+          rangesInFiles.add(TestUtils.showRangesInFile(targetFileRanges, targetFileContent));
+          rangesInFiles.add(TestUtils.showRangesInFile(List.of(originSelectionRange), input));
+        }
 
         link.setTargetUri(TestUtils.normalizeUri(link.getTargetUri()));
       }

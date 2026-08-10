@@ -16,6 +16,8 @@
 
 package vadl.lsp;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
@@ -75,38 +77,63 @@ public class TestUtils {
    * @return given fileContent with range marked, formatted for use in a snapshot
    */
   public static String showRangeInFile(Range range, String fileContent, String name) {
+    return showRangesInFile(List.of(new NamedRange(range, name)), fileContent);
+  }
+
+  public record NamedRange(Range range, String name) {}
+
+  /**
+   * Displays several range markers within the given file content.
+   *
+   * @param ranges all ranges to display, with lsp range and a name (used as part of the marker;
+   *               should be uppercase for aesthetic reasons)
+   * @param fileContent the entire content of the file which should contain given ranges
+   * @return given fileContent with ranges marked, formatted for use in a snapshot
+   */
+  public static String showRangesInFile(List<NamedRange> ranges, String fileContent) {
+    // Create list of all insertions sorted by position
+    record PositionedString(Position position, String string) {}
+
+    List<PositionedString> positionedStrings = new ArrayList<>(ranges.size() * 2);
+    for (var nr : ranges) {
+      var start = nr.range.getStart();
+      var end = nr.range.getEnd();
+      if (start.getLine() > end.getLine()
+          || (start.getLine() == end.getLine() && start.getCharacter() > end.getCharacter())) {
+        return "(ERROR: start position comes after end position)";
+      }
+      positionedStrings.add(new PositionedString(nr.range.getStart(), "<" + nr.name + ">"));
+      positionedStrings.add(new PositionedString(nr.range.getEnd(), "</" + nr.name + ">"));
+    }
+    positionedStrings.sort((ps1, ps2) -> {
+      var pos1 = ps1.position();
+      var pos2 = ps2.position();
+      if (pos1.getLine() != pos2.getLine()) {
+        return pos1.getLine() - pos2.getLine();
+      }
+      if (pos1.getCharacter() != pos2.getCharacter()) {
+        return pos1.getCharacter() - pos2.getCharacter();
+      }
+      return 0;
+    });
+
     String[] lines = fileContent.split("\n", -1);
-    boolean startOutOfBounds = true;
-    boolean endOutOfBounds = true;
-
-    var start = range.getStart();
-    var end = range.getEnd();
-
-    if (start.getLine() > end.getLine()
-        || (start.getLine() == end.getLine() && start.getCharacter() > end.getCharacter())) {
-      return "(ERROR: start position comes after end position)";
-    }
-
-    // Put end marker first so that start marker position is not affected by it
-    if (end.getLine() < lines.length
-        && end.getCharacter() <= lines[end.getLine()].length()) {
-      endOutOfBounds = false;
-      var line = lines[end.getLine()];
-      lines[end.getLine()] = line.substring(0, end.getCharacter())
-          + "</>" + line.substring(end.getCharacter());
-    }
-
-    if (start.getLine() < lines.length
-        && start.getCharacter() <= lines[start.getLine()].length()) {
-      startOutOfBounds = false;
-      var line = lines[start.getLine()];
-      lines[start.getLine()] = line.substring(0, start.getCharacter())
-          + "<" + name + ">" + line.substring(start.getCharacter());
+    List<String> outOfBoundsStrings = new ArrayList<>();
+    // Do insertions in reverse order so that positions do not have to be adjusted
+    for (var ps : positionedStrings.reversed()) {
+      var pos = ps.position();
+      if (pos.getLine() >= lines.length || pos.getCharacter() > lines[pos.getLine()].length()) {
+        outOfBoundsStrings.add(ps.string);
+        continue;
+      }
+      var line = lines[pos.getLine()];
+      lines[pos.getLine()] = line.substring(0, pos.getCharacter())
+          + ps.string() + line.substring(pos.getCharacter());
     }
 
     return SEPARATOR_LINE + "\n  " + String.join("\n  ", lines)
-        + "\n" + SEPARATOR_LINE + (startOutOfBounds ? "\n(start position is out-of-bounds)" : "")
-        + (endOutOfBounds ? "\n(end position is out-of-bounds)" : "");
+        + "\n" + SEPARATOR_LINE + (!outOfBoundsStrings.isEmpty()
+        ? "\n(out-of-bounds: " + String.join(", ", outOfBoundsStrings) + ")" : "");
   }
 
   /**

@@ -46,7 +46,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: tw
   Error: Errors in imported file: 
   twoFiles-otherFile.vadl
   ================
-    <RANGE></>// error in imported file
+    <RANGE></RANGE>// error in imported file
     import "twoFiles-otherFile"::TEST
     
     application binary interface ABI for TEST = {

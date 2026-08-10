@@ -43,7 +43,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: calculated
     instruction set architecture TEST = {
         constant Size = 32
     
-        using Reg  = <RANGE>Bits<32*2></>
+        using Reg  = <RANGE>Bits<32*2></RANGE>
         using Word = Bits<Size>
     
         register R : Reg -> Word

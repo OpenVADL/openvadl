@@ -152,7 +152,7 @@ public class VadlTextDocumentService implements TextDocumentService {
         return emptyDefinitionResult();
       }
       var target = identifier.target();
-      if (target == null || target.location().path() == null) {
+      if (target == null || !target.location().isValid()) {
         return emptyDefinitionResult();
       }
       var targetUri = toUri(Objects.requireNonNull(target.location().path()));
@@ -162,8 +162,9 @@ public class VadlTextDocumentService implements TextDocumentService {
         return emptyDefinitionResult();
       }
 
-      // targetSelectionRange is the location to navigate to, whereas targetRange refers to the
-      // entire definition code (i.e. less important information)
+      // targetSelectionRange is the location the cursor jumps to, whereas targetRange refers to the
+      // whole definition we jump to.
+      // See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#locationLink
       var targetRange = targetDocument.calculateUtf16Range(target.location());
       Range targetSelectionRange = targetRange; // Fallback
       if (target instanceof IdentifiableNode identifiableTarget) {

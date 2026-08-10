@@ -45,6 +45,6 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: sy
   ================
     // syntax error
     instruction set architecture TEST = {
-    <RANGE></>
+    <RANGE></RANGE>
   ================
 
