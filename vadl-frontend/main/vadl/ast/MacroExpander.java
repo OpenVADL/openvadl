@@ -46,6 +46,7 @@ import vadl.ast.nodes.AsmModifierDefinition;
 import vadl.ast.nodes.AssemblyDefinition;
 import vadl.ast.nodes.AssignmentStatement;
 import vadl.ast.nodes.BasicSyntaxType;
+import vadl.ast.nodes.BinOp;
 import vadl.ast.nodes.BinaryExpr;
 import vadl.ast.nodes.BinaryLiteral;
 import vadl.ast.nodes.BlockStatement;
@@ -324,6 +325,7 @@ class MacroExpander
       case PlaceholderNode placeholderNode -> expand(placeholderNode);
       case MacroInstanceNode macroInstanceNode -> expand(macroInstanceNode);
       case MacroMatchNode macroMatchNode -> expand(macroMatchNode);
+      case BinOp binOp -> new BinOp(binOp.operator, copyLoc(binOp.location));
       case UnOp unOp -> new UnOp(unOp.operator, copyLoc(unOp.location));
       case null, default -> node;
     };
