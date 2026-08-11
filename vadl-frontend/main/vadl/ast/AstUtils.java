@@ -73,9 +73,7 @@ class AstUtils {
       name = "sdec";
     }
 
-    String finalBuiltinName = name;
-    var matchingBuiltin = nameLookupTable.get(finalBuiltinName);
-    return matchingBuiltin;
+    return nameLookupTable.get(name);
   }
 
   static BuiltInTable.BuiltIn getOperatorBuiltIn(Operator operator, List<Type> argTypes) {

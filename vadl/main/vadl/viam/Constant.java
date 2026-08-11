@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.warning;
 import static vadl.types.BuiltInTable.BUILTIN_RESULT;
 import static vadl.types.BuiltInTable.BUILTIN_STATUS;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.types.BitsType;
@@ -443,7 +445,7 @@ public abstract class Constant {
             .multiply(b.integer()); // multiply with other value
 
         var newType = Type.constructDataType(divType.getClass(), 2 * divType.bitWidth());
-        Objects.requireNonNull(newType);
+        requireNonNull(newType);
 
         return fromInteger(newValue, newType);
       } else {
@@ -467,7 +469,7 @@ public abstract class Constant {
       var divType = signed
           ? Type.signedInt(type().bitWidth())
           : Type.unsignedInt(type().bitWidth());
-      Objects.requireNonNull(divType);
+      requireNonNull(divType);
 
       var a = this.trivialCastTo(divType);
       var b = other.trivialCastTo(divType);
@@ -510,7 +512,7 @@ public abstract class Constant {
       var divType = signed
           ? Type.signedInt(type().bitWidth())
           : Type.unsignedInt(type().bitWidth());
-      Objects.requireNonNull(divType);
+      requireNonNull(divType);
 
       var a = this.trivialCastTo(divType);
       var b = other.trivialCastTo(divType);
@@ -1412,7 +1414,7 @@ public abstract class Constant {
      * @return The Constant value at the specified name.
      */
     public Constant get(String name) {
-      return Objects.requireNonNull(values.get(name),
+      return requireNonNull(values.get(name),
           "Struct does not contain a value with name %s".formatted(name));
     }
 
@@ -1548,6 +1550,82 @@ public abstract class Constant {
         return get(OVERFLOW, Value.class);
       }
 
+    }
+  }
+
+  /**
+   * Represents a constant float-type.
+   *
+   * <p>It stores a reference to the {@link FloatFormat}.
+   */
+  public static class FloatType extends Constant {
+
+    @Nullable
+    private final FloatFormat format;
+
+    private final Integer size;
+    private final String name;
+
+    /**
+     * Constructs a float-type constant from a float format definition.
+     *
+     * @param format The float format definition.
+     */
+    public FloatType(FloatFormat format) {
+      super(Type.floatType());
+      this.format = format;
+      // the type-checker checks that float-type definitions have a size, and thus an encoding
+      this.size = requireNonNull(format.encoding()).size;
+      this.name = format.simpleName();
+    }
+
+    /**
+     * Constructs a dummy float-type constant from a float format encoding size. This is used by
+     * the type checker when the float format definition is not yet available.
+     *
+     * @param size The float format encoding size, i.e. the bit-size of the float type.
+     * @param name The name of the float format.
+     */
+    public FloatType(int size, String name) {
+      super(Type.floatType());
+      this.format = null;
+      this.size = size;
+      this.name = name;
+    }
+
+    @Nullable
+    public FloatFormat format() {
+      return format;
+    }
+
+    public Integer size() {
+      return size;
+    }
+
+    @Override
+    public java.lang.String toString() {
+      return name + ": " + type().toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+      FloatType floatType = (FloatType) o;
+      return Objects.equals(format, floatType.format) && Objects.equals(size,
+          floatType.size) && Objects.equals(name, floatType.name);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), format, size, name);
     }
   }
 

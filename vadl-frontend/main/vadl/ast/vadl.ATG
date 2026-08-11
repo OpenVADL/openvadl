@@ -181,6 +181,7 @@ TOKENS
   FALSE        = "false".
   FETCH        = "fetch".
   FILE         = "file".
+  FLOAT_TYPE   = "float-type".
   FOLD         = "fold".
   FOR          = "for".
   FORALL       = "forall".
@@ -417,6 +418,7 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
 
   commonDefinition<out Definition def>    (. def = DUMMY_DEF; .)
   = constantDefinition<out def>
+  | floatTypeDefinition<out def>
   | formatDefinition<out def>
   | enumerationDefinition<out def>
   | usingDefinition<out def>
@@ -514,6 +516,11 @@ elements. A single annotation is described in the #annotation production rule.
     [ SYM_COLON typeLiteral<out type> ]
     SYM_EQ
     expression<out Expr expr, BIN_OPS>           (. def = new ConstantDefinition(id, type, expr, startLocation.join(lastTokenLoc())); .)
+  .
+
+  floatTypeDefinition<out FloatTypeDefinition def>          (. var startLocation = nextTokenLoc(); .)
+  = FLOAT_TYPE
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. def = new FloatTypeDefinition(id, startLocation.join(lastTokenLoc())); .)
   .
 
   formatDefinition<out FormatDefinition def>                                      (. var startLoc = nextTokenLoc(); var fields = new ArrayList<FormatField>(); .)
@@ -1797,15 +1804,30 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.ID))
     identifierPath<out IsId path>
     [
-      IF (la.kind == _SYM_LT)
-      SYM_LT                                                 (. var lessLoc = lastTokenLoc(); .)
-      term<out Expr term, BIN_OPS>
-      [
-        IF (!allowLtOp || la.kind == _SYM_GT)
-        SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(lastTokenLoc())); .)
-      ]                                                      (. if (expr.equals(DUMMY_EXPR)) expr = new BinaryExpr((Expr) path, new BinOp(Operator.Less, lessLoc), term); .)
-    ]                                                        (. if (expr.equals(DUMMY_EXPR)) expr = (Expr) path; .)
-  | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
+      // TODO: decide if the ::<...> syntax should have its own rule
+      //       see Discussion #578, especially the comment
+      //       https://github.com/OpenVADL/openvadl/discussions/578#discussioncomment-17872831
+      IF (la.kind == _SYM_NAMESPACE || la.kind == _SYM_LT)  (. var values = new ArrayList<Expr>(); .)
+      (
+        IF (la.kind == _SYM_NAMESPACE)
+        SYM_NAMESPACE
+        SYM_LT
+        term<out Expr firstTerm, BIN_OPS>                   (. values.add(firstTerm); .)
+        {
+          SYM_COMMA
+          term<out Expr term, BIN_OPS>                      (. values.add(term); .)
+        }
+        SYM_GT                                              (. expr = new SymbolExpr(path, values, path.location().join(lastTokenLoc())); .)
+      |
+        SYM_LT                                              (. var lessLoc = lastTokenLoc(); .)
+        term<out Expr term, BIN_OPS>                        (. values.add(term); .)
+        [
+          IF (!allowLtOp || la.kind == _SYM_GT)
+          SYM_GT                                            (. expr = new SymbolExpr(path, values, path.location().join(lastTokenLoc())); .)
+        ]                                                   (. if (expr.equals(DUMMY_EXPR)) expr = new BinaryExpr((Expr) path, new BinOp(Operator.Less, lessLoc), term); .)
+      )
+    ]                                                       (. if (expr.equals(DUMMY_EXPR)) expr = (Expr) path; .)
+  | macroReplacement<out Node node>                         (. expr = castExpr(this, node); .)
   .
 
   binaryOperator<out Operator op> (. op = null; .)
@@ -1917,6 +1939,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   identifierPath<out IsId path>                                 (. List<IdentifierOrPlaceholder> segments = new ArrayList<>(); .)
   = identifierOrPlaceholder<out IdentifierOrPlaceholder id>     (. segments.add(id); .)
     {
+      IF (la.kind == _SYM_NAMESPACE && scanner.Peek().kind != _SYM_LT) // symbol expression can look like id::path::<>()
       SYM_NAMESPACE
       identifierOrPlaceholder<out IdentifierOrPlaceholder next> (. segments.add(next); .)
     }                                                           (. if (segments.size() == 1) path = id;

@@ -1,0 +1,30 @@
+// INCLUDE-VIAM-DUMP
+
+instruction set architecture ISA = {
+
+  float-type binary32
+
+  // VADL::add does not actually take a float-type constant parameter,
+  // but the size is checked beforehand anyway
+  function F() -> Bits<32> = VADL::add::<binary32>(0, 0, 0)
+
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Missing float-type encoding size
+//       ╭── test/resources/frontend-snapshots/lowering/invalidUsedFloatTypeMissingSize.vadl:5:3
+//       │
+//     5 │   float-type binary32
+//       │   ^^^^^^^^^^^^^^^^^^^
+//       │
+//       help: Annotate with e.g. `[ IEEE : <size> ]`
+//
+//
+//  VIAM Dump:
+//
+//  Unable to dump VIAM
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -1,0 +1,31 @@
+// INCLUDE-AST-DUMP
+
+instruction set architecture TEST = {
+  function a() -> Bits<32> = VADL::add::<0, 1>(0, 1)
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    InstructionSetDefinition name: "TEST"
+//    . FunctionDefinition name: "a"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : CastExpr type: Bits<32>
+//    . : ' CallIndexExpr type: Const<1>
+//    . : ' | SymbolExpr type: null
+//    . : ' | . IdentifierPath name: "VADL::add" type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' | ArgsIndices
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

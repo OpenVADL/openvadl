@@ -120,6 +120,20 @@ public abstract class Type {
         .computeIfAbsent(bitWidth, k -> new UIntType(bitWidth));
   }
 
+  private static @Nullable FloatType floatType = null;
+
+  /**
+   * Retrieves the instance of FloatType.
+   *
+   * @return the FloatType object
+   */
+  public static FloatType floatType() {
+    if (floatType == null) {
+      floatType = new FloatType();
+    }
+    return floatType;
+  }
+
   /**
    * Returns a DummyType object.
    *
@@ -202,6 +216,20 @@ public abstract class Type {
     return statusType;
   }
 
+  private static @Nullable FloatStatusType floatStatusType = null;
+
+  /**
+   * Retrieves the float status type instance.
+   *
+   * @return the float status type instance
+   */
+  public static FloatStatusType floatStatus() {
+    if (floatStatusType == null) {
+      floatStatusType = new FloatStatusType();
+    }
+    return floatStatusType;
+  }
+
   private static @Nullable VoidType voidType = null;
 
 
@@ -239,23 +267,53 @@ public abstract class Type {
    */
   public static RelationType relation(List<Class<? extends Type>> argTypes,
                                       Class<? extends Type> returnType) {
-    return relation(argTypes, false, returnType);
+    return relation(argTypes, List.of(), false, returnType);
   }
 
   /**
    * Retrieves the generic relation type.
    *
-   * @param argTypes   the list of argument type classes
-   * @param hasVarArgs the flag indicating if the last argument of kind varargs
-   * @param returnType the return type class
+   * @param argTypes      the list of argument type classes
+   * @param constArgTypes the list of constant argument type classes
+   * @param returnType    the return type class
+   * @return the RelationType instance
+   */
+  public static RelationType relation(List<Class<? extends Type>> argTypes,
+                                      List<Class<? extends Type>> constArgTypes,
+                                      Class<? extends Type> returnType) {
+    return relation(argTypes, constArgTypes, false, returnType);
+  }
+
+  /**
+   * Retrieves the generic relation type.
+   *
+   * @param argTypes      the list of argument type classes
+   * @param hasVarArgs    the flag indicating if the last argument of kind varargs
+   * @param returnType    the return type class
    * @return the RelationType instance
    */
   public static RelationType relation(List<Class<? extends Type>> argTypes,
                                       boolean hasVarArgs,
                                       Class<? extends Type> returnType) {
-    var hashCode = Objects.hash(argTypes, hasVarArgs, returnType);
-    return relationTypes
-        .computeIfAbsent(hashCode, k -> new RelationType(argTypes, hasVarArgs, returnType));
+    return relation(argTypes, List.of(), hasVarArgs, returnType);
+  }
+
+  /**
+   * Retrieves the generic relation type.
+   *
+   * @param argTypes      the list of argument type classes
+   * @param constArgTypes the list of constant argument type classes
+   * @param hasVarArgs    the flag indicating if the last argument of kind varargs
+   * @param returnType    the return type class
+   * @return the RelationType instance
+   */
+  public static RelationType relation(List<Class<? extends Type>> argTypes,
+                                      List<Class<? extends Type>> constArgTypes,
+                                      boolean hasVarArgs,
+                                      Class<? extends Type> returnType) {
+    var hashCode = Objects.hash(argTypes, constArgTypes, hasVarArgs, returnType);
+    return relationTypes.computeIfAbsent(hashCode, k ->
+        new RelationType(argTypes, constArgTypes, hasVarArgs, returnType));
   }
 
   /**
@@ -265,7 +323,7 @@ public abstract class Type {
    * @return the RelationType instance
    */
   public static RelationType relation(Class<? extends Type> returnType) {
-    return relation(List.of(), false, returnType);
+    return relation(List.of(), List.of(), false, returnType);
   }
 
   /**
@@ -291,7 +349,7 @@ public abstract class Type {
   public static RelationType relation(Class<? extends Type> firstArg,
                                       Class<? extends Type> secondArg,
                                       Class<? extends Type> returnType) {
-    return relation(List.of(firstArg, secondArg), false, returnType);
+    return relation(List.of(firstArg, secondArg), List.of(), false, returnType);
   }
 
   private static final HashMap<Integer, ConcreteRelationType> concreteRelationTypes =

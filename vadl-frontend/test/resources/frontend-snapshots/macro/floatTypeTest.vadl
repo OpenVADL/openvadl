@@ -1,0 +1,24 @@
+// INCLUDE-PRETTY-PRINT
+model FloatType(id : Id): Defs = { [ IEEE : 32 ] float-type $id }
+$FloatType(IEEE32)
+
+model FloatTypeId(): Id = { IEEE64 }
+[ IEEE : 64 ]
+float-type $FloatTypeId()
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  [ IEEE : 32 ]
+//  float-type IEEE32
+//
+//  [ IEEE : 64 ]
+//  float-type IEEE64
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

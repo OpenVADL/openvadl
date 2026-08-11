@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import vadl.ast.TensorType;
 import vadl.types.BuiltInTable;
@@ -193,8 +194,9 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  public @Nullable Expr size() {
-    return target.size();
+  @Nullable
+  public List<Expr> symbolArgs() {
+    return target.symbolArgs();
   }
 
   @Override
