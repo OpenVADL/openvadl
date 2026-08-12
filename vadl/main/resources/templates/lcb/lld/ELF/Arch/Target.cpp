@@ -51,7 +51,7 @@ namespace lld
         } // end anonymous namespace
 
         RelType [(${namespace})]::getDynRel(RelType type) const {
-            return type == symbolicRel ? type : static_cast<RelType>(R_rv64im_NONE);
+            return type == symbolicRel ? type : static_cast<RelType>(R_[(${namespace})]_NONE);
         }
 
         RelExpr [(${namespace})]::getRelExpr(const RelType type, const Symbol &s,
