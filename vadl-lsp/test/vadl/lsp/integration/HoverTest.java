@@ -42,7 +42,7 @@ public class HoverTest extends IntegrationTest {
       Pattern.compile("^// HOVER POSITION \\s*(\\d+):(\\d+)", Pattern.MULTILINE);
 
   @ParameterizedTest
-  @ValueSource(strings = {"noHover", "constant", "calculated", "alias"})
+  @ValueSource(strings = {"noHover", "constant", "calculated", "alias", "modelInvocation"})
   public void mainTest(String testCase) throws ExecutionException, InterruptedException {
     var snapshot = new TestSnapshot(testCase, true);
     var inputUri = snapshot.getInputUri(INPUT_NAME);

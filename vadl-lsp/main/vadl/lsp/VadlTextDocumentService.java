@@ -233,34 +233,64 @@ public class VadlTextDocumentService implements TextDocumentService {
 
       } catch (DiagnosticList dl) {
         log.debug("UNABLE hover: Parser produced diagnostics instead of AST for {}", document.uri);
-        return hoverResult(null, null);
+        return emptyHoverResult();
       }
 
       var position = document.calculateUtf8Position(params.getPosition(), false);
-      var node = AstFinderByPosition.findTypedNode(ast, toPath(document.uri), position);
+      var path = toPath(document.uri);
 
-      if (node == null) {
-        return hoverResult(null, null);
-      }
+        {
+          // Show type information
+          var node = AstFinderByPosition.findTypedNode(ast, path, position);
+          if (node != null) {
+            return hoverResult(null, node.type().name(),
+                document.calculateUtf16Range(node.location()));
+          }
+        }
 
-      return hoverResult(node.type().name(), document.calculateUtf16Range(node.location()));
+        {
+          // Show expanded code (for model invocations)
+          var nodes = AstFinder.findExpandedNodes(ast, path, position);
+          if (!nodes.isEmpty()) {
+            var range = document.calculateUtf16Range(
+                nodes.getFirst().location().expandedFromStack().getLast());
+            var prettyPrinted = new ArrayList<String>(nodes.size());
+            for (var node : nodes) {
+              var builder = new StringBuilder();
+              node.prettyPrint(0, builder);
+              prettyPrinted.add(builder.toString().trim());
+            }
+            return hoverResult("Expanded to:", String.join("\n", prettyPrinted), range);
+          }
+        }
+
+      return emptyHoverResult();
     });
   }
 
-  private @Nullable Hover hoverResult(@Nullable String text, @Nullable Range range) {
+  private @Nullable Hover hoverResult(@Nullable String text, @Nullable String sourceCode,
+      @Nullable Range range) {
     Hover result = null;
-    if (text != null) {
+    if (text != null || sourceCode != null) {
       var clientContentFormat = getClientMarkupContent();
       MarkupContent content = null;
+      List<String> parts = new ArrayList<>();
+      if (text != null) {
+        parts.add(text);
+      }
 
       if (clientContentFormat.contains(MarkupKind.MARKDOWN)) {
-        // For now, we assume that all hover texts are snippets of valid OpenVADL source code, so
-        // let's use Markdown to mark them as such
-        content = new MarkupContent(MarkupKind.MARKDOWN,
-            "```" + LANGUAGE_IDENTIFIER + "\n" + text + "\n```");
+        if (sourceCode != null) {
+          parts.add("```" + LANGUAGE_IDENTIFIER + "\n" + sourceCode + "\n```");
+        }
+        content = new MarkupContent(MarkupKind.MARKDOWN, String.join("  \n", parts));
+
       } else if (clientContentFormat.contains(MarkupKind.PLAINTEXT)) {
         // Fallback
-        content = new MarkupContent(MarkupKind.PLAINTEXT, text);
+        if (sourceCode != null) {
+          parts.add(sourceCode);
+        }
+        content = new MarkupContent(MarkupKind.PLAINTEXT, String.join("\n", parts));
       }
 
       if (content != null) {
@@ -270,6 +300,10 @@ public class VadlTextDocumentService implements TextDocumentService {
     }
     log.debug("<<- hover: {}", result);
     return result;
+  }
+
+  private @Nullable Hover emptyHoverResult() {
+    return hoverResult(null, null, null);
   }
 
   /**
