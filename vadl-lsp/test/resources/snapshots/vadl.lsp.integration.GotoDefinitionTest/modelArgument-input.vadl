@@ -1,0 +1,12 @@
+// GOTO POSITION 10:15 - Goes to beginning of instruction definition
+instruction set architecture TEST = {
+  format Simple : Bits<1> = {b [0]}
+  model TestModel (name : Id, val : Bin) : IsaDefs = {
+    instruction $name : Simple = {}
+    encoding $name = { b = $val }
+    assembly $name = (mnemonic)
+  }
+
+  $TestModel(ZERO ; 0b0)
+  $TestModel(ONE ; 0b1)
+}

@@ -45,7 +45,7 @@ public class GotoDefinitionTest extends IntegrationTest {
       Pattern.compile("^// GOTO POSITION \\s*(\\d+):(\\d+)", Pattern.MULTILINE);
 
   @ParameterizedTest
-  @ValueSource(strings = {"noDefinition", "aliasRegister", "isa", "twoFiles"})
+  @ValueSource(strings = {"noDefinition", "aliasRegister", "isa", "twoFiles", "modelArgument"})
   public void mainTest(String testCase) throws ExecutionException, InterruptedException {
     var snapshot = new TestSnapshot(testCase, true);
     var inputUri = snapshot.getInputUri(INPUT_NAME);
