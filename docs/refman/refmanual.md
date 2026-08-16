@@ -437,6 +437,147 @@ function cto( a : Bits<N> ) -> UInt<N> // counting trailing ones
 
 \endlisting
 
+## Float Operations
+
+Listing \r{basic_float_operations} lists built-in float operations. They must be parametrized with
+float type(s), which define the float format to operate with. Listing \r{lst_float_type} shows how this
+can be done to convert between different float formats and from float to integer.
+
+### IEEE Float Type
+
+Currently only the IEEE-754-2019 formats `binary32` and `binary64` are supported. The semantics of all
+built-ins which use these formats, are as defined by the standard.
+
+If the result of an operations is `NaN`, it is always a canonical `qNaN`, except for min/max operations,
+which behave according to IEEE's `minimumNumber` and `maximumNumber` operations.
+
+When an operand of any float operation is a `sNaN`, it sets the invalid flag. `flt` and `fle` perform
+signaling comparisons, meaning they also set the invalid flag when an operand is any `NaN`, not just `sNaN`.
+In the future, this will be configurable.
+
+\listing{lst_float_type, VADL Float Type Definitions and Usage}
+
+~~~{.vadl}
+[ IEEE : 32 ]
+float-type binary32
+[ IEEE : 64 ]
+float-type binary64
+ 
+instruction set architecture test = {
+register X : Bits<32>   // 32-bit integer register
+
+register F32 : Bits<32> // 32-bit float register
+register F64 : Bits<64> // 64-bit float register
+ 
+format F : Bits<8> = {opcode : Bits<8>}
+instruction instr1 : F =
+    F32 := VADL::fcvt::<binary64, binary32>(F64, 0b000) // 64-bit float to 32-bit flaot conversion
+instruction instr2 : F =
+    X := VADL::fcvtfs::<binary32, 32>(F32, 0b000)       // 32-bit float to 32-bit signed int conversion
+}
+~~~
+
+\endlisting
+
+### Float Exception Flags
+
+Listing \r{lst_float_exception_flags} shows how to store float exception flags in registers. All built-ins
+which produce float exceptions write to the flags in the marked registers.
+
+Each flag can be stored in sticky (accrued) and non-sticky form. Sticky means, that the flags stays set and
+will not be unset by float operations. Each flag (sticky and non-sticky) can only be stored once.
+
+|    flag     |                                                                                             |
+|:-----------:|:--------------------------------------------------------------------------------------------|
+|   invalid   | Invalid operation, e.g. sqrt of a negative number, returns qNaN                             |
+| div_by_zero | Operation on finite operands with exact infinite result, e.g. 1/0 or log(0)                 |
+|  overflow   | Finite result is too large, returns +/- infinity                                            |
+|  underflow  | Finite result is denormal and inexact                                                       |
+|   inexact   | Unrounded result cannot be represented exactly, returns rounded result                      |
+
+\listing{lst_float_exception_flags, VADL Float Exception Flags}
+
+~~~{.vadl}
+instruction set architecture test = {
+
+[        fe flag invalid     : nv2 ]
+[ sticky fe flag invalid     : nv ]
+[ sticky fe flag div_by_zero : dz ]
+[ sticky fe flag overflow    : of ]
+[ sticky fe flag underflow   : uf ]
+[ sticky fe flag inexact     : nx ]
+register FEFlags : F
+
+format F : Bits<8> =
+  { dummy    [7..6]
+  , nv2      [5]
+  , nv       [4]
+  , dz       [3]
+  , of       [2]
+  , uf       [1]
+  , nx       [0]
+  }
+}
+~~~
+
+\endlisting
+
+### Rounding Modes
+
+|              mode              | value |
+|:------------------------------:|:-----:|
+| Round to nearest, ties to even | 0b000 |
+|            Round up            | 0b001 |
+|           Round down           | 0b010 |
+|         Round to zero          | 0b011 |
+| Round to nearest, ties to away | 0b100 |
+
+\listing{basic_float_operations, VADL Float Operations}
+
+~~~{.vadl}
+// arithmetic
+function fsqrt::< t : FloatType >( a : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fadd::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fsub::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fmul::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fdiv::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+
+// fused multiply-add operations
+// (a * b) + c
+function fmadd ::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+// (a * b) - c
+function fmsub ::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+// -(a * b) - c
+function fnmadd::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+// -(a * b) + c
+function fnmsub::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+
+function fmin::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bits<t.size>
+function fmax::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bits<t.size>
+
+// comparison
+function flt::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool // a < b
+function fle::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool // a <= b
+function feq::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool // a == b
+
+// conversion
+function fcvt::< t : FloatType, u : FloatType >( a : Bits<t.size>, rm : Bits<3> ) -> Bits<u.type>
+function fcvtfs::< t : FloatType, s : UInt >( a : Bits<t.size>, rm : Bits<3> ) -> SInt<s>
+function fcvtfu::< t : FloatType, s : UInt >( a : Bits<t.size>, rm : Bits<3> ) -> UInt<s>
+function fcvtsf::< t : FloatType >( a : SInt<N>, rm : Bits<3> ) -> Bits<t.size>
+function fcvtuf::< t : FloatType >( a : UInt<N>, rm : Bits<3> ) -> Bits<t.size>
+
+// classification
+function fisinf   ::< t : FloatType >( a : Bits<t.size> ) -> Bool // a is +/- inf
+function fiszero  ::< t : FloatType >( a : Bits<t.size> ) -> Bool // a == 0
+function fisneg   ::< t : FloatType >( a : Bits<t.size> ) -> Bool // sign-bit of a is set
+function fisdenorm::< t : FloatType >( a : Bits<t.size> ) -> Bool // a is denormal
+function fissnan  ::< t : FloatType >( a : Bits<t.size> ) -> Bool // a is sNaN
+function fisqnan  ::< t : FloatType >( a : Bits<t.size> ) -> Bool // a is qNaN
+~~~
+
+\endlisting
+
 ## Assembly Directives
 
 \lbl{table_assembly_directives}
