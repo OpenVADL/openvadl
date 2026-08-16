@@ -113,6 +113,56 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleCTZ(input);
     } else if (builtIn == BuiltInTable.CTO) {
       handleCTO(input);
+    } else if (builtIn == BuiltInTable.FSQRT) {
+      handleFSQRT(input);
+    } else if (builtIn == BuiltInTable.FADD) {
+      handleFADD(input);
+    } else if (builtIn == BuiltInTable.FSUB) {
+      handleFSUB(input);
+    } else if (builtIn == BuiltInTable.FMUL) {
+      handleFMUL(input);
+    } else if (builtIn == BuiltInTable.FDIV) {
+      handleFDIV(input);
+    } else if (builtIn == BuiltInTable.FMADD) {
+      handleFMADD(input);
+    } else if (builtIn == BuiltInTable.FMSUB) {
+      handleFMSUB(input);
+    } else if (builtIn == BuiltInTable.FNMADD) {
+      handleFNMADD(input);
+    } else if (builtIn == BuiltInTable.FNMSUB) {
+      handleFNMSUB(input);
+    } else if (builtIn == BuiltInTable.FMIN) {
+      handleFMIN(input);
+    } else if (builtIn == BuiltInTable.FMAX) {
+      handleFMAX(input);
+    } else if (builtIn == BuiltInTable.FLT) {
+      handleFLT(input);
+    } else if (builtIn == BuiltInTable.FLE) {
+      handleFLE(input);
+    } else if (builtIn == BuiltInTable.FEQ) {
+      handleFEQ(input);
+    } else if (builtIn == BuiltInTable.FCVT) {
+      handleFCVT(input);
+    } else if (builtIn == BuiltInTable.FCVTFS) {
+      handleFCVTFS(input);
+    } else if (builtIn == BuiltInTable.FCVTFU) {
+      handleFCVTFU(input);
+    } else if (builtIn == BuiltInTable.FCVTSF) {
+      handleFCVTSF(input);
+    } else if (builtIn == BuiltInTable.FCVTUF) {
+      handleFCVTUF(input);
+    } else if (builtIn == BuiltInTable.FISINF) {
+      handleFISINF(input);
+    } else if (builtIn == BuiltInTable.FISZERO) {
+      handleFISZERO(input);
+    } else if (builtIn == BuiltInTable.FISNEG) {
+      handleFISNEG(input);
+    } else if (builtIn == BuiltInTable.FISDENORM) {
+      handleFISDENORM(input);
+    } else if (builtIn == BuiltInTable.FISSNAN) {
+      handleFISSNAN(input);
+    } else if (builtIn == BuiltInTable.FISQNAN) {
+      handleFISQNAN(input);
     } else if (builtIn == BuiltInTable.CONCATENATE_BITS) {
       handleConcat(input);
     } else {
@@ -204,6 +254,56 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
   void handleCTZ(T input);
 
   void handleCTO(T input);
+
+  void handleFSQRT(T input);
+
+  void handleFADD(T input);
+
+  void handleFSUB(T input);
+
+  void handleFMUL(T input);
+
+  void handleFDIV(T input);
+
+  void handleFMADD(T input);
+
+  void handleFMSUB(T input);
+
+  void handleFNMADD(T input);
+
+  void handleFNMSUB(T input);
+
+  void handleFMIN(T input);
+
+  void handleFMAX(T input);
+
+  void handleFLT(T input);
+
+  void handleFLE(T input);
+
+  void handleFEQ(T input);
+
+  void handleFCVT(T input);
+
+  void handleFCVTFS(T input);
+
+  void handleFCVTFU(T input);
+
+  void handleFCVTSF(T input);
+
+  void handleFCVTUF(T input);
+
+  void handleFISINF(T input);
+
+  void handleFISZERO(T input);
+
+  void handleFISNEG(T input);
+
+  void handleFISDENORM(T input);
+
+  void handleFISSNAN(T input);
+
+  void handleFISQNAN(T input);
 
   void handleConcat(T input);
 

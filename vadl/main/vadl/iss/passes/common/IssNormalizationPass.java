@@ -811,6 +811,131 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Override
+  public void handleFSQRT(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFADD(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFSUB(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFMUL(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFDIV(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFMADD(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFMSUB(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFNMADD(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFNMSUB(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFMIN(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFMAX(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFLT(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFLE(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFEQ(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVT(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTFS(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTFU(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTSF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFCVTUF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFISINF(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFISZERO(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFISNEG(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFISDENORM(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFISSNAN(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
+  public void handleFISQNAN(BuiltInCall input) {
+    // do nothing (float ops are done by helper function, which handle everything)
+  }
+
+  @Override
   public void handleConcat(BuiltInCall input) {
     // do nothing (result is already fine)
   }

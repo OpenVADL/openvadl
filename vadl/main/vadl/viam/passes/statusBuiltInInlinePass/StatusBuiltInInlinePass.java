@@ -23,6 +23,7 @@ import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.VadlBuiltInFloatStatusOnlyDispatcher;
 import vadl.utils.VadlBuiltInStatusOnlyDispatcher;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
@@ -52,8 +53,10 @@ public class StatusBuiltInInlinePass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     return viam.isa().map(isa -> {
-      isa.ownInstructions().forEach(i ->
-          new StatusBuiltInInliner(i.behavior()).run());
+      isa.ownInstructions().forEach(i -> {
+        new StatusBuiltInInliner(i.behavior()).run();
+        new FloatStatusBuiltInInliner(i.behavior()).run();
+      });
       return null;
     });
   }
@@ -271,6 +274,37 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleRRXS(BuiltInCall input) {
+    throwNotImplemented(input);
+  }
+}
+
+/**
+ * Inlines all float status built-ins for the given graph.
+ * There is a {@link Inliner} for each status built-in.
+ */
+class FloatStatusBuiltInInliner implements VadlBuiltInFloatStatusOnlyDispatcher<BuiltInCall> {
+
+  private final Graph graph;
+
+  FloatStatusBuiltInInliner(Graph graph) {
+    this.graph = graph;
+  }
+
+  void run() {
+    graph.getNodes(BuiltInCall.class).forEach(n -> {
+      dispatch(n, n.builtIn());
+    });
+  }
+
+  private void throwNotImplemented(BuiltInCall input) {
+    throw Diagnostic.error("Built-In Lowering Not Implemented", input)
+        .description("OpenVADL does not yet implement the inlining of the %s built-in.",
+            input.builtIn().name())
+        .build();
+  }
+
+  @Override
+  public void handleFADDS(BuiltInCall input) {
     throwNotImplemented(input);
   }
 }

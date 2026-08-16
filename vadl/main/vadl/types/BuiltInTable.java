@@ -1040,6 +1040,317 @@ public class BuiltInTable {
           .build();
 
 
+  ///// FLOAT ARITHMETIC //////
+
+  /**
+   * {@code function fsqrt::< t : FloatType >( a : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FSQRT =
+      func("VADL::fsqrt",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(1)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fadd::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<t.size> }
+   */
+  public static final BuiltIn FADD =
+      func("VADL::fadd",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(2)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fadds::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   ( Bits<t.size>, FloatStatus ) }
+   */
+  public static final BuiltIn FADDS =
+      func("VADL::fadds",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), StructType.class))
+          .takesFloatArgsAndFrm(2)
+          // TODO: returns function
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fsub::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<t.size> }
+   */
+  public static final BuiltIn FSUB =
+      func("VADL::fsub",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(2)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fmul::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<t.size> }
+   */
+  public static final BuiltIn FMUL =
+      func("VADL::fmul",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(2)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fdiv::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<t.size> }
+   */
+  public static final BuiltIn FDIV =
+      func("VADL::fdiv",
+          Type.relation(List.of(BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(2)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fmadd::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>,
+   * rm : Bits<3> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FMADD =
+      func("VADL::fmadd",
+          Type.relation(List.of(
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(3)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fmsub::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>,
+   * rm : Bits<3> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FMSUB =
+      func("VADL::fmsub",
+          Type.relation(List.of(
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(3)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fnmadd::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>,
+   * c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FNMADD =
+      func("VADL::fnmadd",
+          Type.relation(List.of(
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(3)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fnmsub::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>,
+   * c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FNMSUB =
+      func("VADL::fnmsub",
+          Type.relation(List.of(
+              BitsType.class, BitsType.class, BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(3)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fmin::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FMIN =
+      func("VADL::fmin",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgs(2)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * {@code function fmax::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FMAX =
+      func("VADL::fmax",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFloatArgs(2)
+          .returnsFirstFloatType()
+          .build();
+
+  ///// FLOAT COMPARISON //////
+
+  /**
+   * {@code function flt::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FLT =
+      func("VADL::flt",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(2)
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fle::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FLE =
+      func("VADL::fle",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(2)
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function feq::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FEQ =
+      func("VADL::feq",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(2)
+          .returns(Type.bool())
+          .build();
+
+  ///// FLOAT CONVERSION //////
+
+  /**
+   * Float to float conversion.
+   * {@code function fcvt::< t : FloatType, u : FloatType >( a : Bits<t.size>, rm : Bits<3> ) ->
+   *   Bits<u.type> }
+   */
+  public static final BuiltIn FCVT =
+      func("VADL::fcvt",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class, FloatType.class), BitsType.class))
+          .takesFloatArgsAndFrm(1)
+          .returnsSecondFloatType()
+          .build();
+
+  /**
+   * Float to signed int conversion.
+   * {@code function fcvtfs::< t : FloatType, s : UInt >( a : Bits<t.size>, rm : Bits<3> ) ->
+   *   SInt<s> }
+   */
+  public static final BuiltIn FCVTFS =
+      func("VADL::fcvtfs",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class, UIntType.class), SIntType.class))
+          .takesFloatArgsAndFrm(1)
+          .returnsFromSecondConstSize(SIntType.class)
+          .build();
+
+  /**
+   * Float to unsigned int conversion.
+   * {@code function fcvtfu::< t : FloatType, s : UInt >( a : Bits<t.size>, rm : Bits<3> ) ->
+   *   UInt<s> }
+   */
+  public static final BuiltIn FCVTFU =
+      func("VADL::fcvtfu",
+          Type.relation(List.of(BitsType.class, BitsType.class),
+              List.of(FloatType.class, UIntType.class), UIntType.class))
+          .takesFloatArgsAndFrm(1)
+          .returnsFromSecondConstSize(UIntType.class)
+          .build();
+
+  /**
+   * Signed int to float conversion.
+   * {@code function fcvtsf::< t : FloatType >( a : SInt<N>, rm : Bits<3> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FCVTSF =
+      func("VADL::fcvtsf",
+          Type.relation(List.of(SIntType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFrm(1)
+          .returnsFirstFloatType()
+          .build();
+
+  /**
+   * Unsigned int to float conversion.
+   * {@code function fcvtuf::< t : FloatType >( a : UInt<N>, rm : Bits<3> ) -> Bits<t.size> }
+   */
+  public static final BuiltIn FCVTUF =
+      func("VADL::fcvtuf",
+          Type.relation(List.of(UIntType.class, BitsType.class),
+              List.of(FloatType.class), BitsType.class))
+          .takesFrm(1)
+          .returnsFirstFloatType()
+          .build();
+
+  ///// FLOAT CLASSIFICATION //////
+
+  /**
+   * {@code function fisinf::< t : FloatType >( a : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FISINF =
+      func("VADL::fisinf",
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fiszero::< t : FloatType >( a : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FISZERO =
+      func("VADL::fiszero",
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fisneg::< t : FloatType >( a : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FISNEG =
+      func("VADL::fisneg",
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fisdenorm::< t : FloatType >( a : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FISDENORM =
+      func("VADL::fisdenorm",
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fissnan::< t : FloatType >( a : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FISSNAN =
+      func("VADL::fissnan",
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * {@code function fisqnan::< t : FloatType >( a : Bits<t.size> ) -> Bool }
+   */
+  public static final BuiltIn FISQNAN =
+      func("VADL::fisqnan",
+          Type.relation(List.of(BitsType.class), List.of(FloatType.class), BoolType.class))
+          .takesFloatArgs(1)
+          .returns(Type.bool())
+          .build();
+
+
   ///// FUNCTIONS //////
 
   /**
@@ -1410,6 +1721,43 @@ public class BuiltInTable {
       CTO
   );
 
+  public static final List<BuiltIn> FLOAT_ARITHMETIC_BUILT_INS = List.of(
+      FSQRT,
+      FADD,
+      FSUB,
+      FMUL,
+      FDIV,
+      FMADD,
+      FMSUB,
+      FNMADD,
+      FNMSUB,
+      FMIN,
+      FMAX
+  );
+
+  public static final List<BuiltIn> FLOAT_COMPARISON_BUILT_INS = List.of(
+      FLT,
+      FLE,
+      FEQ
+  );
+
+  public static final List<BuiltIn> FLOAT_CONVERSION_BUILT_INS = List.of(
+      FCVT,
+      FCVTFS,
+      FCVTFU,
+      FCVTSF,
+      FCVTUF
+  );
+
+  public static final List<BuiltIn> FLOAT_CLASSIFICATION_BUILT_INS = List.of(
+      FISINF,
+      FISZERO,
+      FISNEG,
+      FISDENORM,
+      FISSNAN,
+      FISQNAN
+  );
+
   public static final List<BuiltIn> FUNCTION_BUILT_INS = List.of(
       MNEMONIC,
       CONCATENATE_STRINGS,
@@ -1440,12 +1788,20 @@ public class BuiltInTable {
       INSTRUCTION_WRITE
   );
 
+  public static final List<BuiltIn> FLOAT_BUILT_INS = Stream.of(
+      FLOAT_ARITHMETIC_BUILT_INS.stream(),
+      FLOAT_COMPARISON_BUILT_INS.stream(),
+      FLOAT_CONVERSION_BUILT_INS.stream(),
+      FLOAT_CLASSIFICATION_BUILT_INS.stream()
+  ).flatMap(s -> s).toList();
+
   public static final List<BuiltIn> BUILT_INS = Stream.of(
       ARITHMETIC_BUILT_INS.stream(),
       LOGICAL_BUILT_INS.stream(),
       COMPARISON_BUILT_INS.stream(),
       SHIFTING_BUILT_INS.stream(),
       BITWISE_COUNTING_BUILT_INS.stream(),
+      FLOAT_BUILT_INS.stream(),
       FUNCTION_BUILT_INS.stream(),
       ASM_PARSER_BUILT_INS_LIST.stream(),
       MICRO_ARCHITECTURE_BUILT_INS.stream()
