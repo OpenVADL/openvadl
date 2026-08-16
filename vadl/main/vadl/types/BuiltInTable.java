@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -1610,6 +1609,89 @@ public class BuiltInTable {
    */
   public static final BuiltIn INSTRUCTION_VERIFY = instr("verify");
 
+  /**
+   * Operation equality.
+   *
+   * <p>{@code function opequ ( a : OperationType, b : OperationType ) -> Bool // <=> a = b }
+   */
+  public static final BuiltInTable.BuiltIn OP_EQU =
+      BuiltInTable.func("VADL::opequ", "=",
+              Type.relation(OperationType.class, OperationType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * Operation inequality.
+   *
+   * <p>{@code function opneq ( a : OperationType, b : OperationType ) -> Bool // <=> a != b }
+   */
+  public static final BuiltInTable.BuiltIn OP_NEQ =
+      BuiltInTable.func("VADL::opneq", "!=",
+              Type.relation(OperationType.class, OperationType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  public static final List<BuiltIn> OP_EQUALITY_PREDICATES = List.of(OP_EQU, OP_NEQ);
+
+  /**
+   * Element-of check for operations. Check if the actual instruction, matched by the group
+   * expression is an element of the given operation.
+   * <br>
+   * Example:
+   * <pre>
+   *   instruction A : IType = ...
+   *   instruction B : IType = ...
+   *
+   *   operation O1 = {A}
+   *   operation O1 = {B}
+   *
+   *   [assert : VLIW(0) ∈ O1]
+   *   group VLIW = (O1|O2)
+   * </pre>
+   */
+  public static final BuiltInTable.BuiltIn OP_ELEM_OF =
+      BuiltInTable.func("VADL::elemof", "∈",
+              Type.relation(OperationType.class, OperationType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * Negation of the element-of check for operation, see {@link #OP_ELEM_OF}.
+   *
+   */
+  public static final BuiltInTable.BuiltIn OP_NOT_ELEM_OF =
+      BuiltInTable.func("VADL::nelemof", "∉",
+              Type.relation(OperationType.class, OperationType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * Element-of check for operations. Semantically equivalent to {@link #OP_ELEM_OF}.
+   */
+  public static final BuiltInTable.BuiltIn OP_IN =
+      BuiltInTable.func("VADL::inop", "in",
+              Type.relation(OperationType.class, OperationType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * Negation of the element-of check for operation.
+   * Semantically equivalent to {@link #OP_NOT_ELEM_OF}.
+   */
+  public static final BuiltInTable.BuiltIn OP_NOT_IN =
+      BuiltInTable.func("VADL::ninop", "!in",
+              Type.relation(OperationType.class, OperationType.class, BoolType.class))
+          .takesDefault()
+          .returns(Type.bool())
+          .build();
+
+  public static final List<BuiltIn> OP_ELEMENT_OF_PREDICATES =
+      List.of(OP_ELEM_OF, OP_NOT_ELEM_OF, OP_IN, OP_NOT_IN);
 
   /// // FIELDS /////
 
@@ -1804,7 +1886,9 @@ public class BuiltInTable {
       FLOAT_BUILT_INS.stream(),
       FUNCTION_BUILT_INS.stream(),
       ASM_PARSER_BUILT_INS_LIST.stream(),
-      MICRO_ARCHITECTURE_BUILT_INS.stream()
+      MICRO_ARCHITECTURE_BUILT_INS.stream(),
+      OP_EQUALITY_PREDICATES.stream(),
+      OP_ELEMENT_OF_PREDICATES.stream()
   ).flatMap(s -> s).toList();
 
   // Operator-like categorizations for BuiltIns
@@ -1821,8 +1905,6 @@ public class BuiltInTable {
       SMAX, UMAX,
       CONCATENATE_STRINGS
   );
-
-  public static final List<BuiltIn> operationEqualityPredicates = List.of();
 
   public static final List<BuiltIn> arithmeticComparisons = List.of(
       EQU, NEQ,

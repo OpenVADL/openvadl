@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -119,6 +118,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.GroupType;
 import vadl.types.MicroArchitectureType;
+import vadl.types.OperationType;
 import vadl.types.SIntType;
 import vadl.types.StructType;
 import vadl.types.Type;
@@ -340,8 +340,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
   }
 
-  private static Type getViamType(Type astType) {
-    return ViamLowering.getViamType(astType);
+  private Type getViamType(Type astType) {
+    return viamLowering.getViamType(astType);
   }
 
   /**
@@ -831,7 +831,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return buildBranch(branchCtx, stmt);
   }
 
-  private static BuiltInCall produceNeqToZero(ExpressionNode node) {
+  private BuiltInCall produceNeqToZero(ExpressionNode node) {
     var constNode = new ConstantNode(Constant.Value.of(0, (DataType) getViamType(node.type())));
     constNode.setSourceLocation(node.location());
     return BuiltInCall.of(BuiltInTable.NEQ, node, constNode);
@@ -846,13 +846,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var result = expr.accept(this);
     result.setSourceLocationIfNotSet(expr.location());
     expressionCache.put(expr, result);
-    // FIXME: Should this really be here?
-    result.ensure(!(result.type() instanceof ConstantType),
-        "Constant types must not exist in the VIAM");
-    result.ensure(!(result.type() instanceof FormatType),
-        "Format types must not exist in the VIAM");
-    result.ensure(!(result.type() instanceof TensorType),
-        "Tensor types must not exist in the VIAM");
+
+    result.setType(getViamType(result.type()));
     return result;
   }
 
@@ -1041,14 +1036,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .filter(idx -> idx.identifier().name.equals(innerName))
           .findFirst()
           .orElseThrow();
-      final var format = (PseudoFormatType) index.identifier().type();
-
-      final List<Operation> ops = format.operations().stream()
-          .map(viamLowering::fetch)
-          .filter(Optional::isPresent).map(Optional::get)
-          .map(Operation.class::cast)
-          .toList();
-      return new OperationForAllNode.Index(getViamType(format), ops);
+      final var frontendType = (PseudoFormatType) index.identifier().type();
+      final var operationType = viamLowering.toOperationType(frontendType);
+      return new OperationForAllNode.Index(getViamType(operationType), operationType.operations());
     }
 
     if (computedTarget instanceof ExistsInThenExpr existsInThenExpr) {
@@ -1056,24 +1046,19 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .filter(idx -> idx.identifier().name.equals(innerName))
           .findFirst()
           .orElseThrow();
-      final var format = (PseudoFormatType) index.identifier().type();
-
-      final List<Operation> ops = format.operations().stream()
-          .map(viamLowering::fetch)
-          .filter(Optional::isPresent).map(Optional::get)
-          .map(Operation.class::cast)
-          .toList();
-      return new OperationForAllNode.Index(getViamType(format), ops);
+      final var frontendType = (PseudoFormatType) index.identifier().type();
+      final var operationType = viamLowering.toOperationType(frontendType);
+      return new OperationForAllNode.Index(getViamType(operationType), operationType.operations());
     }
 
     // Reference to a Group Definition
     if (computedTarget instanceof GroupDefinition) {
-      return new GroupRef(expr.type());
+      return new GroupRef(getViamType(expr.type()));
     }
 
     // Reference to an Operation Definition
     if (computedTarget instanceof OperationDefinition) {
-      return new OperationRef(expr.type());
+      return new OperationRef(getViamType(expr.type()));
     }
 
     // Function call without arguments (and no parenthesis)
@@ -1084,7 +1069,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Builtin Call
-    var matchingBuiltins = FrontendBuiltIns.builtIns()
+    var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
         .filter(b -> b.name().equals(innerName))
         .toList();
@@ -1251,11 +1236,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         resultExpr = visitSliceIndexCall(indexing, fieldType, subCall.argsIndices);
       } else if (exprBeforeSubcall.type() == MicroArchitectureType.instruction()) {
         // There is weired way to call functions on instructions
-        var builtin =
-            FrontendBuiltIns.builtIns()
-                .filter(b -> b.name().equals(subCall.identifier().name))
-                .findFirst()
-                .get();
+        var builtin = BuiltInTable.builtIns()
+            .filter(b -> b.name().equals(subCall.identifier().name))
+            .findFirst()
+            .get();
         var call = new MiaBuiltInCall(builtin, new NodeList<>(exprBeforeSubcall),
             builtin.returns(List.of(MicroArchitectureType.instruction())));
         call.setSourceLocation(subCall.location());
@@ -1321,8 +1305,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             final var resType = ((GroupType) groupRef.type()).bitLengthType();
             yield new StructGetFieldNode("bitLength", groupRef, resType);
           }
-          default ->
-              throw error("Unknown group field: `%s`".formatted(fieldName), subCall).build();
+          default -> throw error("Unknown group field: `%s`".formatted(fieldName), subCall).build();
         };
       } else {
         throw new IllegalStateException();
@@ -1619,17 +1602,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public ExpressionNode visit(ExistsInExpr expr) {
 
-    final var opDefs = new ArrayList<OperationDefinition>();
     final var ops = new ArrayList<Operation>();
 
     for (IsId op : expr.operations) {
       final var opDef = requireNonNull((OperationDefinition) op.target());
-      opDefs.add(opDef);
       viamLowering.fetch(opDef)
           .ifPresent(o -> ops.add((Operation) o));
     }
 
-    final var idxType = getViamType(PseudoFormatType.of(opDefs));
+    final var idxType = getViamType(OperationType.of(ops));
     final var idx = new OperationForAllNode.Index(idxType, ops);
 
     var type = getViamType(expr.type());
@@ -1641,13 +1622,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     final List<OperationForAllNode.Index> indices = new ArrayList<>();
     for (ExistsInThenExpr.Index idx : expr.indices) {
-      final var format = (PseudoFormatType) idx.identifier().type();
-      final List<Operation> ops = format.operations().stream()
-          .map(viamLowering::fetch)
-          .filter(Optional::isPresent).map(Optional::get)
-          .map(Operation.class::cast)
-          .toList();
-      final var idxNode = new OperationForAllNode.Index(getViamType(format), ops);
+      final var frontendType = (PseudoFormatType) idx.identifier().type();
+      final var operationType = viamLowering.toOperationType(frontendType);
+      final var idxNode =
+          new OperationForAllNode.Index(getViamType(operationType), operationType.operations());
       indices.add(idxNode);
     }
 
@@ -1661,13 +1639,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     final List<OperationForAllNode.Index> indices = new ArrayList<>();
     for (ForallThenExpr.Index idx : expr.indices) {
-      final var format = (PseudoFormatType) idx.identifier().type();
-      final List<Operation> ops = format.operations().stream()
-          .map(viamLowering::fetch)
-          .filter(Optional::isPresent).map(Optional::get)
-          .map(Operation.class::cast)
-          .toList();
-      final var idxNode = new OperationForAllNode.Index(getViamType(format), ops);
+      final var frontendType = (PseudoFormatType) idx.identifier().type();
+      final var operationType = viamLowering.toOperationType(frontendType);
+      final var idxNode =
+          new OperationForAllNode.Index(getViamType(operationType), operationType.operations());
       indices.add(idxNode);
     }
 

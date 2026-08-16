@@ -35,6 +35,7 @@ import vadl.ast.nodes.PlaceholderExpr;
 import vadl.ast.nodes.PlaceholderNode;
 import vadl.ast.nodes.PlaceholderStatement;
 import vadl.types.BuiltInTable;
+import vadl.types.OperationType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -50,7 +51,7 @@ class AstUtils {
           List.of("VADL::smod", "VADL::umod"));
 
   private static Map<String, BuiltInTable.BuiltIn> nameLookupTable =
-      FrontendBuiltIns.builtIns().collect(Collectors.toMap(BuiltInTable.BuiltIn::name, b -> b));
+      BuiltInTable.builtIns().collect(Collectors.toMap(BuiltInTable.BuiltIn::name, b -> b));
 
   private static Map<String, String> operatorRewrites = Map.of(
       "&&", "&",
@@ -58,7 +59,7 @@ class AstUtils {
   );
 
   private static Map<String, List<BuiltInTable.BuiltIn>> operatorLookupTable =
-      FrontendBuiltIns.builtIns()
+      BuiltInTable.builtIns()
           .filter(b -> b.operator() != null)
           .collect(Collectors.groupingBy(BuiltInTable.BuiltIn::operator));
 
@@ -104,11 +105,11 @@ class AstUtils {
         if (firstArgType == PseudoFormatType.class) {
           // For opequ/opneq, we select the overload only upon exact match
           builtIns = builtIns.stream()
-              .filter(b -> b.signature().argTypeClasses().getFirst() == PseudoFormatType.class)
+              .filter(b -> b.signature().argTypeClasses().getFirst() == OperationType.class)
               .toList();
         } else {
           builtIns = builtIns.stream()
-              .filter(b -> b.signature().argTypeClasses().getFirst() != PseudoFormatType.class)
+              .filter(b -> b.signature().argTypeClasses().getFirst() != OperationType.class)
               .toList();
         }
 

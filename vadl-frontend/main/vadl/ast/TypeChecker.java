@@ -17,12 +17,12 @@
 package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
-import static vadl.ast.FrontendBuiltIns.OP_NOT_ELEM_OF;
-import static vadl.ast.FrontendBuiltIns.OP_NOT_IN;
 import static vadl.ast.GroupDefUtils.GroupExprBitLengthCollector.maxBitLength;
 import static vadl.ast.GroupDefUtils.GroupExprLengthCollector.maxLength;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
+import static vadl.types.BuiltInTable.OP_NOT_ELEM_OF;
+import static vadl.types.BuiltInTable.OP_NOT_IN;
 
 import com.google.common.collect.Streams;
 import java.math.BigInteger;
@@ -199,7 +199,6 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
-import vadl.viam.InstructionSetArchitecture;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -1028,7 +1027,7 @@ public class TypeChecker
       }
     }
 
-    if (args.size() == 2 && FrontendBuiltIns.operationEqualityPredicates.contains(builtIn)) {
+    if (args.size() == 2 && BuiltInTable.OP_EQUALITY_PREDICATES.contains(builtIn)) {
       // Special case for equality over bound variables of the forall and exists then expression
       final Expr l = args.getFirst();
       final Expr r = args.getLast();
@@ -1054,11 +1053,23 @@ public class TypeChecker
       }
     }
 
-    if (args.size() == 2 && FrontendBuiltIns.operationElementOfPredicates.contains(builtIn)) {
-      // Static checks for operation element predicates
-      final PseudoFormatType l = (PseudoFormatType) args.getFirst().type();
-      final PseudoFormatType r = (PseudoFormatType) args.getLast().type();
+    if (args.size() == 2 && BuiltInTable.OP_ELEMENT_OF_PREDICATES.contains(builtIn)) {
 
+      if (!(args.getFirst().type() instanceof PseudoFormatType l)) {
+        throw addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location, "Expected the left side to be an operation, but"
+                + "was an `%s`", args.getFirst().type())
+            .build());
+      }
+
+      if (!(args.getLast().type() instanceof PseudoFormatType r)) {
+        throw addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location, "Expected the right side to be an operation, but"
+                + "was an `%s`", args.getFirst().type())
+            .build());
+      }
+
+      // Static checks for operation element predicates
       final Set<InstructionDefinition> commonInsns = new LinkedHashSet<>(l.instructions());
       commonInsns.retainAll(r.instructions());
 
@@ -1074,6 +1085,8 @@ public class TypeChecker
                         + "are part of operation `%s`.", op.identifier().name)
                 .build());
       }
+
+      return new BuiltInCheckResult(List.of(l, r), Type.bool());
     }
 
     if (args.size() == 2 && (BuiltInTable.arithmeticOperators.contains(builtIn)
@@ -3479,7 +3492,7 @@ public class TypeChecker
 
     // It's also possible to call functions without parenthesis if the function doesn't take any
     // arguments.
-    var matchingBuiltins = FrontendBuiltIns.builtIns()
+    var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
         .filter(b -> b.name().equals(innerName))
         .toList();
