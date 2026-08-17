@@ -18,6 +18,7 @@ package vadl.ast.nodes;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.types.FloatEncoding;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
@@ -32,12 +33,12 @@ public class FloatTypeDefinition extends Definition implements IdentifiableNode,
   public IdentifierOrPlaceholder identifier;
 
   /**
-   * Represents the bit-size of the represented float format. This is used by the type-checker
+   * Represents the encoding of the represented float format. This is used by the type-checker
    * to infer types when the float-type is used as a constant parameter in built-ins. This is not
    * set during parsing, and must be set by an annotation such as {@code [ IEEE : 32 ]}.
    */
   @Nullable
-  public Integer size;
+  public FloatEncoding encoding;
 
   public SourceLocation loc;
 

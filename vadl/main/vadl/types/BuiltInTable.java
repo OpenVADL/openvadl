@@ -34,6 +34,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
+import vadl.error.Diagnostic;
+import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
@@ -1235,6 +1237,7 @@ public class BuiltInTable {
               List.of(FloatType.class, FloatType.class), BitsType.class))
           .takesFloatArgsAndFrm(1)
           .returnsSecondFloatType()
+          .checkConvertingBetweenDifferentFloatEncodings()
           .build();
 
   /**
@@ -1248,6 +1251,7 @@ public class BuiltInTable {
               List.of(FloatType.class, UIntType.class), SIntType.class))
           .takesFloatArgsAndFrm(1)
           .returnsFromSecondConstSize(SIntType.class)
+          .checkConvertingTo3264Int()
           .build();
 
   /**
@@ -1261,6 +1265,7 @@ public class BuiltInTable {
               List.of(FloatType.class, UIntType.class), UIntType.class))
           .takesFloatArgsAndFrm(1)
           .returnsFromSecondConstSize(UIntType.class)
+          .checkConvertingTo3264Int()
           .build();
 
   /**
@@ -1273,6 +1278,7 @@ public class BuiltInTable {
               List.of(FloatType.class), BitsType.class))
           .takesFrm(1)
           .returnsFirstFloatType()
+          .checkConvertingFrom3264Int()
           .build();
 
   /**
@@ -1285,6 +1291,7 @@ public class BuiltInTable {
               List.of(FloatType.class), BitsType.class))
           .takesFrm(1)
           .returnsFirstFloatType()
+          .checkConvertingFrom3264Int()
           .build();
 
   ///// FLOAT CLASSIFICATION //////
@@ -2136,6 +2143,19 @@ public class BuiltInTable {
       return returns(List.of(), argTypes);
     }
 
+    /**
+     * Checks the validity of the constant arguments and argument types of the call.
+     * Optionally returns a diagnostic, if a problem is found.
+     * It assumes that the argument types are valid, such as a call to
+     * {@link #takes(List, List)} would return true.
+     *
+     * @param constArgs concrete constant arguments.
+     * @param argTypes  concrete types of argument for call.
+     * @param location  the location of the call.
+     * @return an optional diagnostic, if a problem is found
+     */
+    public abstract Optional<Diagnostic> check(List<Constant> constArgs, List<Type> argTypes,
+                                               WithLocation location);
 
     public final boolean matches(RelationType type) {
       return this.signature.equals(type);
@@ -2215,6 +2235,9 @@ public class BuiltInTable {
     private BiFunction<List<Constant>, List<Type>, Boolean> takesFunction;
     @Nullable
     private BiFunction<List<Constant>, List<Type>, Type> returnsFunction;
+    @Nullable
+    private TriFunction<List<Constant>, List<Type>, WithLocation, Optional<Diagnostic>>
+        checkFunction;
     private boolean hasSameBitWidth = false;
 
     BuiltInBuilder(String name, @Nullable String operator, RelationType signature,
@@ -2419,14 +2442,59 @@ public class BuiltInTable {
       });
     }
 
-    private int floatTypeSize(Constant arg) {
+    private FloatEncoding floatTypeEncoding(Constant arg) {
       ensure(arg instanceof Constant.FloatType, "Expected a float type, but found %s", arg);
-      return ((Constant.FloatType) arg).size();
+      return ((Constant.FloatType) arg).encoding();
+    }
+
+    private int floatTypeSize(Constant arg) {
+      return floatTypeEncoding(arg).size;
     }
 
     private int constInt(Constant arg) {
       ensure(arg instanceof Constant.Value, "Expected a value type, but found %s", arg);
       return ((Constant.Value) arg).intValue();
+    }
+
+    public BuiltInBuilder check(
+        TriFunction<List<Constant>, List<Type>, WithLocation, Optional<Diagnostic>> checkFunction) {
+      this.checkFunction = checkFunction;
+      return this;
+    }
+
+    public BuiltInBuilder checkConvertingBetweenDifferentFloatEncodings() {
+      return check((constArgs, argTypes, location) -> {
+        if (floatTypeEncoding(constArgs.get(0)) == floatTypeEncoding(constArgs.get(1))) {
+          return Optional.of(
+              Diagnostic.error("Cannot convert to same float encoding", location).build()
+          );
+        }
+        return Optional.empty();
+      });
+    }
+
+    public BuiltInBuilder checkConvertingTo3264Int() {
+      return check((constArgs, argTypes, location) -> {
+        var intBitSize = constInt(constArgs.get(1));
+        if (intBitSize != 32 && intBitSize != 64) {
+          return Optional.of(
+              Diagnostic.error("Can only convert to 32 or 64 bit integers", location).build()
+          );
+        }
+        return Optional.empty();
+      });
+    }
+
+    public BuiltInBuilder checkConvertingFrom3264Int() {
+      return check((constArgs, argTypes, location) -> {
+        var intBitSize = argTypes.getFirst().asDataType().bitWidth();
+        if (intBitSize != 32 && intBitSize != 64) {
+          return Optional.of(
+              Diagnostic.error("Can only convert from 32 or 64 bit integers", location).build()
+          );
+        }
+        return Optional.empty();
+      });
     }
 
 
@@ -2475,6 +2543,15 @@ public class BuiltInTable {
         @Override
         public Type returns(List<Constant> constArgs, List<Type> argTypes) {
           return returnsFunction.apply(constArgs, argTypes);
+        }
+
+        @Override
+        public Optional<Diagnostic> check(List<Constant> constArgs, List<Type> argTypes,
+                                          WithLocation location) {
+          if (checkFunction == null) {
+            return Optional.empty();
+          }
+          return checkFunction.apply(constArgs, argTypes, location);
         }
       };
     }

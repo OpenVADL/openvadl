@@ -1127,7 +1127,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(FloatTypeDefinition definition) {
     var identifier =
         new vadl.viam.Identifier(definition.viamId, definition.identifier().location());
-    return Optional.of(new FloatFormat(identifier));
+    return Optional.of(new FloatFormat(identifier, requireNonNull(definition.encoding)));
   }
 
   @Override
