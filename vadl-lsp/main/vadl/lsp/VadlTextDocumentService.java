@@ -172,9 +172,9 @@ public class VadlTextDocumentService implements TextDocumentService {
             identifiableTarget.identifier().location());
 
         if (!isWithin(targetSelectionRange, targetRange)) {
-          // Selection range MUST be contained in target range, so let's fall back again.
-          // This may happen if the target identifier is provided by a model invocation.
-          targetSelectionRange = targetRange;
+          // Selection range MUST be contained in target range. If that is not the case, the target
+          // identifier is provided by a model invocation, and it is better not to jump anywhere.
+          return emptyDefinitionResult();
         }
       }
       var originSelectionRange = document.calculateUtf16Range(identifier.location());

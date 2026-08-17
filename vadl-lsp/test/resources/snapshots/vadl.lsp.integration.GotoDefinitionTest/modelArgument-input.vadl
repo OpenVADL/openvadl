@@ -1,4 +1,4 @@
-// GOTO POSITION 10:15 - Goes to beginning of instruction definition
+// GOTO POSITION 10:15 - Model argument goes nowhere
 instruction set architecture TEST = {
   format Simple : Bits<1> = {b [0]}
   model TestModel (name : Id, val : Bin) : IsaDefs = {
