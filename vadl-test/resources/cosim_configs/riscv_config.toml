@@ -27,7 +27,7 @@ ignore_unset_registers = true
 
 # Ignore specific registers
 # Filters in conjunction with `ignore_unset_registers`
-ignore_registers = []
+ignore_registers = [ "pc" ]
 
 
 # Defines a list of clients to test against

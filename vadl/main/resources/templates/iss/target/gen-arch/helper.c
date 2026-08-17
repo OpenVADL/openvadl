@@ -36,7 +36,9 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
 
 // float helpers
 
-void prep_float_status(CPU[(${gen_arch_upper})]State *env, float_status *s, uint32_t rm) {
+#define TS uint[(${target_size})]_t
+
+void prep_float_status(CPU[(${gen_arch_upper})]State *env, float_status *s, TS rm) {
   uint16_t flags = 0xffff;
   // un-set non sticky flags
   [# th:each="reg : ${register_tensors}"][# th:each="flag : ${reg.non_sticky_fe_flags}"]
@@ -68,64 +70,53 @@ void set_float_status(CPU[(${gen_arch_upper})]State *env, float_status *s) {
   return result;
 
 #define FLOAT_HELPER_1(S, FMT, NAME, QEMU_FUN) \
-  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                     \
-                                   uint##S##_t rs1, uint32_t rm) {                          \
+  TS helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1, TS rm) {             \
     FLOAT_HELPER_BODY(uint##S##_t, float##S##_##QEMU_FUN(rs1, s), FMT, rm)                  \
   }
 
 #define FLOAT_HELPER_2(S, FMT, NAME, QEMU_FUN) \
-  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                     \
-                                   uint##S##_t rs1, uint##S##_t rs2, uint32_t rm) {         \
+  TS helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1, TS rs2, TS rm) {     \
     FLOAT_HELPER_BODY(uint##S##_t, float##S##_##QEMU_FUN(rs1, rs2, s), FMT, rm)             \
   }
 
 #define FLOAT_HELPER_MINMAX(S, FMT, NAME, QEMU_FUN) \
-  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                     \
-                                   uint##S##_t rs1, uint##S##_t rs2) {                      \
+  TS helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1, TS rs2) {            \
     FLOAT_HELPER_BODY(uint##S##_t, float##S##_##QEMU_FUN(rs1, rs2, s), FMT, 0)              \
   }
 
 #define FLOAT_HELPER_3(S, FMT, NAME, QEMU_FUN, FLAGS) \
-  uint##S##_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                     \
-                                   uint##S##_t rs1, uint##S##_t rs2, uint##S##_t rs3,       \
-                                   uint32_t rm) {                                           \
-    FLOAT_HELPER_BODY(uint##S##_t, float##S##_##QEMU_FUN(rs1, rs2, rs3, FLAGS, s), FMT, rm) \
+  TS helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1, TS rs2, TS rs3, TS rm) { \
+    FLOAT_HELPER_BODY(uint##S##_t, float##S##_##QEMU_FUN(rs1, rs2, rs3, FLAGS, s), FMT, rm)     \
   }
 
 #define FLOAT_HELPER_F2I(S, FMT, INT_S, INT_FMT, NAME) \
-  uint##INT_S##_t helper_##FMT##_##INT_S##_##NAME(CPU[(${gen_arch_upper})]State *env,       \
-                                   uint##S##_t rs1, uint32_t rm) {                          \
+  TS helper_##FMT##_##INT_S##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1, TS rm) {   \
     FLOAT_HELPER_BODY(uint##INT_S##_t, float##S##_to_##INT_FMT(rs1, s), FMT, rm)            \
   }
 
 #define FLOAT_HELPER_I2F(S, FMT, INT_S, INT_FMT, NAME) \
-  uint##S##_t helper_##FMT##_##INT_S##_##NAME(CPU[(${gen_arch_upper})]State *env,           \
-                                   uint##INT_S##_t rs1, uint32_t rm) {                      \
+  TS helper_##FMT##_##INT_S##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1, TS rm) {   \
     FLOAT_HELPER_BODY(uint##S##_t, INT_FMT##_to_##float##S(rs1, s), FMT, rm)                \
   }
 
 #define FLOAT_HELPER_F2F(S, FMT, S2, FMT2, NAME) \
-  uint##S2##_t helper_##FMT##_##FMT2##_##NAME(CPU[(${gen_arch_upper})]State *env,           \
-                                   uint##S##_t rs1, uint32_t rm) {                          \
+  TS helper_##FMT##_##FMT2##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1, TS rm) {    \
     FLOAT_HELPER_BODY(uint##S2##_t, float##S##_to_##float##S2(rs1, s), FMT, rm)             \
   }
 
 // TODO: optimize fe flags (maybe prep can be omitted; or flags set to avoid recomputation)
 #define FLOAT_HELPER_CMP(S, FMT, NAME, QEMU_FUN) \
-  uint64_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                        \
-                                   uint##S##_t rs1, uint##S##_t rs2) {                      \
+  TS helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1, TS rs2) {            \
     FLOAT_HELPER_BODY(bool, float##S##_##QEMU_FUN(rs1, rs2, s), FMT, 0)                     \
   }
 
 #define FLOAT_HELPER_CLASSS(S, FMT, NAME, QEMU_FUN) \
-  uint64_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                        \
-                                   uint##S##_t rs1) {                                       \
+  TS helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1) {                    \
     FLOAT_HELPER_BODY(bool, float##S##_##QEMU_FUN(rs1, s), FMT, 0)                          \
   }
 
 #define FLOAT_HELPER_CLASS(S, FMT, NAME, QEMU_FUN) \
-  uint64_t helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env,                        \
-                                   uint##S##_t rs1) {                                       \
+  TS helper_##FMT##_##NAME(CPU[(${gen_arch_upper})]State *env, TS rs1) {                    \
     FLOAT_HELPER_BODY(bool, float##S##_##QEMU_FUN(rs1), FMT, 0)                             \
   }
 
