@@ -23,12 +23,13 @@ instruction set architecture TEST =
 //    . : ' | ArgsIndices
 //    . : ' | . CastExpr type: Bits<1>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
-//    . : TypeLiteral type: Bits<5>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : ' TypeLiteral type: Bits<5>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 5 (5) type: Const<5>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

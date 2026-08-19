@@ -16,28 +16,19 @@
 
 package vadl.ast;
 
-import java.util.Arrays;
-import java.util.List;
-import vadl.ast.nodes.AnnotationDefinition;
-import vadl.ast.nodes.CallIndexExpr;
-import vadl.ast.nodes.ConstantDefinition;
+import java.util.Collections;
+import javax.annotation.Nullable;
 import vadl.ast.nodes.Definition;
-import vadl.ast.nodes.EnumerationDefinition;
 import vadl.ast.nodes.Expr;
-import vadl.ast.nodes.IdentifiableNode;
-import vadl.ast.nodes.Identifier;
-import vadl.ast.nodes.ImportDefinition;
-import vadl.ast.nodes.LetExpr;
-import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.Node;
-import vadl.ast.nodes.RecursiveAstVisitor;
 import vadl.ast.nodes.Statement;
 
 /**
  * A pass over the AST that produces a textual representation of the AST.
  */
-public class AstDumper extends RecursiveAstVisitor {
+public class AstDumper {
   private StringBuilder builder = new StringBuilder();
+  private AstDumpLabler labler = new AstDumpLabler();
   private int indent;
 
   /**
@@ -51,27 +42,33 @@ public class AstDumper extends RecursiveAstVisitor {
     indent = 0;
 
     for (var definition : ast.definitions) {
-      definition.accept(this);
+      dumpNode(definition);
     }
     return builder.toString();
   }
 
-  static <T extends Definition> String debugNode(T node) {
-    var dumper = new AstDumper();
-    node.accept(dumper);
-    return dumper.builder.toString();
-  }
+  private void dumpNode(Node node) {
+    builder.append(indentString());
 
-  static <T extends Expr> String debugNode(T node) {
-    var dumper = new AstDumper();
-    node.accept(dumper);
-    return dumper.builder.toString();
-  }
+    @Nullable AstDumpLabler.DumpLabel label;
+    if (node instanceof Definition def) {
+      label = def.accept(labler);
+    } else if (node instanceof Expr expr) {
+      label = expr.accept(labler);
+    } else if (node instanceof Statement statement) {
+      label = statement.accept(labler);
+    } else if (node == null) {
+      label = new AstDumpLabler.DumpLabel("null", Collections.emptyList());
+    } else {
+      label = labler.visitNode(node);
+    }
 
-  static <T extends Statement> String debuNode(T node) {
-    var dumper = new AstDumper();
-    node.accept(dumper);
-    return dumper.builder.toString();
+    builder.append(label.description());
+    builder.append("\n");
+
+    indent++;
+    label.children().forEach(child -> dumpNode(child));
+    indent--;
   }
 
   private String indentString() {
@@ -82,178 +79,4 @@ public class AstDumper extends RecursiveAstVisitor {
         + indentCharacters.substring(0, indentLength % indentCharacters.length());
   }
 
-  private void dumpNode(Node node) {
-    builder.append(indentString());
-    builder.append(node.toString());
-    if (node instanceof IdentifiableNode identifiable) {
-      builder.append(" name: \"%s\"".formatted(identifiable.identifier().name));
-    }
-
-    // FIXME: Some other nodes can also have types but the dumper must also work with nullable types
-    // which the current TypedNode interface doesn't provide.
-    if (node instanceof Expr expr) {
-      builder.append(" type: %s".formatted(expr.type));
-    }
-    builder.append('\n');
-  }
-
-  private void dumpChildren(List<? extends Node> children) {
-    indent++;
-    for (var child : children) {
-      if (child instanceof Definition def) {
-        def.accept(this);
-      } else if (child instanceof Expr expr) {
-        expr.accept(this);
-      } else if (child instanceof Statement statement) {
-        statement.accept(this);
-      } else if (child == null) {
-        builder.append(indentString()).append("null");
-      } else {
-        throw new RuntimeException("NOT IMPLEMENTED");
-      }
-    }
-    indent--;
-  }
-
-  private void dumpChildren(Node... children) {
-    dumpChildren(Arrays.asList(children));
-  }
-
-  @Override
-  protected void beforeTravel(Expr expr) {
-    dumpNode(expr);
-    indent++;
-  }
-
-  @Override
-  protected void beforeTravel(Statement statement) {
-    dumpNode(statement);
-    indent++;
-  }
-
-  @Override
-  protected void beforeTravel(Definition definition) {
-    dumpNode(definition);
-    indent++;
-  }
-
-  @Override
-  protected void afterTravel(Expr expr) {
-    indent--;
-  }
-
-
-  @Override
-  protected void afterTravel(Statement statement) {
-    indent--;
-  }
-
-
-  @Override
-  protected void afterTravel(Definition definition) {
-    indent--;
-  }
-
-  @Override
-  public Void visit(ConstantDefinition definition) {
-    builder.append(indentString());
-    builder.append(definition.toString());
-    builder.append(" name: \"%s\"".formatted(definition.identifier().name));
-
-    builder.append(" evaluatedValue: %s".formatted(definition.evaluatedValue));
-    builder.append('\n');
-
-    dumpChildren(definition.children());
-
-    return null;
-  }
-
-  @Override
-  public Void visit(AnnotationDefinition definition) {
-    // Also dump the keywords that aren't children
-    dumpNode(definition);
-    dumpChildren(definition.keywords.stream().map(k -> (Node) k).toList());
-    dumpChildren(definition.values);
-    return null;
-  }
-
-  @Override
-  public Void visit(CallIndexExpr expr) {
-    dumpNode(expr);
-    dumpChildren((Expr) expr.target);
-    indent++;
-    for (CallIndexExpr.Arguments args : expr.argsIndices) {
-      builder.append(indentString()).append("ArgsIndices\n");
-      dumpChildren(args.values);
-    }
-    for (CallIndexExpr.SubCall subCall : expr.subCalls) {
-      builder.append(indentString()).append("SubCall\n");
-      dumpChildren(subCall.identifier());
-      for (var args : subCall.argsIndices) {
-        builder.append(indentString()).append("ArgsIndices\n");
-        dumpChildren(args.values);
-      }
-    }
-    indent--;
-    return null;
-  }
-
-  @Override
-  public Void visit(ImportDefinition importDefinition) {
-    dumpNode(importDefinition);
-    indent++;
-    builder.append(indentString()).append("File\n");
-    if (importDefinition.fileId != null) {
-      dumpChildren(importDefinition.fileId);
-    }
-    if (importDefinition.filePath != null) {
-      dumpChildren(importDefinition.filePath);
-    }
-    for (List<Identifier> importPath : importDefinition.importedSymbols) {
-      builder.append(indentString()).append("Import\n");
-      indent++;
-      dumpChildren(importPath);
-      indent--;
-    }
-    if (!importDefinition.args.isEmpty()) {
-      builder.append(indentString()).append("Args\n");
-      indent++;
-      dumpChildren(importDefinition.args);
-      indent--;
-    }
-    builder.append(indentString()).append("Module AST\n");
-    dumpChildren(importDefinition.moduleAst.definitions);
-    indent--;
-    return null;
-  }
-
-  @Override
-  public Void visit(EnumerationDefinition definition) {
-    dumpNode(definition);
-    indent++;
-    for (var entry : definition.entries) {
-      entry.identifier().accept(this);
-      if (entry.value != null) {
-        entry.value.accept(this);
-      }
-    }
-    indent--;
-    return null;
-  }
-
-  @Override
-  public Void visit(LetExpr expr) {
-    dumpNode(expr);
-    dumpChildren(expr.identifiers());
-    dumpChildren(expr.valueExpr, expr.body);
-    return null;
-  }
-
-  @Override
-  public Void visit(LetStatement stmt) {
-    dumpNode(stmt);
-    dumpChildren(stmt.identifiers());
-    dumpChildren(stmt.valueExpr, stmt.body);
-    return null;
-  }
 }

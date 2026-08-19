@@ -32,9 +32,11 @@ instruction set architecture TEST = {
 //    '"\😂" ("\b\t\r\n\f\'\"\\\ud83d\ude02") type: String
 //    . EncodingDefinition
 //    . : Identifier name: "I" type: null
-//    . : Identifier name: "a" type: null
-//    . : CastExpr type: Bits<1>
-//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "a", value=CastExpr]
+//    . : ' | Identifier name: "a" type: null
+//    . : ' | CastExpr type: Bits<1>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

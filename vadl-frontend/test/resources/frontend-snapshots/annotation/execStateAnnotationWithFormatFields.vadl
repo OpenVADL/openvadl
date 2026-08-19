@@ -27,8 +27,9 @@ instruction set architecture TEST =
 //    . : ' Identifier name: "state" type: null
 //    . : ' Identifier name: "a" type: null
 //    . : ' Identifier name: "c" type: null
-//    . : TypeLiteral type: F
-//    . : ' Identifier name: "F" type: null
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: F
+//    . : ' | Identifier name: "F" type: null
 //    . FormatDefinition name: "F"
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Bits" type: null

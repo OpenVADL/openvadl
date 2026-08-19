@@ -2,9 +2,9 @@ ImportDefinition
 . File
 . : Identifier name: "rv3264im" type: null
 . Import
-. : ' Identifier name: "RV3264IM" type: null
+. : Identifier name: "RV3264IM" type: null
 . Args
-. : ' StringLiteral literal: "ArchSize=Arch64" ("ArchSize=Arch64") type: null
+. : StringLiteral literal: "ArchSize=Arch64" ("ArchSize=Arch64") type: null
 . Module AST
 . : InstructionSetDefinition name: "RV3264I"
 . : ' ConstantDefinition name: "Arch32" evaluatedValue: null
@@ -103,10 +103,11 @@ ImportDefinition
 . : ' | . : Identifier name: "X" type: null
 . : ' | . : ArgsIndices
 . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
-. : ' | TypeLiteral type: null
-. : ' | . Identifier name: "Index" type: null
-. : ' | TypeLiteral type: null
-. : ' | . Identifier name: "Regs" type: null
+. : ' | RelationTypeLiteral
+. : ' | . TypeLiteral type: null
+. : ' | . : Identifier name: "Index" type: null
+. : ' | . TypeLiteral type: null
+. : ' | . : Identifier name: "Regs" type: null
 . : ' CounterDefinition kind: PROGRAM name: "PC"
 . : ' | TypeLiteral type: null
 . : ' | . Identifier name: "Address" type: null
@@ -305,12 +306,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "ADD" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -356,12 +361,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SUB" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b010'0000 (32) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b010'0000 (32)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0000 (32) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -407,12 +416,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "AND" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b111 (7) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b111 (7)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b111 (7) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -458,12 +471,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "OR" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b110 (6) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b110 (6)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b110 (6) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -509,12 +526,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "XOR" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b100 (4) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b100 (4)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b100 (4) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -560,12 +581,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SLT" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b010 (2) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b010 (2)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b010 (2) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -611,12 +636,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SLTU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b011 (3) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b011 (3)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -662,12 +691,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SLL" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b001 (1) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b001 (1)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b001 (1) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -713,12 +746,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SRL" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -764,12 +801,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SRA" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b010'0000 (32) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b010'0000 (32)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0000 (32) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -812,10 +853,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "ADDI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -858,10 +902,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "ANDI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b111 (7) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b111 (7)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b111 (7) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -904,10 +951,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "ORI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b110 (6) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b110 (6)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b110 (6) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -950,10 +1000,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "XORI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b100 (4) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b100 (4)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b100 (4) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -996,10 +1049,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SLTI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b010 (2) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b010 (2)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b010 (2) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1042,10 +1098,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SLTIU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b011 (3) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b011 (3)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b011 (3) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1076,8 +1135,10 @@ ImportDefinition
 . : ' | . : Identifier name: "immUp" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "AUIPC" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0111 (23) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0111 (23)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0111 (23) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1101,8 +1162,10 @@ ImportDefinition
 . : ' | . Identifier name: "immUp" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "LUI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0111 (55) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0111 (55)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0111 (55) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1140,10 +1203,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "LB" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b000'0011 (3)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1187,10 +1253,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "UIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "LBU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b100 (4) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b000'0011 (3)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b100 (4)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b100 (4) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1236,10 +1305,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "LH" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b000'0011 (3)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b001 (1)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1285,10 +1357,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "UIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "LHU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b000'0011 (3)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1334,10 +1409,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "LW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b010 (2) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b000'0011 (3)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b010 (2)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b010 (2) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1381,10 +1459,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "Byte" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SB" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b010'0011 (35) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b010'0011 (35)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0011 (35) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1430,10 +1511,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "Half" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SH" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b010'0011 (35) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b010'0011 (35)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0011 (35) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b001 (1)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1479,10 +1563,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "Word" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b010'0011 (35) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b010 (2) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b010'0011 (35)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0011 (35) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b010 (2)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b010 (2) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1524,10 +1611,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "immS" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "BEQ" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b110'0011 (99)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b110'0011 (99) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1568,10 +1658,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "immS" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "BNE" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b110'0011 (99)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b110'0011 (99) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b001 (1)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1612,10 +1705,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "immS" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "BGE" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b110'0011 (99)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b110'0011 (99) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1656,10 +1752,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "immS" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "BGEU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b111 (7) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b110'0011 (99)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b110'0011 (99) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b111 (7)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b111 (7) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1700,10 +1799,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "immS" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "BLT" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b100 (4) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b110'0011 (99)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b110'0011 (99) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b100 (4)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b100 (4) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1744,10 +1846,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "immS" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "BLTU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b110 (6) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b110'0011 (99)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b110'0011 (99) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b110 (6)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b110 (6) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1772,8 +1877,8 @@ ImportDefinition
 . : ' | . Identifier name: "retaddr" type: null
 . : ' | . CallIndexExpr type: null
 . : ' | . : Identifier name: "PC" type: null
-. : ' | . : SubCall
-. : ' | . : ' Identifier name: "next" type: null
+. : ' | . : Subcall
+. : ' | . : ' SubCall
 . : ' | . BlockStatement
 . : ' | . : AssignmentStatement
 . : ' | . : ' Identifier name: "PC" type: null
@@ -1794,8 +1899,10 @@ ImportDefinition
 . : ' | . : ' Identifier name: "retaddr" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "JAL" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b110'1111 (111) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b110'1111 (111)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b110'1111 (111) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1816,8 +1923,8 @@ ImportDefinition
 . : ' | . Identifier name: "retaddr" type: null
 . : ' | . CallIndexExpr type: null
 . : ' | . : Identifier name: "PC" type: null
-. : ' | . : SubCall
-. : ' | . : ' Identifier name: "next" type: null
+. : ' | . : Subcall
+. : ' | . : ' SubCall
 . : ' | . BlockStatement
 . : ' | . : AssignmentStatement
 . : ' | . : ' Identifier name: "PC" type: null
@@ -1841,10 +1948,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "retaddr" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "JALR" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b110'0111 (103) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b110'0111 (103)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b110'0111 (103) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1870,16 +1980,22 @@ ImportDefinition
 . : ' | BlockStatement
 . : ' EncodingDefinition
 . : ' | Identifier name: "ECALL" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b111'0011 (115) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
-. : ' | Identifier name: "rd" type: null
-. : ' | BinaryLiteral literal: 0b0'0000 (0) type: null
-. : ' | Identifier name: "rs1" type: null
-. : ' | BinaryLiteral literal: 0b0'0000 (0) type: null
-. : ' | Identifier name: "imm" type: null
-. : ' | IntegerLiteral literal: 0 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b111'0011 (115)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b111'0011 (115) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "rd", value=BinaryLiteral literal: 0b0'0000 (0)]
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : BinaryLiteral literal: 0b0'0000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "rs1", value=BinaryLiteral literal: 0b0'0000 (0)]
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : BinaryLiteral literal: 0b0'0000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "imm", value=IntegerLiteral literal: 0 (0)]
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : IntegerLiteral literal: 0 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1888,16 +2004,22 @@ ImportDefinition
 . : ' | BlockStatement
 . : ' EncodingDefinition
 . : ' | Identifier name: "EBREAK" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b111'0011 (115) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
-. : ' | Identifier name: "rd" type: null
-. : ' | BinaryLiteral literal: 0b0'0000 (0) type: null
-. : ' | Identifier name: "rs1" type: null
-. : ' | BinaryLiteral literal: 0b0'0000 (0) type: null
-. : ' | Identifier name: "imm" type: null
-. : ' | IntegerLiteral literal: 1 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b111'0011 (115)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b111'0011 (115) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "rd", value=BinaryLiteral literal: 0b0'0000 (0)]
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : BinaryLiteral literal: 0b0'0000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "rs1", value=BinaryLiteral literal: 0b0'0000 (0)]
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : BinaryLiteral literal: 0b0'0000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "imm", value=IntegerLiteral literal: 1 (1)]
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : IntegerLiteral literal: 1 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -1957,10 +2079,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "UIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "LWU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b110 (6) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b000'0011 (3)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b110 (6)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b110 (6) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2006,10 +2131,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "Dble" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "LD" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b011 (3) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b000'0011 (3)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b011 (3)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b011 (3) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2055,10 +2183,13 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "Dble" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SD" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b010'0011 (35) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b011 (3) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b010'0011 (35)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0011 (35) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b011 (3)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b011 (3) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2105,10 +2236,13 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "ADDIW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'1011 (27) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'1011 (27)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'1011 (27) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2151,12 +2285,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SLLIW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'1011 (27) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b001 (1) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'1011 (27)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'1011 (27) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b001 (1)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b001 (1) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2199,12 +2337,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SRLIW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'1011 (27) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'1011 (27)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'1011 (27) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2247,12 +2389,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SRAIW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'1011 (27) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b010'0000 (32) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'1011 (27)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'1011 (27) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b010'0000 (32)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0000 (32) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2301,12 +2447,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "ADDW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2355,12 +2505,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SUBW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b010'0000 (32) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b010'0000 (32)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0000 (32) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2409,12 +2563,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SLLW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b001 (1) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b001 (1)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b001 (1) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2463,12 +2621,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SRLW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0000 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0000 (0)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0000 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2517,12 +2679,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SRAW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b010'0000 (32) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b010'0000 (32)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b010'0000 (32) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2551,24 +2717,29 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "AUIPC" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "got_hi" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "got_hi" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "LD" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "pcrel_lo" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "pcrel_lo" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . StringLiteral literal: "LGA" ("LGA") type: null
@@ -2602,14 +2773,19 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SLLI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "zero" type: null
-. : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b001 (1) type: null
-. : ' | Identifier name: "funct2" type: null
-. : ' | BinaryLiteral literal: 0b00 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "zero", value=IntegerLiteral literal: 0 (0)]
+. : ' | . : Identifier name: "zero" type: null
+. : ' | . : IntegerLiteral literal: 0 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b001 (1)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b001 (1) type: null
+. : ' | . EncodingField[field=Identifier name: "funct2", value=BinaryLiteral literal: 0b00 (0)]
+. : ' | . : Identifier name: "funct2" type: null
+. : ' | . : BinaryLiteral literal: 0b00 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2649,14 +2825,19 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SRLI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "zero" type: null
-. : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct2" type: null
-. : ' | BinaryLiteral literal: 0b00 (0) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "zero", value=IntegerLiteral literal: 0 (0)]
+. : ' | . : Identifier name: "zero" type: null
+. : ' | . : IntegerLiteral literal: 0 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct2", value=BinaryLiteral literal: 0b00 (0)]
+. : ' | . : Identifier name: "funct2" type: null
+. : ' | . : BinaryLiteral literal: 0b00 (0) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2696,14 +2877,19 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "SRAI" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
-. : ' | Identifier name: "zero" type: null
-. : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct2" type: null
-. : ' | BinaryLiteral literal: 0b01 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b001'0011 (19)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b001'0011 (19) type: null
+. : ' | . EncodingField[field=Identifier name: "zero", value=IntegerLiteral literal: 0 (0)]
+. : ' | . : Identifier name: "zero" type: null
+. : ' | . : IntegerLiteral literal: 0 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct2", value=BinaryLiteral literal: 0b01 (1)]
+. : ' | . : Identifier name: "funct2" type: null
+. : ' | . : BinaryLiteral literal: 0b01 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2885,33 +3071,38 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "LUI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 1 (1) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "hi" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "hi" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "JALR" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 1 (1) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 1 (1) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "lo" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "lo" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2927,37 +3118,42 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "AUIPC" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 6 (6) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "hi" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
-. : ' | InstructionCallStatement
-. : ' | . Identifier name: "JALR" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 6 (6) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CastExpr type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 6 (6) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
 . : ' | . : CallIndexExpr type: null
-. : ' | . : ' Identifier name: "lo" type: null
+. : ' | . : ' Identifier name: "hi" type: null
 . : ' | . : ' ArgsIndices
 . : ' | . : ' | Identifier name: "symbol" type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' IntegerLiteral literal: 12 (12) type: null
+. : ' | InstructionCallStatement
+. : ' | . Identifier name: "JALR" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 6 (6) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "lo" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "symbol" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits" type: null
+. : ' | . : ' | IntegerLiteral literal: 12 (12) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -2969,22 +3165,25 @@ ImportDefinition
 . : ' PseudoInstructionDefinition name: "RET"
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "JALR" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 1 (1) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' IntegerLiteral literal: 12 (12) type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits" type: null
+. : ' | . : ' | IntegerLiteral literal: 12 (12) type: null
 . : ' AssemblyDefinition
 . : ' | Identifier name: "mnemonic" type: null
 . : ' PseudoInstructionDefinition name: "J"
@@ -2993,13 +3192,15 @@ ImportDefinition
 . : ' | . : Identifier name: "SIntR" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "JAL" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "immS" type: null
-. : ' | . Identifier name: "offset" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "immS" type: null
+. : ' | . : Identifier name: "offset" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3011,22 +3212,25 @@ ImportDefinition
 . : ' PseudoInstructionDefinition name: "NOP"
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "ADDI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' IntegerLiteral literal: 12 (12) type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits" type: null
+. : ' | . : ' | IntegerLiteral literal: 12 (12) type: null
 . : ' AssemblyDefinition
 . : ' | Identifier name: "mnemonic" type: null
 . : ' PseudoInstructionDefinition name: "MV"
@@ -3038,16 +3242,19 @@ ImportDefinition
 . : ' | . : Identifier name: "Index" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "ADDI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' IntegerLiteral literal: 12 (12) type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits" type: null
+. : ' | . : ' | IntegerLiteral literal: 12 (12) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3070,12 +3277,15 @@ ImportDefinition
 . : ' | . : Identifier name: "Index" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "XORI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . BinaryLiteral literal: 0xFFF (4095) type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : BinaryLiteral literal: 0xFFF (4095) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3098,15 +3308,18 @@ ImportDefinition
 . : ' | . : Identifier name: "Index" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "SUB" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . Identifier name: "rs1" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : Identifier name: "rs1" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3129,15 +3342,18 @@ ImportDefinition
 . : ' | . : Identifier name: "Index" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "SLTU" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . Identifier name: "rs1" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : Identifier name: "rs1" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3160,15 +3376,18 @@ ImportDefinition
 . : ' | . : Identifier name: "Index" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "SLT" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3191,15 +3410,18 @@ ImportDefinition
 . : ' | . : Identifier name: "Index" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "SLT" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . Identifier name: "rs1" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : Identifier name: "rs1" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3222,15 +3444,18 @@ ImportDefinition
 . : ' | . : Identifier name: "SIntR" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "BEQ" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rs" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "immS" type: null
-. : ' | . Identifier name: "offset" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rs" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "immS" type: null
+. : ' | . : Identifier name: "offset" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3253,15 +3478,18 @@ ImportDefinition
 . : ' | . : Identifier name: "SIntR" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "BNE" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rs" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "immS" type: null
-. : ' | . Identifier name: "offset" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rs" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "immS" type: null
+. : ' | . : Identifier name: "offset" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3284,15 +3512,18 @@ ImportDefinition
 . : ' | . : Identifier name: "SIntR" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "BGE" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . Identifier name: "rs" type: null
-. : ' | . Identifier name: "immS" type: null
-. : ' | . Identifier name: "offset" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : Identifier name: "rs" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "immS" type: null
+. : ' | . : Identifier name: "offset" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3315,15 +3546,18 @@ ImportDefinition
 . : ' | . : Identifier name: "SIntR" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "BGE" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rs" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "immS" type: null
-. : ' | . Identifier name: "offset" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rs" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "immS" type: null
+. : ' | . : Identifier name: "offset" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3346,15 +3580,18 @@ ImportDefinition
 . : ' | . : Identifier name: "SIntR" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "BLT" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rs" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "immS" type: null
-. : ' | . Identifier name: "offset" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rs" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "immS" type: null
+. : ' | . : Identifier name: "offset" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3377,15 +3614,18 @@ ImportDefinition
 . : ' | . : Identifier name: "SIntR" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "BLT" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . CastExpr type: null
-. : ' | . : IntegerLiteral literal: 0 (0) type: null
-. : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits5" type: null
-. : ' | . Identifier name: "rs2" type: null
-. : ' | . Identifier name: "rs" type: null
-. : ' | . Identifier name: "immS" type: null
-. : ' | . Identifier name: "offset" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits5" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs2" type: null
+. : ' | . : Identifier name: "rs" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "immS" type: null
+. : ' | . : Identifier name: "offset" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3409,24 +3649,29 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "LUI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "hi" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "hi" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "ADDI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "lo" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "lo" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3449,24 +3694,29 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "AUIPC" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "got_hi" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "got_hi" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "LW" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "pcrel_lo" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "pcrel_lo" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . StringLiteral literal: "LGA" ("LGA") type: null
@@ -3489,24 +3739,29 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "AUIPC" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "pcrel_hi" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "pcrel_hi" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "ADDI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "pcrel_lo" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "pcrel_lo" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3529,24 +3784,29 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "LUI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "hi" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "hi" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' | InstructionCallStatement
 . : ' | . Identifier name: "ADDI" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "rs1" type: null
-. : ' | . Identifier name: "rd" type: null
-. : ' | . Identifier name: "imm" type: null
-. : ' | . CallIndexExpr type: null
-. : ' | . : Identifier name: "lo" type: null
-. : ' | . : ArgsIndices
-. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "rs1" type: null
+. : ' | . : Identifier name: "rd" type: null
+. : ' | . NamedArgument
+. : ' | . : Identifier name: "imm" type: null
+. : ' | . : CallIndexExpr type: null
+. : ' | . : ' Identifier name: "lo" type: null
+. : ' | . : ' ArgsIndices
+. : ' | . : ' | Identifier name: "symbol" type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3597,12 +3857,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "MUL" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3653,12 +3917,16 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "MLen" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "MULH" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b001 (1) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b001 (1)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b001 (1) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3709,12 +3977,16 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "MLen" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "MULHSU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b010 (2) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b010 (2)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b010 (2) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3765,12 +4037,16 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "MLen" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "MULHU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b011 (3) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b011 (3)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b011 (3) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3868,12 +4144,16 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "DIV" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b100 (4) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b100 (4)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b100 (4) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -3949,12 +4229,16 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "DIVU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -4052,12 +4336,16 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "REM" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b110 (6) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b110 (6)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b110 (6) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -4133,12 +4421,16 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "REMU" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b111 (7) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'0011 (51)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'0011 (51) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b111 (7)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b111 (7) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -4187,12 +4479,16 @@ ImportDefinition
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "MULW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b000 (0) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b000 (0)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b000 (0) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -4290,12 +4586,16 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "DIVW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b100 (4) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b100 (4)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b100 (4) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -4371,12 +4671,16 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "DIVUW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b101 (5) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b101 (5)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b101 (5) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -4474,12 +4778,16 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "REMW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b110 (6) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b110 (6)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b110 (6) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -4555,12 +4863,16 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
 . : ' | Identifier name: "REMUW" type: null
-. : ' | Identifier name: "opcode" type: null
-. : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
-. : ' | Identifier name: "funct3" type: null
-. : ' | BinaryLiteral literal: 0b111 (7) type: null
-. : ' | Identifier name: "funct7" type: null
-. : ' | BinaryLiteral literal: 0b000'0001 (1) type: null
+. : ' | EncsNode
+. : ' | . EncodingField[field=Identifier name: "opcode", value=BinaryLiteral literal: 0b011'1011 (59)]
+. : ' | . : Identifier name: "opcode" type: null
+. : ' | . : BinaryLiteral literal: 0b011'1011 (59) type: null
+. : ' | . EncodingField[field=Identifier name: "funct3", value=BinaryLiteral literal: 0b111 (7)]
+. : ' | . : Identifier name: "funct3" type: null
+. : ' | . : BinaryLiteral literal: 0b111 (7) type: null
+. : ' | . EncodingField[field=Identifier name: "funct7", value=BinaryLiteral literal: 0b000'0001 (1)]
+. : ' | . : Identifier name: "funct7" type: null
+. : ' | . : BinaryLiteral literal: 0b000'0001 (1) type: null
 . : ' AssemblyDefinition
 . : ' | GroupedExpr type: null
 . : ' | . Identifier name: "mnemonic" type: null
@@ -4858,24 +5170,29 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' | IntegerLiteral literal: 32 (32) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "LUI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "hi" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "hi" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ADDI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "lo" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "lo" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . AbiSequenceDefinition
 . : Parameter name: "rd"
 . : ' TypeLiteral type: null
@@ -4887,24 +5204,29 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' | IntegerLiteral literal: 32 (32) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "LUI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "hi" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "hi" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ADDI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "lo" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "lo" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . AbiSequenceDefinition
 . : Parameter name: "rd"
 . : ' TypeLiteral type: null
@@ -4916,62 +5238,79 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' | IntegerLiteral literal: 64 (64) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "LUI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "to32AndHi" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "to32AndHi" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ADDI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "to32AndLo" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "to32AndLo" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . : InstructionCallStatement
 . : ' Identifier name: "SLLI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "sft" type: null
-. : ' IntegerLiteral literal: 16 (16) type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "sft" type: null
+. : ' | IntegerLiteral literal: 16 (16) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ORI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "lowerHalfHi" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "lowerHalfHi" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . : InstructionCallStatement
 . : ' Identifier name: "SLLI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "sft" type: null
-. : ' IntegerLiteral literal: 16 (16) type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "sft" type: null
+. : ' | IntegerLiteral literal: 16 (16) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ORI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "lowerHalfLo" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "lowerHalfLo" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . AbiSequenceDefinition
 . : Parameter name: "rd"
 . : ' TypeLiteral type: null
@@ -4983,62 +5322,79 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' | IntegerLiteral literal: 64 (64) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "LUI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "to32AndHi" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "to32AndHi" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ADDI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "to32AndLo" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "to32AndLo" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . : InstructionCallStatement
 . : ' Identifier name: "SLLI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "sft" type: null
-. : ' IntegerLiteral literal: 16 (16) type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "sft" type: null
+. : ' | IntegerLiteral literal: 16 (16) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ORI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "lowerHalfHi" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "lowerHalfHi" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . : InstructionCallStatement
 . : ' Identifier name: "SLLI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "sft" type: null
-. : ' IntegerLiteral literal: 16 (16) type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "sft" type: null
+. : ' | IntegerLiteral literal: 16 (16) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ORI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "imm" type: null
-. : ' CallIndexExpr type: null
-. : ' | Identifier name: "lowerHalfLo" type: null
-. : ' | ArgsIndices
-. : ' | . Identifier name: "val" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | CallIndexExpr type: null
+. : ' | . Identifier name: "lowerHalfLo" type: null
+. : ' | . ArgsIndices
+. : ' | . : Identifier name: "val" type: null
 . AbiSequenceDefinition
 . : Parameter name: "rd"
 . : ' TypeLiteral type: null
@@ -5050,12 +5406,15 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' | IntegerLiteral literal: 12 (12) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ADDI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' IntegerLiteral literal: 0 (0) type: null
-. : ' Identifier name: "imm" type: null
-. : ' Identifier name: "imm" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | IntegerLiteral literal: 0 (0) type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | Identifier name: "imm" type: null
 . AbiSequenceDefinition
 . : Parameter name: "rd"
 . : ' TypeLiteral type: null
@@ -5071,12 +5430,15 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' | IntegerLiteral literal: 12 (12) type: null
 . : InstructionCallStatement
 . : ' Identifier name: "ADDI" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rd" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "rs1" type: null
-. : ' Identifier name: "imm" type: null
-. : ' Identifier name: "imm" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rd" type: null
+. : ' | Identifier name: "rd" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "rs1" type: null
+. : ' | Identifier name: "rs1" type: null
+. : ' NamedArgument
+. : ' | Identifier name: "imm" type: null
+. : ' | Identifier name: "imm" type: null
 ProcessorDefinition name: "Spike"
 . Identifier name: "RV64IM" type: null
 . Identifier name: "ABI" type: null

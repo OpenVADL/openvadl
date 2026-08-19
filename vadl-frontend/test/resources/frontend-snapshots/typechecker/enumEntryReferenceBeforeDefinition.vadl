@@ -27,12 +27,15 @@ enumeration Nums : Bits<4> =
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IdentifierPath name: "Nums::second" type: Bits<4>
 //    EnumerationDefinition name: "Nums"
-//    . Identifier name: "first" type: null
-//    . CastExpr type: Bits<4>
-//    . : IntegerLiteral literal: 10 (10) type: Const<10>
-//    . Identifier name: "second" type: null
-//    . CastExpr type: Bits<4>
-//    . : IntegerLiteral literal: 11 (11) type: Const<11>
+//    . TypeLiteral type: Bits<4>
+//    . : Identifier name: "Bits" type: null
+//    . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . Entry name: "first"
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 10 (10) type: Const<10>
+//    . Entry name: "second"
+//    . : CastExpr type: Bits<4>
+//    . : ' IntegerLiteral literal: 11 (11) type: Const<11>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

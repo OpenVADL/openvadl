@@ -24,8 +24,9 @@ instruction set architecture TEST =
 //    . : AnnotationDefinition
 //    . : ' Identifier name: "execution" type: null
 //    . : ' Identifier name: "state" type: null
-//    . : TypeLiteral type: F
-//    . : ' Identifier name: "F" type: null
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: F
+//    . : ' | Identifier name: "F" type: null
 //    . FormatDefinition name: "F"
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Bits" type: null

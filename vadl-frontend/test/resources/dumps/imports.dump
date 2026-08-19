@@ -2,17 +2,17 @@ ImportDefinition
 . File
 . : StringLiteral literal: "./imports/entry.vadl" ("./imports/entry.vadl") type: null
 . Import
-. : ' Identifier name: "A" type: null
+. : Identifier name: "A" type: null
 . Import
-. : ' Identifier name: "B" type: null
+. : Identifier name: "B" type: null
 . Import
-. : ' Identifier name: "TopLevelModel" type: null
+. : Identifier name: "TopLevelModel" type: null
 . Module AST
 . : ImportDefinition
 . : ' File
 . : ' | Identifier name: "isa_a" type: null
 . : ' Import
-. : ' | . Identifier name: "A" type: null
+. : ' | Identifier name: "A" type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition name: "A"
 . : ' | . ConstantDefinition name: "a" evaluatedValue: null
@@ -21,7 +21,7 @@ ImportDefinition
 . : ' File
 . : ' | Identifier name: "isa_a" type: null
 . : ' Import
-. : ' | . Identifier name: "TopLevelModel" type: null
+. : ' | Identifier name: "TopLevelModel" type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition name: "A"
 . : ' | . ConstantDefinition name: "a" evaluatedValue: null
@@ -30,7 +30,7 @@ ImportDefinition
 . : ' File
 . : ' | Identifier name: "isa_b" type: null
 . : ' Import
-. : ' | . Identifier name: "B" type: null
+. : ' | Identifier name: "B" type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition name: "B"
 . : ' | . ConstantDefinition name: "b" evaluatedValue: null

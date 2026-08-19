@@ -26,9 +26,10 @@ instruction set architecture TEST =
 //    . : ' Identifier name: "execution" type: null
 //    . : ' Identifier name: "state" type: null
 //    . : ' Identifier name: "x" type: null
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

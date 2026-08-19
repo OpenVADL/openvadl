@@ -26,10 +26,11 @@ instruction set architecture Tensor = {
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
 //    . RegisterDefinition name: "X"
-//    . : TypeLiteral type: Bits<16><32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 16 (16) type: Const<16>
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<16><32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
 //    . FormatDefinition name: "F"
 //    . : TypeLiteral type: Bits<16>
 //    . : ' Identifier name: "Bits" type: null
@@ -50,13 +51,14 @@ instruction set architecture Tensor = {
 //    . InstructionDefinition name: "Init4X"
 //    . : Identifier name: "F" type: null
 //    . : ForallStatement
-//    . : ' Identifier name: "i" type: Bits<4>
-//    . : ' TypeLiteral type: Bits<4>
-//    . : ' | Identifier name: "Bits" type: null
-//    . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' RangeExpr type: null
-//    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' ForallIndex name: "i"
+//    . : ' | Identifier name: "i" type: Bits<4>
+//    . : ' | TypeLiteral type: Bits<4>
+//    . : ' | . Identifier name: "Bits" type: null
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | RangeExpr type: null
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' AssignmentStatement
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -66,18 +68,23 @@ instruction set architecture Tensor = {
 //    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
 //    . EncodingDefinition
 //    . : Identifier name: "Init4X" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' BinaryLiteral literal: 0b1100 (12) type: Const<12>
-//    . : Identifier name: "rs2" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' BinaryLiteral literal: 0b0000 (0) type: Const<0>
-//    . : Identifier name: "rs1" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' BinaryLiteral literal: 0b0000 (0) type: Const<0>
-//    . : Identifier name: "rd" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' BinaryLiteral literal: 0b0000 (0) type: Const<0>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . BinaryLiteral literal: 0b1100 (12) type: Const<12>
+//    . : ' EncodingField[field=Identifier name: "rs2", value=CastExpr]
+//    . : ' | Identifier name: "rs2" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . BinaryLiteral literal: 0b0000 (0) type: Const<0>
+//    . : ' EncodingField[field=Identifier name: "rs1", value=CastExpr]
+//    . : ' | Identifier name: "rs1" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . BinaryLiteral literal: 0b0000 (0) type: Const<0>
+//    . : ' EncodingField[field=Identifier name: "rd", value=CastExpr]
+//    . : ' | Identifier name: "rd" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . BinaryLiteral literal: 0b0000 (0) type: Const<0>
 //    . AssemblyDefinition
 //    . : GroupedExpr type: String
 //    . : ' Identifier name: "mnemonic" type: String

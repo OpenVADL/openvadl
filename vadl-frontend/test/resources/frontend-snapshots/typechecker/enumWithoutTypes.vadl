@@ -15,14 +15,14 @@
 //  Dumped AST:
 //
 //    EnumerationDefinition name: "ENUM"
-//    . Identifier name: "A" type: null
-//    . IntegerLiteral literal: 1 (1) type: Const<1>
-//    . Identifier name: "B" type: null
-//    . IntegerLiteral literal: 2 (2) type: Const<2>
-//    . Identifier name: "C" type: null
-//    . BinaryExpr operator: + type: Const<7>
-//    . : IntegerLiteral literal: 3 (3) type: Const<3>
-//    . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . Entry name: "A"
+//    . : IntegerLiteral literal: 1 (1) type: Const<1>
+//    . Entry name: "B"
+//    . : IntegerLiteral literal: 2 (2) type: Const<2>
+//    . Entry name: "C"
+//    . : BinaryExpr operator: + type: Const<7>
+//    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

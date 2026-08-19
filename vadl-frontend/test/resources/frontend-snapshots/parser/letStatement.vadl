@@ -50,9 +50,11 @@ instruction set architecture ISA = {
 //    . : Identifier name: "mnemonic" type: String
 //    . EncodingDefinition
 //    . : Identifier name: "BEQ" type: null
-//    . : Identifier name: "bits" type: null
-//    . : CastExpr type: Bits<32>
-//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "bits", value=CastExpr]
+//    . : ' | Identifier name: "bits" type: null
+//    . : ' | CastExpr type: Bits<32>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

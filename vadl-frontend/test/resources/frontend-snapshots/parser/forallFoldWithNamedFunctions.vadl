@@ -40,10 +40,11 @@ instruction set architecture Tensor = {
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
 //    . RegisterDefinition name: "X"
-//    . : TypeLiteral type: Bits<16><32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 16 (16) type: Const<16>
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<16><32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 16 (16) type: Const<16>
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
 //    . FormatDefinition name: "F"
 //    . : TypeLiteral type: Bits<4>
 //    . : ' Identifier name: "Bits" type: null
@@ -61,13 +62,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::add" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -75,9 +77,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I1" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //    . InstructionDefinition name: "I2"
@@ -89,13 +93,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::mul" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -103,9 +108,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I2" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 2 (2) type: Const<2>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //    . InstructionDefinition name: "I3"
@@ -117,13 +124,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::and" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -131,9 +139,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I3" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //    . InstructionDefinition name: "I4"
@@ -145,13 +155,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::or" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -159,9 +170,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I4" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //    . InstructionDefinition name: "I5"
@@ -173,13 +186,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::xor" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -187,9 +201,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I5" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 5 (5) type: Const<5>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //    . InstructionDefinition name: "I6"
@@ -201,13 +217,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::smin" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -215,9 +232,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I6" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 6 (6) type: Const<6>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 6 (6) type: Const<6>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //    . InstructionDefinition name: "I7"
@@ -229,13 +248,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::umin" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -243,9 +263,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I7" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 7 (7) type: Const<7>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //    . InstructionDefinition name: "I8"
@@ -257,13 +279,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::smax" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -271,9 +294,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I8" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 8 (8) type: Const<8>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //    . InstructionDefinition name: "I9"
@@ -285,13 +310,14 @@ instruction set architecture Tensor = {
 //    . : ' | . CastExpr type: Bits<4>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' ForallExpr keyword: fold, type: Bits<32> type: Bits<32>
-//    . : ' | Identifier name: "i" type: Bits<4>
-//    . : ' | TypeLiteral type: Bits<4>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<4>
+//    . : ' | . TypeLiteral type: Bits<4>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | IdentifierPath name: "VADL::umax" type: null
 //    . : ' | CallIndexExpr type: Bits<32>
 //    . : ' | . Identifier name: "X" type: null
@@ -299,9 +325,11 @@ instruction set architecture Tensor = {
 //    . : ' | . : Identifier name: "i" type: Bits<4>
 //    . EncodingDefinition
 //    . : Identifier name: "I9" type: null
-//    . : Identifier name: "opcode" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 9 (9) type: Const<9>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "opcode", value=CastExpr]
+//    . : ' | Identifier name: "opcode" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 9 (9) type: Const<9>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "id" ("id") type: String
 //

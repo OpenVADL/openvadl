@@ -33,10 +33,11 @@ instruction set architecture Test = {
 //    . : ' Identifier name: "Bits" type: null
 //    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
 //    . RegisterDefinition name: "Reg"
-//    . : TypeLiteral type: Bits<8><64>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
-//    . : ' IntegerLiteral literal: 64 (64) type: Const<64>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<8><64>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | IntegerLiteral literal: 64 (64) type: Const<64>
 //    . FormatDefinition name: "Inst"
 //    . : TypeLiteral type: Bits<4>
 //    . : ' Identifier name: "Bits" type: null
@@ -68,9 +69,11 @@ instruction set architecture Test = {
 //    . : ' | . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . EncodingDefinition
 //    . : Identifier name: "t" type: null
-//    . : Identifier name: "op" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "op", value=CastExpr]
+//    . : ' | Identifier name: "op" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
 //    . AssemblyDefinition
 //    . : GroupedExpr type: String
 //    . : ' StringLiteral literal: "load" ("load") type: String

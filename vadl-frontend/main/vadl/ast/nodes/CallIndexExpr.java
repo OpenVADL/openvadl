@@ -21,14 +21,12 @@ import static java.util.Objects.requireNonNull;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import vadl.ast.TensorType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithLocation;
 import vadl.viam.Constant;
 
 /**
@@ -264,7 +262,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
     return result;
   }
 
-  public static final class Arguments implements TypedNode {
+  public static final class Arguments extends Node implements TypedNode {
     public List<Expr> values;
     public SourceLocation location;
 
@@ -309,9 +307,23 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
     }
 
 
+    @Override
+    public SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    public void prettyPrint(int indent, StringBuilder builder) {
+      throw new IllegalStateException("Call the CallIndexExpr::prettyPrint instead.");
+    }
+
+    @Override
+    public SourceLocation location() {
+      return location;
+    }
   }
 
-  public static final class SubCall implements WithLocation {
+  public static final class SubCall extends Node {
     public IdentifierOrPlaceholder id;
     public List<Arguments> argsIndices;
 
@@ -363,6 +375,16 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
         location = location.join(argsIndices.getLast().location);
       }
       return location;
+    }
+
+    @Override
+    public SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    public void prettyPrint(int indent, StringBuilder builder) {
+      throw new IllegalStateException("Call the CallIndexExpr::prettyPrint instead.");
     }
   }
 }

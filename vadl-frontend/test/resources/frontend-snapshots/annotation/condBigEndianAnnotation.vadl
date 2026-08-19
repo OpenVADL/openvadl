@@ -22,9 +22,10 @@ instruction set architecture TEST =
 //    . : AnnotationDefinition
 //    . : ' Identifier name: "execution" type: null
 //    . : ' Identifier name: "state" type: null
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
 //    . MemoryDefinition name: "MEM"
 //    . : AnnotationDefinition
 //    . : ' Identifier name: "big" type: null
