@@ -57,8 +57,8 @@ public class RecursiveAstVisitor extends DefaultAstVisitor<Void> {
 
   @Override
   public final Void visitNode(Node node) {
-    throw new IllegalStateException("This should never be called because all three visit methods are"
-        + "implemented.");
+    throw new IllegalStateException("This should never be called because all three visit methods "
+        + "are implemented.");
   }
 
   @Override

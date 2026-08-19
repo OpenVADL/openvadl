@@ -25,9 +25,9 @@ package vadl.ast.nodes;
  * for all definitions/statements/expressions by overriding visitDefinition or custom handling by
  * overriding the explicit visiting method.
  */
-abstract public class DefaultAstVisitor<T> implements AstVisitor<T> {
+public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
 
-  abstract public T visitNode(Node node);
+  public abstract T visitNode(Node node);
 
   public T visitDefinition(Definition definition) {
     return visitNode(definition);

@@ -38,11 +38,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
-import org.thymeleaf.templateresolver.ITemplateResolver;
 import vadl.OpenVadlProperties;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.formatting.CodeFormatter;
@@ -61,7 +56,6 @@ import vadl.viam.Specification;
  * @see Result
  */
 public abstract class AbstractMultiTemplateRenderingPass extends Pass {
-  private static final TemplateEngine templateEngine = templateEngine();
   private static final Logger log = LoggerFactory.getLogger(
       AbstractMultiTemplateRenderingPass.class);
 
@@ -213,7 +207,6 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
 
   private void renderTemplate(Map<String, Object> vars,
                               Writer writer) throws IOException {
-    var ctx = new Context();
     // check if variables have correct type.
     // for rendering, only primitive types, maps, and lists are valid.
     try {
@@ -223,12 +216,10 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
           this.getClass().getSimpleName(), e);
       throw new RuntimeException(e);
     }
-    vars.forEach(ctx::setVariable);
-
     // if copyright is enabled, we use the wrapped writer.
     var actualWriter =
         enableCopyright() ? new PrependingWriter(writer, getCopyrightNotice()) : writer;
-    templateEngine.process(getTemplatePath(), ctx, actualWriter);
+    TemplateRenderer.render(getTemplatePath(), vars, actualWriter);
   }
 
   private void formatRenderedFile(Path filePath) {
@@ -280,22 +271,5 @@ public abstract class AbstractMultiTemplateRenderingPass extends Pass {
         .append("\n\n") // double new line to have some space
         .toString();
   }
-
-  private static TemplateEngine templateEngine() {
-    TemplateEngine templateEngine = new TemplateEngine();
-    templateEngine.addTemplateResolver(templateResolver());
-    return templateEngine;
-  }
-
-  private static ITemplateResolver templateResolver() {
-    ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
-    templateResolver.setPrefix("/templates/");
-    templateResolver.setTemplateMode(TemplateMode.TEXT);
-    templateResolver.setCharacterEncoding("UTF8");
-    templateResolver.setCheckExistence(true);
-    templateResolver.setCacheable(true);
-    return templateResolver;
-  }
-
 
 }

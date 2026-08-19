@@ -34,10 +34,26 @@ import vadl.ast.nodes.SyntaxType;
 import vadl.utils.SourceLocation;
 
 
+/**
+ * The Labler generates for each node a description that will be put into the dump and the children
+ * that should be included in the dump.
+ */
 public class AstDumpLabler extends DefaultAstVisitor<AstDumpLabler.DumpLabel> {
-  public record DumpLabel(String description, List<Node> children) {}
 
-  public class  PseudoChild<T extends Node> extends Node {
+  /**
+   * The Label for a single Node.
+   *
+   * @param description of the node.
+   * @param children to be put into the dump.
+   */
+  public record DumpLabel(String description, List<Node> children) {
+  }
+
+  /**
+   * Sometimes it makes sense to put in an additional layer of hirachy for readability this node
+   * does that.
+   */
+  public static class PseudoChild<T extends Node> extends Node {
     public String name;
     public List<T> children;
 
@@ -61,7 +77,7 @@ public class AstDumpLabler extends DefaultAstVisitor<AstDumpLabler.DumpLabel> {
     @Override
     public SourceLocation location() {
       // Just implemented to pass Node
-      throw new IllegalStateException();
+      return SourceLocation.join(children.stream().map(c -> c.location()).toList());
     }
   }
 
@@ -105,7 +121,8 @@ public class AstDumpLabler extends DefaultAstVisitor<AstDumpLabler.DumpLabel> {
   @Override
   public DumpLabel visit(AnnotationDefinition definition) {
     // Also dump the keywords that aren't children
-    var children = Streams.concat(definition.keywords.stream().map(k -> (Node) k), definition.values.stream());
+    var children =
+        Streams.concat(definition.keywords.stream().map(k -> (Node) k), definition.values.stream());
     return new DumpLabel(defaultDescription(definition), children.toList());
   }
 
@@ -125,7 +142,8 @@ public class AstDumpLabler extends DefaultAstVisitor<AstDumpLabler.DumpLabel> {
     children.add(new PseudoChild<>("File", List.of(
         importDefinition.fileId != null ? importDefinition.fileId : importDefinition.filePath)));
 
-    importDefinition.importedSymbols.forEach(importPath -> children.add(new PseudoChild<>("Import", importPath)));
+    importDefinition.importedSymbols.forEach(
+        importPath -> children.add(new PseudoChild<>("Import", importPath)));
     if (!importDefinition.args.isEmpty()) {
       children.add(new PseudoChild<>("Args", importDefinition.args));
     }

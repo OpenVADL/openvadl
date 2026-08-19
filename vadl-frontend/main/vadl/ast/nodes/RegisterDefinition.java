@@ -142,6 +142,9 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
 
     @Override
     public SourceLocation location() {
+      if (argTypes().isEmpty()) {
+        return resultType.location();
+      }
       return argTypes.get(0).location().join(resultType.location());
     }
 
