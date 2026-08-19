@@ -1,0 +1,18 @@
+
+instruction set architecture Test = {
+  [ fe flag invalid : f0 ]
+  register A : F
+  [ fe flag invalid : f1 ]
+  register B : F
+
+  format F : Bits<16> =
+    { dummy : Bits<14>
+    , f1    : Bits<1>
+    , f0    : Bits<1>
+    }
+
+  memory MEM : Bits<32> -> Bits<8>
+  program counter PC : Bits<32>
+}
+
+processor Proc implements Test = { }
