@@ -16,7 +16,10 @@
 
 package vadl.viam.graph.dependency;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
@@ -91,7 +94,7 @@ public class OperationForAllNode extends ExpressionNode {
   public static class Index extends ExpressionNode {
 
     @DataValue
-    private final List<Operation> operations;
+    private final Set<Operation> operations;
 
     /**
      * The constructor.
@@ -99,12 +102,12 @@ public class OperationForAllNode extends ExpressionNode {
      * @param type       type of the expression.
      * @param operations operation restrictions.
      */
-    public Index(Type type, List<Operation> operations) {
+    public Index(Type type, Collection<Operation> operations) {
       super(type);
-      this.operations = operations;
+      this.operations = new LinkedHashSet<>(operations);
     }
 
-    public List<Operation> operations() {
+    public Set<Operation> operations() {
       return operations;
     }
 

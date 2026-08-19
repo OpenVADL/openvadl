@@ -45,6 +45,7 @@ import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
+import vadl.viam.graph.dependency.OperationRef;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
@@ -227,6 +228,11 @@ abstract class IssProcGen implements CDefaultMixins.All,
   @Handler
   void handle(CGenContext<Node> ctx, GroupRef toHandle) {
     throwNotAllowed(toHandle, "group reference expressions");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, OperationRef toHandle) {
+    throwNotAllowed(toHandle, "operation reference expressions");
   }
 
   private boolean shouldInlineExprSave(ExprSaveNode save) {

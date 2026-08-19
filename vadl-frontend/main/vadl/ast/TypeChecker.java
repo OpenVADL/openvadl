@@ -21,6 +21,8 @@ import static vadl.ast.GroupDefUtils.GroupExprBitLengthCollector.maxBitLength;
 import static vadl.ast.GroupDefUtils.GroupExprLengthCollector.maxLength;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
+import static vadl.types.BuiltInTable.OP_NOT_ELEM_OF;
+import static vadl.types.BuiltInTable.OP_NOT_IN;
 
 import com.google.common.collect.Streams;
 import java.math.BigInteger;
@@ -197,7 +199,6 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
-import vadl.viam.InstructionSetArchitecture;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -1026,7 +1027,7 @@ public class TypeChecker
       }
     }
 
-    if (args.size() == 2 && FrontendBuiltIns.operationEqualityPredicates.contains(builtIn)) {
+    if (args.size() == 2 && BuiltInTable.OP_EQUALITY_PREDICATES.contains(builtIn)) {
       // Special case for equality over bound variables of the forall and exists then expression
       final Expr l = args.getFirst();
       final Expr r = args.getLast();
@@ -1050,6 +1051,42 @@ public class TypeChecker
         var argTypes = args.stream().map(a -> a.type()).toList();
         return new BuiltInCheckResult(argTypes, Type.bool());
       }
+    }
+
+    if (args.size() == 2 && BuiltInTable.OP_ELEMENT_OF_PREDICATES.contains(builtIn)) {
+
+      if (!(args.getFirst().type() instanceof PseudoFormatType l)) {
+        throw addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location, "Expected the left side to be an operation, but"
+                + "was an `%s`", args.getFirst().type())
+            .build());
+      }
+
+      if (!(args.getLast().type() instanceof PseudoFormatType r)) {
+        throw addErrorAndStopChecking(error("Type Mismatch", location)
+            .locationDescription(location, "Expected the right side to be an operation, but"
+                + "was an `%s`", args.getFirst().type())
+            .build());
+      }
+
+      // Static checks for operation element predicates
+      final Set<InstructionDefinition> commonInsns = new LinkedHashSet<>(l.instructions());
+      commonInsns.retainAll(r.instructions());
+
+      if (commonInsns.isEmpty()) {
+        // If there is no static overlap, we can emit some diagnostics. For ∈ and `in`, the expr is
+        // always false, and for ∉ and `!in` it's always true.
+        final boolean constVal = builtIn == OP_NOT_ELEM_OF || builtIn == OP_NOT_IN;
+        final var op = Objects.requireNonNull(r.operations().stream().findFirst().orElse(null));
+        DeferredDiagnosticStore.add(
+            warning("This expression is always %s".formatted(constVal), location)
+                .description(
+                    "None of the possible concrete instructions matched by the left side "
+                        + "are part of operation `%s`.", op.identifier().name)
+                .build());
+      }
+
+      return new BuiltInCheckResult(List.of(l, r), Type.bool());
     }
 
     if (args.size() == 2 && (BuiltInTable.arithmeticOperators.contains(builtIn)
@@ -3424,6 +3461,22 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof OperationDefinition op) {
+      check(op);
+
+      var def = getCurrentlyVisitingDefinition();
+      if (!(def instanceof AnnotationDefinition annotation)
+          || !(annotation.target instanceof GroupDefinition)) {
+        final var diagnostic = error("Invalid Reference", expr)
+            .description("Reference to an `operation` definition is only allowed within "
+                + "`group` annotations.");
+        addErrorAndContinueChecking(diagnostic.build());
+      }
+
+      expr.type = PseudoFormatType.of(List.of(op));
+      return;
+    }
+
     if (origin != null) {
       // It's not a builtin but we don't handle it yet.
       // We might be here from a call expr and it might be necessary to handle the call for another
@@ -3439,7 +3492,7 @@ public class TypeChecker
 
     // It's also possible to call functions without parenthesis if the function doesn't take any
     // arguments.
-    var matchingBuiltins = FrontendBuiltIns.builtIns()
+    var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
         .filter(b -> b.name().equals(innerName))
         .toList();

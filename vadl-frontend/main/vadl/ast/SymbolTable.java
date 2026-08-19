@@ -123,7 +123,7 @@ public class SymbolTable {
   static HashSet<String> builtinNames;
 
   static {
-    builtinNames = FrontendBuiltIns.builtIns()
+    builtinNames = BuiltInTable.builtIns()
         .map(BuiltInTable.BuiltIn::name)
         .collect(Collectors.toCollection(HashSet::new));
 
@@ -1010,7 +1010,8 @@ public class SymbolTable {
         switch (expr.foldAction) {
           case Identifier id -> id.accept(this);
           case IdentifierPath id -> id.accept(this);
-          case BinOp binOp -> { }
+          case BinOp binOp -> {
+          }
           default -> throw new IllegalStateException("Unknown fold action: " + expr.foldAction);
         }
       }
