@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,16 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.riscv.riscv32.asm;
+package vadl.ast.nodes;
 
-import org.junit.jupiter.api.Disabled;
-import vadl.lcb.riscv.riscv32.AsmRiscv32FileCheckTest;
-
-@Disabled("Enable once indirect relocations in the linker are implemented.")
-public class AsmCodeEmitterRiscv32FileCheckTest extends AsmRiscv32FileCheckTest {
-
-  @Override
-  protected String getComponent() {
-    return "codeemitter";
-  }
+/**
+ * Supertype for all statements that can appear in instruction sequences
+ * like {@link PseudoInstructionDefinition} and {@link AbiSequenceDefinition}.
+ */
+public abstract class InstructionSequenceStatement extends Statement {
 }

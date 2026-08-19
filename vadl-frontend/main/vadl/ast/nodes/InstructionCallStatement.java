@@ -28,7 +28,7 @@ import vadl.utils.SourceLocation;
  * and unnamed positional arguments.
  */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public final class InstructionCallStatement extends Statement {
+public final class InstructionCallStatement extends InstructionSequenceStatement {
 
   @Child
   public IdentifierOrPlaceholder id;
@@ -46,7 +46,7 @@ public final class InstructionCallStatement extends Statement {
   public Definition instrDef;
 
   public InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
-                           List<Expr> unnamedArguments, SourceLocation loc) {
+                                  List<Expr> unnamedArguments, SourceLocation loc) {
     this.id = id;
     this.namedArguments = namedArguments;
     this.unnamedArguments = unnamedArguments;

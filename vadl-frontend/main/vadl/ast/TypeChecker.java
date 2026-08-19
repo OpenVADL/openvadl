@@ -132,6 +132,7 @@ import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.MicroArchitectureDefinition;
 import vadl.ast.nodes.ModelDefinition;
 import vadl.ast.nodes.ModelTypeDefinition;
+import vadl.ast.nodes.NewLabelStatement;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Operator;
@@ -3463,6 +3464,11 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof NewLabelStatement) {
+      expr.type = Type.label();
+      return;
+    }
+
     if (origin instanceof OperationDefinition op) {
       check(op);
 
@@ -3803,9 +3809,9 @@ public class TypeChecker
 
       return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
           error("Unknown Type `%s`".formatted(base), expr)
-          .locationDescription(expr, "No type with that name exists.")
-          .suggestions(suggestions)
-          .build());
+              .locationDescription(expr, "No type with that name exists.")
+              .suggestions(suggestions)
+              .build());
     }
 
     // 2. Calculate the sizes
@@ -3845,9 +3851,9 @@ public class TypeChecker
       if (!sizes.isEmpty()) {
         return ParsedTypeLiteralResult.error(skipErrorConstruction ? null :
             error("Invalid Type Notation", expr.location())
-            .description("The `%s` type doesn't use the size notation.", base)
-            .help("Try removing the size parameter here.")
-            .build());
+                .description("The `%s` type doesn't use the size notation.", base)
+                .help("Try removing the size parameter here.")
+                .build());
       }
       return ParsedTypeLiteralResult.success(unSizedBuiltins.get(base).get());
     }
@@ -5203,6 +5209,12 @@ public class TypeChecker
   @Override
   public Void visit(StatementList statement) {
     statement.items.forEach(this::check);
+    return null;
+  }
+
+  @Override
+  public Void visit(NewLabelStatement statement) {
+    statement.labelId().type = Type.label();
     return null;
   }
 

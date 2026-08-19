@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -67,7 +67,7 @@ public class FuncCallNode extends AbstractFunctionCallNode {
     for (int i = 0; i < args.size(); i++) {
       var arg = args.get(i);
       var param = params[i];
-      ensure(param.type().isTrivialCastTo(arg.type()),
+      ensure(arg.type().isTrivialCastTo(param.type()),
           "Argument does not match type of param %s, %s vs %s", param.simpleName(), param.type(),
           arg.type());
     }

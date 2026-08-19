@@ -88,6 +88,7 @@ import vadl.ast.nodes.MacroMatchStatement;
 import vadl.ast.nodes.MatchExpr;
 import vadl.ast.nodes.MatchStatement;
 import vadl.ast.nodes.MemoryDefinition;
+import vadl.ast.nodes.NewLabelStatement;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
@@ -156,6 +157,7 @@ import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
+import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
@@ -172,6 +174,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
+import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.OperationExistsNode;
@@ -292,7 +295,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     end.setSourceLocation(definition.location());
 
     var calls = definition.statements.stream()
-        .map(s -> (InstrCallNode) requireNonNull(fetch(s).controlBlock()).firstNode())
+        .map(s -> (DirectionalNode) requireNonNull(fetch(s).controlBlock()).firstNode())
         .toList();
 
     ControlNode curr = end;
@@ -1068,6 +1071,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           getViamType(expr.type()));
     }
 
+    // NewLabel statement in an instruction sequence
+    if (computedTarget instanceof NewLabelStatement) {
+      var labelNode = currentGraph.getNodes(NewLabelNode.class)
+          .filter(n -> n.labelNode().labelName().equals(innerName)).toList().getFirst();
+      return labelNode.labelNode();
+    }
+
     // Builtin Call
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
@@ -1118,7 +1128,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var type = expr.type().equals(Type.string()) ? expr.type() :
         Type.bits(expr.expressions.get(0).type().asDataType()
-                  .bitWidth() + expr.expressions.get(1).type().asDataType().bitWidth());
+            .bitWidth() + expr.expressions.get(1).type().asDataType().bitWidth());
 
     var call = new BuiltInCall(concatBuiltin,
         new NodeList<>(expr.expressions.get(0).accept(this),
@@ -1128,7 +1138,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     for (int i = 2; i < expr.expressions.size(); i++) {
       type = expr.type().equals(Type.string()) ? expr.type() :
           Type.bits(type.asDataType().bitWidth()
-                    + expr.expressions.get(i).type().asDataType().bitWidth());
+              + expr.expressions.get(i).type().asDataType().bitWidth());
       call = new BuiltInCall(concatBuiltin,
           new NodeList<>(call,
               expr.expressions.get(i).accept(this)),
@@ -2031,6 +2041,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   private static Type forallIndexType(Type type) {
     return Type.bits(type.asDataType().bitWidth());
+  }
+
+  @Override
+  public SubgraphContext visit(NewLabelStatement statement) {
+    var newLabelNode =
+        new NewLabelNode(new LabelNode(statement.labelId().name, statement.labelId().type()));
+    newLabelNode.setSourceLocation(statement.location());
+    newLabelNode = addToGraph(newLabelNode);
+    return SubgraphContext.of(statement, newLabelNode);
   }
 
   @Override

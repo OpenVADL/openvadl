@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -144,6 +144,15 @@ public abstract class Type {
     return DummyType.INSTANCE;
   }
 
+  /**
+   * Returns a LabelType object.
+   *
+   * @return a LabelType object representing a label type
+   */
+  public static LabelType label() {
+    return LabelType.INSTANCE;
+  }
+
   private static @Nullable BitSliceType bitSliceType = null;
 
   /**
@@ -287,9 +296,9 @@ public abstract class Type {
   /**
    * Retrieves the generic relation type.
    *
-   * @param argTypes      the list of argument type classes
-   * @param hasVarArgs    the flag indicating if the last argument of kind varargs
-   * @param returnType    the return type class
+   * @param argTypes   the list of argument type classes
+   * @param hasVarArgs the flag indicating if the last argument of kind varargs
+   * @param returnType the return type class
    * @return the RelationType instance
    */
   public static RelationType relation(List<Class<? extends Type>> argTypes,

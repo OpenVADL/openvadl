@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,18 +26,26 @@ import vadl.viam.graph.control.NewLabelNode;
  * {@link LabelNode}.
  */
 public class LabelNode extends ExpressionNode {
-  public LabelNode(Type type) {
+
+  private final String labelName;
+
+  public LabelNode(String labelName, Type type) {
     super(type);
+    this.labelName = labelName;
+  }
+
+  public String labelName() {
+    return labelName;
   }
 
   @Override
   public ExpressionNode copy() {
-    return new LabelNode(type());
+    return new LabelNode(labelName, type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LabelNode(type());
+    return new LabelNode(labelName, type());
   }
 
   @Override
