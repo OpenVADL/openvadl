@@ -606,13 +606,13 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
       // b % N == b & (N - 1)
       var rhs = Constant.Value.of(valT.bitWidth() - 1, shiftT).toNode();
       // b -> b & (N - 1)
-      shift.replace(BuiltInTable.AND.call(shift, rhs));
+      input.replaceInput(shift, behavior.addWithInputs(BuiltInTable.AND.call(shift, rhs)));
       return;
     }
 
     // replace by modulo (b -> b % N)
     var valN = Constant.Value.of(valT.bitWidth(), shiftT).toNode();
-    shift.replace(BuiltInTable.UMOD.call(shift, valN));
+    input.replaceInput(shift, behavior.addWithInputs(BuiltInTable.UMOD.call(shift, valN)));
   }
 
   @Override
