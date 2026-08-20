@@ -97,7 +97,7 @@ instruction set architecture AArch32v6 = {
 
   function asrW (left : Word, right : Word) -> Word =
     let amount = if right > 31 then 31 else right in
-      left as SInt >> right
+      left as SInt >> amount
 
 // syntax records and model types **********************************************
 
