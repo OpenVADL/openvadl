@@ -265,7 +265,7 @@ instruction set architecture RV64IFD extending RV64IZicsr = {
       AsStr($name, ".", $iSize.mvSuffix, $u.str("U" ; ""), ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b1'1000 ;
       // always sign extend the result, even unsigned results
-      X(rd) := VADL::$u.id(fcvtfu ; fcvtfs)::<$size.fTy, $iSize.size>(F(rs1) as $size.ty, frm($rm)) as SIntR
+      X(rd) := VADL::$u.id(fcvtfu ; fcvtfs)::<$size.fTy, $iSize.size>(F(rs1) as $size.ty, frm($rm)) as $iSize.sTy as SIntR
     ) ; $rs2 )
   }
 

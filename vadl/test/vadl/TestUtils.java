@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
+import net.jqwik.api.Combinators;
 import net.jqwik.api.arbitraries.BigIntegerArbitrary;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.FileInfo;
@@ -252,12 +253,145 @@ public class TestUtils {
    * range.
    * Both boundaries are inclusive.
    *
-   * @return number with potentially zero bits within the bit-width
+   * @return number between min and max
    */
   public static Arbitrary<BigInteger> arbitraryBetween(BigInteger min, BigInteger max) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(min)
         .lessOrEqual(max);
+  }
+
+  public record FloatFormat(int exponentLength, int significantLength) {
+    int signBitIdx() {
+      return exponentLength + significantLength;
+    }
+
+    BigInteger maxNormalExponent() {
+      return BigInteger.ONE.shiftLeft(exponentLength).subtract(BigInteger.TWO);
+    }
+
+    BigInteger infNaNExponent() {
+      return BigInteger.ONE.shiftLeft(exponentLength).subtract(BigInteger.ONE);
+    }
+
+    BigInteger maxSignificant() {
+      return BigInteger.ONE.shiftLeft(significantLength).subtract(BigInteger.ONE);
+    }
+  }
+
+  public static final FloatFormat IEEE_BINARY_32 = new FloatFormat(8, 23);
+  public static final FloatFormat IEEE_BINARY_64 = new FloatFormat(11, 52);
+
+  /**
+   * Results a big integer that represents a random sequence of normal float values with
+   * the given format.
+   *
+   * @param format the float format
+   * @return number which encodes a normal float value
+   */
+  public static Arbitrary<BigInteger> arbitraryNormalFloat(FloatFormat format) {
+    return buildArbitraryFloat(
+        format,
+        Arbitraries.of(false, true),
+        Arbitraries.bigIntegers().between(BigInteger.ONE, format.maxNormalExponent()),
+        Arbitraries.bigIntegers().between(BigInteger.ZERO, format.maxSignificant())
+    );
+  }
+
+  /**
+   * Results a big integer that represents a random sequence of subnormal float values with
+   * the given format.
+   *
+   * @param format the float format
+   * @return number which encodes a subnormal float value
+   */
+  public static Arbitrary<BigInteger> arbitrarySubnormalFloat(FloatFormat format) {
+    return buildArbitraryFloat(
+        format,
+        Arbitraries.of(false, true),
+        Arbitraries.of(BigInteger.ZERO),
+        Arbitraries.bigIntegers().between(BigInteger.ONE, format.maxSignificant())
+    );
+  }
+
+  /**
+   * Results a big integer that represents a random sequence of zero (positive or negative)
+   * float values with the given format.
+   *
+   * @param format the float format
+   * @return number which encodes a zero (positive or negative) float value
+   */
+  public static Arbitrary<BigInteger> arbitraryZeroFloat(FloatFormat format) {
+    return buildArbitraryFloat(
+        format,
+        Arbitraries.of(false, true),
+        Arbitraries.of(BigInteger.ZERO),
+        Arbitraries.of(BigInteger.ZERO)
+    );
+  }
+
+  /**
+   * Results a big integer that represents a random sequence of infinite (positive or negative)
+   * float values with the given format.
+   *
+   * @param format the float format
+   * @return number which encodes an infinite (positive or negative) float value
+   */
+  public static Arbitrary<BigInteger> arbitraryInfFloat(FloatFormat format) {
+    return buildArbitraryFloat(
+        format,
+        Arbitraries.of(false, true),
+        Arbitraries.of(format.infNaNExponent()),
+        Arbitraries.of(BigInteger.ZERO)
+    );
+  }
+
+  /**
+   * Results a big integer that represents a random sequence of NaN (any sign, any payload)
+   * float values with the given format.
+   *
+   * @param format the float format
+   * @return number which encodes a NaN (any sign, any payload) float value
+   */
+  public static Arbitrary<BigInteger> arbitraryNaNFloat(FloatFormat format) {
+    return buildArbitraryFloat(
+        format,
+        Arbitraries.of(false, true),
+        Arbitraries.of(format.infNaNExponent()),
+        Arbitraries.bigIntegers().between(BigInteger.ONE, format.maxSignificant())
+    );
+  }
+
+  /**
+   * Results a big integer that represents a random sequence of NaN (any sign) float values with
+   * the given format. If {@code msbSet} is {@code true}, then the MSB of the significant is
+   * always 1 (IEEE-754-2008 qNaN). Otherwise, the MSB is always 0 (IEEE-754-2008 sNaN).
+   *
+   * @param format the float format
+   * @param msbSet whether the MSB of the significant should be set
+   * @return number which encodes a NaN (any sign, any payload) float value
+   */
+  public static Arbitrary<BigInteger> arbitrarySQNaNFloat(FloatFormat format, boolean msbSet) {
+    var sig = BigInteger.ONE.shiftLeft(format.significantLength - 1);
+    return buildArbitraryFloat(
+        format,
+        Arbitraries.of(false, true),
+        Arbitraries.of(format.infNaNExponent()),
+        Arbitraries.bigIntegers().between(
+            msbSet ? sig : BigInteger.ONE,
+            msbSet ? format.maxSignificant() : sig.subtract(BigInteger.ONE)
+        )
+    );
+  }
+
+  private static Arbitrary<BigInteger> buildArbitraryFloat(FloatFormat format,
+                                                          Arbitrary<Boolean> negative,
+                                                          Arbitrary<BigInteger> exponent,
+                                                          Arbitrary<BigInteger> significant) {
+    return Combinators.combine(negative, exponent, significant).as((neg, exp, sig) -> sig
+        .or(exp.shiftLeft(format.significantLength))
+        .or((neg ? BigInteger.ONE : BigInteger.ZERO).shiftLeft(format.signBitIdx()))
+    );
   }
 
   public static Identifier createIdentifier(String name) {
