@@ -46,7 +46,7 @@ import vadl.viam.graph.control.StartNode;
 public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
 
   private static Graph createDummySyscallGraph() {
-    var g = new Graph("synthetic-syscall");
+    var g = new Graph("synthetic-ume-syscall");
     g.setSourceLocation(SourceLocation.INVALID_SOURCE_LOCATION);
 
     var end = g.addWithInputs(new ProcEndNode(new NodeList<>()));
@@ -59,8 +59,8 @@ public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
     return g;
   }
 
-  private static final ExceptionDef SYSCALL_EXC = new ExceptionDef(
-      new Identifier(List.of("Syscall"), SourceLocation.INVALID_SOURCE_LOCATION),
+  private static final ExceptionDef UME_SYSCALL_EXC = new ExceptionDef(
+      new Identifier(List.of("ume_syscall"), SourceLocation.INVALID_SOURCE_LOCATION),
       new Parameter[]{},
       createDummySyscallGraph(),
       ExceptionDef.Kind.ANONYMOUS
@@ -85,7 +85,7 @@ public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
 
     var instrEnd = graph.getNodes(InstrEndNode.class).findFirst().orElseThrow();
 
-    instrEnd.addBefore(new TcgGenException(SYSCALL_EXC, new NodeList<>()));
+    instrEnd.addBefore(new TcgGenException(UME_SYSCALL_EXC, new NodeList<>()));
   };
 
   List<Consumer<Instruction>> instrAddOns = List.of(
@@ -98,7 +98,7 @@ public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
 
     var isa = viam.isa().orElseThrow();
     var excInfo = isa.expectExtension(ExceptionInfo.class);
-    excInfo.addException(SYSCALL_EXC);
+    excInfo.addException(UME_SYSCALL_EXC);
 
     normalTcgInstrs(viam).forEach(i -> instrAddOns.forEach(f -> f.accept(i)));
 

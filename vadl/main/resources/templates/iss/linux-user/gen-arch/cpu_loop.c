@@ -43,7 +43,7 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
         case EXCP_ATOMIC:
             cpu_exec_step_atomic(cs);
             break;
-        case [(${gen_arch_upper})]_EXCP_SYSCALL:
+        case [(${gen_arch_upper})]_EXCP_UME_SYSCALL:
             env->[(${pc_info.accessor})] += [(${config.insn_width_bytes})];
                 ret = do_syscall(env,
                                   env->[(${config.sysRegFile})][ [(${config.sysReg})] ],
