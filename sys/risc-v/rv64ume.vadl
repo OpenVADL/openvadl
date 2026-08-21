@@ -1,8 +1,8 @@
 // This is meant to be the temporary root specification during implementation
 // of the UME for RISC-V
-import rv64csr::{ RV64IMZicsr }
+import rv64im::{ RV64IM }
 
-instruction set architecture RV64UME extending RV64IMZicsr = {}
+instruction set architecture RV64UME extending RV64IM = {}
 
 application binary interface ABI for RV64UME = {
     alias register a0  = X(10)

@@ -123,8 +123,6 @@ instruction set architecture RV64IZicsr extending RV3264Base = {
   , M_ECALL       = 0x0B
   }
 
-  exception Syscall () = {}
-
   model wCSR(csr: Val, val: Ex) : Stat = {
     CSR(CsrDefToImpl($csr)) := $val
   }
@@ -143,14 +141,14 @@ instruction set architecture RV64IZicsr extending RV3264Base = {
 
   //// INSTRUCTIONS ////
 
-  model ECallInstr (name : Id, imm : Lit, excStat : Stat) : IsaDefs = {
-    instruction $name : Itype = $excStat                    // ecall / ebreak instructions
+  model ECallInstr (name : Id, imm : Lit, excCode: Id) : IsaDefs = {
+    instruction $name : Itype = raise Exc(ExcCode::$excCode)                    // ecall / ebreak instructions
     encoding $name = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rs1 = 0b0'0000, imm = $imm}
     assembly $name = (mnemonic)
     }
 
-  $ECallInstr (ECALL ; 0; raise Syscall)        // environment (sys) call
-  $ECallInstr (EBREAK; 1; raise Exc(ExcCode::BREAKPOINT))     // environment (sys) break
+  $ECallInstr (ECALL ; 0; M_ECALL)        // environment (sys) call
+  $ECallInstr (EBREAK; 1; BREAKPOINT)     // environment (sys) break
 
   // return from trap
   instruction MRET: Itype = {
