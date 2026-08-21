@@ -249,25 +249,25 @@ instruction set architecture AArch32v6 = {
   model ArithmeticImmInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
     $ArithmeticImmBehavior ($c ; $i ; $f)
     encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag}
-    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',', register(rn), ',#', udec(immW))
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',', register(rn), ',#', udec(immW))
     }
 
   model ArithTestImmInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
     $ArithmeticImmBehavior ($c ; $i ; $f)
     encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rd = 0}
-    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rn), ',#', udec(immW))
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rn), ',#', udec(immW))
     }
 
   model ArithMovImmInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
     $ArithmeticImmBehavior ($c ; $i ; $f)
     encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rn = 0}
-    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',#', udec(immW))
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',#', udec(immW))
     }
 
   model ArithMovNImmInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
     $MovNImmBehavior ($c ; $i ; $f)
     encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rn = 0}
-    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',#', udec(immW))
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',#', udec(immW))
     }
 
   model ArithShiftBehavior (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
@@ -282,19 +282,19 @@ instruction set architecture AArch32v6 = {
   model ArithShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
     $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
     encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, $sft.encs}
-    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm), $sft.asms)
+    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',', register(rn), ',', register(rm), $sft.asms)
     }
 
   model ArithTestShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
     $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
     encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rd = 0, $sft.encs}
-    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rn), ',', register(rm), $sft.asms)
+    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rn), ',', register(rm), $sft.asms)
     }
 
   model ArithMovShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
     $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
     encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rn = 0, $sft.encs}
-    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',', register(rm), $sft.asms)
+    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',', register(rm), $sft.asms)
     }
 
   model ShiftedImmOpInstr (m : IdCondInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
@@ -375,7 +375,7 @@ instruction set architecture AArch32v6 = {
           $f.flagStmt ()
         }
     encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, op1 = 0b1001, ra = 0b0000}
-    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm))
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',', register(rn), ',', register(rm))
     }
 
   model MultiplyAccInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
@@ -385,7 +385,7 @@ instruction set architecture AArch32v6 = {
           $f.flagStmt ()
         }
     encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, op1 = 0b1001}
-    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm), ',', register(ra))
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',', register(rn), ',', register(rm), ',', register(ra))
     }
 
   model MultiplySubInstr (c : CondRec, i : InstrRec) : IsaDefs = {
@@ -401,7 +401,7 @@ instruction set architecture AArch32v6 = {
             {$f.flagStmt ()}
           }
     encoding AsId ($i.id, $f.flagExt, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, op1 = 0b1001}
-    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $f.flagExt, $c.condStr), ' ', register(ra), ',', register(rd), ',', register(rn), ',', register(rm))
+    assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(ra), ',', register(rd), ',', register(rn), ',', register(rm))
     }
 
 // divide model ****************************************************************
@@ -869,21 +869,21 @@ instruction set architecture AArch32v6 = {
 // instruction enriching models ************************************************
 
   model CondInstrNFlags (instrModel : CondInstrFlagsModel, i : InstrRec, f : FlagRec) : IsaDefs = {
-    $instrModel (( EQ ; "eq" ; APSR_Z = 1                     ) ; $i ; $f )
-    $instrModel (( NE ; "ne" ; APSR_Z = 0                     ) ; $i ; $f )
-    $instrModel (( CS ; "cs" ; APSR_C = 1                     ) ; $i ; $f )
-    $instrModel (( CC ; "cc" ; APSR_C = 0                     ) ; $i ; $f )
-    $instrModel (( MI ; "mi" ; APSR_N = 1                     ) ; $i ; $f )
-    $instrModel (( PL ; "pl" ; APSR_N = 0                     ) ; $i ; $f )
-    $instrModel (( VS ; "vs" ; APSR_V = 1                     ) ; $i ; $f )
-    $instrModel (( VC ; "vc" ; APSR_V = 0                     ) ; $i ; $f )
-    $instrModel (( HI ; "hi" ; APSR_C = 1 && APSR_Z = 0       ) ; $i ; $f )
-    $instrModel (( LS ; "ls" ; APSR_C = 0 || APSR_Z = 1       ) ; $i ; $f )
-    $instrModel (( GE ; "ge" ; APSR_N  = APSR_V               ) ; $i ; $f )
-    $instrModel (( LT ; "lt" ; APSR_N != APSR_V               ) ; $i ; $f )
-    $instrModel (( GT ; "gt" ; APSR_N  = APSR_V && APSR_Z = 0 ) ; $i ; $f )
-    $instrModel (( LE ; "le" ; APSR_N != APSR_V || APSR_Z = 1 ) ; $i ; $f )
-    $instrModel (( AL ; ""   ; true                           ) ; $i ; $f )
+    $instrModel (( EQ ; "eq" ; APSR_Z != 0                     ) ; $i ; $f )
+    $instrModel (( NE ; "ne" ; APSR_Z  = 0                     ) ; $i ; $f )
+    $instrModel (( CS ; "cs" ; APSR_C != 0                     ) ; $i ; $f )
+    $instrModel (( CC ; "cc" ; APSR_C  = 0                     ) ; $i ; $f )
+    $instrModel (( MI ; "mi" ; APSR_N != 0                     ) ; $i ; $f )
+    $instrModel (( PL ; "pl" ; APSR_N  = 0                     ) ; $i ; $f )
+    $instrModel (( VS ; "vs" ; APSR_V != 0                     ) ; $i ; $f )
+    $instrModel (( VC ; "vc" ; APSR_V  = 0                     ) ; $i ; $f )
+    $instrModel (( HI ; "hi" ; APSR_C != 0 && APSR_Z  = 0      ) ; $i ; $f )
+    $instrModel (( LS ; "ls" ; APSR_C  = 0 || APSR_Z != 0      ) ; $i ; $f )
+    $instrModel (( GE ; "ge" ; APSR_N  = APSR_V                ) ; $i ; $f )
+    $instrModel (( LT ; "lt" ; APSR_N != APSR_V                ) ; $i ; $f )
+    $instrModel (( GT ; "gt" ; APSR_N  = APSR_V && APSR_Z  = 0 ) ; $i ; $f )
+    $instrModel (( LE ; "le" ; APSR_N != APSR_V || APSR_Z != 0 ) ; $i ; $f )
+    $instrModel (( AL ; ""   ; true                            ) ; $i ; $f )
     }
 
   model CondInstr4Flags (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
@@ -910,21 +910,21 @@ instruction set architecture AArch32v6 = {
     }
 
   model CondInstr (instrModel : CondInstrModel, i : InstrRec) : IsaDefs = {
-    $instrModel (( EQ ; "eq" ; APSR_Z = 1                     ) ; $i )
-    $instrModel (( NE ; "ne" ; APSR_Z = 0                     ) ; $i )
-    $instrModel (( CS ; "cs" ; APSR_C = 1                     ) ; $i )
-    $instrModel (( CC ; "cc" ; APSR_C = 0                     ) ; $i )
-    $instrModel (( MI ; "mi" ; APSR_N = 1                     ) ; $i )
-    $instrModel (( PL ; "pl" ; APSR_N = 0                     ) ; $i )
-    $instrModel (( VS ; "vs" ; APSR_V = 1                     ) ; $i )
-    $instrModel (( VC ; "vc" ; APSR_V = 0                     ) ; $i )
-    $instrModel (( HI ; "hi" ; APSR_C = 1 && APSR_Z = 0       ) ; $i )
-    $instrModel (( LS ; "ls" ; APSR_C = 0 || APSR_Z = 1       ) ; $i )
-    $instrModel (( GE ; "ge" ; APSR_N  = APSR_V               ) ; $i )
-    $instrModel (( LT ; "lt" ; APSR_N != APSR_V               ) ; $i )
-    $instrModel (( GT ; "gt" ; APSR_N  = APSR_V && APSR_Z = 0 ) ; $i )
-    $instrModel (( LE ; "le" ; APSR_N != APSR_V || APSR_Z = 1 ) ; $i )
-    $instrModel (( AL ; ""   ; true                           ) ; $i )
+    $instrModel (( EQ ; "eq" ; APSR_Z != 0                     ) ; $i )
+    $instrModel (( NE ; "ne" ; APSR_Z  = 0                     ) ; $i )
+    $instrModel (( CS ; "cs" ; APSR_C != 0                     ) ; $i )
+    $instrModel (( CC ; "cc" ; APSR_C  = 0                     ) ; $i )
+    $instrModel (( MI ; "mi" ; APSR_N != 0                     ) ; $i )
+    $instrModel (( PL ; "pl" ; APSR_N  = 0                     ) ; $i )
+    $instrModel (( VS ; "vs" ; APSR_V != 0                     ) ; $i )
+    $instrModel (( VC ; "vc" ; APSR_V  = 0                     ) ; $i )
+    $instrModel (( HI ; "hi" ; APSR_C != 0 && APSR_Z  = 0      ) ; $i )
+    $instrModel (( LS ; "ls" ; APSR_C  = 0 || APSR_Z != 0      ) ; $i )
+    $instrModel (( GE ; "ge" ; APSR_N  = APSR_V                ) ; $i )
+    $instrModel (( LT ; "lt" ; APSR_N != APSR_V                ) ; $i )
+    $instrModel (( GT ; "gt" ; APSR_N  = APSR_V && APSR_Z  = 0 ) ; $i )
+    $instrModel (( LE ; "le" ; APSR_N != APSR_V || APSR_Z != 0 ) ; $i )
+    $instrModel (( AL ; ""   ; true                            ) ; $i )
     }
 
 // base instructions ***********************************************************
