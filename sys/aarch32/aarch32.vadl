@@ -596,6 +596,7 @@ instruction set architecture AArch32v6 = {
     , rt       [15..12]               // source/target register
     , imm8     [11..8,3..0]           // unsigned offset
     , offset   = imm8 as Word         // zero extended offset
+    , rt2      = rt + 1               // second source/target register
     }
 
   format HalfMemRegFormat : Word =    // (signed) half/byte memory register format
@@ -607,14 +608,15 @@ instruction set architecture AArch32v6 = {
     , rt       [15..12]               // source/target register
     , zero     [11..8]                // zeroes
     , rm       [3..0]                 // index register
+    , rt2      = rt + 1               // second source/target register
     }
 
   model LdSB() : Ex = {MEM<1>(a) as SIntW}
   model LdSH() : Ex = {MEM<2>(a) as SIntW}
   model LdUH() : Ex = {MEM<2>(a) as  Word}
 
-  model HalfMemImmPstInstr (c : CondRec, i : InstrRec, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
-    [undefined when : op1(4) = 1 && rn = rt]
+  model HalfMemImmPstInstr (c : CondRec, i : InstrRec, undef : Ex, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
+    [undefined when : op1(4) = 1 && rn = rt || $undef]
     instruction AsId($i.id, $m.mode, $c.condId) : HalfMemImmFormat =
       if ($c.condEx) then
         let a = R(rn) in {
@@ -625,8 +627,8 @@ instruction set architecture AArch32v6 = {
     assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
     }
 
-  model HalfMemImmPreInstr (c : CondRec, i : InstrRec, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
-    [undefined when : op1(4) = 1 && puw(0) = 1 && rn = rt]
+  model HalfMemImmPreInstr (c : CondRec, i : InstrRec, undef : Ex, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
+    [undefined when : op1(4) = 1 && puw(0) = 1 && rn = rt || $undef]
     instruction AsId($i.id, $m.mode, $c.condId) : HalfMemImmFormat =
       if ($c.condEx) then
         let a = R(rn) $m.op offset in {
@@ -637,25 +639,25 @@ instruction set architecture AArch32v6 = {
     assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
     }
 
-  model HalfMemImmediateInstr (c : CondRec, i : InstrRec, memStmt : Stats) : IsaDefs = {
-    $HalfMemImmPstInstr ($c ; $i ; $memStmt ; (PstDecUp ; - ; {}        ) ; ('],#-', udec(imm8)      ))
-    $HalfMemImmPstInstr ($c ; $i ; $memStmt ; (PstIncUp ; + ; {}        ) ; ('],#+', udec(imm8)      ))
-    $HalfMemImmPreInstr ($c ; $i ; $memStmt ; (PreDecNo ; - ; {}        ) ; ( ',#-', udec(imm8), ']' ))
-    $HalfMemImmPreInstr ($c ; $i ; $memStmt ; (PreDecUp ; - ; R(rn) := a) ; ( ',#-', udec(imm8), ']!'))
-    $HalfMemImmPreInstr ($c ; $i ; $memStmt ; (PreIncNo ; + ; {}        ) ; ( ',#+', udec(imm8), ']' ))
-    $HalfMemImmPreInstr ($c ; $i ; $memStmt ; (PreIncUp ; + ; R(rn) := a) ; ( ',#+', udec(imm8), ']!'))
+  model HalfMemImmediateInstr (c : CondRec, i : InstrRec, undef : Ex, memStmt : Stats) : IsaDefs = {
+    $HalfMemImmPstInstr ($c ; $i ; $undef ; $memStmt ; (PstDecUp ; - ; {}        ) ; ('],#-', udec(imm8)      ))
+    $HalfMemImmPstInstr ($c ; $i ; $undef ; $memStmt ; (PstIncUp ; + ; {}        ) ; ('],#+', udec(imm8)      ))
+    $HalfMemImmPreInstr ($c ; $i ; $undef ; $memStmt ; (PreDecNo ; - ; {}        ) ; ( ',#-', udec(imm8), ']' ))
+    $HalfMemImmPreInstr ($c ; $i ; $undef ; $memStmt ; (PreDecUp ; - ; R(rn) := a) ; ( ',#-', udec(imm8), ']!'))
+    $HalfMemImmPreInstr ($c ; $i ; $undef ; $memStmt ; (PreIncNo ; + ; {}        ) ; ( ',#+', udec(imm8), ']' ))
+    $HalfMemImmPreInstr ($c ; $i ; $undef ; $memStmt ; (PreIncUp ; + ; R(rn) := a) ; ( ',#+', udec(imm8), ']!'))
     }
 
   model HalfMemLoadImmInstr (c : CondRec, i : InstrRec) : IsaDefs = {
-    $HalfMemImmediateInstr ($c ; $i ; R(rt) := $i.funct())
+    $HalfMemImmediateInstr ($c ; $i ; false ; R(rt) := $i.funct())
     }
 
   model HalfMemStoreImmInstr (c : CondRec, i : InstrRec) : IsaDefs = {
-    $HalfMemImmediateInstr ($c ; $i ; MEM<2>(a) := R(rt) as Bits<16>)
+    $HalfMemImmediateInstr ($c ; $i ; false ; MEM<2>(a) := R(rt) as Bits<16>)
     }
 
-  model HalfMemRegPstInstr (c : CondRec, i : InstrRec, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
-    [undefined when : op1(4) = 1 && rn = rt]
+  model HalfMemRegPstInstr (c : CondRec, i : InstrRec, undef : Ex, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
+    [undefined when : op1(4) = 1 && rn = rt || $undef]
     instruction AsId($i.id, $m.mode, $c.condId) : HalfMemRegFormat =
       if ($c.condEx) then
         let a = R(rn) in {
@@ -666,8 +668,8 @@ instruction set architecture AArch32v6 = {
     assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
     }
 
-  model HalfMemRegPreInstr (c : CondRec, i : InstrRec, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
-    [undefined when : op1(4) = 1 && puw(0) = 1 && rn = rt]
+  model HalfMemRegPreInstr (c : CondRec, i : InstrRec, undef : Ex, memStmt : Stats, m : AddrRec, asms : Ex) : IsaDefs = {
+    [undefined when : op1(4) = 1 && puw(0) = 1 && rn = rt || $undef]
     instruction AsId($i.id, $m.mode, $c.condId) : HalfMemRegFormat =
       if ($c.condEx) then
         let a = R(rn) $m.op R(rm) in {
@@ -678,22 +680,41 @@ instruction set architecture AArch32v6 = {
     assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
     }
 
-  model HalfMemRegisterInstr (c : CondRec, i : InstrRec, memStmt : Stats) : IsaDefs = {
-    $HalfMemRegPstInstr ($c ; $i ; $memStmt ; (PstDecUp ; - ; {}        ) ; ('], -', register(rm)      ))
-    $HalfMemRegPstInstr ($c ; $i ; $memStmt ; (PstIncUp ; + ; {}        ) ; ('], +', register(rm)      ))
-    $HalfMemRegPreInstr ($c ; $i ; $memStmt ; (PreDecNo ; - ; {}        ) ; ( ', -', register(rm), ']' ))
-    $HalfMemRegPreInstr ($c ; $i ; $memStmt ; (PreDecUp ; - ; R(rn) := a) ; ( ', -', register(rm), ']!'))
-    $HalfMemRegPreInstr ($c ; $i ; $memStmt ; (PreIncNo ; + ; {}        ) ; ( ', +', register(rm), ']' ))
-    $HalfMemRegPreInstr ($c ; $i ; $memStmt ; (PreIncUp ; + ; R(rn) := a) ; ( ', +', register(rm), ']!'))
+  model HalfMemRegisterInstr (c : CondRec, i : InstrRec, undef : Ex, memStmt : Stats) : IsaDefs = {
+    $HalfMemRegPstInstr ($c ; $i ; $undef ; $memStmt ; (PstDecUp ; - ; {}        ) ; ('], -', register(rm)      ))
+    $HalfMemRegPstInstr ($c ; $i ; $undef ; $memStmt ; (PstIncUp ; + ; {}        ) ; ('], +', register(rm)      ))
+    $HalfMemRegPreInstr ($c ; $i ; $undef ; $memStmt ; (PreDecNo ; - ; {}        ) ; ( ', -', register(rm), ']' ))
+    $HalfMemRegPreInstr ($c ; $i ; $undef ; $memStmt ; (PreDecUp ; - ; R(rn) := a) ; ( ', -', register(rm), ']!'))
+    $HalfMemRegPreInstr ($c ; $i ; $undef ; $memStmt ; (PreIncNo ; + ; {}        ) ; ( ', +', register(rm), ']' ))
+    $HalfMemRegPreInstr ($c ; $i ; $undef ; $memStmt ; (PreIncUp ; + ; R(rn) := a) ; ( ', +', register(rm), ']!'))
     }
 
   model HalfMemLoadRegInstr (c : CondRec, i : InstrRec) : IsaDefs = {
-    $HalfMemRegisterInstr ($c ; $i ; R(rt) := $i.funct())
+    $HalfMemRegisterInstr ($c ; $i ; false ; R(rt) := $i.funct())
     }
 
   model HalfMemStoreRegInstr (c : CondRec, i : InstrRec) : IsaDefs = {
-    $HalfMemRegisterInstr ($c ; $i ; MEM<2>(a) := R(rt) as Bits<16>)
+    $HalfMemRegisterInstr ($c ; $i ; false ; MEM<2>(a) := R(rt) as Bits<16>)
     }
+
+// load / store double models **************************************************
+
+  model DblMemLoadRegInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $HalfMemRegisterInstr ($c ; $i ; rt(0) = 1 || puw(0) = 1 && rn = rt2 ; R(rt) := MEM<4>(a)   R(rt2) := MEM<4>(a+4))
+    }
+
+  model DblMemStoreRegInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $HalfMemRegisterInstr ($c ; $i ; rt(0) = 1 ; MEM<4>(a) := R(rt)   MEM<4>(a+4) := R(rt2))
+    }
+
+  model DblMemLoadImmInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $HalfMemImmediateInstr ($c ; $i ; rt(0) = 1 || puw(0) = 1 && rn = rt2 ; R(rt) := MEM<4>(a)   R(rt2) := MEM<4>(a+4))
+    }
+
+  model DblMemStoreImmInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $HalfMemImmediateInstr ($c ; $i ; rt(0) = 1 ; MEM<4>(a) := R(rt)   MEM<4>(a+4) := R(rt2))
+    }
+
 
 // load / store multiple models ************************************************
 
@@ -1001,6 +1022,11 @@ instruction set architecture AArch32v6 = {
   $CondInstr          (HalfMemLoadRegInstr  ; (LDRSH ; "ldrsh" ; LdSH    ; 0b01'1111  ))
   $CondInstr          (HalfMemStoreImmInstr ; (STRHI ; "strh"  ; None    ; 0b10'1011  ))
   $CondInstr          (HalfMemStoreRegInstr ; (STRH  ; "strh"  ; None    ; 0b00'1011  ))
+
+  $CondInstr          (DblMemLoadRegInstr   ; (LDRD  ; "ldrd"  ; None    ; 0b00'1101  ))
+  $CondInstr          (DblMemStoreRegInstr  ; (STRD  ; "strd"  ; None    ; 0b00'1111  ))
+  $CondInstr          (DblMemLoadImmInstr   ; (LDRDI ; "ldrd"  ; None    ; 0b10'1101  ))
+  $CondInstr          (DblMemStoreImmInstr  ; (STRDI ; "strd"  ; None    ; 0b10'1111  ))
 
   $CondInstr          (LoadMultipleInstr    ; (LDM   ; "ldm"   ; None    ; 0b100'01   ))
   $CondInstr          (StoreMultipleInstr   ; (STM   ; "stm"   ; None    ; 0b100'00   ))
