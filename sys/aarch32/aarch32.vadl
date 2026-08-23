@@ -107,8 +107,8 @@ instruction set architecture AArch32v6 = {
   // flag settings: statment, statuscode, assembly extionsion string
   record FlagRec (flagStmt : () -> Stats, setFlag : Ex, flagExt : Str)
 
-  // shifted operands: shift identifier, encodings, shift expression, assembly elements
-  record ShiftRec (sftId : Id, encs : Encs, sftEx : Ex, asms : Ex)
+  // shifted operands: shift identifier, encodings, shift expression, carry expression, assembly elements
+  record ShiftRec (sftId : Id, encs : Encs, sftEx : Ex, carry : Ex, asms : Ex)
 
   // addressing mode: mode id, inc/dec operator, pre statement, update statement
   record AddrRec  (mode : Id, op : BinOp, upStmt : Stat)
@@ -140,10 +140,17 @@ instruction set architecture AArch32v6 = {
     APSR_C := flags.carry
     }
 
-// set first 3 Flags
+// set first 3 Flags with separate carry
   model Set3FlagsCarry () : Stats = {
     $Set2Flags()
-    APSR_C := carry.carry
+    if rorcount != 0 then
+      APSR_C := carry.carry
+    }
+
+// set first 3 Flags with explicit carry
+  model Set3FlagsExplicitCarry () : Stats = {
+    $Set2Flags()
+    APSR_C := explicitCarry
     }
 
 // set all 4 Flags
@@ -175,6 +182,12 @@ instruction set architecture AArch32v6 = {
     $Set3FlagsCarry()
     }
 
+// assign result to destination register R(rd) and set 3 flags with separate carry
+  model Result3FlagsExplicitCarry () : Stats = {
+    R(rd) := result
+    $Set3FlagsExplicitCarry()
+    }
+
 // assign result to destination register R(rd) and set all 4 flags
   model Result4Flags () : Stats = {
     R(rd) := result
@@ -193,6 +206,8 @@ instruction set architecture AArch32v6 = {
     , rd       [15..12]               // destination register
     , imm12    [11..0]                // [7..0] immediate rotated by [11..8]
     , immW     = immConst(imm12)
+    , base     = imm12(7..0) as Word
+    , rorcount = imm12(11..8) as Bits5 << 1
     }
 
   format ArithShiftImmFormat : Word = // arithmetic register shifted by immediate format
@@ -234,7 +249,7 @@ instruction set architecture AArch32v6 = {
   model OrNot()  : Ex = {VADL::ors  (R(rn), ~operand2)}
   model MovSft() : Ex = {VADL::lsls (operand2, 0)}
   model MovNSft(): Ex = {VADL::lsls (~operand2, 0)}
-  model MakeImm(): Ex = {VADL::rors (imm12(7..0) as Word, imm12(11..8) as Bits5 << 1)}
+  model MakeImm(): Ex = {VADL::rors (base, rorcount)}
   model CntLZ()  : Ex = {VADL::clz  (R(rm))}
   model RevByte(): Ex = {R(rm)(7..0,15..8,23..16,31..24)}
   model RevBits(): Ex = {revBits(R(rm))}
@@ -301,40 +316,91 @@ instruction set architecture AArch32v6 = {
         }
     }
 
+  model ArithShiftCarryBehavior (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
+    instruction AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) : $iForm =
+      if ($c.condEx) then
+        let operand2 = $sft.sftEx in
+        let explicitCarry = $sft.carry in
+        let result, flags = $i.funct() in {
+          $f.flagStmt ()
+        }
+    }
+
+  model ArithMovShiftBehavior (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
+    instruction AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) : $iForm =
+      if ($c.condEx) then
+        let res, flags = VADL::ors($sft.sftEx, 0 as Word) in
+        let explicitCarry = $sft.carry in
+        let result = $i.funct() in {
+          $f.flagStmt ()
+          }
+    }
+
   model ArithShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
     $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
     encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, $sft.encs}
     assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',', register(rn), ',', register(rm), $sft.asms)
     }
 
+  model ArithShiftBaseCarryInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
+    $ArithShiftCarryBehavior ($iForm ; $c ; $i ; $f ; $sft)
+    encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, $sft.encs}
+    assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',', register(rn), ',', register(rm), $sft.asms)
+    }
+
   model ArithTestShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
-    $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
+    $ArithShiftCarryBehavior ($iForm ; $c ; $i ; $f ; $sft)
     encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rd = 0, $sft.encs}
     assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rn), ',', register(rm), $sft.asms)
     }
 
   model ArithMovShiftBaseInstr (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
-    $ArithShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
+    $ArithMovShiftBehavior ($iForm ; $c ; $i ; $f ; $sft)
     encoding AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = $f.setFlag, rn = 0, $sft.encs}
     assembly AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(rd), ',', register(rm), $sft.asms)
     }
 
   model ShiftedImmOpInstr (m : IdCondInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                     ;  ''                     ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5             ; (', lsl #', udec(imm5)) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                 ; (', lsr #32'          ) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5             ; (', lsr #', udec(imm5)) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31       ; (', asr #32'          ) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5     ; (', asr #', udec(imm5)) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), APSR_C) ; (', rrx'              ) ))
-    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5            ; (', ror #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                     ; none ;  ''                     ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5             ; none ; (', lsl #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                 ; none ; (', lsr #32'          ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5             ; none ; (', lsr #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31       ; none ; (', asr #32'          ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5     ; none ; (', asr #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), APSR_C) ; none ; (', rrx'              ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5            ; none ; (', ror #', udec(imm5)) ))
+    }
+
+  model CarryL   () : Ex = {let sftR = R(rm) << imm5-1 in sftR(31)}
+  model CarryR   () : Ex = {let sftR = R(rm) >> imm5-1 in sftR( 0)}
+  model CarryLSL () : Ex = {if R(rs) = 0 then APSR_C else if R(rs)  = 32 then R(rm)( 0) else if R(rs) > 32 then 0 else let sftR = R(rm) << R(rs)-1 in sftR(31)}
+  model CarryLSR () : Ex = {if R(rs) = 0 then APSR_C else if R(rs)  = 32 then R(rm)(31) else if R(rs) > 32 then 0 else let sftR = R(rm) >> R(rs)-1 in sftR( 0)}
+  model CarryASR () : Ex = {if R(rs) = 0 then APSR_C else if R(rs) >= 32 then R(rm)(31) else                           let sftR = R(rm) >> R(rs)-1 in sftR( 0)}
+  model CarryROR () : Ex = {if R(rs) = 0 then APSR_C else                                                              let sftR = R(rm) >> R(rs)-1 in sftR( 0)}
+
+  model ShiftedImmCarryInstr (m : IdCondInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                     ; APSR_C    ;  ''                     ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5             ; $CarryL   ; (', lsl #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                 ; R(rm)(31) ; (', lsr #32'          ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5             ; $CarryR   ; (', lsr #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31       ; R(rm)(31) ; (', asr #32'          ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5     ; $CarryR   ; (', asr #', udec(imm5)) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), APSR_C) ; R(rm)(0)  ; (', rrx'              ) ))
+    $m (ArithShiftImmFormat ; $c ; $i ; $f ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5            ; $CarryR   ; (', ror #', udec(imm5)) ))
     }
 
   model ShiftedRegOpInstr (m : IdCondInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
-    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSLR ; type = ShiftType::LSLR, op1 = 0  ; lslW (R(rm), R(rs))       ; (', lsl ', register(rs))))
-    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSRR ; type = ShiftType::LSRR, op1 = 0  ; lsrW (R(rm), R(rs))       ; (', lsr ', register(rs))))
-    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (ASRR ; type = ShiftType::ASRR, op1 = 0  ; asrW (R(rm), R(rs))       ; (', asr ', register(rs))))
-    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (RORR ; type = ShiftType::RORR, op1 = 0  ; R(rm) <>> R(rs)           ; (', ror ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSLR ; type = ShiftType::LSLR, op1 = 0  ; lslW (R(rm), R(rs))       ; none ; (', lsl ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSRR ; type = ShiftType::LSRR, op1 = 0  ; lsrW (R(rm), R(rs))       ; none ; (', lsr ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (ASRR ; type = ShiftType::ASRR, op1 = 0  ; asrW (R(rm), R(rs))       ; none ; (', asr ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (RORR ; type = ShiftType::RORR, op1 = 0  ; R(rm) <>> R(rs)           ; none ; (', ror ', register(rs))))
+    }
+
+  model ShiftedRegCarryInstr (m : IdCondInstrFlagsShiftModel, c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSLR ; type = ShiftType::LSLR, op1 = 0  ; lslW (R(rm), R(rs))       ; $CarryLSL ; (', lsl ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (LSRR ; type = ShiftType::LSRR, op1 = 0  ; lsrW (R(rm), R(rs))       ; $CarryLSR ; (', lsr ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (ASRR ; type = ShiftType::ASRR, op1 = 0  ; asrW (R(rm), R(rs))       ; $CarryASR ; (', asr ', register(rs))))
+    $m (ArithShiftRegFormat ; $c ; $i ; $f ; (RORR ; type = ShiftType::RORR, op1 = 0  ; R(rm) <>> R(rs)           ; $CarryROR ; (', ror ', register(rs))))
     }
 
   model ArithmeticSftInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
@@ -342,14 +408,19 @@ instruction set architecture AArch32v6 = {
     $ShiftedRegOpInstr (ArithShiftBaseInstr ; $c ; $i ; $f)
     }
 
+  model ArithSftCarryInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    $ShiftedImmCarryInstr (ArithShiftBaseCarryInstr ; $c ; $i ; $f)
+    $ShiftedRegCarryInstr (ArithShiftBaseCarryInstr ; $c ; $i ; $f)
+    }
+
   model ArithTestSftInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
-    $ShiftedImmOpInstr (ArithTestShiftBaseInstr ; $c ; $i ; $f)
-    $ShiftedRegOpInstr (ArithTestShiftBaseInstr ; $c ; $i ; $f)
+    $ShiftedImmCarryInstr (ArithTestShiftBaseInstr ; $c ; $i ; $f)
+    $ShiftedRegCarryInstr (ArithTestShiftBaseInstr ; $c ; $i ; $f)
     }
 
   model ArithMovSftInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
-    $ShiftedImmOpInstr (ArithMovShiftBaseInstr ; $c ; $i ; $f)
-    $ShiftedRegOpInstr (ArithMovShiftBaseInstr ; $c ; $i ; $f)
+    $ShiftedImmCarryInstr (ArithMovShiftBaseInstr ; $c ; $i ; $f)
+    $ShiftedRegCarryInstr (ArithMovShiftBaseInstr ; $c ; $i ; $f)
     }
 
   model CountLZInstr (c : CondRec, i : InstrRec) : IsaDefs = {
@@ -582,14 +653,14 @@ instruction set architecture AArch32v6 = {
     }
 
   model MemRegShiftInstr (c : CondRec, i : InstrRec, blId : Id, memStmt : Stats) : IsaDefs = {
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                     ;  ''                     ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5             ; (', lsl #', udec(imm5)) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                 ; (', lsr #32'          ) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5             ; (', lsr #', udec(imm5)) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31       ; (', asr #32'          ) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5     ; (', asr #', udec(imm5)) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), APSR_C) ; (', rrx'              ) ))
-    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5            ; (', ror #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL0 ; type = ShiftType::LSLI, imm5 = 0 ; R(rm)                     ; none ;  ''                     ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSL  ; type = ShiftType::LSLI           ; R(rm) << imm5             ; none ; (', lsl #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR0 ; type = ShiftType::LSRI, imm5 = 0 ; 0 as Word                 ; none ; (', lsr #32'          ) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (LSR  ; type = ShiftType::LSRI           ; R(rm) >> imm5             ; none ; (', lsr #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR0 ; type = ShiftType::ASRI, imm5 = 0 ; R(rm) as SInt >> 31       ; none ; (', asr #32'          ) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ASR  ; type = ShiftType::ASRI           ; R(rm) as SInt >> imm5     ; none ; (', asr #', udec(imm5)) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (RRX  ; type = ShiftType::RORI, imm5 = 0 ; VADL::rrx (R(rm), APSR_C) ; none ; (', rrx'              ) ))
+    $MemRegInstr ($c ; $i ; $blId ; $memStmt ; (ROR  ; type = ShiftType::RORI           ; R(rm) <>> imm5            ; none ; (', ror #', udec(imm5)) ))
     }
 
   model MemoryInstr (c : CondRec, i : InstrRec,  blId : Id, memStmt : Stats) : IsaDefs = {
@@ -944,6 +1015,11 @@ instruction set architecture AArch32v6 = {
     $CondInstrNFlags ($instrModel ; $i ; (Result3FlagsCarry ; 1 ; "s"))
     }
 
+  model CondInstr3FlagsExCar (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
+    $CondInstrNFlags ($instrModel ; $i ; (Result                    ; 0 ;  ""))
+    $CondInstrNFlags ($instrModel ; $i ; (Result3FlagsExplicitCarry ; 1 ; "s"))
+    }
+
   model CondInstr2Flags (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
     $CondInstrNFlags ($instrModel ; $i ; (Result       ; 0 ;  ""))
     $CondInstrNFlags ($instrModel ; $i ; (Result2Flags ; 1 ; "s"))
@@ -959,6 +1035,10 @@ instruction set architecture AArch32v6 = {
 
   model CondInstrTst3Carry (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
     $CondInstrNFlags ($instrModel ; $i ; (Set3FlagsCarry ; 1 ; ""))
+    }
+
+  model CondInstrTst3ExCar (instrModel : CondInstrFlagsModel, i : InstrRec) : IsaDefs = {
+    $CondInstrNFlags ($instrModel ; $i ; (Set3FlagsExplicitCarry ; 1 ; ""))
     }
 
   model CondInstr (instrModel : CondInstrModel, i : InstrRec) : IsaDefs = {
@@ -986,12 +1066,12 @@ instruction set architecture AArch32v6 = {
   $CondInstr4Flags      (ArithmeticSftInstr   ; (SUB   ; "sub"   ; SubSC   ; 0b000'0010 ))
   $CondInstr4Flags      (ArithmeticSftInstr   ; (SBC   ; "sbc"   ; SubC    ; 0b000'0110 ))
   $CondInstr4Flags      (ArithmeticSftInstr   ; (RSB   ; "rsb"   ; SubR    ; 0b000'0011 ))
-  $CondInstr3Flags      (ArithmeticSftInstr   ; (AND   ; "and"   ; AndS    ; 0b000'0000 )) // TODO set correct carry
-  $CondInstr3Flags      (ArithmeticSftInstr   ; (ORR   ; "orr"   ; OrS     ; 0b000'1100 )) // TODO set correct carry
-  $CondInstr3Flags      (ArithmeticSftInstr   ; (EOR   ; "eor"   ; XOrS    ; 0b000'0001 )) // TODO set correct carry
-  $CondInstr3Flags      (ArithmeticSftInstr   ; (BIC   ; "bic"   ; AndNot  ; 0b000'1110 )) // TODO set correct carry
-  $CondInstr3Flags      (ArithMovSftInstr     ; (MOV   ; "mov"   ; MovSft  ; 0b000'1101 )) // TODO set correct carry
-  $CondInstr3Flags      (ArithMovSftInstr     ; (MOVN  ; "movn"  ; MovNSft ; 0b000'1111 )) // TODO set correct carry
+  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (AND   ; "and"   ; AndS    ; 0b000'0000 ))
+  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (ORR   ; "orr"   ; OrS     ; 0b000'1100 ))
+  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (EOR   ; "eor"   ; XOrS    ; 0b000'0001 ))
+  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (BIC   ; "bic"   ; AndNot  ; 0b000'1110 ))
+  $CondInstr3FlagsExCar (ArithMovSftInstr     ; (MOV   ; "mov"   ; Ident   ; 0b000'1101 ))
+  $CondInstr3FlagsExCar (ArithMovSftInstr     ; (MOVN  ; "movn"  ; Negate  ; 0b000'1111 ))
 
   $CondInstr4Flags      (ArithmeticImmInstr   ; (ADDI  ; "add"   ; AddS    ; 0b001'0100 ))
   $CondInstr4Flags      (ArithmeticImmInstr   ; (ADCI  ; "adc"   ; AddC    ; 0b001'0101 ))
@@ -1035,8 +1115,8 @@ instruction set architecture AArch32v6 = {
 
   $CondInstrTst4Flags   (ArithTestSftInstr    ; (CMP   ; "cmp"   ; SubSC   ; 0b000'1010 ))
   $CondInstrTst4Flags   (ArithTestSftInstr    ; (CMN   ; "cmn"   ; AddS    ; 0b000'1011 ))
-  $CondInstrTst3Flags   (ArithTestSftInstr    ; (TST   ; "tst"   ; AndS    ; 0b000'1000 )) // TODO set correct carry
-  $CondInstrTst3Flags   (ArithTestSftInstr    ; (TEQ   ; "teq"   ; XOrS    ; 0b000'1001 )) // TODO set correct carry
+  $CondInstrTst3ExCar   (ArithTestSftInstr    ; (TST   ; "tst"   ; AndS    ; 0b000'1000 ))
+  $CondInstrTst3ExCar   (ArithTestSftInstr    ; (TEQ   ; "teq"   ; XOrS    ; 0b000'1001 ))
   $CondInstrTst4Flags   (ArithTestImmInstr    ; (CMPI  ; "cmp"   ; SubSC   ; 0b001'1010 ))
   $CondInstrTst4Flags   (ArithTestImmInstr    ; (CMNI  ; "cmn"   ; AddS    ; 0b001'1011 ))
   $CondInstrTst3Carry   (ArithTestImmInstr    ; (TSTI  ; "tst"   ; AndS    ; 0b001'1000 ))
