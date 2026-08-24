@@ -19,7 +19,9 @@ package vadl.iss.riscv;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,10 +38,16 @@ import vadl.iss.IssTestUtils;
 
 /**
  * Tests the RV64D instructions set.
+ *
+ * <p>Tests each instruction (single and double) with combinations of float variants
+ * (e.g. {@code fadd.d ..., <sNaN value>, <normal value>}). All tests are performed using
+ * rounding mode {@code rne}. Also compares the {@code fcsr} register, in addition to general
+ * purpose float registers.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
 
+  static final Map<String, String> GDB_REF_MAP_FLOAT = new HashMap<>();
   private static final String VADL_SPEC = "sys/risc-v/rv64d.vadl";
   // Note: due to the grid testing we have (4^argc+3^argc) tests per instr
   //       e.g. fmadd (takes 3 float args) gets (4^3+3^3)=91 tests
@@ -50,6 +58,11 @@ public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
   // Keep randomized load/store scratch addresses above that reserved startup/HTIF region.
   private static final BigInteger TEST_DATA_MIN_ADDR = BigInteger.valueOf(0x80002000L);
   private static final BigInteger TEST_DATA_MAX_ADDR = BigInteger.valueOf(0x800F0000L);
+
+  @Override
+  public Map<String, String> gdbRegMap() {
+    return GDB_REF_MAP_FLOAT;
+  }
 
   @Override
   public int getTestPerInstruction() {
@@ -82,40 +95,40 @@ public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
   }
 
   static {
-    GDB_REF_MAP.put("f0", "ft0");
-    GDB_REF_MAP.put("f1", "ft1");
-    GDB_REF_MAP.put("f2", "ft2");
-    GDB_REF_MAP.put("f3", "ft3");
-    GDB_REF_MAP.put("f4", "ft4");
-    GDB_REF_MAP.put("f5", "ft5");
-    GDB_REF_MAP.put("f6", "ft6");
-    GDB_REF_MAP.put("f7", "ft7");
-    GDB_REF_MAP.put("f8", "fs0");
-    GDB_REF_MAP.put("f9", "fs1");
-    GDB_REF_MAP.put("f10", "fa0");
-    GDB_REF_MAP.put("f11", "fa1");
-    GDB_REF_MAP.put("f12", "fa2");
-    GDB_REF_MAP.put("f13", "fa3");
-    GDB_REF_MAP.put("f14", "fa4");
-    GDB_REF_MAP.put("f15", "fa5");
-    GDB_REF_MAP.put("f16", "fa6");
-    GDB_REF_MAP.put("f17", "fa7");
-    GDB_REF_MAP.put("f18", "fs2");
-    GDB_REF_MAP.put("f19", "fs3");
-    GDB_REF_MAP.put("f20", "fs4");
-    GDB_REF_MAP.put("f21", "fs5");
-    GDB_REF_MAP.put("f22", "fs6");
-    GDB_REF_MAP.put("f23", "fs7");
-    GDB_REF_MAP.put("f24", "fs8");
-    GDB_REF_MAP.put("f25", "fs9");
-    GDB_REF_MAP.put("f26", "fs10");
-    GDB_REF_MAP.put("f27", "fs11");
-    GDB_REF_MAP.put("f28", "ft8");
-    GDB_REF_MAP.put("f29", "ft9");
-    GDB_REF_MAP.put("f30", "ft10");
-    GDB_REF_MAP.put("f31", "ft11");
+    GDB_REF_MAP_FLOAT.put("f0", "ft0");
+    GDB_REF_MAP_FLOAT.put("f1", "ft1");
+    GDB_REF_MAP_FLOAT.put("f2", "ft2");
+    GDB_REF_MAP_FLOAT.put("f3", "ft3");
+    GDB_REF_MAP_FLOAT.put("f4", "ft4");
+    GDB_REF_MAP_FLOAT.put("f5", "ft5");
+    GDB_REF_MAP_FLOAT.put("f6", "ft6");
+    GDB_REF_MAP_FLOAT.put("f7", "ft7");
+    GDB_REF_MAP_FLOAT.put("f8", "fs0");
+    GDB_REF_MAP_FLOAT.put("f9", "fs1");
+    GDB_REF_MAP_FLOAT.put("f10", "fa0");
+    GDB_REF_MAP_FLOAT.put("f11", "fa1");
+    GDB_REF_MAP_FLOAT.put("f12", "fa2");
+    GDB_REF_MAP_FLOAT.put("f13", "fa3");
+    GDB_REF_MAP_FLOAT.put("f14", "fa4");
+    GDB_REF_MAP_FLOAT.put("f15", "fa5");
+    GDB_REF_MAP_FLOAT.put("f16", "fa6");
+    GDB_REF_MAP_FLOAT.put("f17", "fa7");
+    GDB_REF_MAP_FLOAT.put("f18", "fs2");
+    GDB_REF_MAP_FLOAT.put("f19", "fs3");
+    GDB_REF_MAP_FLOAT.put("f20", "fs4");
+    GDB_REF_MAP_FLOAT.put("f21", "fs5");
+    GDB_REF_MAP_FLOAT.put("f22", "fs6");
+    GDB_REF_MAP_FLOAT.put("f23", "fs7");
+    GDB_REF_MAP_FLOAT.put("f24", "fs8");
+    GDB_REF_MAP_FLOAT.put("f25", "fs9");
+    GDB_REF_MAP_FLOAT.put("f26", "fs10");
+    GDB_REF_MAP_FLOAT.put("f27", "fs11");
+    GDB_REF_MAP_FLOAT.put("f28", "ft8");
+    GDB_REF_MAP_FLOAT.put("f29", "ft9");
+    GDB_REF_MAP_FLOAT.put("f30", "ft10");
+    GDB_REF_MAP_FLOAT.put("f31", "ft11");
 
-    GDB_REF_MAP.put("fcsr", "fcsr");
+    GDB_REF_MAP_FLOAT.put("fcsr", "fcsr");
   }
 
   private enum ArgType {
@@ -148,13 +161,49 @@ public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
     }
 
     // values for tests between non-NaN values
-    static List<FloatVariant> dataValues() {
-      return List.of(NORM, SUBN, ZERO, INF);
+    static FloatVariantList dataValues() {
+      return new FloatVariantList(List.of(NORM, SUBN, ZERO, INF), "DATA");
     }
 
     // values for tests with NaN values
-    static List<FloatVariant> nanValues() {
-      return List.of(NORM, SNAN, QNAN);
+    static FloatVariantList nanValues() {
+      return new FloatVariantList(List.of(NORM, SNAN, QNAN), "NAN");
+    }
+  }
+
+  private static class FloatVariantList {
+    public final List<FloatVariant> variants;
+    public final String name;
+
+    private FloatVariantList(List<FloatVariant> variants, String name) {
+      this.variants = variants;
+      this.name = name;
+    }
+
+    public String suffix() {
+      return "_%s_%s".formatted(
+          name,
+          variants.stream().map(FloatVariant::name).collect(Collectors.joining("_"))
+      );
+    }
+
+    public void forEachProduct(int dim, Consumer<FloatVariantList> consumer) {
+      forEachProduct(variants, dim, v -> consumer.accept(new FloatVariantList(List.copyOf(v), name)));
+    }
+
+    // with set={A,B} and dim=2, consumer gets called with (A,A), (A,B), (B,A) and (B,B)
+    private <T> void forEachProduct(List<T> set, int dim, Consumer<List<T>> consumer) {
+      if (dim == 0) {
+        consumer.accept(new ArrayList<>());
+        return;
+      }
+      forEachProduct(set, dim - 1, l -> {
+        for (var e : set) {
+          l.add(e);
+          consumer.accept(l);
+          l.removeLast();
+        }
+      });
     }
   }
 
@@ -215,13 +264,12 @@ public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
 
   private List<IssTestUtils.TestCase> gridTestArithInstr(String instruction, int instrArgc) {
     List<Function<Integer, IssTestUtils.TestCase>> generators = new ArrayList<>();
-    Consumer<List<FloatVariant>> variantTester = variants -> {
-      var variantsCopy = List.copyOf(variants);
-      generators.add(testArithInstr(instruction, instrArgc, true, variantsCopy));
-      generators.add(testArithInstr(instruction, instrArgc, false, variantsCopy));
+    Consumer<FloatVariantList> variantTester = variants -> {
+      generators.add(testArithInstr(instruction, instrArgc, true, variants));
+      generators.add(testArithInstr(instruction, instrArgc, false, variants));
     };
-    forEachProduct(FloatVariant.dataValues(), instrArgc, variantTester);
-    forEachProduct(FloatVariant.nanValues(), instrArgc, variantTester);
+    FloatVariant.dataValues().forEachProduct(instrArgc, variantTester);
+    FloatVariant.nanValues().forEachProduct(instrArgc, variantTester);
     return buildTestsWith(generators);
   }
 
@@ -293,13 +341,12 @@ public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
 
   private List<IssTestUtils.TestCase> testCmpSgnjInstr(String instruction, boolean isCmp) {
     List<Function<Integer, IssTestUtils.TestCase>> generators = new ArrayList<>();
-    Consumer<List<FloatVariant>> variantTester = variants -> {
-      var variantsCopy = List.copyOf(variants);
-      generators.add(cmpSgnj(instruction, false, isCmp, variantsCopy));
-      generators.add(cmpSgnj(instruction, true, isCmp, variantsCopy));
+    Consumer<FloatVariantList> variantTester = variants -> {
+      generators.add(cmpSgnj(instruction, false, isCmp, variants));
+      generators.add(cmpSgnj(instruction, true, isCmp, variants));
     };
-    forEachProduct(FloatVariant.dataValues(), 2, variantTester);
-    forEachProduct(FloatVariant.nanValues(), 2, variantTester);
+    FloatVariant.dataValues().forEachProduct(2, variantTester);
+    FloatVariant.nanValues().forEachProduct(2, variantTester);
     return buildTestsWith(generators);
   }
 
@@ -344,12 +391,11 @@ public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
   }
 
   Function<Integer, IssTestUtils.TestCase> cmpSgnj(String instr, boolean single, boolean isCmp,
-                                                   List<FloatVariant> variants) {
+                                                   FloatVariantList variants) {
     var instrName = "%s.%s".formatted(instr, single ? "s" : "d");
-    var suffix = "_" + variants.stream().map(FloatVariant::name).collect(Collectors.joining("_"));
     var inType = single ? ArgType.F32 : ArgType.F64;
-    return id -> testInstr(getBuilder(instrName.toUpperCase() + "_" + suffix, id),
-        instrName, 2, inType, isCmp ? X_REG_TYPE : inType, variants);
+    return id -> testInstr(getBuilder(instrName.toUpperCase() + variants.suffix(), id),
+        instrName, 2, inType, isCmp ? X_REG_TYPE : inType, variants.variants);
   }
 
   Function<Integer, IssTestUtils.TestCase> fclass(boolean single, FloatVariant variant) {
@@ -358,28 +404,12 @@ public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
         instrName, 1, single ? ArgType.F32 : ArgType.F64, X_REG_TYPE, List.of(variant));
   }
 
-  // with set={A,B} and dim=2, consumer gets called with (A,A), (A,B), (B,A) and (B,B)
-  private <T> void forEachProduct(List<T> set, int dim, Consumer<List<T>> consumer) {
-    if (dim == 0) {
-      consumer.accept(new ArrayList<>());
-      return;
-    }
-    forEachProduct(set, dim - 1, l -> {
-      for (var e : set) {
-        l.add(e);
-        consumer.accept(l);
-        l.removeLast();
-      }
-    });
-  }
-
   Function<Integer, IssTestUtils.TestCase> testArithInstr(String instr, int argc, boolean single,
-                                                          List<FloatVariant> variants) {
+                                                          FloatVariantList variants) {
     var instrName = "%s.%s".formatted(instr, single ? "s" : "d");
-    var suffix = variants.stream().map(FloatVariant::name).collect(Collectors.joining("_"));
     var argType = single ? ArgType.F32 : ArgType.F64;
-    return id -> testInstr(getBuilder(instrName.toUpperCase() + "_" + suffix, id),
-        instrName, argc, argType, argType, variants);
+    return id -> testInstr(getBuilder(instrName.toUpperCase() + variants.suffix(), id),
+        instrName, argc, argType, argType, variants.variants);
   }
 
   private IssTestUtils.TestCase testInstr(RV64IMVDTestBuilder b, String instr, int argc,
