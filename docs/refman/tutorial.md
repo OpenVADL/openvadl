@@ -1001,6 +1001,29 @@ instruction set architecture ISA = {
 ~~~
 \endlisting
 
+Parts of registers that do not change often and globally affect instruction semantics should be annotated with
+`[ execution state : ... ]`. This is a hint to the \ac{ISS} generator, which helps it generate a faster simulator.
+Listing \r{exec_state_reg} shows how the annotation can be used to mark specific bits in a register. It is also
+possible to mark the whole register using `[ execution state ]`. The whole \ac{VADL} \ac{ISA} specification may not
+mark more than `32` bits.
+
+\listing{exec_state_reg, Execution State Register}
+~~~{.vadl}
+instruction set architecture ISA = {
+
+  format MSRFormat : Bits<32> =  // machine state register format
+  { sf       Bits< 1>            // [s]ixty-[f]our bit, if set the processor is in 64-bit Mode
+  , pr       Bits< 1>            // privilege state of the processor
+  , le       Bits< 1>            // little endian mode
+  , reserved Bits<29>
+  }
+  
+  [ execution state : sf, pr, le ]
+  register MSR : MSRFormat      // machine state register
+}
+~~~
+\endlisting
+
 
 ### Memory Declaration
 
