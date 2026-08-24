@@ -36,7 +36,7 @@ instruction set architecture ISA = {
 //       ╭── test/resources/frontend-snapshots/typechecker/operationElementOfTrivialWarning.vadl:27:13
 //       │
 //    27 │   [assert : VLIW(0) ∈ OpB]
-//       │             ^^^^^^^^^^^^^^^
+//       │             ^^^^^^^^^^^^^
 //       │
 //       None of the possible concrete instructions matched by the left side are part of operation `OpB`.
 //
@@ -44,7 +44,7 @@ instruction set architecture ISA = {
 //       ╭── test/resources/frontend-snapshots/typechecker/operationElementOfTrivialWarning.vadl:28:13
 //       │
 //    28 │   [assert : VLIW(0) ∉ OpB]
-//       │             ^^^^^^^^^^^^^^^
+//       │             ^^^^^^^^^^^^^
 //       │
 //       None of the possible concrete instructions matched by the left side are part of operation `OpB`.
 //
