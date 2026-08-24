@@ -142,7 +142,7 @@ instruction set architecture PPC64SFS = {
   , rsv7 : Bit
   , pmm  : Bit                                   // this bit is used by the performance monitoring facility (not implemented)
   , ri   : Bit                                   // if set interrupt is recoverable (not implemented)
-  , le   : Bit                                   // if set the thread is in little endian mode (not implemented)
+  , le   : Bit                                   // if set the thread is in little endian mode
   }
 
   format BForm : Instr =
