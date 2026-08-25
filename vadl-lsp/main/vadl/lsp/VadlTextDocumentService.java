@@ -170,6 +170,12 @@ public class VadlTextDocumentService implements TextDocumentService {
       if (target instanceof IdentifiableNode identifiableTarget) {
         targetSelectionRange = targetDocument.calculateUtf16Range(
             identifiableTarget.identifier().location());
+
+        if (!isWithin(targetSelectionRange, targetRange)) {
+          // Selection range MUST be contained in target range. If that is not the case, the target
+          // identifier is provided by a model invocation, and it is better not to jump anywhere.
+          return emptyDefinitionResult();
+        }
       }
       var originSelectionRange = document.calculateUtf16Range(identifier.location());
 
@@ -196,6 +202,22 @@ public class VadlTextDocumentService implements TextDocumentService {
   private Either<List<? extends Location>, List<? extends LocationLink>> emptyDefinitionResult() {
     log.debug("<<- definition: []");
     return Either.forLeft(List.of());
+  }
+
+  private boolean isWithin(Range a, Range b) {
+    if (a.getStart().getLine() < b.getStart().getLine()
+        || a.getEnd().getLine() > b.getEnd().getLine()) {
+      return false;
+    }
+    if (a.getStart().getLine() == b.getStart().getLine()
+        && a.getStart().getCharacter() < b.getStart().getCharacter()) {
+      return false;
+    }
+    if (a.getEnd().getLine() == b.getEnd().getLine()
+        && a.getEnd().getCharacter() > b.getEnd().getCharacter()) {
+      return false;
+    }
+    return true;
   }
 
   @Override
