@@ -50,31 +50,12 @@ public class IssRegisterAccessLoweringPassTest extends AbstractTest {
   @TestFactory
   Stream<DynamicTest> testTbState() {
     return Stream.of(
-        // this technically does not test IssRegisterAccessLoweringPass,
-        // but IssInfoRetrievalPass#checkTbStateBitSize
-        invalid("invalid_tb_state_reg_too_big.vadl",
-            "The number of execution state bits (64) may not exceed 32"),
-        invalid("invalid_tb_state_multiple_reg_too_big.vadl",
-            "The number of execution state bits (48) may not exceed 32"),
-
         regRead("tb_state_reg_read.vadl", null, true),
         regRead("tb_state_reg_format_read.vadl", null, true),
         regRead("tb_state_reg_format_slice_static_read.vadl", slice, true),
         regRead("tb_state_reg_format_slice_non_static_read.vadl", slice, false),
         regRead("tb_state_reg_format_slice_whole_non_static_read.vadl", slice, false)
     );
-  }
-
-  private DynamicTest invalid(String fileName, String diagSubstr) {
-    return dynamicTest(fileName, () -> {
-      var config = new IssConfiguration(getConfiguration(false));
-      var diag = assertThrows(DiagnosticList.class, () -> setupPassManagerAndRunSpec(
-          "passes/issRegisterAccessLowering/" + fileName,
-          PassOrders.iss(config).untilFirst(IssRegisterAccessLoweringPass.class)
-      ));
-      assertEquals(1, diag.items.size());
-      assertThat(diag.items.getFirst().getMessage(), containsString(diagSubstr));
-    });
   }
 
   private DynamicTest regRead(String fileName, Constant.BitSlice slice, boolean staticRead) {

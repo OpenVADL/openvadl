@@ -20,6 +20,7 @@ import static vadl.error.Diagnostic.error;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
@@ -39,9 +40,12 @@ import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
+import vadl.utils.WithLocation;
+import vadl.viam.FloatExceptionFlag;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
+import vadl.viam.annotations.FloatFlagAnnotation;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -83,6 +87,8 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
     checkProgramCounter(viam, diagnostics);
     checkRegisterTensors(viam, diagnostics);
     checkTbStateBitSize(viam, diagnostics);
+    // TODO: this check should eventually be moved to a backend-agnostic pass
+    checkFeFlags(viam, diagnostics);
 
     // The following checks and emissions use InstrInfo.
     withIsa(viam, this::attachInstrInfo);
@@ -243,6 +249,35 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
             ).help("Check `[execution state]` annotations and reduce the number of covered bits.")
         );
       }
+    });
+  }
+
+  // checks that there are no duplicate float exception flags
+  private void checkFeFlags(Specification viam, List<DiagnosticBuilder> diagnostics) {
+    checkEachFeFlagOccursOnce(viam, diagnostics, true);
+    checkEachFeFlagOccursOnce(viam, diagnostics, false);
+  }
+
+  private void checkEachFeFlagOccursOnce(Specification viam, List<DiagnosticBuilder> diagnostics,
+                                         boolean sticky) {
+    withIsa(viam, isa -> {
+      var flagLocations = new HashMap<FloatExceptionFlag, List<WithLocation>>();
+      isa.registerTensors().stream()
+          .map(reg -> reg.annotation(FloatFlagAnnotation.class))
+          .filter(Objects::nonNull)
+          .forEach(ann -> (sticky ? ann.stickyFlags() : ann.nonStickyFlags()).values().forEach(
+              flag -> flagLocations.computeIfAbsent(flag,
+                  f -> new ArrayList<>()).add(ann.parentDefinition())));
+      flagLocations.forEach((flag, locations) -> {
+        if (locations.size() <= 1) {
+          return;
+        }
+        var err = error("Duplicate float exception flag: " + flag.name, locations.getFirst())
+            .description("There can only be one %s %s flag", sticky ? "sticky" : "non sticky",
+                flag.name);
+        locations.stream().skip(1).forEach(loc -> err.locationNote(loc, "duplicate"));
+        diagnostics.add(err);
+      });
     });
   }
 

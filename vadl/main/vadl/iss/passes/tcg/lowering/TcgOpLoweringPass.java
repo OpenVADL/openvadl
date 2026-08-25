@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
@@ -63,6 +65,7 @@ import vadl.iss.passes.tcg.lowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGenException;
 import vadl.iss.passes.tcg.lowering.nodes.TcgGvecOpNode;
+import vadl.iss.passes.tcg.lowering.nodes.TcgHelperCall;
 import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpDirectJmp;
 import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpHelperCall;
 import vadl.iss.passes.tcg.lowering.nodes.TcgIsJmpIndirectJmp;
@@ -96,6 +99,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.ExceptionDef;
+import vadl.viam.FloatFormat;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -1250,6 +1254,43 @@ class BuiltInTcgLoweringExecutor {
           );
         })
 
+        //// Float Arithmetic ////
+
+        .set(BuiltInTable.FSQRT,  (ctx) -> floatHelperCall(ctx, 2, "fsqrt"))
+        .set(BuiltInTable.FADD,   (ctx) -> floatHelperCall(ctx, 3, "fadd"))
+        .set(BuiltInTable.FSUB,   (ctx) -> floatHelperCall(ctx, 3, "fsub"))
+        .set(BuiltInTable.FMUL,   (ctx) -> floatHelperCall(ctx, 3, "fmul"))
+        .set(BuiltInTable.FDIV,   (ctx) -> floatHelperCall(ctx, 3, "fdiv"))
+        .set(BuiltInTable.FMADD,  (ctx) -> floatHelperCall(ctx, 4, "fmadd"))
+        .set(BuiltInTable.FMSUB,  (ctx) -> floatHelperCall(ctx, 4, "fmsub"))
+        .set(BuiltInTable.FNMADD, (ctx) -> floatHelperCall(ctx, 4, "fnmadd"))
+        .set(BuiltInTable.FNMSUB, (ctx) -> floatHelperCall(ctx, 4, "fnmsub"))
+        .set(BuiltInTable.FMIN,   (ctx) -> floatHelperCall(ctx, 2, "fmin"))
+        .set(BuiltInTable.FMAX,   (ctx) -> floatHelperCall(ctx, 2, "fmax"))
+
+        //// Float Comparison ////
+
+        .set(BuiltInTable.FLT, (ctx) -> floatHelperCall(ctx, 2, "flt"))
+        .set(BuiltInTable.FLE, (ctx) -> floatHelperCall(ctx, 2, "fle"))
+        .set(BuiltInTable.FEQ, (ctx) -> floatHelperCall(ctx, 2, "feq"))
+
+        //// Float to Int Conversion ////
+
+        .set(BuiltInTable.FCVT,   (ctx) -> floatHelperCall(ctx, 2, "fcvt"))
+        .set(BuiltInTable.FCVTFS, (ctx) -> floatHelperCall(ctx, 2, "fcvtfs"))
+        .set(BuiltInTable.FCVTFU, (ctx) -> floatHelperCall(ctx, 2, "fcvtfu"))
+        .set(BuiltInTable.FCVTSF, (ctx) -> floatHelperCall(ctx, 2, "fcvtsf"))
+        .set(BuiltInTable.FCVTUF, (ctx) -> floatHelperCall(ctx, 2, "fcvtuf"))
+
+        //// Float Classification ////
+
+        .set(BuiltInTable.FISINF,    (ctx) -> floatHelperCall(ctx, 1, "fisinf"))
+        .set(BuiltInTable.FISZERO,   (ctx) -> floatHelperCall(ctx, 1, "fiszero"))
+        .set(BuiltInTable.FISNEG,    (ctx) -> floatHelperCall(ctx, 1, "fisneg"))
+        .set(BuiltInTable.FISDENORM, (ctx) -> floatHelperCall(ctx, 1, "fisdenorm"))
+        .set(BuiltInTable.FISSNAN,   (ctx) -> floatHelperCall(ctx, 1, "fissnan"))
+        .set(BuiltInTable.FISQNAN,   (ctx) -> floatHelperCall(ctx, 1, "fisqnan"))
+
         .build();
   }
 
@@ -1283,6 +1324,25 @@ class BuiltInTcgLoweringExecutor {
   }
 
   /**
+   * Helper method to create a {@link BuiltInResult} from a helper call for a float built-in.
+   *
+   * @param ctx    The built-in lowering context.
+   * @param argc   The number of arguments the float built-in takes.
+   * @param name   The name of the helper call to generate.
+   * @return A {@link BuiltInResult} containing the helper call.
+   */
+  private static BuiltInResult floatHelperCall(BuiltInTcgLoweringExecutor.Context ctx, int argc,
+                                               String name) {
+    return out(new TcgHelperCall(
+        ctx.dest(), new NodeList<>(IntStream.range(0, argc).mapToObj(ctx::src).toList()), true,
+        Stream.concat(
+            ctx.floatFormats().stream().map(FloatFormat::nameLower),
+            ctx.constIntArgs().stream().map(Object::toString)
+        ).collect(Collectors.joining("_")) + "_" + name
+    ));
+  }
+
+  /**
    * Context for lowering a built-in function call.
    */
   private record Context(
@@ -1310,6 +1370,31 @@ class BuiltInTcgLoweringExecutor {
       call.ensure(call.arguments().size() > index, "Tried to access arg %s", index);
       var arg = call.arguments().get(index);
       return assignments.singleDestOf(arg);
+    }
+
+    /**
+     * Retrieves the float formats of a float built-in call.
+     *
+     * @return A list of the float formats.
+     */
+    private List<FloatFormat> floatFormats() {
+      return call.constArgs().stream()
+          .filter(Constant.FloatType.class::isInstance)
+          .map(c -> requireNonNull((Constant.FloatType) c).format())
+          .toList();
+    }
+
+    /**
+     * Retrieves the constant arguments that are integers. I.e. all {@link Constant.Value}
+     * passed via the angle brackets `VADL::builtin<...>()`.
+     *
+     * @return A list of the constant integer arguments.
+     */
+    private List<Integer> constIntArgs() {
+      return call.constArgs().stream()
+          .filter(Constant.Value.class::isInstance)
+          .map(c -> requireNonNull((Constant.Value) c).intValue())
+          .toList();
     }
 
     /**
