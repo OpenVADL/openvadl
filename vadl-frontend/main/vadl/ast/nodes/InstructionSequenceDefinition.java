@@ -28,11 +28,11 @@ public abstract class InstructionSequenceDefinition extends Definition {
   @Child
   public List<Parameter> params;
   @Child
-  public List<InstructionSequenceStatement> statements;
+  public List<Statement> statements;
   public SourceLocation loc;
 
   public InstructionSequenceDefinition(List<Parameter> params,
-                                       List<InstructionSequenceStatement> statements,
+                                       List<Statement> statements,
                                        SourceLocation loc) {
     this.params = params;
     this.statements = statements;

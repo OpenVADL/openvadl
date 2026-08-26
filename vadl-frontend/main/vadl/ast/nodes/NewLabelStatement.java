@@ -23,7 +23,7 @@ import vadl.utils.SourceLocation;
 /**
  * A statement that defines a new label in an instruction sequence.
  */
-public class NewLabelStatement extends InstructionSequenceStatement {
+public class NewLabelStatement extends Statement {
 
   @Child
   public IdentifierOrPlaceholder labelId;

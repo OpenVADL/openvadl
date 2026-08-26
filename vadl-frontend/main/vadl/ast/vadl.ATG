@@ -608,7 +608,7 @@ elements. A single annotation is described in the #annotation production rule.
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>  (. List<Parameter> params = new ArrayList<>(); .)
     [ parameters<out params> ]
     SYM_EQ
-    SYM_BRACE_OPEN                                                          (. var stmts = new ArrayList<InstructionSequenceStatement>(); .)
+    SYM_BRACE_OPEN                                                          (. var stmts = new ArrayList<Statement>(); .)
     {                                                                       (. var newLabelLoc = nextTokenLoc(); .)
       NEWLABEL identifierOrPlaceholder<out IdentifierOrPlaceholder labelId> (. stmts.add(new NewLabelStatement(labelId, newLabelLoc.join(lastTokenLoc()))); .)
       | instructionCallStmt<out InstructionCallStatement stmt>              (. stmts.add(stmt); .)
@@ -1082,7 +1082,7 @@ elements. A single annotation is described in the #annotation production rule.
   SEQUENCE                                                   (. List<Parameter> params = new ArrayList<>(); .)
   [ parameters<.out params.> ]
   SYM_EQ
-  SYM_BRACE_OPEN                                             (. var stmts = new ArrayList<InstructionSequenceStatement>(); .)
+  SYM_BRACE_OPEN                                             (. var stmts = new ArrayList<Statement>(); .)
   {
     instructionCallStmt<out InstructionCallStatement stmt>   (. stmts.add(stmt); .)
   }

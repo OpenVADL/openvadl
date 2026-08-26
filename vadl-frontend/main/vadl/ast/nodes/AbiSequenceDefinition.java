@@ -27,7 +27,7 @@ public class AbiSequenceDefinition extends InstructionSequenceDefinition {
 
   public AbiSequenceDefinition(SeqKind kind,
                                List<Parameter> params,
-                               List<InstructionSequenceStatement> statements,
+                               List<Statement> statements,
                                SourceLocation loc) {
     super(params, statements, loc);
     this.kind = kind;
@@ -63,7 +63,7 @@ public class AbiSequenceDefinition extends InstructionSequenceDefinition {
     builder.append(" sequence ");
     Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" = {\n");
-    for (InstructionSequenceStatement statement : statements) {
+    for (Statement statement : statements) {
       statement.prettyPrint(indent + 1, builder);
     }
     builder.append(prettyIndentString(indent)).append("}\n");

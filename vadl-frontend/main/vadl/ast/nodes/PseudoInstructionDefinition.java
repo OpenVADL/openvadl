@@ -37,7 +37,7 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
 
   public PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
                                      List<Parameter> params,
-                                     List<InstructionSequenceStatement> statements,
+                                     List<Statement> statements,
                                      SourceLocation loc) {
     super(params, statements, loc);
     this.identifier = identifier;
@@ -74,7 +74,7 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
     identifier.prettyPrint(indent, builder);
     Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" = {\n");
-    for (InstructionSequenceStatement statement : statements) {
+    for (Statement statement : statements) {
       statement.prettyPrint(indent + 1, builder);
     }
     builder.append(prettyIndentString(indent)).append("}\n");

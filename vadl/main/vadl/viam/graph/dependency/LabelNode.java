@@ -16,6 +16,7 @@
 
 package vadl.viam.graph.dependency;
 
+import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -27,6 +28,7 @@ import vadl.viam.graph.control.NewLabelNode;
  */
 public class LabelNode extends ExpressionNode {
 
+  @DataValue
   private final String labelName;
 
   public LabelNode(String labelName, Type type) {
