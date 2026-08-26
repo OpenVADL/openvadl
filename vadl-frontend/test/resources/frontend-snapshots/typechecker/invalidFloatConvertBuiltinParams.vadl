@@ -3,48 +3,51 @@
 [ IEEE : 32 ]
 float-type ieee32
 
-function fcvt(a: Bits<32>) -> Bits<32> = VADL::fcvt::<ieee32, ieee32>(a, 0 as Bits<3>)
-function fcvtfs(a: Bits<32>) -> SInt<7> = VADL::fcvtfs::<ieee32, 7>(a, 0 as Bits<3>)
-function fcvtfu(a: Bits<32>) -> UInt<7> = VADL::fcvtfu::<ieee32, 7>(a, 0 as Bits<3>)
-function fcvtsf(a: SInt<7>) -> Bits<32> = VADL::fcvtsf::<ieee32>(a, 0 as Bits<3>)
-function fcvtuf(a: SInt<7>) -> Bits<32> = VADL::fcvtuf::<ieee32>(a, 0 as Bits<3>)
+using SInt7 = SInt<7>
+using Bits32 = Bits<32>
+
+function fcvt  (a: ieee32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
+function fcvtfs(a: ieee32) -> SInt7  = VADL::fcvt<SInt7> (a, 0 as Bits<3>)
+function fcvtfb(a: ieee32) -> Bits32 = VADL::fcvt<Bits32>(a, 0 as Bits<3>)
+function fcvtsf(a: SInt7)  -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
+function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
 
 
 //  Reported Diagnostics:
 //
 //  error: Cannot convert to same float encoding
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:6:42
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:9:40
 //       │
-//     6 │ function fcvt(a: Bits<32>) -> Bits<32> = VADL::fcvt::<ieee32, ieee32>(a, 0 as Bits<3>)
-//       │                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//       │
-//
-//  error: Can only convert to 32 or 64 bit integers
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:7:43
-//       │
-//     7 │ function fcvtfs(a: Bits<32>) -> SInt<7> = VADL::fcvtfs::<ieee32, 7>(a, 0 as Bits<3>)
-//       │                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//     9 │ function fcvt  (a: ieee32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
+//       │                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //       │
 //
 //  error: Can only convert to 32 or 64 bit integers
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:8:43
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:10:40
 //       │
-//     8 │ function fcvtfu(a: Bits<32>) -> UInt<7> = VADL::fcvtfu::<ieee32, 7>(a, 0 as Bits<3>)
-//       │                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//    10 │ function fcvtfs(a: ieee32) -> SInt7  = VADL::fcvt<SInt7> (a, 0 as Bits<3>)
+//       │                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//       │
+//
+//  error: Float can only be converted to one of: `FloatType`, `UInt` or `SInt`
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:11:40
+//       │
+//    11 │ function fcvtfb(a: ieee32) -> Bits32 = VADL::fcvt<Bits32>(a, 0 as Bits<3>)
+//       │                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //       │
 //
 //  error: Can only convert from 32 or 64 bit integers
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:9:43
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:12:40
 //       │
-//     9 │ function fcvtsf(a: SInt<7>) -> Bits<32> = VADL::fcvtsf::<ieee32>(a, 0 as Bits<3>)
-//       │                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//    12 │ function fcvtsf(a: SInt7)  -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
+//       │                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //       │
 //
-//  error: Can only convert from 32 or 64 bit integers
-//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:10:43
+//  error: Float can only be converted from one of: `FloatType`, `UInt` or `SInt`
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidFloatConvertBuiltinParams.vadl:13:40
 //       │
-//    10 │ function fcvtuf(a: SInt<7>) -> Bits<32> = VADL::fcvtuf::<ieee32>(a, 0 as Bits<3>)
-//       │                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//    13 │ function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
+//       │                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //       │
 //
 //
@@ -54,21 +57,27 @@ function fcvtuf(a: SInt<7>) -> Bits<32> = VADL::fcvtuf::<ieee32>(a, 0 as Bits<3>
 //    . AnnotationDefinition
 //    . : Identifier name: "IEEE" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
-//    FunctionDefinition name: "fcvt"
-//    . Parameter name: "a"
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    UsingDefinition name: "SInt7"
+//    . TypeLiteral type: SInt<7>
+//    . : Identifier name: "SInt" type: null
+//    . : IntegerLiteral literal: 7 (7) type: Const<7>
+//    UsingDefinition name: "Bits32"
 //    . TypeLiteral type: Bits<32>
 //    . : Identifier name: "Bits" type: null
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
-//    . CallIndexExpr type: Bits<32>
+//    FunctionDefinition name: "fcvt"
+//    . Parameter name: "a"
+//    . : TypeLiteral type: Float(IEEE32)
+//    . : ' Identifier name: "ieee32" type: null
+//    . TypeLiteral type: Float(IEEE32)
+//    . : Identifier name: "ieee32" type: null
+//    . CallIndexExpr type: Float(IEEE32)
 //    . : SymbolExpr type: null
 //    . : ' IdentifierPath name: "VADL::fcvt" type: null
-//    . : ' Identifier name: "ieee32" type: FloatType
-//    . : ' Identifier name: "ieee32" type: FloatType
+//    . : ' TypeLiteral type: Float(IEEE32)
+//    . : ' | Identifier name: "ieee32" type: null
 //    . : ArgsIndices
-//    . : ' Identifier name: "a" type: Bits<32>
+//    . : ' Identifier name: "a" type: Float(IEEE32)
 //    . : ' CastExpr type: Bits<3>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | TypeLiteral type: Bits<3>
@@ -76,39 +85,35 @@ function fcvtuf(a: SInt<7>) -> Bits<32> = VADL::fcvtuf::<ieee32>(a, 0 as Bits<3>
 //    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
 //    FunctionDefinition name: "fcvtfs"
 //    . Parameter name: "a"
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : TypeLiteral type: Float(IEEE32)
+//    . : ' Identifier name: "ieee32" type: null
 //    . TypeLiteral type: SInt<7>
-//    . : Identifier name: "SInt" type: null
-//    . : IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : Identifier name: "SInt7" type: null
 //    . CallIndexExpr type: SInt<7>
 //    . : SymbolExpr type: null
-//    . : ' IdentifierPath name: "VADL::fcvtfs" type: null
-//    . : ' Identifier name: "ieee32" type: FloatType
-//    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : ' IdentifierPath name: "VADL::fcvt" type: null
+//    . : ' TypeLiteral type: SInt<7>
+//    . : ' | Identifier name: "SInt7" type: null
 //    . : ArgsIndices
-//    . : ' Identifier name: "a" type: Bits<32>
+//    . : ' Identifier name: "a" type: Float(IEEE32)
 //    . : ' CastExpr type: Bits<3>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | TypeLiteral type: Bits<3>
 //    . : ' | . Identifier name: "Bits" type: null
 //    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
-//    FunctionDefinition name: "fcvtfu"
+//    FunctionDefinition name: "fcvtfb"
 //    . Parameter name: "a"
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
-//    . TypeLiteral type: UInt<7>
-//    . : Identifier name: "UInt" type: null
-//    . : IntegerLiteral literal: 7 (7) type: Const<7>
-//    . CallIndexExpr type: UInt<7>
+//    . : TypeLiteral type: Float(IEEE32)
+//    . : ' Identifier name: "ieee32" type: null
+//    . TypeLiteral type: Bits<32>
+//    . : Identifier name: "Bits32" type: null
+//    . CallIndexExpr type: Bits<32>
 //    . : SymbolExpr type: null
-//    . : ' IdentifierPath name: "VADL::fcvtfu" type: null
-//    . : ' Identifier name: "ieee32" type: FloatType
-//    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
+//    . : ' IdentifierPath name: "VADL::fcvt" type: null
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits32" type: null
 //    . : ArgsIndices
-//    . : ' Identifier name: "a" type: Bits<32>
+//    . : ' Identifier name: "a" type: Float(IEEE32)
 //    . : ' CastExpr type: Bits<3>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | TypeLiteral type: Bits<3>
@@ -117,15 +122,14 @@ function fcvtuf(a: SInt<7>) -> Bits<32> = VADL::fcvtuf::<ieee32>(a, 0 as Bits<3>
 //    FunctionDefinition name: "fcvtsf"
 //    . Parameter name: "a"
 //    . : TypeLiteral type: SInt<7>
-//    . : ' Identifier name: "SInt" type: null
-//    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
-//    . TypeLiteral type: Bits<32>
-//    . : Identifier name: "Bits" type: null
-//    . : IntegerLiteral literal: 32 (32) type: Const<32>
-//    . CallIndexExpr type: Bits<32>
+//    . : ' Identifier name: "SInt7" type: null
+//    . TypeLiteral type: Float(IEEE32)
+//    . : Identifier name: "ieee32" type: null
+//    . CallIndexExpr type: Float(IEEE32)
 //    . : SymbolExpr type: null
-//    . : ' IdentifierPath name: "VADL::fcvtsf" type: null
-//    . : ' Identifier name: "ieee32" type: FloatType
+//    . : ' IdentifierPath name: "VADL::fcvt" type: null
+//    . : ' TypeLiteral type: Float(IEEE32)
+//    . : ' | Identifier name: "ieee32" type: null
 //    . : ArgsIndices
 //    . : ' Identifier name: "a" type: SInt<7>
 //    . : ' CastExpr type: Bits<3>
@@ -135,18 +139,17 @@ function fcvtuf(a: SInt<7>) -> Bits<32> = VADL::fcvtuf::<ieee32>(a, 0 as Bits<3>
 //    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
 //    FunctionDefinition name: "fcvtuf"
 //    . Parameter name: "a"
-//    . : TypeLiteral type: SInt<7>
-//    . : ' Identifier name: "SInt" type: null
-//    . : ' IntegerLiteral literal: 7 (7) type: Const<7>
-//    . TypeLiteral type: Bits<32>
-//    . : Identifier name: "Bits" type: null
-//    . : IntegerLiteral literal: 32 (32) type: Const<32>
-//    . CallIndexExpr type: Bits<32>
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits32" type: null
+//    . TypeLiteral type: Float(IEEE32)
+//    . : Identifier name: "ieee32" type: null
+//    . CallIndexExpr type: Float(IEEE32)
 //    . : SymbolExpr type: null
-//    . : ' IdentifierPath name: "VADL::fcvtuf" type: null
-//    . : ' Identifier name: "ieee32" type: FloatType
+//    . : ' IdentifierPath name: "VADL::fcvt" type: null
+//    . : ' TypeLiteral type: Float(IEEE32)
+//    . : ' | Identifier name: "ieee32" type: null
 //    . : ArgsIndices
-//    . : ' Identifier name: "a" type: SInt<7>
+//    . : ' Identifier name: "a" type: Bits<32>
 //    . : ' CastExpr type: Bits<3>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | TypeLiteral type: Bits<3>

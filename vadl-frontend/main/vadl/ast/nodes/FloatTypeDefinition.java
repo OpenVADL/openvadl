@@ -16,31 +16,39 @@
 
 package vadl.ast.nodes;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.types.FloatEncoding;
+import vadl.types.FloatType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 /**
- * Represents a float-type definition, which is used to specify float formats.
+ * Represents a float-type definition, which is used to specify float types.
  * <pre>{@code
  * [ IEEE : 32 ]
- * float-type binary32
+ * float-type Binary32
  * }</pre>
+ * Float types represent {@link vadl.viam.FloatFormat}s.
  */
 public class FloatTypeDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
 
   /**
    * Represents the encoding of the represented float format. This is used by the type-checker
-   * to infer types when the float-type is used as a constant parameter in built-ins. This is not
-   * set during parsing, and must be set by an annotation such as {@code [ IEEE : 32 ]}.
+   * to enforce certain rules for float built-ins (e.g. that the fcvt built-in cannot convert
+   * between two float types with the same encoding).
+   * This is not set during parsing, and must be set by an annotation such as {@code [ IEEE : 32 ]}.
    */
   @Nullable
   public FloatEncoding encoding;
 
   public SourceLocation loc;
+
+  @Nullable
+  private FloatType type;
 
   public FloatTypeDefinition(IdentifierOrPlaceholder identifier, SourceLocation loc) {
     this.identifier = identifier;
@@ -91,6 +99,10 @@ public class FloatTypeDefinition extends Definition implements IdentifiableNode,
 
   @Override
   public Type type() {
-    return Type.floatType();
+    if (type == null) {
+      // Note: the definition must be type-checked beforehand
+      type = new FloatType(requireNonNull(encoding));
+    }
+    return type;
   }
 }

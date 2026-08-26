@@ -85,6 +85,7 @@ import vadl.ast.nodes.SequenceCallExpr;
 import vadl.ast.nodes.Statement;
 import vadl.ast.nodes.StatementList;
 import vadl.ast.nodes.StringLiteral;
+import vadl.ast.nodes.SymbolExpr;
 import vadl.ast.nodes.SyntaxType;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -1043,6 +1044,32 @@ class ParserUtils {
       }
     }
     return expandedCalls;
+  }
+
+  static Expr createSymExprOrBinOp(IsId path, List<Expr> terms, boolean isLtOp,
+                                   SourceLocation ltLoc, SourceLocation gtLoc) {
+    if (ltLoc == null) {
+      // we parsed id::path
+      return (Expr) path;
+    }
+    if (gtLoc == null) {
+      // we parsed id::path < term
+      return new BinaryExpr(
+          (Expr) path,
+          new BinOp(Operator.Less, ltLoc),
+          terms.getLast()
+      );
+    }
+    if (!isLtOp) {
+      // we parsed id::path<term><term>
+      return new SymbolExpr(path, terms, path.location().join(gtLoc));
+    }
+    // we parsed id::path<term> < term
+    return new BinaryExpr(
+        new SymbolExpr(path, terms.subList(0, terms.size() - 1), path.location().join(gtLoc)),
+        new BinOp(Operator.Less, ltLoc),
+        terms.getLast()
+    );
   }
 
   static void addDef(List<Definition> definitions, Definition def) {

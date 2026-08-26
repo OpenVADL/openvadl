@@ -6,7 +6,7 @@ instruction set architecture ISA = {
 
   // VADL::add does not actually take a float-type constant parameter,
   // but the size is checked beforehand anyway
-  function F() -> Bits<32> = VADL::add::<binary32>(0, 0, 0)
+  function F() -> Bits<32> = VADL::add<binary32>(0, 0, 0)
 
 }
 

@@ -30,7 +30,6 @@ instruction set architecture ISA = {
 //    . : MemoryCount: 0
 //    . : ArtificialResourceCount: 0
 //    . : FloatFormat name: "binary32"
-//    . : ' Type: FloatType
 //    . : ' Encoding: IEEE32(32)
 //
 //

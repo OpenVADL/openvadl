@@ -17,13 +17,17 @@
 package vadl.viam.graph.dependency;
 
 import static java.util.Collections.reverse;
+import static java.util.Objects.requireNonNull;
 
+import com.google.common.collect.Streams;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
 import vadl.types.Type;
-import vadl.viam.Constant;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -42,18 +46,28 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
   protected BuiltIn builtIn;
 
   @DataValue
-  protected List<Constant> constArgs;
+  protected List<Type> typeParams;
+
+  /**
+   * Stores the original types of all arguments, since the types stored in the argument
+   * nodes may be altered or normalized (to BitsType). May be {@code null}, if the original
+   * was not preserved.
+   */
+  @DataValue
+  @Nullable
+  protected List<Type> originalArgTypes;
 
   @SuppressWarnings("checkstyle:MissingJavadocMethod")
-  public BuiltInCall(BuiltIn builtIn, List<Constant> constArgs,
+  public BuiltInCall(BuiltIn builtIn, List<Type> typeParams, @Nullable List<Type> originalArgTypes,
                      NodeList<ExpressionNode> args, Type type) {
     super(args, type);
     this.builtIn = builtIn;
-    this.constArgs = constArgs;
+    this.typeParams = typeParams;
+    this.originalArgTypes = originalArgTypes;
   }
 
   public BuiltInCall(BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
-    this(builtIn, List.of(), args, type);
+    this(builtIn, List.of(), null, args, type);
   }
 
   /**
@@ -90,18 +104,25 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
   }
 
   /**
-   * Gets the constant args, i.e. the args in the pointy brackets {@code <...>}.
+   * Gets the type parameters, i.e. the parameters in the pointy brackets {@code <...>}.
    */
-  public List<Constant> constArgs() {
-    return constArgs;
+  public List<Type> typeParams() {
+    return typeParams;
   }
 
-  public void setConstArgs(List<Constant> constArgs) {
-    this.constArgs = constArgs;
+  /**
+   * Gets the original types of the arguments.
+   */
+  public List<Type> originalArgTypes() {
+    return requireNonNull(originalArgTypes);
   }
 
   public ExpressionNode arg(int index) {
     return args.get(index);
+  }
+
+  public Type typeParam(int index) {
+    return typeParams.get(index);
   }
 
   @Override
@@ -118,7 +139,7 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
           .toList();
 
       return builtIn
-          .compute(constArgs, args)
+          .compute(typeParams, args)
           .map(e -> (Node) new ConstantNode(e))
           .orElse(this);
     }
@@ -152,11 +173,18 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
         "Number of arguments must match, %s vs %s", argTypeClasses.size(), this.arguments().size());
 
     var actualArgTypes = this.arguments().stream().map(ExpressionNode::type).toList();
-    ensure(builtIn.takes(constArgs, actualArgTypes),
-        "Arguments' types do not match with the type of the builtin. Const args: %s, Args: %s",
-        constArgs, actualArgTypes);
+    ensure(builtIn.takes(typeParams, actualArgTypes),
+        "Arguments' types do not match with the type of the builtin. Type params: %s, Args: %s",
+        typeParams, actualArgTypes);
 
-    var builtInResultType = builtIn.returns(constArgs, actualArgTypes);
+    ensure(originalArgTypes == null || Streams.zip(
+        actualArgTypes.stream(), originalArgTypes.stream(),
+            (actualArgType, original) -> original.isTrivialCastTo(actualArgType)).allMatch(b -> b),
+        "Arguments' types do not match with the original argument types: %s, Original: %s",
+        actualArgTypes, originalArgTypes
+    );
+
+    var builtInResultType = builtIn.returns(typeParams, actualArgTypes);
     ensure(builtInResultType.isTrivialCastTo(this.type()),
         "BuiltIns' result type does not match node's type. %s vs %s", builtInResultType, this.type()
     );
@@ -165,14 +193,15 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
   @Override
   public ExpressionNode copy() {
     return new BuiltInCall(builtIn,
-        constArgs.stream().toList(),
+        new ArrayList<>(typeParams),
+        originalArgTypes == null ? null : new ArrayList<>(originalArgTypes),
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
         this.type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new BuiltInCall(builtIn, constArgs, args, type());
+    return new BuiltInCall(builtIn, typeParams, originalArgTypes, args, type());
   }
 
 
@@ -180,7 +209,8 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(builtIn);
-    collection.add(constArgs);
+    collection.add(typeParams);
+    collection.add(originalArgTypes);
   }
 
   @Override
@@ -193,16 +223,7 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
       sb.append(")");
     } else {
       sb.append(builtIn.name());
-      if (!constArgs.isEmpty()) {
-        sb.append("::<");
-        for (int i = 0; i < constArgs.size(); i++) {
-          if (i > 0) {
-            sb.append(", ");
-          }
-          sb.append(constArgs.get(i).toString());
-        }
-        sb.append(">");
-      }
+      sb.append(typeParams.stream().map(t -> "<" + t + ">").collect(Collectors.joining()));
       sb.append("(");
 
       for (int i = 0; i < args.size(); i++) {

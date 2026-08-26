@@ -16,29 +16,68 @@
 
 package vadl.types;
 
+import static java.util.Objects.requireNonNull;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+import vadl.viam.FloatFormat;
+
 /**
- * A class that represents the built-in type for float-type expressions.
+ * Represents a float type, which in turn represents a {@link FloatFormat}.
  *
  * <pre>{@code
- * // This declares a float format
+ * // This declares a float format and its representing type
  * [ IEEE : 32 ]
- * float-type binary32
+ * float-type Float
  *
- * // It can later be used as an expression
- * VADL::fcvtfs::<binary32, 32>(...)
- * //             ^^^^^^^^ this is an expression with the type `FloatType`
+ * [ IEEE : 64 ]
+ * float-type Double
+ *
+ * // Example usage: converts from `Float` to `Double`
+ * VADL::fcvt<Double>(... as Float, ...)
  * }</pre>
- *
- * <strong>Note:</strong> FloatType is NOT a {@link DataType}. It is NOT the type of float
- * expressions. Float expressions are {@link BitsType}. There exist no conversions between this
- * and any other type.
  */
-public class FloatType extends Type {
+public class FloatType extends BitsType {
 
-  protected FloatType() { }
+  @Nullable
+  FloatFormat format;
+  FloatEncoding encoding;
+
+  /**
+   * Constructs a float type. Only takes an encoding, since during type-checking, only the encoding
+   * (not the whole format) is known.
+   *
+   * @param encoding the encoding of the float format this type represents.
+   */
+  public FloatType(FloatEncoding encoding) {
+    super(encoding.size);
+    this.encoding = encoding;
+  }
+
+  /**
+   * Called during VIAM lowering to set the concrete float format.
+   */
+  public void setFormat(@CheckForNull FloatFormat format) {
+    this.format = format;
+  }
+
+  public FloatFormat format() {
+    return requireNonNull(format);
+  }
+
+  public FloatEncoding encoding() {
+    return encoding;
+  }
 
   @Override
   public String name() {
-    return "FloatType";
+    return "Float(%s)".formatted(
+        format != null ? format.simpleName() : encoding.name()
+    );
+  }
+
+  @Override
+  public BitsType withBitWidth(int bitWidth) {
+    throw new IllegalStateException("FloatType cannot be scaled");
   }
 }

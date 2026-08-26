@@ -1803,34 +1803,19 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   // Symbol expressions of form "a::b<3>".
   // Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   // Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)
+  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; boolean isLtOp = false; var terms = new ArrayList<Expr>(); SourceLocation ltLoc = null; SourceLocation gtLoc = null; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.ID))
     identifierPath<out IsId path>
-    [
-      // TODO: decide if the ::<...> syntax should have its own rule
-      //       see Discussion #578, especially the comment
-      //       https://github.com/OpenVADL/openvadl/discussions/578#discussioncomment-17872831
-      IF (la.kind == _SYM_NAMESPACE || la.kind == _SYM_LT)  (. var values = new ArrayList<Expr>(); .)
-      (
-        IF (la.kind == _SYM_NAMESPACE)
-        SYM_NAMESPACE
-        SYM_LT
-        term<out Expr firstTerm, BIN_OPS>                   (. values.add(firstTerm); .)
-        {
-          SYM_COMMA
-          term<out Expr term, BIN_OPS>                      (. values.add(term); .)
-        }
-        SYM_GT                                              (. expr = new SymbolExpr(path, values, path.location().join(lastTokenLoc())); .)
-      |
-        SYM_LT                                              (. var lessLoc = lastTokenLoc(); .)
-        term<out Expr term, BIN_OPS>                        (. values.add(term); .)
-        [
-          IF (!allowLtOp || la.kind == _SYM_GT)
-          SYM_GT                                            (. expr = new SymbolExpr(path, values, path.location().join(lastTokenLoc())); .)
-        ]                                                   (. if (expr.equals(DUMMY_EXPR)) expr = new BinaryExpr((Expr) path, new BinOp(Operator.Less, lessLoc), term); .)
-      )
-    ]                                                       (. if (expr.equals(DUMMY_EXPR)) expr = (Expr) path; .)
-  | macroReplacement<out Node node>                         (. expr = castExpr(this, node); .)
+    {
+      IF (!isLtOp && la.kind == _SYM_LT)                     (. isLtOp = true; .)
+      SYM_LT                                                 (. ltLoc = lastTokenLoc(); .)
+      term<out Expr term, BIN_OPS>                           (. terms.add(term); .)
+      [
+        IF (!allowLtOp || la.kind == _SYM_GT)                (. isLtOp = false; .)
+        SYM_GT                                               (. gtLoc = lastTokenLoc(); .)
+      ]
+    }                                                        (. expr = createSymExprOrBinOp(path, terms, isLtOp, ltLoc, gtLoc); .)
+  | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
   .
 
   binaryOperator<out Operator op> (. op = null; .)
@@ -1942,7 +1927,6 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   identifierPath<out IsId path>                                 (. List<IdentifierOrPlaceholder> segments = new ArrayList<>(); .)
   = identifierOrPlaceholder<out IdentifierOrPlaceholder id>     (. segments.add(id); .)
     {
-      IF (la.kind == _SYM_NAMESPACE && scanner.Peek().kind != _SYM_LT) // symbol expression can look like id::path::<>()
       SYM_NAMESPACE
       identifierOrPlaceholder<out IdentifierOrPlaceholder next> (. segments.add(next); .)
     }                                                           (. if (segments.size() == 1) path = id;
