@@ -1072,10 +1072,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // NewLabel statement in an instruction sequence
-    if (computedTarget instanceof NewLabelStatement) {
-      var labelNode = currentGraph.getNodes(NewLabelNode.class)
-          .filter(n -> n.labelNode().labelName().equals(innerName)).toList().getFirst();
-      return labelNode.labelNode();
+    if (computedTarget instanceof NewLabelStatement labelStmt) {
+      var labelNode = new LabelNode(innerName, getViamType(labelStmt.labelId().type()));
+      labelNode.setSourceLocation(expr.location());
+      return labelNode;
     }
 
     // Builtin Call
@@ -2045,8 +2045,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(NewLabelStatement statement) {
-    var newLabelNode =
-        new NewLabelNode(new LabelNode(statement.labelId().name, statement.labelId().type()));
+    var newLabelNode = new NewLabelNode(
+        new LabelNode(statement.labelId().name, getViamType(statement.labelId().type())));
     newLabelNode.setSourceLocation(statement.location());
     newLabelNode = addToGraph(newLabelNode);
     return SubgraphContext.of(statement, newLabelNode);
