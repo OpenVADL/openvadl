@@ -24,6 +24,7 @@ instruction set architecture AArch32v6 = {
   using Byte     = Bits<8>            // memory size
   using Word     = Bits<Size>         // word size
   using SIntW    = SInt<Size>         // signed word size
+  using Double   = Bits<Size*2>       // signed double word size
   using Addr     = Word               // address has word size
 
   memory MEM : Addr  -> Byte          // byte addressed memory
@@ -497,6 +498,64 @@ instruction set architecture AArch32v6 = {
     assembly AsId ($i.id, $f.flagExt, $c.condStr) = (AsStr($i.name, $c.condStr, $f.flagExt), ' ', register(ra), ',', register(rd), ',', register(rn), ',', register(rm))
     }
 
+// multiply short / long *******************************************************
+
+  format MultiplyShortLongFormat : Word = // multiply short / long format
+    { cond     [31..28]               // condition
+    , op       [27..21,7..4]          // opcode
+    , setflags [20]                   // set status flags
+    , rd       [19..16]               // destination or high register
+    , ra       [15..12]               // accumulator or low register or zeroes
+    , rm       [11..8]                // 2nd source register
+//    , tbm      [6]                    // top / bottom selection for rm
+//    , tbn      [5]                    // top / bottom selection for rn
+    , rn       [3..0]                 // 1st source register
+    }
+
+  model MultiplySMLEncAsm (c : CondRec, i : InstrRec) : IsaDefs = {
+    encoding AsId($i.id, $c.condId) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = 0}
+    assembly AsId ($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(ra), ',', register(rd), ',', register(rn), ',', register(rm))
+  }
+
+  model SMULbb()  : Ex = {R(rn)(15.. 0) as SInt *# R(rm)(15.. 0) as SInt}
+  model SMULbt()  : Ex = {R(rn)(15.. 0) as SInt *# R(rm)(31..16) as SInt}
+  model SMULtb()  : Ex = {R(rn)(31..16) as SInt *# R(rm)(15.. 0) as SInt}
+  model SMULtt()  : Ex = {R(rn)(31..16) as SInt *# R(rm)(31..16) as SInt}
+
+  model MultiplySMLAInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    [undefined when : rd = 15 || ra = 15 || rn = 15 || rm = 15]
+    instruction AsId($i.id, $c.condId) : MultiplyShortLongFormat =
+      if ($c.condEx) then
+        let result, flags = VADL::adds (R(ra) as SInt, $i.funct()) in {
+          R(rd)  := result
+          APSR_Q := flags.overflow
+        }
+    $MultiplySMLEncAsm ($c; $i)
+    }
+
+  model MultiplySMULInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    instruction AsId($i.id, $c.condId) : MultiplyShortLongFormat =
+      if ($c.condEx) then
+        R(rd) :=  $i.funct()
+    encoding AsId($i.id, $c.condId) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = 0, ra = 0}
+    assembly AsId ($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm))
+    }
+
+  model SMLALbb()  : Ex = {(R(rd),R(ra)) + (R(rn)(15.. 0) as SInt *# R(rm)(15.. 0) as SInt) as Double}
+  model SMLALbt()  : Ex = {(R(rd),R(ra)) + (R(rn)(15.. 0) as SInt *# R(rm)(31..16) as SInt) as Double}
+  model SMLALtb()  : Ex = {(R(rd),R(ra)) + (R(rn)(31..16) as SInt *# R(rm)(15.. 0) as SInt) as Double}
+  model SMLALtt()  : Ex = {(R(rd),R(ra)) + (R(rn)(31..16) as SInt *# R(rm)(31..16) as SInt) as Double}
+
+  model MultiplySMLALInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    instruction AsId($i.id, $c.condId) : MultiplyShortLongFormat =
+      if ($c.condEx) then
+        let result = $i.funct() in {
+          R(rd) := result(63..32)
+          R(ra) := result as Word
+        }
+    $MultiplySMLEncAsm ($c; $i)
+    }
+
 // divide model ****************************************************************
 
   model SDiv() : Ex = {if dividend = 0x8000'0000 && divisor = -1 then dividend else VADL::sdiv(dividend, divisor)}
@@ -511,6 +570,8 @@ instruction set architecture AArch32v6 = {
     encoding AsId($i.id, $c.condId) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = 1, op1 = 0b0001, ra = 0b1111 }
     assembly AsId($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm))
     }
+
+
 
 // extend models ***************************************************************
 
@@ -1061,93 +1122,106 @@ instruction set architecture AArch32v6 = {
 
 // base instructions ***********************************************************
 
-  $CondInstr4Flags      (ArithmeticSftInstr   ; (ADD   ; "add"   ; AddS    ; 0b000'0100 ))
-  $CondInstr4Flags      (ArithmeticSftInstr   ; (ADC   ; "adc"   ; AddC    ; 0b000'0101 ))
-  $CondInstr4Flags      (ArithmeticSftInstr   ; (SUB   ; "sub"   ; SubSC   ; 0b000'0010 ))
-  $CondInstr4Flags      (ArithmeticSftInstr   ; (SBC   ; "sbc"   ; SubC    ; 0b000'0110 ))
-  $CondInstr4Flags      (ArithmeticSftInstr   ; (RSB   ; "rsb"   ; SubR    ; 0b000'0011 ))
-  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (AND   ; "and"   ; AndS    ; 0b000'0000 ))
-  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (ORR   ; "orr"   ; OrS     ; 0b000'1100 ))
-  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (EOR   ; "eor"   ; XOrS    ; 0b000'0001 ))
-  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (BIC   ; "bic"   ; AndNot  ; 0b000'1110 ))
-  $CondInstr3FlagsExCar (ArithMovSftInstr     ; (MOV   ; "mov"   ; Ident   ; 0b000'1101 ))
-  $CondInstr3FlagsExCar (ArithMovSftInstr     ; (MOVN  ; "movn"  ; Negate  ; 0b000'1111 ))
+  $CondInstr4Flags      (ArithmeticSftInstr   ; (ADD     ; "add"     ; AddS    ; 0b000'0100 ))
+  $CondInstr4Flags      (ArithmeticSftInstr   ; (ADC     ; "adc"     ; AddC    ; 0b000'0101 ))
+  $CondInstr4Flags      (ArithmeticSftInstr   ; (SUB     ; "sub"     ; SubSC   ; 0b000'0010 ))
+  $CondInstr4Flags      (ArithmeticSftInstr   ; (SBC     ; "sbc"     ; SubC    ; 0b000'0110 ))
+  $CondInstr4Flags      (ArithmeticSftInstr   ; (RSB     ; "rsb"     ; SubR    ; 0b000'0011 ))
+  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (AND     ; "and"     ; AndS    ; 0b000'0000 ))
+  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (ORR     ; "orr"     ; OrS     ; 0b000'1100 ))
+  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (EOR     ; "eor"     ; XOrS    ; 0b000'0001 ))
+  $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (BIC     ; "bic"     ; AndNot  ; 0b000'1110 ))
+  $CondInstr3FlagsExCar (ArithMovSftInstr     ; (MOV     ; "mov"     ; Ident   ; 0b000'1101 ))
+  $CondInstr3FlagsExCar (ArithMovSftInstr     ; (MOVN    ; "movn"    ; Negate  ; 0b000'1111 ))
 
-  $CondInstr4Flags      (ArithmeticImmInstr   ; (ADDI  ; "add"   ; AddS    ; 0b001'0100 ))
-  $CondInstr4Flags      (ArithmeticImmInstr   ; (ADCI  ; "adc"   ; AddC    ; 0b001'0101 ))
-  $CondInstr4Flags      (ArithmeticImmInstr   ; (SUBI  ; "sub"   ; SubSC   ; 0b001'0010 ))
-  $CondInstr4Flags      (ArithmeticImmInstr   ; (SBCI  ; "sbc"   ; SubC    ; 0b001'0110 ))
-  $CondInstr4Flags      (ArithmeticImmInstr   ; (RSBI  ; "rsb"   ; SubR    ; 0b001'0011 ))
-  $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (ANDI  ; "and"   ; AndS    ; 0b001'0000 ))
-  $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (ORRI  ; "orr"   ; OrS     ; 0b001'1100 ))
-  $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (EORI  ; "eor"   ; XOrS    ; 0b001'0001 ))
-  $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (BICI  ; "bic"   ; AndNot  ; 0b001'1110 ))
-  $CondInstr3Flags      (ArithMovImmInstr     ; (MOVI  ; "mov"   ; Ident   ; 0b001'1101 ))
-  $CondInstr3Flags      (ArithMovImmInstr     ; (MOVIN ; "movn"  ; Negate  ; 0b001'1111 ))
+  $CondInstr4Flags      (ArithmeticImmInstr   ; (ADDI    ; "add"     ; AddS    ; 0b001'0100 ))
+  $CondInstr4Flags      (ArithmeticImmInstr   ; (ADCI    ; "adc"     ; AddC    ; 0b001'0101 ))
+  $CondInstr4Flags      (ArithmeticImmInstr   ; (SUBI    ; "sub"     ; SubSC   ; 0b001'0010 ))
+  $CondInstr4Flags      (ArithmeticImmInstr   ; (SBCI    ; "sbc"     ; SubC    ; 0b001'0110 ))
+  $CondInstr4Flags      (ArithmeticImmInstr   ; (RSBI    ; "rsb"     ; SubR    ; 0b001'0011 ))
+  $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (ANDI    ; "and"     ; AndS    ; 0b001'0000 ))
+  $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (ORRI    ; "orr"     ; OrS     ; 0b001'1100 ))
+  $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (EORI    ; "eor"     ; XOrS    ; 0b001'0001 ))
+  $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (BICI    ; "bic"     ; AndNot  ; 0b001'1110 ))
+  $CondInstr3Flags      (ArithMovImmInstr     ; (MOVI    ; "mov"     ; Ident   ; 0b001'1101 ))
+  $CondInstr3Flags      (ArithMovImmInstr     ; (MOVIN   ; "movn"    ; Negate  ; 0b001'1111 ))
 
-  $CondInstr2Flags      (MultiplyInstr        ; (MUL   ; "mul"   ; Mul     ; 0b000'0000 ))
-  $CondInstr2Flags      (MultiplyAccInstr     ; (MLA   ; "mla"   ; MulAcc  ; 0b000'0001 ))
-  $CondInstr            (MultiplySubInstr     ; (MLS   ; "mls"   ; MulSub  ; 0b000'0011 ))
-  $CondInstr2Flags      (MultiplyLongInstr    ; (UMULL ; "umull" ; UMull   ; 0b000'0100 ))
-  $CondInstr2Flags      (MultiplyLongInstr    ; (SMULL ; "smull" ; SMull   ; 0b000'0110 ))
-  $CondInstr2Flags      (MultiplyLongInstr    ; (UMLAL ; "umlal" ; UMlAl   ; 0b000'0101 ))
-  $CondInstr2Flags      (MultiplyLongInstr    ; (SMLAL ; "smlal" ; SMlAl   ; 0b000'0111 ))
+  $CondInstr2Flags      (MultiplyInstr        ; (MUL     ; "mul"     ; Mul     ; 0b000'0000 ))
+  $CondInstr2Flags      (MultiplyAccInstr     ; (MLA     ; "mla"     ; MulAcc  ; 0b000'0001 ))
+  $CondInstr            (MultiplySubInstr     ; (MLS     ; "mls"     ; MulSub  ; 0b000'0011 ))
+  $CondInstr2Flags      (MultiplyLongInstr    ; (UMULL   ; "umull"   ; UMull   ; 0b000'0100 ))
+  $CondInstr2Flags      (MultiplyLongInstr    ; (SMULL   ; "smull"   ; SMull   ; 0b000'0110 ))
+  $CondInstr2Flags      (MultiplyLongInstr    ; (UMLAL   ; "umlal"   ; UMlAl   ; 0b000'0101 ))
+  $CondInstr2Flags      (MultiplyLongInstr    ; (SMLAL   ; "smlal"   ; SMlAl   ; 0b000'0111 ))
 
-  $CondInstr            (DivideInstr          ; (SDIV  ; "sdiv"  ; SDiv    ; 0b011'1000 ))
-  $CondInstr            (DivideInstr          ; (UDIV  ; "udiv"  ; UDiv    ; 0b011'1001 ))
+  $CondInstr            (MultiplySMLAInstr    ; (SMLABB  ; "smlabb"  ; SMULbb  ; 0b000'1000'1000 ))
+  $CondInstr            (MultiplySMLAInstr    ; (SMLABT  ; "smlabt"  ; SMULbt  ; 0b000'1000'1100 ))
+  $CondInstr            (MultiplySMLAInstr    ; (SMLATB  ; "smlatb"  ; SMULtb  ; 0b000'1000'1010 ))
+  $CondInstr            (MultiplySMLAInstr    ; (SMLATT  ; "smlatt"  ; SMULtt  ; 0b000'1000'1110 ))
+  $CondInstr            (MultiplySMULInstr    ; (SMULBB  ; "smulbb"  ; SMULbb  ; 0b000'1011'1000 ))
+  $CondInstr            (MultiplySMULInstr    ; (SMULBT  ; "smulbt"  ; SMULbt  ; 0b000'1011'1100 ))
+  $CondInstr            (MultiplySMULInstr    ; (SMULTB  ; "smultb"  ; SMULtb  ; 0b000'1011'1010 ))
+  $CondInstr            (MultiplySMULInstr    ; (SMULTT  ; "smultt"  ; SMULtt  ; 0b000'1011'1110 ))
+  $CondInstr            (MultiplySMLALInstr   ; (SMLALBB ; "smlalbb" ; SMLALbb ; 0b000'1010'1000 ))
+  $CondInstr            (MultiplySMLALInstr   ; (SMLALBT ; "smlalbt" ; SMLALbt ; 0b000'1010'1100 ))
+  $CondInstr            (MultiplySMLALInstr   ; (SMLALTB ; "smlaltb" ; SMLALtb ; 0b000'1010'1010 ))
+  $CondInstr            (MultiplySMLALInstr   ; (SMLALTT ; "smlaltt" ; SMLALtt ; 0b000'1010'1110 ))
 
-  $CondInstr            (ExtendInstr          ; (SXTB  ; "sxtb"  ; ExtSB   ; 0b0110'1010))
-  $CondInstr            (ExtendInstr          ; (SXTH  ; "sxth"  ; ExtSH   ; 0b0110'1011))
-  $CondInstr            (ExtendInstr          ; (SXT16 ; "sxt16" ; ExtS16  ; 0b0110'1000))
-  $CondInstr            (ExtendInstr          ; (UXTB  ; "uxtb"  ; ExtUB   ; 0b0110'1110))
-  $CondInstr            (ExtendInstr          ; (UXTH  ; "uxth"  ; ExtUH   ; 0b0110'1111))
-  $CondInstr            (ExtendInstr          ; (UXT16 ; "uxt16" ; ExtU16  ; 0b0110'1100))
-  $CondInstr            (ExtendAddInstr       ; (SXTAB ; "sxtab" ; ExtSB   ; 0b0110'1010))
-  $CondInstr            (ExtendAddInstr       ; (SXTAH ; "sxtah" ; ExtSH   ; 0b0110'1011))
-  $CondInstr            (ExtendAddInstr       ; (SXTA16; "sxta16"; ExtS16  ; 0b0110'1000))
-  $CondInstr            (ExtendAddInstr       ; (UXTAB ; "uxtab" ; ExtUB   ; 0b0110'1110))
-  $CondInstr            (ExtendAddInstr       ; (UXTAH ; "uxtah" ; ExtUH   ; 0b0110'1111))
-  $CondInstr            (ExtendAddInstr       ; (UXTA16; "uxta16"; ExtU16  ; 0b0110'1100))
+  $CondInstr            (DivideInstr          ; (SDIV    ; "sdiv"    ; SDiv    ; 0b011'1000 ))
+  $CondInstr            (DivideInstr          ; (UDIV    ; "udiv"    ; UDiv    ; 0b011'1001 ))
 
-  $CondInstr            (CountLZInstr         ; (CLZ   ; "clz"   ; CntLZ   ; 0b000'1011 ))
-  $CondInstr            (ReverseInstr         ; (REV   ; "rev"   ; RevByte ; 0b011'0101 ))
-  $CondInstr            (ReverseInstr         ; (RBIT  ; "rbit"  ; RevBits ; 0b011'0111 ))
+  $CondInstr            (ExtendInstr          ; (SXTB    ; "sxtb"    ; ExtSB   ; 0b0110'1010))
+  $CondInstr            (ExtendInstr          ; (SXTH    ; "sxth"    ; ExtSH   ; 0b0110'1011))
+  $CondInstr            (ExtendInstr          ; (SXT16   ; "sxt16"   ; ExtS16  ; 0b0110'1000))
+  $CondInstr            (ExtendInstr          ; (UXTB    ; "uxtb"    ; ExtUB   ; 0b0110'1110))
+  $CondInstr            (ExtendInstr          ; (UXTH    ; "uxth"    ; ExtUH   ; 0b0110'1111))
+  $CondInstr            (ExtendInstr          ; (UXT16   ; "uxt16"   ; ExtU16  ; 0b0110'1100))
+  $CondInstr            (ExtendAddInstr       ; (SXTAB   ; "sxtab"   ; ExtSB   ; 0b0110'1010))
+  $CondInstr            (ExtendAddInstr       ; (SXTAH   ; "sxtah"   ; ExtSH   ; 0b0110'1011))
+  $CondInstr            (ExtendAddInstr       ; (SXTA16  ; "sxta16"  ; ExtS16  ; 0b0110'1000))
+  $CondInstr            (ExtendAddInstr       ; (UXTAB   ; "uxtab"   ; ExtUB   ; 0b0110'1110))
+  $CondInstr            (ExtendAddInstr       ; (UXTAH   ; "uxtah"   ; ExtUH   ; 0b0110'1111))
+  $CondInstr            (ExtendAddInstr       ; (UXTA16  ; "uxta16"  ; ExtU16  ; 0b0110'1100))
 
-  $CondInstrTst4Flags   (ArithTestSftInstr    ; (CMP   ; "cmp"   ; SubSC   ; 0b000'1010 ))
-  $CondInstrTst4Flags   (ArithTestSftInstr    ; (CMN   ; "cmn"   ; AddS    ; 0b000'1011 ))
-  $CondInstrTst3ExCar   (ArithTestSftInstr    ; (TST   ; "tst"   ; AndS    ; 0b000'1000 ))
-  $CondInstrTst3ExCar   (ArithTestSftInstr    ; (TEQ   ; "teq"   ; XOrS    ; 0b000'1001 ))
-  $CondInstrTst4Flags   (ArithTestImmInstr    ; (CMPI  ; "cmp"   ; SubSC   ; 0b001'1010 ))
-  $CondInstrTst4Flags   (ArithTestImmInstr    ; (CMNI  ; "cmn"   ; AddS    ; 0b001'1011 ))
-  $CondInstrTst3Carry   (ArithTestImmInstr    ; (TSTI  ; "tst"   ; AndS    ; 0b001'1000 ))
-  $CondInstrTst3Carry   (ArithTestImmInstr    ; (TEQI  ; "teq"   ; XOrS    ; 0b001'1001 ))
+  $CondInstr            (CountLZInstr         ; (CLZ     ; "clz"     ; CntLZ   ; 0b000'1011 ))
+  $CondInstr            (ReverseInstr         ; (REV     ; "rev"     ; RevByte ; 0b011'0101 ))
+  $CondInstr            (ReverseInstr         ; (RBIT    ; "rbit"    ; RevBits ; 0b011'0111 ))
 
-  $CondInstr            (LoadInstr            ; (LDR   ; "ldr"   ; None    ; 0b010      ))
-  $CondInstr            (StoreInstr           ; (STR   ; "str"   ; None    ; 0b010      ))
+  $CondInstrTst4Flags   (ArithTestSftInstr    ; (CMP     ; "cmp"     ; SubSC   ; 0b000'1010 ))
+  $CondInstrTst4Flags   (ArithTestSftInstr    ; (CMN     ; "cmn"     ; AddS    ; 0b000'1011 ))
+  $CondInstrTst3ExCar   (ArithTestSftInstr    ; (TST     ; "tst"     ; AndS    ; 0b000'1000 ))
+  $CondInstrTst3ExCar   (ArithTestSftInstr    ; (TEQ     ; "teq"     ; XOrS    ; 0b000'1001 ))
+  $CondInstrTst4Flags   (ArithTestImmInstr    ; (CMPI    ; "cmp"     ; SubSC   ; 0b001'1010 ))
+  $CondInstrTst4Flags   (ArithTestImmInstr    ; (CMNI    ; "cmn"     ; AddS    ; 0b001'1011 ))
+  $CondInstrTst3Carry   (ArithTestImmInstr    ; (TSTI    ; "tst"     ; AndS    ; 0b001'1000 ))
+  $CondInstrTst3Carry   (ArithTestImmInstr    ; (TEQI    ; "teq"     ; XOrS    ; 0b001'1001 ))
 
-  $CondInstr            (HalfMemLoadImmInstr  ; (LDRHI ; "ldrh"  ; LdUH    ; 0b11'1011  ))
-  $CondInstr            (HalfMemLoadImmInstr  ; (LDRSBI; "ldrsb" ; LdSB    ; 0b11'1101  ))
-  $CondInstr            (HalfMemLoadImmInstr  ; (LDRSHI; "ldrsh" ; LdSH    ; 0b11'1111  ))
-  $CondInstr            (HalfMemLoadRegInstr  ; (LDRH  ; "ldrh"  ; LdUH    ; 0b01'1011  ))
-  $CondInstr            (HalfMemLoadRegInstr  ; (LDRSB ; "ldrsb" ; LdSB    ; 0b01'1101  ))
-  $CondInstr            (HalfMemLoadRegInstr  ; (LDRSH ; "ldrsh" ; LdSH    ; 0b01'1111  ))
-  $CondInstr            (HalfMemStoreImmInstr ; (STRHI ; "strh"  ; None    ; 0b10'1011  ))
-  $CondInstr            (HalfMemStoreRegInstr ; (STRH  ; "strh"  ; None    ; 0b00'1011  ))
+  $CondInstr            (LoadInstr            ; (LDR     ; "ldr"     ; None    ; 0b010      ))
+  $CondInstr            (StoreInstr           ; (STR     ; "str"     ; None    ; 0b010      ))
 
-  $CondInstr            (DblMemLoadRegInstr   ; (LDRD  ; "ldrd"  ; None    ; 0b00'1101  ))
-  $CondInstr            (DblMemStoreRegInstr  ; (STRD  ; "strd"  ; None    ; 0b00'1111  ))
-  $CondInstr            (DblMemLoadImmInstr   ; (LDRDI ; "ldrd"  ; None    ; 0b10'1101  ))
-  $CondInstr            (DblMemStoreImmInstr  ; (STRDI ; "strd"  ; None    ; 0b10'1111  ))
+  $CondInstr            (HalfMemLoadImmInstr  ; (LDRHI   ; "ldrh"    ; LdUH    ; 0b11'1011  ))
+  $CondInstr            (HalfMemLoadImmInstr  ; (LDRSBI  ; "ldrsb"   ; LdSB    ; 0b11'1101  ))
+  $CondInstr            (HalfMemLoadImmInstr  ; (LDRSHI  ; "ldrsh"   ; LdSH    ; 0b11'1111  ))
+  $CondInstr            (HalfMemLoadRegInstr  ; (LDRH    ; "ldrh"    ; LdUH    ; 0b01'1011  ))
+  $CondInstr            (HalfMemLoadRegInstr  ; (LDRSB   ; "ldrsb"   ; LdSB    ; 0b01'1101  ))
+  $CondInstr            (HalfMemLoadRegInstr  ; (LDRSH   ; "ldrsh"   ; LdSH    ; 0b01'1111  ))
+  $CondInstr            (HalfMemStoreImmInstr ; (STRHI   ; "strh"    ; None    ; 0b10'1011  ))
+  $CondInstr            (HalfMemStoreRegInstr ; (STRH    ; "strh"    ; None    ; 0b00'1011  ))
 
-  $CondInstr            (LoadMultipleInstr    ; (LDM   ; "ldm"   ; None    ; 0b100'01   ))
-  $CondInstr            (StoreMultipleInstr   ; (STM   ; "stm"   ; None    ; 0b100'00   ))
+  $CondInstr            (DblMemLoadRegInstr   ; (LDRD    ; "ldrd"    ; None    ; 0b00'1101  ))
+  $CondInstr            (DblMemStoreRegInstr  ; (STRD    ; "strd"    ; None    ; 0b00'1111  ))
+  $CondInstr            (DblMemLoadImmInstr   ; (LDRDI   ; "ldrd"    ; None    ; 0b10'1101  ))
+  $CondInstr            (DblMemStoreImmInstr  ; (STRDI   ; "strd"    ; None    ; 0b10'1111  ))
 
-  $CondInstr            (BranchBInstr         ; (B     ; "b"     ; None    ; 0b1010     ))
-  $CondInstr            (BranchBInstr         ; (BL    ; "bl"    ; None    ; 0b1011     ))
-  $CondInstr            (BranchBXInstr        ; (BX    ; "bx"    ; None    ; 0b0001     ))
-  $CondInstr            (BranchBXInstr        ; (BLX   ; "blx"   ; None    ; 0b0011     ))
+  $CondInstr            (LoadMultipleInstr    ; (LDM     ; "ldm"     ; None    ; 0b100'01   ))
+  $CondInstr            (StoreMultipleInstr   ; (STM     ; "stm"     ; None    ; 0b100'00   ))
 
-  $CondInstr            (SupervisorCallInstr  ; (SVC   ; "svc"   ; None    ; 0b1111     ))
-  $CondInstr            (ReadSpecialRegInstr  ; (MRS   ; "mrs"   ; None    ; APSR       ))
+  $CondInstr            (BranchBInstr         ; (B       ; "b"       ; None    ; 0b1010     ))
+  $CondInstr            (BranchBInstr         ; (BL      ; "bl"      ; None    ; 0b1011     ))
+  $CondInstr            (BranchBXInstr        ; (BX      ; "bx"      ; None    ; 0b0001     ))
+  $CondInstr            (BranchBXInstr        ; (BLX     ; "blx"     ; None    ; 0b0011     ))
+
+  $CondInstr            (SupervisorCallInstr  ; (SVC     ; "svc"     ; None    ; 0b1111     ))
+  $CondInstr            (ReadSpecialRegInstr  ; (MRS     ; "mrs"     ; None    ; APSR       ))
 
 }
