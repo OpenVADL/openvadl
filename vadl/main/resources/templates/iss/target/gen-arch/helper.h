@@ -28,11 +28,12 @@ DEF_HELPER_1(unsupported, noreturn, env)
 [/][# th:each="c : ${float_builtins.flt}"]DEF_HELPER_FLAGS_3([(${c[0].name})]_flt, 0, TS, env, TS, TS)
 [/][# th:each="c : ${float_builtins.fle}"]DEF_HELPER_FLAGS_3([(${c[0].name})]_fle, 0, TS, env, TS, TS)
 [/][# th:each="c : ${float_builtins.feq}"]DEF_HELPER_FLAGS_3([(${c[0].name})]_feq, 0, TS, env, TS, TS)
-[/][# th:each="c : ${float_builtins.fcvt}"]DEF_HELPER_FLAGS_3([(${c[0].name})]_[(${c[1].name})]_fcvt, 0, TS, env, TS, TS)
-[/][# th:each="c : ${float_builtins.fcvtfs}"]DEF_HELPER_FLAGS_3([(${c[0].name})]_[(${c[1]})]_fcvtfs, 0, TS, env, TS, TS)
-[/][# th:each="c : ${float_builtins.fcvtfu}"]DEF_HELPER_FLAGS_3([(${c[0].name})]_[(${c[1]})]_fcvtfu, 0, TS, env, TS, TS)
-[/][# th:each="c : ${float_builtins.fcvtsf}"]DEF_HELPER_FLAGS_3([(${c[0].name})]_[(${c[1]})]_fcvtsf, 0, TS, env, TS, TS)
-[/][# th:each="c : ${float_builtins.fcvtuf}"]DEF_HELPER_FLAGS_3([(${c[0].name})]_[(${c[1]})]_fcvtuf, 0, TS, env, TS, TS)
+[/][# th:each="c : ${float_builtins.fcvt}"]
+[# th:if='${c[0].type == "f" && c[1].type == "f"}']DEF_HELPER_FLAGS_3([(${c[0].name})]_[(${c[1].name})]_fcvt, 0, TS, env, TS, TS)[/]
+[# th:if='${c[0].type == "f" && c[1].type == "s"}']DEF_HELPER_FLAGS_3([(${c[0].name})]_[(${c[1].bit_size})]_fcvtfs, 0, TS, env, TS, TS)[/]
+[# th:if='${c[0].type == "f" && c[1].type == "u"}']DEF_HELPER_FLAGS_3([(${c[0].name})]_[(${c[1].bit_size})]_fcvtfu, 0, TS, env, TS, TS)[/]
+[# th:if='${c[0].type == "s" && c[1].type == "f"}']DEF_HELPER_FLAGS_3([(${c[1].name})]_[(${c[0].bit_size})]_fcvtsf, 0, TS, env, TS, TS)[/]
+[# th:if='${c[0].type == "u" && c[1].type == "f"}']DEF_HELPER_FLAGS_3([(${c[1].name})]_[(${c[0].bit_size})]_fcvtuf, 0, TS, env, TS, TS)[/]
 [/][# th:each="c : ${float_builtins.fisinf}"]DEF_HELPER_FLAGS_2([(${c[0].name})]_fisinf, 0, TS, env, TS)
 [/][# th:each="c : ${float_builtins.fiszero}"]DEF_HELPER_FLAGS_2([(${c[0].name})]_fiszero, 0, TS, env, TS)
 [/][# th:each="c : ${float_builtins.fisneg}"]DEF_HELPER_FLAGS_2([(${c[0].name})]_fisneg, 0, TS, env, TS)
