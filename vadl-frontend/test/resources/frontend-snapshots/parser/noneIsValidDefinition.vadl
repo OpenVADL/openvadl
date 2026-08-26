@@ -28,9 +28,10 @@ instruction set architecture TEST = {
 //
 //    InstructionSetDefinition name: "TEST"
 //    . RegisterDefinition name: "A"
-//    . : TypeLiteral type: Bits<64>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 64 (64) type: Const<64>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<64>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 64 (64) type: Const<64>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

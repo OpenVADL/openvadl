@@ -33,7 +33,7 @@ public class Ast {
   public List<Definition> definitions = new ArrayList<>();
 
   @Nullable
-  Path filePath = null;
+  public Path filePath = null;
 
   public InterleavedTimingRecorder timingRecorder = new InterleavedTimingRecorder();
 

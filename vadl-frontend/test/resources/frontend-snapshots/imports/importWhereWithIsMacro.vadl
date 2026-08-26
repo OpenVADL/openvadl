@@ -26,10 +26,10 @@ constant flo = $numPlusOne()
 //    . File
 //    . : Identifier name: "base" type: null
 //    . Import
-//    . : ' Identifier name: "numPlusOne" type: null
+//    . : Identifier name: "numPlusOne" type: null
 //    . Args
-//    . : ' StringLiteral literal: "num=two" ("num=two") type: null
-//    . : ' StringLiteral literal: "author=flotschi" ("author=flotschi") type: null
+//    . : StringLiteral literal: "num=two" ("num=two") type: null
+//    . : StringLiteral literal: "author=flotschi" ("author=flotschi") type: null
 //    . Module AST
 //    ConstantDefinition name: "two" evaluatedValue: 2
 //    . IntegerLiteral literal: 2 (2) type: Const<2>

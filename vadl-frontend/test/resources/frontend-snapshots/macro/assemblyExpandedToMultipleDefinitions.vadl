@@ -48,12 +48,13 @@ instruction set architecture TEST = {
 //    . : ' | IntegerLiteral literal: 63 (63) type: Const<63>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . RegisterDefinition name: "X"
-//    . : TypeLiteral type: Bits<5>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<5>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
 //    . InstructionDefinition name: "One"
 //    . : Identifier name: "Fa" type: null
 //    . : AssignmentStatement
@@ -76,14 +77,18 @@ instruction set architecture TEST = {
 //    . : ' | IntegerLiteral literal: 2 (2) type: Const<2>
 //    . EncodingDefinition
 //    . : Identifier name: "One" type: null
-//    . : Identifier name: "field" type: null
-//    . : CastExpr type: Bits<32>
-//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "field", value=CastExpr]
+//    . : ' | Identifier name: "field" type: null
+//    . : ' | CastExpr type: Bits<32>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
 //    . EncodingDefinition
 //    . : Identifier name: "Two" type: null
-//    . : Identifier name: "field" type: null
-//    . : CastExpr type: Bits<64>
-//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "field", value=CastExpr]
+//    . : ' | Identifier name: "field" type: null
+//    . : ' | CastExpr type: Bits<64>
+//    . : ' | . IntegerLiteral literal: 2 (2) type: Const<2>
 //    . AssemblyDefinition
 //    . : GroupedExpr type: String
 //    . : ' Identifier name: "mnemonic" type: String

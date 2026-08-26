@@ -31,10 +31,11 @@ instruction set architecture TEST = {
 //
 //    InstructionSetDefinition name: "TEST"
 //    . RegisterDefinition name: "X"
-//    . : TypeLiteral type: Bits<5><8>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
-//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<5><8>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
 //    . FormatDefinition name: "Frmt"
 //    . : TypeLiteral type: Bits<8>
 //    . : ' Identifier name: "Bits" type: null
@@ -54,9 +55,11 @@ instruction set architecture TEST = {
 //    . : StringLiteral literal: "" ('') type: String
 //    . EncodingDefinition
 //    . : Identifier name: "Instr" type: null
-//    . : Identifier name: "a" type: null
-//    . : CastExpr type: Bits<4>
-//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "a", value=CastExpr]
+//    . : ' | Identifier name: "a" type: null
+//    . : ' | CastExpr type: Bits<4>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
 //    . PseudoInstructionDefinition name: "abc"
 //    . : Parameter name: "arg"
 //    . : ' TypeLiteral type: Bits<4>
@@ -64,8 +67,9 @@ instruction set architecture TEST = {
 //    . : ' | IntegerLiteral literal: 4 (4) type: Const<4>
 //    . : InstructionCallStatement
 //    . : ' Identifier name: "Instr" type: null
-//    . : ' Identifier name: "b" type: null
-//    . : ' Identifier name: "arg" type: Bits<4>
+//    . : ' NamedArgument
+//    . : ' | Identifier name: "b" type: null
+//    . : ' | Identifier name: "arg" type: Bits<4>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "abc" ('abc') type: String
 //

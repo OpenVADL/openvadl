@@ -85,10 +85,11 @@ instruction set architecture RV3264I = {
 //    . : ' | ArgsIndices
 //    . : ' | . CastExpr type: Bits<5>
 //    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : TypeLiteral type: Bits<5>
-//    . : ' Identifier name: "Index" type: null
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Regs" type: null
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<5>
+//    . : ' | Identifier name: "Index" type: null
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Regs" type: null
 //    . FormatDefinition name: "Rtype"
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Inst" type: null
@@ -170,16 +171,20 @@ instruction set architecture RV3264I = {
 //    . : StringLiteral literal: "" ("") type: String
 //    . EncodingDefinition
 //    . : Identifier name: "ADD" type: null
-//    . : Identifier name: "rs2" type: null
-//    . : CastExpr type: Bits<5>
-//    . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "rs2", value=CastExpr]
+//    . : ' | Identifier name: "rs2" type: null
+//    . : ' | CastExpr type: Bits<5>
+//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "" ("") type: String
 //    . EncodingDefinition
 //    . : Identifier name: "ADD2" type: null
-//    . : Identifier name: "rs2" type: null
-//    . : CastExpr type: Bits<5>
-//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "rs2", value=CastExpr]
+//    . : ' | Identifier name: "rs2" type: null
+//    . : ' | CastExpr type: Bits<5>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

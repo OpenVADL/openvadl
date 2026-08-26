@@ -38,12 +38,13 @@ instruction set architecture RV3264I = {
 //
 //    InstructionSetDefinition name: "RV3264I"
 //    . RegisterDefinition name: "X"
-//    . : TypeLiteral type: Bits<5>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
-//    . : TypeLiteral type: Bits<32>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<5>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' TypeLiteral type: Bits<32>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 32 (32) type: Const<32>
 //    . FormatDefinition name: "Rtype"
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Bits" type: null
@@ -81,9 +82,11 @@ instruction set architecture RV3264I = {
 //    . : ' | . : IntegerLiteral literal: 32 (32) type: Const<32>
 //    . EncodingDefinition
 //    . : Identifier name: "add1" type: null
-//    . : Identifier name: "op" type: null
-//    . : CastExpr type: Bits<32>
-//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "op", value=CastExpr]
+//    . : ' | Identifier name: "op" type: null
+//    . : ' | CastExpr type: Bits<32>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "add1" ("add1") type: String
 //    . InstructionDefinition name: "add2"
@@ -107,9 +110,11 @@ instruction set architecture RV3264I = {
 //    . : ' | . : IntegerLiteral literal: 32 (32) type: Const<32>
 //    . EncodingDefinition
 //    . : Identifier name: "add2" type: null
-//    . : Identifier name: "op" type: null
-//    . : CastExpr type: Bits<32>
-//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "op", value=CastExpr]
+//    . : ' | Identifier name: "op" type: null
+//    . : ' | CastExpr type: Bits<32>
+//    . : ' | . IntegerLiteral literal: 2 (2) type: Const<2>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "add2" ("add2") type: String
 //

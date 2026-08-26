@@ -40,6 +40,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import vadl.ast.Ast;
+import vadl.ast.AstAdvancedDumper;
 import vadl.ast.AstDumper;
 import vadl.ast.ModelRemover;
 import vadl.ast.SpecStatAnalyser;
@@ -254,6 +255,17 @@ public abstract class BaseCommand implements Callable<Integer> {
     });
   }
 
+  private void dumpAdvanced(Ast ast, VirtualFileSystem vfs) {
+    if (dump != DumpMode.ALWAYS) {
+      return;
+    }
+
+    withTimings("Advanced AST Dump", () -> {
+      var content = new AstAdvancedDumper().dump(ast, vfs, getTimeString());
+      dumpFile("ast-dump-advanced.html", content);
+    });
+  }
+
   /**
    * Parses, typechecks and lowers the input according to the arguments and
    * returns a parsed VIAM specification.
@@ -277,6 +289,7 @@ public abstract class BaseCommand implements Callable<Integer> {
         t -> timings.add(new Timing(t.description(), t.durationNS())));
     ast.timingRecorder.passTimings.clear();
     dumpTyped(ast);
+    dumpAdvanced(ast, new DiskVirtualFileSystem());
 
     var spec = ViamLowering.generate(ast);
     ast.timingRecorder.passTimings.sequencedValues().forEach(

@@ -34,10 +34,11 @@ instruction set architecture TEST = {
 //
 //    InstructionSetDefinition name: "TEST"
 //    . RegisterDefinition name: "X"
-//    . : TypeLiteral type: Bits<5><8>
-//    . : ' Identifier name: "Bits" type: null
-//    . : ' IntegerLiteral literal: 5 (5) type: Const<5>
-//    . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : RelationTypeLiteral
+//    . : ' TypeLiteral type: Bits<5><8>
+//    . : ' | Identifier name: "Bits" type: null
+//    . : ' | IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' | IntegerLiteral literal: 8 (8) type: Const<8>
 //    . FormatDefinition name: "Frmt"
 //    . : TypeLiteral type: Bits<8>
 //    . : ' Identifier name: "Bits" type: null
@@ -56,13 +57,15 @@ instruction set architecture TEST = {
 //    . : ' | . : CastExpr type: Bits<3>
 //    . : ' | . : ' IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | ForallExpr keyword: fold, type: Bits<8> type: Bits<8>
-//    . : ' | . Identifier name: "i" type: Bits<8>
-//    . : ' | . TypeLiteral type: Bits<8>
-//    . : ' | . : Identifier name: "Bits" type: null
-//    . : ' | . : IntegerLiteral literal: 8 (8) type: Const<8>
-//    . : ' | . RangeExpr type: null
-//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | . ForallIndex name: "i"
+//    . : ' | . : Identifier name: "i" type: Bits<8>
+//    . : ' | . : TypeLiteral type: Bits<8>
+//    . : ' | . : ' Identifier name: "Bits" type: null
+//    . : ' | . : ' IntegerLiteral literal: 8 (8) type: Const<8>
+//    . : ' | . : RangeExpr type: null
+//    . : ' | . : ' IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : ' IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | . BinOp +
 //    . : ' | . BinaryExpr operator: * type: Bits<8>
 //    . : ' | . : Identifier name: "i" type: Bits<8>
 //    . : ' | . : CastExpr type: Bits<8>
@@ -71,20 +74,23 @@ instruction set architecture TEST = {
 //    . : StringLiteral literal: "" ('') type: String
 //    . EncodingDefinition
 //    . : Identifier name: "Instr1" type: null
-//    . : Identifier name: "a" type: null
-//    . : CastExpr type: Bits<8>
-//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "a", value=CastExpr]
+//    . : ' | Identifier name: "a" type: null
+//    . : ' | CastExpr type: Bits<8>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
 //    . InstructionDefinition name: "Instr2"
 //    . : Identifier name: "Frmt" type: null
 //    . : BlockStatement
 //    . : ' ForallStatement
-//    . : ' | Identifier name: "i" type: Bits<5>
-//    . : ' | TypeLiteral type: Bits<5>
-//    . : ' | . Identifier name: "Bits" type: null
-//    . : ' | . IntegerLiteral literal: 5 (5) type: Const<5>
-//    . : ' | RangeExpr type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' | ForallIndex name: "i"
+//    . : ' | . Identifier name: "i" type: Bits<5>
+//    . : ' | . TypeLiteral type: Bits<5>
+//    . : ' | . : Identifier name: "Bits" type: null
+//    . : ' | . : IntegerLiteral literal: 5 (5) type: Const<5>
+//    . : ' | . RangeExpr type: null
+//    . : ' | . : IntegerLiteral literal: 0 (0) type: Const<0>
+//    . : ' | . : IntegerLiteral literal: 3 (3) type: Const<3>
 //    . : ' | AssignmentStatement
 //    . : ' | . CallIndexExpr type: Bits<8>
 //    . : ' | . : Identifier name: "X" type: null
@@ -97,9 +103,11 @@ instruction set architecture TEST = {
 //    . : StringLiteral literal: "" ('') type: String
 //    . EncodingDefinition
 //    . : Identifier name: "Instr2" type: null
-//    . : Identifier name: "a" type: null
-//    . : CastExpr type: Bits<8>
-//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "a", value=CastExpr]
+//    . : ' | Identifier name: "a" type: null
+//    . : ' | CastExpr type: Bits<8>
+//    . : ' | . IntegerLiteral literal: 2 (2) type: Const<2>
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

@@ -51,18 +51,23 @@ instruction set architecture TEST = {
 //    . : BlockStatement
 //    . EncodingDefinition
 //    . : Identifier name: "ADD" type: null
-//    . : Identifier name: "a" type: null
-//    . : CastExpr type: Bits<8>
-//    . : ' IntegerLiteral literal: 1 (1) type: Const<1>
-//    . : Identifier name: "b" type: null
-//    . : CastExpr type: Bits<8>
-//    . : ' IntegerLiteral literal: 2 (2) type: Const<2>
-//    . : Identifier name: "c" type: null
-//    . : CastExpr type: Bits<8>
-//    . : ' IntegerLiteral literal: 3 (3) type: Const<3>
-//    . : Identifier name: "d" type: null
-//    . : CastExpr type: Bits<8>
-//    . : ' IntegerLiteral literal: 4 (4) type: Const<4>
+//    . : EncsNode
+//    . : ' EncodingField[field=Identifier name: "a", value=CastExpr]
+//    . : ' | Identifier name: "a" type: null
+//    . : ' | CastExpr type: Bits<8>
+//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' EncodingField[field=Identifier name: "b", value=CastExpr]
+//    . : ' | Identifier name: "b" type: null
+//    . : ' | CastExpr type: Bits<8>
+//    . : ' | . IntegerLiteral literal: 2 (2) type: Const<2>
+//    . : ' EncodingField[field=Identifier name: "c", value=CastExpr]
+//    . : ' | Identifier name: "c" type: null
+//    . : ' | CastExpr type: Bits<8>
+//    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
+//    . : ' EncodingField[field=Identifier name: "d", value=CastExpr]
+//    . : ' | Identifier name: "d" type: null
+//    . : ' | CastExpr type: Bits<8>
+//    . : ' | . IntegerLiteral literal: 4 (4) type: Const<4>
 //    . AssemblyDefinition
 //    . : StringLiteral literal: "" ("") type: String
 //

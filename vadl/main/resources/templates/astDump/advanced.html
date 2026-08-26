@@ -1,0 +1,329 @@
+<!-- SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced AST Dump</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style type="text/tailwindcss">
+    @theme {
+      --color-clifford: #da373d;
+    }
+
+  </style>
+</head>
+<body class="h-dvh w-full overflow-hidden p-8 bg-stone-50 flex flex-col">
+<h1 class="text-3xl shrink-0">Advanced AST Dump</h1>
+<p class="shrink-0">
+  AST Dump with types generated on [[${timestamp}]].<br>
+  In the AST all macros are expanded and validated by the typechecker.
+</p>
+<div class="flex flex-1 min-h-0 pt-8 gap-4">
+  <div class="flex-1 min-w-0 min-h-0 overflow-y-auto rounded-xl p-4 bg-white shadow-xl ring ring-gray-900/5">
+    AST
+    <div th:fragment="tree(nodes)" class="border-l ml-2 border-gray-200">
+      <div th:each="node : ${nodes}">
+        <th:block th:with="location=${node.location}">
+          <div th:if="${location != null}"
+               class="p-2 border-3 border-dashed border-transparent rounded-r-lg cursor-pointer"
+               th:attr="data-path=${location.path},
+                        data-start-line=${location.startLine},
+                        data-start-col=${location.startColumn},
+                        data-end-line=${location.endLine},
+                        data-end-col=${location.endColumn}"
+               onmouseenter="highlight(this)"
+               onmouseleave="clearHighlight()"
+               onclick="toggleLock(this)">
+            <span th:text="${node.description}">Node name</span>
+            <span th:each="expandedLocation : ${node.expandedFrom}"
+                  th:if="${expandedLocation != null}"
+                  class="expanded-from-location hidden"
+                  th:attr="data-path=${expandedLocation.path},
+                           data-start-line=${expandedLocation.startLine},
+                           data-start-col=${expandedLocation.startColumn},
+                           data-end-line=${expandedLocation.endLine},
+                           data-end-col=${expandedLocation.endColumn}"></span>
+          </div>
+
+          <div th:unless="${location != null}"
+               class="p-2 rounded-r-lg">
+            <span th:text="${node.description}">Node name</span>
+          </div>
+        </th:block>
+
+        <div th:if="${!#lists.isEmpty(node.children)}"
+            th:replace="~{::tree(${node.children})}">
+        </div>
+      </div>
+    </div>
+
+    <div th:replace="~{ :: tree(${ast})}"></div>
+  </div>
+
+  <div class="flex-1 min-w-0 min-h-0 flex flex-col rounded-xl bg-white shadow-xl ring ring-gray-900/5">
+    <div class="shrink-0 w-full p-4 border-b border-gray-200 flex items-center justify-between gap-4">
+      <span class="flex items-center gap-2">
+        <span id="locationName">
+         <i>Nothing highlighted</i>
+        </span>
+        <span id="lockIndicator" class="hidden" title="Location locked"
+              aria-label="Location locked">🔒</span>
+      </span>
+      <div class="shrink-0 flex items-center gap-4">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input id="showExpandedFrom" type="checkbox"
+                 class="size-4 accent-sky-600">
+          <span>Expanded from</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input id="autoScroll" type="checkbox" checked
+                 class="size-4 accent-emerald-600">
+          <span>Autoscroll</span>
+        </label>
+      </div>
+    </div>
+    <pre id="sourceCode" class="flex-1 min-h-0 overflow-auto p-4 whitespace-pre">[[${source}]]</pre>
+    <div id="expandedFromPanel"
+         class="hidden h-32 shrink-0 overflow-auto p-4 border-t border-gray-200">
+      <div id="expandedFromTitle" class="mb-2 font-medium">Expanded from</div>
+      <div id="expandedFromList" class="space-y-1 text-sm text-gray-700">
+        <i class="text-gray-500">Display disabled</i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const sourceElement = document.getElementById("sourceCode");
+  const autoScrollElement = document.getElementById("autoScroll");
+  const showExpandedFromElement = document.getElementById("showExpandedFrom");
+  const lockIndicatorElement = document.getElementById("lockIndicator");
+  const expandedFromPanelElement = document.getElementById("expandedFromPanel");
+  const expandedFromTitleElement = document.getElementById("expandedFromTitle");
+  const expandedFromListElement = document.getElementById("expandedFromList");
+  const source = sourceElement.textContent;
+  let activeNodeElement = null;
+  let lockedNodeElement = null;
+
+  // Assumes lines and columns are 1-based, and end is exclusive.
+  function offsetAt(line, column) {
+    const lines = source.split("\n");
+
+    const safeLine = Math.max(1, Math.min(line, lines.length));
+    const lineStart = lines
+            .slice(0, safeLine - 1)
+            .reduce((offset, currentLine) => offset + currentLine.length + 1, 0);
+
+    const safeColumn = Math.max(
+            1,
+            Math.min(column, lines[safeLine - 1].length + 1)
+    );
+
+    return lineStart + safeColumn - 1;
+  }
+
+  function locationOf(element) {
+    return {
+      path: element.dataset.path,
+      startLine: Number(element.dataset.startLine),
+      startColumn: Number(element.dataset.startCol),
+      endLine: Number(element.dataset.endLine),
+      endColumn: Number(element.dataset.endCol)
+    };
+  }
+
+  function sourceRange(location, type) {
+    return {
+      start: offsetAt(location.startLine, location.startColumn),
+      end: Math.min(
+              source.length,
+              offsetAt(location.endLine, location.endColumn) + 1
+      ),
+      type
+    };
+  }
+
+  function formatLocation(location) {
+    return `${location.path}:${location.startLine}:${location.startColumn}`
+            + ` - ${location.endLine}:${location.endColumn}`;
+  }
+
+  function expandedFromMessage(message) {
+    const text = document.createElement("i");
+    text.className = "text-gray-500";
+    text.textContent = message;
+    expandedFromListElement.replaceChildren(text);
+  }
+
+  function renderExpandedFrom(locations) {
+    if (!showExpandedFromElement.checked) {
+      expandedFromTitleElement.textContent = "Expanded from";
+      expandedFromMessage("Display disabled");
+      return;
+    }
+
+    expandedFromTitleElement.textContent = `Expanded from (${locations.length})`;
+    if (locations.length === 0) {
+      expandedFromMessage("No macro expansion");
+      return;
+    }
+
+    const entries = locations.map(location => {
+      const entry = document.createElement("div");
+      entry.className = "flex items-start gap-2 font-mono";
+
+      const marker = document.createElement("span");
+      marker.className = "mt-1.5 size-2 shrink-0 rounded-full bg-sky-200";
+
+      const text = document.createElement("span");
+      text.textContent = formatLocation(location);
+
+      entry.append(marker, text);
+      return entry;
+    });
+    expandedFromListElement.replaceChildren(...entries);
+  }
+
+  function highlight(nodeElement) {
+    if (lockedNodeElement !== null && nodeElement !== lockedNodeElement) {
+      return;
+    }
+
+    if (activeNodeElement !== null && activeNodeElement !== nodeElement) {
+      activeNodeElement.classList.remove("bg-emerald-100");
+    }
+    activeNodeElement = nodeElement;
+    activeNodeElement.classList.add("bg-emerald-100");
+
+    const location = locationOf(nodeElement);
+    document.getElementById("locationName").textContent = formatLocation(location);
+
+    const primaryRange = sourceRange(location, "primary");
+    const expandedLocations = Array.from(
+            nodeElement.querySelectorAll(".expanded-from-location")
+    )
+            .map(locationOf);
+    renderExpandedFrom(expandedLocations);
+
+    if (primaryRange.end <= primaryRange.start) {
+      sourceElement.textContent = source;
+      return;
+    }
+
+    const expandedRanges = showExpandedFromElement.checked
+            ? expandedLocations
+            // The source pane can only highlight locations from the current file.
+            .filter(expandedLocation => expandedLocation.path === location.path)
+            .map(expandedLocation => sourceRange(expandedLocation, "expanded"))
+            .filter(range => range.end > range.start)
+            : [];
+
+    const ranges = [primaryRange, ...expandedRanges];
+    const boundaries = Array.from(new Set([
+      0,
+      source.length,
+      ...ranges.flatMap(range => [range.start, range.end])
+    ])).sort((left, right) => left - right);
+
+    const content = document.createDocumentFragment();
+    let primaryMark = null;
+
+    for (let index = 0; index < boundaries.length - 1; index++) {
+      const start = boundaries[index];
+      const end = boundaries[index + 1];
+      const matchingRanges = ranges.filter(range =>
+              range.start <= start && range.end >= end
+      );
+      const type = matchingRanges.some(range => range.type === "primary")
+              ? "primary"
+              : matchingRanges.length > 0 ? "expanded" : null;
+
+      if (type === null) {
+        content.append(document.createTextNode(source.slice(start, end)));
+        continue;
+      }
+
+      const mark = document.createElement("mark");
+      mark.className = type === "primary"
+              ? "bg-emerald-100 rounded"
+              : "bg-sky-100 rounded";
+      mark.textContent = source.slice(start, end);
+      content.append(mark);
+
+      if (type === "primary" && primaryMark === null) {
+        primaryMark = mark;
+      }
+    }
+
+    sourceElement.replaceChildren(content);
+
+    if (autoScrollElement.checked && primaryMark !== null) {
+      primaryMark.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest"
+      });
+    }
+  }
+
+  function clearHighlight() {
+    if (lockedNodeElement !== null) {
+      return;
+    }
+
+    if (activeNodeElement !== null) {
+      activeNodeElement.classList.remove("bg-emerald-100");
+    }
+    activeNodeElement = null;
+    sourceElement.textContent = source;
+    document.getElementById("locationName").innerHTML =
+            "<i>Nothing highlighted</i>";
+    if (showExpandedFromElement.checked) {
+      expandedFromTitleElement.textContent = "Expanded from";
+      expandedFromMessage("Nothing highlighted");
+    } else {
+      renderExpandedFrom([]);
+    }
+  }
+
+  function toggleLock(nodeElement) {
+    if (lockedNodeElement !== null && lockedNodeElement !== nodeElement) {
+      return;
+    }
+
+    if (lockedNodeElement === nodeElement) {
+      lockedNodeElement.classList.remove("border-emerald-500");
+      lockedNodeElement.classList.add("border-transparent");
+      lockedNodeElement = null;
+      lockIndicatorElement.classList.add("hidden");
+      return;
+    }
+
+    lockedNodeElement = nodeElement;
+    lockedNodeElement.classList.remove("border-transparent");
+    lockedNodeElement.classList.add("border-emerald-500");
+    lockIndicatorElement.classList.remove("hidden");
+    highlight(lockedNodeElement);
+  }
+
+  function syncExpandedFromDisplay() {
+    expandedFromPanelElement.classList.toggle(
+            "hidden",
+            !showExpandedFromElement.checked
+    );
+
+    if (activeNodeElement !== null) {
+      highlight(activeNodeElement);
+    } else {
+      clearHighlight();
+    }
+  }
+
+  showExpandedFromElement.addEventListener("change", syncExpandedFromDisplay);
+  window.addEventListener("pageshow", syncExpandedFromDisplay);
+  syncExpandedFromDisplay();
+</script>
+</body>
+</html>
