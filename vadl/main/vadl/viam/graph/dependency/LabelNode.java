@@ -16,6 +16,7 @@
 
 package vadl.viam.graph.dependency;
 
+import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -38,6 +39,12 @@ public class LabelNode extends ExpressionNode {
 
   public String labelName() {
     return labelName;
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(labelName);
   }
 
   @Override
