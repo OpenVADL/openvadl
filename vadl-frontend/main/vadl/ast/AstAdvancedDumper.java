@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,9 +47,18 @@ public class AstAdvancedDumper {
   private final String source;
   private final int[] lineStarts;
   private final List<SourceIndexEntry> sourceIndex = new ArrayList<>();
+  private final Map<Path, Integer> expandedFromPathIds = new LinkedHashMap<>();
+  private final List<ExpandedFromEntry> expandedFromIndex = new ArrayList<>();
   private int nextNodeId;
 
   private record SourceIndexEntry(int start, int end, int nodeId, int depth) {
+  }
+
+  private record ExpandedFromLocation(int pathId, int startLine, int startColumn,
+                                      int endLine, int endColumn) {
+  }
+
+  private record ExpandedFromEntry(int nodeId, List<ExpandedFromLocation> locations) {
   }
 
   private AstAdvancedDumper(Path sourcePath, String source) {
@@ -76,7 +86,8 @@ public class AstAdvancedDumper {
     var astMaps = dumper.astToMaps(ast);
     TemplateRenderer.render("astDump/advanced.html",
         Map.of("ast", astMaps, "source", source, "timestamp", timeString,
-            "sourceIndex", dumper.sourceIndexAsJavaScript()),
+            "sourceIndex", dumper.sourceIndexAsJavaScript(),
+            "expandedFromData", dumper.expandedFromDataAsJson()),
         writer);
   }
 
@@ -98,8 +109,7 @@ public class AstAdvancedDumper {
     map.put("children",
         label.children().stream().map(child -> nodeToMap(child, depth + 1)).toList());
     map.put("location", locationToMap(location));
-    map.put("expandedFrom", location == null ? List.of() : location.expandedFromStack().stream()
-        .map(this::locationToMap).toList());
+    addToExpandedFromIndex(location, nodeId);
     addToSourceIndex(location, nodeId, depth);
     return map;
   }
@@ -118,6 +128,28 @@ public class AstAdvancedDumper {
     map.put("endLine", location.end().line());
     map.put("endColumn", location.end().column());
     return map;
+  }
+
+  private void addToExpandedFromIndex(@Nullable WithLocation locatable, int nodeId) {
+    var location = locatable == null ? null : locatable.location();
+    if (location == null) {
+      return;
+    }
+
+    var locations = location.expandedFromStack().stream()
+        .filter(expandedFrom -> expandedFrom.isValid() && expandedFrom.path() != null)
+        .map(expandedFrom -> {
+          var path = Objects.requireNonNull(expandedFrom.path());
+          var pathId = expandedFromPathIds.computeIfAbsent(
+              path, unused -> expandedFromPathIds.size());
+          return new ExpandedFromLocation(pathId,
+              expandedFrom.begin().line(), expandedFrom.begin().column(),
+              expandedFrom.end().line(), expandedFrom.end().column());
+        })
+        .toList();
+    if (!locations.isEmpty()) {
+      expandedFromIndex.add(new ExpandedFromEntry(nodeId, locations));
+    }
   }
 
   private void addToSourceIndex(@Nullable WithLocation locatable, int nodeId, int depth) {
@@ -172,6 +204,62 @@ public class AstAdvancedDumper {
           .append(']');
     }
     return builder.append(']').toString();
+  }
+
+  private String expandedFromDataAsJson() {
+    expandedFromIndex.sort(Comparator.comparingInt(ExpandedFromEntry::nodeId));
+
+    var builder = new StringBuilder("[[");
+    var paths = expandedFromPathIds.keySet().iterator();
+    while (paths.hasNext()) {
+      appendJsonString(builder, paths.next().toString());
+      if (paths.hasNext()) {
+        builder.append(',');
+      }
+    }
+    builder.append("],[");
+
+    for (var entryIndex = 0; entryIndex < expandedFromIndex.size(); entryIndex++) {
+      if (entryIndex > 0) {
+        builder.append(',');
+      }
+      var entry = expandedFromIndex.get(entryIndex);
+      builder.append('[').append(entry.nodeId());
+      for (var location : entry.locations()) {
+        builder.append(',').append(location.pathId())
+            .append(',').append(location.startLine())
+            .append(',').append(location.startColumn())
+            .append(',').append(location.endLine())
+            .append(',').append(location.endColumn());
+      }
+      builder.append(']');
+    }
+    return builder.append("]]").toString();
+  }
+
+  private static void appendJsonString(StringBuilder builder, String value) {
+    builder.append('"');
+    for (var index = 0; index < value.length(); index++) {
+      var character = value.charAt(index);
+      switch (character) {
+        case '"' -> builder.append("\\\"");
+        case '\\' -> builder.append("\\\\");
+        case '\b' -> builder.append("\\b");
+        case '\f' -> builder.append("\\f");
+        case '\n' -> builder.append("\\n");
+        case '\r' -> builder.append("\\r");
+        case '\t' -> builder.append("\\t");
+        default -> {
+          if (character < 0x20 || character == '<'
+              || character == '\u2028' || character == '\u2029') {
+            builder.append("\\u%04x".formatted((int) character));
+          } else {
+            builder.append(character);
+          }
+        }
+      }
+    }
+    builder.append('"');
   }
 
   private static int[] findLineStarts(String source) {
