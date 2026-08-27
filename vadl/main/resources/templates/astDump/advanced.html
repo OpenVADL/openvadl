@@ -84,7 +84,12 @@
         </label>
       </div>
     </div>
-    <pre id="sourceCode" class="flex-1 min-h-0 overflow-auto p-4 whitespace-pre">[[${source}]]</pre>
+    <div class="flex-1 min-h-0 flex">
+      <pre id="lineNumbers"
+           class="shrink-0 overflow-hidden p-4 pr-2 text-right font-mono tabular-nums text-gray-400 select-none whitespace-pre"
+           aria-hidden="true"></pre>
+      <pre id="sourceCode" class="flex-1 min-w-0 min-h-0 overflow-auto p-4 whitespace-pre">[[${source}]]</pre>
+    </div>
     <div id="expandedFromPanel"
          class="hidden h-32 shrink-0 overflow-auto p-4 border-t border-gray-200">
       <div id="expandedFromTitle" class="mb-2 font-medium">Expanded from</div>
@@ -97,6 +102,7 @@
 
 <script>
   const sourceElement = document.getElementById("sourceCode");
+  const lineNumbersElement = document.getElementById("lineNumbers");
   const autoScrollElement = document.getElementById("autoScroll");
   const showExpandedFromElement = document.getElementById("showExpandedFrom");
   const lockIndicatorElement = document.getElementById("lockIndicator");
@@ -104,6 +110,10 @@
   const expandedFromTitleElement = document.getElementById("expandedFromTitle");
   const expandedFromListElement = document.getElementById("expandedFromList");
   const source = sourceElement.textContent;
+  lineNumbersElement.textContent = Array.from(
+          {length: source.split("\n").length},
+          (_, index) => index + 1
+  ).join("\n");
   let activeNodeElement = null;
   let lockedNodeElement = null;
 
@@ -322,6 +332,9 @@
   }
 
   showExpandedFromElement.addEventListener("change", syncExpandedFromDisplay);
+  sourceElement.addEventListener("scroll", () => {
+    lineNumbersElement.scrollTop = sourceElement.scrollTop;
+  });
   window.addEventListener("pageshow", syncExpandedFromDisplay);
   syncExpandedFromDisplay();
 </script>
