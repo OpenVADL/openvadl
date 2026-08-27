@@ -19,7 +19,10 @@ package vadl.ast;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +41,21 @@ import vadl.utils.WithLocation;
  */
 public class AstAdvancedDumper {
 
-  private AstDumpLabler labler = new AstDumpLabler();
+  private final AstDumpLabler labler = new AstDumpLabler();
+  private final Path sourcePath;
+  private final String source;
+  private final int[] lineStarts;
+  private final List<SourceIndexEntry> sourceIndex = new ArrayList<>();
+  private int nextNodeId;
+
+  private record SourceIndexEntry(int start, int end, int nodeId, int depth) {
+  }
+
+  private AstAdvancedDumper(Path sourcePath, String source) {
+    this.sourcePath = sourcePath.normalize();
+    this.source = source;
+    this.lineStarts = findLineStarts(source);
+  }
 
   /**
    * Dumps the AST into a textual representation.
@@ -55,10 +72,12 @@ public class AstAdvancedDumper {
       throw new RuntimeException(e);
     }
 
-    var dumper = new AstAdvancedDumper();
+    var dumper = new AstAdvancedDumper(Objects.requireNonNull(ast.filePath), source);
+    var astMaps = dumper.astToMaps(ast);
     var renderedDump = new StringWriter();
     TemplateRenderer.render("astDump/advanced.html",
-        Map.of("ast", dumper.astToMaps(ast), "source", source, "timestamp", timeString),
+        Map.of("ast", astMaps, "source", source, "timestamp", timeString,
+            "sourceIndex", dumper.sourceIndexAsJavaScript()),
         renderedDump);
     return renderedDump.toString();
   }
@@ -68,23 +87,28 @@ public class AstAdvancedDumper {
    * custom classes, which caused issues with GraalVM Native Images.
    */
   private List<Map<String, Object>> astToMaps(Ast ast) {
-    return ast.definitions.stream().map(this::nodeToMap).toList();
+    return ast.definitions.stream().map(node -> nodeToMap(node, 0)).toList();
   }
 
-  private Map<String, Object> nodeToMap(Node node) {
+  private Map<String, Object> nodeToMap(Node node, int depth) {
     var map = new HashMap<String, Object>();
     var label = label(node);
+    var nodeId = nextNodeId++;
+    var location = node.location();
+    map.put("htmlId", "ast-node-" + nodeId);
     map.put("description", label.description());
-    map.put("children", label.children().stream().map(this::nodeToMap).toList());
-    map.put("location", locationToMap(node));
-    map.put("expandedFrom", node.location().expandedFromStack().stream()
+    map.put("children",
+        label.children().stream().map(child -> nodeToMap(child, depth + 1)).toList());
+    map.put("location", locationToMap(location));
+    map.put("expandedFrom", location == null ? List.of() : location.expandedFromStack().stream()
         .map(this::locationToMap).toList());
+    addToSourceIndex(location, nodeId, depth);
     return map;
   }
 
   @Nullable
-  private Map<String, Object> locationToMap(WithLocation locatable) {
-    var location = locatable.location();
+  private Map<String, Object> locationToMap(@Nullable WithLocation locatable) {
+    var location = locatable == null ? null : locatable.location();
     if (location == null || !location.isValid()) {
       return null;
     }
@@ -96,6 +120,71 @@ public class AstAdvancedDumper {
     map.put("endLine", location.end().line());
     map.put("endColumn", location.end().column());
     return map;
+  }
+
+  private void addToSourceIndex(@Nullable WithLocation locatable, int nodeId, int depth) {
+    var location = locatable == null ? null : locatable.location();
+    if (location == null || !location.isValid() || location.path() == null
+        || !location.path().normalize().equals(sourcePath)) {
+      return;
+    }
+
+    var start = offsetAt(location.begin().line(), location.begin().column());
+    var endOffset = offsetAt(location.end().line(), location.end().column());
+    var end = endOffset < 0 ? -1 : Math.min(source.length(), endOffset + 1);
+    if (start < 0 || end <= start) {
+      return;
+    }
+
+    sourceIndex.add(new SourceIndexEntry(start, end, nodeId, depth));
+  }
+
+  private int offsetAt(int line, int column) {
+    if (line < 1 || line > lineStarts.length || column < 1) {
+      return -1;
+    }
+
+    var lineStart = lineStarts[line - 1];
+    var lineEnd = line < lineStarts.length ? lineStarts[line] - 1 : source.length();
+    if (column > lineEnd - lineStart + 1) {
+      return -1;
+    }
+    return lineStart + column - 1;
+  }
+
+  private String sourceIndexAsJavaScript() {
+    sourceIndex.sort(Comparator.comparingInt(SourceIndexEntry::start)
+        .thenComparing(Comparator.comparingInt(SourceIndexEntry::end).reversed())
+        .thenComparingInt(SourceIndexEntry::nodeId));
+
+    var builder = new StringBuilder("[");
+    var maxEnd = 0;
+    for (var index = 0; index < sourceIndex.size(); index++) {
+      var entry = sourceIndex.get(index);
+      maxEnd = Math.max(maxEnd, entry.end());
+      if (index > 0) {
+        builder.append(',');
+      }
+      builder.append('[')
+          .append(entry.start()).append(',')
+          .append(entry.end()).append(',')
+          .append(entry.nodeId()).append(',')
+          .append(entry.depth()).append(',')
+          .append(maxEnd)
+          .append(']');
+    }
+    return builder.append(']').toString();
+  }
+
+  private static int[] findLineStarts(String source) {
+    var starts = new ArrayList<Integer>();
+    starts.add(0);
+    for (var index = 0; index < source.length(); index++) {
+      if (source.charAt(index) == '\n') {
+        starts.add(index + 1);
+      }
+    }
+    return starts.stream().mapToInt(Integer::intValue).toArray();
   }
 
   /**

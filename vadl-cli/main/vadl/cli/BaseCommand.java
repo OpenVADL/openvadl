@@ -261,7 +261,7 @@ public abstract class BaseCommand implements Callable<Integer> {
     }
 
     withTimings("Advanced AST Dump", () -> {
-      var content = new AstAdvancedDumper().dump(ast, vfs, getTimeString());
+      var content = AstAdvancedDumper.dump(ast, vfs, getTimeString());
       dumpFile("ast-dump-advanced.html", content);
     });
   }
