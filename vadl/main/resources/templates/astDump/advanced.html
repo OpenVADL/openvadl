@@ -28,6 +28,7 @@
         <th:block th:with="location=${node.location}">
           <div th:if="${location != null}"
                class="p-2 border-3 border-dashed border-transparent rounded-r-lg cursor-pointer"
+               th:id="${node.htmlId}"
                th:attr="data-path=${location.path},
                         data-start-line=${location.startLine},
                         data-start-col=${location.startColumn},
@@ -48,7 +49,8 @@
           </div>
 
           <div th:unless="${location != null}"
-               class="p-2 rounded-r-lg">
+               class="p-2 rounded-r-lg"
+               th:id="${node.htmlId}">
             <span th:text="${node.description}">Node name</span>
           </div>
         </th:block>
@@ -110,12 +112,17 @@
   const expandedFromTitleElement = document.getElementById("expandedFromTitle");
   const expandedFromListElement = document.getElementById("expandedFromList");
   const source = sourceElement.textContent;
+  // Entries are [start, end, node id, AST depth, greatest end up to this entry].
+  // They are generated and sorted in Java to avoid scanning the AST DOM on page load.
+  const sourceIndex = [(${sourceIndex})];
   lineNumbersElement.textContent = Array.from(
           {length: source.split("\n").length},
           (_, index) => index + 1
   ).join("\n");
   let activeNodeElement = null;
   let lockedNodeElement = null;
+  let sourceHoverFrame = null;
+  let pendingSourceHover = null;
 
   // Assumes lines and columns are 1-based, and end is exclusive.
   function offsetAt(line, column) {
@@ -196,11 +203,13 @@
     expandedFromListElement.replaceChildren(...entries);
   }
 
-  function highlight(nodeElement) {
-    if (lockedNodeElement !== null && nodeElement !== lockedNodeElement) {
-      return;
-    }
+  function expandedLocationsOf(nodeElement) {
+    return Array.from(
+            nodeElement.querySelectorAll(".expanded-from-location")
+    ).map(locationOf);
+  }
 
+  function activateAstNode(nodeElement) {
     if (activeNodeElement !== null && activeNodeElement !== nodeElement) {
       activeNodeElement.classList.remove("bg-emerald-100");
     }
@@ -209,13 +218,18 @@
 
     const location = locationOf(nodeElement);
     document.getElementById("locationName").textContent = formatLocation(location);
+    renderExpandedFrom(expandedLocationsOf(nodeElement));
+  }
 
+  function highlight(nodeElement, scrollSource = true) {
+    if (lockedNodeElement !== null && nodeElement !== lockedNodeElement) {
+      return;
+    }
+
+    activateAstNode(nodeElement);
+    const location = locationOf(nodeElement);
     const primaryRange = sourceRange(location, "primary");
-    const expandedLocations = Array.from(
-            nodeElement.querySelectorAll(".expanded-from-location")
-    )
-            .map(locationOf);
-    renderExpandedFrom(expandedLocations);
+    const expandedLocations = expandedLocationsOf(nodeElement);
 
     if (primaryRange.end <= primaryRange.start) {
       sourceElement.textContent = source;
@@ -269,7 +283,7 @@
 
     sourceElement.replaceChildren(content);
 
-    if (autoScrollElement.checked && primaryMark !== null) {
+    if (scrollSource && autoScrollElement.checked && primaryMark !== null) {
       primaryMark.scrollIntoView({
         behavior: "smooth",
         block: "center",
@@ -296,6 +310,123 @@
     } else {
       renderExpandedFrom([]);
     }
+  }
+
+  function sourceOffsetFromPoint(x, y) {
+    let offsetNode;
+    let offset;
+    if (document.caretPositionFromPoint) {
+      const position = document.caretPositionFromPoint(x, y);
+      if (position === null) {
+        return null;
+      }
+      offsetNode = position.offsetNode;
+      offset = position.offset;
+    } else if (document.caretRangeFromPoint) {
+      const caretRange = document.caretRangeFromPoint(x, y);
+      if (caretRange === null) {
+        return null;
+      }
+      offsetNode = caretRange.startContainer;
+      offset = caretRange.startOffset;
+    } else {
+      return null;
+    }
+
+    if (offsetNode !== sourceElement && !sourceElement.contains(offsetNode)) {
+      return null;
+    }
+
+    const range = document.createRange();
+    range.selectNodeContents(sourceElement);
+    try {
+      range.setEnd(offsetNode, offset);
+    } catch (error) {
+      return null;
+    }
+    return range.toString().length;
+  }
+
+  function sourceIndexEntryAt(offset) {
+    let lower = 0;
+    let upper = sourceIndex.length;
+    while (lower < upper) {
+      const middle = Math.floor((lower + upper) / 2);
+      if (sourceIndex[middle][0] <= offset) {
+        lower = middle + 1;
+      } else {
+        upper = middle;
+      }
+    }
+
+    let best = null;
+    for (let index = lower - 1; index >= 0; index--) {
+      const entry = sourceIndex[index];
+      if (entry[4] <= offset) {
+        break;
+      }
+      if (entry[0] > offset || entry[1] <= offset) {
+        continue;
+      }
+
+      if (best === null
+              || entry[1] - entry[0] < best[1] - best[0]
+              || (entry[1] - entry[0] === best[1] - best[0]
+                      && entry[3] > best[3])
+              || (entry[1] - entry[0] === best[1] - best[0]
+                      && entry[3] === best[3] && entry[2] < best[2])) {
+        best = entry;
+      }
+    }
+    return best;
+  }
+
+  function highlightFromSource(x, y) {
+    if (lockedNodeElement !== null) {
+      return;
+    }
+
+    const offset = sourceOffsetFromPoint(x, y);
+    const entry = offset === null ? null : sourceIndexEntryAt(offset);
+    if (entry === null) {
+      if (activeNodeElement !== null) {
+        clearHighlight();
+      }
+      return;
+    }
+
+    const nodeElement = document.getElementById(`ast-node-${entry[2]}`);
+    if (nodeElement === null || activeNodeElement === nodeElement) {
+      return;
+    }
+
+    highlight(nodeElement, false);
+    if (autoScrollElement.checked) {
+      nodeElement.scrollIntoView({
+        behavior: "auto",
+        block: "nearest",
+        inline: "nearest"
+      });
+    }
+  }
+
+  function queueSourceHighlight(event) {
+    if (lockedNodeElement !== null) {
+      return;
+    }
+    pendingSourceHover = {x: event.clientX, y: event.clientY};
+    if (sourceHoverFrame !== null) {
+      return;
+    }
+
+    sourceHoverFrame = requestAnimationFrame(() => {
+      sourceHoverFrame = null;
+      const point = pendingSourceHover;
+      pendingSourceHover = null;
+      if (point !== null) {
+        highlightFromSource(point.x, point.y);
+      }
+    });
   }
 
   function toggleLock(nodeElement) {
@@ -332,6 +463,8 @@
   }
 
   showExpandedFromElement.addEventListener("change", syncExpandedFromDisplay);
+  sourceElement.addEventListener("pointermove", queueSourceHighlight);
+  sourceElement.addEventListener("pointerleave", clearHighlight);
   sourceElement.addEventListener("scroll", () => {
     lineNumbersElement.scrollTop = sourceElement.scrollTop;
   });
