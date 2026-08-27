@@ -16,50 +16,21 @@
 
 package vadl.viam;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+import vadl.types.FloatEncoding;
 import vadl.types.Type;
 
 /**
- * Describes a float format. This covers bit-size, encoding and interpretation.
+ * VIAM definition representing a float format. This currently only contains a
+ * {@link FloatEncoding}, but will contain other things like NaN encoding and handling
+ * in the future.
  */
 public class FloatFormat extends Definition implements DefProp.WithType {
 
-  /**
-   * Represents all supported float encodings.
-   */
-  public enum Encoding {
-    IEEE32(32, true),
-    IEEE64(64, true);
+  private final FloatEncoding encoding;
 
-    public final int size;
-    public final boolean ieee;
-
-    Encoding(int size, boolean ieee) {
-      this.size = size;
-      this.ieee = ieee;
-    }
-
-    /**
-     * Returns the IEEE encoding for the given bit-size.
-     */
-    public static @Nullable Encoding ieee(int size) {
-      return switch (size) {
-        case 32 -> IEEE32;
-        case 64 -> IEEE64;
-        default -> null;
-      };
-    }
-  }
-
-  @Nullable
-  private Encoding encoding = null;
-
-  public FloatFormat(Identifier identifier) {
+  public FloatFormat(Identifier identifier, FloatEncoding encoding) {
     super(identifier);
-  }
-
-  public void setEncoding(@CheckForNull Encoding encoding) {
     this.encoding = encoding;
   }
 
@@ -67,7 +38,7 @@ public class FloatFormat extends Definition implements DefProp.WithType {
    * The encoding of the float format.
    */
   @Nullable
-  public Encoding encoding() {
+  public FloatEncoding encoding() {
     return encoding;
   }
 
@@ -86,12 +57,6 @@ public class FloatFormat extends Definition implements DefProp.WithType {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
-  }
-
-  @Override
-  public void verify() {
-    super.verify();
-    ensure(encoding != null, "Encoding missing");
   }
 
   @Override

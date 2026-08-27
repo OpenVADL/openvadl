@@ -170,7 +170,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
   private List<List<Object>> getFloatBuiltinConfigs(Set<List<Constant>> configs) {
     return configs.stream().map(config -> config.stream().map(c -> switch (c) {
       case Constant.FloatType ft -> Map.of(
-          "bit_size", ft.size(),
+          "bit_size", ft.encoding().size,
           "name", requireNonNull(ft.format()).nameLower()
       );
       case Constant.Value v -> Integer.toString(v.intValue());

@@ -49,6 +49,7 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
+import vadl.types.FloatEncoding;
 import vadl.types.SIntType;
 import vadl.types.StructType;
 import vadl.types.Type;
@@ -1563,7 +1564,7 @@ public abstract class Constant {
     @Nullable
     private final FloatFormat format;
 
-    private final Integer size;
+    private final FloatEncoding encoding;
     private final String name;
 
     /**
@@ -1574,22 +1575,22 @@ public abstract class Constant {
     public FloatType(FloatFormat format) {
       super(Type.floatType());
       this.format = format;
-      // the type-checker checks that float-type definitions have a size, and thus an encoding
-      this.size = requireNonNull(format.encoding()).size;
+      // the type-checker checks that float-type definitions have an encoding
+      this.encoding = requireNonNull(format.encoding());
       this.name = format.simpleName();
     }
 
     /**
-     * Constructs a dummy float-type constant from a float format encoding size. This is used by
-     * the type checker when the float format definition is not yet available.
+     * Constructs a dummy float-type constant from a float format encoding. This is used by
+     * the type checker when the full float format definition is not yet available.
      *
-     * @param size The float format encoding size, i.e. the bit-size of the float type.
-     * @param name The name of the float format.
+     * @param encoding The float format encoding.
+     * @param name     The name of the float format.
      */
-    public FloatType(int size, String name) {
+    public FloatType(FloatEncoding encoding, String name) {
       super(Type.floatType());
       this.format = null;
-      this.size = size;
+      this.encoding = encoding;
       this.name = name;
     }
 
@@ -1598,8 +1599,8 @@ public abstract class Constant {
       return format;
     }
 
-    public Integer size() {
-      return size;
+    public FloatEncoding encoding() {
+      return encoding;
     }
 
     @Override
@@ -1619,13 +1620,13 @@ public abstract class Constant {
         return false;
       }
       FloatType floatType = (FloatType) o;
-      return Objects.equals(format, floatType.format) && Objects.equals(size,
-          floatType.size) && Objects.equals(name, floatType.name);
+      return Objects.equals(format, floatType.format) && Objects.equals(encoding,
+          floatType.encoding) && Objects.equals(name, floatType.name);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(super.hashCode(), format, size, name);
+      return Objects.hash(super.hashCode(), format, encoding, name);
     }
   }
 

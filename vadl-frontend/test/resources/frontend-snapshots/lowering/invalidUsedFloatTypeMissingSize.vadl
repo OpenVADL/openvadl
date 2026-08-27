@@ -13,7 +13,7 @@ instruction set architecture ISA = {
 
 //  Reported Diagnostics:
 //
-//  error: Missing float-type encoding size
+//  error: Missing float-type encoding
 //       ╭── test/resources/frontend-snapshots/lowering/invalidUsedFloatTypeMissingSize.vadl:5:3
 //       │
 //     5 │   float-type binary32

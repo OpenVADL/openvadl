@@ -1317,6 +1317,8 @@ public class TypeChecker
               .build());
     }
 
+    builtIn.check(constArgs, argTypes, location).ifPresent(this::addErrorAndContinueChecking);
+
     return new BuiltInCheckResult(argTypes, builtIn.returns(constArgs, argTypes));
   }
 
@@ -1337,7 +1339,7 @@ public class TypeChecker
     //       !!! There is a similar method in BehaviorLowering
     if (origin instanceof FloatTypeDefinition floatType) {
       check(floatType);
-      return new Constant.FloatType(requireNonNull(floatType.size), requireNonNull(name));
+      return new Constant.FloatType(requireNonNull(floatType.encoding), requireNonNull(name));
     }
 
     return constantEvaluator.eval(expr).toViamConstant();
@@ -1346,8 +1348,8 @@ public class TypeChecker
   @Override
   public Void visit(FloatTypeDefinition definition) {
     if (definition.annotations.stream().map(a -> a.annotation)
-        .noneMatch(FloatEncodingSizeAnnotation.class::isInstance)) {
-      addErrorAndStopChecking(error("Missing float-type encoding size", definition)
+        .noneMatch(FloatEncodingAnnotation.class::isInstance)) {
+      addErrorAndStopChecking(error("Missing float-type encoding", definition)
           .help("Annotate with e.g. `[ IEEE : <size> ]`")
           .build());
     }

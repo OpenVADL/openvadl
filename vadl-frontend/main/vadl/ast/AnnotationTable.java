@@ -69,6 +69,7 @@ import vadl.gcb.annotations.RelocationSyntaxAnnotation;
 import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.BitsType;
+import vadl.types.FloatEncoding;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.utils.functionInterfaces.QuadConsumer;
@@ -81,7 +82,6 @@ import vadl.viam.Counter;
 import vadl.viam.Encoding;
 import vadl.viam.Endianness;
 import vadl.viam.FloatExceptionFlag;
-import vadl.viam.FloatFormat;
 import vadl.viam.Format;
 import vadl.viam.Group;
 import vadl.viam.Instruction;
@@ -338,17 +338,17 @@ public class AnnotationTable {
     /// FLOAT RELATED ///
 
     annotationOn(FloatTypeDefinition.class, "IEEE", IEEEFloatFormatAnnotation::new)
-        .applyAst((def, annotation) -> def.size = annotation.constant.value().intValue())
-        .applyViam((def, annotation, lowering) -> {
-          var encoding = FloatFormat.Encoding.ieee(annotation.constant.value().intValue());
-          ensure(encoding != null,
+        .applyAst((def, annotation) -> {
+          var size = annotation.constant.value().intValue();
+          ensure(FloatEncoding.isValidIEEESize(size),
               () -> error("Invalid IEEE encoding size", annotation)
                   .description("The following sizes are supported: %s",
-                      Arrays.stream(FloatFormat.Encoding.values())
+                      Arrays.stream(FloatEncoding.values())
                           .map(e -> Integer.toString(e.size)).collect(Collectors.joining(", ")))
           );
-          ((FloatFormat) def).setEncoding(encoding);
-        }).build();
+          def.encoding = FloatEncoding.ieee(size);
+        })
+        .build();
 
     QuadConsumer<RegisterTensor, FloatFlagAnnotation, Boolean, FloatExceptionFlag>
         applyViamFloatFlag;
@@ -1318,16 +1318,16 @@ abstract class FormatFieldAnnotation extends Annotation {
 }
 
 /**
- * Marker interface for all annotations that set the {@link FloatTypeDefinition#size} field.
+ * Marker interface for all annotations that set the {@link FloatTypeDefinition#encoding} field.
  */
-interface FloatEncodingSizeAnnotation {
+interface FloatEncodingAnnotation {
 }
 
 /**
  * An annotation which makes a {@link FloatTypeDefinition} use IEEE-754 encoding with a given
  * size (32 or 64 bit).
  */
-class IEEEFloatFormatAnnotation extends ConstantAnnotation implements FloatEncodingSizeAnnotation {
+class IEEEFloatFormatAnnotation extends ConstantAnnotation implements FloatEncodingAnnotation {
 }
 
 /**
