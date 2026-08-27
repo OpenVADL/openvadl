@@ -7,6 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Advanced AST Dump</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    /* Keep off-screen AST branches out of the initial layout and paint work. */
+    .ast-layout-subtree {
+      content-visibility: auto;
+      contain-intrinsic-block-size: auto 1000px;
+    }
+  </style>
   <style type="text/tailwindcss">
     @theme {
       --color-clifford: #da373d;
@@ -24,7 +31,8 @@
   <div class="flex-1 min-w-0 min-h-0 overflow-y-auto rounded-xl p-4 bg-white shadow-xl ring ring-gray-900/5">
     AST
     <div th:fragment="tree(nodes)" class="border-l ml-2 border-gray-200">
-      <div th:each="node : ${nodes}">
+      <div th:each="node : ${nodes}"
+           th:classappend="${node.layoutBoundary} ? 'ast-layout-subtree'">
         <th:block th:with="location=${node.location}">
           <div th:if="${location != null}"
                class="p-2 border-3 border-dashed border-transparent rounded-r-lg cursor-pointer"

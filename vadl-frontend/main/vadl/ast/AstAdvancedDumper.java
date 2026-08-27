@@ -105,6 +105,7 @@ public class AstAdvancedDumper {
     var nodeId = nextNodeId++;
     var location = node.location();
     map.put("htmlId", "ast-node-" + nodeId);
+    map.put("layoutBoundary", depth <= 1);
     map.put("description", label.description());
     map.put("children",
         label.children().stream().map(child -> nodeToMap(child, depth + 1)).toList());

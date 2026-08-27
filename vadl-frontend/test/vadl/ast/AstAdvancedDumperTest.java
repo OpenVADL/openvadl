@@ -40,6 +40,8 @@ class AstAdvancedDumperTest {
     assertTrue(dump.contains("sourceElement.addEventListener(\"pointermove\""));
     assertTrue(dump.contains("highlight(nodeElement, false)"));
     assertTrue(dump.contains("<script id=\"expandedFromData\" type=\"application/json\">"));
+    assertTrue(dump.contains("class=\"ast-layout-subtree\""));
+    assertTrue(dump.contains("content-visibility: auto"));
     assertFalse(dump.contains("expanded-from-location"));
   }
 
