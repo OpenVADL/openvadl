@@ -17,7 +17,7 @@
 package vadl.ast;
 
 import java.io.IOException;
-import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -58,12 +58,12 @@ public class AstAdvancedDumper {
   }
 
   /**
-   * Dumps the AST into a textual representation.
+   * Dumps the AST into a writer.
    *
    * @param ast to dump.
-   * @return an HTML representation of the tree.
+   * @param writer destination for the HTML representation of the tree
    */
-  public static String dump(Ast ast, VirtualFileSystem vfs, String timeString) {
+  public static void dump(Ast ast, VirtualFileSystem vfs, String timeString, Writer writer) {
     String source = null;
     try {
       source = new String(vfs.getInputStream(Objects.requireNonNull(ast.filePath)).readAllBytes(),
@@ -74,12 +74,10 @@ public class AstAdvancedDumper {
 
     var dumper = new AstAdvancedDumper(Objects.requireNonNull(ast.filePath), source);
     var astMaps = dumper.astToMaps(ast);
-    var renderedDump = new StringWriter();
     TemplateRenderer.render("astDump/advanced.html",
         Map.of("ast", astMaps, "source", source, "timestamp", timeString,
             "sourceIndex", dumper.sourceIndexAsJavaScript()),
-        renderedDump);
-    return renderedDump.toString();
+        writer);
   }
 
   /**
