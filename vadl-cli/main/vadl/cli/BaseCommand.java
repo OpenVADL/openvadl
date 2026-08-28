@@ -23,6 +23,7 @@ import static picocli.CommandLine.TypeConversionException;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -139,6 +140,11 @@ public abstract class BaseCommand implements Callable<Integer> {
   private record Timing(String name, long durationNS) {
   }
 
+  @FunctionalInterface
+  private interface DumpWriter {
+    void write(Writer writer) throws IOException;
+  }
+
   /**
    * Dumps should contain their date this method returns the date in a uniform string.
    * Format is YYYY-MM-DD hh:mm:ss
@@ -163,6 +169,16 @@ public abstract class BaseCommand implements Callable<Integer> {
    * @param content  of the dump.
    */
   private void dumpFile(String fileName, CharSequence content) {
+    dumpFile(fileName, writer -> writer.append(content));
+  }
+
+  /**
+   * Dump a file.
+   *
+   * @param fileName of the dump.
+   * @param dumpWriter writes the dump directly to the file.
+   */
+  private void dumpFile(String fileName, DumpWriter dumpWriter) {
     var folderPath = Paths.get(output.toString(), "dump");
     if (!folderPath.toFile().exists()) {
       folderPath.toFile().mkdirs();
@@ -170,7 +186,7 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     var filePath = Paths.get(folderPath.toString(), fileName);
     try (var writer = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
-      writer.append(content);
+      dumpWriter.write(writer);
     } catch (IOException e) {
       e.printStackTrace();
       throw Diagnostic.error("Unable to write file %s".formatted(filePath.toString()),
@@ -261,8 +277,8 @@ public abstract class BaseCommand implements Callable<Integer> {
     }
 
     withTimings("Advanced AST Dump", () -> {
-      var content = AstAdvancedDumper.dump(ast, vfs, getTimeString());
-      dumpFile("ast-dump-advanced.html", content);
+      dumpFile("ast-dump-advanced.html",
+          writer -> AstAdvancedDumper.dump(ast, vfs, getTimeString(), writer));
     });
   }
 
