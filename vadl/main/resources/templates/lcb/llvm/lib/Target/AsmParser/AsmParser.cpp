@@ -1,5 +1,6 @@
 #include "AsmRecursiveDescentParser.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
+#include "MCTargetDesc/[(${namespace})]MCInstExpander.h"
 #include "MCTargetDesc/[(${namespace})]TargetStreamer.h"
 #include "MCTargetDesc/AsmUtils.h"
 #include "TargetInfo/[(${namespace})]TargetInfo.h"
@@ -21,6 +22,7 @@ struct [(${namespace})]Operand;
 
 class [(${namespace})]AsmParser : public MCTargetAsmParser {
     MCAsmParser &Parser;
+    [(${namespace})]MCInstExpander InstExpander;
 
 [(${namespace})]TargetStreamer &getTargetStreamer() {
     MCTargetStreamer &TS = *getParser().getStreamer().getTargetStreamer();
@@ -55,7 +57,7 @@ bool parse_[(${instruction.name})](MCInst &Inst, OperandVector &Operands);
 public:
     [(${namespace})]AsmParser(const MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII, const MCTargetOptions &Options)
-        : MCTargetAsmParser(Options, sti, MII), Parser(parser) {
+        : MCTargetAsmParser(Options, sti, MII), Parser(parser), InstExpander(parser.getContext()) {
         [# th:each="alias : ${aliases}" ]
             Parser.addAliasForDirective("[(${alias.alias})]", "[(${alias.target})]");
         [/]
@@ -165,7 +167,18 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc,
         [/]
     }
 
-    Out.emitInstruction(Inst, getSTI());
+    // Out.emitInstruction(Inst, getSTI());
+    if (InstExpander.isExpandable(Inst)) {
+        InstExpander.expand(Inst,
+            [&](const MCInst &MI) {
+                Out.emitInstruction(MI, getSTI());
+            },
+            [&](MCSymbol *Symbol) {
+                Out.emitLabel(Symbol);
+            });
+    } else {
+        Out.emitInstruction(Inst, getSTI());
+    }
 
     return false;
 }
