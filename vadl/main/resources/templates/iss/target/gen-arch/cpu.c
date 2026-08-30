@@ -104,6 +104,10 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
     [(${access.name})](env);[/]
 
 [(${reset})]
+
+  [# th:if="${float_facts.has_float_ops}"]
+  // TODO: this disables nan-propagation. this will be configurable via the vadl spec at some point
+  set_default_nan_mode(1, &env->fp_status);[/]
 }
 
 static ObjectClass* [(${gen_arch_lower})]_cpu_class_by_name(const char *cpu_model)

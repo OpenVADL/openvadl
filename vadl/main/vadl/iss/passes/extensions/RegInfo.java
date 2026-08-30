@@ -189,18 +189,6 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     );
   }
 
-  private List<Map<String, String>> feFlags(
-      Function<FloatFlagAnnotation, Map<Integer, FloatExceptionFlag>> flags) {
-    if (!reg().hasAnnotation(FloatFlagAnnotation.class)) {
-      return List.of();
-    }
-    var ann = reg().expectAnnotation(FloatFlagAnnotation.class);
-    return flags.apply(ann).entrySet().stream().map(e -> Map.of(
-        "idx", Integer.toString(e.getKey()),
-        "flag_idx", Integer.toString(e.getValue().qemuFlagOffset)
-    )).toList();
-  }
-
   /**
    * Returns the execution class used for backend selection.
    */
@@ -306,8 +294,6 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("is_gvec_capable", isGvecCapable());
       renderObj.put("is_tb_state", isTbState());
       renderObj.put("tb_state_parts", tbStateParts());
-      renderObj.put("sticky_fe_flags", feFlags(FloatFlagAnnotation::stickyFlags));
-      renderObj.put("non_sticky_fe_flags", feFlags(FloatFlagAnnotation::nonStickyFlags));
       renderObj.put("exec_class", execClass().name());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);
@@ -936,11 +922,58 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
       // emit index access
       var access = "env->" + owner.nameLower() + owner.cArrayIndex("i");
+
       switch (type) {
-        case READ -> cb.returnStmt(access);
-        case WRITE -> cb.stmt(access + " = value");
+        case READ -> {
+          var resultName = "result_" + owner.nameLower();
+          cb.stmt("%s %s = %s".formatted(accessValueCType(), resultName, access));
+          emitFEFlagReconstructionOnRead(cb, resultName, true);
+          emitFEFlagReconstructionOnRead(cb, resultName, false);
+          cb.returnStmt(resultName);
+        }
+        case WRITE -> {
+          emitFEFlagReconstructionOnWrite(cb, true);
+          emitFEFlagReconstructionOnWrite(cb, false);
+          cb.stmt(access + " = value");
+        }
       }
       return cb.toString();
+    }
+
+    private void emitFEFlagReconstructionOnRead(CStringBuilder cb, String resultName,
+                                                boolean sticky) {
+      var ffAnn = owner.reg().annotation(FloatFlagAnnotation.class);
+      if (ffAnn == null || ffAnn.flags(sticky).isEmpty()) {
+        return;
+      }
+      var flagVarName = sticky ? "s_fe_flags" : "ns_fe_flags";
+
+      // unset all fe flag bits in the result
+      cb.stmt("%s &= 0x%sULL".formatted(resultName, Long.toHexString(~ffAnn.flagMask(sticky))));
+      cb.stmt("uint16_t %s = %s".formatted(
+          flagVarName, sticky ? "get_float_exception_flags(&env->fp_status)" : "env->ns_fe_flags"
+      ));
+      ffAnn.flags(sticky).forEach((idx, flag) -> cb.stmt("%s |= ((%s >> %d) & 1) << %d"
+          .formatted(resultName, flagVarName, flag.qemuFlagOffset, idx)));
+    }
+
+    private void emitFEFlagReconstructionOnWrite(CStringBuilder cb, boolean sticky) {
+      var ffAnn = owner.reg().annotation(FloatFlagAnnotation.class);
+      if (ffAnn == null || ffAnn.flags(sticky).isEmpty()) {
+        return;
+      }
+      var flagVarName = sticky ? "s_fe_flags" : "ns_fe_flags";
+
+      // by default, all unused flags are set
+      int initialValue = ~ffAnn.qemuFlagMask(sticky);
+      cb.stmt("uint16_t %s = 0x%s".formatted(flagVarName, Integer.toHexString(initialValue)));
+      ffAnn.flags(sticky).forEach((idx, flag) -> cb.stmt("%s |= ((value >> %d) & 1) << %d"
+          .formatted(flagVarName, idx, flag.qemuFlagOffset)));
+      if (sticky) {
+        cb.stmt("set_float_exception_flags(%s, &env->fp_status)".formatted(flagVarName));
+      } else {
+        cb.stmt("env->ns_fe_flags = %s".formatted(flagVarName));
+      }
     }
 
     /**
