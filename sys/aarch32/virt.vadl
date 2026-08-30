@@ -1,7 +1,7 @@
 
-import aarch32::AArch32v6
+import aarch32::AArch32v7
 
-instruction set architecture A32 extending AArch32v6 = { }
+instruction set architecture A32 extending AArch32v7 = { }
 
 [ htif ]
 processor Virt implements A32 = {

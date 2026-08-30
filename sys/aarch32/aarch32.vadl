@@ -456,7 +456,7 @@ instruction set architecture AArch32v6 = {
 
   model Mul()    : Ex = {VADL::muls  (R(rn), R(rm))}
   model MulAcc() : Ex = {VADL::adds  (R(rn) * R(rm), R(ra))}
-  model MulSub() : Ex = {VADL::subsc (R(rn) * R(rm), R(ra))}
+  model MulSub() : Ex = {VADL::subsc (R(ra), R(rn) * R(rm))}
   model SMull()  : Ex = {VADL::smulls(R(rn), R(rm))}
   model UMull()  : Ex = {VADL::umulls(R(rn), R(rm))}
   model SMlAl()  : Ex = {VADL::adds((R(rd),R(ra)), VADL::smull(R(rn), R(rm)))}
@@ -487,6 +487,7 @@ instruction set architecture AArch32v6 = {
     }
 
   model MultiplyLongInstr (c : CondRec, i : InstrRec, f : FlagRec) : IsaDefs = {
+    [undefined when : rd = 15 || ra = 15 || rd = ra]
     instruction AsId ($i.id, $f.flagExt, $c.condStr) : MultiplyDivideFormat =
       if ($c.condEx) then
         let double, flags = $i.funct() in {
@@ -555,22 +556,6 @@ instruction set architecture AArch32v6 = {
         }
     $MultiplySMLEncAsm ($c; $i)
     }
-
-// divide model ****************************************************************
-
-  model SDiv() : Ex = {if dividend = 0x8000'0000 && divisor = -1 then dividend else VADL::sdiv(dividend, divisor)}
-  model UDiv() : Ex = {VADL::udiv(dividend, divisor)}
-
-  model DivideInstr (c : CondRec, i : InstrRec) : IsaDefs = {
-    instruction AsId($i.id, $c.condId) : MultiplyDivideFormat =
-      if ($c.condEx) then
-        let dividend = R(rn) in
-        let divisor  = R(rm) in
-          R(rd) := if divisor = 0 then 0 else $i.funct()
-    encoding AsId($i.id, $c.condId) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = 1, op1 = 0b0001, ra = 0b1111 }
-    assembly AsId($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm))
-    }
-
 
 
 // extend models ***************************************************************
@@ -1148,7 +1133,6 @@ instruction set architecture AArch32v6 = {
 
   $CondInstr2Flags      (MultiplyInstr        ; (MUL     ; "mul"     ; Mul     ; 0b000'0000 ))
   $CondInstr2Flags      (MultiplyAccInstr     ; (MLA     ; "mla"     ; MulAcc  ; 0b000'0001 ))
-  $CondInstr            (MultiplySubInstr     ; (MLS     ; "mls"     ; MulSub  ; 0b000'0011 ))
   $CondInstr2Flags      (MultiplyLongInstr    ; (UMULL   ; "umull"   ; UMull   ; 0b000'0100 ))
   $CondInstr2Flags      (MultiplyLongInstr    ; (SMULL   ; "smull"   ; SMull   ; 0b000'0110 ))
   $CondInstr2Flags      (MultiplyLongInstr    ; (UMLAL   ; "umlal"   ; UMlAl   ; 0b000'0101 ))
@@ -1166,9 +1150,6 @@ instruction set architecture AArch32v6 = {
   $CondInstr            (MultiplySMLALInstr   ; (SMLALBT ; "smlalbt" ; SMLALbt ; 0b000'1010'1100 ))
   $CondInstr            (MultiplySMLALInstr   ; (SMLALTB ; "smlaltb" ; SMLALtb ; 0b000'1010'1010 ))
   $CondInstr            (MultiplySMLALInstr   ; (SMLALTT ; "smlaltt" ; SMLALtt ; 0b000'1010'1110 ))
-
-  $CondInstr            (DivideInstr          ; (SDIV    ; "sdiv"    ; SDiv    ; 0b011'1000 ))
-  $CondInstr            (DivideInstr          ; (UDIV    ; "udiv"    ; UDiv    ; 0b011'1001 ))
 
   $CondInstr            (ExtendInstr          ; (SXTB    ; "sxtb"    ; ExtSB   ; 0b0110'1010))
   $CondInstr            (ExtendInstr          ; (SXTH    ; "sxth"    ; ExtSH   ; 0b0110'1011))
@@ -1223,5 +1204,31 @@ instruction set architecture AArch32v6 = {
 
   $CondInstr            (SupervisorCallInstr  ; (SVC     ; "svc"     ; None    ; 0b1111     ))
   $CondInstr            (ReadSpecialRegInstr  ; (MRS     ; "mrs"     ; None    ; APSR       ))
+
+}
+
+instruction set architecture AArch32v7 extending AArch32v6  = {
+
+// divide model ****************************************************************
+
+  model SDiv() : Ex = {if dividend = 0x8000'0000 && divisor = -1 then dividend else VADL::sdiv(dividend, divisor)}
+  model UDiv() : Ex = {VADL::udiv(dividend, divisor)}
+
+  model DivideInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    instruction AsId($i.id, $c.condId) : MultiplyDivideFormat =
+      if ($c.condEx) then
+        let dividend = R(rn) in
+        let divisor  = R(rm) in
+          R(rd) := if divisor = 0 then 0 else $i.funct()
+    encoding AsId($i.id, $c.condId) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = 1, op1 = 0b0001, ra = 0b1111 }
+    assembly AsId($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm))
+    }
+
+// base instructions ***********************************************************
+
+  $CondInstr            (MultiplySubInstr     ; (MLS     ; "mls"     ; MulSub  ; 0b000'0011 ))
+
+  $CondInstr            (DivideInstr          ; (SDIV    ; "sdiv"    ; SDiv    ; 0b011'1000 ))
+  $CondInstr            (DivideInstr          ; (UDIV    ; "udiv"    ; UDiv    ; 0b011'1001 ))
 
 }
