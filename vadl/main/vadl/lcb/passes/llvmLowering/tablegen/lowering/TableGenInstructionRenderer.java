@@ -22,6 +22,7 @@ import java.util.BitSet;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.gcb.passes.RegisterRef;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
@@ -34,6 +35,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.sched.TableGenSchedRead;
+import vadl.lcb.passes.llvmLowering.tablegen.model.sched.TableGenSchedWrite;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -91,7 +94,8 @@ public final class TableGenInstructionRenderer {
             
             let Uses = [ %s ];
             let Defs = [ %s ];
-            }
+            },
+            Sched<[%s]>
             """,
         instruction.getName(),
         instruction.getNamespace(),
@@ -132,7 +136,11 @@ public final class TableGenInstructionRenderer {
         instruction.getUses().stream().map(TableGenInstructionRenderer::renderRegisterRef)
             .collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(TableGenInstructionRenderer::renderRegisterRef)
-            .collect(Collectors.joining(","))
+            .collect(Collectors.joining(",")),
+        Stream.of(
+            instruction.sched().schedWrites().stream().map(TableGenSchedWrite::name),
+            instruction.sched().schedReads().stream().map(TableGenSchedRead::name)
+        ).flatMap(stream -> stream).collect(Collectors.joining(", "))
     );
     return y;
   }

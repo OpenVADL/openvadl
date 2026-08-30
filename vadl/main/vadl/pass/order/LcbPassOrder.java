@@ -32,6 +32,7 @@ import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.InferAvailableAddressingModesPass;
 import vadl.lcb.passes.llvmLowering.InferRegisterTypesPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.LlvmSchedLoweringPass;
 import vadl.lcb.passes.llvmLowering.RemoveRegisterWritesPass;
 import vadl.lcb.passes.llvmLowering.RemoveTruncationAndAnyExtPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
@@ -89,6 +90,7 @@ public final class LcbPassOrder {
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new InferAvailableAddressingModesPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
+    order.add(new LlvmSchedLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));
     order.add(new GenerateTableGenAbiSequenceInstructionRecordPass(configuration));
@@ -269,6 +271,7 @@ public final class LcbPassOrder {
     order.add(new vadl.lcb.template.lib.Target.EmitTargetMachineHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitISelLoweringHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitInsnSchedulingTableGenPass(configuration));
     order.add(
         new vadl.lcb.template.lib.Target.EmitTargetTransformInfoHeaderFilePass(configuration));
     order.add(

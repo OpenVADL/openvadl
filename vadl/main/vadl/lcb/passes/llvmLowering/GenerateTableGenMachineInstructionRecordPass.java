@@ -19,7 +19,6 @@ package vadl.lcb.passes.llvmLowering;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -59,6 +58,11 @@ public class GenerateTableGenMachineInstructionRecordPass extends Pass {
             passResults.lastResultOf(LlvmLoweringPass.class),
             "llvmLowering must exist");
 
+    final var llvmSchedLoweringPassResult = (LlvmSchedLoweringPass.Result) ensureNonNull(
+        passResults.lastResultOf(LlvmSchedLoweringPass.class),
+        "llvmSchedLowering must exist"
+    );
+
     return
         llvmLoweringPassResult.machineInstructionRecords().entrySet().stream()
             .sorted(
@@ -77,7 +81,8 @@ public class GenerateTableGenMachineInstructionRecordPass extends Pass {
                   result.info().uses(),
                   result.info().defs(),
                   result.patterns(),
-                  result.constraints()
+                  result.constraints(),
+                  ensureNonNull(llvmSchedLoweringPassResult.scheds().get(instruction), "LLVM Sched lowering must be present for all instructions")
               );
             })
             .toList();

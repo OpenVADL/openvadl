@@ -28,6 +28,7 @@ import vadl.gcb.passes.RegisterRef;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.sched.TableGenSched;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.ReferencesImmediateOperand;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
@@ -45,6 +46,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
   private final Instruction instruction;
   private final LlvmLoweringRecord.Machine llvmLoweringRecord;
   private final List<TableGenInstructionConstraint> constraints;
+  private final TableGenSched sched;
 
   /**
    * Constructor for an instruction in TableGen. It wraps the {@link LlvmLoweringRecord}.
@@ -59,7 +61,8 @@ public class TableGenMachineInstruction extends TableGenInstruction {
                                     List<RegisterRef> uses,
                                     List<RegisterRef> defs,
                                     List<TableGenPattern> anonymousPatterns,
-                                    List<TableGenInstructionConstraint> constraints) {
+                                    List<TableGenInstructionConstraint> constraints,
+                                    TableGenSched sched) {
     super(name, namespace, flags, inOperands, outOperands, uses, defs, anonymousPatterns);
     this.formatSize = instruction.encoding().format().type().bitWidth();
     this.size = instruction.encoding().format().type().bitWidth() / 8;
@@ -69,6 +72,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.instruction = instruction;
     this.llvmLoweringRecord = llvmLoweringRecord;
     this.constraints = constraints;
+    this.sched = sched;
   }
 
   public int getSize() {
@@ -101,6 +105,10 @@ public class TableGenMachineInstruction extends TableGenInstruction {
 
   public List<TableGenInstructionConstraint> constraints() {
     return constraints;
+  }
+
+  public TableGenSched sched() {
+    return sched;
   }
 
   /**
