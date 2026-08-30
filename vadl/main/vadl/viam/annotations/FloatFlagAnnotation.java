@@ -16,6 +16,7 @@
 
 package vadl.viam.annotations;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -58,6 +59,50 @@ public class FloatFlagAnnotation extends Annotation<RegisterTensor> {
 
   public Map<Integer, FloatExceptionFlag> nonStickyFlags() {
     return nonSticky;
+  }
+
+  public Map<Integer, FloatExceptionFlag> flags(boolean sticky) {
+    return sticky ? stickyFlags() : nonStickyFlags();
+  }
+
+  /**
+   * Creates a binary mask for the float exception flags in the register this annotation
+   * is attached to, where all flags are set, which exists in the register.
+   *
+   * @param sticky     Whether to compute the mask for sticky flags (if {@code false}, then
+   *                   the mask is computed for the non-sticky flags)
+   * @return           The mask
+   */
+  public long flagMask(boolean sticky) {
+    return flags(sticky).keySet().stream().mapToLong(idx -> idx)
+        .reduce(0, (mask, idx) -> mask | (1L << idx));
+  }
+
+  /**
+   * Creates a binary mask for the QEMU float exception flags, where all flags are set,
+   * which exists in the given annotation.
+   *
+   * @param sticky      Whether to compute the mask for sticky flags (if {@code false}, then
+   *                    the mask is computed for the non-sticky flags)
+   * @return            The mask
+   */
+  public int qemuFlagMask(boolean sticky) {
+    return (short) flags(sticky).values().stream().mapToInt(f -> f.qemuFlagOffset)
+        .reduce(0, (mask, idx) -> mask | (1 << idx));
+  }
+
+  /**
+   * Creates a binary mask for the QEMU float exception flags, where all flags are set,
+   * which exists in any of the given annotations.
+   *
+   * @param annotations The float flags annotations to consider
+   * @param sticky      Whether to compute the mask for sticky flags (if {@code false}, then
+   *                    the mask is computed for the non-sticky flags)
+   * @return            The mask
+   */
+  public static int qemuFlagMask(Collection<FloatFlagAnnotation> annotations, boolean sticky) {
+    return annotations.stream().mapToInt(ann -> ann.qemuFlagMask(sticky))
+        .reduce(0, (a, b) -> a | b);
   }
 
 }

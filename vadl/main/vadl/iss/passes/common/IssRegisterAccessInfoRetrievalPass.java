@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -34,6 +35,7 @@ import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Specification;
+import vadl.viam.annotations.FloatFlagAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -75,6 +77,24 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
           .filter(behavior -> !(behavior.parentDefinition() instanceof ArtificialResource))
           .forEach(behavior -> collectAccessorDescriptors(behavior, registry));
     });
+
+    // add custom ones for registers with float exception flag, because the gdb stub needs
+    // to use getters in cpu.c
+    viam.isa().get().registerTensors().stream()
+        .filter(r -> r.hasAnnotation(FloatFlagAnnotation.class))
+        .forEach(r -> {
+          var info = regInfo(r);
+          r.ensure(r.indexDimensions().isEmpty(),
+              "Float exception flags are only supported on single registers");
+          registry.addBaseAccessor(new RegInfo.BaseAccessorDescriptor(
+              info, RegInfo.AccessType.READ, List.of(), r.resultType().bitWidth(),
+              r.resultType().bitWidth(), 0, r
+          ));
+          registry.addBaseAccessor(new RegInfo.BaseAccessorDescriptor(
+              info, RegInfo.AccessType.WRITE, List.of(), r.resultType().bitWidth(),
+              r.resultType().bitWidth(), 0, r
+          ));
+        });
 
     // add custom one for program counter
     var pc = requireNonNull(viam.isa().get().pc());

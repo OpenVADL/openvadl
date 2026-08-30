@@ -47,6 +47,7 @@ import vadl.types.UIntType;
 import vadl.viam.Endianness;
 import vadl.viam.Memory;
 import vadl.viam.Specification;
+import vadl.viam.annotations.FloatFlagAnnotation;
 
 /**
  * The template rendering pass all ISS (QEMU) rendering passes extend from.
@@ -131,6 +132,10 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = new HashMap<String, Object>();
+    var floatBuiltinConfigs = passResults.lastResultOf(
+        IssFloatBuiltinCollectionPass.class,
+        IssFloatBuiltinCollectionPass.Output.class
+    );
     vars.put("gen_arch", configuration().targetName().toLowerCase());
     vars.put("gen_arch_upper", configuration().targetName().toUpperCase());
     vars.put("gen_arch_lower", configuration().targetName().toLowerCase());
@@ -138,11 +143,8 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_machine_upper", configuration().machineName().toUpperCase());
     vars.put("gen_machine_lower", configuration().machineName().toLowerCase());
     vars.put("register_tensors", mapRegTensors(specification));
-    vars.put("float_builtins", getFloatBuiltins(passResults.lastResultOf(
-        IssFloatBuiltinCollectionPass.class,
-        IssFloatBuiltinCollectionPass.Output.class
-    )));
-    vars.put("float_formats", getFloatFormats(specification));
+    vars.put("float_builtins", getFloatBuiltins(floatBuiltinConfigs));
+    vars.put("float_facts", getFloatFacts(specification, floatBuiltinConfigs));
     vars.put("pc_info", getPcInfo(specification));
     vars.put("target_size", configuration().targetSize().width);
     vars.put("mem_regions", memRegions(specification));
@@ -189,11 +191,27 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     }).toList()).toList();
   }
 
-  private List<Map<String, String>> getFloatFormats(Specification viam) {
-    return viam.isa().get().ownFloatFormats().stream().map(fmt -> Map.of(
-        "name", fmt.nameLower(),
-        "bit_size", Integer.toString(requireNonNull(fmt.encoding()).size)
-    )).toList();
+  private Map<String, Object> getFloatFacts(Specification viam,
+                                             IssFloatBuiltinCollectionPass.Output config) {
+    var hasFloatOps = !config.floatBuiltIns().isEmpty();
+    var hasStickyFlags = false;
+    var hasNonStickyFlags = false;
+    var annotations = viam.isa().get().registerTensors().stream()
+        .filter(r -> r.hasAnnotation(FloatFlagAnnotation.class))
+        .map(r -> r.expectAnnotation(FloatFlagAnnotation.class)).toList();
+    for (var ann : annotations) {
+      hasStickyFlags |= !ann.stickyFlags().isEmpty();
+      hasNonStickyFlags |= !ann.nonStickyFlags().isEmpty();
+    }
+    var stickyMask = FloatFlagAnnotation.qemuFlagMask(annotations, true);
+    var nonStickyMask = FloatFlagAnnotation.qemuFlagMask(annotations, false);
+    return Map.of(
+        "has_float_ops", hasFloatOps,
+        "has_sticky_flags", hasStickyFlags,
+        "has_non_sticky_flags", hasNonStickyFlags,
+        "sticky_mask", "0x" + Integer.toHexString(stickyMask),
+        "non_sticky_mask", "0x" + Integer.toHexString(nonStickyMask)
+    );
   }
 
   private String builtInName(BuiltInTable.BuiltIn builtin) {
