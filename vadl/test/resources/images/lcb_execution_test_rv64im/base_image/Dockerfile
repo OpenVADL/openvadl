@@ -15,3 +15,4 @@ COPY compile.sh .
 COPY filecheck.sh .
 COPY upstream.sh .
 COPY compare.sh .
+COPY lcb_integration.sh .
