@@ -192,10 +192,6 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
     }
 
     // All minSize outer layers are the same for both locations; let's return them
-    if (!Objects.equals(thisStack.get(minSize - 1).path(), otherStack.get(minSize - 1).path())) {
-      throw new IllegalArgumentException("Cannot join source locations from different files.");
-    }
-
     return thisStack.size() < otherStack.size() ? this : other;
   }
 
