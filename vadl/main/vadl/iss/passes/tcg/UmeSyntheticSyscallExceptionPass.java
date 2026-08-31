@@ -18,7 +18,7 @@ package vadl.iss.passes.tcg;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
@@ -39,25 +39,11 @@ import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.StartNode;
 
 /**
- * This pass manipulates the VIAM with hardcoded elements.
- * E.g. it adds an exception generation to {@code ECALL} instruction because
- * this is not yet supported in the VADL specification.
+ * This pass injects a synthetic exception raise into the {@code syscall instruction}.
+ * The user does not have to define or reference an exception, this mechanism
+ * works internally. The user only declares which instruction triggers a syscall.
  */
-public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
-
-  private static Graph createDummySyscallGraph() {
-    var g = new Graph("synthetic-ume-syscall");
-    g.setSourceLocation(SourceLocation.INVALID_SOURCE_LOCATION);
-
-    var end = g.addWithInputs(new ProcEndNode(new NodeList<>()));
-    end.setSourceLocation(SourceLocation.INVALID_SOURCE_LOCATION);
-
-    var start = new StartNode(end);
-    start.setSourceLocation(SourceLocation.INVALID_SOURCE_LOCATION);
-    g.addWithInputs(start);
-
-    return g;
-  }
+public class UmeSyntheticSyscallExceptionPass extends AbstractIssPass {
 
   private static final ExceptionDef UME_SYSCALL_EXC = new ExceptionDef(
       new Identifier(List.of("ume_syscall"), SourceLocation.INVALID_SOURCE_LOCATION),
@@ -66,18 +52,18 @@ public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
       ExceptionDef.Kind.ANONYMOUS
   );
 
-  public IssHardcodedTcgAddOnPass(IssConfiguration configuration) {
+  public UmeSyntheticSyscallExceptionPass(IssConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("ISS Hardcoded TCG Add-Ons");
+    return PassName.of("UME Synthetic Syscall Exception");
   }
 
-  Consumer<Instruction> injectSyscallRaise = instr -> {
+  BiConsumer<Instruction, Instruction> injectSyscallRaise = (instr, syscallInstr) -> {
 
-    if (!"ECALL".equalsIgnoreCase(instr.simpleName())) {
+    if (!instr.equals(syscallInstr)) {
       return;
     }
 
@@ -88,7 +74,7 @@ public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
     instrEnd.addBefore(new TcgGenException(UME_SYSCALL_EXC, new NodeList<>()));
   };
 
-  List<Consumer<Instruction>> instrAddOns = List.of(
+  List<BiConsumer<Instruction, Instruction>> instrAddOns = List.of(
       injectSyscallRaise
   );
 
@@ -96,14 +82,29 @@ public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
+    var ume = viam.userModeEmulation();
+    if (ume.isEmpty()) {
+      return null;
+    }
+
+    var syscallInstr = ume.get().syscallInstr();
+
     var isa = viam.isa().orElseThrow();
     var excInfo = isa.expectExtension(ExceptionInfo.class);
     excInfo.addException(UME_SYSCALL_EXC);
 
-    normalTcgInstrs(viam).forEach(i -> instrAddOns.forEach(f -> f.accept(i)));
-
+    normalTcgInstrs(viam).forEach(i -> instrAddOns.forEach(f -> f.accept(i, syscallInstr)));
     return null;
   }
 
+  private static Graph createDummySyscallGraph() {
+    var g = new Graph("synthetic-ume-syscall");
 
+    var end = g.addWithInputs(new ProcEndNode(new NodeList<>()));
+
+    var start = new StartNode(end);
+    g.addWithInputs(start);
+
+    return g;
+  }
 }

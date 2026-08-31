@@ -46,11 +46,11 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
         case [(${gen_arch_upper})]_EXCP_UME_SYSCALL:
             env->[(${pc_info.accessor})] += [(${config.insn_width_bytes})];
                 ret = do_syscall(env,
-                                  env->[(${config.sysRegFile})][ [(${config.sysReg})] ],
-                                  [# th:each="arg : ${config.args}"]
-                                  env->[(${arg.file})][ [(${arg.index})] ],
-                                  [/]
-                                  0, 0);
+                      env->[(${config.sysRegFile})][ [(${config.sysReg})] ],
+                      [# th:each="arg : ${config.args}"]
+                      env->[(${arg.file})][ [(${arg.index})] ],
+                      [/]
+                      0, 0);
             if (ret == -QEMU_ERESTARTSYS) {
                 env->[(${pc_info.accessor})] -= [(${config.insn_width_bytes})];
             } else if (ret != -QEMU_ESIGRETURN) {
