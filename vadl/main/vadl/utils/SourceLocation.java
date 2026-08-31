@@ -161,47 +161,38 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
           thisExpandedLoc.expandedFrom);
     }
 
-    // The expansion stacks differ, let's find a shared substack or use the innermost invocation.
+    // The expansion stacks differ, let's find a shared substack (starting at the outermost
+    // invocation).
     // NOTE: If this regularly happens, investigate it further to provide better help.
     var thisStack = this.fullExpandedFromStack().reversed();
     var otherStack = other.fullExpandedFromStack().reversed();
 
-    var firstLocation = thisStack.getLast();
-    var secondLocation = otherStack.getLast();
-
     int minSize = Math.min(thisStack.size(), otherStack.size());
-    for (int i = 0; i <= minSize; i++) {
-      if (i == minSize) {
-        // Reached end: use last of smaller, next of larger
-        if (thisStack.size() < otherStack.size()) {
-          secondLocation = otherStack.get(i);
-        } else if (thisStack.size() > otherStack.size()) {
-          firstLocation = thisStack.get(i);
-        }
-        break;
-      }
-
+    for (int i = 0; i < minSize; i++) {
       if (!thisStack.get(i).equals(otherStack.get(i))) {
-        firstLocation = thisStack.get(i);
-        secondLocation = otherStack.get(i);
-        thisStack = thisStack.subList(i, thisStack.size());
-        otherStack = otherStack.subList(i, otherStack.size());
-        break;
+        // After checking i layers of model invocations (starting at outermost), finally the
+        // locations diverge - stop here and join for new primaryLocation, keeping all previous
+        // layers as expandedFrom
+        var firstLocation = thisStack.get(i);
+        var secondLocation = otherStack.get(i);
+        var expandedFrom = thisStack.subList(0, i).reversed();
+
+        if (!Objects.equals(firstLocation.path(), secondLocation.path())) {
+          throw new IllegalArgumentException("Cannot join source locations from different files.");
+        }
+
+        var begin =
+            firstLocation.begin().compareTo(secondLocation.begin()) < 0 ? firstLocation.begin() :
+                secondLocation.begin();
+        var end = firstLocation.end().compareTo(secondLocation.end()) > 0 ? firstLocation.end() :
+            secondLocation.end();
+
+        return SourceLocation.of(firstLocation.path(), begin, end, expandedFrom);
       }
     }
 
-    if (!Objects.equals(firstLocation.path(), secondLocation.path())) {
-      throw new IllegalArgumentException("Cannot join source locations from different files.");
-    }
-
-    var begin =
-        firstLocation.begin().compareTo(secondLocation.begin()) < 0 ? firstLocation.begin() :
-            secondLocation.begin();
-    var end = firstLocation.end().compareTo(secondLocation.end()) > 0 ? firstLocation.end() :
-        secondLocation.end();
-    var expanedFrom = Objects.equals(thisStack, otherStack) ? thisStack : null;
-
-    return SourceLocation.of(firstLocation.path(), begin, end, expanedFrom);
+    // All minSize outer layers are the same for both locations; let's return them
+    return thisStack.size() < otherStack.size() ? this : other;
   }
 
   /**

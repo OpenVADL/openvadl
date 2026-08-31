@@ -88,6 +88,23 @@ public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVi
       } catch (NullPointerException e) {
         return false;
       }
+
+      // Ignore TypedNodes that may be part of a Model Definition (and thus their Type may depend
+      // on one particular Model Invocation)
+      // - i.e. they have an ExpandedLocation and their primary location is not fully contained
+      //   within the outermost invocation's location.
+      if (n.location() instanceof SourceLocation.ExpandedLocation(
+          SourceLocation.DirectLocation primaryLocation,
+          vadl.utils.RopeList<SourceLocation.DirectLocation> expandedFrom
+        )
+      ) {
+        var outerLocation = expandedFrom.toList().getLast();
+        if (!primaryLocation.begin().isWithin(outerLocation)
+            || !primaryLocation.end().isWithin(outerLocation)) {
+          return false;
+        }
+      }
+
       return true;
     });
     return visitor.find();

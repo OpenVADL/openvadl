@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -91,5 +92,131 @@ public class SourceLocationTest {
     SourceLocation location = new SourceLocation.DirectLocation(miniVadlPath, new SourceLocation.Position(1, 5));
     assertThat(location.toUriString(), startsWith("file:/"));
     assertThat(location.toUriString(), endsWith("mini.vadl:1:5 .. 1:5"));
+  }
+
+  @Test
+  public void testJoin_DirectLocations() {
+    var resultStart = new SourceLocation.Position(1, 5);
+    var resultEnd = new SourceLocation.Position(4, 2);
+
+    var locationA = new SourceLocation.DirectLocation(miniVadlPath,
+        resultStart,
+        new SourceLocation.Position(2, 3)
+    );
+    var locationB = new SourceLocation.DirectLocation(miniVadlPath,
+        new SourceLocation.Position(4, 1),
+        resultEnd
+    );
+
+    var result1 = locationA.join(locationB);
+    var result2 = locationB.join(locationA);
+
+    assertEquals(
+        new SourceLocation.DirectLocation(miniVadlPath, resultStart, resultEnd),
+        result1
+    );
+    assertEquals(result1, result2, "join() should be commutative");
+  }
+
+  @Test
+  public void testJoin_DirectAndExpandedLocation() {
+    var resultStart = new SourceLocation.Position(2, 1);
+    var resultEnd = new SourceLocation.Position(10, 3);
+
+    var locationA = new SourceLocation.DirectLocation(miniVadlPath,
+        resultStart,
+        new SourceLocation.Position(2, 3)
+    );
+    var locationB = SourceLocation.of(miniVadlPath,
+        // This primary location should be ignored
+        new SourceLocation.Position(44, 33),
+        new SourceLocation.Position(111, 222),
+
+        List.of(new SourceLocation.DirectLocation(miniVadlPath,
+            new SourceLocation.Position(4, 1), resultEnd)
+        )
+    );
+
+    var result1 = locationA.join(locationB);
+    var result2 = locationB.join(locationA);
+
+    assertEquals(
+        new SourceLocation.DirectLocation(miniVadlPath, resultStart, resultEnd),
+        result1
+    );
+    assertEquals(result1, result2, "join() should be commutative");
+  }
+
+  @Test
+  public void testJoin_ExpandedLocationsWithSameExpandedFrom() {
+    var expandedFrom = List.of(
+        new SourceLocation.DirectLocation(miniVadlPath,
+            new SourceLocation.Position(30, 1),
+            new SourceLocation.Position(30, 12)
+        ),
+        new SourceLocation.DirectLocation(miniVadlPath,
+            new SourceLocation.Position(20, 4),
+            new SourceLocation.Position(20, 15)
+        )
+    );
+    var resultStart = new SourceLocation.Position(2, 1);
+    var resultEnd = new SourceLocation.Position(10, 3);
+
+    var locationA = SourceLocation.of(miniVadlPath,
+        resultStart,
+        new SourceLocation.Position(2, 3),
+        expandedFrom
+    );
+    var locationB = SourceLocation.of(miniVadlPath,
+        new SourceLocation.Position(10, 1),
+        resultEnd,
+        expandedFrom
+    );
+
+    var result1 = locationA.join(locationB);
+    var result2 = locationB.join(locationA);
+
+    assertEquals(
+        SourceLocation.of(miniVadlPath, resultStart, resultEnd, expandedFrom),
+        result1
+    );
+    assertEquals(result1, result2, "join() should be commutative");
+  }
+
+  @Test
+  public void testJoin_ExpandedLocationsWithDifferentExpandedFrom() {
+    var resultStart = new SourceLocation.Position(2, 1);
+    var resultEnd = new SourceLocation.Position(20, 15);
+
+    var expandedFrom1 = new SourceLocation.DirectLocation(miniVadlPath,
+        new SourceLocation.Position(30, 1),
+        new SourceLocation.Position(30, 12)
+    );
+    var expandedFrom2 = new SourceLocation.DirectLocation(miniVadlPath,
+        new SourceLocation.Position(20, 4),
+        resultEnd
+    );
+
+    var locationA = SourceLocation.of(miniVadlPath,
+        resultStart,
+        new SourceLocation.Position(2, 3),
+        List.of(expandedFrom1)
+    );
+    var locationB = SourceLocation.of(miniVadlPath,
+        // This primary location should be ignored
+        new SourceLocation.Position(10, 1),
+        new SourceLocation.Position(10, 3),
+
+        List.of(expandedFrom2, expandedFrom1)
+    );
+
+    var result1 = locationA.join(locationB);
+    var result2 = locationB.join(locationA);
+
+    assertEquals(
+        SourceLocation.of(miniVadlPath, resultStart, resultEnd, List.of(expandedFrom1)),
+        result1
+    );
+    assertEquals(result1, result2, "join() should be commutative");
   }
 }
