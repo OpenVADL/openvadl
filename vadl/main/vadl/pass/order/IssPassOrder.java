@@ -46,10 +46,10 @@ import vadl.iss.passes.common.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.common.planning.IssExecStrategyPass;
 import vadl.iss.passes.common.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.helper.IssCFunctionExtractionPass;
-import vadl.iss.passes.tcg.IssHardcodedTcgAddOnPass;
 import vadl.iss.passes.tcg.IssSelectLoweringPass;
 import vadl.iss.passes.tcg.IssTcgSchedulingPass;
 import vadl.iss.passes.tcg.IssTcgVAllocationPass;
+import vadl.iss.passes.tcg.UmeSyntheticSyscallExceptionPass;
 import vadl.iss.passes.tcg.lowering.IssTcgContextPass;
 import vadl.iss.passes.tcg.lowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcg.lowering.TcgOpLoweringPass;
@@ -90,6 +90,9 @@ public final class IssPassOrder {
    */
   public static PassOrder create(IssConfiguration config) throws IOException {
     var order = ViamPassOrder.create(config);
+
+    order.add(new UmeHardcodedRiscvDefinitionPass(config));
+
     order.skip(ArtificialResInlinerPass.class);
     order.skip(FieldAccessInlinerPass.class);
     order.skip(NormalizeFieldsToFieldAccessFunctionsPass.class);
@@ -150,7 +153,7 @@ public final class IssPassOrder {
         .add(new IssTcgSchedulingPass(config))
         .add(new TcgBranchLoweringPass(config))
         .add(new TcgOpLoweringPass(config))
-        .add(new IssHardcodedTcgAddOnPass(config))
+        .add(new UmeSyntheticSyscallExceptionPass(config))
         .add(new IssTcgVAllocationPass(config));
   }
 
@@ -220,7 +223,6 @@ public final class IssPassOrder {
     var inputPath = config.inputPath();
     if (inputPath != null && inputPath.getFileName().endsWith("rv64ume.vadl")) {
       order
-          .add(new UmeHardcodedRiscvDefinitionPass(config))
           .add(issDefault("/configs/targets/gen-arch-linux-user.mak", config))
 
           .add(issDefault("/linux-user/meson.build", config))

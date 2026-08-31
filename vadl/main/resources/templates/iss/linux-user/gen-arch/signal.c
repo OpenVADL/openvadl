@@ -12,11 +12,7 @@ void setup_rt_frame(int sig, struct target_sigaction *ka,
     (void)set;
     (void)env;
 
-    if (sig == TARGET_SIGSEGV) {
-        force_sig(TARGET_SIGSEGV);
-    } else {
-        force_sig(sig);
-    }
+    force_sig(sig);
 }
 
 long do_rt_sigreturn(CPU[(${gen_arch_upper})]State *env)

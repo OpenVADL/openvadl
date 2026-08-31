@@ -24,24 +24,15 @@ import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.BitsType;
 import vadl.types.DataType;
-import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
-import vadl.viam.Assembly;
 import vadl.viam.Constant;
-import vadl.viam.Encoding;
-import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Identifier;
-import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.Parameter;
 import vadl.viam.RegisterRef;
 import vadl.viam.Specification;
 import vadl.viam.UserModeEmulation;
-import vadl.viam.graph.Graph;
 
 /**
  * A specialized hardcoded rendering pass for QEMU User-Mode Emulation (UME) source files.
@@ -93,34 +84,10 @@ public class UmeHardcodedRiscvDefinitionPass extends AbstractIssPass {
         ))
         .toList();
 
-    Graph emptyGraph = new Graph("empty_graph");
-
-    BitsType mockType = BitsType.bits(32);
-
-    Function mockFunc = new Function(
-        new Identifier(new String[]{"dummy_function"},
-            SourceLocation.INVALID_SOURCE_LOCATION),
-        new Parameter[0],
-        Type.string(),
-        emptyGraph
-    );
-
-    Assembly emptyAssembly = new Assembly(new Identifier(new String[]{"dummy_assembly"},
-        SourceLocation.INVALID_SOURCE_LOCATION), mockFunc);
-
-    Format dummyFormat = new Format(new Identifier(new String[]{"dummy_format"},
-        SourceLocation.INVALID_SOURCE_LOCATION), mockType);
-
-    Encoding emptyEncoding = new Encoding(
-        new Identifier(new String[]{"dummy_encoding"},
-            SourceLocation.INVALID_SOURCE_LOCATION),
-        dummyFormat, new Encoding.Field[0]);
-
-    Instruction mockSyscallInsn = new Instruction(
-        new Identifier(new String[]{"ECALL"},
-            SourceLocation.INVALID_SOURCE_LOCATION),
-        emptyGraph, emptyAssembly, emptyEncoding
-    );
+    var syscallInstr = isa.ownInstructions().stream()
+        .filter(i -> "ECALL".equals(i.simpleName()))
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("ECALL instruction not found in ISA"));
 
     var syscallNrRef = new RegisterRef(
         registerResource,
@@ -137,7 +104,7 @@ public class UmeHardcodedRiscvDefinitionPass extends AbstractIssPass {
     return new UserModeEmulation(
         identifier,
         isa, abi, args,
-        mockSyscallInsn,
+        syscallInstr,
         syscallNrRef,
         syscallReturnRef);
   }

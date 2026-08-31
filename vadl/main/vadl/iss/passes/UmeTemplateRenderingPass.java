@@ -72,6 +72,10 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
         Map.entry("retRegFile", ume.getSyscallReturn().resource().simpleName().toLowerCase()),
         Map.entry("spReg", abi.stackPointer().addr()),
         Map.entry("spRegFile",  abi.stackPointer().registerFile().simpleName().toLowerCase()),
+        /*
+        * tries to find the most idiomatic name for the stack pointer register;
+        * "sp" is the default; if user defines an alias -> uses that instead
+        * */
         Map.entry("spRegName",  abi.aliases()
             .getOrDefault(
                 Pair.of(abi.stackPointer().registerFile(), abi.stackPointer().addr()),
