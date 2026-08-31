@@ -37,6 +37,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.utils.Pair;
+import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
@@ -73,7 +74,14 @@ public class GenerateCompilerRegistersPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
+    var abi = (Abi) viam
+        .definitions()
+        .filter(x -> x instanceof Abi)
+        .findFirst()
+        .orElseThrow(() -> Diagnostic.error(
+            "Missing ABI definition for compiler generation",
+            SourceLocation.INVALID_SOURCE_LOCATION).build()
+        );
 
     var generalRegisters =
         generalRegisters(viam.registerTensors().filter(RegisterTensor::isSingleRegister).toList());
