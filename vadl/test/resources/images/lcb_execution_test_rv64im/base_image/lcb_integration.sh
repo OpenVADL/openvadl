@@ -3,7 +3,7 @@
 set -x
 
 # Compile from c source with the LCB Compiler
-/src/llvm-final/build/bin/clang --target=${TARGET} -S -O${OPT_LEVEL} -c /src/inputs/$INPUT -o /tmp/main.s
+/src/llvm-final/build/bin/clang --target=${TARGET} -fPIC -S -O${OPT_LEVEL} -c /src/inputs/$INPUT -o /tmp/main.s
 chmod 777 /tmp/main.s
 cat /tmp/main.s
 
