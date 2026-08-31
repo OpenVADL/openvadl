@@ -75,6 +75,7 @@ import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.MicroArchitectureDefinition;
 import vadl.ast.nodes.ModelDefinition;
 import vadl.ast.nodes.ModelTypeDefinition;
+import vadl.ast.nodes.NewLabelStatement;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.Parameter;
 import vadl.ast.nodes.ProcessorDefinition;
@@ -1072,6 +1073,16 @@ public class SymbolTable {
       withSymbols(childTable, () -> expr.thenExpr.accept(this));
 
       afterTravel(expr);
+      return null;
+    }
+
+    @Override
+    public Void visit(NewLabelStatement statement) {
+      beforeTravel(statement);
+      statement.symbolTable = currentSymbols();
+      statement.labelId().symbolTable = currentSymbols();
+      currentSymbols().defineSymbol(statement.labelId.pathToString(), statement);
+      afterTravel(statement);
       return null;
     }
   }

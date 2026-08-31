@@ -122,6 +122,7 @@ import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.MicroArchitectureDefinition;
 import vadl.ast.nodes.ModelDefinition;
 import vadl.ast.nodes.ModelTypeDefinition;
+import vadl.ast.nodes.NewLabelStatement;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
@@ -621,7 +622,7 @@ class MacroExpander
   public Expr visit(AsStrExpr expr) {
     var expressions = expandExprs(expr.exprs);
     var name = concatStringifyExpressions(expr, expressions);
-    if (name == null)  {
+    if (name == null) {
       // Will be expanded as soon as the used placeholders are bound
       return new AsStrExpr(expressions, copyLoc(expr.location()));
     }
@@ -1504,6 +1505,14 @@ class MacroExpander
     return new StatementList(
         expandStatements(statementList.items),
         copyLoc(statementList.location())
+    );
+  }
+
+  @Override
+  public NewLabelStatement visit(NewLabelStatement newLabelStatement) {
+    return new NewLabelStatement(
+        expandExpr(newLabelStatement.labelId),
+        copyLoc(newLabelStatement.loc)
     );
   }
 

@@ -98,6 +98,7 @@ import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.MicroArchitectureDefinition;
 import vadl.ast.nodes.ModelDefinition;
 import vadl.ast.nodes.ModelTypeDefinition;
+import vadl.ast.nodes.NewLabelStatement;
 import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
 import vadl.ast.nodes.PatchDefinition;
@@ -869,6 +870,11 @@ public class Ungrouper
     for (var stmt : statementList.items) {
       stmt.accept(this);
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(NewLabelStatement newLabelStatement) {
     return null;
   }
 

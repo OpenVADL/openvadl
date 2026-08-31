@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,16 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.riscv.riscv32.asm;
+package vadl.types;
 
-import org.junit.jupiter.api.Disabled;
-import vadl.lcb.riscv.riscv32.AsmRiscv32FileCheckTest;
+/**
+ * A type for labels in assembly code.
+ * LabelType can be used as a placeholder for any DataType.
+ */
+public class LabelType extends Type {
 
-@Disabled("Enable once indirect relocations in the linker are implemented.")
-public class AsmCodeEmitterRiscv32FileCheckTest extends AsmRiscv32FileCheckTest {
+  public static final LabelType INSTANCE = new LabelType();
+
+  private LabelType() {
+  }
 
   @Override
-  protected String getComponent() {
-    return "codeemitter";
+  public String name() {
+    return "LabelType";
+  }
+
+  @Override
+  public boolean isTrivialCastTo(Type other) {
+    return this == other || other instanceof DataType;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return this == obj || obj instanceof DataType;
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
   }
 }

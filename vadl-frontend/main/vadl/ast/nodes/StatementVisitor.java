@@ -18,31 +18,33 @@ package vadl.ast.nodes;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public interface StatementVisitor<T> {
-  public T visit(AssignmentStatement statement);
+  T visit(AssignmentStatement statement);
 
-  public T visit(BlockStatement statement);
+  T visit(BlockStatement statement);
 
-  public T visit(CallStatement statement);
+  T visit(CallStatement statement);
 
-  public T visit(ForallStatement statement);
+  T visit(ForallStatement statement);
 
-  public T visit(IfStatement statement);
+  T visit(IfStatement statement);
 
-  public T visit(InstructionCallStatement statement);
+  T visit(NewLabelStatement statement);
 
-  public T visit(LetStatement statement);
+  T visit(InstructionCallStatement statement);
 
-  public T visit(LockStatement statement);
+  T visit(LetStatement statement);
 
-  public T visit(MacroInstanceStatement statement);
+  T visit(LockStatement statement);
 
-  public T visit(MacroMatchStatement statement);
+  T visit(MacroInstanceStatement statement);
 
-  public T visit(MatchStatement statement);
+  T visit(MacroMatchStatement statement);
 
-  public T visit(PlaceholderStatement statement);
+  T visit(MatchStatement statement);
 
-  public T visit(RaiseStatement statement);
+  T visit(PlaceholderStatement statement);
 
-  public T visit(StatementList statement);
+  T visit(RaiseStatement statement);
+
+  T visit(StatementList statement);
 }

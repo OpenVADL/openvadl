@@ -26,7 +26,6 @@ import vadl.viam.passes.ArtificialResPartialAccessExpansionPass;
 import vadl.viam.passes.ControlFlowOptimizationPass;
 import vadl.viam.passes.DetectRegisterIndicesPass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
-import vadl.viam.passes.HardcodeLGALabelPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.viam.passes.RegisterTensorPartialAccessExpansionPass;
@@ -87,7 +86,6 @@ public final class ViamPassOrder {
     order.add(new AlgebraicSimplificationPass(configuration));
     order.add(new BehaviorRewritePass(configuration));
     order.add(new InstructionResourceAccessAnalysisPass(configuration));
-    order.add(new HardcodeLGALabelPass(configuration));
     order.add(new ViamVerificationPass(configuration));
     return order;
   }

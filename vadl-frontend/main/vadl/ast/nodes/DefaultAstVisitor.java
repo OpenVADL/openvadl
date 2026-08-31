@@ -558,6 +558,12 @@ public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
   }
 
   @Override
+  public T visit(NewLabelStatement statement) {
+
+    return visitStatement(statement);
+  }
+
+  @Override
   public T visit(LetStatement statement) {
 
     return visitStatement(statement);

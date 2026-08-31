@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -186,6 +186,18 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   public String genFunctionDefinition() {
     context.ln(genFunctionSignature()).ln("{").spacedIn().ln("std::vector< MCInst > result;");
 
+    // Traverse labels first, because they can be defined after they are used.
+    var labelTraversal = new CfgTraverser() {
+      @Override
+      public ControlNode onDirectional(DirectionalNode dir) {
+        if (dir instanceof NewLabelNode newLabelNode) {
+          var sym = symbolTable.getNextVariable();
+          labelSymbolNameLookup.put(newLabelNode, sym);
+        }
+        return dir;
+      }
+    };
+
     var cfgTraversal = new CfgTraverser() {
       @Override
       public ControlNode onDirectional(DirectionalNode dir) {
@@ -214,15 +226,17 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
               .ln("result.push_back(%s);", sym)
               .ln("callback(%s);", sym);
         } else if (dir instanceof NewLabelNode newLabelNode) {
-          var sym = symbolTable.getNextVariable();
+          var sym = requireNonNull(labelSymbolNameLookup.get(newLabelNode));
           context.ln("MCSymbol *%s = Ctx.createTempSymbol();", sym)
               .ln("callbackSymbol(%s);", sym);
-          labelSymbolNameLookup.put(newLabelNode, sym);
         }
 
         return dir;
       }
     };
+
+    labelTraversal.traverseBranch(
+        function.behavior().getNodes(StartNode.class).findFirst().orElseThrow());
 
     cfgTraversal.traverseBranch(
         function.behavior().getNodes(StartNode.class).findFirst().orElseThrow());
