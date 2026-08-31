@@ -726,7 +726,7 @@ public class TypeChecker
         return availableWidth >= fromConstant.requiredBitWidth();
       }
 
-      if (to.getClass() == BitsType.class || to.getClass() == FloatType.class) {
+      if (to.getClass() == BitsType.class) {
         var availableWidth = ((BitsType) to).bitWidth();
         var value = fromConstant.getValue();
         var isNegative = value.compareTo(BigInteger.ZERO) < 0;
@@ -757,13 +757,6 @@ public class TypeChecker
         var fromUInt = (UIntType) from;
         var toBitsType = (BitsType) from;
         return fromUInt.bitWidth() == toBitsType.bitWidth();
-      }
-    }
-
-    // FloatType => Bits<n>
-    if (from.getClass() == FloatType.class) {
-      if (to.getClass() == BitsType.class) {
-        return ((FloatType) from).bitWidth() == ((BitsType) to).bitWidth();
       }
     }
 

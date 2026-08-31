@@ -1065,6 +1065,7 @@ public class BuiltInTable {
           .checkFrmAndFloatTypesEqual(2)
           .build();
 
+  // Note: this is an example for how float *s builtins will look like
   /**
    * {@code function fadds( a : FloatType, b : FloatType, rm : Bits<3> ) ->
    *   ( FloatType, FloatStatus ) }
@@ -1075,7 +1076,7 @@ public class BuiltInTable {
               StructType.class))
           .takesDefault()
           .checkFrmAndFloatTypesEqual(2)
-          // TODO: returns function
+          // TODO: add returns function which also returns float status
           .returnsFirstArgType()
           .build();
 
@@ -2333,22 +2334,37 @@ public class BuiltInTable {
       return this;
     }
 
+    /**
+     * Checks that the argument at the given index is of type {@code Bits<3>}.
+     */
     public BuiltInBuilder checkFrm(int frmArgIdx) {
       return check((typeParams, argTypes, location) ->
           checkFrmInternal(argTypes.get(frmArgIdx), location));
     }
 
+    /**
+     * Checks that the first {@code floatArgCount} arguments have the exact same float type.
+     */
     public BuiltInBuilder checkFloatTypesEqual(int floatArgCount) {
       return check((typeParams, argTypes, location) ->
           checkFloatTypesEqualInternal(argTypes, floatArgCount, location));
     }
 
+    /**
+     * Checks that the argument at the given index is of type {@code Bits<3>}
+     * and that the first {@code floatArgCount} arguments have the exact same float type.
+     */
     public BuiltInBuilder checkFrmAndFloatTypesEqual(int frmArgIdx) {
       return check((typeParams, argTypes, location) ->
           checkFrmInternal(argTypes.get(frmArgIdx), location).or(() ->
               checkFloatTypesEqualInternal(argTypes, frmArgIdx, location)));
     }
 
+    /**
+     * Checks that the first {@code floatArgCount} arguments have the exact same float type.
+     *
+     * <p>Note: this function should not be used. Use {@link #checkFrm(int)} instead.
+     */
     private Optional<Diagnostic> checkFrmInternal(Type type, WithLocation loc) {
       var frmSize = type.asDataType().bitWidth();
       if (frmSize != 3) {
@@ -2360,6 +2376,12 @@ public class BuiltInTable {
       return Optional.empty();
     }
 
+    /**
+     * Checks that the argument at the given index is of type {@code Bits<3>}
+     * and that the first {@code floatArgCount} arguments have the exact same float type.
+     *
+     * <p>Note: this function should not be used. Use {@link #checkFloatTypesEqual(int)} instead.
+     */
     private Optional<Diagnostic> checkFloatTypesEqualInternal(List<Type> types, int count,
                                                               WithLocation loc) {
       if (types.stream().limit(count).skip(1).allMatch(t -> t.equals(types.getFirst()))) {
