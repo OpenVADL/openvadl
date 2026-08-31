@@ -7,6 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Advanced AST Dump</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    /* Keep off-screen AST branches out of the initial layout and paint work. */
+    .ast-layout-subtree {
+      content-visibility: auto;
+      contain-intrinsic-block-size: auto 1000px;
+    }
+  </style>
   <style type="text/tailwindcss">
     @theme {
       --color-clifford: #da373d;
@@ -24,7 +31,8 @@
   <div class="flex-1 min-w-0 min-h-0 overflow-y-auto rounded-xl p-4 bg-white shadow-xl ring ring-gray-900/5">
     AST
     <div th:fragment="tree(nodes)" class="border-l ml-2 border-gray-200">
-      <div th:each="node : ${nodes}">
+      <div th:each="node : ${nodes}"
+           th:classappend="${node.layoutBoundary} ? 'ast-layout-subtree'">
         <th:block th:with="location=${node.location}">
           <div th:if="${location != null}"
                class="p-2 border-3 border-dashed border-transparent rounded-r-lg cursor-pointer"
@@ -38,14 +46,6 @@
                onmouseleave="clearHighlight()"
                onclick="toggleLock(this)">
             <span th:text="${node.description}">Node name</span>
-            <span th:each="expandedLocation : ${node.expandedFrom}"
-                  th:if="${expandedLocation != null}"
-                  class="expanded-from-location hidden"
-                  th:attr="data-path=${expandedLocation.path},
-                           data-start-line=${expandedLocation.startLine},
-                           data-start-col=${expandedLocation.startColumn},
-                           data-end-line=${expandedLocation.endLine},
-                           data-end-col=${expandedLocation.endColumn}"></span>
           </div>
 
           <div th:unless="${location != null}"
@@ -102,6 +102,7 @@
   </div>
 </div>
 
+<script id="expandedFromData" type="application/json">[(${expandedFromData})]</script>
 <script>
   const sourceElement = document.getElementById("sourceCode");
   const lineNumbersElement = document.getElementById("lineNumbers");
@@ -123,6 +124,7 @@
   let lockedNodeElement = null;
   let sourceHoverFrame = null;
   let pendingSourceHover = null;
+  let parsedExpandedFromData = null;
 
   // Assumes lines and columns are 1-based, and end is exclusive.
   function offsetAt(line, column) {
@@ -204,9 +206,42 @@
   }
 
   function expandedLocationsOf(nodeElement) {
-    return Array.from(
-            nodeElement.querySelectorAll(".expanded-from-location")
-    ).map(locationOf);
+    if (parsedExpandedFromData === null) {
+      parsedExpandedFromData = JSON.parse(
+              document.getElementById("expandedFromData").textContent
+      );
+    }
+
+    const nodeId = Number(nodeElement.id.substring("ast-node-".length));
+    const entries = parsedExpandedFromData[1];
+    let lower = 0;
+    let upper = entries.length;
+    while (lower < upper) {
+      const middle = Math.floor((lower + upper) / 2);
+      if (entries[middle][0] < nodeId) {
+        lower = middle + 1;
+      } else {
+        upper = middle;
+      }
+    }
+
+    if (lower >= entries.length || entries[lower][0] !== nodeId) {
+      return [];
+    }
+
+    const paths = parsedExpandedFromData[0];
+    const entry = entries[lower];
+    const locations = [];
+    for (let index = 1; index < entry.length; index += 5) {
+      locations.push({
+        path: paths[entry[index]],
+        startLine: entry[index + 1],
+        startColumn: entry[index + 2],
+        endLine: entry[index + 3],
+        endColumn: entry[index + 4]
+      });
+    }
+    return locations;
   }
 
   function activateAstNode(nodeElement) {
@@ -218,7 +253,9 @@
 
     const location = locationOf(nodeElement);
     document.getElementById("locationName").textContent = formatLocation(location);
-    renderExpandedFrom(expandedLocationsOf(nodeElement));
+    renderExpandedFrom(showExpandedFromElement.checked
+            ? expandedLocationsOf(nodeElement)
+            : []);
   }
 
   function highlight(nodeElement, scrollSource = true) {
@@ -229,7 +266,9 @@
     activateAstNode(nodeElement);
     const location = locationOf(nodeElement);
     const primaryRange = sourceRange(location, "primary");
-    const expandedLocations = expandedLocationsOf(nodeElement);
+    const expandedLocations = showExpandedFromElement.checked
+            ? expandedLocationsOf(nodeElement)
+            : [];
 
     if (primaryRange.end <= primaryRange.start) {
       sourceElement.textContent = source;
