@@ -18,19 +18,15 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ProcessDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder name;
-  @Child
   public List<TemplateParam> templateParams;
-  @Child
   public List<Parameter> inputs;
-  @Child
   public List<Parameter> outputs;
-  @Child
   public Statement statement;
   public SourceLocation loc;
 
@@ -90,6 +86,19 @@ public class ProcessDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    templateParams.forEach(action);
+
+    inputs.forEach(action);
+
+    outputs.forEach(action);
+
+    action.accept(statement);
+  }
+
+  @Override
   public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -115,6 +124,4 @@ public class ProcessDefinition extends Definition implements IdentifiableNode {
   public int hashCode() {
     return Objects.hash(name, templateParams, inputs, outputs, statement);
   }
-
-
 }

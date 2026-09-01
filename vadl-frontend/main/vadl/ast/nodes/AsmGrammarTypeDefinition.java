@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -26,7 +26,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarTypeDefinition extends Definition {
-  @Child
   public Identifier id;
   public SourceLocation loc;
 
@@ -54,6 +53,13 @@ public class AsmGrammarTypeDefinition extends Definition {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(" @");
     id.prettyPrint(0, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(id);
   }
 
   @Override

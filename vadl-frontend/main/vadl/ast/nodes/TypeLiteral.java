@@ -18,8 +18,8 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -29,16 +29,12 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class TypeLiteral extends Expr {
-  @Child
   public IsId baseType;
-
   /**
    * The sizes of the type literal.
    * Can be zero or more, written like {@code Bits<dimension1><dimension2><dimension3>} etc.
    */
-  @Child
   public List<Expr> sizeIndices;
-
   public SourceLocation loc;
 
   public TypeLiteral(IsId baseType, List<Expr> sizeIndices, SourceLocation loc) {
@@ -84,6 +80,15 @@ public final class TypeLiteral extends Expr {
       index.prettyPrint(indent, builder);
       builder.append(">");
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) baseType);
+
+    sizeIndices.forEach(action);
   }
 
   @Override

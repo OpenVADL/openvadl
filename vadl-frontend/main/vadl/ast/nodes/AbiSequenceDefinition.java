@@ -18,7 +18,6 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
@@ -31,13 +30,6 @@ public class AbiSequenceDefinition extends InstructionSequenceDefinition {
                                SourceLocation loc) {
     super(params, statements, loc);
     this.kind = kind;
-  }
-
-  @Override
-  public void forEachChild(Consumer<Node> action) {
-    // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
-    NodeChildrenRegistry.unsafeForEachChildDirect(this,
-        (Class<? extends Node>) getClass().getSuperclass(), action);
   }
 
   @Override

@@ -19,7 +19,7 @@ package vadl.ast.nodes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -27,7 +27,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class BlockStatement extends Statement {
-  @Child
   public List<Statement> statements;
   public SourceLocation location;
 
@@ -57,6 +56,13 @@ public final class BlockStatement extends Statement {
     statements.forEach(statement -> statement.prettyPrint(indent + 1, builder));
     builder.append(prettyIndentString(indent));
     builder.append("}\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    statements.forEach(action);
   }
 
   @Override

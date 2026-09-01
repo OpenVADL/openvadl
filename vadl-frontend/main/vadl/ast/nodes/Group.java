@@ -19,8 +19,8 @@ package vadl.ast.nodes;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
@@ -31,8 +31,6 @@ public sealed interface Group {
   public <R> R accept(GroupVisitor<R> visitor);
 
   public final class Sequence extends Node implements Group {
-
-    @Child
     public List<Group> groups;
     public SourceLocation loc;
 
@@ -64,6 +62,13 @@ public sealed interface Group {
     }
 
     @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      groups.forEach(group -> action.accept((Node) group));
+    }
+
+    @Override
     public <R> R accept(GroupVisitor<R> visitor) {
       return visitor.visit(this);
     }
@@ -87,10 +92,7 @@ public sealed interface Group {
   }
 
   public final class Literal extends Node implements Group {
-
-    @Child
     public IsId id;
-    @Child
     @Nullable
     public Expr size;
     public SourceLocation loc;
@@ -136,6 +138,16 @@ public sealed interface Group {
     }
 
     @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      action.accept((Node) id);
+
+      if (size != null)
+        action.accept(size);
+    }
+
+    @Override
     public <R> R accept(GroupVisitor<R> visitor) {
       return visitor.visit(this);
     }
@@ -159,8 +171,6 @@ public sealed interface Group {
   }
 
   public final class Alternative extends Node implements Group {
-
-    @Child
     public List<Sequence> sequences;
     public SourceLocation loc;
 
@@ -194,6 +204,13 @@ public sealed interface Group {
     }
 
     @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      sequences.forEach(action);
+    }
+
+    @Override
     public <R> R accept(GroupVisitor<R> visitor) {
       return visitor.visit(this);
     }
@@ -218,7 +235,6 @@ public sealed interface Group {
 
   public final class Permutation extends Node implements Group {
 
-    @Child
     public List<Sequence> sequences;
     public SourceLocation loc;
 
@@ -249,6 +265,13 @@ public sealed interface Group {
         sequence.prettyPrint(indent, builder);
       }
       builder.append("}");
+    }
+
+    @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      sequences.forEach(action);
     }
 
     @Override

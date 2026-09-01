@@ -18,18 +18,16 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.ast.GroupDefUtils;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class GroupDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder name;
   @Nullable
-  @Child
   public TypeLiteral type;
-  @Child
   public Group.Sequence groupSequence;
   public SourceLocation loc;
 
@@ -69,6 +67,16 @@ public class GroupDefinition extends Definition implements IdentifiableNode {
     builder.append(" = ");
     groupSequence.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    if (type != null)
+      action.accept(type);
+
+    action.accept(groupSequence);
   }
 
   public Group expr() {

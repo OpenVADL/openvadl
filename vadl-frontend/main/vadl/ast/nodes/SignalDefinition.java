@@ -17,13 +17,12 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class SignalDefinition extends Definition implements IdentifiableNode {
   public Identifier id;
-  @Child
   public TypeLiteral type;
   public SourceLocation loc;
 
@@ -57,6 +56,13 @@ public class SignalDefinition extends Definition implements IdentifiableNode {
     builder.append(" : ");
     type.prettyPrint(0, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(type);
   }
 
   @Override

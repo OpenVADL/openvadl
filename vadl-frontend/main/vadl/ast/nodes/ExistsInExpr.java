@@ -18,7 +18,7 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -28,10 +28,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class ExistsInExpr extends Expr {
-
   public SourceLocation loc;
-
-  @Child
   public List<IsId> operations;
 
   public ExistsInExpr(List<IsId> operations, SourceLocation loc) {
@@ -61,6 +58,13 @@ public class ExistsInExpr extends Expr {
       operation.prettyPrint(0, builder);
     }
     builder.append("}");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    operations.forEach(operation -> action.accept((Node) operation));
   }
 
   @Override

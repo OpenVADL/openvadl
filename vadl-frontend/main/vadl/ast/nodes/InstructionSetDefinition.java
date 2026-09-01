@@ -20,17 +20,15 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class InstructionSetDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder identifier;
-  @Child
   public List<IsId> extending;
-  @Child
   public List<Definition> definitions;
   public SourceLocation loc;
 
@@ -91,6 +89,15 @@ public class InstructionSetDefinition extends Definition implements Identifiable
     builder.append(" = {\n");
     prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append("}\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    extending.forEach(ext -> action.accept((Node) ext));
+
+    definitions.forEach(action);
   }
 
   @Override

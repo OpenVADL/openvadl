@@ -18,8 +18,8 @@ package vadl.ast.nodes;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import vadl.ast.Occurrence;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -31,7 +31,6 @@ import vadl.utils.SourceLocation;
 public class AbiSpecialPurposeInstructionDefinition extends Definition {
 
   public Kind kind;
-  @Child
   public IdentifierOrPlaceholder target;
   public SourceLocation loc;
 
@@ -65,6 +64,13 @@ public class AbiSpecialPurposeInstructionDefinition extends Definition {
     builder.append("special ").append(kind.keyword).append(" instruction = ");
     target.prettyPrint(indent + 1, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) target);
   }
 
   @Override

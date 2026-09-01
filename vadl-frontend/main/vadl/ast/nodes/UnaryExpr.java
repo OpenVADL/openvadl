@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 
@@ -30,7 +30,6 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public class UnaryExpr extends Expr {
   public IsUnOp operator;
-  @Child
   public Expr operand;
 
   /**
@@ -70,6 +69,13 @@ public class UnaryExpr extends Expr {
     wrapInGroup(parentPrec, builder, true, () -> {
       operand.prettyPrintExpr(indent, builder, precedence());
     });
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(operand);
   }
 
   @Override

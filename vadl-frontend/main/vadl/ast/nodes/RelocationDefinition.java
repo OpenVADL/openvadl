@@ -20,19 +20,16 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RelocationDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
-  @Child
   public List<Parameter> params;
-  @Child
   public TypeLiteral resultTypeLiteral;
-  @Child
   public Expr expr;
   public SourceLocation loc;
 
@@ -82,6 +79,17 @@ public class RelocationDefinition extends Definition implements IdentifiableNode
       expr.prettyPrint(0, builder);
       builder.append("\n");
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    params.forEach(action);
+
+    action.accept(resultTypeLiteral);
+
+    action.accept(expr);
   }
 
   @Override

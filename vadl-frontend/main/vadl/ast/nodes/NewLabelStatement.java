@@ -17,17 +17,14 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
  * A statement that defines a new label in an instruction sequence.
  */
 public class NewLabelStatement extends Statement {
-
-  @Child
   public IdentifierOrPlaceholder labelId;
-
   public SourceLocation loc;
 
   public NewLabelStatement(IdentifierOrPlaceholder labelId, SourceLocation loc) {
@@ -45,6 +42,13 @@ public class NewLabelStatement extends Statement {
     builder.append("newlabel ");
     labelId.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) labelId);
   }
 
   @Override

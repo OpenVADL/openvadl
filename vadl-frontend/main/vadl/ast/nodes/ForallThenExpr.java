@@ -18,14 +18,12 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ForallThenExpr extends Expr {
-  @Child
   public List<ForallThenExpr.Index> indices;
-  @Child
   public Expr thenExpr;
   public SourceLocation loc;
 
@@ -68,6 +66,15 @@ public class ForallThenExpr extends Expr {
   }
 
   @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    indices.forEach(action);
+
+    action.accept(thenExpr);
+  }
+
+  @Override
   public <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -92,7 +99,6 @@ public class ForallThenExpr extends Expr {
 
   public static final class Index extends Node implements IdentifiableNode {
     public IsId id;
-    @Child
     public List<IsId> operations;
 
     public Index(IsId id, List<IsId> operations) {
@@ -132,6 +138,13 @@ public class ForallThenExpr extends Expr {
         operation.prettyPrint(0, builder);
       }
       builder.append("}");
+    }
+
+    @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      operations.forEach(operation -> action.accept((Node) operation));
     }
 
     @Override

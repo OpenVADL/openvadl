@@ -20,7 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
@@ -34,9 +34,7 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public class LetExpr extends Expr {
   public List<IdentifierOrPlaceholder> identifiers;
-  @Child
   public Expr valueExpr;
-  @Child
   public Expr body;
   public SourceLocation location;
 
@@ -127,6 +125,15 @@ public class LetExpr extends Expr {
     }
     body.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
     builder.append(")");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(valueExpr);
+
+    action.accept(body);
   }
 
   @Override

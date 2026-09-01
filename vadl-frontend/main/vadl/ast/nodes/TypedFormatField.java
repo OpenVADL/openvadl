@@ -17,13 +17,12 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class TypedFormatField extends FormatField implements IdentifiableNode {
-  @Child
   public TypeLiteral typeLiteral;
 
   // The range this field occupies in its parent format.
@@ -57,6 +56,12 @@ public class TypedFormatField extends FormatField implements IdentifiableNode {
     typeLiteral.prettyPrint(indent, builder);
   }
 
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(typeLiteral);
+  }
 
   @Override
   public boolean equals(Object o) {

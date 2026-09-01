@@ -17,13 +17,12 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class UsingDefinition extends Definition implements IdentifiableNode {
   public final IdentifierOrPlaceholder id;
-  @Child
   public final TypeLiteral typeLiteral;
   public final SourceLocation loc;
 
@@ -58,6 +57,13 @@ public class UsingDefinition extends Definition implements IdentifiableNode {
     builder.append(" = ");
     typeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(typeLiteral);
   }
 
   @Override

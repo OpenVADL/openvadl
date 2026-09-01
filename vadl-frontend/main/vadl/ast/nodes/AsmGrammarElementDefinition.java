@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
@@ -42,30 +42,22 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarElementDefinition extends Definition {
   @Nullable
-  @Child
   public AsmGrammarLocalVarDefinition localVar;
   @Nullable
-  @Child
   public Identifier attribute;
   public Boolean isPlusEqualsAttributeAssign;
   public Boolean isAttributeLocalVar = false;
   @Nullable
-  @Child
   public AsmGrammarLiteralDefinition asmLiteral;
   @Nullable
-  @Child
   public AsmGrammarAlternativesDefinition groupAlternatives;
   @Nullable
-  @Child
   public AsmGrammarAlternativesDefinition optionAlternatives;
   @Nullable
-  @Child
   public AsmGrammarAlternativesDefinition repetitionAlternatives;
   @Nullable
-  @Child
   public Expr semanticPredicate;
   @Nullable
-  @Child
   public AsmGrammarTypeDefinition groupAsmTypeDefinition;
   public SourceLocation loc;
 
@@ -157,6 +149,35 @@ public class AsmGrammarElementDefinition extends Definition {
     if (groupAsmTypeDefinition != null) {
       groupAsmTypeDefinition.prettyPrint(0, builder);
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    if (localVar != null)
+      action.accept(localVar);
+
+    if (attribute != null)
+      action.accept(attribute);
+
+    if (asmLiteral != null)
+      action.accept(asmLiteral);
+
+    if (groupAlternatives != null)
+      action.accept(groupAlternatives);
+
+    if (optionAlternatives != null)
+      action.accept(optionAlternatives);
+
+    if (repetitionAlternatives != null)
+      action.accept(repetitionAlternatives);
+
+    if (semanticPredicate != null)
+      action.accept(semanticPredicate);
+
+    if (groupAsmTypeDefinition != null)
+      action.accept(groupAsmTypeDefinition);
   }
 
   @Override

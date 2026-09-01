@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
@@ -32,9 +32,7 @@ import vadl.utils.SourceLocation;
 public class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   public Identifier id;
   @Nullable
-  @Child
   public AsmGrammarTypeDefinition asmTypeDefinition;
-  @Child
   public AsmGrammarAlternativesDefinition alternatives;
   public SourceLocation loc;
 
@@ -86,6 +84,16 @@ public class AsmGrammarRuleDefinition extends Definition implements Identifiable
     indent--;
 
     builder.append("\n").append(prettyIndentString(indent)).append(";\n\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    if (asmTypeDefinition != null)
+      action.accept(asmTypeDefinition);
+
+    action.accept(alternatives);
   }
 
   @Override

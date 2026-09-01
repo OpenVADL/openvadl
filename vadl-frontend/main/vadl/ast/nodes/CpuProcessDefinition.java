@@ -18,15 +18,13 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CpuProcessDefinition extends Definition {
   public ProcessKind kind;
-  @Child
   public List<Parameter> startupOutputs;
-  @Child
   public Statement statement;
   public SourceLocation loc;
 
@@ -64,6 +62,15 @@ public class CpuProcessDefinition extends Definition {
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    startupOutputs.forEach(action);
+
+    action.accept(statement);
   }
 
   @Override

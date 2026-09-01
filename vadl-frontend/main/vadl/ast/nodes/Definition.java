@@ -20,9 +20,9 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.ast.Annotation;
-import vadl.javaannotations.ast.Child;
 
 /**
  * The Definition nodes inside the AST.
@@ -31,7 +31,6 @@ import vadl.javaannotations.ast.Child;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public abstract class Definition extends Node {
-  @Child
   public List<AnnotationDefinition> annotations = new ArrayList<>();
 
   @LazyInit
@@ -71,6 +70,13 @@ public abstract class Definition extends Node {
       definition.prettyPrint(indent, builder);
       previousDefinition = definition;
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    annotations.forEach(action);
   }
 
   @Nullable

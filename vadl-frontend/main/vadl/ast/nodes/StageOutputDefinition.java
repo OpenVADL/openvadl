@@ -16,14 +16,13 @@
 
 package vadl.ast.nodes;
 
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class StageOutputDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
-  @Child
   public TypeLiteral typeLiteral;
 
   public StageOutputDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral) {
@@ -51,6 +50,13 @@ public class StageOutputDefinition extends Definition implements IdentifiableNod
     identifier.prettyPrint(indent, builder);
     builder.append(" : ");
     typeLiteral.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(typeLiteral);
   }
 
   @Override

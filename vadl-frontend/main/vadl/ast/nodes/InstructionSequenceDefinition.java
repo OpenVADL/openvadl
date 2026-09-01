@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.List;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -25,9 +25,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public abstract class InstructionSequenceDefinition extends Definition {
-  @Child
   public List<Parameter> params;
-  @Child
   public List<Statement> statements;
   public SourceLocation loc;
 
@@ -37,6 +35,15 @@ public abstract class InstructionSequenceDefinition extends Definition {
     this.params = params;
     this.statements = statements;
     this.loc = loc;
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    params.forEach(action);
+
+    statements.forEach(action);
   }
 
   @Override

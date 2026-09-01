@@ -19,18 +19,15 @@ package vadl.ast.nodes;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.ast.Annotation;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class AnnotationDefinition extends Definition {
-
   public List<IdentifierOrPlaceholder> keywords;
-
-  @Child
   public List<Expr> values;
 
   /**
@@ -77,6 +74,13 @@ public final class AnnotationDefinition extends Definition {
       prettyPrintJoin(", ", values, indent, builder);
     }
     builder.append(" ]\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    values.forEach(action);
   }
 
   @Override

@@ -20,14 +20,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class OperationDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder name;
-
-  @Child
   public List<IsId> resources;
 
   /**
@@ -77,6 +75,13 @@ public class OperationDefinition extends Definition implements IdentifiableNode 
       }
       builder.append(prettyIndentString(indent)).append("}\n");
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    resources.forEach(resource -> action.accept((Node) resource));
   }
 
   @Override

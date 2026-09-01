@@ -18,7 +18,7 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -32,12 +32,8 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class ForallStatement extends Statement {
-  @Child
   public List<ForallIndex> indices;
-
-  @Child
   public Statement body;
-
   public SourceLocation loc;
 
   public ForallStatement(List<ForallIndex> indices, Statement body, SourceLocation loc) {
@@ -64,6 +60,15 @@ public final class ForallStatement extends Statement {
     }
     builder.append(" do\n");
     body.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    indices.forEach(action);
+
+    action.accept(body);
   }
 
   @Override

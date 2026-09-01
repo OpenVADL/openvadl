@@ -20,17 +20,15 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class ExceptionDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder id;
-  @Child
   public Statement statement;
-  @Child
   public List<Parameter> params;
   public SourceLocation loc;
 
@@ -68,6 +66,15 @@ public final class ExceptionDefinition extends Definition implements Identifiabl
     builder.append(" = ");
     statement.prettyPrint(indent + 1, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(statement);
+
+    params.forEach(action);
   }
 
   @Override

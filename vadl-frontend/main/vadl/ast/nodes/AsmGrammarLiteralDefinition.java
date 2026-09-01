@@ -18,8 +18,8 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
@@ -38,13 +38,10 @@ import vadl.utils.SourceLocation;
 public class AsmGrammarLiteralDefinition extends Definition {
   @Nullable
   public Identifier id;
-  @Child
   public List<AsmGrammarLiteralDefinition> parameters;
   @Nullable
-  @Child
   public Expr stringLiteral;
   @Nullable
-  @Child
   public AsmGrammarTypeDefinition asmTypeDefinition;
   public SourceLocation loc;
 
@@ -104,6 +101,19 @@ public class AsmGrammarLiteralDefinition extends Definition {
     if (asmTypeDefinition != null) {
       asmTypeDefinition.prettyPrint(0, builder);
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    parameters.forEach(action);
+
+    if (stringLiteral != null)
+      action.accept(stringLiteral);
+
+    if (asmTypeDefinition != null)
+      action.accept(asmTypeDefinition);
   }
 
   @Override

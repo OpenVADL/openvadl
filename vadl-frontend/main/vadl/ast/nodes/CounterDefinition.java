@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Locale;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
@@ -25,7 +25,6 @@ import vadl.utils.SourceLocation;
 public class CounterDefinition extends Definition implements IdentifiableNode, TypedNode {
   public CounterKind kind;
   public IdentifierOrPlaceholder identifier;
-  @Child
   public TypeLiteral typeLiteral;
   public SourceLocation loc;
 
@@ -72,6 +71,13 @@ public class CounterDefinition extends Definition implements IdentifiableNode, T
     builder.append(": ");
     typeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(typeLiteral);
   }
 
   @Override

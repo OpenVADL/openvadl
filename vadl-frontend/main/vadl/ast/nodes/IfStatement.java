@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -28,12 +28,9 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class IfStatement extends Statement {
-  @Child
   public Expr condition;
-  @Child
   public Statement thenStmt;
   @Nullable
-  @Child
   public Statement elseStmt;
   public SourceLocation location;
 
@@ -64,6 +61,18 @@ public final class IfStatement extends Statement {
       elseStmt.prettyPrint(indent + 1, builder);
       builder.append("\n");
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(condition);
+
+    action.accept(thenStmt);
+
+    if (elseStmt != null)
+      action.accept(elseStmt);
   }
 
   @Override

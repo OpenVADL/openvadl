@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -29,7 +29,6 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AbiClangNumericTypeDefinition extends Definition {
   public NumTypeName typeName;
-  @Child
   public Expr size;
   public SourceLocation loc;
 
@@ -93,5 +92,12 @@ public class AbiClangNumericTypeDefinition extends Definition {
     builder.append(prettyIndentString(indent))
         .append(typeName.keyword).append(" = ");
     size.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(size);
   }
 }

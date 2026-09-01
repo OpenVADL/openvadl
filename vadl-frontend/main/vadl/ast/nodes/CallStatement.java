@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -26,8 +26,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class CallStatement extends Statement {
-
-  @Child
   public Expr expr;
 
   public CallStatement(Expr expr) {
@@ -43,6 +41,13 @@ public final class CallStatement extends Statement {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     expr.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(expr);
   }
 
   @Override

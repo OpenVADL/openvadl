@@ -50,18 +50,6 @@ public class AsmGrammarAlternativesDefinition extends Definition {
   }
 
   @Override
-  public void forEachChild(Consumer<Node> action) {
-    // This is too complicated for the @Child annotation
-    for (var l : alternatives) {
-      for (var a : l) {
-        if (a != null) {
-          action.accept((Node) a);
-        }
-      }
-    }
-  }
-
-  @Override
   public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -98,6 +86,18 @@ public class AsmGrammarAlternativesDefinition extends Definition {
       }
       if (i != alternatives.size() - 1) {
         builder.append("\n");
+      }
+    }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    for (var l : alternatives) {
+      for (var a : l) {
+        if (a != null)
+          action.accept(a);
       }
     }
   }

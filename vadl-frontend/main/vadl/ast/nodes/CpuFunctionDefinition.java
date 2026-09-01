@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
@@ -26,9 +26,7 @@ public class CpuFunctionDefinition extends Definition implements IdentifiableNod
   public Identifier id;
   public BehaviorKind kind;
   @Nullable
-  @Child
   public IsId stopWithReference;
-  @Child
   public Expr expr;
   public SourceLocation loc;
 
@@ -74,6 +72,16 @@ public class CpuFunctionDefinition extends Definition implements IdentifiableNod
       expr.prettyPrint(0, builder);
       builder.append("\n");
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    if (stopWithReference != null)
+      action.accept((Node) stopWithReference);
+
+    action.accept(expr);
   }
 
   @Override

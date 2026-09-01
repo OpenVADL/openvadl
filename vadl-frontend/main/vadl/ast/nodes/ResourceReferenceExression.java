@@ -16,7 +16,7 @@
 
 package vadl.ast.nodes;
 
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -27,7 +27,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class ResourceReferenceExression extends Expr {
-  @Child
   public IdentifierOrPlaceholder resource;
   public SourceLocation location;
 
@@ -40,6 +39,13 @@ public class ResourceReferenceExression extends Expr {
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("@");
     resource.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) resource);
   }
 
   @Override

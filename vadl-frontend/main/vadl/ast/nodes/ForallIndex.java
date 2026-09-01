@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -28,14 +28,11 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class ForallIndex extends Node implements IdentifiableNode {
-  @Child
   public IsId name;
 
-  @Child
   @Nullable
   public TypeLiteral typeLiteral;
 
-  @Child
   public Expr domain;
 
   /**
@@ -76,6 +73,18 @@ public final class ForallIndex extends Node implements IdentifiableNode {
     }
     builder.append(" in ");
     domain.prettyPrint(0, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) name);
+
+    if (typeLiteral != null)
+      action.accept(typeLiteral);
+
+    action.accept(domain);
   }
 
   @Override

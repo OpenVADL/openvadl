@@ -17,19 +17,17 @@
 package vadl.ast.nodes;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.ast.FormatType;
-import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class FormatDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
-  @Child
   public TypeLiteral typeLiteral;
-  @Child
   public List<FormatField> fields;
   public SourceLocation loc;
 
@@ -166,6 +164,15 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
 
     builder.append(prettyIndentString(indent));
     builder.append("}\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(typeLiteral);
+
+    fields.forEach(action);
   }
 
   @Override

@@ -16,8 +16,8 @@
 
 package vadl.ast.nodes;
 
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -28,11 +28,8 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class SequenceCallExpr extends Expr {
-
-  @Child
   public IsCallExpr target;
   @Nullable
-  @Child
   public Expr range;
   public SourceLocation loc;
 
@@ -65,5 +62,15 @@ public class SequenceCallExpr extends Expr {
       range.prettyPrint(0, builder);
       builder.append("}");
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) target);
+
+    if (range != null)
+      action.accept(range);
   }
 }

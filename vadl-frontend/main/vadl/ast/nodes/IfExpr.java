@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -27,11 +27,8 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class IfExpr extends Expr {
-  @Child
   public Expr condition;
-  @Child
   public Expr thenExpr;
-  @Child
   public Expr elseExpr;
   public SourceLocation location;
 
@@ -67,6 +64,17 @@ public class IfExpr extends Expr {
       builder.append(prettyIndentString(indent + 1));
     }
     elseExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(condition);
+
+    action.accept(thenExpr);
+
+    action.accept(elseExpr);
   }
 
   @Override
