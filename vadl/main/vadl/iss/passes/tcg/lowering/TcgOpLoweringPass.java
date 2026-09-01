@@ -96,7 +96,9 @@ import vadl.javaannotations.Handler;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
+import vadl.types.FloatType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.ExceptionDef;
 import vadl.viam.FloatFormat;
@@ -1274,13 +1276,9 @@ class BuiltInTcgLoweringExecutor {
         .set(BuiltInTable.FLE, (ctx) -> floatHelperCall(ctx, 2, "fle"))
         .set(BuiltInTable.FEQ, (ctx) -> floatHelperCall(ctx, 2, "feq"))
 
-        //// Float to Int Conversion ////
+        //// Float Conversion ////
 
-        .set(BuiltInTable.FCVT,   (ctx) -> floatHelperCall(ctx, 2, "fcvt"))
-        .set(BuiltInTable.FCVTFS, (ctx) -> floatHelperCall(ctx, 2, "fcvtfs"))
-        .set(BuiltInTable.FCVTFU, (ctx) -> floatHelperCall(ctx, 2, "fcvtfu"))
-        .set(BuiltInTable.FCVTSF, (ctx) -> floatHelperCall(ctx, 2, "fcvtsf"))
-        .set(BuiltInTable.FCVTUF, (ctx) -> floatHelperCall(ctx, 2, "fcvtuf"))
+        .set(BuiltInTable.FCVT, BuiltInTcgLoweringExecutor::fcvtHelperCall)
 
         //// Float Classification ////
 
@@ -1326,6 +1324,10 @@ class BuiltInTcgLoweringExecutor {
   /**
    * Helper method to create a {@link BuiltInResult} from a helper call for a float built-in.
    *
+   * <p>The helper name is prefixed with an underscore-separated list of float-format names.
+   * The first float-format is taken from the first call argument type. The remaining
+   * float-formats are taken from the type parameters of the call.
+   *
    * @param ctx    The built-in lowering context.
    * @param argc   The number of arguments the float built-in takes.
    * @param name   The name of the helper call to generate.
@@ -1336,9 +1338,50 @@ class BuiltInTcgLoweringExecutor {
     return out(new TcgHelperCall(
         ctx.dest(), new NodeList<>(IntStream.range(0, argc).mapToObj(ctx::src).toList()), true,
         Stream.concat(
-            ctx.floatFormats().stream().map(FloatFormat::nameLower),
-            ctx.constIntArgs().stream().map(Object::toString)
-        ).collect(Collectors.joining("_")) + "_" + name
+            Stream.of(((FloatType) ctx.call.originalArgTypes().getFirst()).format()),
+            ctx.floatFormats().stream()
+        ).map(FloatFormat::nameLower).collect(Collectors.joining("_")) + "_" + name
+    ));
+  }
+
+  /**
+   * Helper method to create a {@link BuiltInResult} from a helper call for the float built-in
+   * {@code fcvt}.
+   *
+   * @param ctx The built-in lowering context.
+   * @return A {@link BuiltInResult} containing the helper call.
+   */
+  private static BuiltInResult fcvtHelperCall(BuiltInTcgLoweringExecutor.Context ctx) {
+    var name = "";
+    var inType = ctx.call.originalArgTypes().getFirst();
+    var outType = ctx.call.typeParam(0);
+
+    if (inType instanceof FloatType inFt && outType instanceof FloatType outFt) {
+      // float -> float
+      name = "%s_%s_fcvt".formatted(
+          inFt.format().nameLower(),
+          outFt.format().nameLower()
+      );
+    } else if (inType instanceof FloatType inFt) {
+      // float -> int
+      name = "%s_%s_fcvtf%s".formatted(
+          inFt.format().nameLower(),
+          outType.asDataType().bitWidth(),
+          outType instanceof UIntType ? "u" : "s"
+      );
+    } else if (outType instanceof FloatType outFt) {
+      // int -> float
+      name = "%s_%s_fcvt%sf".formatted(
+          outFt.format().nameLower(),
+          inType.asDataType().bitWidth(),
+          inType instanceof UIntType ? "u" : "s"
+      );
+    } else {
+      throw new IllegalStateException("Fcvt argument types are invalid");
+    }
+    return out(new TcgHelperCall(
+        ctx.dest(), new NodeList<>(IntStream.range(0, 2).mapToObj(ctx::src).toList()), true,
+        name
     ));
   }
 
@@ -1378,23 +1421,8 @@ class BuiltInTcgLoweringExecutor {
      * @return A list of the float formats.
      */
     private List<FloatFormat> floatFormats() {
-      return call.constArgs().stream()
-          .filter(Constant.FloatType.class::isInstance)
-          .map(c -> requireNonNull((Constant.FloatType) c).format())
-          .toList();
-    }
-
-    /**
-     * Retrieves the constant arguments that are integers. I.e. all {@link Constant.Value}
-     * passed via the angle brackets `VADL::builtin<...>()`.
-     *
-     * @return A list of the constant integer arguments.
-     */
-    private List<Integer> constIntArgs() {
-      return call.constArgs().stream()
-          .filter(Constant.Value.class::isInstance)
-          .map(c -> requireNonNull((Constant.Value) c).intValue())
-          .toList();
+      return call.typeParams().stream().filter(FloatType.class::isInstance)
+          .map(FloatType.class::cast).map(FloatType::format).toList();
     }
 
     /**

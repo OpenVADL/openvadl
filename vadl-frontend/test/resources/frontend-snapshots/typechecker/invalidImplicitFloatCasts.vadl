@@ -1,0 +1,76 @@
+[ IEEE : 32 ]
+float-type Float
+
+function b2f(a : Bits<32>) -> Float = a
+function i2f(a : SInt<32>) -> Float = a
+function u2f(a : UInt<32>) -> Float = a
+
+function f2b(a : Float) -> Bits<32> = a
+function f2i(a : Float) -> SInt<32> = a
+function f2u(a : Float) -> UInt<32> = a
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidImplicitFloatCasts.vadl:4:39
+//       │
+//     4 │ function b2f(a : Bits<32>) -> Float = a
+//       │                               ----- Return type defined here as `FloatType(IEEE32)`
+//       ⋮
+//     4 │ function b2f(a : Bits<32>) -> Float = a
+//       │                                       ^ Expected `FloatType(IEEE32)` but got `Bits<32>`
+//       │
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidImplicitFloatCasts.vadl:5:39
+//       │
+//     5 │ function i2f(a : SInt<32>) -> Float = a
+//       │                               ----- Return type defined here as `FloatType(IEEE32)`
+//       ⋮
+//     5 │ function i2f(a : SInt<32>) -> Float = a
+//       │                                       ^ Expected `FloatType(IEEE32)` but got `SInt<32>`
+//       │
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidImplicitFloatCasts.vadl:6:39
+//       │
+//     6 │ function u2f(a : UInt<32>) -> Float = a
+//       │                               ----- Return type defined here as `FloatType(IEEE32)`
+//       ⋮
+//     6 │ function u2f(a : UInt<32>) -> Float = a
+//       │                                       ^ Expected `FloatType(IEEE32)` but got `UInt<32>`
+//       │
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidImplicitFloatCasts.vadl:8:39
+//       │
+//     8 │ function f2b(a : Float) -> Bits<32> = a
+//       │                            -------- Return type defined here as `Bits<32>`
+//       ⋮
+//     8 │ function f2b(a : Float) -> Bits<32> = a
+//       │                                       ^ Expected `Bits<32>` but got `FloatType(IEEE32)`
+//       │
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidImplicitFloatCasts.vadl:9:39
+//       │
+//     9 │ function f2i(a : Float) -> SInt<32> = a
+//       │                            -------- Return type defined here as `SInt<32>`
+//       ⋮
+//     9 │ function f2i(a : Float) -> SInt<32> = a
+//       │                                       ^ Expected `SInt<32>` but got `FloatType(IEEE32)`
+//       │
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidImplicitFloatCasts.vadl:10:39
+//       │
+//    10 │ function f2u(a : Float) -> UInt<32> = a
+//       │                            -------- Return type defined here as `UInt<32>`
+//       ⋮
+//    10 │ function f2u(a : Float) -> UInt<32> = a
+//       │                                       ^ Expected `UInt<32>` but got `FloatType(IEEE32)`
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

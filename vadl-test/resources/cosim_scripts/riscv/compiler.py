@@ -50,9 +50,6 @@ def link(ld_cmd: str, linker_script: Path, obj_in: Path, elf_out: Path) -> None:
 def build_assembly(id: str, core: str) -> Path:
     asm_out = _tmp_file(id, f"asm-{id}.s")
 
-    # We load the tests into the RAM region at 0x40000000, because loading into the
-    # firmware region does not work, because aarch32/virt.vadl already has firmware.
-
     content = f"""
     .globl _start
     .section .text

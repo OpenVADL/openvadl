@@ -127,6 +127,7 @@ import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
+import vadl.types.FloatType;
 import vadl.types.GroupType;
 import vadl.types.OperationType;
 import vadl.types.Type;
@@ -1127,7 +1128,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(FloatTypeDefinition definition) {
     var identifier =
         new vadl.viam.Identifier(definition.viamId, definition.identifier().location());
-    return Optional.of(new FloatFormat(identifier, requireNonNull(definition.encoding)));
+    var format = new FloatFormat(identifier, requireNonNull(definition.encoding));
+    ((FloatType) definition.type()).setFormat(format);
+    return Optional.of(format);
   }
 
   @Override

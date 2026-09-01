@@ -1,0 +1,66 @@
+[ IEEE : 32 ]
+float-type Float
+
+function b2f(a : Bits<16>) -> Float = a as Float // cannot cast from smaller bits
+function i2f(a : SInt<32>) -> Float = a as Float // cannot cast int to float directly
+function u2f(a : UInt<32>) -> Float = a as Float // cannot cast int to float directly
+
+function f2b0(a : Float) -> Bits<16> = a as Bits<16> // cannot cast to smaller bits
+function f2b1(a : Float) -> Bits<64> = a as Bits<64> // cannot cast to larger bits
+function f2i (a : Float) -> SInt<32> = a as SInt<32> // cannot cast float to int directly
+function f2u (a : Float) -> UInt<32> = a as UInt<32> // cannot cast float to int directly
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid cast
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidExplicitFloatCasts.vadl:4:39
+//       │
+//     4 │ function b2f(a : Bits<16>) -> Float = a as Float // cannot cast from smaller bits
+//       │                                       ^^^^^^^^^^ Cannot cast `Bits<16>` to `FloatType(IEEE32)`.
+//       │
+//
+//  error: Invalid cast
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidExplicitFloatCasts.vadl:5:39
+//       │
+//     5 │ function i2f(a : SInt<32>) -> Float = a as Float // cannot cast int to float directly
+//       │                                       ^^^^^^^^^^ Cannot cast `SInt<32>` to `FloatType(IEEE32)`.
+//       │
+//
+//  error: Invalid cast
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidExplicitFloatCasts.vadl:6:39
+//       │
+//     6 │ function u2f(a : UInt<32>) -> Float = a as Float // cannot cast int to float directly
+//       │                                       ^^^^^^^^^^ Cannot cast `UInt<32>` to `FloatType(IEEE32)`.
+//       │
+//
+//  error: Invalid cast
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidExplicitFloatCasts.vadl:8:40
+//       │
+//     8 │ function f2b0(a : Float) -> Bits<16> = a as Bits<16> // cannot cast to smaller bits
+//       │                                        ^^^^^^^^^ Cannot cast `FloatType(IEEE32)` to `Bits<16>`.
+//       │
+//
+//  error: Invalid cast
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidExplicitFloatCasts.vadl:9:40
+//       │
+//     9 │ function f2b1(a : Float) -> Bits<64> = a as Bits<64> // cannot cast to larger bits
+//       │                                        ^^^^^^^^^ Cannot cast `FloatType(IEEE32)` to `Bits<64>`.
+//       │
+//
+//  error: Invalid cast
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidExplicitFloatCasts.vadl:10:40
+//       │
+//    10 │ function f2i (a : Float) -> SInt<32> = a as SInt<32> // cannot cast float to int directly
+//       │                                        ^^^^^^^^^ Cannot cast `FloatType(IEEE32)` to `SInt<32>`.
+//       │
+//
+//  error: Invalid cast
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidExplicitFloatCasts.vadl:11:40
+//       │
+//    11 │ function f2u (a : Float) -> UInt<32> = a as UInt<32> // cannot cast float to int directly
+//       │                                        ^^^^^^^^^ Cannot cast `FloatType(IEEE32)` to `UInt<32>`.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -48,7 +48,8 @@ public abstract class DataType extends Type {
     }
     if (other instanceof DataType otherDataType) {
       var sameLength = otherDataType.bitWidth() == bitWidth();
-      return sameLength && (other instanceof BitsType || other instanceof BoolType);
+      return sameLength && (other instanceof BitsType || other instanceof FloatType
+          || other instanceof BoolType);
     }
     return false;
   }

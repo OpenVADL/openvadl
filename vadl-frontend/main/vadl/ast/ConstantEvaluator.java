@@ -122,8 +122,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     });
   }
 
-  public ConstantValue evalBuiltin(BuiltInTable.BuiltIn builtin, List<ConstantValue> args,
-                                   WithLocation loc) {
+  public ConstantValue evalBuiltin(BuiltInTable.BuiltIn builtin, List<Type> typeParams,
+                                   List<ConstantValue> args, WithLocation loc) {
     return timingRecorder.withPassTiming("Constant Evaluation", () -> {
       if (args.size() == 1) {
         var innerVal = args.getFirst();
@@ -164,21 +164,10 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         }
       }
 
-      // NOTE: The semantics of a builtin function may depend on constant parameters. The built-in
-      // compute function does not account for these yet. Thus, constant-evaluating built-ins with
-      // constant parameters can not yet be done.
-      if (!builtin.signature().constArgTypeClass().isEmpty()) {
-        throw new EvaluationError(
-            "Built-in function `%s` cannot be constant evaluated (yet)."
-                .formatted(builtin.name()),
-            loc
-        );
-      }
-
       // NOTE: If you are seeing this issue, someone forgot to add the `compute` method for a
       // built-in function. Look to into BuiltInTable.
       var val = builtin
-          .compute(List.of(), args.stream().map(c -> (Constant) c.toViamConstant()).toList())
+          .compute(typeParams, args.stream().map(c -> (Constant) c.toViamConstant()).toList())
           .orElseThrow(() -> new EvaluationError(
               "Built-in function `%s` cannot be constant evaluated (yet).".formatted(
                   builtin.name()),
@@ -384,7 +373,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   public ConstantValue visit(BinaryExpr expr) {
     var builtin =
         AstUtils.getOperatorBuiltIn(expr.operator(), List.of(expr.left.type(), expr.right.type()));
-    return evalBuiltin(builtin, List.of(eval(expr.left), eval(expr.right)), expr);
+    return evalBuiltin(builtin, List.of(), List.of(eval(expr.left), eval(expr.right)), expr);
   }
 
   @Override
@@ -463,7 +452,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   @Override
   public ConstantValue visit(UnaryExpr expr) {
     var inner = eval(expr.operand);
-    return evalBuiltin(requireNonNull(expr.computedTarget), List.of(inner), expr);
+    return evalBuiltin(requireNonNull(expr.computedTarget), List.of(), List.of(inner), expr);
   }
 
   @Override
@@ -473,6 +462,13 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         !expr.args().isEmpty() ? expr.args().stream().flatMap(a -> a.values.stream()).toList() :
             new ArrayList<>();
     var argTypes = args.stream().map(Expr::type).toList();
+
+    var symbolArgs = expr.symbolArgs();
+    // the symbolArgs are replaced by TypeLiterals whose .type is set to the type
+    // they represent by the type checker
+    var typeParams = symbolArgs == null
+        ? List.<Type>of()
+        : symbolArgs.stream().map(tl -> requireNonNull(tl.type)).toList();
 
     @Nullable ConstantValue result = null;
 
@@ -485,7 +481,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
         throw new EvaluationError(
             "The constant evaluator cannot handle subcalls or indexing/slicing", expr);
       }
-      result = evalBuiltin(builtin, args.stream().map(this::eval).toList(), expr);
+      result = evalBuiltin(builtin, typeParams, args.stream().map(this::eval).toList(), expr);
     }
 
     // User Defined Functions

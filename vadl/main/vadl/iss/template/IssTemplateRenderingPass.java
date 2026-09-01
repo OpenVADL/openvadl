@@ -40,7 +40,10 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.types.BuiltInTable;
-import vadl.viam.Constant;
+import vadl.types.FloatType;
+import vadl.types.SIntType;
+import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.Endianness;
 import vadl.viam.Memory;
 import vadl.viam.Specification;
@@ -167,13 +170,21 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     return conf;
   }
 
-  private List<List<Object>> getFloatBuiltinConfigs(Set<List<Constant>> configs) {
-    return configs.stream().map(config -> config.stream().map(c -> switch (c) {
-      case Constant.FloatType ft -> Map.of(
+  private List<List<Object>> getFloatBuiltinConfigs(Set<List<Type>> configs) {
+    return configs.stream().map(config -> config.stream().map(type -> (Object) switch (type) {
+      case FloatType ft -> Map.of(
           "bit_size", ft.encoding().size,
-          "name", requireNonNull(ft.format()).nameLower()
+          "name", ft.format().nameLower(),
+          "type", "f"
       );
-      case Constant.Value v -> Integer.toString(v.intValue());
+      case UIntType ty -> Map.of(
+          "bit_size", Integer.toString(ty.bitWidth()),
+          "type", "u"
+      );
+      case SIntType ty -> Map.of(
+          "bit_size", Integer.toString(ty.bitWidth()),
+          "type", "s"
+      );
       default -> throw new IllegalStateException();
     }).toList()).toList();
   }

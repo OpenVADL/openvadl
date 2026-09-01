@@ -143,14 +143,6 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleFEQ(input);
     } else if (builtIn == BuiltInTable.FCVT) {
       handleFCVT(input);
-    } else if (builtIn == BuiltInTable.FCVTFS) {
-      handleFCVTFS(input);
-    } else if (builtIn == BuiltInTable.FCVTFU) {
-      handleFCVTFU(input);
-    } else if (builtIn == BuiltInTable.FCVTSF) {
-      handleFCVTSF(input);
-    } else if (builtIn == BuiltInTable.FCVTUF) {
-      handleFCVTUF(input);
     } else if (builtIn == BuiltInTable.FISINF) {
       handleFISINF(input);
     } else if (builtIn == BuiltInTable.FISZERO) {
@@ -284,14 +276,6 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
   void handleFEQ(T input);
 
   void handleFCVT(T input);
-
-  void handleFCVTFS(T input);
-
-  void handleFCVTFU(T input);
-
-  void handleFCVTSF(T input);
-
-  void handleFCVTUF(T input);
 
   void handleFISINF(T input);
 

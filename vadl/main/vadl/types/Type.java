@@ -120,20 +120,6 @@ public abstract class Type {
         .computeIfAbsent(bitWidth, k -> new UIntType(bitWidth));
   }
 
-  private static @Nullable FloatType floatType = null;
-
-  /**
-   * Retrieves the instance of FloatType.
-   *
-   * @return the FloatType object
-   */
-  public static FloatType floatType() {
-    if (floatType == null) {
-      floatType = new FloatType();
-    }
-    return floatType;
-  }
-
   /**
    * Returns a DummyType object.
    *
@@ -282,15 +268,15 @@ public abstract class Type {
   /**
    * Retrieves the generic relation type.
    *
-   * @param argTypes      the list of argument type classes
-   * @param constArgTypes the list of constant argument type classes
-   * @param returnType    the return type class
+   * @param argTypes        the list of argument type classes
+   * @param typeParamBounds the list of type parameter bounds
+   * @param returnType      the return type class
    * @return the RelationType instance
    */
   public static RelationType relation(List<Class<? extends Type>> argTypes,
-                                      List<Class<? extends Type>> constArgTypes,
+                                      List<Class<? extends Type>> typeParamBounds,
                                       Class<? extends Type> returnType) {
-    return relation(argTypes, constArgTypes, false, returnType);
+    return relation(argTypes, typeParamBounds, false, returnType);
   }
 
   /**
@@ -310,19 +296,19 @@ public abstract class Type {
   /**
    * Retrieves the generic relation type.
    *
-   * @param argTypes      the list of argument type classes
-   * @param constArgTypes the list of constant argument type classes
-   * @param hasVarArgs    the flag indicating if the last argument of kind varargs
-   * @param returnType    the return type class
+   * @param argTypes        the list of argument type classes
+   * @param typeParamBounds the list of type parameter bounds
+   * @param hasVarArgs      the flag indicating if the last argument of kind varargs
+   * @param returnType      the return type class
    * @return the RelationType instance
    */
   public static RelationType relation(List<Class<? extends Type>> argTypes,
-                                      List<Class<? extends Type>> constArgTypes,
+                                      List<Class<? extends Type>> typeParamBounds,
                                       boolean hasVarArgs,
                                       Class<? extends Type> returnType) {
-    var hashCode = Objects.hash(argTypes, constArgTypes, hasVarArgs, returnType);
+    var hashCode = Objects.hash(argTypes, typeParamBounds, hasVarArgs, returnType);
     return relationTypes.computeIfAbsent(hashCode, k ->
-        new RelationType(argTypes, constArgTypes, hasVarArgs, returnType));
+        new RelationType(argTypes, typeParamBounds, hasVarArgs, returnType));
   }
 
   /**
@@ -441,6 +427,10 @@ public abstract class Type {
       return Type.signedInt(bitWidth);
     } else if (typeClass == UIntType.class) {
       return Type.unsignedInt(bitWidth);
+    } else if (typeClass == FloatType.class) {
+      // Note: we can't actually create a new float type using a bit-width alone. But the
+      //       type-checker needs something to check type compatibility
+      return Type.bits(bitWidth);
     } else {
       return null;
     }

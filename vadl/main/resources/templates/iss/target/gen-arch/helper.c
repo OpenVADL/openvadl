@@ -136,11 +136,12 @@ void set_float_status(CPU[(${gen_arch_upper})]State *env, float_status *s) {
 [/][# th:each="c : ${float_builtins.flt}"]FLOAT_HELPER_CMP([(${c[0].bit_size})], [(${c[0].name})], flt, lt)
 [/][# th:each="c : ${float_builtins.fle}"]FLOAT_HELPER_CMP([(${c[0].bit_size})], [(${c[0].name})], fle, le)
 [/][# th:each="c : ${float_builtins.feq}"]FLOAT_HELPER_CMP([(${c[0].bit_size})], [(${c[0].name})], feq, eq_quiet)
-[/][# th:each="c : ${float_builtins.fcvt}"]FLOAT_HELPER_F2F([(${c[0].bit_size})], [(${c[0].name})], [(${c[1].bit_size})], [(${c[1].name})], fcvt)
-[/][# th:each="c : ${float_builtins.fcvtfs}"]FLOAT_HELPER_F2I([(${c[0].bit_size})], [(${c[0].name})], [(${c[1]})], int[(${c[1]})], fcvtfs)
-[/][# th:each="c : ${float_builtins.fcvtfu}"]FLOAT_HELPER_F2I([(${c[0].bit_size})], [(${c[0].name})], [(${c[1]})], uint[(${c[1]})], fcvtfu)
-[/][# th:each="c : ${float_builtins.fcvtsf}"]FLOAT_HELPER_I2F([(${c[0].bit_size})], [(${c[0].name})], [(${c[1]})], int[(${c[1]})], fcvtsf)
-[/][# th:each="c : ${float_builtins.fcvtuf}"]FLOAT_HELPER_I2F([(${c[0].bit_size})], [(${c[0].name})], [(${c[1]})], uint[(${c[1]})], fcvtuf)
+[/][# th:each="c : ${float_builtins.fcvt}"]
+[# th:if='${c[0].type == "f" && c[1].type == "f"}']FLOAT_HELPER_F2F([(${c[0].bit_size})], [(${c[0].name})], [(${c[1].bit_size})], [(${c[1].name})], fcvt)[/]
+[# th:if='${c[0].type == "f" && c[1].type == "s"}']FLOAT_HELPER_F2I([(${c[0].bit_size})], [(${c[0].name})], [(${c[1].bit_size})], int[(${c[1].bit_size})], fcvtfs)[/]
+[# th:if='${c[0].type == "f" && c[1].type == "u"}']FLOAT_HELPER_F2I([(${c[0].bit_size})], [(${c[0].name})], [(${c[1].bit_size})], uint[(${c[1].bit_size})], fcvtfu)[/]
+[# th:if='${c[0].type == "s" && c[1].type == "f"}']FLOAT_HELPER_I2F([(${c[1].bit_size})], [(${c[1].name})], [(${c[0].bit_size})], int[(${c[0].bit_size})], fcvtsf)[/]
+[# th:if='${c[0].type == "u" && c[1].type == "f"}']FLOAT_HELPER_I2F([(${c[1].bit_size})], [(${c[1].name})], [(${c[0].bit_size})], uint[(${c[0].bit_size})], fcvtuf)[/]
 [/][# th:each="c : ${float_builtins.fisinf}"]FLOAT_HELPER_CLASS([(${c[0].bit_size})], [(${c[0].name})], fisinf, is_infinity)
 [/][# th:each="c : ${float_builtins.fiszero}"]FLOAT_HELPER_CLASS([(${c[0].bit_size})], [(${c[0].name})], fiszero, is_zero)
 [/][# th:each="c : ${float_builtins.fisneg}"]FLOAT_HELPER_CLASS([(${c[0].bit_size})], [(${c[0].name})], fisneg, is_neg)

@@ -19,6 +19,7 @@ package vadl.ast;
 import java.math.BigInteger;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
+import vadl.types.FloatType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -91,6 +92,16 @@ public class ConstantType extends Type {
         return Type.signedInt(bitsWidth);
       }
       return Type.unsignedInt(bitsWidth);
+    }
+
+    if (target instanceof FloatType targetFloat) {
+      var bitsWidth = Math.max(targetFloat.bitWidth(), requiredBitWidth());
+
+      if (value.compareTo(BigInteger.ZERO) < 0) {
+        // Cannot pack into float is negative, closest is still SInt
+        return Type.signedInt(bitsWidth);
+      }
+      return Type.bits(bitsWidth);
     }
 
     if (target instanceof BitsType targetBits) {

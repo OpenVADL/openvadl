@@ -251,22 +251,6 @@ public interface VadlBuiltInEmptyNoStatusDispatcher<T> extends VadlBuiltInNoStat
   }
 
   @Override
-  default void handleFCVTFS(T input) {
-  }
-
-  @Override
-  default void handleFCVTFU(T input) {
-  }
-
-  @Override
-  default void handleFCVTSF(T input) {
-  }
-
-  @Override
-  default void handleFCVTUF(T input) {
-  }
-
-  @Override
   default void handleFISINF(T input) {
   }
 

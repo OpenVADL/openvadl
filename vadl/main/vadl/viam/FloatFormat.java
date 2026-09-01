@@ -25,7 +25,7 @@ import vadl.types.Type;
  * {@link FloatEncoding}, but will contain other things like NaN encoding and handling
  * in the future.
  */
-public class FloatFormat extends Definition implements DefProp.WithType {
+public class FloatFormat extends Definition {
 
   private final FloatEncoding encoding;
 
@@ -47,11 +47,6 @@ public class FloatFormat extends Definition implements DefProp.WithType {
    */
   public String nameLower() {
     return simpleName().toLowerCase();
-  }
-
-  @Override
-  public Type type() {
-    return Type.floatType();
   }
 
   @Override

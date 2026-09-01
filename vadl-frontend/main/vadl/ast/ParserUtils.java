@@ -85,6 +85,7 @@ import vadl.ast.nodes.SequenceCallExpr;
 import vadl.ast.nodes.Statement;
 import vadl.ast.nodes.StatementList;
 import vadl.ast.nodes.StringLiteral;
+import vadl.ast.nodes.SymbolExpr;
 import vadl.ast.nodes.SyntaxType;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -1043,6 +1044,46 @@ class ParserUtils {
       }
     }
     return expandedCalls;
+  }
+
+  /**
+   * This is a helper function for parsing symbol expressions. The Coco/R rule
+   * {@code symbolOrBinaryExpression} can return either a binary less-than expression
+   * or a symbol expression. Which one is picked depends on whether a `>` is found at the
+   * end. This helper function takes a list of parsed terms and decides which expression
+   * to return based on whether certain tokens are found py the parser.
+   *
+   * @param path   The id or path at the start of the expression
+   * @param terms  The list parsed terms after the id or path
+   * @param isLtOp Should be `true` if a `<` and no `>` was parsed
+   * @param ltLoc  The location of the last `<`, or `null` of none was parsed
+   * @param gtLoc  The location of the last `>`, or `null` of none was parsed
+   * @return       The right expression (either binary less-than or a symbol expression)
+   */
+  static Expr createSymExprOrBinOp(IsId path, List<Expr> terms, boolean isLtOp,
+                                   SourceLocation ltLoc, SourceLocation gtLoc) {
+    if (ltLoc == null) {
+      // we parsed id::path
+      return (Expr) path;
+    }
+    if (gtLoc == null) {
+      // we parsed id::path < term
+      return new BinaryExpr(
+          (Expr) path,
+          new BinOp(Operator.Less, ltLoc),
+          terms.getLast()
+      );
+    }
+    if (!isLtOp) {
+      // we parsed id::path<term><term>
+      return new SymbolExpr(path, terms, path.location().join(gtLoc));
+    }
+    // we parsed id::path<term> < term
+    return new BinaryExpr(
+        new SymbolExpr(path, terms.subList(0, terms.size() - 1), path.location().join(gtLoc)),
+        new BinOp(Operator.Less, ltLoc),
+        terms.getLast()
+    );
   }
 
   static void addDef(List<Definition> definitions, Definition def) {

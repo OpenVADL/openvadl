@@ -1,7 +1,9 @@
 // INCLUDE-AST-DUMP
 
+using Ty = Bits<32>
+
 instruction set architecture TEST = {
-  function a() -> Bits<32> = VADL::add::<0, 1>(0, 1)
+  function a() -> Bits<32> = VADL::add<Ty><Ty>(0, 1)
 }
 
 
@@ -12,6 +14,10 @@ instruction set architecture TEST = {
 //
 //  Dumped AST:
 //
+//    UsingDefinition name: "Ty"
+//    . TypeLiteral type: Bits<32>
+//    . : Identifier name: "Bits" type: null
+//    . : IntegerLiteral literal: 32 (32) type: Const<32>
 //    InstructionSetDefinition name: "TEST"
 //    . FunctionDefinition name: "a"
 //    . : TypeLiteral type: Bits<32>
@@ -21,8 +27,10 @@ instruction set architecture TEST = {
 //    . : ' CallIndexExpr type: Const<1>
 //    . : ' | SymbolExpr type: null
 //    . : ' | . IdentifierPath name: "VADL::add" type: null
-//    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
-//    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>
+//    . : ' | . TypeLiteral type: Bits<32>
+//    . : ' | . : Identifier name: "Ty" type: null
+//    . : ' | . TypeLiteral type: Bits<32>
+//    . : ' | . : Identifier name: "Ty" type: null
 //    . : ' | ArgsIndices
 //    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | . IntegerLiteral literal: 1 (1) type: Const<1>

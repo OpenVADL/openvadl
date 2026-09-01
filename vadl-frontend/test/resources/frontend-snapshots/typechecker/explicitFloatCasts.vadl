@@ -1,0 +1,45 @@
+// INCLUDE-AST-DUMP
+
+[ IEEE : 32 ]
+float-type Float
+
+function b2f0(a : Bits<32>) -> Float = a as Float
+function b2f1(a : Bits<64>) -> Float = a as Float
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Dumped AST:
+//
+//    FloatTypeDefinition name: "Float"
+//    . AnnotationDefinition
+//    . : Identifier name: "IEEE" type: null
+//    . : IntegerLiteral literal: 32 (32) type: Const<32>
+//    FunctionDefinition name: "b2f0"
+//    . Parameter name: "a"
+//    . : TypeLiteral type: Bits<32>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 32 (32) type: Const<32>
+//    . TypeLiteral type: FloatType(Float)
+//    . : Identifier name: "Float" type: null
+//    . CastExpr type: FloatType(Float)
+//    . : Identifier name: "a" type: Bits<32>
+//    . : TypeLiteral type: FloatType(Float)
+//    . : ' Identifier name: "Float" type: null
+//    FunctionDefinition name: "b2f1"
+//    . Parameter name: "a"
+//    . : TypeLiteral type: Bits<64>
+//    . : ' Identifier name: "Bits" type: null
+//    . : ' IntegerLiteral literal: 64 (64) type: Const<64>
+//    . TypeLiteral type: FloatType(Float)
+//    . : Identifier name: "Float" type: null
+//    . CastExpr type: FloatType(Float)
+//    . : Identifier name: "a" type: Bits<64>
+//    . : TypeLiteral type: FloatType(Float)
+//    . : ' Identifier name: "Float" type: null
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

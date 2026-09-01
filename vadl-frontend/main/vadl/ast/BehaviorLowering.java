@@ -912,11 +912,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new ConstantNode(value);
     }
 
-    if (computedTarget instanceof FloatTypeDefinition floatType) {
-      var format = (FloatFormat) viamLowering.fetch(floatType).orElseThrow();
-      return new ConstantNode(new Constant.FloatType(format));
-    }
-
     // Enum field
     if (computedTarget instanceof EnumerationDefinition.Entry enumField) {
       // Inline the value of the enum
@@ -1381,26 +1376,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new ReadStageOutputNode(output);
   }
 
-  private Constant visitConstArg(Expr expr) {
-    Node origin = null;
-    if (expr instanceof Identifier identifier) {
-      origin = requireNonNull(identifier.target());
-    } else if (expr instanceof IdentifierPath path) {
-      origin = requireNonNull(path.target());
-    }
-
-    // TODO: the constant evaluator can only evaluate integers currently. Once other stuff like
-    //       strings and float-types are supported, we do not need this function anymore and can
-    //       directly call the constant evaluator.
-    //       !!! There is a similar method in TypeChecker
-    if (origin instanceof FloatTypeDefinition floatType) {
-      var format = (FloatFormat) viamLowering.fetch(floatType).orElseThrow();
-      return new Constant.FloatType(format);
-    }
-
-    return constantEvaluator.eval(expr).toViamConstant();
-  }
-
   @Override
   public ExpressionNode visit(CallIndexExpr expr) {
 
@@ -1412,13 +1387,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var symbolArgs = expr.symbolArgs();
 
-    var constArgs = symbolArgs != null
-        ? symbolArgs.stream().map(this::visitConstArg).toList()
-        : List.<Constant>of();
-
     var argGroups = expr.args();
-    final var args = new NodeList<ExpressionNode>(AstUtils.argumentCount(argGroups));
-    AstUtils.forEachArgument(argGroups, arg -> args.add(this.fetch(arg)));
+    var argCount = AstUtils.argumentCount(argGroups);
+    final var originalArgTypes = new ArrayList<Type>(argCount);
+    final var args = new NodeList<ExpressionNode>(argCount);
+    AstUtils.forEachArgument(argGroups, arg -> {
+      originalArgTypes.add(arg.type());
+      args.add(this.fetch(arg));
+    });
     var typeBeforeSlice = getViamType(expr.typeBeforeSlice());
 
     ExpressionNode exprBeforeSlice;
@@ -1428,7 +1404,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, args, typeBeforeSlice);
       } else {
-        exprBeforeSlice = new BuiltInCall(expr.computedBuiltIn, constArgs, args, typeBeforeSlice);
+        // the symbolArgs are replaced by TypeLiterals whose .type is set to the type
+        // they represent by the type checker
+        var typeParams = symbolArgs == null
+            ? List.<Type>of()
+            : symbolArgs.stream().map(tl -> getViamType(requireNonNull(tl.type))).toList();
+        exprBeforeSlice = new BuiltInCall(
+            expr.computedBuiltIn, typeParams, originalArgTypes, args, typeBeforeSlice);
       }
     } else {
       exprBeforeSlice = switch (expr.computedTarget()) {

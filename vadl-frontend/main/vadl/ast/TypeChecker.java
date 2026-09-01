@@ -181,6 +181,7 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.FetchResultType;
 import vadl.types.FloatStatusType;
+import vadl.types.FloatType;
 import vadl.types.GroupType;
 import vadl.types.InstructionType;
 import vadl.types.MicroArchitectureType;
@@ -671,6 +672,10 @@ public class TypeChecker
       if (to instanceof TensorType toTensor) {
         return toTensor.flattenBitsType().bitWidth() == fromBits.bitWidth();
       }
+      if (to instanceof FloatType toFloat) {
+        // Bits can only be truncated to float
+        return from.getClass() == BitsType.class && toFloat.bitWidth() <= fromBits.bitWidth();
+      }
       return to instanceof BitsType || to instanceof BoolType;
     }
 
@@ -680,6 +685,11 @@ public class TypeChecker
 
     if (from instanceof BoolType) {
       return to instanceof BoolType || to instanceof BitsType;
+    }
+
+    if (from instanceof FloatType fromFloat) {
+      // Float can only be cast to bits of same length
+      return to.getClass() == BitsType.class && ((BitsType) to).bitWidth() == fromFloat.bitWidth();
     }
 
 
@@ -942,24 +952,22 @@ public class TypeChecker
 
   /// A tiny custom cache for built-in function type checking.
   private static class BuiltInCheckCache {
-    private Map<BuiltInTable.BuiltIn, Map<List<Constant>, Map<List<Type>, BuiltInCheckResult>>>
+    private Map<BuiltInTable.BuiltIn, Map<List<Type>, BuiltInCheckResult>>
         store = new HashMap<>();
 
     @Nullable
-    private BuiltInCheckResult get(BuiltInTable.BuiltIn builtIn, List<Constant> constArgs,
-                                   List<Type> argTypes) {
-      // unwrap the maps and propagate `null`
-      return Optional.ofNullable(store.get(builtIn))
-          .map(inner -> inner.get(constArgs))
-          .map(inner -> inner.get(argTypes))
-          .orElse(null);
+    private BuiltInCheckResult get(BuiltInTable.BuiltIn builtIn, List<Type> argTypes) {
+      var inner = store.get(builtIn);
+      if (inner == null) {
+        return null;
+      }
+      return inner.get(argTypes);
     }
 
-    private void put(BuiltInTable.BuiltIn builtIn, List<Constant> constArgs, List<Type> argTypes,
+    private void put(BuiltInTable.BuiltIn builtIn, List<Type> argTypes,
                      BuiltInCheckResult result) {
       var inner = store.computeIfAbsent(builtIn, k -> new HashMap<>());
-      var innerInner = inner.computeIfAbsent(constArgs, k -> new HashMap<>());
-      innerInner.put(argTypes, result);
+      inner.put(argTypes, result);
     }
   }
 
@@ -969,19 +977,19 @@ public class TypeChecker
   /// Check if the built-in function call, but doesn't care which kind of expression it arises from
   /// binary expressions, unary expressions or direct calls.
   /// The passed arguments have to be already checked!
-  private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Expr> constArgs,
+  private BuiltInCheckResult checkBuiltin(BuiltInTable.BuiltIn builtIn, List<Type> typeParams,
                                           List<Expr> args, WithLocation location) {
-    List<Type> argTypes = new ArrayList<>(args.size());
+    // perform lookup using combined list of type params and argument types
+    List<Type> argTypes = new ArrayList<>(typeParams);
     for (int i = 0; i < args.size(); i++) {
       argTypes.add(args.get(i).type());
     }
-    var constArgValues = constArgs.stream().map(this::evalConstArg).toList();
-    var cached = builtInCheckCache.get(builtIn, constArgValues, argTypes);
+    var cached = builtInCheckCache.get(builtIn, argTypes);
     if (cached != null) {
       return cached;
     }
 
-    var result = unCachedCheckBuiltin(builtIn, constArgValues, args, location);
+    var result = unCachedCheckBuiltin(builtIn, typeParams, args, location);
 
     // We cannot cache if the result is a constant but not all input types were also constant.
     // This is quite rare but here we simply cannot determine the result type simply based on the
@@ -990,12 +998,12 @@ public class TypeChecker
       return result;
     }
 
-    builtInCheckCache.put(builtIn, constArgValues, argTypes, result);
+    builtInCheckCache.put(builtIn, argTypes, result);
     return result;
   }
 
   private BuiltInCheckResult unCachedCheckBuiltin(BuiltInTable.BuiltIn builtIn,
-                                                  List<Constant> constArgs, List<Expr> args,
+                                                  List<Type> typeParams, List<Expr> args,
                                                   WithLocation location) {
     int minArgCount = builtIn.argTypeClasses().size();
     if (!(args.size() == minArgCount
@@ -1017,9 +1025,9 @@ public class TypeChecker
             .build());
       }
 
-      if (args.get(0).type() instanceof ConstantType) {
-        var type = constantEvaluator.evalBuiltin(builtIn,
-            args.stream().map(a -> constantEvaluator.eval(a)).toList(), location).type();
+      if (args.getFirst().type() instanceof ConstantType) {
+        var type = constantEvaluator.evalBuiltin(builtIn, typeParams,
+            args.stream().map(constantEvaluator::eval).toList(), location).type();
         return new BuiltInCheckResult(null, type);
       }
 
@@ -1160,8 +1168,8 @@ public class TypeChecker
           }
 
           if (constantEvaluator.isConstant(right)) {
-            var result = constantEvaluator.evalBuiltin(builtIn,
-                List.of(left, right).stream().map(a -> constantEvaluator.eval(a)).toList(),
+            var result = constantEvaluator.evalBuiltin(builtIn, typeParams,
+                Stream.of(left, right).map(constantEvaluator::eval).toList(),
                 location);
             return new BuiltInCheckResult(List.of(left.type(), right.type()), result.type());
           }
@@ -1184,8 +1192,8 @@ public class TypeChecker
 
       // Const types are a special case
       if (left.type() instanceof ConstantType && right.type() instanceof ConstantType) {
-        var result = constantEvaluator.evalBuiltin(builtIn,
-            List.of(left, right).stream().map(a -> constantEvaluator.eval(a)).toList(), location);
+        var result = constantEvaluator.evalBuiltin(builtIn, typeParams,
+            Stream.of(left, right).map(constantEvaluator::eval).toList(), location);
         return new BuiltInCheckResult(List.of(left.type(), right.type()), result.type());
       }
 
@@ -1281,7 +1289,8 @@ public class TypeChecker
     var areAllConst = argTypes.stream().allMatch(ConstantType.class::isInstance);
     if (areAllConst) {
       var type = constantEvaluator
-          .evalBuiltin(builtIn, args.stream().map(constantEvaluator::eval).toList(), location)
+          .evalBuiltin(builtIn, typeParams,
+              args.stream().map(constantEvaluator::eval).toList(), location)
           .type();
       return new BuiltInCheckResult(null, type);
     }
@@ -1302,12 +1311,11 @@ public class TypeChecker
     var originalArgTypes = argTypes;
     argTypes = args.stream().map(Expr::type).toList();
 
-    if (!builtIn.takes(constArgs, argTypes)) {
+    if (!builtIn.takes(typeParams, argTypes)) {
       // FIXME: Further improve these error messages.
-      var calledParamsAndTypes = String.join(", ", Stream.concat(
-          constArgs.stream().map(Constant::toString),
-          argTypes.stream().map(Type::toString)
-      ).toList());
+      var calledParamsAndTypes = String.join(", ",
+          Stream.concat(typeParams.stream(), argTypes.stream()).map(Type::toString).toList()
+      );
       var areSomeConst = originalArgTypes.stream().anyMatch(ConstantType.class::isInstance);
       addErrorAndStopChecking(
           error("Type Mismatch", location)
@@ -1318,32 +1326,9 @@ public class TypeChecker
               .build());
     }
 
-    builtIn.check(constArgs, argTypes, location).ifPresent(this::addErrorAndContinueChecking);
+    builtIn.check(typeParams, argTypes, location).ifPresent(this::addErrorAndContinueChecking);
 
-    return new BuiltInCheckResult(argTypes, builtIn.returns(constArgs, argTypes));
-  }
-
-  private Constant evalConstArg(Expr expr) {
-    Node origin = null;
-    String name = null;
-    if (expr instanceof Identifier identifier) {
-      origin = requireNonNull(identifier.target());
-      name = identifier.name;
-    } else if (expr instanceof IdentifierPath path) {
-      origin = requireNonNull(path.target());
-      name = path.toString();
-    }
-
-    // TODO: the constant evaluator can only evaluate integers currently. Once other stuff like
-    //       strings and float-types are supported, we do not need this function anymore and can
-    //       directly call the constant evaluator.
-    //       !!! There is a similar method in BehaviorLowering
-    if (origin instanceof FloatTypeDefinition floatType) {
-      check(floatType);
-      return new Constant.FloatType(requireNonNull(floatType.encoding), requireNonNull(name));
-    }
-
-    return constantEvaluator.eval(expr).toViamConstant();
+    return new BuiltInCheckResult(argTypes, builtIn.returns(typeParams, argTypes));
   }
 
   @Override
@@ -3796,7 +3781,9 @@ public class TypeChecker
 
     // 1. Check whether the base exists.
     var customTarget = expr.target();
-    if (!(customTarget instanceof UsingDefinition) && !(customTarget instanceof FormatDefinition)) {
+    if (!(customTarget instanceof UsingDefinition)
+        && !(customTarget instanceof FormatDefinition)
+        && !(customTarget instanceof FloatTypeDefinition)) {
       customTarget = null;
     }
 
@@ -3890,6 +3877,10 @@ public class TypeChecker
       case FormatDefinition formatDef -> {
         check(formatDef);
         yield new FormatType(formatDef);
+      }
+      case FloatTypeDefinition floatTypeDef -> {
+        check(floatTypeDef);
+        yield floatTypeDef.type();
       }
       default -> throw new IllegalStateException("Unexpected value: " + customTarget);
     };
@@ -4431,8 +4422,38 @@ public class TypeChecker
     List<Expr> args =
         !expr.argsIndices.isEmpty() ? expr.argsIndices.getFirst().values : new ArrayList<>();
     var symbolArgs = expr.symbolArgs();
-    var constArgs = symbolArgs == null ? List.<Expr>of() : symbolArgs;
-    checkExpressions(constArgs);
+    var typeParams = new ArrayList<Type>();
+
+    if (symbolArgs != null) {
+      // Note: SymbolExpr does not take type literals in its pointy brackets, it only takes terms.
+      //       Therefore, this hack coverts to a type literal.
+      var typeLiterals = new ArrayList<Expr>();
+      for (var arg : symbolArgs) {
+        var typeLiteral = switch (arg) {
+          case Identifier id -> new TypeLiteral(id, List.of(), id.location());
+          case IdentifierPath id -> new TypeLiteral(id, List.of(), id.location());
+          case TypeLiteral tl -> tl;
+          default -> throw addErrorAndStopChecking(error("Invalid type parameter", arg)
+              .description("Type parameter must be an identifier or identifier path")
+              .help("Try declaring the type with `using` or `float-type`")
+              .build());
+        };
+        typeLiteral.symbolTable = arg.symbolTable;
+        typeLiterals.add(typeLiteral);
+      }
+      typeLiterals.forEach(lit -> {
+        var type = parseTypeLiteral((TypeLiteral) lit, null);
+        lit.type = type;
+        typeParams.add(type);
+      });
+      if (expr.target instanceof SymbolExpr symEx) {
+        // Replace with the type literals here, so we can get the type during lowering
+        symEx.symbolArgs = typeLiterals;
+      } else {
+        throw new IllegalStateException("Builtin call with symbol args is no symbol expression");
+      }
+    }
+
     var argTypes = checkExpressions(args);
     var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
 
@@ -4445,7 +4466,7 @@ public class TypeChecker
 
     expr.computedBuiltIn = builtin;
 
-    var checkResult = checkBuiltin(builtin, constArgs, args, expr);
+    var checkResult = checkBuiltin(builtin, typeParams, args, expr);
     if (checkResult.castedArgTypes != null) {
       expr.replaceArgsFor(0, checkResult.applyCastToArgs(args));
     }
@@ -4591,7 +4612,8 @@ public class TypeChecker
         throw addErrorAndStopChecking(err.build());
       }
       var targetSizeExpr = targetSymbolArgs.getFirst();
-      if (!(expr.typeBeforeSlice() instanceof BitsType exprType)) {
+      if (!(expr.typeBeforeSlice() instanceof BitsType exprType)
+          || expr.typeBeforeSlice() instanceof FloatType) {
         throw addErrorAndStopChecking(error("Invalid scaling type", targetSizeExpr)
             .locationDescription(targetSizeExpr, "Result type `%s` cannot be scaled.",
                 expr.typeBeforeSlice())

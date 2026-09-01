@@ -439,9 +439,10 @@ function cto( a : Bits<N> ) -> UInt<N> // counting trailing ones
 
 ## Float Operations
 
-Listing \r{basic_float_operations} lists built-in float operations. They must be parametrized with
-float type(s), which define the float format to operate with. Listing \r{lst_float_type} shows how this
-can be done to convert between different float formats and from float to integer.
+Listing \r{basic_float_operations} lists built-in float operations. The semantics of the operations are defined
+by the float type(s) of the operand(s). Some operations, such as float conversion, must be parametrized further with
+type parameters. Listing \r{lst_float_type} shows how this can be done to convert between different float formats and
+from float to integer.
 
 ### IEEE Float Type
 
@@ -459,9 +460,11 @@ In the future, this will be configurable.
 
 ~~~{.vadl}
 [ IEEE : 32 ]
-float-type binary32
+float-type Binary32
 [ IEEE : 64 ]
-float-type binary64
+float-type Binary64
+
+using SInt32 = SInt<32>
  
 instruction set architecture test = {
 register X : Bits<32>   // 32-bit integer register
@@ -471,9 +474,9 @@ register F64 : Bits<64> // 64-bit float register
  
 format F : Bits<8> = {opcode : Bits<8>}
 instruction instr1 : F =
-    F32 := VADL::fcvt::<binary64, binary32>(F64, 0b000) // 64-bit float to 32-bit flaot conversion
+    F32 := VADL::fcvt<Binary32>(F64 as Binary64, 0b000) // 64-bit float to 32-bit float conversion
 instruction instr2 : F =
-    X := VADL::fcvtfs::<binary32, 32>(F32, 0b000)       // 32-bit float to 32-bit signed int conversion
+    X := VADL::fcvt<SInt32>(F32 as Binary32, 0b000)     // 32-bit float to 32-bit signed int conversion
 }
 ~~~
 
@@ -536,44 +539,40 @@ format F : Bits<8> =
 
 ~~~{.vadl}
 // arithmetic
-function fsqrt::< t : FloatType >( a : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
-function fadd::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
-function fsub::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
-function fmul::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
-function fdiv::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fsqrt( a : FloatType, rm : Bits<3> ) -> FloatType
+function fadd ( a : FloatType, b : FloatType, rm : Bits<3> ) -> FloatType
+function fsub ( a : FloatType, b : FloatType, rm : Bits<3> ) -> FloatType
+function fmul ( a : FloatType, b : FloatType, rm : Bits<3> ) -> FloatType
+function fdiv ( a : FloatType, b : FloatType, rm : Bits<3> ) -> FloatType
 
 // fused multiply-add operations
 // (a * b) + c
-function fmadd ::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fmadd ( a : FloatType, b : FloatType, c : FloatType, rm : Bits<3> ) -> FloatType
 // (a * b) - c
-function fmsub ::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fmsub ( a : FloatType, b : FloatType, c : FloatType, rm : Bits<3> ) -> FloatType
 // -(a * b) - c
-function fnmadd::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fnmadd( a : FloatType, b : FloatType, c : FloatType, rm : Bits<3> ) -> FloatType
 // -(a * b) + c
-function fnmsub::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size>, c : Bits<t.size>, rm : Bits<3> ) -> Bits<t.size>
+function fnmsub( a : FloatType, b : FloatType, c : FloatType, rm : Bits<3> ) -> FloatType
 
-function fmin::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bits<t.size>
-function fmax::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bits<t.size>
+function fmin( a : FloatType, b : FloatType ) -> FloatType
+function fmax( a : FloatType, b : FloatType ) -> FloatType
 
 // comparison
-function flt::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool // a < b
-function fle::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool // a <= b
-function feq::< t : FloatType >( a : Bits<t.size>, b : Bits<t.size> ) -> Bool // a == b
+function flt( a : FloatType, b : FloatType ) -> Bool // a < b
+function fle( a : FloatType, b : FloatType ) -> Bool // a <= b
+function feq( a : FloatType, b : FloatType ) -> Bool // a == b
 
 // conversion
-function fcvt::< t : FloatType, u : FloatType >( a : Bits<t.size>, rm : Bits<3> ) -> Bits<u.type>
-function fcvtfs::< t : FloatType, s : UInt >( a : Bits<t.size>, rm : Bits<3> ) -> SInt<s>
-function fcvtfu::< t : FloatType, s : UInt >( a : Bits<t.size>, rm : Bits<3> ) -> UInt<s>
-function fcvtsf::< t : FloatType >( a : SInt<N>, rm : Bits<3> ) -> Bits<t.size>
-function fcvtuf::< t : FloatType >( a : UInt<N>, rm : Bits<3> ) -> Bits<t.size>
+function fcvt< T : FloatType | SInt<N> | UInt<N> >( a : FloatType | SInt<N> | UInt<N>, rm : Bits<3> ) -> T }
 
 // classification
-function fisinf   ::< t : FloatType >( a : Bits<t.size> ) -> Bool // a is +/- inf
-function fiszero  ::< t : FloatType >( a : Bits<t.size> ) -> Bool // a == 0
-function fisneg   ::< t : FloatType >( a : Bits<t.size> ) -> Bool // sign-bit of a is set
-function fisdenorm::< t : FloatType >( a : Bits<t.size> ) -> Bool // a is denormal
-function fissnan  ::< t : FloatType >( a : Bits<t.size> ) -> Bool // a is sNaN
-function fisqnan  ::< t : FloatType >( a : Bits<t.size> ) -> Bool // a is qNaN
+function fisinf   ( a : FloatType ) -> Bool // a is +/- inf
+function fiszero  ( a : FloatType ) -> Bool // a == 0
+function fisneg   ( a : FloatType ) -> Bool // sign-bit of a is set
+function fisdenorm( a : FloatType ) -> Bool // a is denormal
+function fissnan  ( a : FloatType ) -> Bool // a is sNaN
+function fisqnan  ( a : FloatType ) -> Bool // a is qNaN
 ~~~
 
 \endlisting

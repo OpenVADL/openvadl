@@ -49,7 +49,7 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
-import vadl.types.FloatEncoding;
+import vadl.types.FloatType;
 import vadl.types.SIntType;
 import vadl.types.StructType;
 import vadl.types.Type;
@@ -162,6 +162,17 @@ public abstract class Constant {
         // hard code boolean value
         var val = integer.compareTo(BigInteger.ZERO) == 0 ? integer : BigInteger.ONE;
         return new Value(val, type);
+      } else if (type instanceof FloatType floatType) {
+        if (integer.signum() < 0) {
+          throw new ViamError("Negative value %s does not fit in type %s".formatted(
+              integer.toString(16), floatType));
+        }
+        if (integer.bitLength() > floatType.bitWidth()) {
+          throw new ViamError("Value 0x%s does not fit in type %s".formatted(integer.toString(16),
+              floatType));
+        }
+        var value = twosComplement(integer, type.bitWidth());
+        return new Value(value, type);
       } else if (type instanceof BitsType bitsType) {
         if (bitsType.getClass() == BitsType.class) {
           // for bitsType, it must just fit into the bit width, but it has no
@@ -1551,82 +1562,6 @@ public abstract class Constant {
         return get(OVERFLOW, Value.class);
       }
 
-    }
-  }
-
-  /**
-   * Represents a constant float-type.
-   *
-   * <p>It stores a reference to the {@link FloatFormat}.
-   */
-  public static class FloatType extends Constant {
-
-    @Nullable
-    private final FloatFormat format;
-
-    private final FloatEncoding encoding;
-    private final String name;
-
-    /**
-     * Constructs a float-type constant from a float format definition.
-     *
-     * @param format The float format definition.
-     */
-    public FloatType(FloatFormat format) {
-      super(Type.floatType());
-      this.format = format;
-      // the type-checker checks that float-type definitions have an encoding
-      this.encoding = requireNonNull(format.encoding());
-      this.name = format.simpleName();
-    }
-
-    /**
-     * Constructs a dummy float-type constant from a float format encoding. This is used by
-     * the type checker when the full float format definition is not yet available.
-     *
-     * @param encoding The float format encoding.
-     * @param name     The name of the float format.
-     */
-    public FloatType(FloatEncoding encoding, String name) {
-      super(Type.floatType());
-      this.format = null;
-      this.encoding = encoding;
-      this.name = name;
-    }
-
-    @Nullable
-    public FloatFormat format() {
-      return format;
-    }
-
-    public FloatEncoding encoding() {
-      return encoding;
-    }
-
-    @Override
-    public java.lang.String toString() {
-      return name + ": " + type().toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      if (!super.equals(o)) {
-        return false;
-      }
-      FloatType floatType = (FloatType) o;
-      return Objects.equals(format, floatType.format) && Objects.equals(encoding,
-          floatType.encoding) && Objects.equals(name, floatType.name);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(super.hashCode(), format, encoding, name);
     }
   }
 

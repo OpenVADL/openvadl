@@ -140,6 +140,10 @@ public class ExprTest {
           constant vectorCmpLhs = MEM<3> < a
           constant vectorCmpRhs = a < MEM<3>
           constant vectorCmpBoth = MEM<9> < MEM<3>
+          constant typeParam = VADL::add<4><2>
+          constant typeParamCmpLhs = VADL::add<4><2> < a
+          constant typeParamCmpRhs = a < VADL::add<4><2>
+          constant typeParamCmpBoth = VADL::add<1><2> < VADL::add<4><2>
         }
         """;
 

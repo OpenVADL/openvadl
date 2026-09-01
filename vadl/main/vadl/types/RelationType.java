@@ -28,15 +28,15 @@ import java.util.stream.Collectors;
 public class RelationType extends Type {
 
   private final List<Class<? extends Type>> argTypeClass;
-  private final List<Class<? extends Type>> constArgTypeClass;
+  private final List<Class<? extends Type>> typeParamBounds;
   private final boolean hasVarArgs;
   private final Class<? extends Type> resultTypeClass;
 
   protected RelationType(List<Class<? extends Type>> argTypes,
-                         List<Class<? extends Type>> constArgTypeClass, boolean hasVarArgs,
+                         List<Class<? extends Type>> typeParamBounds, boolean hasVarArgs,
                          Class<? extends Type> resultType) {
     this.argTypeClass = argTypes;
-    this.constArgTypeClass = constArgTypeClass;
+    this.typeParamBounds = typeParamBounds;
     this.hasVarArgs = hasVarArgs;
     this.resultTypeClass = resultType;
   }
@@ -45,8 +45,8 @@ public class RelationType extends Type {
     return argTypeClass;
   }
 
-  public List<Class<? extends Type>> constArgTypeClass() {
-    return constArgTypeClass;
+  public List<Class<? extends Type>> typeParamBounds() {
+    return typeParamBounds;
   }
 
   public boolean hasVarArgs() {
@@ -60,11 +60,9 @@ public class RelationType extends Type {
   @Override
   public String name() {
     var sb = new StringBuilder();
-    if (!constArgTypeClass.isEmpty()) {
-      sb.append("<");
-      sb.append(constArgTypeClass.stream().map(Class::getSimpleName)
-          .collect(Collectors.joining(", ")));
-      sb.append(">");
+    if (!typeParamBounds.isEmpty()) {
+      sb.append(typeParamBounds.stream().map(t -> "<" + t.getSimpleName() + ">")
+          .collect(Collectors.joining()));
     }
     sb.append("(");
     sb.append(argTypeClass.stream().map(Class::getSimpleName)
