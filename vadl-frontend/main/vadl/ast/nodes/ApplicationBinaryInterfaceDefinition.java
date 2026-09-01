@@ -73,7 +73,7 @@ public class ApplicationBinaryInterfaceDefinition extends Definition implements 
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    action.accept((Node)isa);
+    action.accept((Node) isa);
 
     definitions.forEach(action);
   }

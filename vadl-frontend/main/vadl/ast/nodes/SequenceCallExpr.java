@@ -70,7 +70,8 @@ public class SequenceCallExpr extends Expr {
 
     action.accept((Node) target);
 
-    if (range != null)
+    if (range != null) {
       action.accept(range);
+    }
   }
 }

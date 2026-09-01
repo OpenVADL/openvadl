@@ -114,14 +114,17 @@ public class AliasDefinition extends Definition implements IdentifiableNode, Typ
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    if (aliasType != null)
+    if (aliasType != null) {
       action.accept(aliasType);
+    }
 
-    if (targetType != null)
+    if (targetType != null) {
       action.accept(targetType);
+    }
 
-    if (value != null)
+    if (value != null) {
       action.accept(value);
+    }
   }
 
   @Override

@@ -102,12 +102,14 @@ public final class MatchStatement extends Statement {
     for (var c : cases) {
       c.patterns.forEach(action);
 
-      if (c.result != null)
+      if (c.result != null) {
         action.accept(c.result);
+      }
     }
 
-    if (defaultResult != null)
+    if (defaultResult != null) {
       action.accept(defaultResult);
+    }
   }
 
   @Override

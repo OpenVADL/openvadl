@@ -96,8 +96,9 @@ public class AsmGrammarAlternativesDefinition extends Definition {
 
     for (var l : alternatives) {
       for (var a : l) {
-        if (a != null)
+        if (a != null) {
           action.accept(a);
+        }
       }
     }
   }

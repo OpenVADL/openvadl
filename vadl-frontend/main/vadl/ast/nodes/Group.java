@@ -143,8 +143,9 @@ public sealed interface Group {
 
       action.accept((Node) id);
 
-      if (size != null)
+      if (size != null) {
         action.accept(size);
+      }
     }
 
     @Override

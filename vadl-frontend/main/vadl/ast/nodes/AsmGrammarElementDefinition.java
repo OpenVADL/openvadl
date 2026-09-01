@@ -155,29 +155,37 @@ public class AsmGrammarElementDefinition extends Definition {
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    if (localVar != null)
+    if (localVar != null) {
       action.accept(localVar);
+    }
 
-    if (attribute != null)
+    if (attribute != null) {
       action.accept(attribute);
+    }
 
-    if (asmLiteral != null)
+    if (asmLiteral != null) {
       action.accept(asmLiteral);
+    }
 
-    if (groupAlternatives != null)
+    if (groupAlternatives != null) {
       action.accept(groupAlternatives);
+    }
 
-    if (optionAlternatives != null)
+    if (optionAlternatives != null) {
       action.accept(optionAlternatives);
+    }
 
-    if (repetitionAlternatives != null)
+    if (repetitionAlternatives != null) {
       action.accept(repetitionAlternatives);
+    }
 
-    if (semanticPredicate != null)
+    if (semanticPredicate != null) {
       action.accept(semanticPredicate);
+    }
 
-    if (groupAsmTypeDefinition != null)
+    if (groupAsmTypeDefinition != null) {
       action.accept(groupAsmTypeDefinition);
+    }
   }
 
   @Override

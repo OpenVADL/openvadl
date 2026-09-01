@@ -71,8 +71,9 @@ public final class IfStatement extends Statement {
 
     action.accept(thenStmt);
 
-    if (elseStmt != null)
+    if (elseStmt != null) {
       action.accept(elseStmt);
+    }
   }
 
   @Override

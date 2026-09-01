@@ -97,8 +97,9 @@ public class CastExpr extends Expr {
 
     action.accept(value);
 
-    if (typeLiteral != null)
+    if (typeLiteral != null) {
       action.accept(typeLiteral);
+    }
   }
 
   @Override

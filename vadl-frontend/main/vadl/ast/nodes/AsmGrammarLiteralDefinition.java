@@ -109,11 +109,13 @@ public class AsmGrammarLiteralDefinition extends Definition {
 
     parameters.forEach(action);
 
-    if (stringLiteral != null)
+    if (stringLiteral != null) {
       action.accept(stringLiteral);
+    }
 
-    if (asmTypeDefinition != null)
+    if (asmTypeDefinition != null) {
       action.accept(asmTypeDefinition);
+    }
   }
 
   @Override

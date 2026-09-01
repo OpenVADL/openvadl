@@ -112,8 +112,9 @@ public class ForallExpr extends Expr {
 
     indices.forEach(action);
 
-    if (foldAction != null)
+    if (foldAction != null) {
       action.accept(foldAction);
+    }
 
     action.accept(body);
   }

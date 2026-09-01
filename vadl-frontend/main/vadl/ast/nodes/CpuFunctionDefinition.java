@@ -78,8 +78,9 @@ public class CpuFunctionDefinition extends Definition implements IdentifiableNod
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    if (stopWithReference != null)
+    if (stopWithReference != null) {
       action.accept((Node) stopWithReference);
+    }
 
     action.accept(expr);
   }

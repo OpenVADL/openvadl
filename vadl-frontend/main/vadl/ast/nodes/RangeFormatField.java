@@ -82,8 +82,9 @@ public class RangeFormatField extends FormatField implements IdentifiableNode {
 
     ranges.forEach(action);
 
-    if (typeLiteral != null)
+    if (typeLiteral != null) {
       action.accept(typeLiteral);
+    }
   }
 
   @Override
