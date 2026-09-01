@@ -155,6 +155,21 @@ assembly description ASM for ABI = {
       rs1 = rs1Tmp
       immS = immTmp
     ;
+
+    JalInstruction @instruction:
+        var rdTmp = null @operand
+        var immTmp = null @operand
+        mnemonic = "JAL" @operand
+        ( ?(LaIdEq(1, ","))
+            rdTmp = Register@operand ","
+            immTmp = ImmediateOperand
+          |
+            rdTmp = (x1_string @register) @operand    // jal imm
+            immTmp = ImmediateOperand
+        )
+        rd = rdTmp
+        immS = immTmp
+      ;
   }
 
   function x1_string -> String = "x1"
