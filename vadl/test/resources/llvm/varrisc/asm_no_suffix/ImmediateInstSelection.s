@@ -141,43 +141,57 @@ BRA 511
 # CHECK-NEXT: <MCOperand Imm:1022>>
 
 BRA 512
-# CHECK: <MCInst #{{[0-9]+}} BRA
+# CHECK: <MCInst #{{[0-9]+}} BEQ
+# CHECK-NEXT: <MCOperand Reg:2>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:512>>
 
 BRA 1023
-# CHECK: <MCInst #{{[0-9]+}} BRA
+# CHECK: <MCInst #{{[0-9]+}} BEQ
+# CHECK-NEXT: <MCOperand Reg:2>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:1023>>
 
 BRA -1024
-# CHECK: <MCInst #{{[0-9]+}} BRA
+# CHECK: <MCInst #{{[0-9]+}} BEQ
+# CHECK-NEXT: <MCOperand Reg:2>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:-1024>>
 
 BRA 1024
-# CHECK: <MCInst #{{[0-9]+}} BRA_L
+# CHECK: <MCInst #{{[0-9]+}} BEQ_L
+# CHECK-NEXT: <MCOperand Reg:2>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:1024>>
 
 BRA -1025
-# CHECK: <MCInst #{{[0-9]+}} BRA_L
+# CHECK: <MCInst #{{[0-9]+}} BEQ_L
+# CHECK-NEXT: <MCOperand Reg:2>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:-1025>>
 
 
 
 BEQZ r1, 1023
-# CHECK: <MCInst #{{[0-9]+}} BEQZ
+# CHECK: <MCInst #{{[0-9]+}} BEQ
 # CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:1023>>
 
 BEQZ r1, -1024
-# CHECK: <MCInst #{{[0-9]+}} BEQZ
+# CHECK: <MCInst #{{[0-9]+}} BEQ
 # CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:-1024>>
 
 BEQZ r1, 1024
-# CHECK: <MCInst #{{[0-9]+}} BEQZ_L
+# CHECK: <MCInst #{{[0-9]+}} BEQ_L
 # CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:1024>>
 
 BEQZ r1, -1025
-# CHECK: <MCInst #{{[0-9]+}} BEQZ_L
+# CHECK: <MCInst #{{[0-9]+}} BEQ_L
 # CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Imm:-1025>>
