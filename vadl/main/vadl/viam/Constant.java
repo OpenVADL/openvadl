@@ -49,7 +49,7 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
-import vadl.types.FloatEncoding;
+import vadl.types.FloatType;
 import vadl.types.SIntType;
 import vadl.types.StructType;
 import vadl.types.Type;
@@ -162,6 +162,17 @@ public abstract class Constant {
         // hard code boolean value
         var val = integer.compareTo(BigInteger.ZERO) == 0 ? integer : BigInteger.ONE;
         return new Value(val, type);
+      } else if (type instanceof FloatType floatType) {
+        if (integer.signum() < 0) {
+          throw new ViamError("Negative value %s does not fit in type %s".formatted(
+              integer.toString(16), floatType));
+        }
+        if (integer.bitLength() > floatType.bitWidth()) {
+          throw new ViamError("Value 0x%s does not fit in type %s".formatted(integer.toString(16),
+              floatType));
+        }
+        var value = twosComplement(integer, type.bitWidth());
+        return new Value(value, type);
       } else if (type instanceof BitsType bitsType) {
         if (bitsType.getClass() == BitsType.class) {
           // for bitsType, it must just fit into the bit width, but it has no

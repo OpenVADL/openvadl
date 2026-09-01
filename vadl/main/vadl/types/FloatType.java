@@ -37,7 +37,7 @@ import vadl.viam.FloatFormat;
  * VADL::fcvt<Double>(... as Float, ...)
  * }</pre>
  */
-public class FloatType extends BitsType {
+public class FloatType extends DataType {
 
   @Nullable
   FloatFormat format;
@@ -50,7 +50,7 @@ public class FloatType extends BitsType {
    * @param encoding the encoding of the float format this type represents.
    */
   public FloatType(FloatEncoding encoding) {
-    super(encoding.size);
+    super();
     this.encoding = encoding;
   }
 
@@ -71,13 +71,24 @@ public class FloatType extends BitsType {
 
   @Override
   public String name() {
-    return "Float(%s)".formatted(
+    return "FloatType(%s)".formatted(
         format != null ? format.simpleName() : encoding.name()
     );
   }
 
   @Override
-  public BitsType withBitWidth(int bitWidth) {
-    throw new IllegalStateException("FloatType cannot be scaled");
+  public int bitWidth() {
+    return encoding.size;
+  }
+
+  @Override
+  public int useableBitWidth() {
+    return encoding.size;
+  }
+
+  @Override
+  @Nullable
+  public DataType fittingCppType() {
+    return new BitsType(encoding.size).fittingCppType();
   }
 }

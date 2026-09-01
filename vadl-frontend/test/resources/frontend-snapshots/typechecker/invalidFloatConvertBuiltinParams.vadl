@@ -67,17 +67,17 @@ function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
 //    . : IntegerLiteral literal: 32 (32) type: Const<32>
 //    FunctionDefinition name: "fcvt"
 //    . Parameter name: "a"
-//    . : TypeLiteral type: Float(IEEE32)
+//    . : TypeLiteral type: FloatType(IEEE32)
 //    . : ' Identifier name: "ieee32" type: null
-//    . TypeLiteral type: Float(IEEE32)
+//    . TypeLiteral type: FloatType(IEEE32)
 //    . : Identifier name: "ieee32" type: null
-//    . CallIndexExpr type: Float(IEEE32)
+//    . CallIndexExpr type: FloatType(IEEE32)
 //    . : SymbolExpr type: null
 //    . : ' IdentifierPath name: "VADL::fcvt" type: null
-//    . : ' TypeLiteral type: Float(IEEE32)
+//    . : ' TypeLiteral type: FloatType(IEEE32)
 //    . : ' | Identifier name: "ieee32" type: null
 //    . : ArgsIndices
-//    . : ' Identifier name: "a" type: Float(IEEE32)
+//    . : ' Identifier name: "a" type: FloatType(IEEE32)
 //    . : ' CastExpr type: Bits<3>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | TypeLiteral type: Bits<3>
@@ -85,7 +85,7 @@ function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
 //    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
 //    FunctionDefinition name: "fcvtfs"
 //    . Parameter name: "a"
-//    . : TypeLiteral type: Float(IEEE32)
+//    . : TypeLiteral type: FloatType(IEEE32)
 //    . : ' Identifier name: "ieee32" type: null
 //    . TypeLiteral type: SInt<7>
 //    . : Identifier name: "SInt7" type: null
@@ -95,7 +95,7 @@ function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
 //    . : ' TypeLiteral type: SInt<7>
 //    . : ' | Identifier name: "SInt7" type: null
 //    . : ArgsIndices
-//    . : ' Identifier name: "a" type: Float(IEEE32)
+//    . : ' Identifier name: "a" type: FloatType(IEEE32)
 //    . : ' CastExpr type: Bits<3>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | TypeLiteral type: Bits<3>
@@ -103,7 +103,7 @@ function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
 //    . : ' | . IntegerLiteral literal: 3 (3) type: Const<3>
 //    FunctionDefinition name: "fcvtfb"
 //    . Parameter name: "a"
-//    . : TypeLiteral type: Float(IEEE32)
+//    . : TypeLiteral type: FloatType(IEEE32)
 //    . : ' Identifier name: "ieee32" type: null
 //    . TypeLiteral type: Bits<32>
 //    . : Identifier name: "Bits32" type: null
@@ -113,7 +113,7 @@ function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
 //    . : ' TypeLiteral type: Bits<32>
 //    . : ' | Identifier name: "Bits32" type: null
 //    . : ArgsIndices
-//    . : ' Identifier name: "a" type: Float(IEEE32)
+//    . : ' Identifier name: "a" type: FloatType(IEEE32)
 //    . : ' CastExpr type: Bits<3>
 //    . : ' | IntegerLiteral literal: 0 (0) type: Const<0>
 //    . : ' | TypeLiteral type: Bits<3>
@@ -123,12 +123,12 @@ function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
 //    . Parameter name: "a"
 //    . : TypeLiteral type: SInt<7>
 //    . : ' Identifier name: "SInt7" type: null
-//    . TypeLiteral type: Float(IEEE32)
+//    . TypeLiteral type: FloatType(IEEE32)
 //    . : Identifier name: "ieee32" type: null
-//    . CallIndexExpr type: Float(IEEE32)
+//    . CallIndexExpr type: FloatType(IEEE32)
 //    . : SymbolExpr type: null
 //    . : ' IdentifierPath name: "VADL::fcvt" type: null
-//    . : ' TypeLiteral type: Float(IEEE32)
+//    . : ' TypeLiteral type: FloatType(IEEE32)
 //    . : ' | Identifier name: "ieee32" type: null
 //    . : ArgsIndices
 //    . : ' Identifier name: "a" type: SInt<7>
@@ -141,12 +141,12 @@ function fcvtuf(a: Bits32) -> ieee32 = VADL::fcvt<ieee32>(a, 0 as Bits<3>)
 //    . Parameter name: "a"
 //    . : TypeLiteral type: Bits<32>
 //    . : ' Identifier name: "Bits32" type: null
-//    . TypeLiteral type: Float(IEEE32)
+//    . TypeLiteral type: FloatType(IEEE32)
 //    . : Identifier name: "ieee32" type: null
-//    . CallIndexExpr type: Float(IEEE32)
+//    . CallIndexExpr type: FloatType(IEEE32)
 //    . : SymbolExpr type: null
 //    . : ' IdentifierPath name: "VADL::fcvt" type: null
-//    . : ' TypeLiteral type: Float(IEEE32)
+//    . : ' TypeLiteral type: FloatType(IEEE32)
 //    . : ' | Identifier name: "ieee32" type: null
 //    . : ArgsIndices
 //    . : ' Identifier name: "a" type: Bits<32>

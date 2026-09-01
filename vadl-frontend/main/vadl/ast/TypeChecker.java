@@ -672,6 +672,10 @@ public class TypeChecker
       if (to instanceof TensorType toTensor) {
         return toTensor.flattenBitsType().bitWidth() == fromBits.bitWidth();
       }
+      if (to instanceof FloatType toFloat) {
+        // Bits can only be truncated to float
+        return toFloat.bitWidth() <= fromBits.bitWidth();
+      }
       return to instanceof BitsType || to instanceof BoolType;
     }
 
@@ -681,6 +685,11 @@ public class TypeChecker
 
     if (from instanceof BoolType) {
       return to instanceof BoolType || to instanceof BitsType;
+    }
+
+    if (from instanceof FloatType fromFloat) {
+      // Float can only be cast to bits of same length
+      return to instanceof BitsType toBits && toBits.bitWidth() == fromFloat.bitWidth();
     }
 
 
