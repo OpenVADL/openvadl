@@ -674,7 +674,7 @@ public class TypeChecker
       }
       if (to instanceof FloatType toFloat) {
         // Bits can only be truncated to float
-        return toFloat.bitWidth() <= fromBits.bitWidth();
+        return from.getClass() == BitsType.class && toFloat.bitWidth() <= fromBits.bitWidth();
       }
       return to instanceof BitsType || to instanceof BoolType;
     }
@@ -689,7 +689,7 @@ public class TypeChecker
 
     if (from instanceof FloatType fromFloat) {
       // Float can only be cast to bits of same length
-      return to instanceof BitsType toBits && toBits.bitWidth() == fromFloat.bitWidth();
+      return to.getClass() == BitsType.class && ((BitsType) to).bitWidth() == fromFloat.bitWidth();
     }
 
 
