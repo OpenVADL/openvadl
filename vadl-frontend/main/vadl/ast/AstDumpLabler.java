@@ -169,13 +169,4 @@ public class AstDumpLabler extends DefaultAstVisitor<AstDumpLabler.DumpLabel> {
     children.add(stmt.body);
     return new DumpLabel(defaultDescription(stmt), children);
   }
-
-  @Override
-  public DumpLabel visit(FloatTypeDefinition definition) {
-    // FIXME: This is a bug and should be fixed
-    var children = new ArrayList<Node>();
-    children.addAll(definition.annotations);
-    children.addAll(definition.children());
-    return new DumpLabel(defaultDescription(definition), children);
-  }
 }
