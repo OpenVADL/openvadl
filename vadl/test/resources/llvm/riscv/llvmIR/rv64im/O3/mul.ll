@@ -25,9 +25,9 @@ define signext i32 @mul(i32 %a, i32 %b) nounwind {
 define signext i32 @mul_constant(i32 %a) nounwind {
 ; CHECK-LABEL: mul_constant: # @mul_constant
 ; CHECK-LABEL: # %bb.0:
-; CHECK-LABEL: .Ltmp0:
+; CHECK-LABEL: .Lhi_label0:
 ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI2_0)
-; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label0)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: MUL a0,a0,a1
 ; CHECK-NEXT: SRAI a0,a0,32
