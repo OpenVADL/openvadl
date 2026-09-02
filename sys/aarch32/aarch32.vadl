@@ -571,27 +571,35 @@ instruction set architecture AArch32v6 = {
     , rot      = rotate as Bits5 << 3
     }
 
-  model ExtSB()  : Ex = { rotRm( 7.. 0) as SInt<Size>}
-  model ExtSH()  : Ex = { rotRm(15.. 0) as SInt<Size>}
-  model ExtS16() : Ex = {(rotRm(23..16) as SInt<16>, rotRm(7..0) as SInt<16>)}
-  model ExtUB()  : Ex = { rotRm( 7.. 0) as UInt<Size>}
-  model ExtUH()  : Ex = { rotRm(15.. 0) as UInt<Size>}
-  model ExtU16() : Ex = {(rotRm(23..16) as UInt<16>, rotRm(7..0) as UInt<16>)}
+  model ExtSB()   : Ex = { rotRm( 7.. 0) as SInt<Size>}
+  model ExtSH()   : Ex = { rotRm(15.. 0) as SInt<Size>}
+  model ExtS16()  : Ex = {(rotRm(23..16) as SInt<16>, rotRm(7..0) as SInt<16>)}
+  model ExtUB()   : Ex = { rotRm( 7.. 0) as UInt<Size>}
+  model ExtUH()   : Ex = { rotRm(15.. 0) as UInt<Size>}
+  model ExtU16()  : Ex = {(rotRm(23..16) as UInt<16>, rotRm(7..0) as UInt<16>)}
 
-  model ExtendInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+  model ExtASB()  : Ex = { R(rn) + rotRm( 7.. 0) as SInt<Size>}
+  model ExtASH()  : Ex = { R(rn) + rotRm(15.. 0) as SInt<Size>}
+  model ExtAS16() : Ex = {(R(rn)(31..16) + rotRm(23..16) as SInt<16>, R(rn) as SInt<16> + rotRm(7..0) as SInt<16>)}
+  model ExtAUB()  : Ex = { R(rn) +  rotRm( 7.. 0) as UInt<Size>}
+  model ExtAUH()  : Ex = { R(rn) +  rotRm(15.. 0) as UInt<Size>}
+  model ExtAU16() : Ex = {(R(rn)(31..16) + rotRm(23..16) as UInt<16>, R(rn) as UInt<16> + rotRm(7..0) as UInt<16>)}
+
+  model ExtendBehavior (c : CondRec, i : InstrRec) : IsaDefs = {
     instruction AsId ($i.id, $c.condStr) : ExtendFormat =
       if ($c.condEx) then
         let rotRm = R(rm) <>> rot in
           R(rd) := $i.funct()
+  }
+
+  model ExtendInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    $ExtendBehavior ($c ; $i)
     encoding AsId ($i.id, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, rn = 0b1111, opfix = 0b000'111}
     assembly AsId ($i.id, $c.condStr) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', register(rm), ', ror #', udec(rot))
     }
 
   model ExtendAddInstr (c : CondRec, i : InstrRec) : IsaDefs = {
-    instruction AsId ($i.id, $c.condStr) : ExtendFormat =
-      if ($c.condEx) then
-        let rotRm = R(rm) <>> rot in
-          R(rd) := R(rn) + $i.funct()
+    $ExtendBehavior ($c ; $i)
     encoding AsId ($i.id, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, opfix = 0b000'111}
     assembly AsId ($i.id, $c.condStr) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm), ', ror #', udec(rot))
     }
@@ -1157,12 +1165,12 @@ instruction set architecture AArch32v6 = {
   $CondInstr            (ExtendInstr          ; (UXTB    ; "uxtb"    ; ExtUB   ; 0b0110'1110))
   $CondInstr            (ExtendInstr          ; (UXTH    ; "uxth"    ; ExtUH   ; 0b0110'1111))
   $CondInstr            (ExtendInstr          ; (UXT16   ; "uxt16"   ; ExtU16  ; 0b0110'1100))
-  $CondInstr            (ExtendAddInstr       ; (SXTAB   ; "sxtab"   ; ExtSB   ; 0b0110'1010))
-  $CondInstr            (ExtendAddInstr       ; (SXTAH   ; "sxtah"   ; ExtSH   ; 0b0110'1011))
-  $CondInstr            (ExtendAddInstr       ; (SXTA16  ; "sxta16"  ; ExtS16  ; 0b0110'1000))
-  $CondInstr            (ExtendAddInstr       ; (UXTAB   ; "uxtab"   ; ExtUB   ; 0b0110'1110))
-  $CondInstr            (ExtendAddInstr       ; (UXTAH   ; "uxtah"   ; ExtUH   ; 0b0110'1111))
-  $CondInstr            (ExtendAddInstr       ; (UXTA16  ; "uxta16"  ; ExtU16  ; 0b0110'1100))
+  $CondInstr            (ExtendAddInstr       ; (SXTAB   ; "sxtab"   ; ExtASB  ; 0b0110'1010))
+  $CondInstr            (ExtendAddInstr       ; (SXTAH   ; "sxtah"   ; ExtASH  ; 0b0110'1011))
+  $CondInstr            (ExtendAddInstr       ; (SXTA16  ; "sxta16"  ; ExtAS16 ; 0b0110'1000))
+  $CondInstr            (ExtendAddInstr       ; (UXTAB   ; "uxtab"   ; ExtAUB  ; 0b0110'1110))
+  $CondInstr            (ExtendAddInstr       ; (UXTAH   ; "uxtah"   ; ExtAUH  ; 0b0110'1111))
+  $CondInstr            (ExtendAddInstr       ; (UXTA16  ; "uxta16"  ; ExtAU16 ; 0b0110'1100))
 
   $CondInstr            (CountLZInstr         ; (CLZ     ; "clz"     ; CntLZ   ; 0b000'1011 ))
   $CondInstr            (ReverseInstr         ; (REV     ; "rev"     ; RevByte ; 0b011'0101 ))
