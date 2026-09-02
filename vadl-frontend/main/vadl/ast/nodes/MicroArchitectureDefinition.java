@@ -79,7 +79,6 @@ public class MicroArchitectureDefinition extends Definition implements Identifia
     super.forEachChild(action);
 
     action.accept((Node) isa);
-
     definitions.forEach(action);
   }
 

@@ -74,7 +74,6 @@ public class MemoryDefinition extends Definition implements IdentifiableNode, Ty
     super.forEachChild(action);
 
     action.accept(addressTypeLiteral);
-
     action.accept(dataTypeLiteral);
   }
 
