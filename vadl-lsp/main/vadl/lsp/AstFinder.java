@@ -24,14 +24,13 @@ import vadl.ast.Ast;
 import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.Node;
-import vadl.ast.nodes.RecursiveAstVisitor;
 import vadl.ast.nodes.Statement;
 import vadl.utils.SourceLocation;
 
 /**
- * Finds one or several AST nodes based on some selection criteria (which can be quite complex).
+ * Finds one or several AST nodes based on an arbitrary caller-provided selection criteria.
  */
-class AstFinder<N extends Node> extends RecursiveAstVisitor {
+class AstFinder<N extends Node> {
   /**
    * Finds all root nodes that are the result of expanding the model invocation at the
    * given source code position.
@@ -43,9 +42,11 @@ class AstFinder<N extends Node> extends RecursiveAstVisitor {
   static List<Node> findExpandedNodes(
       Ast ast, Path path, SourceLocation.Position position) {
 
-    var visitor = new AstFinder<>(ast, (n) -> {
+    var visitor = new AstFinder<>(ast, (node) -> {
       // Before
-      if (!(n.location() instanceof SourceLocation.ExpandedLocation expandedLocation)) {
+      if (!(node.location() instanceof SourceLocation.ExpandedLocation expandedLocation)) {
+        // Shortcut: Already collected some desired root nodes, but there cannot be more as the
+        // current node has not been expanded from a model invocation.
         return Choice.STOP_IF_SOME_FOUND;
       }
 
@@ -53,9 +54,12 @@ class AstFinder<N extends Node> extends RecursiveAstVisitor {
       if (path.equals(outermostLocation.path()) && position.isWithin(outermostLocation)) {
         return Choice.SELECT_AND_SKIP_CHILDREN;
       }
+      // Stop condition: Already collected some desired root nodes, but there cannot be more as the
+      // current node has not been expanded from a model invocation that fits the searched position
+      // (i.e. we are past the searched position).
       return Choice.STOP_IF_SOME_FOUND;
 
-    }, (n) -> {
+    }, (node) -> {
       // After
       return Choice.CONTINUE;
     });
@@ -111,14 +115,12 @@ class AstFinder<N extends Node> extends RecursiveAstVisitor {
 
   /**
    * Called in {@code afterTravel()}, decides which action to take.
-   *    * Must NOT yield {@code SELECT_*} if {@code testedObject instanceof N} is false!
+   * Must NOT yield {@code SELECT_*} if {@code testedObject instanceof N} is false!
    */
   private final Function<Node, Choice> selectorAfter;
 
   private final Ast ast;
   private final List<N> selectedNodes = new ArrayList<>();
-  private int depth = 0;
-  private int ignoreUntilDepth = Integer.MAX_VALUE;
 
   private AstFinder(Ast ast, Function<Node, Choice> selectorBefore,
       Function<Node, Choice> selectorAfter) {
@@ -130,37 +132,12 @@ class AstFinder<N extends Node> extends RecursiveAstVisitor {
   private List<N> find() {
     try {
       for (var definition : ast.definitions) {
-        definition.accept(this);
+        processNode(definition);
       }
     } catch (StopSignal fs) {
       // Nothing
     }
     return selectedNodes;
-  }
-
-  private void beforeNode(Node node) {
-    depth++;
-    if (depth > ignoreUntilDepth) {
-      // Skipping children by ignoring them - but this still traverses through all these nodes.
-      // To skip traversing them altogether we'd have to override all(!) RecursiveAstVisitor.visit()
-      // methods.
-      return;
-    }
-
-    var choice = applySelector(node, selectorBefore);
-    if (choice == Choice.SKIP_CHILDREN || choice == Choice.SELECT_AND_SKIP_CHILDREN) {
-      ignoreUntilDepth = depth;
-    }
-  }
-
-  private void afterNode(Node node) {
-    depth--;
-    if (depth >= ignoreUntilDepth) {
-      return;
-    }
-    ignoreUntilDepth = Integer.MAX_VALUE;
-
-    applySelector(node, selectorAfter);
   }
 
   private Choice applySelector(Node node, Function<Node, Choice> selector) {
@@ -175,34 +152,19 @@ class AstFinder<N extends Node> extends RecursiveAstVisitor {
     return choice;
   }
 
-  @Override
-  protected void beforeTravel(Definition definition) {
-    beforeNode(definition);
-  }
+  private void processNode(Node node) {
+    if (!(node instanceof Expr) && !(node instanceof Statement) && !(node instanceof Definition)) {
+      // Skip intermediate nodes, just visit their children
+      // (same as in RecursiveAstVisitor.travel())
+      node.forEachChild(this::processNode);
+      return;
+    }
 
-  @Override
-  protected void beforeTravel(Expr expr) {
-    beforeNode(expr);
-  }
-
-  @Override
-  protected void beforeTravel(Statement statement) {
-    beforeNode(statement);
-  }
-
-  @Override
-  protected void afterTravel(Definition definition) {
-    afterNode(definition);
-  }
-
-  @Override
-  protected void afterTravel(Expr expr) {
-    afterNode(expr);
-  }
-
-  @Override
-  protected void afterTravel(Statement statement) {
-    afterNode(statement);
+    var choice = applySelector(node, selectorBefore);
+    if (choice != Choice.SKIP_CHILDREN && choice != Choice.SELECT_AND_SKIP_CHILDREN) {
+      node.forEachChild(this::processNode);
+    }
+    applySelector(node, selectorAfter);
   }
 
   private static class StopSignal extends RuntimeException {}

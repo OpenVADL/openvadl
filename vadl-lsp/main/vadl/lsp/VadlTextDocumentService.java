@@ -260,7 +260,8 @@ public class VadlTextDocumentService implements TextDocumentService {
               node.prettyPrint(0, builder);
               prettyPrinted.add(builder.toString().trim());
             }
-            return hoverResult("Expanded to:", String.join("\n", prettyPrinted), range);
+            return hoverResult("This model invocation expands to:",
+                String.join("\n", prettyPrinted), range);
           }
         }
 
@@ -270,34 +271,39 @@ public class VadlTextDocumentService implements TextDocumentService {
 
   private @Nullable Hover hoverResult(@Nullable String text, @Nullable String sourceCode,
       @Nullable Range range) {
-    Hover result = null;
-    if (text != null || sourceCode != null) {
-      var clientContentFormat = getClientMarkupContent();
-      MarkupContent content = null;
-      List<String> parts = new ArrayList<>();
-      if (text != null) {
-        parts.add(text);
-      }
-
-      if (clientContentFormat.contains(MarkupKind.MARKDOWN)) {
-        if (sourceCode != null) {
-          parts.add("```" + LANGUAGE_IDENTIFIER + "\n" + sourceCode + "\n```");
-        }
-        content = new MarkupContent(MarkupKind.MARKDOWN, String.join("  \n", parts));
-
-      } else if (clientContentFormat.contains(MarkupKind.PLAINTEXT)) {
-        // Fallback
-        if (sourceCode != null) {
-          parts.add(sourceCode);
-        }
-        content = new MarkupContent(MarkupKind.PLAINTEXT, String.join("\n", parts));
-      }
-
-      if (content != null) {
-        result = new Hover(content);
-        result.setRange(range);
-      }
+    if (text == null && sourceCode == null) {
+      log.debug("<<- hover: null");
+      return null;
     }
+
+    var clientContentFormat = getClientMarkupContent();
+    MarkupContent content = null;
+    List<String> parts = new ArrayList<>();
+    if (text != null) {
+      parts.add(text);
+    }
+
+    if (clientContentFormat.contains(MarkupKind.MARKDOWN)) {
+      if (sourceCode != null) {
+        parts.add("```" + LANGUAGE_IDENTIFIER + "\n" + sourceCode + "\n```");
+      }
+      content = new MarkupContent(MarkupKind.MARKDOWN, String.join("  \n", parts));
+
+    } else if (clientContentFormat.contains(MarkupKind.PLAINTEXT)) {
+      // Fallback
+      if (sourceCode != null) {
+        parts.add(sourceCode);
+      }
+      content = new MarkupContent(MarkupKind.PLAINTEXT, String.join("\n", parts));
+    }
+
+    if (content == null) {
+      log.debug("<<- hover: null");
+      return null;
+    }
+
+    var result = new Hover(content);
+    result.setRange(range);
     log.debug("<<- hover: {}", result);
     return result;
   }

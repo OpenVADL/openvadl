@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.HoverParams;
+import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -68,13 +69,26 @@ public class HoverTest extends IntegrationTest {
         new TextDocumentIdentifier(inputUri), position
     )).get();
 
-    var rangeInFile = processResult(result, input);
+    var hoverText = processResultText(result);
+    var rangeInFile = processResultRange(result, input);
     snapshot.add("returned Hover", result);
-    snapshot.add("... which has this range", rangeInFile);
+    snapshot.add("... which has this text", hoverText);
+    snapshot.add("... and this range", rangeInFile);
     snapshot.verify();
   }
 
-  private String processResult(@Nullable Hover hover, String input) {
+  private String processResultText(@Nullable Hover hover) {
+    if (hover == null) {
+      return "n/a";
+    }
+    MarkupContent content = hover.getContents().getRight();
+    if (content == null) {
+      return "unexpected list-based legacy format";
+    }
+    return content.getValue();
+  }
+
+  private String processResultRange(@Nullable Hover hover, String input) {
     if (hover == null) {
       return "n/a";
     }

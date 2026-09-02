@@ -25,7 +25,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: modelInvocation
       left = null
       right = MarkupContent [
       kind = "markdown"
-      value = "Expanded to:  \n```vadl\ninstruction ONE : Simple = {\n}\nencoding ONE =\n{ b = 0b1 as Bits<1>\n}\nassembly ONE = (mnemonic)\n```"
+      value = "This model invocation expands to:  \n```vadl\ninstruction ONE : Simple = {\n}\nencoding ONE =\n{ b = 0b1 as Bits<1>\n}\nassembly ONE = (mnemonic)\n```"
     ]
     ]
     range = Range [
@@ -40,7 +40,18 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: modelInvocation
     ]
   ]
 
-- ... which has this range: 
+- ... which has this text: 
+  This model invocation expands to:  
+  ```vadl
+  instruction ONE : Simple = {
+  }
+  encoding ONE =
+  { b = 0b1 as Bits<1>
+  }
+  assembly ONE = (mnemonic)
+  ```
+
+- ... and this range: 
   ================
     // HOVER POSITION 11:8 - Shows expansion of second model invocation
     instruction set architecture TEST = {
