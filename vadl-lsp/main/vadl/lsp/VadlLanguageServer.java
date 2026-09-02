@@ -49,7 +49,7 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   private LanguageClient client;
   @Nullable
   private Future<Void> listeningFuture;
-  private final ExecutorService executor = Executors.newCachedThreadPool();
+  final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
   
   private final VadlTextDocumentService textService = new VadlTextDocumentService(this);
 
@@ -146,10 +146,6 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
       throw new RuntimeException("client isn't set yet");
     }
     return this.client;
-  }
-
-  ExecutorService executor() {
-    return this.executor;
   }
 
   InitializeParams params() {
