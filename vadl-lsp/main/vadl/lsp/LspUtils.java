@@ -18,12 +18,11 @@ package vadl.lsp;
 
 import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 class LspUtils {
 
   static Path toPath(String uri) {
-    return Paths.get(URI.create(uri));
+    return Path.of(URI.create(uri));
   }
 
   static String toUri(Path path) {

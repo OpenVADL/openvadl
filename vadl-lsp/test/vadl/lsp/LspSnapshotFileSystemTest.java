@@ -18,8 +18,6 @@ package vadl.lsp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static vadl.lsp.LspUtils.toPath;
-import static vadl.lsp.LspUtils.toUri;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -39,7 +37,7 @@ public class LspSnapshotFileSystemTest {
   @Test
   public void emptyVfsDelegates() {
     var existingPath = SingleFileVirtualFileSystem.DEFAULT_PATH.toAbsolutePath();
-    var invalidPath = toPath(DocumentTest.TEST_URI);
+    var invalidPath = DocumentTest.TEST_PATH;
     var underlyingFs = new SingleFileVirtualFileSystem(DocumentTest.TEST_TEXT, existingPath);
 
     LspSnapshotFileSystem vfs = new LspSnapshotFileSystem(Map.of(), underlyingFs);
@@ -75,30 +73,30 @@ public class LspSnapshotFileSystemTest {
         .isEqualTo(underlyingFs.toRelativePath(invalidPath));
 
     // getDocument()
-    assertThat(vfs.getDocument(toUri(existingPath))).isNull();
-    assertThat(vfs.getDocument(DocumentTest.TEST_URI)).isNull();
+    assertThat(vfs.getDocument(existingPath)).isNull();
+    assertThat(vfs.getDocument(DocumentTest.TEST_PATH)).isNull();
 
     // getFileBasedDocument()
-    assertThat(vfs.getFileBasedDocument(toUri(existingPath)))
-        .extracting("uri", "text").containsExactly(toUri(existingPath), DocumentTest.TEST_TEXT);
-    assertThat(vfs.getFileBasedDocument(DocumentTest.TEST_URI)).isNull();
+    assertThat(vfs.getFileBasedDocument(existingPath))
+        .extracting("path", "text").containsExactly(existingPath, DocumentTest.TEST_TEXT);
+    assertThat(vfs.getFileBasedDocument(DocumentTest.TEST_PATH)).isNull();
 
-    assertThat(vfs.getReadFiles()).hasSize(2).contains(toUri(existingPath), DocumentTest.TEST_URI);
+    assertThat(vfs.getReadFiles()).hasSize(2).contains(existingPath, DocumentTest.TEST_PATH);
   }
 
   @Test
   public void vfsWithDocuments() {
-    var existingPath = toPath(DocumentTest.TEST_URI);
-    var overridenDocument = new Document(DocumentTest.TEST_URI, 3, DocumentTest.TEST_TEXT);
+    var existingPath = DocumentTest.TEST_PATH;
+    var overridenDocument = new Document(DocumentTest.TEST_PATH, 3, DocumentTest.TEST_TEXT);
 
-    var newPath = toPath(DocumentTest.TEST_URI2);
-    var newDocument = new Document(DocumentTest.TEST_URI2, 1, DocumentTest.TEST_TEXT2);
+    var newPath = DocumentTest.TEST_PATH2;
+    var newDocument = new Document(DocumentTest.TEST_PATH2, 1, DocumentTest.TEST_TEXT2);
 
     var invalidPath = SingleFileVirtualFileSystem.DEFAULT_PATH.toAbsolutePath();
     var underlyingFs = new SingleFileVirtualFileSystem(DocumentTest.TEST_UNICODE_TEXT, existingPath);
 
     LspSnapshotFileSystem vfs = new LspSnapshotFileSystem(
-        Map.of(overridenDocument.uri, overridenDocument, newDocument.uri, newDocument),
+        Map.of(overridenDocument.path, overridenDocument, newDocument.path, newDocument),
         underlyingFs);
 
     assertThat(vfs.getReadFiles()).isEmpty();
@@ -140,19 +138,19 @@ public class LspSnapshotFileSystemTest {
         .isEqualTo(underlyingFs.toRelativePath(invalidPath));
 
     // getDocument()
-    assertThat(vfs.getDocument(toUri(existingPath))).isEqualTo(overridenDocument);
-    assertThat(vfs.getDocument(toUri(newPath))).isEqualTo(newDocument);
-    assertThat(vfs.getDocument(toUri(invalidPath))).isNull();
+    assertThat(vfs.getDocument(existingPath)).isEqualTo(overridenDocument);
+    assertThat(vfs.getDocument(newPath)).isEqualTo(newDocument);
+    assertThat(vfs.getDocument(invalidPath)).isNull();
 
     // getFileBasedDocument()
-    assertThat(vfs.getFileBasedDocument(toUri(existingPath)))
+    assertThat(vfs.getFileBasedDocument(existingPath))
         .isEqualTo(overridenDocument);
-    assertThat(vfs.getFileBasedDocument(toUri(newPath)))
+    assertThat(vfs.getFileBasedDocument(newPath))
         .isEqualTo(newDocument);
-    assertThat(vfs.getFileBasedDocument(toUri(invalidPath))).isNull();
+    assertThat(vfs.getFileBasedDocument(invalidPath)).isNull();
 
     assertThat(vfs.getReadFiles()).hasSize(3)
-        .contains(toUri(existingPath), toUri(newPath), toUri(invalidPath));
+        .contains(existingPath, newPath, invalidPath);
   }
 
 

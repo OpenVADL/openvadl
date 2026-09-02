@@ -16,6 +16,8 @@
 
 package vadl.lsp;
 
+import static vadl.lsp.LspUtils.toPath;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +42,7 @@ public class Document {
    */
   private static final Pattern EOL_REGEX = Pattern.compile("(\\r\\n|\\n|\\r)");
 
-  public final String uri;
+  public final Path path;
   public final int version;
 
   public final List<String> textLines;
@@ -50,15 +52,15 @@ public class Document {
    *
    * @param textLines List of individual lines. Each item MUST NOT contain a newline character.
    */
-  public Document(String uri, int version, List<String> textLines) {
-    this.uri = uri;
+  public Document(Path path, int version, List<String> textLines) {
+    this.path = path;
     this.version = version;
     this.textLines = Collections.unmodifiableList(textLines);
   }
 
 
-  public Document(String uri, int version, String text) {
-    this(uri, version, splitLines(text));
+  public Document(Path path, int version, String text) {
+    this(path, version, splitLines(text));
   }
 
   /**
@@ -67,7 +69,7 @@ public class Document {
    * @param tdi as provided by the LSP didOpen request
    */
   public Document(TextDocumentItem tdi) {
-    this(tdi.getUri(), tdi.getVersion(), tdi.getText());
+    this(toPath(tdi.getUri()), tdi.getVersion(), tdi.getText());
   }
 
   /**
@@ -83,13 +85,13 @@ public class Document {
 
     // Shortcuts
     if (contentChanges.isEmpty()) {
-      return new Document(this.uri, newVersion, this.textLines);
+      return new Document(this.path, newVersion, this.textLines);
     }
     if (contentChanges.size() == 1) {
       var change = contentChanges.getFirst();
       if (change.getRange() == null) {
         // Single change which replaces entire document
-        return new Document(this.uri, newVersion, change.getText());
+        return new Document(this.path, newVersion, change.getText());
       }
     }
 
@@ -132,15 +134,11 @@ public class Document {
       newTextLines.addAll(startLine, insertTextLines);
     }
 
-    return new Document(uri, newVersion, newTextLines);
+    return new Document(path, newVersion, newTextLines);
   }
 
   public String getText() {
     return String.join("\n", textLines);
-  }
-
-  public Path getPath() {
-    return LspUtils.toPath(uri);
   }
 
   /**
@@ -276,7 +274,7 @@ public class Document {
 
   @Override
   public String toString() {
-    return "Document " + uri + " (version " + version + "):\n================\n  "
+    return "Document " + path + " (version " + version + "):\n================\n  "
         + getText().replace("\n", "\n  ") + "\n================";
   }
 
