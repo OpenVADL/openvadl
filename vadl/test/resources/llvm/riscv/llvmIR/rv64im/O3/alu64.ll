@@ -184,9 +184,9 @@ define i64 @and(i64 %a, i64 %b) nounwind {
 define signext i32 @addiw(i32 signext %a) nounwind {
 ; CHECK-LABEL: addiw: # @addiw
 ; CHECK-LABEL: # %bb.0:
-; CHECK-LABEL: .Ltmp0:
+; CHECK-LABEL: .Lhi_label0:
 ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI19_0)
-; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label0)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: SLLI a0,a0,32
 ; CHECK-NEXT: ADD a0,a0,a1
@@ -209,9 +209,9 @@ define signext i32 @slliw(i32 signext %a) nounwind {
 define signext i32 @srliw(i32 %a) nounwind {
 ; CHECK-LABEL: srliw: # @srliw
 ; CHECK-LABEL: # %bb.0:
-; CHECK-LABEL: .Ltmp1:
+; CHECK-LABEL: .Lhi_label1:
 ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI21_0)
-; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label1)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: AND a0,a0,a1
 ; CHECK-NEXT: SRLI a0,a0,8
@@ -286,9 +286,9 @@ define signext i32 @sllw(i32 signext %a, i32 zeroext %b) nounwind {
 define signext i32 @srlw(i32 signext %a, i32 zeroext %b) nounwind {
 ; CHECK-LABEL: srlw: # @srlw
 ; CHECK-LABEL: # %bb.0:
-; CHECK-LABEL: .Ltmp2:
+; CHECK-LABEL: .Lhi_label2:
 ; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI28_0)
-; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp2)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Lhi_label2)
 ; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: AND a0,a0,a2
 ; CHECK-NEXT: SRL a0,a0,a1
@@ -323,9 +323,9 @@ define i64 @add_hi_and_lo_negone(i64 %0) {
 define i64 @add_hi_zero_lo_negone(i64 %0) {
 ; CHECK-LABEL: add_hi_zero_lo_negone: # @add_hi_zero_lo_negone
 ; CHECK-LABEL: # %bb.0:
-; CHECK-LABEL: .Ltmp3:
+; CHECK-LABEL: .Lhi_label3:
 ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI31_0)
-; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp3)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label3)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: ADD a0,a0,a1
 ; CHECK-NEXT: RET
@@ -336,9 +336,9 @@ define i64 @add_hi_zero_lo_negone(i64 %0) {
 define i64 @add_lo_negone(i64 %0) {
 ; CHECK-LABEL: add_lo_negone: # @add_lo_negone
 ; CHECK-LABEL: # %bb.0:
-; CHECK-LABEL: .Ltmp4:
+; CHECK-LABEL: .Lhi_label4:
 ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI32_0)
-; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp4)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label4)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: ADD a0,a0,a1
 ; CHECK-NEXT: RET
@@ -349,9 +349,9 @@ define i64 @add_lo_negone(i64 %0) {
 define i64 @add_hi_one_lo_negone(i64 %0) {
 ; CHECK-LABEL: add_hi_one_lo_negone: # @add_hi_one_lo_negone
 ; CHECK-LABEL: # %bb.0:
-; CHECK-LABEL: .Ltmp5:
+; CHECK-LABEL: .Lhi_label5:
 ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI33_0)
-; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp5)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label5)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: ADD a0,a0,a1
 ; CHECK-NEXT: RET

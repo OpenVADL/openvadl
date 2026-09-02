@@ -55,9 +55,9 @@ define signext i32 @neg_i32_hi20_only() nounwind {
 
 define i64 @imm_end_xori_1() nounwind {
   ; CHECK-LABEL: imm_end_xori_1: # @imm_end_xori_1
-  ; CHECK-LABEL: .Ltmp0:
+  ; CHECK-LABEL: .Lhi_label0:
   ; CHECK-NEXT: AUIPC a0,%pcrel_hi(.LCPI7_0)
-  ; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Ltmp0)
+  ; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Lhi_label0)
   ; CHECK-NEXT: LD a0,0(a0)
   ; CHECK-NEXT: RET
   ret i64 -2305843009180139521 ; 0xE000_0000_01FF_FFFF
@@ -84,9 +84,9 @@ define void @imm_store_i16_neg1(ptr %p) nounwind {
 
 define void @imm_store_i32_neg1(ptr %p) nounwind {
   ; CHECK-LABEL: imm_store_i32_neg1: # @imm_store_i32_neg1
-  ; CHECK-LABEL: .Ltmp1:
+  ; CHECK-LABEL: .Lhi_label1:
   ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI10_0)
-  ; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp1)
+  ; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label1)
   ; CHECK-NEXT: LD a1,0(a1)
   ; CHECK-NEXT: SW a1,0(a0)
   ; CHECK-NEXT: RET

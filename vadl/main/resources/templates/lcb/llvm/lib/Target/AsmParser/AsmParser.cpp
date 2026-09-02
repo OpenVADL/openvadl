@@ -167,7 +167,6 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc,
         [/]
     }
 
-    // Out.emitInstruction(Inst, getSTI());
     if (InstExpander.isExpandable(Inst)) {
         InstExpander.expand(Inst,
             [&](const MCInst &MI) {
