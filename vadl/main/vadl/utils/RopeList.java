@@ -92,6 +92,32 @@ public sealed interface RopeList<T> permits RopeList.ItemLeaf, RopeList.ListLeaf
   }
 
   /**
+   * Get the first element stored in the list.
+   *
+   * @return the element.
+   */
+  default T getFirst() {
+    return switch (this) {
+      case ItemLeaf<T> node -> node.element;
+      case Concat<T> node -> node.left.getFirst();
+      case ListLeaf<T> node -> node.elements.getFirst();
+    };
+  }
+
+  /**
+   * Get the last element stored in the list.
+   *
+   * @return the element.
+   */
+  default T getLast() {
+    return switch (this) {
+      case ItemLeaf<T> node -> node.element;
+      case Concat<T> node -> node.left.getLast();
+      case ListLeaf<T> node -> node.elements.getLast();
+    };
+  }
+
+  /**
    * Concatenates two lists in constant time and space.
    * Does not modify the original lists.
    *

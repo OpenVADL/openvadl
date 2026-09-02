@@ -196,16 +196,59 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
   }
 
   /**
-   * Strips a location of all expandedFrom information and returns it as a direct location.
+   * Strips a location of all its macro expansion information and returns it as a
+   * {@link DirectLocation}.
+   *
+   * <p><pre>{@code
+   *  model inner(): Ex = {
+   *    42
+   *  }
+   *
+   *  model outer(): Ex = {
+   *    $inner
+   *  }
+   *
+   *  $outer()
+   * }</pre>
+   * In this example the {@code innermostDirectLocation} of the integer literal would be the one in
+   * the second line inside the inner model.
    *
    * @return the direct location.
    */
-  default DirectLocation asDirectLocation() {
+  default DirectLocation innermostDirectLocation() {
     return switch (this) {
       case DirectLocation direct -> direct;
       case ExpandedLocation expanded -> expanded.primaryLocation;
     };
   }
+
+  /**
+   * Gets the outer most macro invocation (the top-level call).
+   * If the location is not the result of a macro call this just returns the location itself.
+   *
+   * <p><pre>{@code
+   *  model inner(): Ex = {
+   *    42
+   *  }
+   *
+   *  model outer(): Ex = {
+   *    $inner
+   *  }
+   *
+   *  $outer()
+   * }</pre>
+   * In this example the {@code outermostDirectLocation} of the integer literal would be the one in
+   * last line.
+   *
+   * @return the outer direct location.
+   */
+  default DirectLocation outermostDirectLocation() {
+    return switch (this) {
+      case DirectLocation direct -> direct;
+      case ExpandedLocation expanded -> expanded.expandedFrom.getLast();
+    };
+  }
+
 
   /**
    * Create a new source location that is a copy of the current one with the provided expanded stack
