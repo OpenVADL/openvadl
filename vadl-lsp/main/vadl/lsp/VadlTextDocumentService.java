@@ -233,48 +233,58 @@ public class VadlTextDocumentService implements TextDocumentService {
 
       } catch (DiagnosticList dl) {
         log.debug("UNABLE hover: Parser produced diagnostics instead of AST for {}", document.uri);
-        return emptyHoverResult();
+        log.debug("<<- hover: null");
+        return null;
       }
 
       var position = document.calculateUtf8Position(params.getPosition(), false);
       var path = toPath(document.uri);
 
-        {
-          // Show type information
-          var node = AstFinderByPosition.findTypedNode(ast, path, position);
-          if (node != null) {
-            return hoverResult(null, node.type().name(),
-                document.calculateUtf16Range(node.location()));
-          }
-        }
+      // 1) Show type information
+      Hover result = typeHover(ast, path, position, document);
 
-        {
-          // Show expanded code (for model invocations)
-          var nodes = AstFinder.findExpandedNodes(ast, path, position);
-          if (!nodes.isEmpty()) {
-            var range = document.calculateUtf16Range(
-                nodes.getFirst().location().expandedFromStack().getLast());
-            var prettyPrinted = new ArrayList<String>(nodes.size());
-            for (var node : nodes) {
-              var builder = new StringBuilder();
-              node.prettyPrint(0, builder);
-              prettyPrinted.add(builder.toString().trim());
-            }
-            return hoverResult("This model invocation expands to:",
-                String.join("\n", prettyPrinted), range);
-          }
-        }
+      // 2) Show expanded code (for model invocations)
+      if (result == null) {
+        result = modelExpansionHover(ast, path, position, document);
+      }
 
-      return emptyHoverResult();
+      log.debug("<<- hover: {}", result);
+      return result;
     });
+  }
+
+  private @Nullable Hover typeHover(Ast ast, Path path, SourceLocation.Position position,
+      Document document) {
+    var node = AstFinderByPosition.findTypedNode(ast, path, position);
+    if (node == null) {
+      return null;
+    }
+
+    return hoverResult(null, node.type().name(),
+        document.calculateUtf16Range(node.location()));
+  }
+
+  private @Nullable Hover modelExpansionHover(Ast ast, Path path, SourceLocation.Position position,
+      Document document) {
+    var nodes = AstFinder.findExpandedNodes(ast, path, position);
+    if (nodes.isEmpty()) {
+      return null;
+    }
+
+    var range = document.calculateUtf16Range(
+        nodes.getFirst().location().expandedFromStack().getLast());
+    var prettyPrinted = new ArrayList<String>(nodes.size());
+    for (var node : nodes) {
+      var builder = new StringBuilder();
+      node.prettyPrint(0, builder);
+      prettyPrinted.add(builder.toString().trim());
+    }
+    return hoverResult("This model invocation expands to:",
+        String.join("\n", prettyPrinted), range);
   }
 
   private @Nullable Hover hoverResult(@Nullable String text, @Nullable String sourceCode,
       @Nullable Range range) {
-    if (text == null && sourceCode == null) {
-      log.debug("<<- hover: null");
-      return null;
-    }
 
     var clientContentFormat = getClientMarkupContent();
     MarkupContent content = null;
@@ -298,18 +308,12 @@ public class VadlTextDocumentService implements TextDocumentService {
     }
 
     if (content == null) {
-      log.debug("<<- hover: null");
       return null;
     }
 
     var result = new Hover(content);
     result.setRange(range);
-    log.debug("<<- hover: {}", result);
     return result;
-  }
-
-  private @Nullable Hover emptyHoverResult() {
-    return hoverResult(null, null, null);
   }
 
   /**
