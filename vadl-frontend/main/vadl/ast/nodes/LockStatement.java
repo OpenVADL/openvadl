@@ -71,7 +71,6 @@ public final class LockStatement extends Statement {
     super.forEachChild(action);
 
     action.accept(expr);
-
     action.accept(statement);
   }
 

@@ -68,12 +68,8 @@ public final class IfStatement extends Statement {
     super.forEachChild(action);
 
     action.accept(condition);
-
     action.accept(thenStmt);
-
-    if (elseStmt != null) {
-      action.accept(elseStmt);
-    }
+    acceptNullable(action, elseStmt);
   }
 
   @Override

@@ -90,10 +90,7 @@ public class AsmGrammarRuleDefinition extends Definition implements Identifiable
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    if (asmTypeDefinition != null) {
-      action.accept(asmTypeDefinition);
-    }
-
+    acceptNullable(action, asmTypeDefinition);
     action.accept(alternatives);
   }
 

@@ -111,11 +111,7 @@ public class ForallExpr extends Expr {
     super.forEachChild(action);
 
     indices.forEach(action);
-
-    if (foldAction != null) {
-      action.accept(foldAction);
-    }
-
+    acceptNullable(action, foldAction);
     action.accept(body);
   }
 

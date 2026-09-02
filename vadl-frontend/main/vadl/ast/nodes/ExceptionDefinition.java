@@ -73,7 +73,6 @@ public final class ExceptionDefinition extends Definition implements Identifiabl
     super.forEachChild(action);
 
     action.accept(statement);
-
     params.forEach(action);
   }
 

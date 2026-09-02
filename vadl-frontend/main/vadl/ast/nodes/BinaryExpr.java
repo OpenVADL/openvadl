@@ -121,7 +121,6 @@ public class BinaryExpr extends Expr {
     super.forEachChild(action);
 
     action.accept(left);
-
     action.accept(right);
   }
 

@@ -69,7 +69,6 @@ public class EncodingDefinition extends Definition {
     super.forEachChild(action);
 
     action.accept((Node) instrIdentifier);
-
     action.accept(encodings);
   }
 
@@ -195,7 +194,6 @@ public class EncodingDefinition extends Definition {
       super.forEachChild(action);
 
       action.accept((Node) field);
-
       action.accept(value);
     }
 

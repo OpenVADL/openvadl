@@ -81,7 +81,6 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
     super.forEachChild(action);
 
     action.accept((Node) path);
-
     symbolArgs.forEach(action);
   }
 

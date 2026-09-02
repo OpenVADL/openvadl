@@ -70,7 +70,6 @@ public class ForallThenExpr extends Expr {
     super.forEachChild(action);
 
     indices.forEach(action);
-
     action.accept(thenExpr);
   }
 

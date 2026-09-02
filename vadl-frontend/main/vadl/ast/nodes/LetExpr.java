@@ -132,7 +132,6 @@ public class LetExpr extends Expr {
     super.forEachChild(action);
 
     action.accept(valueExpr);
-
     action.accept(body);
   }
 

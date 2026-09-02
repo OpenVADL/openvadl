@@ -142,10 +142,7 @@ public sealed interface Group {
       super.forEachChild(action);
 
       action.accept((Node) id);
-
-      if (size != null) {
-        action.accept(size);
-      }
+      acceptNullable(action, size);
     }
 
     @Override

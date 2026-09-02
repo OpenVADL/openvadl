@@ -90,11 +90,8 @@ public class ProcessDefinition extends Definition implements IdentifiableNode {
     super.forEachChild(action);
 
     templateParams.forEach(action);
-
     inputs.forEach(action);
-
     outputs.forEach(action);
-
     action.accept(statement);
   }
 

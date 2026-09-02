@@ -96,9 +96,7 @@ public final class InstructionCallStatement extends Statement {
     super.forEachChild(action);
 
     action.accept((Node) id);
-
     namedArguments.forEach(action);
-
     unnamedArguments.forEach(action);
   }
 
@@ -156,7 +154,6 @@ public final class InstructionCallStatement extends Statement {
       super.forEachChild(action);
 
       action.accept((Node) name);
-
       action.accept(value);
     }
 

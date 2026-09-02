@@ -83,7 +83,6 @@ public class InstructionDefinition extends Definition implements IdentifiableNod
     super.forEachChild(action);
 
     action.accept((Node) typeIdentifier);
-
     action.accept(behavior);
   }
 

@@ -100,10 +100,7 @@ public final class EnumerationDefinition extends Definition implements Identifia
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    if (enumType != null) {
-      action.accept(enumType);
-    }
-
+    acceptNullable(action, enumType);
     entries.forEach(action);
   }
 

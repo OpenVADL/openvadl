@@ -73,7 +73,6 @@ public class StageDefinition extends Definition implements IdentifiableNode {
     super.forEachChild(action);
 
     outputs.forEach(action);
-
     action.accept(statement);
   }
 

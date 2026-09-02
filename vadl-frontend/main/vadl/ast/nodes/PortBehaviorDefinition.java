@@ -74,9 +74,7 @@ public class PortBehaviorDefinition extends Definition implements IdentifiableNo
     super.forEachChild(action);
 
     inputs.forEach(action);
-
     outputs.forEach(action);
-
     action.accept(statement);
   }
 

@@ -57,7 +57,6 @@ public final class AssignmentStatement extends Statement {
     super.forEachChild(action);
 
     action.accept(target);
-
     action.accept(valueExpression);
   }
 

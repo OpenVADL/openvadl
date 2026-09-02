@@ -69,7 +69,6 @@ public class CpuProcessDefinition extends Definition {
     super.forEachChild(action);
 
     startupOutputs.forEach(action);
-
     action.accept(statement);
   }
 

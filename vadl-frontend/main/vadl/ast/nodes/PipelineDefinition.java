@@ -70,7 +70,6 @@ public class PipelineDefinition extends Definition implements IdentifiableNode {
     super.forEachChild(action);
 
     outputs.forEach(action);
-
     action.accept(statement);
   }
 

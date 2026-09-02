@@ -176,7 +176,6 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
       super.forEachChild(action);
 
       argTypes.forEach(action);
-
       action.accept(resultType);
     }
   }

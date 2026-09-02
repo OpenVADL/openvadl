@@ -123,4 +123,10 @@ public abstract class Node implements WithLocation {
   public String toString() {
     return this.getClass().getSimpleName();
   }
+
+  protected static void acceptNullable(Consumer<Node> action, @Nullable Node node) {
+    if (node != null) {
+      action.accept(node);
+    }
+  }
 }

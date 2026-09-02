@@ -119,7 +119,6 @@ public final class LetStatement extends Statement {
     super.forEachChild(action);
 
     action.accept(valueExpr);
-
     action.accept(body);
   }
 

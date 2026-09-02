@@ -96,7 +96,6 @@ public class InstructionSetDefinition extends Definition implements Identifiable
     super.forEachChild(action);
 
     extending.forEach(ext -> action.accept((Node) ext));
-
     definitions.forEach(action);
   }
 

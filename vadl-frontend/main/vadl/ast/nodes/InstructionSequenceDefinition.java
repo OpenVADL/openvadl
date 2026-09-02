@@ -42,7 +42,6 @@ public abstract class InstructionSequenceDefinition extends Definition {
     super.forEachChild(action);
 
     params.forEach(action);
-
     statements.forEach(action);
   }
 

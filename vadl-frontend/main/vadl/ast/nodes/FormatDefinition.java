@@ -171,7 +171,6 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
     super.forEachChild(action);
 
     action.accept(typeLiteral);
-
     fields.forEach(action);
   }
 

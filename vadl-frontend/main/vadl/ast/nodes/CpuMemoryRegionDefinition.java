@@ -103,10 +103,7 @@ public class CpuMemoryRegionDefinition extends Definition implements Identifiabl
     super.forEachChild(action);
 
     action.accept((Node) memoryRef);
-
-    if (stmt != null) {
-      action.accept(stmt);
-    }
+    acceptNullable(action, stmt);
   }
 
   @Override

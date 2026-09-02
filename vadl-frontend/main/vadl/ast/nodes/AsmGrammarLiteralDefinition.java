@@ -108,14 +108,8 @@ public class AsmGrammarLiteralDefinition extends Definition {
     super.forEachChild(action);
 
     parameters.forEach(action);
-
-    if (stringLiteral != null) {
-      action.accept(stringLiteral);
-    }
-
-    if (asmTypeDefinition != null) {
-      action.accept(asmTypeDefinition);
-    }
+    acceptNullable(action, stringLiteral);
+    acceptNullable(action, asmTypeDefinition);
   }
 
   @Override

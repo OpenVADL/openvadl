@@ -73,10 +73,7 @@ public class GroupDefinition extends Definition implements IdentifiableNode {
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    if (type != null) {
-      action.accept(type);
-    }
-
+    acceptNullable(action, type);
     action.accept(groupSequence);
   }
 

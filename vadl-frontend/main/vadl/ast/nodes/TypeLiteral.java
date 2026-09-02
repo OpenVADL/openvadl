@@ -87,7 +87,6 @@ public final class TypeLiteral extends Expr {
     super.forEachChild(action);
 
     action.accept((Node) baseType);
-
     sizeIndices.forEach(action);
   }
 

@@ -128,13 +128,9 @@ public class AsmDescriptionDefinition extends Definition implements Identifiable
     super.forEachChild(action);
 
     action.accept(abi);
-
     modifiers.forEach(action);
-
     directives.forEach(action);
-
     rules.forEach(action);
-
     commonDefinitions.forEach(action);
   }
 

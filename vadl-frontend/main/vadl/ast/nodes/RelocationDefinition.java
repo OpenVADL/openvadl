@@ -86,9 +86,7 @@ public class RelocationDefinition extends Definition implements IdentifiableNode
     super.forEachChild(action);
 
     params.forEach(action);
-
     action.accept(resultTypeLiteral);
-
     action.accept(expr);
   }
 

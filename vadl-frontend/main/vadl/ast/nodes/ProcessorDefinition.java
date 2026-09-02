@@ -126,11 +126,7 @@ public class ProcessorDefinition extends Definition implements IdentifiableNode 
     super.forEachChild(action);
 
     action.accept((Node) implementedIsa);
-
-    if (abi != null) {
-      action.accept((Node) abi);
-    }
-
+    acceptNullable(action, (Node) abi);
     definitions.forEach(action);
   }
 

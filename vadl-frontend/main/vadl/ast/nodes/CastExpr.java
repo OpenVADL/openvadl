@@ -96,10 +96,7 @@ public class CastExpr extends Expr {
     super.forEachChild(action);
 
     action.accept(value);
-
-    if (typeLiteral != null) {
-      action.accept(typeLiteral);
-    }
+    acceptNullable(action, typeLiteral);
   }
 
   @Override

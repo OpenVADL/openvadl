@@ -71,9 +71,7 @@ public class IfExpr extends Expr {
     super.forEachChild(action);
 
     action.accept(condition);
-
     action.accept(thenExpr);
-
     action.accept(elseExpr);
   }
 

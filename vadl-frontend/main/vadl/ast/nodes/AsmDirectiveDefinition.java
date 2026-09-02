@@ -66,7 +66,6 @@ public class AsmDirectiveDefinition extends Definition {
     super.forEachChild(action);
 
     action.accept(stringLiteral);
-
     action.accept(builtinDirective);
   }
 

@@ -74,7 +74,6 @@ public class ExistsInThenExpr extends Expr {
     super.forEachChild(action);
 
     indices.forEach(action);
-
     action.accept(thenExpr);
   }
 

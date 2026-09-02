@@ -69,9 +69,6 @@ public class SequenceCallExpr extends Expr {
     super.forEachChild(action);
 
     action.accept((Node) target);
-
-    if (range != null) {
-      action.accept(range);
-    }
+    acceptNullable(action, range);
   }
 }

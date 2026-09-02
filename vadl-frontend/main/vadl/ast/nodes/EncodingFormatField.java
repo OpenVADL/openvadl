@@ -66,7 +66,6 @@ public class EncodingFormatField extends FormatField {
     // `identifier` is treated as a child here even though it comes from the
     // parent class, since it isn't treated as a child in other subclasses.
     action.accept((Node) identifier);
-
     action.accept(expr);
   }
 

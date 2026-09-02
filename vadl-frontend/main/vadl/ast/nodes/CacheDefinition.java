@@ -68,7 +68,6 @@ public class CacheDefinition extends Definition implements IdentifiableNode {
     super.forEachChild(action);
 
     action.accept(sourceType);
-
     action.accept(targetType);
   }
 

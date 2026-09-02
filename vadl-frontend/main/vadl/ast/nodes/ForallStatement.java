@@ -67,7 +67,6 @@ public final class ForallStatement extends Statement {
     super.forEachChild(action);
 
     indices.forEach(action);
-
     action.accept(body);
   }
 

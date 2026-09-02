@@ -84,10 +84,7 @@ public class ConstantDefinition extends Definition implements IdentifiableNode, 
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    if (typeLiteral != null) {
-      action.accept(typeLiteral);
-    }
-
+    acceptNullable(action, typeLiteral);
     action.accept(value);
   }
 

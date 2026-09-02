@@ -83,9 +83,7 @@ public class FunctionDefinition extends Definition implements IdentifiableNode, 
     super.forEachChild(action);
 
     params.forEach(action);
-
     action.accept(retType);
-
     action.accept(expr);
   }
 

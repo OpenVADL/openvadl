@@ -70,9 +70,7 @@ public class AsmModifierDefinition extends Definition {
     super.forEachChild(action);
 
     action.accept(stringLiteral);
-
     action.accept(isa);
-
     action.accept(relocation);
   }
 

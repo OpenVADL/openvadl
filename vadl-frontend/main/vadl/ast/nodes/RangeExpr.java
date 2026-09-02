@@ -55,7 +55,6 @@ public class RangeExpr extends Expr {
     super.forEachChild(action);
 
     action.accept(from);
-
     action.accept(to);
   }
 

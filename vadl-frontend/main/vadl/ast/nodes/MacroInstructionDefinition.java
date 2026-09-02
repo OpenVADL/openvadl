@@ -71,9 +71,7 @@ public class MacroInstructionDefinition extends Definition {
     super.forEachChild(action);
 
     inputs.forEach(action);
-
     outputs.forEach(action);
-
     action.accept(statement);
   }
 

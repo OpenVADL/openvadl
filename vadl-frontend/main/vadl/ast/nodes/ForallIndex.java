@@ -80,11 +80,7 @@ public final class ForallIndex extends Node implements IdentifiableNode {
     super.forEachChild(action);
 
     action.accept((Node) name);
-
-    if (typeLiteral != null) {
-      action.accept(typeLiteral);
-    }
-
+    acceptNullable(action, typeLiteral);
     action.accept(domain);
   }
 
