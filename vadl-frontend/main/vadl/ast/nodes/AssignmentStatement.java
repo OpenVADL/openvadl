@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -26,9 +26,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class AssignmentStatement extends Statement {
-  @Child
   public Expr target;
-  @Child
   public Expr valueExpression;
 
   public AssignmentStatement(Expr target, Expr valueExpression) {
@@ -52,6 +50,14 @@ public final class AssignmentStatement extends Statement {
     }
     valueExpression.prettyPrint(indent + 1, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(target);
+    action.accept(valueExpression);
   }
 
   @Override

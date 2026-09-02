@@ -18,19 +18,16 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RangeFormatField extends FormatField implements IdentifiableNode {
-  @Child
   public List<Expr> ranges;
-  @Child
   @Nullable
   public TypeLiteral typeLiteral;
-
   @Nullable
   public Type type;
 
@@ -79,6 +76,13 @@ public class RangeFormatField extends FormatField implements IdentifiableNode {
     }
   }
 
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    ranges.forEach(action);
+    acceptNullable(action, typeLiteral);
+  }
 
   @Override
   public boolean equals(Object o) {

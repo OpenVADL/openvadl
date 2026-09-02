@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
@@ -31,7 +31,6 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNode {
   public Identifier id;
-  @Child
   public AsmGrammarLiteralDefinition asmLiteral;
   public SourceLocation loc;
 
@@ -70,6 +69,13 @@ public class AsmGrammarLocalVarDefinition extends Definition implements Identifi
     id.prettyPrint(0, builder);
     builder.append(" = ");
     asmLiteral.prettyPrint(0, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(asmLiteral);
   }
 
   @Override

@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
@@ -26,11 +26,9 @@ import vadl.utils.SourceLocation;
 public class ConstantDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
 
-  @Child
   @Nullable
   public TypeLiteral typeLiteral;
 
-  @Child
   public Expr value;
   public SourceLocation loc;
 
@@ -80,6 +78,14 @@ public class ConstantDefinition extends Definition implements IdentifiableNode, 
     }
     value.prettyPrint(indent + 1, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    acceptNullable(action, typeLiteral);
+    action.accept(value);
   }
 
   @Override

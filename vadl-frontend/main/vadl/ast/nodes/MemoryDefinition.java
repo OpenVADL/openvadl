@@ -18,17 +18,15 @@ package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
-  @Child
   public TypeLiteral addressTypeLiteral;
-  @Child
   public TypeLiteral dataTypeLiteral;
   public SourceLocation loc;
 
@@ -69,6 +67,14 @@ public class MemoryDefinition extends Definition implements IdentifiableNode, Ty
     builder.append(" -> ");
     dataTypeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(addressTypeLiteral);
+    action.accept(dataTypeLiteral);
   }
 
   @Override

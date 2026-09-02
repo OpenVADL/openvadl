@@ -16,7 +16,7 @@
 
 package vadl.ast.nodes;
 
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -30,7 +30,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasDefSequenceCallExpr {
-  @Child
   public Expr target;
   public SourceLocation loc;
 
@@ -57,5 +56,12 @@ public sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasD
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     target.prettyPrint(0, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(target);
   }
 }

@@ -18,7 +18,7 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
@@ -29,9 +29,7 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public final class LetStatement extends Statement {
   public List<IsId> identifiers;
-  @Child
   public Expr valueExpr;
-  @Child
   public Statement body;
   public SourceLocation location;
 
@@ -114,6 +112,14 @@ public final class LetStatement extends Statement {
     valueExpr.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
     body.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(valueExpr);
+    action.accept(body);
   }
 
   @Override

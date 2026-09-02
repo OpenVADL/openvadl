@@ -18,8 +18,8 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -30,11 +30,8 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class InstructionCallStatement extends Statement {
 
-  @Child
   public IdentifierOrPlaceholder id;
-  @Child
   public List<NamedArgument> namedArguments;
-  @Child
   public List<Expr> unnamedArguments;
   public SourceLocation loc;
 
@@ -95,6 +92,15 @@ public final class InstructionCallStatement extends Statement {
   }
 
   @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) id);
+    namedArguments.forEach(action);
+    unnamedArguments.forEach(action);
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -119,9 +125,7 @@ public final class InstructionCallStatement extends Statement {
   }
 
   public static final class NamedArgument extends Node {
-    @Child
     public IdentifierOrPlaceholder name;
-    @Child
     public Expr value;
 
     public NamedArgument(IdentifierOrPlaceholder name, Expr value) {
@@ -143,6 +147,14 @@ public final class InstructionCallStatement extends Statement {
       name.prettyPrint(0, builder);
       builder.append(" = ");
       value.prettyPrint(0, builder);
+    }
+
+    @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      action.accept((Node) name);
+      action.accept(value);
     }
 
     @Override

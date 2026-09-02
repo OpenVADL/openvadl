@@ -17,13 +17,11 @@
 package vadl.ast.nodes;
 
 import java.util.List;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class DefinitionList extends Definition {
-
-  @Child
   public List<Definition> items;
   public SyntaxType syntaxType;
   public SourceLocation location;
@@ -47,6 +45,13 @@ public class DefinitionList extends Definition {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     items.forEach(item -> item.prettyPrint(indent, builder));
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    items.forEach(action);
   }
 
   @Override

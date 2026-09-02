@@ -19,7 +19,7 @@ package vadl.ast.nodes;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -32,15 +32,10 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
   public Identifier id;
-  @Child
   public Identifier abi;
-  @Child
   public List<AsmModifierDefinition> modifiers;
-  @Child
   public List<AsmDirectiveDefinition> directives;
-  @Child
   public List<AsmGrammarRuleDefinition> rules;
-  @Child
   public List<Definition> commonDefinitions;
   public SourceLocation loc;
 
@@ -126,6 +121,17 @@ public class AsmDescriptionDefinition extends Definition implements Identifiable
     builder.append(prettyIndentString(--indent)).append("}\n");
 
     builder.append(prettyIndentString(--indent)).append("}\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(abi);
+    modifiers.forEach(action);
+    directives.forEach(action);
+    rules.forEach(action);
+    commonDefinitions.forEach(action);
   }
 
   @Override

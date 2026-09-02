@@ -18,7 +18,6 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
@@ -42,13 +41,6 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
     super(params, statements, loc);
     this.identifier = identifier;
     this.kind = kind;
-  }
-
-  @Override
-  public void forEachChild(Consumer<Node> action) {
-    // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
-    NodeChildrenRegistry.unsafeForEachChildDirect(this,
-        (Class<? extends Node>) getClass().getSuperclass(), action);
   }
 
   @Override

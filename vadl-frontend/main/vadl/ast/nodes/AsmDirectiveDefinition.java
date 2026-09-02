@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -27,9 +27,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class AsmDirectiveDefinition extends Definition {
-  @Child
   public Expr stringLiteral;
-  @Child
   public Identifier builtinDirective;
   public SourceLocation loc;
 
@@ -61,6 +59,14 @@ public class AsmDirectiveDefinition extends Definition {
     stringLiteral.prettyPrint(0, builder);
     builder.append(" -> ");
     builtinDirective.prettyPrint(0, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(stringLiteral);
+    action.accept(builtinDirective);
   }
 
   @Override

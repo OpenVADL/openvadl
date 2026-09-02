@@ -44,8 +44,9 @@ public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVi
 
   // TODO When using this class for the LSP Goto Definition feature, there are some limitations -
   //      AST doesn't provide all the data we would like to have:
-  //      - These Identifiers in ImportDefinition have no target set and are not visited
-  //        (missing @Child annotations): fileId; importedSymbols[x]
+  //      - These Identifiers in ImportDefinition have no target set and are not visited:
+  //        - fileId;
+  //        - importedSymbols[x]
   //      - Model invocations are already applied, i.e. we don't know that the searched position is
   //        on a model invocation, hence we cannot Goto Definition to the model. (Except if we
   //        analyze the expandedFrom data, but that is complex and/or points to only part of the

@@ -18,7 +18,7 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -27,12 +27,10 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class SymbolExpr extends Expr implements IsSymExpr {
-  @Child
   public IsId path;
   /**
    * The list of arguments in the pointy brackets. Always contains at least one element.
    */
-  @Child
   public List<Expr> symbolArgs;
   public SourceLocation location;
 
@@ -76,6 +74,14 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
       }
       builder.append(" >");
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) path);
+    symbolArgs.forEach(action);
   }
 
   @Override

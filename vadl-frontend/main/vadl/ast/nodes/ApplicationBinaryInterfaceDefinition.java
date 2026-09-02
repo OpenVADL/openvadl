@@ -18,16 +18,14 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ApplicationBinaryInterfaceDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder id;
-  @Child
   public IsId isa;
-  @Child
   public List<Definition> definitions;
   public SourceLocation loc;
 
@@ -69,6 +67,14 @@ public class ApplicationBinaryInterfaceDefinition extends Definition implements 
     builder.append(" = {\n");
     prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) isa);
+    definitions.forEach(action);
   }
 
   @Override

@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -35,7 +35,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class DerivedFormatField extends FormatField implements IdentifiableNode {
-  @Child
   public Expr expr;
 
   public DerivedFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
@@ -60,6 +59,12 @@ public class DerivedFormatField extends FormatField implements IdentifiableNode 
     expr.prettyPrint(indent, builder);
   }
 
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(expr);
+  }
 
   @Override
   public boolean equals(Object o) {

@@ -19,8 +19,8 @@ package vadl.ast.nodes;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -49,9 +49,7 @@ public class CpuMemoryRegionDefinition extends Definition implements Identifiabl
 
   public IdentifierOrPlaceholder id;
   public MemKind kind;
-  @Child
   public IsId memoryRef;
-  @Child
   @Nullable
   public Statement stmt;
   public SourceLocation loc;
@@ -98,6 +96,14 @@ public class CpuMemoryRegionDefinition extends Definition implements Identifiabl
       stmt.prettyPrint(indent, builder);
     }
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) memoryRef);
+    acceptNullable(action, stmt);
   }
 
   @Override

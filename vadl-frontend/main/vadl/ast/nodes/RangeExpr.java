@@ -16,7 +16,7 @@
 
 package vadl.ast.nodes;
 
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -25,9 +25,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class RangeExpr extends Expr {
-  @Child
   public Expr from;
-  @Child
   public Expr to;
 
   public RangeExpr(Expr from, Expr to) {
@@ -50,6 +48,14 @@ public class RangeExpr extends Expr {
     from.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
     builder.append("..");
     to.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(from);
+    action.accept(to);
   }
 
   @Override

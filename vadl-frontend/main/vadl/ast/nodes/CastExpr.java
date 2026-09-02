@@ -19,8 +19,8 @@ package vadl.ast.nodes;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
@@ -32,7 +32,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class CastExpr extends Expr {
-  @Child
   public Expr value;
 
   /**
@@ -42,7 +41,6 @@ public class CastExpr extends Expr {
    * such cases, and only the Type field is used.
    */
   @Nullable
-  @Child
   public TypeLiteral typeLiteral;
 
   public SourceLocation location;
@@ -91,6 +89,14 @@ public class CastExpr extends Expr {
         builder.append(requireNonNull(type));
       }
     });
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(value);
+    acceptNullable(action, typeLiteral);
   }
 
   @Override

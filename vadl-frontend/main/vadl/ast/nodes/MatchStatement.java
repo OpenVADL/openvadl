@@ -46,21 +46,6 @@ public final class MatchStatement extends Statement {
   }
 
   @Override
-  public void forEachChild(Consumer<Node> action) {
-    // This is too complicated for the @Child annotation
-    action.accept(candidate);
-    for (var c : cases) {
-      c.patterns.forEach(p -> action.accept(p));
-      if (c.result != null) {
-        action.accept(c.result);
-      }
-    }
-    if (defaultResult != null) {
-      action.accept(defaultResult);
-    }
-  }
-
-  @Override
   public SourceLocation location() {
     return loc;
   }
@@ -106,6 +91,20 @@ public final class MatchStatement extends Statement {
       builder.append("\n");
     }
     builder.append(prettyIndentString(indent + 1)).append("}\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(candidate);
+
+    for (var c : cases) {
+      c.patterns.forEach(action);
+      acceptNullable(action, c.result);
+    }
+
+    acceptNullable(action, defaultResult);
   }
 
   @Override

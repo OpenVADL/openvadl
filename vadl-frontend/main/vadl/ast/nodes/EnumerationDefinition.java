@@ -21,8 +21,8 @@ import static java.util.Objects.requireNonNull;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
@@ -30,9 +30,7 @@ import vadl.utils.SourceLocation;
 public final class EnumerationDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder id;
   @Nullable
-  @Child
   public TypeLiteral enumType;
-  @Child
   public List<Entry> entries;
   public SourceLocation loc;
 
@@ -99,6 +97,14 @@ public final class EnumerationDefinition extends Definition implements Identifia
   }
 
   @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    acceptNullable(action, enumType);
+    entries.forEach(action);
+  }
+
+  @Override
   public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -140,7 +146,6 @@ public final class EnumerationDefinition extends Definition implements Identifia
      * it here as a {@link IntegerLiteral}.
      */
     @Nullable
-    @Child
     public Expr value;
 
     /**
@@ -175,6 +180,15 @@ public final class EnumerationDefinition extends Definition implements Identifia
       builder.append(" = ");
       if (value != null) {
         value.prettyPrint(indent, builder);
+      }
+    }
+
+    @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      if (value != null) {
+        action.accept(value);
       }
     }
 

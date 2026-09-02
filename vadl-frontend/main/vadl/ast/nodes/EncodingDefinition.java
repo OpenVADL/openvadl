@@ -18,15 +18,13 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class EncodingDefinition extends Definition {
-  @Child
   public IdentifierOrPlaceholder instrIdentifier;
-  @Child
   public EncsNode encodings;
   public SourceLocation loc;
 
@@ -67,6 +65,14 @@ public class EncodingDefinition extends Definition {
   }
 
   @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) instrIdentifier);
+    action.accept(encodings);
+  }
+
+  @Override
   public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -96,7 +102,6 @@ public class EncodingDefinition extends Definition {
   }
 
   public static final class EncsNode extends Node implements IsEncs {
-    @Child
     public List<IsEncs> items;
     public SourceLocation loc;
 
@@ -130,6 +135,13 @@ public class EncodingDefinition extends Definition {
     }
 
     @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      items.forEach(item -> action.accept((Node) item));
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
@@ -148,9 +160,7 @@ public class EncodingDefinition extends Definition {
   }
 
   public static final class EncodingField extends Node implements IsEncs {
-    @Child
     public final IdentifierOrPlaceholder field;
-    @Child
     public Expr value;
 
     public EncodingField(IdentifierOrPlaceholder field, Expr value) {
@@ -177,6 +187,14 @@ public class EncodingDefinition extends Definition {
       field.prettyPrint(0, builder);
       builder.append(" = ");
       value.prettyPrint(0, builder);
+    }
+
+    @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      action.accept((Node) field);
+      action.accept(value);
     }
 
     @Override

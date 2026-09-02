@@ -151,26 +151,20 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
 
   @Override
   public void forEachChild(Consumer<Node> action) {
-    // This is too complicated for the @Child annotation
-    if (target != null) {
-      action.accept((Node) target);
-    }
-    for (var i = 0; i < argsIndices.size(); i++) {
-      var args = argsIndices.get(i);
-      for (var j = 0; j < args.values.size(); j++) {
-        var value = args.values.get(j);
-        if (value != null) {
-          action.accept(value);
-        }
+    super.forEachChild(action);
+
+    acceptNullable(action, (Node) target);
+
+    for (var args : argsIndices) {
+      for (var value : args.values) {
+        acceptNullable(action, value);
       }
     }
-    for (var i = 0; i < subCalls.size(); i++) {
-      var subCall = subCalls.get(i);
+
+    for (var subCall : subCalls) {
       for (var a : subCall.argsIndices) {
-        for (var v : a.values) {
-          if (v != null) {
-            action.accept(v);
-          }
+        for (var value : a.values) {
+          acceptNullable(action, value);
         }
       }
     }

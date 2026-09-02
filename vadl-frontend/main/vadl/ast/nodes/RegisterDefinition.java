@@ -20,18 +20,16 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RegisterDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder identifier;
-  @Child
   public RelationTypeLiteral typeLiteral;
   public SourceLocation loc;
-
   @Nullable
   public Type type;
 
@@ -69,6 +67,13 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
   }
 
   @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(typeLiteral);
+  }
+
+  @Override
   public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -102,11 +107,8 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
   }
 
   public static final class RelationTypeLiteral extends Node {
-    @Child
     public final List<TypeLiteral> argTypes;
-    @Child
     public TypeLiteral resultType;
-
 
     public RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
       this.argTypes = argTypes;
@@ -167,6 +169,14 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
         builder.append(" -> ");
       }
       resultType.prettyPrint(indent, builder);
+    }
+
+    @Override
+    public void forEachChild(Consumer<Node> action) {
+      super.forEachChild(action);
+
+      argTypes.forEach(action);
+      action.accept(resultType);
     }
   }
 }

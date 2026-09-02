@@ -20,8 +20,8 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 
@@ -32,7 +32,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ForallExpr extends Expr {
-  @Child
   public List<ForallIndex> indices;
 
   /**
@@ -45,7 +44,6 @@ public class ForallExpr extends Expr {
    * The fold can either be a binary operator or a function name.
    */
   @Nullable
-  @Child
   public Node foldAction;
 
   /// The function beeing called by the fold.
@@ -54,7 +52,6 @@ public class ForallExpr extends Expr {
   @Nullable
   public BuiltInTable.BuiltIn computedFoldBuiltin;
 
-  @Child
   public Expr body;
 
   public SourceLocation loc;
@@ -107,6 +104,15 @@ public class ForallExpr extends Expr {
       body.prettyPrint(0, builder);
       builder.append("\n");
     }
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    indices.forEach(action);
+    acceptNullable(action, foldAction);
+    action.accept(body);
   }
 
   @Override

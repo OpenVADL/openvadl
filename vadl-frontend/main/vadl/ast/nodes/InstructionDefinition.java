@@ -17,16 +17,14 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class InstructionDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder identifier;
-  @Child
   public IdentifierOrPlaceholder typeIdentifier;
-  @Child
   public Statement behavior;
   public SourceLocation loc;
 
@@ -78,6 +76,14 @@ public class InstructionDefinition extends Definition implements IdentifiableNod
     builder.append(" = ");
     behavior.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept((Node) typeIdentifier);
+    action.accept(behavior);
   }
 
   @Override

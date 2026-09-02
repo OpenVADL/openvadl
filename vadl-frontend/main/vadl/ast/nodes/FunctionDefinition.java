@@ -20,19 +20,16 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class FunctionDefinition extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder name;
-  @Child
   public List<Parameter> params;
-  @Child
   public TypeLiteral retType;
-  @Child
   public Expr expr;
   public SourceLocation loc;
 
@@ -79,6 +76,15 @@ public class FunctionDefinition extends Definition implements IdentifiableNode, 
     }
     expr.prettyPrint(indent + 1, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    params.forEach(action);
+    action.accept(retType);
+    action.accept(expr);
   }
 
   @Override

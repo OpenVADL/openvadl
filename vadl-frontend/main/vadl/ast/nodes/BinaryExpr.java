@@ -17,8 +17,8 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -26,10 +26,8 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class BinaryExpr extends Expr {
-  @Child
   public Expr left;
   public IsBinOp operator;
-  @Child
   public Expr right;
   public boolean hasBeenReordered = false;
 
@@ -116,6 +114,14 @@ public class BinaryExpr extends Expr {
       builder.append(" ");
       right.prettyPrintExpr(indent, builder, precedence());
     });
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(left);
+    action.accept(right);
   }
 
   @Override

@@ -19,7 +19,7 @@ package vadl.ast.nodes;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -30,11 +30,8 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class RaiseStatement extends Statement {
-
-  @Child
   public Statement statement;
   public SourceLocation location;
-
   @LazyInit
   public List<String> viamId;
 
@@ -52,6 +49,13 @@ public final class RaiseStatement extends Statement {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("raise ");
     statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(statement);
   }
 
   @Override

@@ -18,15 +18,13 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class StageDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder id;
-  @Child
   public List<StageOutputDefinition> outputs;
-  @Child
   public Statement statement;
   public SourceLocation loc;
 
@@ -68,6 +66,14 @@ public class StageDefinition extends Definition implements IdentifiableNode {
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    outputs.forEach(action);
+    action.accept(statement);
   }
 
   @Override

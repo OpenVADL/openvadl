@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -27,11 +27,8 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class AsmModifierDefinition extends Definition {
-  @Child
   public Expr stringLiteral;
-  @Child
   public Identifier isa;
-  @Child
   public Identifier relocation;
   public SourceLocation loc;
 
@@ -66,6 +63,15 @@ public class AsmModifierDefinition extends Definition {
     isa.prettyPrint(0, builder);
     builder.append("::");
     relocation.prettyPrint(0, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(stringLiteral);
+    action.accept(isa);
+    action.accept(relocation);
   }
 
   @Override

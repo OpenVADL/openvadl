@@ -18,18 +18,15 @@ package vadl.ast.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class PortBehaviorDefinition extends Definition implements IdentifiableNode {
   public Identifier id;
   public PortKind kind;
-  @Child
   public List<Parameter> inputs;
-  @Child
   public List<Parameter> outputs;
-  @Child
   public Statement statement;
   public SourceLocation loc;
 
@@ -70,6 +67,15 @@ public class PortBehaviorDefinition extends Definition implements IdentifiableNo
     Parameter.prettyPrintMultiple(indent, outputs, builder);
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    inputs.forEach(action);
+    outputs.forEach(action);
+    action.accept(statement);
   }
 
   @Override

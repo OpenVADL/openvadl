@@ -17,12 +17,11 @@
 package vadl.ast.nodes;
 
 import java.util.List;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class GroupedExpr extends Expr {
-  @Child
   public List<Expr> expressions;
   public SourceLocation loc;
 
@@ -59,6 +58,13 @@ public class GroupedExpr extends Expr {
       expr.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
     }
     builder.append(")");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    expressions.forEach(action);
   }
 
   @Override

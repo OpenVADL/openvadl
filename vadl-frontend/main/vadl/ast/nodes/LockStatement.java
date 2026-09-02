@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 /**
@@ -29,9 +29,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class LockStatement extends Statement {
-  @Child
   public Expr expr;
-  @Child
   public Statement statement;
   public SourceLocation loc;
 
@@ -66,6 +64,14 @@ public final class LockStatement extends Statement {
     LockStatement that = (LockStatement) o;
     return Objects.equals(expr, that.expr)
         && Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(expr);
+    action.accept(statement);
   }
 
   @Override

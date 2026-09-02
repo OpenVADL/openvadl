@@ -1192,16 +1192,6 @@ public class SymbolTable {
     }
 
     @Override
-    public Void visit(FloatTypeDefinition definition) {
-      beforeTravel(definition);
-      // FloatTypeDefinition has no @Child fields, so it's not in NodeChildrenRegistry,
-      // and we need to manually visit annotations
-      definition.annotations.forEach(this::travel);
-      afterTravel(definition);
-      return null;
-    }
-
-    @Override
     public Void visit(InstructionDefinition definition) {
       // Import all symbols from the format.
       beforeTravel(definition);

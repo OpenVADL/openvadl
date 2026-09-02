@@ -19,13 +19,12 @@ package vadl.ast.nodes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AssemblyDefinition extends Definition {
   public List<IdentifierOrPlaceholder> identifiers;
-  @Child
   public Expr expr;
   public SourceLocation loc;
 
@@ -65,6 +64,13 @@ public class AssemblyDefinition extends Definition {
     builder.append(" = ");
     expr.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(expr);
   }
 
   @Override

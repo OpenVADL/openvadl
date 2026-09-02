@@ -20,8 +20,8 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.javaannotations.ast.Child;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
@@ -31,12 +31,9 @@ public class AliasDefinition extends Definition implements IdentifiableNode, Typ
   public IdentifierOrPlaceholder id;
   public AliasKind kind;
   @Nullable
-  @Child
   public TypeLiteral aliasType;
   @Nullable
-  @Child
   public TypeLiteral targetType;
-  @Child
   public Expr value;
   public SourceLocation loc;
 
@@ -111,6 +108,15 @@ public class AliasDefinition extends Definition implements IdentifiableNode, Typ
     builder.append(" = ");
     value.prettyPrint(0, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    acceptNullable(action, aliasType);
+    acceptNullable(action, targetType);
+    acceptNullable(action, value);
   }
 
   @Override

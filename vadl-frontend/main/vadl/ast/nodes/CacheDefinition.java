@@ -17,15 +17,13 @@
 package vadl.ast.nodes;
 
 import java.util.Objects;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CacheDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder id;
-  @Child
   public TypeLiteral sourceType;
-  @Child
   public TypeLiteral targetType;
   public SourceLocation loc;
 
@@ -63,6 +61,14 @@ public class CacheDefinition extends Definition implements IdentifiableNode {
     builder.append(" -> ");
     targetType.prettyPrint(0, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(sourceType);
+    action.accept(targetType);
   }
 
   @Override

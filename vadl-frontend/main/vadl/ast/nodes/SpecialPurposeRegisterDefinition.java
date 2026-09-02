@@ -20,15 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
 import vadl.ast.Occurrence;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class SpecialPurposeRegisterDefinition extends Definition {
-
   public Purpose purpose;
-  @Child
   public List<ExpandedSequenceCallExpr> exprs;
   public SourceLocation loc;
 
@@ -69,6 +67,13 @@ public class SpecialPurposeRegisterDefinition extends Definition {
     }
     builder.append(joiner.toString());
     builder.append("]\n");
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    exprs.forEach(action);
   }
 
   @Override

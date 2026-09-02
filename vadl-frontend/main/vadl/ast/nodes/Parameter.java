@@ -17,7 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.List;
-import vadl.javaannotations.ast.Child;
+import java.util.function.Consumer;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
@@ -30,7 +30,6 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public class Parameter extends Definition implements IdentifiableNode, TypedNode {
   public IdentifierOrPlaceholder name;
-  @Child
   public TypeLiteral typeLiteral;
 
   public Parameter(IdentifierOrPlaceholder name, TypeLiteral typeLiteral) {
@@ -58,6 +57,13 @@ public class Parameter extends Definition implements IdentifiableNode, TypedNode
     name.prettyPrint(indent, builder);
     builder.append(" : ");
     typeLiteral.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    action.accept(typeLiteral);
   }
 
   public static void prettyPrintMultiple(int indent, List<Parameter> parameters,

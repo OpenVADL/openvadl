@@ -19,7 +19,6 @@ package vadl.ast.nodes;
 import static java.util.Objects.requireNonNull;
 
 import java.util.function.Consumer;
-import vadl.javaannotations.ast.Child;
 import vadl.utils.SourceLocation;
 
 /**
@@ -27,7 +26,6 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class EncodingFormatField extends FormatField {
-  @Child
   public Expr expr;
 
   public EncodingFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
@@ -45,14 +43,6 @@ public class EncodingFormatField extends FormatField {
   }
 
   @Override
-  public void forEachChild(Consumer<Node> action) {
-    // This has to be hardcoded here because for this format field it's a child but for some it's
-    // the identfiyable name.
-    action.accept((Node) identifier);
-    action.accept(expr);
-  }
-
-  @Override
   public <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -67,6 +57,16 @@ public class EncodingFormatField extends FormatField {
     identifier.prettyPrint(indent, builder);
     builder.append(" := ");
     expr.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public void forEachChild(Consumer<Node> action) {
+    super.forEachChild(action);
+
+    // `identifier` is treated as a child here even though it comes from the
+    // parent class, since it isn't treated as a child in other subclasses.
+    action.accept((Node) identifier);
+    action.accept(expr);
   }
 
   @Override
