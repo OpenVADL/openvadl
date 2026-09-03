@@ -1,40 +1,38 @@
-#ifndef RV64UME_TARGET_CPU_H
-#define RV64UME_TARGET_CPU_H
+#ifndef [(${gen_arch_upper})]_TARGET_CPU_H
+#define [(${gen_arch_upper})]_TARGET_CPU_H
 
+//TODO: check for correct interpolations for regs & values
 enum {
-    RV64UME_REG_RA = 1,
-    RV64UME_REG_SP = 2,
-    RV64UME_REG_TP = 4,
-    RV64UME_REG_A0 = 10,
-    RV64UME_REG_A1 = 11,
-    RV64UME_REG_A2 = 12,
-    RV64UME_REG_A3 = 13,
-    RV64UME_REG_A4 = 14,
-    RV64UME_REG_A5 = 15,
-    RV64UME_REG_A7 = 17,
+    [(${gen_arch_upper})]_REG_RA  = 1,
+    [(${gen_arch_upper})]_REG_SP  = [(${config.spReg})],
+    [(${gen_arch_upper})]_REG_TP  = 4,
+
+    [# th:each="arg, stat : ${config.args}"]
+    [(${gen_arch_upper})]_REG_ARG[(${stat.index})] = [(${arg.index})],
+    [/]
 };
 
-static inline void cpu_clone_regs_child(CPURV64UMEState *env, target_ulong newsp,
+static inline void cpu_clone_regs_child(CPU[(${gen_arch_upper})]State *env, target_ulong newsp,
                                         unsigned flags)
 {
     if (newsp) {
-        env->x[RV64UME_REG_SP] = newsp;
+        env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_SP] = newsp;
     }
 
-    env->x[RV64UME_REG_A0] = 0;
+    env->[(${register_tensors[0].name_lower})][ [(${config.retReg})] ] = 0;
 }
 
-static inline void cpu_clone_regs_parent(CPURV64UMEState *env, unsigned flags)
+static inline void cpu_clone_regs_parent(CPU[(${gen_arch_upper})]State *env, unsigned flags)
 {
 }
 
-static inline void cpu_set_tls(CPURV64UMEState *env, target_ulong newtls)
+static inline void cpu_set_tls(CPU[(${gen_arch_upper})]State *env, target_ulong newtls)
 {
-    env->x[RV64UME_REG_TP] = newtls;
+    env->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_TP] = newtls;
 }
 
-static inline abi_ulong get_sp_from_cpustate(CPURV64UMEState *state)
+static inline abi_ulong get_sp_from_cpustate(CPU[(${gen_arch_upper})]State *state)
 {
-   return state->x[RV64UME_REG_SP];
+   return state->[(${register_tensors[0].name_lower})][ [(${gen_arch_upper})]_REG_SP];
 }
 #endif

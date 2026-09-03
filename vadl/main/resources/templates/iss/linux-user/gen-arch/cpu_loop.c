@@ -24,17 +24,10 @@
 #include "signal-common.h"
 #include "elf.h"
 
-enum {
-    RV64UME_EXC_ILLEGAL_INSTR = 2,
-    RV64UME_EXC_BREAKPOINT = 3,
-    RV64UME_EXC_ECALL = 11,
-};
-
-void cpu_loop(CPURV64UMEState *env)
+void cpu_loop(CPU[(${gen_arch_upper})]State *env)
 {
     CPUState *cs = env_cpu(env);
     int trapnr;
-    uint32_t cause;
     target_ulong ret;
 
     for (;;) {
@@ -50,55 +43,31 @@ void cpu_loop(CPURV64UMEState *env)
         case EXCP_ATOMIC:
             cpu_exec_step_atomic(cs);
             break;
-        case RV64UME_EXCP_EXC:
-            cause = env->arg_exc_cause;
-            switch (cause) {
-            case RV64UME_EXC_ECALL:
-                env->pc += 4;
-                if (env->x[RV64UME_REG_A7] == TARGET_NR_rv64ume_flush_icache) {
-                    /* no-op in QEMU; TB invalidation is automatic */
-                    ret = 0;
-                } else {
-                    ret = do_syscall(env,
-                                     env->x[RV64UME_REG_A7],
-                                     env->x[RV64UME_REG_A0],
-                                     env->x[RV64UME_REG_A1],
-                                     env->x[RV64UME_REG_A2],
-                                     env->x[RV64UME_REG_A3],
-                                     env->x[RV64UME_REG_A4],
-                                     env->x[RV64UME_REG_A5],
-                                     0, 0);
-                }
-                if (ret == -QEMU_ERESTARTSYS) {
-                    env->pc -= 4;
-                } else if (ret != -QEMU_ESIGRETURN) {
-                    env->x[RV64UME_REG_A0] = ret;
-                }
-                if (cs->singlestep_enabled) {
-                    goto gdbstep;
-                }
-                break;
-            case RV64UME_EXC_ILLEGAL_INSTR:
-                force_sig_fault(TARGET_SIGILL, TARGET_ILL_ILLOPC, env->pc);
-                break;
-            case RV64UME_EXC_BREAKPOINT:
-            case EXCP_DEBUG:
-gdbstep:
-                force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->pc);
-                break;
-            default:
-                EXCP_DUMP(env,
-                          "\nqemu: unhandled rv64ume exception cause %#x - aborting\n",
-                          cause);
-                exit(EXIT_FAILURE);
+        case [(${gen_arch_upper})]_EXCP_UME_SYSCALL:
+            env->[(${pc_info.accessor})] += [(${config.insn_width_bytes})];
+                ret = do_syscall(env,
+                      env->[(${config.sysRegFile})][ [(${config.sysReg})] ],
+                      [# th:each="arg : ${config.args}"]
+                      env->[(${arg.file})][ [(${arg.index})] ],
+                      [/]
+                      0, 0);
+            if (ret == -QEMU_ERESTARTSYS) {
+                env->[(${pc_info.accessor})] -= [(${config.insn_width_bytes})];
+            } else if (ret != -QEMU_ESIGRETURN) {
+                env->[(${config.retRegFile})][ [(${config.retReg})] ] = ret;                }
+            if (cs->singlestep_enabled) {
+                goto gdbstep;
             }
             break;
+        case EXCP_DEBUG:
+        gdbstep:
+             force_sig_fault(TARGET_SIGTRAP, TARGET_TRAP_BRKPT, env->[(${pc_info.accessor})]);
+             break;
         default:
             EXCP_DUMP(env, "\nqemu: unhandled CPU exception %#x - aborting\n",
                      trapnr);
             exit(EXIT_FAILURE);
         }
-
         process_pending_signals(env);
     }
 }
@@ -109,8 +78,8 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     TaskState *ts = get_task_state(cpu);
     struct image_info *info = ts->info;
 
-    env->pc = regs->sepc;
-    env->x[RV64UME_REG_SP] = regs->sp;
+    env->[(${pc_info.accessor})] = regs->sepc;
+    env->[(${config.spRegFile})][ [(${config.spReg})] ] = regs->[(${config.spRegName})];
 
     ts->stack_base = info->start_stack;
 }
