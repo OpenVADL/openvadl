@@ -37,7 +37,12 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: alias
     ]
   ]
 
-- ... which has this range: 
+- ... which has this text: 
+  ```vadl
+  Bits<32>
+  ```
+
+- ... and this range: 
   ================
     // HOVER POSITION 8:26 - Word alias resolved via using definition
     instruction set architecture TEST = {

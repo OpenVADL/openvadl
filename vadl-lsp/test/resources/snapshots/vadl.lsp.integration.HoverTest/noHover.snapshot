@@ -17,4 +17,5 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: noHover
   ================
 
 - returned Hover: null
-- ... which has this range: n/a
+- ... which has this text: n/a
+- ... and this range: n/a

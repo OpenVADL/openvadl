@@ -37,7 +37,12 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: calculated
     ]
   ]
 
-- ... which has this range: 
+- ... which has this text: 
+  ```vadl
+  Bits<64>
+  ```
+
+- ... and this range: 
   ================
     // HOVER POSITION 5:21 - Bits<32*2>
     instruction set architecture TEST = {

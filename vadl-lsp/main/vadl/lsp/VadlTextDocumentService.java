@@ -233,42 +233,86 @@ public class VadlTextDocumentService implements TextDocumentService {
 
       } catch (DiagnosticList dl) {
         log.debug("UNABLE hover: Parser produced diagnostics instead of AST for {}", document.uri);
-        return hoverResult(null, null);
+        log.debug("<<- hover: null");
+        return null;
       }
 
       var position = document.calculateUtf8Position(params.getPosition(), false);
-      var node = AstFinderByPosition.findTypedNode(ast, toPath(document.uri), position);
+      var path = toPath(document.uri);
 
-      if (node == null) {
-        return hoverResult(null, null);
+      // 1) Show type information
+      Hover result = typeHover(ast, path, position, document);
+
+      // 2) Show expanded code (for model invocations)
+      if (result == null) {
+        result = modelExpansionHover(ast, path, position, document);
       }
 
-      return hoverResult(node.type().name(), document.calculateUtf16Range(node.location()));
+      log.debug("<<- hover: {}", result);
+      return result;
     });
   }
 
-  private @Nullable Hover hoverResult(@Nullable String text, @Nullable Range range) {
-    Hover result = null;
-    if (text != null) {
-      var clientContentFormat = getClientMarkupContent();
-      MarkupContent content = null;
-
-      if (clientContentFormat.contains(MarkupKind.MARKDOWN)) {
-        // For now, we assume that all hover texts are snippets of valid OpenVADL source code, so
-        // let's use Markdown to mark them as such
-        content = new MarkupContent(MarkupKind.MARKDOWN,
-            "```" + LANGUAGE_IDENTIFIER + "\n" + text + "\n```");
-      } else if (clientContentFormat.contains(MarkupKind.PLAINTEXT)) {
-        // Fallback
-        content = new MarkupContent(MarkupKind.PLAINTEXT, text);
-      }
-
-      if (content != null) {
-        result = new Hover(content);
-        result.setRange(range);
-      }
+  private @Nullable Hover typeHover(Ast ast, Path path, SourceLocation.Position position,
+      Document document) {
+    var node = AstFinderByPosition.findTypedNode(ast, path, position);
+    if (node == null) {
+      return null;
     }
-    log.debug("<<- hover: {}", result);
+
+    return hoverResult(null, node.type().name(),
+        document.calculateUtf16Range(node.location()));
+  }
+
+  private @Nullable Hover modelExpansionHover(Ast ast, Path path, SourceLocation.Position position,
+      Document document) {
+    var nodes = AstFinder.findExpandedNodes(ast, path, position);
+    if (nodes.isEmpty()) {
+      return null;
+    }
+
+    var range = document.calculateUtf16Range(
+        nodes.getFirst().location().expandedFromStack().getLast());
+    var prettyPrinted = new ArrayList<String>(nodes.size());
+    for (var node : nodes) {
+      var builder = new StringBuilder();
+      node.prettyPrint(0, builder);
+      prettyPrinted.add(builder.toString().trim());
+    }
+    return hoverResult("This model invocation expands to:",
+        String.join("\n", prettyPrinted), range);
+  }
+
+  private @Nullable Hover hoverResult(@Nullable String text, @Nullable String sourceCode,
+      @Nullable Range range) {
+
+    var clientContentFormat = getClientMarkupContent();
+    MarkupContent content = null;
+    List<String> parts = new ArrayList<>();
+    if (text != null) {
+      parts.add(text);
+    }
+
+    if (clientContentFormat.contains(MarkupKind.MARKDOWN)) {
+      if (sourceCode != null) {
+        parts.add("```" + LANGUAGE_IDENTIFIER + "\n" + sourceCode + "\n```");
+      }
+      content = new MarkupContent(MarkupKind.MARKDOWN, String.join("  \n", parts));
+
+    } else if (clientContentFormat.contains(MarkupKind.PLAINTEXT)) {
+      // Fallback
+      if (sourceCode != null) {
+        parts.add(sourceCode);
+      }
+      content = new MarkupContent(MarkupKind.PLAINTEXT, String.join("\n", parts));
+    }
+
+    if (content == null) {
+      return null;
+    }
+
+    var result = new Hover(content);
+    result.setRange(range);
     return result;
   }
 
