@@ -252,7 +252,12 @@ instruction set architecture AArch32v6 = {
   model MovNSft(): Ex = {VADL::lsls (~operand2, 0)}
   model MakeImm(): Ex = {VADL::rors (base, rorcount)}
   model CntLZ()  : Ex = {VADL::clz  (R(rm))}
-  model RevByte(): Ex = {R(rm)(7..0,15..8,23..16,31..24)}
+//  model RevByte(): Ex = {R(rm)(7..0,15..8,23..16,31..24)}
+  model RevByte(): Ex = {let Rrm = R(rm) in
+    let byte0 =  Rrm( 7.. 0) as Word          << 8 in 
+    let byte1 = (Rrm(15.. 8) as Word | byte0) << 8 in
+    let byte2 = (Rrm(23..16) as Word | byte1) << 8 in
+                 Rrm(31..24) as Word | byte2}
   model RevBits(): Ex = {revBits(R(rm))}
   model Ident()  : Ex = {res}
   model Negate() : Ex = {(~(res))}
