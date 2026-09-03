@@ -208,7 +208,7 @@ public class Diagnostic extends RuntimeException {
     for (var diagnostic : diagnostics) {
 
       final var locationDiagnostics = structure.computeIfAbsent(
-          diagnostic.multiLocation.primaryLocation.location().asDirectLocation(),
+          diagnostic.multiLocation.primaryLocation.location().innermostDirectLocation(),
           k -> new ArrayList<>());
 
       var similar = locationDiagnostics.stream()

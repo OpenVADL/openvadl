@@ -60,7 +60,7 @@ public class ForIdxNode extends ExpressionNode {
                     int toIdx) {
     super(normalizeType(type));
     this.bindingName = bindingName;
-    this.bindingLocation = bindingLocation.asDirectLocation();
+    this.bindingLocation = bindingLocation.innermostDirectLocation();
     this.fromIdx = fromIdx;
     this.toIdx = toIdx;
   }

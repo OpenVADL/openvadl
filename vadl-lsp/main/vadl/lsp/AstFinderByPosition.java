@@ -99,7 +99,7 @@ public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVi
           vadl.utils.RopeList<SourceLocation.DirectLocation> expandedFrom
         )
       ) {
-        var outerLocation = expandedFrom.toList().getLast();
+        var outerLocation = expandedFrom.getLast();
         if (!primaryLocation.begin().isWithin(outerLocation)
             || !primaryLocation.end().isWithin(outerLocation)) {
           return false;
