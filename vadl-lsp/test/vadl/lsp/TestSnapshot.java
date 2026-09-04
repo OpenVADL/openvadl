@@ -137,7 +137,7 @@ public class TestSnapshot {
    *              verifying the snapshot data.
    */
   public void add(String name, @Nullable Object value) {
-    data.append("- ").append(name).append(": ");
+    data.append("- ").append(name).append(":");
 
     var valueString = Objects.toString(value);
     if (valueString.contains("\n")) {
@@ -145,6 +145,7 @@ public class TestSnapshot {
       data.append(valueString.replace("\n", "\n  "));
       data.append("\n");
     } else {
+      data.append(" ");
       data.append(value);
     }
     data.append("\n");

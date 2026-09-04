@@ -16,9 +16,6 @@
 
 package vadl.lsp;
 
-import static vadl.lsp.LspUtils.toPath;
-import static vadl.lsp.LspUtils.toUri;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

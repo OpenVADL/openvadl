@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: twoFil
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // GOTO POSITION 5:29 - "foo" points to constant definition in other file
     import "twoFiles-otherFile"::TEST
@@ -16,7 +16,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: twoFil
   ================
 
 # % Requested data of input file otherFile.vadl %
-- returned Goto Definition: 
+- returned Goto Definition:
   Either [
     left = null
     right = [LocationLink [
@@ -54,7 +54,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: twoFil
   ]]
   ]
 
-- ... which looks like this: 
+- ... which looks like this:
   ================
     instruction set architecture TEST = {
       <TARGET RANGE>constant <TARGET SELECTION RANGE>foo</TARGET SELECTION RANGE> = 13</TARGET RANGE>

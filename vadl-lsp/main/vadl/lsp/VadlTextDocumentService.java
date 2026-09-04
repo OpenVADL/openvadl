@@ -179,21 +179,21 @@ public class VadlTextDocumentService implements TextDocumentService {
       }
       var originSelectionRange = document.calculateUtf16Range(identifier.location());
 
-      return definitionResult(toUri(targetDocument.path), targetRange, targetSelectionRange,
+      return definitionResult(targetDocument.path, targetRange, targetSelectionRange,
           originSelectionRange);
     });
   }
 
   private Either<List<? extends Location>, List<? extends LocationLink>> definitionResult(
-      String targetUri, Range targetRange, Range targetSelectionRange, Range originSelectionRange) {
+      Path targetPath, Range targetRange, Range targetSelectionRange, Range originSelectionRange) {
 
     if (!clientSupportsDefinitionLink()) {
-      var location = new Location(targetUri, targetSelectionRange);
+      var location = new Location(toUri(targetPath), targetSelectionRange);
       log.debug("<<- definition: {}", location);
       return Either.forLeft(List.of(location));
     }
 
-    var locationLink = new LocationLink(targetUri, targetRange, targetSelectionRange,
+    var locationLink = new LocationLink(toUri(targetPath), targetRange, targetSelectionRange,
         originSelectionRange);
     log.debug("<<- definition: {}", locationLink);
     return Either.forRight(List.of(locationLink));

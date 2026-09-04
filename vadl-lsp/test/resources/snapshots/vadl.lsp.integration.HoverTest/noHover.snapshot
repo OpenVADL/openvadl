@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: noHover
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // HOVER POSITION 2:14 - Keywords have no type information
     instruction s<POS>et architecture TEST = {

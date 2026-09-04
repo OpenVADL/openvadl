@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: constant
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // HOVER POSITION 3:8 - Constant definition (within keyword)
     instruction set architecture TEST = {
@@ -16,7 +16,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: constant
     }
   ================
 
-- returned Hover: 
+- returned Hover:
   Hover [
     contents = Either [
       left = null
@@ -37,12 +37,12 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: constant
     ]
   ]
 
-- ... which has this text: 
+- ... which has this text:
   ```vadl
   Const<32>
   ```
 
-- ... and this range: 
+- ... and this range:
   ================
     // HOVER POSITION 3:8 - Constant definition (within keyword)
     instruction set architecture TEST = {

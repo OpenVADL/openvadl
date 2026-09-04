@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input: 
+- Input:
   ================
     // no errors
     instruction set architecture TEST = {
@@ -13,7 +13,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
   ================
 
 # % Requested data of input file input.vadl %
-- Published diagnostics: 
+- Published diagnostics:
   [PublishDiagnosticsParams [
     uri = ".../vadl.lsp.integration.PublishDiagnosticsTest/noErrors-input.vadl"
     diagnostics = ArrayList ()
