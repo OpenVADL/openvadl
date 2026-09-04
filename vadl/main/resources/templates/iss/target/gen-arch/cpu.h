@@ -25,9 +25,9 @@ extern const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[
 // e.g. it holds the state of all registers.
 typedef struct CPUArchState {
   // CPU registers
-  [# th:each="reg, iterState : ${register_tensors}"]
+  [# th:each="reg, iterState : ${register_tensors}"][# th:if="${!reg.isFullyLazy}"]
   uint[(${reg.cpu_state_type_width})]_t [(${reg.name_lower})][(${reg.c_array_def})][(${reg.cpu_state_alignment})];
-  [/]
+  [/][/]
 
   // Exception arguments (intermediate store during exception handling)
   [# th:each="exc : ${exc_info.exceptions}"] [# th:each="p : ${exc.params}"]

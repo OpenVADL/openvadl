@@ -19,8 +19,10 @@ package vadl.viam.annotations;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.viam.Annotation;
+import vadl.viam.Constant;
 import vadl.viam.FloatExceptionFlag;
 import vadl.viam.RegisterTensor;
 
@@ -63,6 +65,19 @@ public class FloatFlagAnnotation extends Annotation<RegisterTensor> {
 
   public Map<Integer, FloatExceptionFlag> flags(boolean sticky) {
     return sticky ? stickyFlags() : nonStickyFlags();
+  }
+
+  /**
+   * Returns a bit slice containing all bits that contain a flag.
+   */
+  public Constant.BitSlice slice() {
+    return new Constant.BitSlice(
+        Stream.concat(
+            sticky.keySet().stream(),
+            nonSticky.keySet().stream()
+        ).distinct().map(i -> Constant.BitSlice.Part.of(i, i))
+            .toArray(Constant.BitSlice.Part[]::new)
+    );
   }
 
   /**
