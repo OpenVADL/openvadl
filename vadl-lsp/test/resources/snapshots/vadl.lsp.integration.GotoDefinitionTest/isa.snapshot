@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: isa
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // GOTO POSITION 5:40 - "TEST" points to isa definition
     instruction set architecture TEST = {
@@ -17,7 +17,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: isa
   ================
 
 # % Requested data of input file input.vadl %
-- returned Goto Definition: 
+- returned Goto Definition:
   Either [
     left = null
     right = [LocationLink [
@@ -55,7 +55,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: isa
   ]]
   ]
 
-- ... which looks like this: 
+- ... which looks like this:
   ================
     // GOTO POSITION 5:40 - "TEST" points to isa definition
     <TARGET RANGE>instruction set architecture <TARGET SELECTION RANGE>TEST</TARGET SELECTION RANGE> = {

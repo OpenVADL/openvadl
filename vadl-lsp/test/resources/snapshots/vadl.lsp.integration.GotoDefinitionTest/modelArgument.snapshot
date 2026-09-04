@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: modelA
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // GOTO POSITION 10:15 - Model argument goes nowhere
     instruction set architecture TEST = {
@@ -19,7 +19,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: modelA
     }
   ================
 
-- returned Goto Definition: 
+- returned Goto Definition:
   Either [
     left = []
     right = null

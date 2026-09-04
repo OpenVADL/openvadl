@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input: 
+- Input:
   ================
     // no X
     instruction set architecture TEST = {
@@ -15,7 +15,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
   ================
 
 # % Requested data of input file input.vadl %
-- Published diagnostics: 
+- Published diagnostics:
   [PublishDiagnosticsParams [
     uri = ".../vadl.lsp.integration.PublishDiagnosticsTest/noX-input.vadl"
     diagnostics = ArrayList (
@@ -43,7 +43,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: no
     version = 0
   ]]
 
-- ... which looks like this: 
+- ... which looks like this:
   Error: Unknown Symbol: "X"
   No Symbol with this name exists.
   ================

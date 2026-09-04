@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: modelInvocation
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // HOVER POSITION 11:8 - Shows expansion of second model invocation
     instruction set architecture TEST = {
@@ -19,7 +19,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: modelInvocation
     }
   ================
 
-- returned Hover: 
+- returned Hover:
   Hover [
     contents = Either [
       left = null
@@ -40,7 +40,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: modelInvocation
     ]
   ]
 
-- ... which has this text: 
+- ... which has this text:
   This model invocation expands to:  
   ```vadl
   instruction ONE : Simple = {
@@ -51,7 +51,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: modelInvocation
   assembly ONE = (mnemonic)
   ```
 
-- ... and this range: 
+- ... and this range:
   ================
     // HOVER POSITION 11:8 - Shows expansion of second model invocation
     instruction set architecture TEST = {

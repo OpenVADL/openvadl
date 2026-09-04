@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: tw
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input: 
+- Input:
   ================
     // error in imported file
     import "twoFiles-otherFile"::TEST
@@ -14,7 +14,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: tw
   ================
 
 # % Requested data of input file input.vadl %
-- Published diagnostics: 
+- Published diagnostics:
   [PublishDiagnosticsParams [
     uri = ".../vadl.lsp.integration.PublishDiagnosticsTest/twoFiles-input.vadl"
     diagnostics = ArrayList (
@@ -42,7 +42,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: tw
     version = 0
   ]]
 
-- ... which looks like this: 
+- ... which looks like this:
   Error: Errors in imported file: 
   twoFiles-otherFile.vadl
   ================

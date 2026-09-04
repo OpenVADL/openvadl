@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: sy
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input: 
+- Input:
   ================
     // syntax error
     instruction set architecture TEST = {
@@ -11,7 +11,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: sy
   ================
 
 # % Requested data of input file input.vadl %
-- Published diagnostics: 
+- Published diagnostics:
   [PublishDiagnosticsParams [
     uri = ".../vadl.lsp.integration.PublishDiagnosticsTest/syntax-input.vadl"
     diagnostics = ArrayList (
@@ -39,7 +39,7 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: sy
     version = 0
   ]]
 
-- ... which looks like this: 
+- ... which looks like this:
   Error: Parsing Error
   The parser expected `}` here.
   ================

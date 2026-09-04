@@ -3,13 +3,13 @@ Test method: vadl.lsp.integration.PublishDiagnosticsTest.mainTest, Test case: em
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input: 
+- Input:
   ================
     // Empty file
   ================
 
 # % Requested data of input file input.vadl %
-- Published diagnostics: 
+- Published diagnostics:
   [PublishDiagnosticsParams [
     uri = ".../vadl.lsp.integration.PublishDiagnosticsTest/empty-input.vadl"
     diagnostics = ArrayList ()

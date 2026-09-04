@@ -16,9 +16,6 @@
 
 package vadl.lsp;
 
-import static vadl.lsp.LspUtils.toPath;
-import static vadl.lsp.LspUtils.toUri;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -45,18 +42,18 @@ import vadl.utils.VirtualFileSystem;
  * copy of this VFs (via the copy constructor).
  */
 class LspSnapshotFileSystem implements VirtualFileSystem {
-  private final Map<String, Document> documents;
+  private final Map<Path, Document> documents;
   private final VirtualFileSystem underlyingFileSystem;
-  private final Set<String> readFiles = new HashSet<>();
+  private final Set<Path> readFiles = new HashSet<>();
 
   /**
    * Creates a VirtualFileSystem backed with the given documents.
    *
-   * @param documents Maps URI string to corresponding document. This map is copied.
+   * @param documents Maps file path to corresponding document. This map is copied.
    * @param underlyingFileSystem is used for all files for which this instance has no corresponding
    *                             document.
    */
-  LspSnapshotFileSystem(Map<String, Document> documents, VirtualFileSystem underlyingFileSystem) {
+  LspSnapshotFileSystem(Map<Path, Document> documents, VirtualFileSystem underlyingFileSystem) {
     this.documents = Map.copyOf(documents);
     this.underlyingFileSystem = underlyingFileSystem;
   }
@@ -71,7 +68,7 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
 
   @Override
   public boolean exists(Path path) {
-    if (documents.containsKey(toUri(path))) {
+    if (documents.containsKey(path)) {
       return true;
     }
     return underlyingFileSystem.exists(path);
@@ -79,10 +76,9 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
 
   @Override
   public InputStream getInputStream(Path path) {
-    String uri = toUri(path);
-    readFiles.add(uri);
+    readFiles.add(path);
 
-    var document = documents.get(uri);
+    var document = documents.get(path);
     if (document == null) {
       return underlyingFileSystem.getInputStream(path);
     }
@@ -92,10 +88,9 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
 
   @Override
   public Stream<String> readLines(Path path) {
-    String uri = toUri(path);
-    readFiles.add(uri);
+    readFiles.add(path);
 
-    var document = documents.get(uri);
+    var document = documents.get(path);
     if (document == null) {
       return underlyingFileSystem.readLines(path);
     }
@@ -113,40 +108,40 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
     return underlyingFileSystem.toRelativePath(path);
   }
 
-  public @Nullable Document getDocument(String uri) {
-    return documents.get(uri);
+  public @Nullable Document getDocument(Path path) {
+    return documents.get(path);
   }
 
   /**
    * Attempts to always return a Document, even if it has to be read from the underlying filesystem.
    */
-  public @Nullable Document getFileBasedDocument(String uri) {
-    var result = getDocument(uri);
+  public @Nullable Document getFileBasedDocument(Path path) {
+    var result = getDocument(path);
     if (result != null) {
       return result;
     }
 
     List<String> textLines;
     try {
-      textLines = underlyingFileSystem.readLines(toPath(uri)).toList();
+      textLines = underlyingFileSystem.readLines(path).toList();
     } catch (Diagnostic e) {
       return null;
     }
-    return new Document(uri, -1, textLines);
+    return new Document(path, -1, textLines);
   }
 
   /**
    * The URIs of all files that have been read via this virtual file system so far.
    *
-   * <p>Note: This is not affected by non-VFS methods like {@link #getDocument(String)} and
-   * {@link #getFileBasedDocument(String)}.
+   * <p>Note: This is not affected by non-VFS methods like {@link #getDocument(Path)} and
+   * {@link #getFileBasedDocument(Path)}.
    *
    * <p>In order to "reset" this data, you can create a copy of this VFS instance by using the
    * copy constructor.
    *
    * @return unmodifiable Set of what has been read so far.
    */
-  public Set<String> getReadFiles() {
+  public Set<Path> getReadFiles() {
     return Set.copyOf(readFiles);
   }
 }

@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: aliasR
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // GOTO POSITION 8:23 - "hello" points to alias register definition
     instruction set architecture TEST = {
@@ -17,7 +17,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: aliasR
   ================
 
 # % Requested data of input file input.vadl %
-- returned Goto Definition: 
+- returned Goto Definition:
   Either [
     left = null
     right = [LocationLink [
@@ -55,7 +55,7 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: aliasR
   ]]
   ]
 
-- ... which looks like this: 
+- ... which looks like this:
   ================
     // GOTO POSITION 8:23 - "hello" points to alias register definition
     instruction set architecture TEST = {

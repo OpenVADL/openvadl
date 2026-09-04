@@ -3,7 +3,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: alias
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // HOVER POSITION 8:26 - Word alias resolved via using definition
     instruction set architecture TEST = {
@@ -16,7 +16,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: alias
     }
   ================
 
-- returned Hover: 
+- returned Hover:
   Hover [
     contents = Either [
       left = null
@@ -37,12 +37,12 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: alias
     ]
   ]
 
-- ... which has this text: 
+- ... which has this text:
   ```vadl
   Bits<32>
   ```
 
-- ... and this range: 
+- ... and this range:
   ================
     // HOVER POSITION 8:26 - Word alias resolved via using definition
     instruction set architecture TEST = {

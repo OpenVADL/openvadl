@@ -3,13 +3,13 @@ Test method: vadl.lsp.integration.GotoDefinitionTest.mainTest, Test case: noDefi
 
 # % Requested uri of input file input.vadl %
 # % Requested data of input file input.vadl %
-- Input with position marked: 
+- Input with position marked:
   ================
     // GOTO POSITION 2:4 - Keywords don't have a Goto
     con<POS>stant hrumph = 42
   ================
 
-- returned Goto Definition: 
+- returned Goto Definition:
   Either [
     left = []
     right = null

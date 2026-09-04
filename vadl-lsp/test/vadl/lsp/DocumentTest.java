@@ -18,7 +18,10 @@ package vadl.lsp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static vadl.lsp.LspUtils.toPath;
+import static vadl.lsp.LspUtils.toUri;
 
+import java.nio.file.Path;
 import java.util.List;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
@@ -32,7 +35,9 @@ import vadl.utils.SourceLocation;
  */
 public class DocumentTest {
   static final String TEST_URI = "file:///virtual/file.vadl";
+  static final Path TEST_PATH = toPath(TEST_URI);
   static final String TEST_URI2 = "file:///somewhere/else/test.vadl";
+  static final Path TEST_PATH2 = toPath(TEST_URI2);
 
   static final List<String> TEST_LINES = List.of(
       "constant jakob = 42",
@@ -62,9 +67,9 @@ public class DocumentTest {
 
   @Test
   void textLinesConstructor() {
-    Document document = new Document(TEST_URI, 13, TEST_LINES);
+    Document document = new Document(TEST_PATH, 13, TEST_LINES);
 
-    assertThat(document.uri).isEqualTo(TEST_URI);
+    assertThat(toUri(document.path)).isEqualTo(TEST_URI);
     assertThat(document.version).isEqualTo(13);
     assertThat(document.textLines).isEqualTo(TEST_LINES);
     assertThat(document.getText()).isEqualTo(TEST_TEXT);
@@ -72,9 +77,9 @@ public class DocumentTest {
 
   @Test
   void textConstructor() {
-    Document document = new Document(TEST_URI2, 6, TEST_TEXT);
+    Document document = new Document(TEST_PATH2, 6, TEST_TEXT);
 
-    assertThat(document.uri).isEqualTo(TEST_URI2);
+    assertThat(toUri(document.path)).isEqualTo(TEST_URI2);
     assertThat(document.version).isEqualTo(6);
     assertThat(document.textLines).isEqualTo(TEST_LINES);
     assertThat(document.getText()).isEqualTo(TEST_TEXT);
@@ -86,7 +91,7 @@ public class DocumentTest {
 
     Document document = new Document(tdi);
 
-    assertThat(document.uri).isEqualTo(TEST_URI);
+    assertThat(toUri(document.path)).isEqualTo(TEST_URI);
     assertThat(document.version).isEqualTo(0);
     assertThat(document.textLines).isEqualTo(TEST_LINES2);
     assertThat(document.getText()).isEqualTo(TEST_TEXT2);
@@ -94,7 +99,7 @@ public class DocumentTest {
 
   @Test
   void withChanges_failsIfInvalidVersion() {
-    Document document = new Document(TEST_URI, 5, TEST_TEXT);
+    Document document = new Document(TEST_PATH, 5, TEST_TEXT);
 
     assertThrows(IllegalStateException.class, () -> document.withChanges(4, List.of()));
   }
@@ -102,7 +107,7 @@ public class DocumentTest {
   @Test
   void withChanges() {
     var snapshot = new TestSnapshot();
-    Document document = new Document(TEST_URI, 0, TEST_TEXT);
+    Document document = new Document(TEST_PATH, 0, TEST_TEXT);
     snapshot.add("Initial document", document);
 
     // 1)
@@ -201,7 +206,7 @@ public class DocumentTest {
 
   @Test
   public void positionCalculation_asciiOnly() {
-    Document document = new Document(TEST_URI2, 0, TEST_TEXT2);
+    Document document = new Document(TEST_PATH2, 0, TEST_TEXT2);
 
     var vadlPosition = new SourceLocation.Position(2, 25);
 
@@ -220,7 +225,7 @@ public class DocumentTest {
 
   @Test
   public void rangeCalculation_asciiOnly() {
-    Document document = new Document(TEST_URI, 0, TEST_TEXT);
+    Document document = new Document(TEST_PATH, 0, TEST_TEXT);
 
     var vadlRange = SourceLocation.of(null,
         new SourceLocation.Position(1, 3),
@@ -238,7 +243,7 @@ public class DocumentTest {
 
   @Test
   public void positionCalculation_unicode() {
-    Document document = new Document(TEST_URI, 0, TEST_UNICODE_TEXT);
+    Document document = new Document(TEST_PATH, 0, TEST_UNICODE_TEXT);
 
     // 2 byte UTF-8
     var vadlPosition = new SourceLocation.Position(1, 15);
