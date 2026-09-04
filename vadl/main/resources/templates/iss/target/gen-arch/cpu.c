@@ -106,8 +106,16 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
 [(${reset})]
 
   [# th:if="${float_facts.has_float_ops}"]
+  // float status and stick fe flags
+
+  // this sets all flags that are not sticky so they are not computed by default
+  set_float_exception_flags(~[(${float_facts.sticky_mask})], &env->fp_status);
   // TODO: this disables nan-propagation. this will be configurable via the vadl spec at some point
-  set_default_nan_mode(1, &env->fp_status);[/]
+  set_default_nan_mode(1, &env->fp_status);
+  [# th:if="${float_facts.has_non_sticky_flags}"]
+  // non-sticky fe flags
+  env->ns_fe_flags = 0;
+  [/][/]
 }
 
 static ObjectClass* [(${gen_arch_lower})]_cpu_class_by_name(const char *cpu_model)

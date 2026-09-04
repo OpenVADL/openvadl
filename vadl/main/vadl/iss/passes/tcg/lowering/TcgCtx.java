@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.iss.passes.TcgPassUtils;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssGvecOpNode;
 import vadl.iss.passes.nodes.IssMoveNode;
 import vadl.iss.passes.nodes.IssReadRegNode;
@@ -197,6 +198,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
     @Handler
     List<TcgVRefNode> destOf(ReadRegTensorNode toHandle) {
+      var reg = toHandle.regTensor();
+      var info = reg.expectExtension(RegInfo.class);
+      if (info.isLazy()) {
+        return assignments.computeIfAbsent(toHandle, v -> createTempLazyRegVar(reg));
+      }
       if (toHandle instanceof IssReadRegNode issRead
           && issRead.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
         return assignments.computeIfAbsent(toHandle, v -> createTempExprVar(toHandle));
@@ -302,6 +308,16 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
               )
           ))
           .toList();
+    }
+
+    /**
+     * Creates a temporary variable for the given lazy register.
+     *
+     * @param reg The lazy register.
+     * @return The variable corresponding to the register.
+     */
+    private List<TcgVRefNode> createTempLazyRegVar(RegisterTensor reg) {
+      return List.of(toNode(TcgV.tmp("lazy_" + reg.simpleName().toLowerCase(), targetSize)));
     }
 
     /**

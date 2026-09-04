@@ -30,12 +30,12 @@ import vadl.utils.codegen.CCodeBuilder;
 import vadl.utils.codegen.CStringBuilder;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
-import vadl.viam.annotations.FloatFlagAnnotation;
 
 /**
  * Emits the {@code target/gen-arch/gdbstub.c} file which implements target-specific callback
  * that are used by QEMU's generic gdbstub to read and modify the CPU state.
  * The minimal required callbacks are read/write of CPU registers.
+ * Stubs for lazy registers use CPU helpers.
  *
  * <p>The {@link vadl.iss.template.gdb_xml.EmitIssGdbXmlPass} emits the CPU register information
  * used by GDB to address certain registers.</p>
@@ -175,8 +175,7 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
         emitReadChunkedScalar(builder, bitSize, callPrefix);
       }
     } else if (origin.isSingleRegister()) {
-      boolean useCpuGetter = origin.hasAnnotation(FloatFlagAnnotation.class);
-      var accessor = useCpuGetter
+      var accessor = origin.expectExtension(RegInfo.class).isLazy()
           ? accessorRegistry.baseAccessors().stream()
             .filter(a -> a.owner().reg() == origin && a.accessType() == RegInfo.AccessType.READ)
             .findFirst().get().name() + "(env)"
@@ -212,14 +211,13 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
         emitWriteChunkedScalar(builder, bitSize, callPrefix);
       }
     } else if (origin.isSingleRegister()) {
-      boolean useCpuGetter = origin.hasAnnotation(FloatFlagAnnotation.class);
-      if (useCpuGetter) {
+      if (origin.expectExtension(RegInfo.class).laziness() == RegInfo.Laziness.NONE) {
+        builder.stmt("env->" + base + " = " + scalarLoader(bitSize) + "(mem_buf)");
+      } else {
         var accessorName = accessorRegistry.baseAccessors().stream()
             .filter(a -> a.owner().reg() == origin && a.accessType() == RegInfo.AccessType.WRITE)
             .findFirst().get().name();
         builder.stmt(accessorName + "(env, " + scalarLoader(bitSize) + "(mem_buf))");
-      } else {
-        builder.stmt("env->" + base + " = " + scalarLoader(bitSize) + "(mem_buf)");
       }
       builder.stmt("return " + wireSizeBytes(bitSize));
     } else {

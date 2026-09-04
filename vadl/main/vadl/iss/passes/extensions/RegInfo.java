@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -39,7 +38,6 @@ import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
-import vadl.viam.FloatExceptionFlag;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.annotations.FloatFlagAnnotation;
@@ -61,6 +59,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   private Map<String, Object> renderObj;
   private final IssConfiguration config;
   private final ExecClass execClass;
+  private final Laziness laziness;
 
   /**
    * Constructs a RegInfo for the given register tensor.
@@ -76,6 +75,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
                  List<WriteRegTensorNode> writes) {
     this.config = config;
     this.execClass = determineExecClass(reg, reads, writes);
+    this.laziness = determineLaziness(reg);
   }
 
   /**
@@ -90,6 +90,30 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
      * Register is stored as a CPU-state byte array for helper access and future gvec offsets.
      */
     CPU_VECTOR
+  }
+
+  /**
+   * Determines how much of the register is lazy.
+   *
+   * <p>Some parts or the whole register may be lazy. Lazy parts are not stored or updated in
+   * the TCG global. Instead, they are sourced from other parts of the CPU-state (e.g. from
+   * the {@code float_status}). Thus, no TCG globals are created for registers containing lazy
+   * parts. They are read/written via CPU helpers. When a register is fully lazy, there is no
+   * need to generate a field for it in the CPU-state.
+   */
+  public enum Laziness {
+    /**
+     * No part of the register is lazy.
+     */
+    NONE,
+    /**
+     * Only parts, but not the whole register is lazy.
+     */
+    PARTIAL,
+    /**
+     * The whole register is lazy. No global is created in the CPU-state.
+     */
+    FULL
   }
 
   /**
@@ -197,6 +221,27 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   /**
+   * Returns the laziness of the register.
+   */
+  public Laziness laziness() {
+    return laziness;
+  }
+
+  /**
+   * Returns whether the register contains lazy parts.
+   */
+  public boolean isLazy() {
+    return laziness != Laziness.NONE;
+  }
+
+  /**
+   * Returns whether the register contains only lazy parts.
+   */
+  public boolean isFullyLazy() {
+    return laziness == Laziness.FULL;
+  }
+
+  /**
    * Returns whether this register is stored as an array in the CPU state.
    */
   public boolean hasCpuStateArrayStorage() {
@@ -295,6 +340,8 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       renderObj.put("is_tb_state", isTbState());
       renderObj.put("tb_state_parts", tbStateParts());
       renderObj.put("exec_class", execClass().name());
+      renderObj.put("isLazy", isLazy());
+      renderObj.put("isFullyLazy", isFullyLazy());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParamsComma);
       if (isTcgScalar()) {
@@ -534,6 +581,15 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         || writes.stream()
         .anyMatch(write -> isVectorAccess(reg, write.indices().size()));
     return hasVectorStyleAccess ? ExecClass.CPU_VECTOR : ExecClass.TCG_SCALAR;
+  }
+
+  private static Laziness determineLaziness(RegisterTensor reg) {
+    if (!reg.hasAnnotation(FloatFlagAnnotation.class)) {
+      return Laziness.NONE;
+    }
+    return reg.expectAnnotation(FloatFlagAnnotation.class).slice().covers(reg.totalWidth())
+        ? Laziness.FULL
+        : Laziness.PARTIAL;
   }
 
   /**
@@ -920,28 +976,50 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
         }
       }
 
-      // emit index access
-      var access = "env->" + owner.nameLower() + owner.cArrayIndex("i");
+      var globalAccess = "env->" + owner.nameLower() + owner.cArrayIndex("i");
 
       switch (type) {
         case READ -> {
-          var resultName = "result_" + owner.nameLower();
-          cb.stmt("%s %s = %s".formatted(accessValueCType(), resultName, access));
-          emitFEFlagReconstructionOnRead(cb, resultName, true);
-          emitFEFlagReconstructionOnRead(cb, resultName, false);
-          cb.returnStmt(resultName);
+          if (owner.laziness == Laziness.NONE) {
+            cb.returnStmt(globalAccess);
+          } else {
+            var resultName = "result_" + owner.nameLower();
+            cb.stmt("%s %s = %s".formatted(accessValueCType(), resultName,
+                owner.laziness == Laziness.PARTIAL ? globalAccess : "0"));
+            emitLazyRead(cb, resultName);
+            cb.returnStmt(resultName);
+          }
         }
         case WRITE -> {
-          emitFEFlagReconstructionOnWrite(cb, true);
-          emitFEFlagReconstructionOnWrite(cb, false);
-          cb.stmt(access + " = value");
+          if (owner.laziness != Laziness.NONE) {
+            emitLazyWrite(cb);
+          }
+          if (owner.laziness != Laziness.FULL) {
+            cb.stmt(globalAccess + " = value");
+          }
         }
       }
       return cb.toString();
     }
 
-    private void emitFEFlagReconstructionOnRead(CStringBuilder cb, String resultName,
-                                                boolean sticky) {
+    /**
+     * Generates the logic for constructing the read value for the lazy parts.
+     */
+    private void emitLazyRead(CStringBuilder cb, String resultName) {
+      emitFEFlagRead(cb, resultName, true);
+      emitFEFlagRead(cb, resultName, false);
+    }
+
+    /**
+     * Generates the logic for storing the lazy parts of the written value.
+     */
+    private void emitLazyWrite(CStringBuilder cb) {
+      emitFEFlagWrite(cb, true);
+      emitFEFlagWrite(cb, false);
+    }
+
+    private void emitFEFlagRead(CStringBuilder cb, String resultName,
+                                boolean sticky) {
       var ffAnn = owner.reg().annotation(FloatFlagAnnotation.class);
       if (ffAnn == null || ffAnn.flags(sticky).isEmpty()) {
         return;
@@ -957,7 +1035,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           .formatted(resultName, flagVarName, flag.qemuFlagOffset, idx)));
     }
 
-    private void emitFEFlagReconstructionOnWrite(CStringBuilder cb, boolean sticky) {
+    private void emitFEFlagWrite(CStringBuilder cb, boolean sticky) {
       var ffAnn = owner.reg().annotation(FloatFlagAnnotation.class);
       if (ffAnn == null || ffAnn.flags(sticky).isEmpty()) {
         return;
@@ -965,7 +1043,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       var flagVarName = sticky ? "s_fe_flags" : "ns_fe_flags";
 
       // by default, all unused flags are set
-      int initialValue = ~ffAnn.qemuFlagMask(sticky);
+      int initialValue = ~ffAnn.qemuFlagMask(sticky) & 0xffff;
       cb.stmt("uint16_t %s = 0x%s".formatted(flagVarName, Integer.toHexString(initialValue)));
       ffAnn.flags(sticky).forEach((idx, flag) -> cb.stmt("%s |= ((value >> %d) & 1) << %d"
           .formatted(flagVarName, idx, flag.qemuFlagOffset)));
