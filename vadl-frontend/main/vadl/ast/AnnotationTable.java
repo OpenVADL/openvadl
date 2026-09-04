@@ -1350,6 +1350,7 @@ class ConstantAnnotation extends Annotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 1);
+    definition.values.getFirst().accept(resolver);
   }
 
   @Override
