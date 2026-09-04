@@ -1111,6 +1111,11 @@ interface AnnotationDeclaration {
 
 }
 
+/**
+ * Marker interface for all annotations that set the {@link FloatTypeDefinition#encoding} field.
+ */
+interface FloatEncodingAnnotation {}
+
 
 // ---------- GENERAL ANNOTATION CLASSES ----------
 
@@ -1137,12 +1142,12 @@ class EnableAnnotation extends Annotation {
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCntBetween(definition, 0, 1);
 
-    super.resolveName(definition, resolver);
+    definition.values.forEach(value -> value.accept(resolver));
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    super.typeCheck(definition, typeChecker);
+    definition.values.forEach(typeChecker::check);
 
     // Only eval the argument if there is one
     if (definition.values.size() == 1) {
@@ -1331,17 +1336,10 @@ abstract class FormatFieldAnnotation extends Annotation {
 }
 
 /**
- * Marker interface for all annotations that set the {@link FloatTypeDefinition#encoding} field.
- */
-interface FloatEncodingAnnotation {
-}
-
-/**
  * An annotation which makes a {@link FloatTypeDefinition} use IEEE-754 encoding with a given
  * size (32 or 64 bit).
  */
-class IEEEFloatFormatAnnotation extends ConstantAnnotation implements FloatEncodingAnnotation {
-}
+class IEEEFloatFormatAnnotation extends ConstantAnnotation implements FloatEncodingAnnotation {}
 
 /**
  * A simple annotation that stores and evaluates a constant argument.
@@ -1364,12 +1362,12 @@ class ConstantAnnotation extends Annotation {
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 1);
 
-    super.resolveName(definition, resolver);
+    definition.values.forEach(value -> value.accept(resolver));
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    super.typeCheck(definition, typeChecker);
+    definition.values.forEach(typeChecker::check);
 
     constant = typeChecker.constantEvaluator.eval(definition.values.getFirst());
   }
@@ -1439,7 +1437,12 @@ class StringAnnotation extends Annotation {
           .build();
     }
 
-    super.resolveName(definition, resolver);
+    definition.values.forEach(value -> value.accept(resolver));
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    definition.values.forEach(typeChecker::check);
   }
 
   @Override
@@ -1590,7 +1593,7 @@ class IdentifersAnnotation extends Annotation {
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     // Only typecheck expressions
     if (targetClass != null && Expr.class.isAssignableFrom(targetClass)) {
-      super.typeCheck(definition, typeChecker);
+      definition.values.forEach(typeChecker::check);
     }
   }
 
@@ -1625,7 +1628,12 @@ class OptExprAnnotation extends Annotation {
       expr = definition.values.getFirst();
     }
 
-    super.resolveName(definition, resolver);
+    definition.values.forEach(value -> value.accept(resolver));
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    definition.values.forEach(typeChecker::check);
   }
 
   @Override
@@ -1672,7 +1680,12 @@ class ExprAnnotation extends Annotation {
     verifyValuesCnt(definition, 1);
     expr = definition.values.getFirst();
 
-    super.resolveName(definition, resolver);
+    definition.values.forEach(value -> value.accept(resolver));
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    definition.values.forEach(typeChecker::check);
   }
 
   @Override
