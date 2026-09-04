@@ -24,7 +24,7 @@ import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
 /**
- * A Annotation in Vadl keeps state and knows how to resolve and type check itself. Further checks
+ * An Annotation in Vadl keeps state and knows how to resolve and type check itself. Further checks
  * can be defined on the {@link AnnotationGroupProvider} and who also knows how to apply the
  * annotation to the VIAM.
  *
@@ -51,20 +51,40 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
   }
 
   /**
-   * Called by the symbol resolver to resolve parts of the annotation.
+   * Called by the symbol resolver to resolve the subparts of the annotation.
    *
-   * @param definition to be resolved.
-   * @param resolver   who resolves the annotation.
+   * <p>Can be overwritten by subclasses to specify additional
+   * annotation-specific behavior to execute during name-resolution.
+   *
+   * <p>In general, subclasses overwriting this method should call
+   * {@code super.resolveName} so that names in the annotation's values are
+   * resolved. If this is explicitly *not* desired, the {@code super} call must
+   * be omitted.
+   *
+   * @param definition The `AnnotationDefinition` corresponding to this `Annotation`.
+   * @param resolver The active name resolver.
    */
-  abstract void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver);
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    definition.values.forEach(value -> value.accept(resolver));
+  }
 
   /**
    * Called by the type checker to type check the annotation.
    *
-   * @param definition  to be type checked.
-   * @param typeChecker who type checks the annotation.
+   * <p>Can be overwritten by subclasses to specify additional
+   * annotation-specific behavior to execute during typechecking.
+   *
+   * <p>In general, subclasses overwriting this method should call
+   * {@code super.typeCheck} so that the annotation's values are also
+   * typechecked. If this is explicitly *not* desired, the {@code super} call
+   * must be omitted.
+   *
+   * @param definition The `AnnotationDefinition` corresponding to this `Annotation`.
+   * @param typeChecker the active typechecker.
    */
-  abstract void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker);
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    definition.values.forEach(typeChecker::check);
+  }
 
   @Override
   public String name() {
@@ -76,7 +96,7 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
     return definition.location();
   }
 
-  protected void verifyValuesCntBetween(AnnotationDefinition definition, int min, int max) {
+  protected static void verifyValuesCntBetween(AnnotationDefinition definition, int min, int max) {
     if (definition.values.size() < min || definition.values.size() > max) {
       throw error("Invalid annotation arguments", definition)
           .locationDescription(definition, "Expected between %d and %d arguments but got %d", min,
@@ -86,7 +106,7 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
     }
   }
 
-  protected void verifyValuesCnt(AnnotationDefinition definition, int cnt) {
+  protected static void verifyValuesCnt(AnnotationDefinition definition, int cnt) {
     if (definition.values.size() != cnt) {
       throw error("Invalid annotation arguments", definition)
           .locationDescription(definition, "Expected %d arguments but got %d", cnt,
@@ -95,7 +115,7 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
     }
   }
 
-  protected void verifyValuesNonEmpty(AnnotationDefinition definition) {
+  protected static void verifyValuesNonEmpty(AnnotationDefinition definition) {
     if (definition.values.isEmpty()) {
       throw error("Invalid annotation arguments", definition)
           .locationDescription(definition, "Expected at leat one argument but got none")

@@ -1132,16 +1132,18 @@ class EnableAnnotation extends Annotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCntBetween(definition, 0, 1);
+
+    super.resolveName(definition, resolver);
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    super.typeCheck(definition, typeChecker);
 
     // Only eval the argument if there is one
     if (definition.values.size() == 1) {
       var valueExpr = definition.values.getFirst();
 
-      typeChecker.check(valueExpr);
       if (!valueExpr.type().equals(Type.bool())) {
         throw error("Enable annotation expects a boolean argument", valueExpr)
             .locationDescription(valueExpr, "Expected a boolean but got %s", valueExpr.type())
@@ -1180,13 +1182,16 @@ class FloatFlagAnnotation extends FormatFieldAnnotation {
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     super.typeCheck(definition, typeChecker);
+
     verifyValuesCnt(definition, 1);
+
     field = (Identifier) definition.values.getFirst();
   }
 
   @Override
   void typeCheckTarget(TypedNode target) {
     super.typeCheckTarget(target);
+
     var format = ((FormatType) target.type()).format;
     var range = requireNonNull(format.getFieldRange(field.name));
     Diagnostic.ensure(range.from() == range.to(), () ->
@@ -1272,17 +1277,21 @@ abstract class FormatFieldAnnotation extends Annotation {
 
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    // Intentionally skip name resolution for values, since they are relative
+    // to the annotated value, and thus not available here.
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    definition.values.forEach(def -> {
+    // Intentionally skip typechecking as well.
+
+    fields = definition.values.stream().map(def -> {
       Diagnostic.ensure(def instanceof Identifier, () -> error("Invalid annotation value", def)
           .description("An identifier was expected.")
       );
-    });
 
-    fields = definition.values.stream().map(def -> (Identifier) def).toList();
+      return (Identifier) def;
+    }).toList();
   }
 
   void typeCheckTarget(TypedNode target) {
@@ -1350,15 +1359,15 @@ class ConstantAnnotation extends Annotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 1);
-    definition.values.getFirst().accept(resolver);
+
+    super.resolveName(definition, resolver);
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    var valueExpr = definition.values.getFirst();
-    typeChecker.check(valueExpr);
+    super.typeCheck(definition, typeChecker);
 
-    constant = typeChecker.constantEvaluator.eval(valueExpr);
+    constant = typeChecker.constantEvaluator.eval(definition.values.getFirst());
   }
 
   /**
@@ -1414,20 +1423,19 @@ class StringAnnotation extends Annotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 1);
+
     var firstValue = definition.values.getFirst();
 
     if (!(firstValue instanceof StringLiteral)) {
       throw error("Invalid Annotation Argument", firstValue)
-          .locationDescription(firstValue, "Expected a string but got %s",
+          .locationDescription(
+              firstValue,
+              "Expected a string but got %s",
               firstValue.nodeName())
           .build();
     }
-  }
 
-  @Override
-  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    var valueExpr = definition.values.getFirst();
-    typeChecker.check(valueExpr);
+    super.resolveName(definition, resolver);
   }
 
   @Override
@@ -1479,13 +1487,13 @@ class EnumAnnotation extends Annotation {
           .build();
     }
 
-    // Do not symbol resolve on purpose as the identifiers here aren't pointing to anything in the
-    // AST.
+    // Skip resolving the annotation's values as the identifiers aren't
+    // pointing to anything in the AST.
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    // Do nothing on purpose as the identifiers don't need to be checked.
+    // Do nothing on purpose as the identifiers cannot be checked.
   }
 
   @Override
@@ -1560,6 +1568,7 @@ class IdentifersAnnotation extends Annotation {
                 value.nodeName())
             .build();
       }
+
       identifiers.add(identifier);
 
       if (targetClass != null) {
@@ -1568,13 +1577,16 @@ class IdentifersAnnotation extends Annotation {
         definition.symbolTable().requireAs(identifier, Node.class);
       }
     }
+
+    // Skip `super` call since the above loop already effectively performed
+    // name resolution via the `requireAs` calls.
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     // Only typecheck expressions
     if (targetClass != null && Expr.class.isAssignableFrom(targetClass)) {
-      identifiers.forEach(typeChecker::check);
+      super.typeCheck(definition, typeChecker);
     }
   }
 
@@ -1604,17 +1616,12 @@ class OptExprAnnotation extends Annotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCntBetween(definition, 0, 1);
+
     if (!definition.values.isEmpty()) {
       expr = definition.values.getFirst();
-      expr.accept(resolver);
     }
-  }
 
-  @Override
-  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    if (expr != null) {
-      expr.accept(typeChecker);
-    }
+    super.resolveName(definition, resolver);
   }
 
   @Override
@@ -1660,12 +1667,8 @@ class ExprAnnotation extends Annotation {
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 1);
     expr = definition.values.getFirst();
-    expr.accept(resolver);
-  }
 
-  @Override
-  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    expr.accept(typeChecker);
+    super.resolveName(definition, resolver);
   }
 
   @Override
@@ -1706,6 +1709,7 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     super.typeCheck(definition, typeChecker);
+
     var def = definition.target;
 
     if (!(expr instanceof CallIndexExpr callExpr)) {
@@ -1744,7 +1748,6 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
             .build();
       }
     }).toList();
-
   }
 
   @Override
@@ -1758,8 +1761,10 @@ class EncodingConstraintAnnotation extends ExprAnnotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     var format = requireNonNull(((EncodingDefinition) definition.target).formatNode);
+
     // Extend annotation's symbol table by the symbol table of the encoding's format.
     definition.symbolTable().extendBy(format.symbolTable());
+
     super.resolveName(definition, resolver);
   }
 }
@@ -1769,8 +1774,10 @@ class InstructionUndefinedAnnotation extends ExprAnnotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     var format = requireNonNull(((InstructionDefinition) definition.target).formatNode);
+
     // Extend annotation's symbol table by the symbol table of the encoding's format.
     definition.symbolTable().extendBy(format.symbolTable());
+
     super.resolveName(definition, resolver);
   }
 }
