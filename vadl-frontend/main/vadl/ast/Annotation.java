@@ -53,38 +53,18 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
   /**
    * Called by the symbol resolver to resolve the subparts of the annotation.
    *
-   * <p>Can be overwritten by subclasses to specify additional
-   * annotation-specific behavior to execute during name-resolution.
-   *
-   * <p>In general, subclasses overwriting this method should call
-   * {@code super.resolveName} so that names in the annotation's values are
-   * resolved. If this is explicitly *not* desired, the {@code super} call must
-   * be omitted.
-   *
    * @param definition The `AnnotationDefinition` corresponding to this `Annotation`.
    * @param resolver The active name resolver.
    */
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
-    definition.values.forEach(value -> value.accept(resolver));
-  }
+  abstract void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver);
 
   /**
    * Called by the type checker to type check the annotation.
    *
-   * <p>Can be overwritten by subclasses to specify additional
-   * annotation-specific behavior to execute during typechecking.
-   *
-   * <p>In general, subclasses overwriting this method should call
-   * {@code super.typeCheck} so that the annotation's values are also
-   * typechecked. If this is explicitly *not* desired, the {@code super} call
-   * must be omitted.
-   *
    * @param definition The `AnnotationDefinition` corresponding to this `Annotation`.
    * @param typeChecker the active typechecker.
    */
-  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    definition.values.forEach(typeChecker::check);
-  }
+  abstract void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker);
 
   @Override
   public String name() {
