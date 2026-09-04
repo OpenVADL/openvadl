@@ -21,7 +21,11 @@ dependencies {
 application {
     applicationName = "openvadl"
     mainClass.set("vadl.cli.Main")
-    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
+    applicationDefaultJvmArgs = listOf(
+        "--enable-native-access=ALL-UNNAMED",
+        "-Dstdout.encoding=UTF-8",
+        "-Dstderr.encoding=UTF-8",
+    )
 }
 
 graalvmNative {
@@ -43,6 +47,8 @@ graalvmNative {
             )
             buildArgs.add("--enable-url-protocols=https")
             buildArgs.add("--enable-native-access=ALL-UNNAMED")
+            buildArgs.add("-Dstdout.encoding=UTF-8")
+            buildArgs.add("-Dstderr.encoding=UTF-8")
         }
 
         named("main") {
@@ -65,6 +71,8 @@ tasks.startScripts {
     defaultJvmOpts = listOf(
         "-XX:TieredStopAtLevel=1",
         "--enable-native-access=ALL-UNNAMED",
+        "-Dstdout.encoding=UTF-8",
+        "-Dstderr.encoding=UTF-8",
         "-Xms4g",
         "-Xmn2g",
         "-XX:+UseParallelGC"
@@ -81,6 +89,10 @@ jlink {
 
     launcher {
         name = "openvadl"
+        jvmArgs = listOf(
+            "-Dstdout.encoding=UTF-8",
+            "-Dstderr.encoding=UTF-8",
+        )
     }
 
     mergedModule {
