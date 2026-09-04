@@ -24,7 +24,7 @@ import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
 /**
- * A Annotation in Vadl keeps state and knows how to resolve and type check itself. Further checks
+ * An Annotation in Vadl keeps state and knows how to resolve and type check itself. Further checks
  * can be defined on the {@link AnnotationGroupProvider} and who also knows how to apply the
  * annotation to the VIAM.
  *
@@ -51,18 +51,18 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
   }
 
   /**
-   * Called by the symbol resolver to resolve parts of the annotation.
+   * Called by the symbol resolver to resolve the subparts of the annotation.
    *
-   * @param definition to be resolved.
-   * @param resolver   who resolves the annotation.
+   * @param definition The `AnnotationDefinition` corresponding to this `Annotation`.
+   * @param resolver The active name resolver.
    */
   abstract void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver);
 
   /**
    * Called by the type checker to type check the annotation.
    *
-   * @param definition  to be type checked.
-   * @param typeChecker who type checks the annotation.
+   * @param definition The `AnnotationDefinition` corresponding to this `Annotation`.
+   * @param typeChecker the active typechecker.
    */
   abstract void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker);
 
@@ -76,7 +76,7 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
     return definition.location();
   }
 
-  protected void verifyValuesCntBetween(AnnotationDefinition definition, int min, int max) {
+  protected static void verifyValuesCntBetween(AnnotationDefinition definition, int min, int max) {
     if (definition.values.size() < min || definition.values.size() > max) {
       throw error("Invalid annotation arguments", definition)
           .locationDescription(definition, "Expected between %d and %d arguments but got %d", min,
@@ -86,7 +86,7 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
     }
   }
 
-  protected void verifyValuesCnt(AnnotationDefinition definition, int cnt) {
+  protected static void verifyValuesCnt(AnnotationDefinition definition, int cnt) {
     if (definition.values.size() != cnt) {
       throw error("Invalid annotation arguments", definition)
           .locationDescription(definition, "Expected %d arguments but got %d", cnt,
@@ -95,7 +95,7 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
     }
   }
 
-  protected void verifyValuesNonEmpty(AnnotationDefinition definition) {
+  protected static void verifyValuesNonEmpty(AnnotationDefinition definition) {
     if (definition.values.isEmpty()) {
       throw error("Invalid annotation arguments", definition)
           .locationDescription(definition, "Expected at leat one argument but got none")
