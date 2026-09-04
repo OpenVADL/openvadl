@@ -193,6 +193,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         if (dir instanceof NewLabelNode newLabelNode) {
           var sym = symbolTable.getNextVariable();
           labelSymbolNameLookup.put(newLabelNode, sym);
+          context.ln("MCSymbol *%s = Ctx.createTempSymbol(\"%s\");", sym,
+              newLabelNode.labelNode().labelName());
         }
         return dir;
       }
@@ -227,8 +229,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
               .ln("callback(%s);", sym);
         } else if (dir instanceof NewLabelNode newLabelNode) {
           var sym = requireNonNull(labelSymbolNameLookup.get(newLabelNode));
-          context.ln("MCSymbol *%s = Ctx.createTempSymbol();", sym)
-              .ln("callbackSymbol(%s);", sym);
+          context.ln("callbackSymbol(%s);", sym);
         }
 
         return dir;

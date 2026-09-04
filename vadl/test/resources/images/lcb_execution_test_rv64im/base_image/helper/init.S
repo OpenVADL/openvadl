@@ -43,7 +43,7 @@ _start:
 
     lui t0, %hi(__stack_shift)
     addi t0, t0, %lo(__stack_shift)
-    la tp, __stack_start
+    lla tp, __stack_start
     sll t0, s0, t0
     add tp, tp, t0
 
@@ -56,7 +56,7 @@ _start:
     # shutdown with exit code from main
     slli a0, a0, 1
     ori a0, a0, 1
-    la x2, tohost
+    lla x2, tohost
     sw a0, 0(x2)
     sw x0, 4(x2)
 

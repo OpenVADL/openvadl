@@ -8,9 +8,9 @@ define i32 @rotl_32(i32 %x, i32 %y) nounwind {
 ; CHECK: # %bb.0:
 ; CHECK-NEXT: ADDI a2,zero,32
 ; CHECK-NEXT: SUB a2,a2,a1
-; CHECK-LABEL: .Ltmp0:
+; CHECK-LABEL: .Lhi_label0:
 ; CHECK-NEXT: AUIPC a3,%pcrel_hi(.LCPI0_0)
-; CHECK-NEXT: ADDI a3,a3,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT: ADDI a3,a3,%pcrel_lo(.Lhi_label0)
 ; CHECK-NEXT: LD a3,0(a3)
 ; CHECK-NEXT: AND a2,a2,a3
 ; CHECK-NEXT: AND a4,a0,a3
@@ -29,9 +29,9 @@ define i32 @rotl_32(i32 %x, i32 %y) nounwind {
 define i32 @rotr_32(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotr_32:
 ; CHECK: # %bb.0:
-; CHECK-LABEL: .Ltmp1:
+; CHECK-LABEL: .Lhi_label1:
 ; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI1_0)
-; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Lhi_label1)
 ; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: AND a3,a1,a2
 ; CHECK-NEXT: AND a4,a0,a2
@@ -86,9 +86,9 @@ define i32 @rotl_32_mask(i32 %x, i32 %y) nounwind {
 ; CHECK: # %bb.0:
 ; CHECK-NEXT: SUB a2,zero,a1
 ; CHECK-NEXT: ANDI a2,a2,31
-; CHECK-LABEL: .Ltmp2:
+; CHECK-LABEL: .Lhi_label2:
 ; CHECK-NEXT: AUIPC a3,%pcrel_hi(.LCPI4_0)
-; CHECK-NEXT: ADDI a3,a3,%pcrel_lo(.Ltmp2)
+; CHECK-NEXT: ADDI a3,a3,%pcrel_lo(.Lhi_label2)
 ; CHECK-NEXT: LD a3,0(a3)
 ; CHECK-NEXT: AND a4,a0,a3
 ; CHECK-NEXT: SRL a2,a4,a2
@@ -107,9 +107,9 @@ define i32 @rotl_32_mask(i32 %x, i32 %y) nounwind {
 define i32 @rotl_32_mask_and_63_and_31(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotl_32_mask_and_63_and_31:
 ; CHECK: # %bb.0:
-; CHECK-LABEL: .Ltmp3:
+; CHECK-LABEL: .Lhi_label3:
 ; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI5_0)
-; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp3)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Lhi_label3)
 ; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: AND a2,a0,a2
 ; CHECK-NEXT: SUB a3,zero,a1
@@ -145,9 +145,9 @@ define i32 @rotl_32_mask_or_64_or_32(i32 %x, i32 %y) nounwind {
 define i32 @rotr_32_mask(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotr_32_mask:
 ; CHECK: # %bb.0:
-; CHECK-LABEL: .Ltmp4:
+; CHECK-LABEL: .Lhi_label4:
 ; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI7_0)
-; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp4)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Lhi_label4)
 ; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: AND a3,a1,a2
 ; CHECK-NEXT: AND a2,a0,a2
@@ -171,9 +171,9 @@ define i32 @rotr_32_mask_and_63_and_31(i32 %x, i32 %y) nounwind {
 ; CHECK-NEXT: SUB a2,zero,a1
 ; CHECK-NEXT: ANDI a2,a2,31
 ; CHECK-NEXT: SLL a2,a0,a2
-; CHECK-LABEL: .Ltmp5:
+; CHECK-LABEL: .Lhi_label5:
 ; CHECK-NEXT: AUIPC a3,%pcrel_hi(.LCPI8_0)
-; CHECK-NEXT: ADDI a3,a3,%pcrel_lo(.Ltmp5)
+; CHECK-NEXT: ADDI a3,a3,%pcrel_lo(.Lhi_label5)
 ; CHECK-NEXT: LD a3,0(a3)
 ; CHECK-NEXT: AND a0,a0,a3
 ; CHECK-NEXT: ANDI a1,a1,63

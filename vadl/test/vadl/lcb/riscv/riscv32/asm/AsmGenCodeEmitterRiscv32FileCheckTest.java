@@ -16,10 +16,8 @@
 
 package vadl.lcb.riscv.riscv32.asm;
 
-import org.junit.jupiter.api.Disabled;
 import vadl.lcb.riscv.riscv32.AsmGenRiscv32FileCheckTest;
 
-@Disabled("Enable once indirect relocations in the linker are implemented.")
 public class AsmGenCodeEmitterRiscv32FileCheckTest extends AsmGenRiscv32FileCheckTest {
   @Override
   protected String getComponent() {

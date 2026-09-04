@@ -135,6 +135,8 @@ public final class LcbPassOrder {
     order.add(new vadl.lcb.template.lld.ELF.Arch.EmitLldArchFilePass(configuration));
     order.add(new EmitLldVadlBuiltinsHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lld.ELF.EmitLldTargetCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lld.ELF.EmitInputSectionCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lld.ELF.EmitRelocationsHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.EmitLcbMakeFilePass(configuration));
     order.add(new EmitTargetElfRelocsDefFilePass(configuration));
     order.add(new vadl.lcb.include.llvm.IR.EmitCMakeListsPass(configuration));

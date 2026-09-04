@@ -12,9 +12,9 @@ define void @test_bcc_fallthrough_taken(i32 %in) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK-NEXT: ADDI sp,sp,-16
 ; CHECK-NEXT: SD ra,8(sp) # 8-byte Folded Spill
-; CHECK-LABEL: .Ltmp0:
+; CHECK-LABEL: .Lhi_label0:
 ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI0_0)
-; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label0)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: AND a0,a0,a1
 ; CHECK-NEXT: ADDI a1,zero,42
@@ -50,9 +50,9 @@ define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK-NEXT: ADDI sp,sp,-16
 ; CHECK-NEXT: SD ra,8(sp) # 8-byte Folded Spill
-; CHECK-LABEL: .Ltmp1:
+; CHECK-LABEL: .Lhi_label1:
 ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI1_0)
-; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Lhi_label1)
 ; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: AND a0,a0,a1
 ; CHECK-NEXT: ADDI a1,zero,42

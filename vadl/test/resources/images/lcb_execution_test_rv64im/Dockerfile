@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:45115bb0a22747dd8d347051d2bcb5ee084f568c90afbdf71ef738b0849afb96
+FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:3cd1cfa0fd9db23ba514e38c9321add4e80f1da70bee0424e38d6af3db13d19a
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 ARG UPSTREAM_BUILD_TARGET
