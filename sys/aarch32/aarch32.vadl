@@ -668,7 +668,7 @@ instruction set architecture AArch32v6 = {
     instruction AsId($i.id, $m.mode, $c.condId) : MemmoryImmFormat =
       if ($c.condEx) then
         let a = R(rn) $m.op offset in
-          {$m.upStmt $memStmt}
+          {$memStmt $m.upStmt}
     encoding AsId($i.id, $m.mode, $c.condId) = {cond = CondCode::$c.condId, op = 0b010, puw = AddrMode::$m.mode, bl = MemMode::$blId}
     assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
     }
@@ -784,8 +784,8 @@ instruction set architecture AArch32v6 = {
     instruction AsId($i.id, $m.mode, $c.condId) : HalfMemImmFormat =
       if ($c.condEx) then
         let a = R(rn) $m.op offset in {
-          $m.upStmt
           $memStmt
+          $m.upStmt
           }
     encoding AsId($i.id, $m.mode, $c.condId) = {cond = CondCode::$c.condId, op = 0b000, op1 = $i.opcode, puw = AddrMode::$m.mode}
     assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
@@ -825,8 +825,8 @@ instruction set architecture AArch32v6 = {
     instruction AsId($i.id, $m.mode, $c.condId) : HalfMemRegFormat =
       if ($c.condEx) then
         let a = R(rn) $m.op R(rm) in {
-          $m.upStmt
           $memStmt
+          $m.upStmt
           }
     encoding AsId($i.id, $m.mode, $c.condId) = {cond = CondCode::$c.condId, op = 0b000, zero = 0b0000, op1 = $i.opcode, puw = AddrMode::$m.mode}
     assembly AsId($i.id, $m.mode, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rt), ', [', register(rn), $asms)
