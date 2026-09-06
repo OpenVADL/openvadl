@@ -23,6 +23,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -134,6 +135,7 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     sb.indent();
     isa.registerTensors().stream()
         .filter(IssUtils::isTcgReg)
+        .filter(Predicate.not(IssUtils::isLazyReg))
         .forEach(tensor -> {
           regInitCode(sb, tensor);
           sb.append("\n");

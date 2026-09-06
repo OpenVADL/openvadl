@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.common.IssGdbInfoExtractionPass;
+import vadl.iss.passes.common.IssRegisterAccessInfoRetrievalPass;
+import vadl.iss.passes.extensions.IssAccessorRegistry;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -33,6 +35,7 @@ import vadl.viam.Specification;
  * Emits the {@code target/gen-arch/gdbstub.c} file which implements target-specific callback
  * that are used by QEMU's generic gdbstub to read and modify the CPU state.
  * The minimal required callbacks are read/write of CPU registers.
+ * Stubs for lazy registers use CPU helpers.
  *
  * <p>The {@link vadl.iss.template.gdb_xml.EmitIssGdbXmlPass} emits the CPU register information
  * used by GDB to address certain registers.</p>
@@ -64,20 +67,22 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
     var vars = super.createVariables(passResults, specification);
     var gdbInfo = passResults.lastResultOf(IssGdbInfoExtractionPass.class,
         IssGdbInfoExtractionPass.Result.class);
+    var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
+        IssAccessorRegistry.class);
     var groups = groupRegs(gdbInfo.regs());
     vars.put("regs", gdbInfo.regs());
-    vars.put("gdb_helpers", createHelpers(groups));
+    vars.put("gdb_helpers", createHelpers(groups, accessorRegistry));
     vars.put("read_regs", createRead(groups));
     vars.put("write_regs", createWrite(groups));
     return vars;
   }
 
-  private String createHelpers(List<RegGroup> groups) {
+  private String createHelpers(List<RegGroup> groups, IssAccessorRegistry accessorRegistry) {
     var helpers = new CStringBuilder();
     for (var group : groups) {
-      emitReadHelper(helpers, group);
+      emitReadHelper(helpers, group, accessorRegistry);
       helpers.newLine();
-      emitWriteHelper(helpers, group);
+      emitWriteHelper(helpers, group, accessorRegistry);
       helpers.newLine();
     }
     return helpers.toString();
@@ -151,7 +156,8 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
     return out.toString();
   }
 
-  private void emitReadHelper(CCodeBuilder builder, RegGroup group) {
+  private void emitReadHelper(CCodeBuilder builder, RegGroup group,
+                              IssAccessorRegistry accessorRegistry) {
     var sample = group.sample();
     var origin = sample.origin();
     var bitSize = sample.bitSize();
@@ -169,14 +175,20 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
         emitReadChunkedScalar(builder, bitSize, callPrefix);
       }
     } else if (origin.isSingleRegister()) {
-      builder.stmt("return " + scalarGetter(bitSize) + "(mem_buf, env->" + base + ")");
+      var accessor = origin.expectExtension(RegInfo.class).isLazy()
+          ? accessorRegistry.baseAccessors().stream()
+            .filter(a -> a.owner().reg() == origin && a.accessType() == RegInfo.AccessType.READ)
+            .findFirst().get().name() + "(env)"
+          : "env->" + base;
+      builder.stmt("return " + scalarGetter(bitSize) + "(mem_buf, " + accessor + ")");
     } else {
       builder.stmt("return " + scalarGetter(bitSize) + "(mem_buf, env->" + base + "[idx])");
     }
     builder.unindent().appendLn("}");
   }
 
-  private void emitWriteHelper(CCodeBuilder builder, RegGroup group) {
+  private void emitWriteHelper(CCodeBuilder builder, RegGroup group,
+                               IssAccessorRegistry accessorRegistry) {
     var sample = group.sample();
     var origin = sample.origin();
     var bitSize = sample.bitSize();
@@ -199,8 +211,15 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
         emitWriteChunkedScalar(builder, bitSize, callPrefix);
       }
     } else if (origin.isSingleRegister()) {
-      builder.stmt("env->" + base + " = " + scalarLoader(bitSize) + "(mem_buf)")
-          .stmt("return " + wireSizeBytes(bitSize));
+      if (origin.expectExtension(RegInfo.class).laziness() == RegInfo.Laziness.NONE) {
+        builder.stmt("env->" + base + " = " + scalarLoader(bitSize) + "(mem_buf)");
+      } else {
+        var accessorName = accessorRegistry.baseAccessors().stream()
+            .filter(a -> a.owner().reg() == origin && a.accessType() == RegInfo.AccessType.WRITE)
+            .findFirst().get().name();
+        builder.stmt(accessorName + "(env, " + scalarLoader(bitSize) + "(mem_buf))");
+      }
+      builder.stmt("return " + wireSizeBytes(bitSize));
     } else {
       builder.stmt("env->" + base + "[idx] = " + scalarLoader(bitSize) + "(mem_buf)")
           .stmt("return " + wireSizeBytes(bitSize));

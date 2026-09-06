@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 import static vadl.iss.passes.TcgPassUtils.regInfo;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -33,6 +34,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
 import vadl.viam.ArtificialResource;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
@@ -71,6 +73,10 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     viam.isa().ifPresent(isa -> {
       isa.artificialResources()
           .forEach(alias -> collectAllAliasAccessorDescriptors(alias, registry));
+      // add custom ones for lazy registers, because the gdb stub and cpu dump
+      // need to use getters in cpu.c
+      isa.registerTensors()
+          .forEach(reg -> collectAllLazyRegisterDescriptors(reg, registry));
       ViamUtils.findAllBehaviors(isa)
           .filter(behavior -> !(behavior.parentDefinition() instanceof ArtificialResource))
           .forEach(behavior -> collectAccessorDescriptors(behavior, registry));
@@ -167,6 +173,27 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
     for (var type : RegInfo.AccessType.values()) {
       collectAliasAccessorDescriptor(alias, type, registry);
     }
+  }
+
+  private void collectAllLazyRegisterDescriptors(RegisterTensor reg, IssAccessorRegistry registry) {
+    for (var type : RegInfo.AccessType.values()) {
+      collectLazyAccessorDescriptor(reg, type, registry);
+    }
+  }
+
+  private void collectLazyAccessorDescriptor(RegisterTensor reg,
+                                             RegInfo.AccessType type,
+                                             IssAccessorRegistry registry) {
+    var info = regInfo(reg);
+    if (info.laziness() == RegInfo.Laziness.NONE) {
+      return;
+    }
+    reg.ensure(reg.indexDimensions().isEmpty(),
+        "Lazy registers can only be single registers");
+    registry.addBaseAccessor(new RegInfo.BaseAccessorDescriptor(
+        info, type, List.of(), reg.resultType().bitWidth(),
+        reg.resultType().bitWidth(), 0, reg
+    ));
   }
 
   private boolean shouldCollectDescriptor(Graph behavior, ReadRegTensorNode node,

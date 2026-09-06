@@ -34,39 +34,38 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
 [(${instr})]
 [/]
 
-// float helpers
-
 #define TS uint[(${target_size})]_t
 
-void prep_float_status(CPU[(${gen_arch_upper})]State *env, float_status *s, TS rm) {
-  uint16_t flags = 0xffff;
-  // un-set non sticky flags
-  [# th:each="reg : ${register_tensors}"][# th:each="flag : ${reg.non_sticky_fe_flags}"]
-  flags &= ~(1 << [(${flag.flag_idx})]);[/][/]
-  // un-set sticky flags that are not set
-  [# th:each="reg : ${register_tensors}"][# th:each="flag : ${reg.sticky_fe_flags}"]
-  flags &= ~((1 - ((env->[(${reg.name_lower})] >> [(${flag.idx})]) & 1)) << [(${flag.flag_idx})]);[/][/]
-  set_float_exception_flags(flags, s);
-  set_float_rounding_mode(rm, s);
-  // TODO: this disables nan-propagation. this will be configurable via the vadl spec at some point
-  set_default_nan_mode(1, s);
+// lazy reg read/write helpers
+[# th:each="reg : ${register_tensors}"][# th:if="${reg.isLazy}"]
+TS helper_lazy_read_[(${reg.name_lower})](CPU[(${gen_arch_upper})]State *env) {
+  return get_[(${reg.name_lower})]_u[(${reg.value_width})](env);
 }
+void helper_lazy_write_[(${reg.name_lower})](CPU[(${gen_arch_upper})]State *env, TS value) {
+  set_[(${reg.name_lower})]_u[(${reg.value_width})](env, value);
+}
+[/][/]
 
-void set_float_status(CPU[(${gen_arch_upper})]State *env, float_status *s) {
-  // DEV NOTE: for now we write directly to the flags register. This means that the helper is not pure and
-  //           thus slower. In the future, we should optimize this.
-  uint16_t flags = get_float_exception_flags(s);
-  [# th:each="reg : ${register_tensors}"][# th:each="flag : ${reg.sticky_fe_flags}"]
-  env->[(${reg.name_lower})] |= (flags >> [(${flag.flag_idx})] & 1) << [(${flag.idx})];[/][/]
-  [# th:each="reg : ${register_tensors}"][# th:each="flag : ${reg.non_sticky_fe_flags}"]
-  env->[(${reg.name_lower})] &= ~((1 - (flags >> [(${flag.flag_idx})] & 1)) << [(${flag.idx})]);[/][/]
-}
+[# th:if="${float_facts.has_float_ops}"]
+// float helpers
+
+// unset all non-sticky (ns) float exception (fe) flags so they are computed
+#define NS_FE_FLAG_PROLOG \
+  uint16_t old_s_fe_flags = get_float_exception_flags(s);                             \
+  set_float_exception_flags(old_s_fe_flags & ~[(${float_facts.non_sticky_mask})], s);
+
+// it does not matter if non-ns fe flags are unset in env->ns_fe_flags, since those are never read
+#define NS_FE_FLAG_EPILOG \
+  uint16_t new_fe_flags = get_float_exception_flags(s);                         \
+  env->ns_fe_flags = new_fe_flags;                                              \
+  set_float_exception_flags(new_fe_flags | old_s_fe_flags | ~[(${float_facts.sticky_mask})], s);
 
 #define FLOAT_HELPER_BODY(RET_TY, CALL, FMT, RM) \
-  float_status *s = &env->fp_status_##FMT;                                                  \
-  prep_float_status(env, s, RM);                                                            \
-  RET_TY result = CALL;                                                                     \
-  set_float_status(env, s);                                                                 \
+  float_status *s = &env->fp_status;                                  \
+  set_float_rounding_mode(RM, s);                                     \
+  [# th:if="${float_facts.has_non_sticky_flags}"]NS_FE_FLAG_PROLOG[/] \
+  RET_TY result = CALL;                                               \
+  [# th:if="${float_facts.has_non_sticky_flags}"]NS_FE_FLAG_EPILOG[/] \
   return result;
 
 #define FLOAT_HELPER_1(S, FMT, NAME, QEMU_FUN) \
@@ -149,3 +148,7 @@ void set_float_status(CPU[(${gen_arch_upper})]State *env, float_status *s) {
 [/][# th:each="c : ${float_builtins.fissnan}"]FLOAT_HELPER_CLASSS([(${c[0].bit_size})], [(${c[0].name})], fissnan, is_signaling_nan)
 [/][# th:each="c : ${float_builtins.fisqnan}"]FLOAT_HELPER_CLASSS([(${c[0].bit_size})], [(${c[0].name})], fisqnan, is_quiet_nan)
 [/]
+
+[/]
+
+#undef TS

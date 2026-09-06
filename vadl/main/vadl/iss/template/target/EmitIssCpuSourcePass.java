@@ -49,7 +49,7 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     var vars = super.createVariables(passResults, specification);
     var accessorRegistry = passResults.lastResultOf(IssRegisterAccessInfoRetrievalPass.class,
         IssAccessorRegistry.class);
-    vars.put("reg_dump_code", dumpRegsCode(specification));
+    vars.put("reg_dump_code", dumpRegsCode(specification, accessorRegistry));
     vars.put("reset", getResetCode(specification, accessorRegistry));
     vars.put("base_accessors", accessorRegistry.baseAccessors());
     vars.put("base_clear_cpu_accessors",
@@ -70,19 +70,20 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     return new IssResetGen(proc.reset(), accessorRegistry).fetch();
   }
 
-  private String dumpRegsCode(Specification specification) {
+  private String dumpRegsCode(Specification specification, IssAccessorRegistry accessorRegistry) {
     var sb = new CStringBuilder();
     var isa = specification.processor().get().isa();
     sb.indent();
     isa.registerTensors().forEach(tensor -> {
-      dumpRegsCode(sb, tensor);
+      dumpRegsCode(sb, tensor, accessorRegistry);
       sb.append("\n");
     });
     return sb.toString();
   }
 
   @SuppressWarnings("LambdaParameterName")
-  private void dumpRegsCode(CCodeBuilder sb, RegisterTensor reg) {
+  private void dumpRegsCode(CCodeBuilder sb, RegisterTensor reg,
+                            IssAccessorRegistry accessorRegistry) {
     var regLower = reg.simpleName().toLowerCase();
     var target = configuration().targetName().toLowerCase();
     var names = target + "_cpu_" + regLower + "_names";
@@ -93,9 +94,14 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
     if (regInfo.execClass() == RegInfo.ExecClass.CPU_VECTOR) {
       dumpCpuVectorRegCode(sb, reg, regLower, names, dims.size());
     } else if (dims.isEmpty()) {
+      var accessor = regInfo.isLazy()
+          ? accessorRegistry.baseAccessors().stream()
+            .filter(a -> a.owner().reg() == reg && a.accessType() == RegInfo.AccessType.READ)
+            .findFirst().get().name() + "(env)"
+          : "env->" + regLower;
       sb.callStmt("qemu_fprintf", "f",
           "\" " + reg.simpleName() + ":    \" TARGET_FMT_lx \"\\n\"",
-          "env->" + regLower);
+          accessor);
     } else if (dims.size() == 1) {
       var flatSize = dims.getFirst().size();
       var isWideElement = reg.resultType().bitWidth() > 64;

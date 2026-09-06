@@ -16,10 +16,13 @@
 
 package vadl.viam.annotations;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.viam.Annotation;
+import vadl.viam.Constant;
 import vadl.viam.FloatExceptionFlag;
 import vadl.viam.RegisterTensor;
 
@@ -58,6 +61,63 @@ public class FloatFlagAnnotation extends Annotation<RegisterTensor> {
 
   public Map<Integer, FloatExceptionFlag> nonStickyFlags() {
     return nonSticky;
+  }
+
+  public Map<Integer, FloatExceptionFlag> flags(boolean sticky) {
+    return sticky ? stickyFlags() : nonStickyFlags();
+  }
+
+  /**
+   * Returns a bit slice containing all bits that contain a flag.
+   */
+  public Constant.BitSlice slice() {
+    return new Constant.BitSlice(
+        Stream.concat(
+            sticky.keySet().stream(),
+            nonSticky.keySet().stream()
+        ).distinct().map(i -> Constant.BitSlice.Part.of(i, i))
+            .toArray(Constant.BitSlice.Part[]::new)
+    );
+  }
+
+  /**
+   * Creates a binary mask for the float exception flags in the register this annotation
+   * is attached to, where all flags are set, which exists in the register.
+   *
+   * @param sticky     Whether to compute the mask for sticky flags (if {@code false}, then
+   *                   the mask is computed for the non-sticky flags)
+   * @return           The mask
+   */
+  public long flagMask(boolean sticky) {
+    return flags(sticky).keySet().stream().mapToLong(idx -> idx)
+        .reduce(0, (mask, idx) -> mask | (1L << idx));
+  }
+
+  /**
+   * Creates a binary mask for the QEMU float exception flags, where all flags are set,
+   * which exists in the given annotation.
+   *
+   * @param sticky      Whether to compute the mask for sticky flags (if {@code false}, then
+   *                    the mask is computed for the non-sticky flags)
+   * @return            The mask
+   */
+  public int qemuFlagMask(boolean sticky) {
+    return (short) flags(sticky).values().stream().mapToInt(f -> f.qemuFlagOffset)
+        .reduce(0, (mask, idx) -> mask | (1 << idx));
+  }
+
+  /**
+   * Creates a binary mask for the QEMU float exception flags, where all flags are set,
+   * which exists in any of the given annotations.
+   *
+   * @param annotations The float flags annotations to consider
+   * @param sticky      Whether to compute the mask for sticky flags (if {@code false}, then
+   *                    the mask is computed for the non-sticky flags)
+   * @return            The mask
+   */
+  public static int qemuFlagMask(Collection<FloatFlagAnnotation> annotations, boolean sticky) {
+    return annotations.stream().mapToInt(ann -> ann.qemuFlagMask(sticky))
+        .reduce(0, (a, b) -> a | b);
   }
 
 }

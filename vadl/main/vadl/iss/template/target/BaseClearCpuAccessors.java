@@ -47,9 +47,12 @@ final class BaseClearCpuAccessors {
     var signature = "void cpu_clear_" + regLower + "("
         + "CPU" + config.targetName().toUpperCase() + "State *env)";
 
-    var body = info.hasCpuStateArrayStorage()
-        ? "memset(env->" + regLower + ", 0, sizeof(env->" + regLower + "));"
-        : "env->" + regLower + " = 0;";
+    // Note: fully lazy registers have no field in env
+    var body = info.isFullyLazy()
+        ? ""
+        : info.hasCpuStateArrayStorage()
+          ? "memset(env->" + regLower + ", 0, sizeof(env->" + regLower + "));"
+          : "env->" + regLower + " = 0;";
 
     return Map.of(
         "name", "cpu_clear_" + regLower,
