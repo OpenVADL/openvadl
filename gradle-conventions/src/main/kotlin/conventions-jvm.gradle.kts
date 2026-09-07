@@ -76,6 +76,7 @@ tasks.withType<JavaExec>().configureEach {
     standardInput = System.`in`
     workingDir = rootProject.projectDir
     outputs.upToDateWhen { false }
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
 
 tasks.named<JavaCompile>("compileTestJava").configure {
@@ -84,6 +85,7 @@ tasks.named<JavaCompile>("compileTestJava").configure {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
 
 afterEvaluate {
