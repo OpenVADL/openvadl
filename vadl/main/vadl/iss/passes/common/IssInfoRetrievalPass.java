@@ -44,6 +44,7 @@ import vadl.utils.WithLocation;
 import vadl.viam.FloatExceptionFlag;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Processor;
 import vadl.viam.Specification;
 import vadl.viam.annotations.FloatFlagAnnotation;
 import vadl.viam.annotations.TbStateRegisterAnnotation;
@@ -180,11 +181,11 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
   }
 
   private void checkRegisterTensors(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    withIsa(viam, isa -> {
-      var allReads = getAllBehaviorNodesOf(isa, ReadRegTensorNode.class).toList();
-      var allWrites = getAllBehaviorNodesOf(isa, WriteRegTensorNode.class).toList();
+    withProcessor(viam, processor -> {
+      var allReads = getAllBehaviorNodesOf(processor, ReadRegTensorNode.class).toList();
+      var allWrites = getAllBehaviorNodesOf(processor, WriteRegTensorNode.class).toList();
 
-      isa.registerTensors()
+      processor.isa().registerTensors()
           .stream()
           .map(reg -> {
             var resWidth = reg.resultType().bitWidth();
@@ -205,7 +206,7 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
 
             reg.attachExtension(new RegInfo(configuration(), reg, readsForReg, writesForReg));
 
-            var pc = isa.pc();
+            var pc = processor.isa().pc();
             if (pc != null && pc.registerTensor() == reg) {
               var regInfo = reg.expectExtension(RegInfo.class);
               if (!regInfo.isTcgScalar()) {
@@ -398,6 +399,15 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
         )));
   }
 
+  private void withProcessor(Specification viam, Consumer<Processor> func) {
+    var processor = viam.processor();
+    if (processor.isEmpty()) {
+      return;
+    }
+    var proc = processor.get();
+    func.accept(proc);
+  }
+
   private void withIsa(Specification viam, Consumer<InstructionSetArchitecture> func) {
     var optIsa = viam.isa();
     if (optIsa.isEmpty() || optIsa.get().pc() == null) {
@@ -407,9 +417,9 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
     func.accept(isa);
   }
 
-  private <T extends Node> Stream<T> getAllBehaviorNodesOf(InstructionSetArchitecture isa,
+  private <T extends Node> Stream<T> getAllBehaviorNodesOf(Processor processor,
                                                            Class<T> type) {
-    return ViamUtils.findAllBehaviors(isa).flatMap(b -> b.getNodes(type));
+    return ViamUtils.findAllBehaviors(processor).flatMap(b -> b.getNodes(type));
   }
 
 }

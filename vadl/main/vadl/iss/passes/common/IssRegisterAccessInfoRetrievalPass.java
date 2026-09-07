@@ -68,10 +68,10 @@ public class IssRegisterAccessInfoRetrievalPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var registry = new IssAccessorRegistry();
-    viam.isa().ifPresent(isa -> {
-      isa.artificialResources()
+    viam.processor().ifPresent(processor -> {
+      processor.isa().artificialResources()
           .forEach(alias -> collectAllAliasAccessorDescriptors(alias, registry));
-      ViamUtils.findAllBehaviors(isa)
+      ViamUtils.findAllBehaviors(processor)
           .filter(behavior -> !(behavior.parentDefinition() instanceof ArtificialResource))
           .forEach(behavior -> collectAccessorDescriptors(behavior, registry));
     });
