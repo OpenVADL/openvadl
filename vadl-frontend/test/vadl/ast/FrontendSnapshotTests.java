@@ -120,6 +120,7 @@ public class FrontendSnapshotTests {
     DiagnosticPrinter printer = new DiagnosticPrinter(new DiskVirtualFileSystem(), false);
     printer.forceRelativePaths = true;
     printer.forceUnixPaths = true;
+    printer.forceUnicodeOutput = true;
     var output = "Reported Diagnostics:\n\n";
     output += !diagnostics.isEmpty() ? printer.toString(diagnostics).stripTrailing() :
         "No diagnostics were reported, the input was correctly parsed, typechecked and lowered.";

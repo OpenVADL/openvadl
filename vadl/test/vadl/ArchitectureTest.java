@@ -28,6 +28,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.library.Architectures;
 import org.junit.jupiter.api.Test;
 import vadl.ast.AnnotationTable;
+import vadl.error.DiagnosticPrinter;
 
 public class ArchitectureTest {
   @Test
@@ -60,7 +61,10 @@ public class ArchitectureTest {
   void shouldNotUseSystemOut() {
     JavaClasses jc = new ClassFileImporter()
         .withImportOption(new ImportOption.DoNotIncludeTests())
-        .importPackages("vadl");
+        .importPackages("vadl")
+        // Exception for diagnostic printer because even though it doesn't use System.out to print
+        // it uses it to detect fallback on Windows, when it cannot output unicode.
+        .that(are(not(equivalentTo(DiagnosticPrinter.class))));
 
     NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS
         .check(jc);
