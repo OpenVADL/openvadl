@@ -16,6 +16,7 @@
 
 package vadl.viam.passes.sideEffectScheduling;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.common.collect.Lists;
@@ -27,8 +28,8 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.GraphUtils;
 import vadl.utils.ViamUtils;
-import vadl.viam.Counter;
 import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.Procedure;
@@ -39,13 +40,16 @@ import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ProcCallNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
+import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolver;
 
 /**
  * A pass that schedules side effects within the control flow graph (CFG) of instructions.
@@ -129,6 +133,14 @@ class SideEffectScheduler {
    * @param behavior The behavior to process.
    */
   public static void run(Graph behavior) {
+    if (behavior.parentDefinition() instanceof Instruction) {
+      // re-evaluate side effect conditions (have been removed by IssConfigurationPass)
+      SideEffectConditionResolver.run(behavior);
+      moveInstrExitSideEffectsToInstrEnd(behavior);
+      // delete side effect conditions, as they are not needed and break later passes
+      behavior.getNodes(SideEffectNode.class).forEach(n -> n.setCondition(null));
+      behavior.deleteUnusedDependencies();
+    }
     var startNode = getSingleNode(behavior, StartNode.class);
     var scheduler = new SideEffectScheduler();
     scheduler.processBranch(startNode);
@@ -155,16 +167,15 @@ class SideEffectScheduler {
         ));
 
     var nonPcUpdateEffects = partitionedEffects.getOrDefault(false, List.of());
-    var instrExitSideEffects = partitionedEffects.getOrDefault(true, List.of())
-        .stream().findFirst();
+    var instrExitSideEffects = partitionedEffects.getOrDefault(true, List.of());
 
     // All non-PC updates should be inserted directly at the beginning of the branch
     for (var effect : Lists.reverse(nonPcUpdateEffects)) {
       beginNode.addAfter(new ScheduledNode(effect));
     }
 
-    // Add PC update directly in front of branch end
-    instrExitSideEffects.ifPresent(exitCause -> {
+    // Add PC updates directly in front of branch end
+    instrExitSideEffects.forEach(exitCause -> {
           if (exitCause instanceof ProcCallNode procCall) {
             endNode.addBefore(new InstrExitNode.Raise(procCall));
           } else if (exitCause instanceof WriteResourceNode write) {
@@ -177,6 +188,42 @@ class SideEffectScheduler {
     );
 
     return endNode;
+  }
+
+  /**
+   * Moves all side effects causing an instruction exit to the end of the instruction graph.
+   * Unconditional side effects are simply added to the instruction end node. Conditional
+   * side effect nodes are put in an if-block.
+   *
+   * @param behaviour The graph to process.
+   */
+  private static void moveInstrExitSideEffectsToInstrEnd(Graph behaviour) {
+    var instrEnd = GraphUtils.getSingleNode(behaviour, InstrEndNode.class);
+    var instrExitSideEffects = behaviour.getNodes(SideEffectNode.class).filter(
+        s -> (s instanceof WriteRegTensorNode write && write.isPcAccess())
+            || (s instanceof ProcCallNode procCall && procCall.exceptionRaise())
+    ).toList();
+
+    for (var instrExit : instrExitSideEffects) {
+      var cond = instrExit.condition();
+      // the side effect may be scheduled multiple times, but the condition covers everything
+      instrExit.usages().filter(AbstractEndNode.class::isInstance).toList()
+          .forEach(user -> ((AbstractEndNode) user).removeSideEffect(instrExit));
+      if (cond == null) {
+        instrEnd.addSideEffect(instrExit);
+      } else {
+        var pred = requireNonNull(instrEnd.predecessor());
+        pred.unlinkNext();
+        pred.setNext(GraphUtils.ifElseSideEffect(
+            behaviour,
+            cond,
+            List.of(instrExit),
+            List.of(),
+            instrEnd,
+            instrExit.location()
+        ));
+      }
+    }
   }
 
   /**
