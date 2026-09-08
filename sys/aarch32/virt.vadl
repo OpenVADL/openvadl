@@ -7,8 +7,11 @@ instruction set architecture A32 extending AArch32v7 = { }
 processor Virt implements A32 = {
 
   reset = {
-    PC := 0x0
-    // upstream QEMU sets everything to zero
+    PC := 0x0     // upstream QEMU sets everything to zero
+    APSR_N := 1   // upstream QEMU sets negative
+    APSR_Z := 1   // upstream QEMU sets zero
+    APSR_C := 0   // upstream QEMU clears carry
+    APSR_V := 1   // upstream QEMU sets overflow
   }
 
   [ firmware ]
