@@ -1,7 +1,7 @@
 
-import rv64fd::{RV64IFD}
+import rv64fd::{RV64IMFD}
 
-instruction set architecture RV64IF extending RV64IFD = {}
+instruction set architecture RV64IMF extending RV64IMFD = {}
 
 [ htif ]
 processor Spike implements RV64IF = {
