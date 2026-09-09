@@ -136,6 +136,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
 
     var ifNode = (IfNode) splitNode;
 
+    // FIXME: if parts of the condition are tcg and others are not, we could separate them
+    //  and move some decision-making to translation time
     if (!isCondTcg(ifNode.condition())) {
       // if the condition is immediate, we emit C-If construct
       // and no TCG operations
