@@ -1147,12 +1147,12 @@ class EnableAnnotation extends Annotation {
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    definition.values.forEach(typeChecker::check);
 
     // Only eval the argument if there is one
     if (definition.values.size() == 1) {
       var valueExpr = definition.values.getFirst();
 
+      typeChecker.check(valueExpr);
       if (!valueExpr.type().equals(Type.bool())) {
         throw error("Enable annotation expects a boolean argument", valueExpr)
             .locationDescription(valueExpr, "Expected a boolean but got %s", valueExpr.type())
@@ -1362,14 +1362,15 @@ class ConstantAnnotation extends Annotation {
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 1);
 
-    definition.values.forEach(value -> value.accept(resolver));
+    definition.values.getFirst().accept(resolver);
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    definition.values.forEach(typeChecker::check);
+    var valueExpr = definition.values.getFirst();
+    typeChecker.check(valueExpr);
 
-    constant = typeChecker.constantEvaluator.eval(definition.values.getFirst());
+    constant = typeChecker.constantEvaluator.eval(valueExpr);
   }
 
   /**
@@ -1433,16 +1434,18 @@ class StringAnnotation extends Annotation {
           .locationDescription(
               firstValue,
               "Expected a string but got %s",
-              firstValue.nodeName())
-          .build();
+              firstValue.nodeName()
+          ).build();
     }
 
-    definition.values.forEach(value -> value.accept(resolver));
+    // Intentionally skip name resolution of values as they are guaranteed to
+    // be strings at this point, which do not need any resolution.
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    definition.values.forEach(typeChecker::check);
+    var valueExpr = definition.values.getFirst();
+    typeChecker.check(valueExpr);
   }
 
   @Override
@@ -1626,14 +1629,15 @@ class OptExprAnnotation extends Annotation {
 
     if (!definition.values.isEmpty()) {
       expr = definition.values.getFirst();
+      expr.accept(resolver);
     }
-
-    definition.values.forEach(value -> value.accept(resolver));
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    definition.values.forEach(typeChecker::check);
+    if (expr != null) {
+      expr.accept(typeChecker);
+    }
   }
 
   @Override
@@ -1679,13 +1683,12 @@ class ExprAnnotation extends Annotation {
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 1);
     expr = definition.values.getFirst();
-
-    definition.values.forEach(value -> value.accept(resolver));
+    expr.accept(resolver);
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    definition.values.forEach(typeChecker::check);
+    expr.accept(typeChecker);
   }
 
   @Override
