@@ -364,7 +364,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         std::vector<MCInst> processorNameValueMCInstExpander::RV3264Base_LGA_64_expand(const MCInst& instruction, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const
         {
            std::vector< MCInst > result;
-           MCSymbol *a = Ctx.createTempSymbol();
+           MCSymbol *a = Ctx.createTempSymbol("hi_label");
            callbackSymbol(a);
            MCInst b = MCInst();
            b.setOpcode(processorNameValue::AUIPC);
@@ -417,7 +417,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         std::vector<MCInst> processorNameValueMCInstExpander::RV3264Base_CALL_expand(const MCInst& instruction, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const
         {
            std::vector< MCInst > result;
-           MCSymbol *a = Ctx.createTempSymbol();
+           MCSymbol *a = Ctx.createTempSymbol("hi_label");
            callbackSymbol(a);
            MCInst b = MCInst();
            b.setOpcode(processorNameValue::AUIPC);
@@ -470,7 +470,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         std::vector<MCInst> processorNameValueMCInstExpander::RV3264Base_TAIL_expand(const MCInst& instruction, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const
         {
            std::vector< MCInst > result;
-           MCSymbol *a = Ctx.createTempSymbol();
+           MCSymbol *a = Ctx.createTempSymbol("hi_label");
            callbackSymbol(a);
            MCInst b = MCInst();
            b.setOpcode(processorNameValue::AUIPC);
@@ -1027,7 +1027,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         std::vector<MCInst> processorNameValueMCInstExpander::RV3264Base_LGA_32_expand(const MCInst& instruction, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const
         {
            std::vector< MCInst > result;
-           MCSymbol *a = Ctx.createTempSymbol();
+           MCSymbol *a = Ctx.createTempSymbol("hi_label");
            callbackSymbol(a);
            MCInst b = MCInst();
            b.setOpcode(processorNameValue::AUIPC);
@@ -1080,7 +1080,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         std::vector<MCInst> processorNameValueMCInstExpander::RV3264Base_LLA_expand(const MCInst& instruction, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const
         {
            std::vector< MCInst > result;
-           MCSymbol *a = Ctx.createTempSymbol();
+           MCSymbol *a = Ctx.createTempSymbol("hi_label");
            callbackSymbol(a);
            MCInst b = MCInst();
            b.setOpcode(processorNameValue::AUIPC);

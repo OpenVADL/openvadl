@@ -33,9 +33,9 @@ end_block:                                        ; preds = %block2, %block1
 define void @case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: case1_a:
 ; CHECK:       # %bb.0:
-; CHECK-LABEL: .Ltmp0:
+; CHECK-LABEL: .Lhi_label0:
 ; CHECK-NEXT:    AUIPC a4,%pcrel_hi(.LCPI1_0)
-; CHECK-NEXT:    ADDI a4,a4,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT:    ADDI a4,a4,%pcrel_lo(.Lhi_label0)
 ; CHECK-NEXT:    LD a4,0(a4)
 ; CHECK-NEXT:    SW a4,0(a0)
 ; CHECK-NEXT:    ADDI a0,zero,-2
@@ -96,9 +96,9 @@ end_block:                                        ; preds = %block2, %block1
 define void @case2_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: case2_a:
 ; CHECK:       # %bb.0:
-; CHECK-LABEL: .Ltmp1:
+; CHECK-LABEL: .Lhi_label1:
 ; CHECK-NEXT: AUIPC a4,%pcrel_hi(.LCPI3_0)
-; CHECK-NEXT: ADDI a4,a4,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: ADDI a4,a4,%pcrel_lo(.Lhi_label1)
 ; CHECK-NEXT: LD a4,0(a4)
 ; CHECK-NEXT: SW a4,0(a0)
 ; CHECK-NEXT: ADDI a0,zero,-3

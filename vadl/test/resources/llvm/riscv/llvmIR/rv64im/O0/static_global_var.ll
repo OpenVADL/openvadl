@@ -12,20 +12,20 @@ define void @init_heap_beebs(ptr noundef %heap, i64 noundef %heap_size) #0 {
 ; CHECK-NEXT: SD a0,8(sp)
 ; CHECK-NEXT: SD a1,0(sp)
 ; CHECK-NEXT: LD a1,8(sp)
-; CHECK-LABEL: .Ltmp0:
+; CHECK-LABEL: .Lhi_label0:
 ; CHECK-NEXT: AUIPC a0,%pcrel_hi(heap_ptr)
-; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Lhi_label0)
 ; CHECK-NEXT: SD a1,0(a0)
 ; CHECK-NEXT: LD a0,0(a0)
 ; CHECK-NEXT: LD a1,0(sp)
 ; CHECK-NEXT: ADD a1,a0,a1
-; CHECK-LABEL: .Ltmp1:
+; CHECK-LABEL: .Lhi_label1:
 ; CHECK-NEXT: AUIPC a0,%pcrel_hi(heap_end)
-; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Lhi_label1)
 ; CHECK-NEXT: SD a1,0(a0)
-; CHECK-LABEL: .Ltmp2:
+; CHECK-LABEL: .Lhi_label2:
 ; CHECK-NEXT: AUIPC a0,%pcrel_hi(heap_requested)
-; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Ltmp2)
+; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Lhi_label2)
 ; CHECK-NEXT: ADDI a1,zero,0
 ; CHECK-NEXT: SD a1,0(a0)
 ; CHECK-NEXT: ADDI sp,sp,16

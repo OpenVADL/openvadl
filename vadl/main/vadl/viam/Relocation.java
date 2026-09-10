@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -51,6 +51,8 @@ public class Relocation extends Function {
 
   private Kind kind;
 
+  private boolean isPaired = false;
+
   public Relocation(Identifier identifier, Kind kind, Parameter[] parameters, Type returnType) {
     super(identifier, parameters, returnType);
     this.kind = kind;
@@ -64,6 +66,10 @@ public class Relocation extends Function {
 
   public void setKind(Kind kind) {
     this.kind = kind;
+  }
+
+  public void setIsPaired(boolean isPaired) {
+    this.isPaired = isPaired;
   }
 
   @Override
@@ -85,6 +91,26 @@ public class Relocation extends Function {
    */
   public Kind kind() {
     return kind;
+  }
+
+  /**
+   * Returns {@code true} when the relocation is supposed to be paired with another relocation.
+   * An example for this is the {@code %pcrel_lo} relocation of RISCV, where the relocation's type
+   * depends on the type of its paired relocation.
+   * <pre>{@code .Lpcrel_hi0:
+   *         auipc   a0, %got_pcrel_hi(Coeff)
+   *         ld      a0, %pcrel_lo(.Lpcrel_hi0)(a0)}</pre>
+   * Here the {@code %pcrel_lo} relocation is paired with a {@code got} relocation,
+   * therefore {@code %pcrel_lo} is also  {@code got} relative.
+   *
+   * <pre>{@code .Lpcrel_hi0:
+   *         auipc   a0, %pcrel_hi(Coeff)
+   *         addi    a0, a0, %pcrel_lo(.Lpcrel_hi0)}</pre>
+   * In this case {@code %pcrel_lo} is paired with a {@code pcrel} relocation,
+   * therefore {@code %pcrel_lo} also is just {@code pcrel}.
+   */
+  public boolean isPaired() {
+    return isPaired;
   }
 
   /**

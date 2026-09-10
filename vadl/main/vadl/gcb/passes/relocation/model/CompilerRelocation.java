@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -141,6 +141,16 @@ public abstract class CompilerRelocation implements Renderable {
   public ElfRelocationName elfRelocationName() {
     return new ElfRelocationName(
         "R_" + relocation().identifier.lower());
+  }
+
+  /**
+   * Maps a {@link CompilerRelocation.Kind} to a LLVM relocation kind.
+   */
+  public String llvmKind(String target) {
+    if (relocation().isPaired()) {
+      return "R_" + target + "_INDIRECT";
+    }
+    return kind.llvmKind();
   }
 
   @Override
