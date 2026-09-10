@@ -19,6 +19,7 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
+import com.google.common.collect.Streams;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +53,6 @@ import vadl.ast.nodes.EnumerationDefinition;
 import vadl.ast.nodes.ExistsInExpr;
 import vadl.ast.nodes.ExistsInThenExpr;
 import vadl.ast.nodes.Expr;
-import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -110,6 +110,8 @@ public class SymbolTable {
 
   @Nullable
   SymbolTable parent;
+
+  final List<SymbolTable> shallowParents = new ArrayList<>();
 
   final Map<String, Node> symbols = new HashMap<>();
   final Map<String, Node> macroSymbols = new HashMap<>();
@@ -264,6 +266,12 @@ public class SymbolTable {
       return symbol;
     }
 
+    for (var shallowParent : shallowParents) {
+      if (shallowParent.resolveName(name) != null) {
+        return shallowParent.resolveName(name);
+      }
+    }
+
     if (parent != null) {
       return parent.resolveName(name);
     }
@@ -287,6 +295,12 @@ public class SymbolTable {
     var namespace = resolveName(path.get(0));
     if (namespace == null) {
       return null;
+    }
+
+    for (var shallowParent : shallowParents) {
+      if (shallowParent.resolvePath(path) != null) {
+        return shallowParent.resolvePath(path);
+      }
     }
 
     return namespace.symbolTable().resolvePath(path.subList(1, path.size()));
@@ -471,7 +485,9 @@ public class SymbolTable {
    * There is a hard limit described by {@link #MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS}.
    */
   private void collectAllSymbolNamesWhere(Collection<String> collector, Predicate<Node> pred) {
-    symbols.entrySet().stream()
+
+    Streams.concat(symbols.entrySet().stream(), shallowParents.stream().flatMap(p -> p.symbols.entrySet().stream()))
+    //symbols.entrySet().stream()
         .filter(entry -> entry.getValue() != null && pred.test(entry.getValue()))
         .map(Map.Entry::getKey)
         .limit(Math.max(0, MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS - collector.size()))
@@ -561,25 +577,24 @@ public class SymbolTable {
     return names;
   }
 
+  void verifyCanBeExtendedBy(SymbolTable other)  {
+    other.symbols.forEach(this::verifyAvailable);
+    other.macroSymbols.forEach(this::verifyMacroAvailable);
+  }
+
   /**
    * Copies all symbols of the given symbol table into this symbol table.
    * It internally calls {@link #defineSymbol(String, Node)}, so it
    * will register an error in {@link #errors} if there are symbol name conflicts.
    */
   void extendBy(SymbolTable other) {
-    // we have to check for each symbol that is is not already in this symbol table
-    for (var entry : other.symbols.entrySet()) {
-      var name = entry.getKey();
-      var symbol = entry.getValue();
-      defineSymbol(name, symbol);
-    }
-    // add macro symbols to this symbol table.
-    // #defineSymbol will correctly assign symbol to macroSymbols
-    for (var entry : other.macroSymbols.entrySet()) {
-      var name = entry.getKey();
-      var symbol = entry.getValue();
-      defineSymbol(name, symbol);
-    }
+    verifyCanBeExtendedBy(other);
+    this.shallowParents.add(other);
+
+    other.shallowParents.forEach(otherShallow -> {
+      verifyCanBeExtendedBy(otherShallow);
+      this.shallowParents.add(otherShallow);
+    });
   }
 
   private SourceLocation getIdentifierLocation(Node node) {
@@ -601,11 +616,20 @@ public class SymbolTable {
       return;
     }
 
-    if (!symbols.containsKey(name)) {
+    var otherSymbol = symbols.get(name);
+
+    for (var shallowParent : shallowParents) {
+      if (otherSymbol != null) {
+        break;
+      }
+
+      otherSymbol = shallowParent.symbols.get(name);
+    }
+
+    if (otherSymbol == null) {
       return;
     }
 
-    var otherSymbol = symbols.get(name);
     if (otherSymbol == origin) {
       // if the other origin is the same node, the "redefinition" is ok.
       // this can happen when we have a diamond pattern like isa0 -> abi -> superisa
