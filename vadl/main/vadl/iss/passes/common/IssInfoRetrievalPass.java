@@ -255,12 +255,13 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
 
   // checks that there are no duplicate float exception flags
   private void checkFeFlags(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    checkEachFeFlagOccursOnce(viam, diagnostics, true);
-    checkEachFeFlagOccursOnce(viam, diagnostics, false);
+    checkEachFeFlagOccursAtMostOnce(viam, diagnostics, true);
+    checkEachFeFlagOccursAtMostOnce(viam, diagnostics, false);
   }
 
-  private void checkEachFeFlagOccursOnce(Specification viam, List<DiagnosticBuilder> diagnostics,
-                                         boolean sticky) {
+  private void checkEachFeFlagOccursAtMostOnce(Specification viam,
+                                               List<DiagnosticBuilder> diagnostics,
+                                               boolean sticky) {
     withIsa(viam, isa -> {
       var flagLocations = new HashMap<FloatExceptionFlag, List<WithLocation>>();
       isa.registerTensors().stream()

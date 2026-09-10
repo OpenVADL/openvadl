@@ -209,6 +209,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
         "has_float_ops", hasFloatOps,
         "has_sticky_flags", hasStickyFlags,
         "has_non_sticky_flags", hasNonStickyFlags,
+        "need_float_status", hasStickyFlags || hasNonStickyFlags || hasFloatOps,
         "sticky_mask", "0x" + Integer.toHexString(stickyMask),
         "non_sticky_mask", "0x" + Integer.toHexString(nonStickyMask)
     );

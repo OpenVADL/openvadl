@@ -105,7 +105,7 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
 
 [(${reset})]
 
-  [# th:if="${float_facts.has_float_ops}"]
+  [# th:if="${float_facts.need_float_status}"]
   // float status and stick fe flags
 
   // this sets all flags that are not sticky so they are not computed by default
