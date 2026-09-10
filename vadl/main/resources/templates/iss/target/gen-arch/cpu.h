@@ -34,7 +34,7 @@ typedef struct CPUArchState {
   [(${p.c_type})] [(${p.name_in_cpu})];
   [/][/]
 
-  [# th:if="${float_facts.has_float_ops}"]
+  [# th:if="${float_facts.need_float_status}"]
   float_status fp_status; // float status and stick fe flags
   [# th:if="${float_facts.has_non_sticky_flags}"]
   uint16_t ns_fe_flags;   // non-sticky fe flags
