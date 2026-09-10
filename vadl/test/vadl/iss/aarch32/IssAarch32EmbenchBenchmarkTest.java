@@ -19,6 +19,7 @@ package vadl.iss.aarch32;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import vadl.iss.IssEmbenchBenchmark;
 
 public class IssAarch32EmbenchBenchmarkTest extends IssEmbenchBenchmark {
@@ -28,7 +29,7 @@ public class IssAarch32EmbenchBenchmarkTest extends IssEmbenchBenchmark {
     return List.of("arm-softmmu");
   }
 
-  // @Test
+  @Test
   @Tag("BenchmarkTest")
   void a32BenchmarkTest() throws IOException {
     runBenchmark(benchmarkSpec(

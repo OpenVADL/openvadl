@@ -124,13 +124,17 @@ public class WriteRegTensorNode extends WriteResourceNode implements WritesRegis
 
   @Override
   public WriteRegTensorNode copy() {
-    return new WriteRegTensorNode(regTensor, indices.copy(), value.copy(), staticCounterAccess(),
-        condition != null ? condition.copy() : null);
+    var copy = new WriteRegTensorNode(regTensor, indices.copy(), value.copy(),
+        staticCounterAccess(), condition != null ? condition.copy() : null);
+    copy.setSourceLocation(location());
+    return copy;
   }
 
   @Override
   public WriteRegTensorNode shallowCopy() {
-    return new WriteRegTensorNode(regTensor, indices, value, staticCounterAccess(), condition);
+    var copy = new WriteRegTensorNode(regTensor, indices, value, staticCounterAccess(), condition);
+    copy.setSourceLocation(location());
+    return copy;
   }
 
   @Override

@@ -28,7 +28,6 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
-import vadl.viam.Counter;
 import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.Procedure;
@@ -155,16 +154,15 @@ class SideEffectScheduler {
         ));
 
     var nonPcUpdateEffects = partitionedEffects.getOrDefault(false, List.of());
-    var instrExitSideEffects = partitionedEffects.getOrDefault(true, List.of())
-        .stream().findFirst();
+    var instrExitSideEffects = partitionedEffects.getOrDefault(true, List.of());
 
     // All non-PC updates should be inserted directly at the beginning of the branch
     for (var effect : Lists.reverse(nonPcUpdateEffects)) {
       beginNode.addAfter(new ScheduledNode(effect));
     }
 
-    // Add PC update directly in front of branch end
-    instrExitSideEffects.ifPresent(exitCause -> {
+    // Add PC updates directly in front of branch end
+    instrExitSideEffects.forEach(exitCause -> {
           if (exitCause instanceof ProcCallNode procCall) {
             endNode.addBefore(new InstrExitNode.Raise(procCall));
           } else if (exitCause instanceof WriteResourceNode write) {
