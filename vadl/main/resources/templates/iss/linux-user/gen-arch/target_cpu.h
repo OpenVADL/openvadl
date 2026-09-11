@@ -3,9 +3,9 @@
 
 //TODO: check for correct interpolations for regs & values
 enum {
-    [(${gen_arch_upper})]_REG_RA  = 1,
+    [(${gen_arch_upper})]_REG_RA  = [(${config.raReg})],
     [(${gen_arch_upper})]_REG_SP  = [(${config.spReg})],
-    [(${gen_arch_upper})]_REG_TP  = 4,
+    [(${gen_arch_upper})]_REG_TP  = [(${config.tpReg})],
 
     [# th:each="arg, stat : ${config.args}"]
     [(${gen_arch_upper})]_REG_ARG[(${stat.index})] = [(${arg.index})],

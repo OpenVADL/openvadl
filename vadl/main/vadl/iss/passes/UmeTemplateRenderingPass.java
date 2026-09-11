@@ -82,6 +82,10 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
                 List.of(new Abi.RegisterAlias("sp"))
             )
             .getFirst().value()),
+        Map.entry("raReg", abi.returnAddress().addr()),
+        Map.entry("tpReg", abi.threadPointer()
+            .map(Abi.AbiRegister::addr)
+            .orElse(-1)),
         Map.entry("args", ume.args().stream()
             .map(ref -> Map.of(
                 "index", ref.singleIndex(),
