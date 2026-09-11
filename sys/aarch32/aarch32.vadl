@@ -1034,7 +1034,7 @@ instruction set architecture AArch32v6 = {
   model ReadSpecialRegInstr (c : CondRec, i : InstrRec) : IsaDefs = {
     [undefined when : rd = 15]
     instruction AsId ($i.id, $c.condId) : SpecialRegMovFormat =
-      R(rd) := (APSR_N, APSR_Z, APSR_C, APSR_V, APSR_Q, 0 as Bits<7>, APSR.GE, 0 as Bits<16>)
+      R(rd) := (APSR_N, APSR_Z, APSR_C, APSR_V, APSR_Q, APSR(26..0))
     encoding AsId ($i.id, $c.condId) = {cond = CondCode::$c.condId, op = 0b0001'000, a_s_psr = SysReg::$i.opcode, m_mask = 0b0'1111, op1 = 0b000'0000, rn = 0b0000}
     assembly AsId ($i.id, $c.condId) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', printSysReg(a_s_psr))
     }
