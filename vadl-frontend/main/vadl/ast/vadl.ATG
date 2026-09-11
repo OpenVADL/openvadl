@@ -1210,7 +1210,6 @@ The #miaDefinition production rule lists all micro architecture language element
 \listing{lst_mia_definitions, Example micro architecture definition}
 ~~~{.vadl}
 micro architecture FiveStage implements RV32IM = {
-
   logic [forwarding] bypass
 
   stage FETCH -> ( fr : FetchResult ) = {
