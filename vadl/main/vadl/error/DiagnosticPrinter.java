@@ -35,6 +35,7 @@ public class DiagnosticPrinter {
 
   public boolean forceRelativePaths = false;
   public boolean forceUnixPaths = false;
+  public boolean forceUnicodeOutput = false;
   private final PrinterColors colors;
   private final Map<Path, List<String>> fileLineCache = new HashMap<>();
   VirtualFileSystem fileSystem;
@@ -145,14 +146,17 @@ public class DiagnosticPrinter {
    */
   private void printMultiSourcePreview(Diagnostic diagnostic, StringBuilder builder) {
     // Print preview header
-    builder.append("     %s╭── %s\n".formatted(colors.cyan(),
+    var topBorder = unicodeOrFallback("╭──", "+--");
+    var leftBorder = unicodeOrFallback("│", "|");
+
+    builder.append("     %s%s %s\n".formatted(colors.cyan(), topBorder,
         diagnostic.multiLocation.primaryLocation().location().toIDEString(
             fileSystem,
             forceRelativePaths
                 ? SourceLocation.IDEDetectionMode.RELATIVE
                 : SourceLocation.IDEDetectionMode.AUTO,
             forceUnixPaths)));
-    builder.append("     │\n");
+    builder.append("     %s\n".formatted(leftBorder));
 
     var allSnippets = sortLabels(diagnostic.multiLocation.primaryLocation(),
         diagnostic.multiLocation.secondaryLocations());
@@ -172,7 +176,7 @@ public class DiagnosticPrinter {
     }
 
     printMacroBackTrace(diagnostic, builder);
-    builder.append("\n     %s│%s\n".formatted(colors.cyan(), colors.reset()));
+    builder.append("\n     %s%s%s\n".formatted(colors.cyan(), leftBorder, colors.reset()));
   }
 
   /**
@@ -183,10 +187,14 @@ public class DiagnosticPrinter {
    */
   private String sourceDelimiter(SourceLocation previous,
                                  SourceLocation next) {
+    var topBorder = unicodeOrFallback("╭─", "+-");
+    var leftBorder = unicodeOrFallback("│", "|");
+    var dots = unicodeOrFallback("⋮", ":");
+
     if (!Objects.equals(previous.path(), next.path())) {
       // This is so unusual that we print the location everytime
-      var message = "     %s⋮\n".formatted(colors.cyan());
-      message += "     ╭─ %s\n".formatted(
+      var message = "     %s%s\n".formatted(colors.cyan(), dots);
+      message += "     %s %s\n".formatted(topBorder,
           next.toIDEString(
               fileSystem,
               forceRelativePaths
@@ -195,9 +203,9 @@ public class DiagnosticPrinter {
               forceUnixPaths));
       return message;
     } else if (next.begin().line() == previous.end().line() + 1) {
-      return "     %s│\n".formatted(colors.cyan());
+      return "     %s%s\n".formatted(colors.cyan(), leftBorder);
     } else {
-      return "     %s⋮\n".formatted(colors.cyan());
+      return "     %s%s\n".formatted(colors.cyan(), dots);
     }
   }
 
@@ -218,7 +226,12 @@ public class DiagnosticPrinter {
       default -> "From these %d model invocations (outermost call first):".formatted(
           diagnostic.macroTraces.size());
     };
-    builder.append("\n     %s│\n     ├─%s %s\n".formatted(colors.cyan(), colors.reset(), title));
+
+    var leftBorder = unicodeOrFallback("│", "|");
+    var leftBorderBranching = unicodeOrFallback("├─", "+-");
+    builder.append(
+        "\n     %s%s\n     %s%s %s\n".formatted(colors.cyan(), leftBorder, leftBorderBranching,
+            colors.reset(), title));
 
     var blockBuilder = new StringJoiner("\n");
     for (int i = 0; i < Math.min(tracesCount, MAX_PRINTED_BACKTRACES); i++) {
@@ -250,7 +263,7 @@ public class DiagnosticPrinter {
 
     builder.append(
         indentBy(blockBuilder.toString(),
-            "     %s│%s    ".formatted(colors.cyan(), colors.reset())));
+            "     %s%s%s    ".formatted(colors.cyan(), leftBorder, colors.reset())));
   }
 
   /**
@@ -263,6 +276,8 @@ public class DiagnosticPrinter {
   private void printSourcePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
                                   Diagnostic.Level level,
                                   StringBuilder builder) {
+    var leftBorder = unicodeOrFallback("│", "|");
+
     List<String> lines;
     try {
       if (location.location().path() == null) {
@@ -277,7 +292,7 @@ public class DiagnosticPrinter {
                   location.location().path());
       }
 
-      var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
+      var prefix = "     %s%s%s    ".formatted(colors.cyan(), leftBorder, colors.reset());
       var text = "%s%s%s\n%s".formatted(colors.yellow(), previewError, colors.reset(),
           messageBlock(location));
       builder.append(indentBy(text, prefix));
@@ -286,7 +301,7 @@ public class DiagnosticPrinter {
 
     if (location.location().equals(SourceLocation.INVALID_SOURCE_LOCATION)) {
       var previewError = "No Preview available: The location was lost.";
-      var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
+      var prefix = "     %s%s%s    ".formatted(colors.cyan(), leftBorder, colors.reset());
       var text = "%s%s%s\n%s".formatted(colors.yellow(), previewError, colors.reset(),
           messageBlock(location));
       builder.append(indentBy(text, prefix));
@@ -302,7 +317,7 @@ public class DiagnosticPrinter {
       var previewError =
           "No Preview available: The location was corrupted "
               + "(line or column are out of the range) %s".formatted(location.location());
-      var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
+      var prefix = "     %s%s%s    ".formatted(colors.cyan(), leftBorder, colors.reset());
       var text = "%s%s%s\n%s".formatted(colors.yellow(), previewError, colors.reset(),
           messageBlock(location));
       builder.append(indentBy(text, prefix));
@@ -329,6 +344,8 @@ public class DiagnosticPrinter {
    */
   private void printMultiLinePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
                                      List<String> lines, StringBuilder builder) {
+    var leftBorder = unicodeOrFallback("│", "|");
+    var dots = unicodeOrFallback("⋮", ":");
 
     var numLines = location.location().end().line() - location.location().begin().line() + 1;
 
@@ -339,7 +356,8 @@ public class DiagnosticPrinter {
         // Print the line number, guard and actual line
         builder.append("%s%4d".formatted(colors.lightgrey(), i));
         builder.append(
-            " %s│%s>%s ".formatted(colors.cyan(), isPrimary ? colors.red() : colors.lightblue(),
+            " %s%s%s>%s ".formatted(colors.cyan(), leftBorder,
+                isPrimary ? colors.red() : colors.lightblue(),
                 colors.reset()));
         builder.append(lines.get(i - 1));
         builder.append("\n");
@@ -349,24 +367,27 @@ public class DiagnosticPrinter {
            i++) {
         // Print the line number, guard and actual line
         builder.append("%s%4d".formatted(colors.lightgrey(), i));
-        builder.append(" %s│%s>%s ".formatted(colors.cyan(), colors.red(), colors.reset()));
+        builder.append(
+            " %s%s%s>%s ".formatted(colors.cyan(), leftBorder, colors.red(), colors.reset()));
         builder.append(lines.get(i - 1));
         builder.append("\n");
       }
       builder.append(
-          "     %s⋮%s  %d lines omitted here...%s\n".formatted(colors.cyan(), colors.lightgrey(),
+          "     %s%s%s  %d lines omitted here...%s\n".formatted(colors.cyan(), dots,
+              colors.lightgrey(),
               numLines - 6, colors.reset()));
       for (int i = location.location().end().line() - 2; i <= location.location().end().line();
            i++) {
         // Print the line number, guard and actual line
         builder.append("%s%4d".formatted(colors.lightgrey(), i));
-        builder.append(" %s│%s>%s ".formatted(colors.cyan(), colors.red(), colors.reset()));
+        builder.append(
+            " %s%s%s>%s ".formatted(colors.cyan(), leftBorder, colors.red(), colors.reset()));
         builder.append(lines.get(i - 1));
         builder.append("\n");
       }
     }
 
-    var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
+    var prefix = "     %s%s%s    ".formatted(colors.cyan(), leftBorder, colors.reset());
     builder.append(indentBy(messageBlock(location), prefix));
   }
 
@@ -381,10 +402,11 @@ public class DiagnosticPrinter {
   private void printSingleLinePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
                                       List<String> lines, StringBuilder builder,
                                       String markerColor) {
+    var leftBorder = unicodeOrFallback("│", "|");
 
     // Print the line number, guard and actual line
     builder.append("%s%4d".formatted(colors.lightgrey(), location.location().begin().line()));
-    builder.append(" %s│%s ".formatted(colors.cyan(), colors.reset()));
+    builder.append(" %s%s%s ".formatted(colors.cyan(), leftBorder, colors.reset()));
     builder.append(lines.get(location.location().begin().line() - 1));
     builder.append("\n");
 
@@ -395,7 +417,7 @@ public class DiagnosticPrinter {
         ? markerColor + "^".repeat(highlightLength) + colors.reset()
         : colors.lightblue() + "-".repeat(highlightLength) + colors.reset();
     var nonHighlightPadding = " ".repeat(highlightLength);
-    var padding = "     %s│%s ".formatted(colors.cyan(), colors.reset())
+    var padding = "     %s%s%s ".formatted(colors.cyan(), leftBorder, colors.reset())
         + " ".repeat(location.location().begin().column() - 1);
 
     // Generate the complete block, with highlighting and messages.
@@ -532,6 +554,24 @@ public class DiagnosticPrinter {
     return all;
   }
 
+  /**
+   * On some systems (*cough cough Windows) there still are some problems printing unicode
+   * characters in 2026 (yes I was also surprised by that, but than again it is only the standard
+   * since 1998 on the web, so why rush to support it).
+   *
+   *
+   * @param unicode string that you would like to print.
+   * @param fallback that actually will be printed by legacy implementations.
+   * @return the correct string for the system.
+   */
+  private String unicodeOrFallback(String unicode, String fallback) {
+    if (forceUnicodeOutput) {
+      return unicode;
+    }
+
+    var encoder = System.out.charset().newEncoder();
+    return encoder.canEncode(unicode) ? unicode : fallback;
+  }
 
   @SuppressWarnings("UnusedMethod")
   private interface PrinterColors {
