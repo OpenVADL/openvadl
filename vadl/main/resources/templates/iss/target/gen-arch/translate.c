@@ -150,6 +150,14 @@ static void gen_update_pc_diff(DisasContext *ctx, target_long diff) {
     gen_update_pc(ctx, dest);
 }
 
+static void gen_raise_ume_syscall(DisasContext *ctx) {
+    gen_update_pc(ctx, ctx->pc_curr);
+
+    gen_helper_raise_ume_syscall(tcg_env);
+
+    ctx->base.is_jmp = DISAS_NORETURN;
+}
+
 
 /*
  * Jumps to the given target_pc and sets is_jmp to NORETURN. n indicates the jump slot
@@ -285,7 +293,7 @@ static void translate(DisasContext *ctx)
         return;
     }
 
-    error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
+    error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04 , insn: 0x%04x\n", ctx->base.pc_next, insn);
 
     gen_update_pc_diff(ctx, 0);
     gen_helper_unsupported(tcg_env);
