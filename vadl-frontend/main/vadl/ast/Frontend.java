@@ -17,6 +17,8 @@
 package vadl.ast;
 
 import java.nio.file.Path;
+import javax.annotation.Nullable;
+import vadl.error.DiagnosticList;
 import vadl.utils.Pair;
 import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
@@ -51,7 +53,7 @@ public class Frontend {
   }
 
   /**
-   * Compile a program from a provided path to an valid AST.
+   * Compile a program from a provided path to a valid AST.
    * This entails all passes (but not including) until Viam lowering.
    *
    * @param path to compile.
@@ -66,6 +68,86 @@ public class Frontend {
     TypeChecker.verify(ast);
     return ast;
   }
+
+  /**
+   * Result of {@link #compileToAstBestEffort(Path, VirtualFileSystem)}.
+   *
+   * @param ast If not null, a usable AST
+   * @param completedPass Up to and including this pass have been applied to the given {@code ast}
+   * @param diagnostics If not null, diagnostics that have been encountered (these are usually the
+   *                    reason that not all passes have been applied)
+   */
+  public record BestEffortCompilation(@Nullable Ast ast, AstPass completedPass,
+                                      @Nullable DiagnosticList diagnostics) {}
+
+  /**
+   * Part of {@link BestEffortCompilation}.
+   */
+  public enum AstPass {
+    NONE(0),
+    PARSED(1),
+    MODELS_REMOVED(2),
+    UNGROUPED(3),
+    PARTIALLY_TYPE_CHECKED(4),
+    TYPE_CHECKED(5);
+
+    private final int ordinal;
+
+    AstPass(int ordinal) {
+      this.ordinal = ordinal;
+    }
+
+    /**
+     * Returns true if applying {@code this} pass means that {@code desiredPass} must have been
+     * applied as well.
+     */
+    public boolean includes(AstPass desiredPass) {
+      return desiredPass.ordinal <= this.ordinal;
+    }
+  }
+
+  /**
+   * Compile a program from a provided path to a valid AST, applying as many passes as possible
+   * (Best effort), up to but not including Viam lowering.
+   *
+   * @param path to compile.
+   * @param fileSystem to load the files from.
+   * @return best effort result, which may contain a usable AST (up to a particular pass) and/or
+   *              diagnostics
+   * @throws InterruptedException MAY be thrown if interrupted via {@code Thread.interrupt()}.
+   */
+  public static BestEffortCompilation compileToAstBestEffort(
+      Path path, VirtualFileSystem fileSystem) throws InterruptedException {
+
+    Ast ast;
+    try {
+      ast = VadlParser.parse(path, fileSystem);
+    } catch (DiagnosticList diagnostics) {
+      return new BestEffortCompilation(null, AstPass.NONE, diagnostics);
+    }
+    throwIfInterrupted();
+
+    // The next two passes don't throw diagnostics
+    ModelRemover.removeModels(ast);
+    throwIfInterrupted();
+    Ungrouper.ungroup(ast);
+    throwIfInterrupted();
+
+    try {
+      TypeChecker.verify(ast);
+    } catch (DiagnosticList diagnostics) {
+      return new BestEffortCompilation(ast, AstPass.PARTIALLY_TYPE_CHECKED, diagnostics);
+    }
+
+    return new BestEffortCompilation(ast, AstPass.TYPE_CHECKED, null);
+  }
+
+  private static void throwIfInterrupted() throws InterruptedException {
+    if (Thread.interrupted()) {
+      throw new InterruptedException();
+    }
+  }
+
 
   /**
    * Compile a single program to VIAM.
