@@ -18,8 +18,12 @@ package vadl.viam;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
 
 /**
  * A Micro architecture (MiA) definition of a VADL specification.
@@ -40,6 +44,11 @@ public class MicroArchitecture extends Definition {
   private final List<Function> functions;
   private final List<Operation> operations;
 
+  // Dependencies between MiA elements (stages and logic).
+  private final List<MiaDependency> allDependencies;
+  private final HashMap<Definition, List<MiaDependency>> dependenciesBySource;
+  private final HashMap<Definition, List<MiaDependency>> dependenciesByDestination;
+
   /**
    * Create a micro architecture definition.
    *
@@ -53,13 +62,19 @@ public class MicroArchitecture extends Definition {
    * @param functions                  list of functions
    * @param operations                 list of operations
    */
-  public MicroArchitecture(Identifier identifier,
-                           InstructionSetArchitecture instructionSetArchitecture,
-                           List<Stage> stages,
-                           List<Logic> logic, List<Signal> signals, List<RegisterTensor> registers,
-                           List<Memory> memories, List<Function> functions,
-                           List<Operation> operations) {
+  public MicroArchitecture(
+      Identifier identifier,
+      InstructionSetArchitecture instructionSetArchitecture,
+      List<Stage> stages,
+      List<Logic> logic,
+      List<Signal> signals,
+      List<RegisterTensor> registers,
+      List<Memory> memories,
+      List<Function> functions,
+      List<Operation> operations
+  ) {
     super(identifier);
+
     this.instructionSetArchitecture = instructionSetArchitecture;
     this.stages = stages;
     this.logic = logic;
@@ -68,17 +83,106 @@ public class MicroArchitecture extends Definition {
     this.memories = memories;
     this.functions = functions;
     this.operations = operations;
+    this.allDependencies = new ArrayList<>();
+    this.dependenciesBySource = new HashMap<>();
+    this.dependenciesByDestination = new HashMap<>();
 
     for (Stage stage : stages) {
       stage.setMia(this);
     }
+
     for (Logic l : logic) {
       l.setMia(this);
+    }
+
+    // Find all dependencies from stages on stage outputs. This is done by
+    // inspecting each stage's behavior for `ReadStageOutputNode`s and
+    // following them.
+    for (var stage : stages) {
+      stage
+          .behavior()
+          .getNodes(ReadStageOutputNode.class)
+          .map(ReadStageOutputNode::stageOutput)
+          .filter(Objects::nonNull)
+          .distinct()
+          .forEach(read -> allDependencies.add(new MiaDependency.StageToStageOutputDependency(
+              read,
+              stage
+          )));
+    }
+
+    // Construct indices over the dependencies, both by source and by
+    // destination. This facilitates quick access for traversals.
+    for (var dependency : allDependencies) {
+      dependenciesBySource.compute(dependency.source(), (unused, v) -> {
+        if (v == null) {
+          v = new ArrayList<>();
+        }
+
+        v.add(dependency);
+        return v;
+      });
+
+      dependenciesByDestination.compute(dependency.destination(), (unused, v) -> {
+        if (v == null) {
+          v = new ArrayList<>();
+        }
+
+        v.add(dependency);
+        return v;
+      });
     }
   }
 
   public InstructionSetArchitecture isa() {
     return instructionSetArchitecture;
+  }
+
+  /**
+   * A list containing all the {@link MiaDependency MiaDependencies} in the
+   * MiA.
+   *
+   * @return A list of all {@code MiaDependencies}.
+   *
+   * @see #dependenciesBySource()
+   * @see #dependenciesByDestination()
+   */
+  public List<MiaDependency> allDependencies() {
+    return allDependencies;
+  }
+
+  /**
+   * A map from {@link Definition Definitions} to lists of
+   * {@link MiaDependency MiaDependencies}. Each list contains all the
+   * dependencies for which the key {@link Definition} is found as the
+   * {@link MiaDependency#source() source}.
+   *
+   * @return A map from {@code Definitions} to lists of {@code MiaDependencies}
+   *         containing them in their {@link MiaDependency#source() source}
+   *         field.
+   *
+   * @see #allDependencies()
+   * @see #dependenciesBySource()
+   */
+  public Map<Definition, List<MiaDependency>> dependenciesBySource() {
+    return dependenciesBySource;
+  }
+
+  /**
+   * A map from {@link Definition Definitions} to lists of
+   * {@link MiaDependency MiaDependencies}. Each list contains all the
+   * dependencies for which the key {@link Definition} is found as the
+   * {@link MiaDependency#destination() destination}.
+   *
+   * @return A map from {@code Definitions} to lists of {@code MiaDependencies}
+   *         containing them in their
+   *         {@link MiaDependency#destination() destination} field.
+   *
+   * @see #allDependencies()
+   * @see #dependenciesBySource()
+   */
+  public Map<Definition, List<MiaDependency>> dependenciesByDestination() {
+    return dependenciesByDestination;
   }
 
   public List<Stage> stages() {
