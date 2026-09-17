@@ -3253,7 +3253,8 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     var logicTypeMapping = Map.of(
         "branch prediction", LogicDefinition.LogicType.BranchPrediction,
         "control", LogicDefinition.LogicType.Control,
-        "forwarding", LogicDefinition.LogicType.Forwarding
+        "forwarding", LogicDefinition.LogicType.Forwarding,
+        "reservation station", LogicDefinition.LogicType.ReservationStation
     );
     if (!logicTypeMapping.containsKey(logicTypeString)) {
       addErrorAndStopChecking(

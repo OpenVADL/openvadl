@@ -53,12 +53,15 @@ import vadl.ast.nodes.FormatField;
 import vadl.ast.nodes.GroupDefinition;
 import vadl.ast.nodes.Identifier;
 import vadl.ast.nodes.InstructionDefinition;
+import vadl.ast.nodes.LogicDefinition;
 import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.ProcessorDefinition;
 import vadl.ast.nodes.RegisterDefinition;
 import vadl.ast.nodes.RelocationDefinition;
+import vadl.ast.nodes.StageDefinition;
+import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.StringLiteral;
 import vadl.ast.nodes.TypedNode;
 import vadl.error.DeferredDiagnosticStore;
@@ -70,6 +73,7 @@ import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.BitsType;
 import vadl.types.FloatEncoding;
+import vadl.types.MicroArchitectureType;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.utils.functionInterfaces.QuadConsumer;
@@ -85,11 +89,14 @@ import vadl.viam.FloatExceptionFlag;
 import vadl.viam.Format;
 import vadl.viam.Group;
 import vadl.viam.Instruction;
+import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.MemoryRegion;
+import vadl.viam.Operation;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
+import vadl.viam.StageOutput;
 import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
@@ -497,6 +504,111 @@ public class AnnotationTable {
     annotationOn(RelocationDefinition.class, "paired", EnableAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           ((Relocation) def).setIsPaired(true);
+        }).build();
+
+    annotationOn(LogicDefinition.class, "size", ConstantAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          def.ensure(
+              def instanceof Logic.ReservationStation,
+              "`size` annotation is not supported on `%s` logic elements.",
+              def.getClass().getSimpleName()
+          );
+
+          annotation.verifyGreaterThan(BigInteger.ZERO);
+          annotation.verifyLessThanEqual(BigInteger.valueOf(Integer.MAX_VALUE));
+
+          final var size = annotation.constant.value();
+
+          ((Logic.ReservationStation) def).setSize(size.intValue());
+        }).build();
+
+    annotationOn(
+        LogicDefinition.class,
+        "filter",
+        () -> IdentifersAnnotation.single(OperationDefinition.class)
+    ).applyViam((def, annotation, lowering) -> {
+      def.ensure(
+          def instanceof Logic.ReservationStation,
+          "`filter` annotation is not supported on `%s` logic elements.",
+          def.getClass().getSimpleName()
+      );
+
+      final var operation = (Operation) lowering
+          .fetch((Definition) requireNonNull(annotation.identifiers.getFirst().target()))
+          .get();
+
+      ((Logic.ReservationStation) def).setFilter(operation);
+    }).build();
+
+    annotationOn(LogicDefinition.class, "source", ExprAnnotation::new)
+        .check((def, annotation, tc) -> {
+          annotation.verifyExprType(tc, MicroArchitectureType.instruction());
+
+          if (!(annotation.expr instanceof CallIndexExpr expr)
+              || !(expr.target instanceof Identifier stageId)
+              || expr.subCalls.size() != 1
+              || !(expr.subCalls.getFirst().id instanceof Identifier outputId)
+          ) {
+            throw error("Invalid source Annotation Value", annotation.expr)
+                .locationDescription(
+                    annotation.expr,
+                    "Value of the `source` definition must be of the form `Stage.output`."
+                ).build();
+          } else if (!(stageId.target instanceof StageDefinition stage)) {
+            throw error("Invalid source Annotation Value", annotation.expr)
+                .locationDescription(
+                    stageId,
+                    "First element of the value of the `source` annotation was `%s` must a `%s`.",
+                    requireNonNull(stageId.target).nodeName(),
+                    Node.nodeNameFor(StageDefinition.class)
+                ).locationDescription(
+                    stageId.target,
+                    "`%s` defined here.",
+                    stageId.name
+                ).build();
+          } else {
+            boolean referencesOutput = false;
+
+            for (var output : stage.outputs) {
+              if (output.identifier.equals(outputId)) {
+                referencesOutput = true;
+                break;
+              }
+            }
+
+            if (!referencesOutput) {
+              throw error("Invalid source Annotation Value", annotation.expr)
+                  .locationDescription(
+                      annotation.expr,
+                      "Value of the `source` definition must be of the form `Stage.output`."
+                  ).build();
+            }
+          }
+        }).applyViam((def, annotation, lowering) -> {
+          def.ensure(
+              def instanceof Logic.ReservationStation,
+              "`source` annotation is not supported on `%s` logic elements.",
+              def.getClass().getSimpleName()
+          );
+
+          final var expr = (CallIndexExpr) annotation.expr;
+
+          final var stage = requireNonNull((StageDefinition) ((Identifier) expr.target).target);
+
+          final var outputId = expr.subCalls.getFirst().id;
+
+          StageOutputDefinition stageOutput = null;
+
+          for (var output : stage.outputs) {
+            if (output.identifier.equals(outputId)) {
+              stageOutput = output;
+              break;
+            }
+          }
+
+          final var viamOutput = (StageOutput) lowering.fetch(requireNonNull(stageOutput)).get();
+
+          ((Logic.ReservationStation) def).setSource(viamOutput);
         }).build();
   }
 
@@ -1396,6 +1508,17 @@ class ConstantAnnotation extends Annotation {
       throw error("Invalid annotation expression", expr)
           .locationDescription(expr,
               "Constant expression must greater or equal to %s, but was %s",
+              value.toString(), constant.value().toString())
+          .build();
+    }
+  }
+
+  void verifyLessThanEqual(BigInteger value) {
+    if (constant.value().compareTo(value) > 0) {
+      var expr = definition.values.getFirst();
+      throw error("Invalid annotation expression", expr)
+          .locationDescription(expr,
+              "Constant expression must less than or equal to %s, but was %s",
               value.toString(), constant.value().toString())
           .build();
     }
