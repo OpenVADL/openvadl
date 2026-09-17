@@ -52,7 +52,6 @@ import vadl.ast.nodes.EnumerationDefinition;
 import vadl.ast.nodes.ExistsInExpr;
 import vadl.ast.nodes.ExistsInThenExpr;
 import vadl.ast.nodes.Expr;
-import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -98,9 +97,9 @@ import vadl.utils.WithLocation;
 @SuppressWarnings("MissingJavadocType")
 public class SymbolTable {
 
-  // Collecting symbols is expensive and providing many suggestions makes levenshtein slower.
+  // Collecting names is expensive and providing many suggestions makes levenshtein slower.
   // FIXME: Increase this limit if once the levenshtein algorightm is faster
-  private static final int MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS = 100;
+  private static final int MAX_COLLECTED_NAME_SUGGESTIONS = 100;
 
   /// Collecting names across the AST is quite expensive so to improve this
   /// we limit the amount of diagnostics that get that expensive treatment.
@@ -149,7 +148,7 @@ public class SymbolTable {
   }
 
   /**
-   * Imports all the symbols from the module specified into the current symbol-tabel.
+   * Imports all the symbol from the module specified into the current symbol-tabel.
    *
    * @param moduleAst       of the module from which you import.
    * @param importedSymbols to be imported.
@@ -468,16 +467,16 @@ public class SymbolTable {
   /**
    * Internal use only.
    * Collects all symbol names in scope that satisfy the given predicate.
-   * There is a hard limit described by {@link #MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS}.
+   * There is a hard limit described by {@link #MAX_COLLECTED_NAME_SUGGESTIONS}.
    */
   private void collectAllSymbolNamesWhere(Collection<String> collector, Predicate<Node> pred) {
     symbols.entrySet().stream()
         .filter(entry -> entry.getValue() != null && pred.test(entry.getValue()))
         .map(Map.Entry::getKey)
-        .limit(Math.max(0, MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS - collector.size()))
+        .limit(Math.max(0, MAX_COLLECTED_NAME_SUGGESTIONS - collector.size()))
         .forEach(collector::add);
 
-    if (collector.size() >= MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS) {
+    if (collector.size() >= MAX_COLLECTED_NAME_SUGGESTIONS) {
       return;
     }
 
@@ -489,7 +488,7 @@ public class SymbolTable {
   /**
    * Internal use only.
    * Collects all symbol names in scope that are instances of the given classes.
-   * There is a hard limit described by {@link #MAX_COLLECTED_SYMBOL_NAME_SUGGESTIONS}.
+   * There is a hard limit described by {@link #MAX_COLLECTED_NAME_SUGGESTIONS}.
    */
   private void collectAllSymbolNamesOf(Collection<String> collector,
                                        Class<? extends Node>... classes) {
@@ -674,16 +673,16 @@ public class SymbolTable {
   }
 
   /**
-   * In VADL symbol resolution has to be done in two passes, collection and resolution.
+   * In VADL name resolution has to be done in two passes, collection and resolution.
    * This method makes it easy to run both at once.
    *
-   * @param ast for which all symbols should be resolved.
+   * @param ast for which all names should be resolved.
    * @return a list with diagnostics of violations.
    */
-  static List<Diagnostic> collectAndResolveSymbols(Ast ast) {
-    return ast.timingRecorder.withPassTiming("Symbol Resolution", () -> {
-      SymbolCollector.collectSymbols(ast);
-      return SymbolResolver.resolveSymbols(ast);
+  static List<Diagnostic> collectAndResolveNames(Ast ast) {
+    return ast.timingRecorder.withPassTiming("Name Resolution", () -> {
+      NameCollector.collectNames(ast);
+      return NameResolver.resolveNames(ast);
     });
   }
 
@@ -691,27 +690,28 @@ public class SymbolTable {
    * Distributes "SymbolTable" instances across the nodes in the AST.
    * For "let" expressions and statements, symbols for the declared variables are created here.
    * For "instruction" and "assembly" definitions, only an empty child table is created,
-   * with a further pass {@link SymbolResolver} actually gathering the fields declared
+   * with a further pass {@link NameResolver} actually gathering the fields declared
    * in the linked "format" definition.
    * Before: Ast is fully Macro-expanded
    * After: Ast is fully Macro-expanded and all relevant nodes have "symbolTable" set.
    *
-   * @see SymbolResolver
+   * @see NameResolver
    */
-  static class SymbolCollector extends RecursiveAstVisitor {
+  static class NameCollector extends RecursiveAstVisitor {
     private Deque<String> viamPath = new ArrayDeque<>();
     private Deque<SymbolTable> symbolTables = new ArrayDeque<>();
 
-    private static void collectSymbols(Ast ast) {
-      var collector = new SymbolCollector();
+    private static void collectNames(Ast ast) {
+      var collector = new NameCollector();
       ast.definitions.forEach(
           definition -> collector.withSymbols(ast.rootSymbolTable(),
               () -> definition.accept(collector))
       );
     }
 
-    private SymbolCollector() {
+    private NameCollector() {
     }
+
 
     private SymbolTable currentSymbols() {
       return symbolTables.peekLast();
@@ -1093,17 +1093,17 @@ public class SymbolTable {
    * Before: AST is fully Macro-expanded and all relevant nodes have "symbolTable" set.
    * After: AST nodes have their resolved node references set.
    */
-  static class SymbolResolver extends RecursiveAstVisitor {
+  static class NameResolver extends RecursiveAstVisitor {
 
-    public static List<Diagnostic> resolveSymbols(Ast ast) {
-      var resolver = new SymbolResolver();
+    public static List<Diagnostic> resolveNames(Ast ast) {
+      var resolver = new NameResolver();
       for (Definition definition : ast.definitions) {
         definition.accept(resolver);
       }
       return requireNonNull(ast.rootSymbolTable).errors;
     }
 
-    private SymbolResolver() {
+    private NameResolver() {
     }
 
     @Override

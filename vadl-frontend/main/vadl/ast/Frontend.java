@@ -29,7 +29,7 @@ import vadl.viam.Specification;
  *    - Scanning (aka tokenization)
  *    - Parsing
  *    - Macro Expansion
- *    - Symbol resolution
+ *    - Name resolution
  * - Model removal
  * - Ungrouping
  * - Type checking

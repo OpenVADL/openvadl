@@ -122,7 +122,7 @@ public class VadlParser {
 
     var ast = parser.ast;
 
-    errors.addAll(SymbolTable.collectAndResolveSymbols(ast));
+    errors.addAll(SymbolTable.collectAndResolveNames(ast));
 
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors.stream().distinct().toList());
@@ -199,7 +199,7 @@ public class VadlParser {
 
     var ast = parser.ast;
 
-    var symbolErrors = SymbolTable.collectAndResolveSymbols(ast);
+    var symbolErrors = SymbolTable.collectAndResolveNames(ast);
     if (errors.isEmpty()) {
       errors = symbolErrors;
     }
