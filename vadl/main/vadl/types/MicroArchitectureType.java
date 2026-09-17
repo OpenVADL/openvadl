@@ -50,4 +50,18 @@ public abstract class MicroArchitectureType extends Type {
     }
     return instruction;
   }
+
+  private static @Nullable ReservationStationType reservationStation;
+
+  /**
+   * Get ReservationStationType.
+   *
+   * @return ReservationStationType instance
+   */
+  public static ReservationStationType reservationStation() {
+    if (reservationStation == null) {
+      reservationStation = new ReservationStationType();
+    }
+    return reservationStation;
+  }
 }

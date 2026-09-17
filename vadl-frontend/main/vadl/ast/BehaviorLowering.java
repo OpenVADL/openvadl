@@ -62,7 +62,6 @@ import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ExprVisitor;
-import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -81,6 +80,7 @@ import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
+import vadl.ast.nodes.LogicDefinition;
 import vadl.ast.nodes.MacroInstanceExpr;
 import vadl.ast.nodes.MacroInstanceStatement;
 import vadl.ast.nodes.MacroMatchExpr;
@@ -133,7 +133,6 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Definition;
 import vadl.viam.ExceptionDef;
-import vadl.viam.FloatFormat;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
@@ -176,6 +175,7 @@ import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.LogicRef;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
@@ -1073,6 +1073,24 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return labelNode;
     }
 
+    if (computedTarget instanceof LogicDefinition logic) {
+      final var type = switch (requireNonNull(logic.logicType)) {
+        case Forwarding -> null;
+        case BranchPrediction -> null;
+        case Control -> null;
+        case ReservationStation -> MicroArchitectureType.reservationStation();
+      };
+
+      // If the logic has no associated type, it cannot (yet) be used in a
+      // behavior, and should result in an error. To achieve that, we simply
+      // let it pass on so that it can fail with the default diagnostic.
+      if (type != null) {
+        final var viamLogic = (Logic) viamLowering.fetch(logic).get();
+
+        return new LogicRef(type, viamLogic);
+      }
+    }
+
     // Builtin Call
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
@@ -1403,6 +1421,30 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedBuiltIn != null) {
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, args, typeBeforeSlice);
+      } else if (BuiltInTable.MIA_BUILTINS.contains(expr.computedBuiltIn)) {
+        final var builtinCall = new MiaBuiltInCall(
+            expr.computedBuiltIn,
+            args,
+            typeBeforeSlice,
+            List.of(),
+            List.of()
+        );
+
+        args.forEach(arg -> {
+          final ExpressionNode directArg;
+
+          if (arg instanceof LetNode let) {
+            directArg = let.expression();
+          } else {
+            directArg = arg;
+          }
+
+          if (directArg instanceof LogicRef logic) {
+            builtinCall.add(logic.logic());
+          }
+        });
+
+        exprBeforeSlice = builtinCall;
       } else {
         // the symbolArgs are replaced by TypeLiterals whose .type is set to the type
         // they represent by the type checker

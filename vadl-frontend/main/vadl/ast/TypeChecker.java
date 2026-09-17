@@ -3493,6 +3493,13 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       return;
     }
 
+    if (origin instanceof LogicDefinition logic
+        && logic.logicType == LogicDefinition.LogicType.ReservationStation
+    ) {
+      expr.type = MicroArchitectureType.reservationStation();
+      return;
+    }
+
     if (origin != null) {
       // It's not a builtin but we don't handle it yet.
       // We might be here from a call expr and it might be necessary to handle the call for another
