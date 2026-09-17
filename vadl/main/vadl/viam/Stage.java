@@ -124,17 +124,6 @@ public class Stage extends Definition implements DefProp.WithBehavior {
         .toList();
   }
 
-  /**
-   * Get all stage output definitions used by this stage as inputs.
-   *
-   * @return list of stage outputs
-   */
-  public List<StageOutput> inputs() {
-    return behavior.getNodes(ReadStageOutputNode.class)
-        .map(ReadStageOutputNode::stageOutput)
-        .toList();
-  }
-
   public List<StageOutput> outputs() {
     return outputs;
   }
