@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -389,7 +388,7 @@ public class TypeChecker
       return;
     }
 
-    // NOTE: This could have been done in the symbol resolver
+    // NOTE: This could have been done in the name resolver
     // Disallow the same annotation multiple times, unless explicitly allowed
 
     final Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
@@ -3031,7 +3030,7 @@ public class TypeChecker
     var correspondingAsmType = AsmType.ASM_TYPES.get(definition.id.name);
     if (correspondingAsmType == null) {
       throw buildIllegalStateException(definition,
-          "Symbol resolution found asm type %s but the typechecker could not find it.".formatted(
+          "Name resolution found asm type %s but the typechecker could not find it.".formatted(
               definition.id.name));
     }
     return correspondingAsmType;
@@ -3058,7 +3057,7 @@ public class TypeChecker
 
   @Override
   public Void visit(AsmGrammarTypeDefinition definition) {
-    // symbol checking ensures that Identifier of AsmGrammarTypeDefinition is a valid AsmType
+    // name checking ensures that Identifier of AsmGrammarTypeDefinition is a valid AsmType
     return null;
   }
 
@@ -3497,7 +3496,7 @@ public class TypeChecker
 
     var fullName = isId.pathToString();
     throw new IllegalStateException(
-        "Cannot find symbol `%s` found at: %s (The symbol resolver should already have caught that)"
+        "Cannot find symbol `%s` found at: %s (The name resolver should already have caught that)"
             .formatted(fullName, expr.location().toConciseString()));
   }
 

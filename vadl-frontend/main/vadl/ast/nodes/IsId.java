@@ -37,7 +37,7 @@ public sealed interface IsId extends IsSymExpr
   public String pathToString();
 
   /**
-   * The target this id refers to. It is resolved during symbol resolving and
+   * The target this id refers to. It is resolved during name resolving and
    * is only valid for {@link Identifier} and {@link IdentifierPath}, which
    * are the only two {@link IsId} subtypes that survive the {@link MacroExpander}.
    */
