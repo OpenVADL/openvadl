@@ -44,7 +44,7 @@ public class AsmGrammarTests {
               ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -56,7 +56,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -69,7 +69,7 @@ public class AsmGrammarTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -82,7 +82,7 @@ public class AsmGrammarTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -95,7 +95,7 @@ public class AsmGrammarTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -108,7 +108,7 @@ public class AsmGrammarTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -120,7 +120,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -132,7 +132,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -145,7 +145,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -157,7 +157,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -169,7 +169,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -181,7 +181,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -193,7 +193,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -205,7 +205,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -220,7 +220,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -235,7 +235,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -247,7 +247,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -259,7 +259,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -271,7 +271,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -283,7 +283,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -295,7 +295,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -310,7 +310,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -322,7 +322,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -334,7 +334,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -349,7 +349,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -363,7 +363,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -376,7 +376,7 @@ public class AsmGrammarTests {
             C : STRING;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -391,7 +391,7 @@ public class AsmGrammarTests {
             B : "B" STRING;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -408,7 +408,7 @@ public class AsmGrammarTests {
             B : "B" STRING;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -420,7 +420,7 @@ public class AsmGrammarTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -435,7 +435,7 @@ public class AsmGrammarTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -449,7 +449,7 @@ public class AsmGrammarTests {
             ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -462,6 +462,6 @@ public class AsmGrammarTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 }

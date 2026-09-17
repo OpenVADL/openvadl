@@ -77,7 +77,7 @@ public class AsmLL1CheckerTest {
    * changes lead to an exception. That's why we test the {@code BASE} version first.
    */
   void hasToWork() {
-    var ast = Assertions.assertDoesNotThrow((() -> VadlParser.parse(base)));
+    var ast = Assertions.assertDoesNotThrow((() -> Frontend.parseToNameResolvedAst(base)));
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
@@ -90,7 +90,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -104,7 +104,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -118,7 +118,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -132,7 +132,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -146,7 +146,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -160,7 +160,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -205,7 +205,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(prog), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(prog), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -254,7 +254,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(prog), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(prog), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -268,7 +268,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -284,7 +284,7 @@ public class AsmLL1CheckerTest {
         """;
     var x = inputWrappedByValidAsmDescription(prog);
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(x), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(x), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -298,7 +298,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
@@ -311,7 +311,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
@@ -324,7 +324,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
@@ -337,7 +337,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
@@ -353,7 +353,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
@@ -366,7 +366,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -380,7 +380,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -394,7 +394,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -408,7 +408,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -422,7 +422,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -436,7 +436,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -452,7 +452,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -470,7 +470,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -484,7 +484,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -497,7 +497,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 
@@ -511,7 +511,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var diags = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diags.items.size());
   }
@@ -530,7 +530,7 @@ public class AsmLL1CheckerTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast));
   }
 }

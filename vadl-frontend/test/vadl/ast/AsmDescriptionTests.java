@@ -53,7 +53,7 @@ public class AsmDescriptionTests {
             }
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -76,7 +76,7 @@ public class AsmDescriptionTests {
             }
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -99,7 +99,7 @@ public class AsmDescriptionTests {
             }
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -112,7 +112,7 @@ public class AsmDescriptionTests {
             A : "B" ;
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(
+    Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(
         inputWrappedByValidAsmDescription(prog)));
   }
 
@@ -127,7 +127,7 @@ public class AsmDescriptionTests {
             A : "B" ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -142,7 +142,7 @@ public class AsmDescriptionTests {
             A : "B" ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -157,7 +157,7 @@ public class AsmDescriptionTests {
             A : "B" ;
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -170,7 +170,7 @@ public class AsmDescriptionTests {
             A : "B" ;
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(
+    Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(
         inputWrappedByValidAsmDescription(prog)));
   }
 
@@ -199,7 +199,7 @@ public class AsmDescriptionTests {
             }
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -212,7 +212,7 @@ public class AsmDescriptionTests {
             A : a = minus32<Integer> ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -225,7 +225,7 @@ public class AsmDescriptionTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)),
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)),
         "Invalid function definition");
   }
 
@@ -241,7 +241,7 @@ public class AsmDescriptionTests {
             A : a = minusOne32<Integer> ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -255,7 +255,7 @@ public class AsmDescriptionTests {
             A : a = minusOne<Integer> ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
@@ -272,7 +272,7 @@ public class AsmDescriptionTests {
             }
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -289,7 +289,7 @@ public class AsmDescriptionTests {
             }
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -303,7 +303,7 @@ public class AsmDescriptionTests {
            }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)),
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)),
         "Format definition not allowed in assembly description");
   }
 
@@ -317,7 +317,7 @@ public class AsmDescriptionTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)),
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)),
         "Model definition not allowed in assembly description");
   }
 
@@ -326,7 +326,7 @@ public class AsmDescriptionTests {
     var prog = """
           assembly description AD for ABI = {}
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -340,7 +340,7 @@ public class AsmDescriptionTests {
             }
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -380,6 +380,6 @@ public class AsmDescriptionTests {
             }
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(prog));
   }
 }

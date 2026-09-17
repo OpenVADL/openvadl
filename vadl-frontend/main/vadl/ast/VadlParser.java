@@ -17,7 +17,6 @@
 package vadl.ast;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,6 @@ import vadl.ast.nodes.Identifier;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.utils.DiskVirtualFileSystem;
-import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.SourceLocation;
 import vadl.utils.VirtualFileSystem;
 
@@ -38,7 +36,7 @@ public class VadlParser {
 
   /**
    * Parses the VADL source program at the specified path into an AST.
-   * The returned AST is already macro expanded and all symbols are resolved.
+   * The returned AST is already macro expanded and all names are resolved.
    * This method loads the file always from disk.
    *
    * @param path to load the file from.
@@ -50,7 +48,7 @@ public class VadlParser {
 
   /**
    * Parses the VADL source program at the specified path into an AST.
-   * The returned AST is already macro expanded and all symbols are resolved.
+   * The returned AST is already macro expanded.
    * The file will be loaded from the specified filesystem.
    *
    * @param path to load the file from.
@@ -63,21 +61,7 @@ public class VadlParser {
 
   /**
    * Parses the VADL source program at the specified path into an AST.
-   * The returned AST is already macro expanded and all symbols are resolved.
-   * This method is most useful for testing.
-   *
-   * @param program to parse.
-   * @throws DiagnosticList if the file cannot be loaded or not correctly parsed.
-   */
-  public static Ast parse(String program) {
-    var path = Paths.get("memory");
-    var fileSystem = new SingleFileVirtualFileSystem(program, path);
-    return parse(path, fileSystem);
-  }
-
-  /**
-   * Parses the VADL source program at the specified path into an AST.
-   * The returned AST is already macro expanded and all symbols are resolved.
+   * The returned AST is already macro expanded.
    * The file will be loaded from the specified filesystem.
    *
    * @param path to load the file from.
@@ -122,8 +106,6 @@ public class VadlParser {
 
     var ast = parser.ast;
 
-    errors.addAll(SymbolTable.collectAndResolveNames(ast));
-
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors.stream().distinct().toList());
     }
@@ -147,8 +129,7 @@ public class VadlParser {
 
   /**
    * Parses the VADL source program at the specified path into an AST that might not have succeeded
-   * parsing. Even if parsing fails all symbols tried to be resolved. The errors returned are from
-   * the first stage that fails to avoid follow-up errors.
+   * parsing.
    *
    * <p>USE WITH EXTREME CAUTION! There are no guarantees about the state in which the AST might
    * be in. This includes, but is not limited to, dummy statements that don't appear in the input
@@ -197,13 +178,7 @@ public class VadlParser {
       errors = parser.macroTable.errors.stream().distinct().toList();
     }
 
-    var ast = parser.ast;
-
-    var symbolErrors = SymbolTable.collectAndResolveNames(ast);
-    if (errors.isEmpty()) {
-      errors = symbolErrors;
-    }
-
-    return new PotentiallyBrokenAst(ast, !errors.isEmpty() ? new DiagnosticList(errors) : null);
+    return new PotentiallyBrokenAst(parser.ast,
+        !errors.isEmpty() ? new DiagnosticList(errors) : null);
   }
 }
