@@ -16,6 +16,8 @@
 
 package vadl.viam;
 
+import static vadl.error.Diagnostic.error;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,6 +50,7 @@ public class MicroArchitecture extends Definition {
   private final List<MiaDependency> allDependencies;
   private final HashMap<Definition, List<MiaDependency>> dependenciesBySource;
   private final HashMap<Definition, List<MiaDependency>> dependenciesByDestination;
+  private final Stage rootStage;
 
   /**
    * Create a micro architecture definition.
@@ -111,9 +114,18 @@ public class MicroArchitecture extends Definition {
           )));
     }
 
+    final var rootStages = new HashSet<>(stages);
+
     // Construct indices over the dependencies, both by source and by
     // destination. This facilitates quick access for traversals.
+    // At the same time we also find the root stage by excluding all stages
+    // that read from others. This should only leave one stage in a well-formed
+    // MiA.
     for (var dependency : allDependencies) {
+      if (dependency.destination() instanceof Stage destinationStage) {
+        rootStages.remove(destinationStage);
+      }
+
       dependenciesBySource.compute(dependency.source(), (unused, v) -> {
         if (v == null) {
           v = new ArrayList<>();
@@ -132,6 +144,23 @@ public class MicroArchitecture extends Definition {
         return v;
       });
     }
+
+    if (rootStages.isEmpty()) {
+      throw error("No Initial Stage Found", identifier)
+          .description("Could not find any stages that have no inputs.")
+          .build();
+    } else if (rootStages.size() > 1) {
+      final var err = error("Multiple Initial Stages Found", identifier)
+          .description("Found more than one stage that have no inputs.");
+
+      for (var root : rootStages) {
+        err.locationDescription(root, "Could be this stage");
+      }
+
+      throw err.build();
+    }
+
+    this.rootStage = rootStages.iterator().next();
   }
 
   public InstructionSetArchitecture isa() {
@@ -183,6 +212,21 @@ public class MicroArchitecture extends Definition {
    */
   public Map<Definition, List<MiaDependency>> dependenciesByDestination() {
     return dependenciesByDestination;
+  }
+
+  /**
+   * The one stage that has no inputs, i.e., is never returned by
+   * {@link MiaDependency#destination()}. This is useful as a starting point
+   * for traversals of the MiA's dependency graph.
+   *
+   * <p>The root stage is guaranteed to be unique. If there are multiple stages
+   * that would qualify as roots, an error is issued during creation of the
+   * MiA.
+   *
+   * @return The single stage that has no inputs.
+   */
+  public Stage rootStage() {
+    return rootStage;
   }
 
   public List<Stage> stages() {
