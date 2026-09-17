@@ -77,8 +77,9 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     // outputs give in the spec
     this.behavior.getNodes(WriteStageOutputNode.class)
         .map(WriteStageOutputNode::stageOutput).forEach(output -> {
-          if (!this.outputs.contains(output)) {
+          if (output != null && !this.outputs.contains(output)) {
             this.outputs.add(output);
+            output.setStage(this);
           }
         });
 
