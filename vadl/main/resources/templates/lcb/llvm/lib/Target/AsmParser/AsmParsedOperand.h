@@ -16,6 +16,7 @@ public:
   enum RegisterKind {
     rk_None,
     rk_IntReg,
+    rk_ConstToReg,
   };
 
 private:
@@ -63,6 +64,7 @@ public:
   bool isImm() const override;
   bool isMem() const override;
   bool isIntReg() const;
+  bool isConstToReg() const;
   StringRef getToken() const;
   MCRegister getReg() const override;
   const MCExpr *getImm() const;

@@ -16,6 +16,8 @@
 
 package vadl.lcb.template.lib.Target.AsmParser;
 
+import static java.util.Map.entry;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +43,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.utils.Pair;
@@ -48,6 +51,7 @@ import vadl.utils.SourceLocation;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Format;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
@@ -91,34 +95,37 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                          String params,
                          int fieldBitWidth,
                          long lowest,
-                         long highest) implements Renderable {
+                         long highest,
+                         String registerFileName) implements Renderable {
 
-    public TableGenOperand(String name, String targetName) {
-      this(name, false, "", false, targetName, "", "", 0, 0, 0);
+    public TableGenOperand(String name, String targetName, String registerFileName) {
+      this(name, false, "", false, targetName, "", "", 0, 0, 0, registerFileName);
     }
 
     public TableGenOperand(String name, String targetName, long lowest, long highest) {
       this(name, false, "", false, targetName, "", "", 0, lowest,
-          highest);
+          highest, "");
     }
 
     public TableGenOperand(String name, String targetName, boolean requiresPredicate,
                            String predicateMethod) {
-      this(name, requiresPredicate, predicateMethod, false, targetName, "", "", 0, 0, 0);
+      this(name, requiresPredicate, predicateMethod, false, targetName, "", "", 0, 0, 0, "");
     }
 
     @Override
     public Map<String, Object> renderObj() {
-      return Map.of("name", name,
-          "requiresPredicate", requiresPredicate,
-          "predicateMethod", predicateMethod,
-          "isFieldOperand", isFieldOperand,
-          "targetName", targetName,
-          "decodeMethod", decodeMethod,
-          "params", params,
-          "fieldBitWidth", fieldBitWidth,
-          "lowest", lowest,
-          "highest", highest
+      return Map.ofEntries(
+          entry("name", name),
+          entry("requiresPredicate", requiresPredicate),
+          entry("predicateMethod", predicateMethod),
+          entry("isFieldOperand", isFieldOperand),
+          entry("targetName", targetName),
+          entry("decodeMethod", decodeMethod),
+          entry("params", params),
+          entry("fieldBitWidth", fieldBitWidth),
+          entry("lowest", lowest),
+          entry("highest", highest),
+          entry("registerFileName", registerFileName)
       );
     }
   }
@@ -250,7 +257,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     // Output
     for (var output : instruction.getOutOperands()) {
       var casted = (GcbDefaultInstructionOperand) output;
-      result.add(new TableGenOperand(casted.name(), casted.name()));
+      result.add(new TableGenOperand(casted.name(), casted.name(), casted.type()));
 
       // field access register operands
       if (output instanceof GcbInstructionRegisterFileOperand regOperand) {
@@ -269,18 +276,19 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
             immediateOperand.formatFields(), immediateOperand.immediateOperand(), result);
       } else if (input instanceof GcbInstructionRegisterFileOperand regOperand) {
         if (regOperand.formatField() instanceof RenamedFieldRefNode.RenamedField renamedField) {
-          var operand = new TableGenOperand(renamedField.inner().simpleName(), casted.name());
+          var operand =
+              new TableGenOperand(renamedField.inner().simpleName(), casted.name(), casted.type());
           result.add(operand);
         } else {
           // normal register operand
-          result.add(new TableGenOperand(casted.name(), casted.name()));
+          result.add(new TableGenOperand(casted.name(), casted.name(), casted.type()));
 
           // field access register operands
           createRegisterFieldAccessOperands(regOperand, casted, result);
         }
 
       } else {
-        result.add(new TableGenOperand(casted.name(), casted.name()));
+        result.add(new TableGenOperand(casted.name(), casted.name(), casted.type()));
       }
 
     }
@@ -295,7 +303,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     // Output
     for (var output : instruction.getOutOperands()) {
       var casted = (GcbDefaultInstructionOperand) output;
-      result.add(new TableGenOperand(casted.name(), casted.name()));
+      result.add(new TableGenOperand(casted.name(), casted.name(), casted.type()));
     }
 
     // Inputs
@@ -307,8 +315,20 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
         result.add(new TableGenOperand(casted.name(), casted.name(), valueRange.left(),
             valueRange.right()));
+      } else if (input instanceof TableGenInstructionImmediateOperand operand) {
+        var type = operand.immediateOperand().rawType().asDataType();
+        var valueRange = computeValueRange(type.bitWidth(), type.isSigned());
+
+        result.add(new TableGenOperand(casted.name(), casted.name(), valueRange.left(),
+            valueRange.right()));
+      } else if (input instanceof TableGenInstructionLabelOperand operand) {
+        var type = operand.immediateOperand().rawType().asDataType();
+        var valueRange = computeValueRange(type.bitWidth(), type.isSigned());
+
+        result.add(new TableGenOperand(casted.name(), casted.name(), valueRange.left(),
+            valueRange.right()));
       } else {
-        result.add(new TableGenOperand(casted.name(), casted.name()));
+        result.add(new TableGenOperand(casted.name(), casted.name(), casted.type()));
       }
     }
 
@@ -337,7 +357,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         formatFields.stream().map(x -> "opImm64").collect(Collectors.joining(", ")),
         field.type().bitWidth(),
         0,
-        0
+        0,
+        ""
     );
     result.add(fieldOperand);
 
@@ -367,7 +388,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         fa -> fa.fieldRefs().getFirst().simpleName().equals(casted.name())).toList();
     fieldAccesses.forEach(
         fa -> result.add(
-            new TableGenOperand(fa.simpleName(), casted.name()))
+            new TableGenOperand(fa.simpleName(), casted.name(), casted.type()))
     );
   }
 

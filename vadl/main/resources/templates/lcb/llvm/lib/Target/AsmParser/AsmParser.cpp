@@ -89,6 +89,20 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
         if(operandName == "[(${operand.name})]" && target == "[(${operand.targetName})]") {
           found = true;
 
+          [# th:if="${!#strings.isEmpty(operand.registerFileName)}"]
+          if (Op.isConstToReg()) {
+            // Map parsed constant to register index of the register file of this operand
+            auto regNo = AsmUtils::getRegNoFrom[(${operand.registerFileName})]ByIndex(Op.getReg().id());
+            if (regNo == -1) {
+              Parser.Error(Op.getStartLoc(), "Invalid register index for operand '" + target + "'");
+              return true;
+            }
+            auto adjustedOp = [(${namespace})]ParsedOperand::CreateReg(regNo, [(${namespace})]ParsedOperand::RegisterKind::rk_IntReg, Op.getStartLoc(), Op.getEndLoc());
+            adjustedOp.addOperand(Inst);
+            break;
+          }
+          [/]
+
           if(!Op.isImm() || Op.getImm()->getKind() != MCExpr::ExprKind::Constant) {
               Op.addOperand(Inst);
           } else {
