@@ -56,6 +56,7 @@ import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.LogicRef;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
@@ -888,6 +889,11 @@ class Decomposer
       body = request(body, rq.slice);
     }
     rq.result = new OperationExistsNode(toHandle.type(), indices, body);
+  }
+
+  @Handler
+  void handle(Request rq, LogicRef toHandle) {
+    throw new UnsupportedOperationException("Type LogicRef not yet implemented");
   }
 
 

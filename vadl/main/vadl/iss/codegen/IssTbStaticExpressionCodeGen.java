@@ -35,6 +35,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.GroupRef;
+import vadl.viam.graph.dependency.LogicRef;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.OperationRef;
@@ -159,5 +160,10 @@ public class IssTbStaticExpressionCodeGen implements
   @Handler
   void handle(CGenContext<Node> ctx, OperationRef toHandle) {
     throw new UnsupportedOperationException("Type OperationRef not yet implemented");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, LogicRef toHandle) {
+    throw new UnsupportedOperationException("Type LogicRef not yet implemented");
   }
 }
