@@ -907,6 +907,7 @@ class ParserUtils {
     try {
       parser.ast.timingRecorder.pauseRecording();
       var ast = VadlParser.parse(modulePath, parser.fileSystem, macroOverrides);
+      SymbolTable.collectAndResolveNames(ast);
       parser.macroTable.importFrom(ast, importedSymbols);
       parser.ast.timingRecorder.importAllTimings(ast.timingRecorder);
       parser.ast.timingRecorder.continueRecording();

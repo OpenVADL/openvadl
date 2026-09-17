@@ -87,6 +87,7 @@ import vadl.ast.nodes.SyntaxType;
 import vadl.ast.nodes.TypeLiteral;
 import vadl.ast.nodes.UsingDefinition;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
@@ -677,12 +678,16 @@ public class SymbolTable {
    * This method makes it easy to run both at once.
    *
    * @param ast for which all names should be resolved.
-   * @return a list with diagnostics of violations.
+   * @throws DiagnosticList if some errors occur.
    */
-  static List<Diagnostic> collectAndResolveNames(Ast ast) {
-    return ast.timingRecorder.withPassTiming("Name Resolution", () -> {
+  public static void collectAndResolveNames(Ast ast) {
+    ast.timingRecorder.withPassTiming("Name Resolution", () -> {
       NameCollector.collectNames(ast);
-      return NameResolver.resolveNames(ast);
+      var errors = NameResolver.resolveNames(ast);
+
+      if (!errors.isEmpty()) {
+        throw new DiagnosticList(errors);
+      }
     });
   }
 
