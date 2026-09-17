@@ -16,15 +16,18 @@
 
 package vadl.viam;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 
 /**
@@ -50,7 +53,13 @@ public class MicroArchitecture extends Definition {
   private final List<MiaDependency> allDependencies;
   private final HashMap<Definition, List<MiaDependency>> dependenciesBySource;
   private final HashMap<Definition, List<MiaDependency>> dependenciesByDestination;
-  private final Stage rootStage;
+
+  // Only null if an error was encountered during construction.
+  private final @Nullable Stage rootStage;
+
+  // For error propagation from construction to verification. Only non-null if
+  // an error was encountered during construction.
+  private final @Nullable Collection<Stage> potentialRootStages;
 
   /**
    * Create a micro architecture definition.
@@ -145,22 +154,13 @@ public class MicroArchitecture extends Definition {
       });
     }
 
-    if (rootStages.isEmpty()) {
-      throw error("No Initial Stage Found", identifier)
-          .description("Could not find any stages that have no inputs.")
-          .build();
-    } else if (rootStages.size() > 1) {
-      final var err = error("Multiple Initial Stages Found", identifier)
-          .description("Found more than one stage that have no inputs.");
-
-      for (var root : rootStages) {
-        err.locationDescription(root, "Could be this stage");
-      }
-
-      throw err.build();
+    if (rootStages.size() == 1) {
+      this.rootStage = rootStages.iterator().next();
+      this.potentialRootStages = null;
+    } else {
+      this.rootStage = null;
+      this.potentialRootStages = Collections.emptyList();
     }
-
-    this.rootStage = rootStages.iterator().next();
   }
 
   public InstructionSetArchitecture isa() {
@@ -226,7 +226,7 @@ public class MicroArchitecture extends Definition {
    * @return The single stage that has no inputs.
    */
   public Stage rootStage() {
-    return rootStage;
+    return requireNonNull(rootStage);
   }
 
   public List<Stage> stages() {
@@ -278,5 +278,28 @@ public class MicroArchitecture extends Definition {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public void verify() {
+    super.verify();
+
+    if (potentialRootStages != null) {
+      if (potentialRootStages.isEmpty()) {
+        throw error("No Initial Stage Found", identifier)
+            .description("Could not find any stages that have no inputs.")
+            .build();
+      } else {
+        final var err = error("Multiple Initial Stages Found", identifier)
+            .description("Found more than one stage that have no inputs.");
+
+        for (var root : potentialRootStages) {
+          err.locationDescription(root, "Could be this stage");
+        }
+
+        throw err.build();
+      }
+    }
+
   }
 }
