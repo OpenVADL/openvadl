@@ -1256,6 +1256,14 @@ public abstract class Constant {
       return other.stream().allMatch(i -> parts().anyMatch(p -> p.msb() >= i && p.lsb() <= i));
     }
 
+    /**
+     * Checks whether all bits in the slice {@code [0..width-1]} are contained in this
+     * slice.
+     */
+    public boolean covers(int width) {
+      return covers(Constant.BitSlice.of(width - 1, 0));
+    }
+
     private static List<Part> normalized(Part[] parts) {
       // flat map all parts to a single array of integers
       var flattened = Arrays.stream(parts)

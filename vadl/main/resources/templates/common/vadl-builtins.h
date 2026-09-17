@@ -599,7 +599,6 @@ static inline Bits VADL_clz(Bits a, Width w) {
     /* For w <= 64, the leading zeros are how many top bits (from left) are 0.
      * We'll shift the value down until the top bit is set or the value is 0.
      */
-    Bits topBitPos = w;
 
     Bits leading = 0ULL;
     while (leading < w) {

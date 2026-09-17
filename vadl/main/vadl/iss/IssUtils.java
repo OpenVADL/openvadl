@@ -21,6 +21,7 @@ import static vadl.iss.passes.TcgPassUtils.regInfo;
 import com.google.errorprone.annotations.FormatMethod;
 import java.util.List;
 import vadl.error.Diagnostic;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
 
@@ -44,6 +45,10 @@ public class IssUtils {
 
   public static boolean isTcgReg(RegisterTensor registerTensor) {
     return regInfo(registerTensor).isTcgScalar();
+  }
+
+  public static boolean isLazyReg(RegisterTensor registerTensor) {
+    return regInfo(registerTensor).isLazy();
   }
 
   /**
