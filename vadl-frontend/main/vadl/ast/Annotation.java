@@ -51,12 +51,12 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
   }
 
   /**
-   * Called by the symbol resolver to resolve the subparts of the annotation.
+   * Called by the name resolver to resolve the subparts of the annotation.
    *
    * @param definition The `AnnotationDefinition` corresponding to this `Annotation`.
    * @param resolver The active name resolver.
    */
-  abstract void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver);
+  abstract void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver);
 
   /**
    * Called by the type checker to type check the annotation.

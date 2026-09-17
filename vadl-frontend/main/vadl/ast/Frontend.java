@@ -29,13 +29,41 @@ import vadl.viam.Specification;
  *    - Scanning (aka tokenization)
  *    - Parsing
  *    - Macro Expansion
- *    - Symbol resolution
+ *    - Name resolution
  * - Model removal
  * - Ungrouping
  * - Type checking
  * - Viam lowering
  */
 public class Frontend {
+
+  /**
+   * Parse a single program an valid AST with all names resolved.
+   * This does run name resolution but not ungrouping, model removing nor typechecking.
+   *
+   * @param program to compile.
+   * @return  the parsed and checked AST.
+   * @throws vadl.error.DiagnosticList  if the program isn't valid.
+   */
+  public static Ast parseToNameResolvedAst(String program) {
+    return parseToNameResolvedAst(SingleFileVirtualFileSystem.DEFAULT_PATH,
+        new SingleFileVirtualFileSystem(program));
+  }
+
+  /**
+   * Parse a program from a provided path to an valid AST with all names resolved.
+   * This does run name resolution but not ungrouping, model removing nor typechecking.
+   *
+   * @param path to compile.
+   * @param fileSystem to load the files from.
+   * @return  the parsed and checked AST.
+   * @throws vadl.error.DiagnosticList  if the program isn't valid.
+   */
+  public static Ast parseToNameResolvedAst(Path path, VirtualFileSystem fileSystem) {
+    var ast = VadlParser.parse(path, fileSystem);
+    SymbolTable.collectAndResolveNames(ast);
+    return ast;
+  }
 
   /**
    * Compile a single program to an valid AST.
@@ -61,6 +89,7 @@ public class Frontend {
    */
   public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) {
     var ast = VadlParser.parse(path, fileSystem);
+    SymbolTable.collectAndResolveNames(ast);
     ModelRemover.removeModels(ast);
     Ungrouper.ungroup(ast);
     TypeChecker.verify(ast);
