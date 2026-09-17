@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -3468,6 +3467,13 @@ public class TypeChecker
       }
 
       expr.type = PseudoFormatType.of(List.of(op));
+      return;
+    }
+
+    if (origin instanceof LogicDefinition logic
+        && logic.logicType == LogicDefinition.LogicType.ReservationStation
+    ) {
+      expr.type = MicroArchitectureType.reservationStation();
       return;
     }
 
