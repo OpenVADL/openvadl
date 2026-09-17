@@ -1762,6 +1762,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       case Forwarding -> new Logic.Forwarding(id);
       case Control -> new Logic.Control(id);
       case BranchPrediction -> new Logic.BranchPrediction(id);
+      case ReservationStation -> new Logic.ReservationStation(id);
     };
     return Optional.of(logic);
   }
