@@ -16,20 +16,21 @@
 
 package vadl.rtl.passes;
 
+import static vadl.error.Diagnostic.error;
+
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.MiaDependency;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -71,11 +72,14 @@ public class StageOrderingPass extends Pass {
 
     // input/output dependencies
     var dep = new HashSet<Pair<Stage, Stage>>(); // stage read from -> stage reading
-    for (Stage inputStage : mia.stages()) {
-      var inputs = inputStage.inputs();
-      mia.stages().stream()
-          .filter(outputStage -> inputs.stream().anyMatch(outputStage.outputs()::contains))
-          .forEach(outputStage -> dep.add(Pair.of(outputStage, inputStage)));
+    for (var dependency : mia.allDependencies()) {
+      if (dependency instanceof MiaDependency.StageToStageOutputDependency(var src, var dst)) {
+        dep.add(new Pair<>(src.stage(), dst));
+      } else {
+        throw error("Unexpected Dependency", dependency.destination())
+            .description("Stage ordering currently only handles reads from stage outputs.")
+            .build();
+      }
     }
     var readFrom = dep.stream().map(Pair::left).collect(Collectors.toSet());
     var reading = dep.stream().map(Pair::right).collect(Collectors.toSet());
@@ -85,18 +89,14 @@ public class StageOrderingPass extends Pass {
     unordered.removeAll(reading);
     unordered.removeAll(readFrom);
     var anyUnordered = unordered.stream().findAny();
-    ViamError.ensure(anyUnordered.isEmpty(), () -> Diagnostic.error(
+    ViamError.ensure(anyUnordered.isEmpty(), () -> error(
         "All stages need to be ordered", anyUnordered.get().location()));
 
-    // find start stage
-    var notReading = mia.stages().stream().filter(stage -> stage.inputs().isEmpty()).toList();
-    ViamError.ensure(notReading.size() == 1, () -> Diagnostic.error(
-        "Exactly one start stage not reading stage outputs expected", mia.location()));
-    var start = notReading.getFirst();
+    var start = mia.rootStage();
 
     var order = new ArrayList<Stage>();
     follow(dep, start, order);
-    ViamError.ensure(order.size() == mia.stages().size(), () -> Diagnostic.error(
+    ViamError.ensure(order.size() == mia.stages().size(), () -> error(
         "All stages need to be ordered", mia.location()));
 
     return order;
@@ -107,7 +107,7 @@ public class StageOrderingPass extends Pass {
 
     // find successor
     var succ = dep.stream().filter(p -> p.left() == cur).toList();
-    ViamError.ensure(succ.size() <= 1, () -> Diagnostic.error(
+    ViamError.ensure(succ.size() <= 1, () -> error(
         "Can not order stage, more than one successor", cur.location()));
 
     // recurse
