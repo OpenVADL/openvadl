@@ -285,7 +285,11 @@ public class MicroArchitecture extends Definition {
     super.verify();
 
     if (potentialRootStages != null) {
-      if (potentialRootStages.isEmpty()) {
+      if (stages.isEmpty()) {
+        throw error("Micro Architecture Does Not Contain Any Stages", identifier)
+            .description("At least one initial stage is required.")
+            .build();
+      } else if (potentialRootStages.isEmpty()) {
         throw error("No Initial Stage Found", identifier)
             .description("Could not find any stages that have no inputs.")
             .build();
