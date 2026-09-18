@@ -159,7 +159,7 @@ public class MicroArchitecture extends Definition {
       this.potentialRootStages = null;
     } else {
       this.rootStage = null;
-      this.potentialRootStages = Collections.emptyList();
+      this.potentialRootStages = rootStages;
     }
   }
 
