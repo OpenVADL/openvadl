@@ -85,11 +85,11 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
         [(${namespace})]ParsedOperand& Op = static_cast<[(${namespace})]ParsedOperand&>(*Operands[ index ]);
         StringRef operandName = Op.getTarget();
 
-        [# th:each="operand : ${instruction.operands}" ]
+        [# th:each="operand : ${instruction.registerOperands}" ]
+
         if(operandName == "[(${operand.name})]" && target == "[(${operand.targetName})]") {
           found = true;
 
-          [# th:if="${!#strings.isEmpty(operand.registerFileName)}"]
           if (Op.isConstToReg()) {
             // Map parsed constant to register index of the register file of this operand
             auto regNo = AsmUtils::getRegNoFrom[(${operand.registerFileName})]ByIndex(Op.getReg().id());
@@ -99,9 +99,16 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
             }
             auto adjustedOp = [(${namespace})]ParsedOperand::CreateReg(regNo, [(${namespace})]ParsedOperand::RegisterKind::rk_IntReg, Op.getStartLoc(), Op.getEndLoc());
             adjustedOp.addOperand(Inst);
-            break;
+          } else {
+            Op.addOperand(Inst);
           }
-          [/]
+          break;
+        }
+        [/]
+
+        [# th:each="operand : ${instruction.immediateOperands}" ]
+        if(operandName == "[(${operand.name})]" && target == "[(${operand.targetName})]") {
+          found = true;
 
           if(!Op.isImm() || Op.getImm()->getKind() != MCExpr::ExprKind::Constant) {
               Op.addOperand(Inst);
