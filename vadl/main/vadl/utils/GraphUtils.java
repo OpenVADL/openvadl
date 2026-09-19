@@ -365,10 +365,9 @@ public class GraphUtils {
   }
 
   /**
-   * Inserts an if-else region into the graph at the specified position.
+   * Inserts an if-else region into the graph.
    *
-   * @param position          The node at which the if-else structure is inserted.
-   *                          Must be part of a valid graph.
+   * @param graph             The graph into which the if-else structure is inserted.
    * @param condition         The condition node that determines the branching
    *                          of the if-else structure.
    * @param createTrueBranch  A function that defines the true branch of the if-else structure,
@@ -382,18 +381,25 @@ public class GraphUtils {
    */
 
   public static Pair<IfNode, MergeNode> insertIfElse(
-      DirectionalNode position,
+      Graph graph,
       ExpressionNode condition,
       BiFunction<Graph, BranchEndNode, ControlNode> createTrueBranch,
-      BiFunction<Graph, BranchEndNode, ControlNode> createFalseBranch) {
-    var graph = position.ensureGraph();
+      BiFunction<Graph, BranchEndNode, ControlNode> createFalseBranch,
+      SourceLocation location) {
     var trueEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>()));
+    trueEnd.setSourceLocationRecursively(location);
     var falseEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>()));
+    falseEnd.setSourceLocationRecursively(location);
     var trueBranch = createTrueBranch.apply(graph, trueEnd);
+    trueBranch.setSourceLocationRecursively(location);
     var falseBranch = createFalseBranch.apply(graph, falseEnd);
+    falseBranch.setSourceLocationRecursively(location);
     var trueBegin = graph.addWithInputs(new BranchBeginNode(trueBranch));
+    trueBegin.setSourceLocationRecursively(location);
     var falseBegin = graph.addWithInputs(new BranchBeginNode(falseBranch));
+    falseBegin.setSourceLocationRecursively(location);
     var ifNode = graph.addWithInputs(new IfNode(condition, trueBegin, falseBegin));
+    ifNode.setSourceLocationRecursively(location);
 
     var mergeNode = graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd)));
     return Pair.of(ifNode, mergeNode);
