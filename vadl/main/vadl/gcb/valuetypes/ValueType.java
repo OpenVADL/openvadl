@@ -21,6 +21,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.template.Renderable;
 import vadl.types.BitsType;
+import vadl.types.FloatType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -121,18 +122,10 @@ public enum ValueType implements Renderable {
       } else if (bitsType.bitWidth() == 128) {
         return Optional.of(ValueType.I128);
       }
-    }
-
-    return Optional.empty();
-  }
-
-  public static Optional<ValueType> from(@Nullable Type type, Boolean isFloat) {
-    if (!isFloat) {
-      return from(type);
-    } else if (type instanceof BitsType bitsType) {
-      if (bitsType.bitWidth() == 32) {
+    } else if (type instanceof FloatType floatType) {
+      if (floatType.bitWidth() == 32) {
         return Optional.of(ValueType.F32);
-      } else if (bitsType.bitWidth() == 64) {
+      } else if (floatType.bitWidth() == 64) {
         return Optional.of(ValueType.F64);
       }
     }
