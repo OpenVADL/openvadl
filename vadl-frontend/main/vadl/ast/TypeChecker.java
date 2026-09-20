@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -45,6 +44,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.Contract;
 import vadl.ast.nodes.AbiClangNumericTypeDefinition;
 import vadl.ast.nodes.AbiClangTypeDefinition;
 import vadl.ast.nodes.AbiSequenceDefinition;
@@ -65,6 +65,7 @@ import vadl.ast.nodes.AsmGrammarTypeDefinition;
 import vadl.ast.nodes.AsmModifierDefinition;
 import vadl.ast.nodes.AssemblyDefinition;
 import vadl.ast.nodes.AssignmentStatement;
+import vadl.ast.nodes.AstVisitor;
 import vadl.ast.nodes.BinOp;
 import vadl.ast.nodes.BinaryExpr;
 import vadl.ast.nodes.BinaryLiteral;
@@ -81,7 +82,6 @@ import vadl.ast.nodes.CpuMemoryRegionDefinition;
 import vadl.ast.nodes.CpuProcessDefinition;
 import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.DefinitionList;
-import vadl.ast.nodes.DefinitionVisitor;
 import vadl.ast.nodes.DerivedFormatField;
 import vadl.ast.nodes.EncodingDefinition;
 import vadl.ast.nodes.EncodingFormatField;
@@ -92,7 +92,6 @@ import vadl.ast.nodes.ExistsInThenExpr;
 import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
-import vadl.ast.nodes.ExprVisitor;
 import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
@@ -162,7 +161,6 @@ import vadl.ast.nodes.StageDefinition;
 import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.Statement;
 import vadl.ast.nodes.StatementList;
-import vadl.ast.nodes.StatementVisitor;
 import vadl.ast.nodes.StringLiteral;
 import vadl.ast.nodes.SymbolExpr;
 import vadl.ast.nodes.TypeLiteral;
@@ -203,15 +201,23 @@ import vadl.utils.WithLocation;
 import vadl.viam.Constant;
 
 /**
- * A experimental, temporary type-checker to verify expressions and attach types to the AST.
+ * A typechecker with many other semantic checks for OpenVADL.
  *
- * <p>As the typesystem can depend on constants, the typechecker needs to evaluate (at least some
- * of) them.
+ * <p>The typechecker infers all types and applies them to the {@link Expr#type} field for all
+ * expressions. Since VADL has dependent types the checker out to the {@link ConstantEvaluator} as
+ * needed to evaluate constants needed to determine types. Implicit casts
+ * (conversions) are also implemented by the checker injecting {@link CastExpr} into the AST.
+ *
+ * <p>Besides that the typechecker also performs these more generalized semantic checks:
+ * <ul>
+ *   <li>Checks that no definition is defined in an invalid recursive cycle.</li>
+ *   <li>Format/Range overlaps</li>
+ *   <li>Processor definition conflicts</li>
+ *   <li>Expands assembler grammar rules and verifies it is LL(1)</li>
+ * </ul>
  */
 @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
-public class TypeChecker
-    implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void>,
-    GroupVisitor<Void> {
+public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
   /**
    * The expected type of the expression being checked.
@@ -581,6 +587,7 @@ public class TypeChecker
    *     is used to trick the java compiler.
    * @throws StopPartialCheckingSignal always.
    */
+  @Contract("_ -> fail")
   private StopPartialCheckingSignal addErrorAndStopChecking(Diagnostic error) {
     errors.add(error);
     throw new StopPartialCheckingSignal();
@@ -597,6 +604,7 @@ public class TypeChecker
    *     java compiler.
    * @throws Diagnostic always
    */
+  @Contract("_ -> fail")
   private RuntimeException addErrorAndAbortChecking(Diagnostic error) {
     throw error;
   }
