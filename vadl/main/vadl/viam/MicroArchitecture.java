@@ -17,18 +17,14 @@
 package vadl.viam;
 
 import static java.util.Objects.requireNonNull;
-import static vadl.error.Diagnostic.error;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import javax.annotation.Nullable;
-import vadl.viam.graph.dependency.ReadStageOutputNode;
 
 /**
  * A Micro architecture (MiA) definition of a VADL specification.
@@ -54,12 +50,7 @@ public class MicroArchitecture extends Definition {
   private final HashMap<Definition, List<MiaDependency>> dependenciesBySource;
   private final HashMap<Definition, List<MiaDependency>> dependenciesByDestination;
 
-  // Only null if an error was encountered during construction.
-  private final @Nullable Stage rootStage;
-
-  // For error propagation from construction to verification. Only non-null if
-  // an error was encountered during construction.
-  private final @Nullable Collection<Stage> potentialRootStages;
+  private @LazyInit Stage rootStage;
 
   /**
    * Create a micro architecture definition.
@@ -105,61 +96,6 @@ public class MicroArchitecture extends Definition {
 
     for (Logic l : logic) {
       l.setMia(this);
-    }
-
-    // Find all dependencies from stages on stage outputs. This is done by
-    // inspecting each stage's behavior for `ReadStageOutputNode`s and
-    // following them.
-    for (var stage : stages) {
-      stage
-          .behavior()
-          .getNodes(ReadStageOutputNode.class)
-          .map(ReadStageOutputNode::stageOutput)
-          .filter(Objects::nonNull)
-          .distinct()
-          .forEach(read -> allDependencies.add(new MiaDependency.StageToStageOutputDependency(
-              read,
-              stage
-          )));
-    }
-
-    final var rootStages = new HashSet<>(stages);
-
-    // Construct indices over the dependencies, both by source and by
-    // destination. This facilitates quick access for traversals.
-    // At the same time we also find the root stage by excluding all stages
-    // that read from others. This should only leave one stage in a well-formed
-    // MiA.
-    for (var dependency : allDependencies) {
-      if (dependency.destination() instanceof Stage destinationStage) {
-        rootStages.remove(destinationStage);
-      }
-
-      dependenciesBySource.compute(dependency.source(), (unused, v) -> {
-        if (v == null) {
-          v = new ArrayList<>();
-        }
-
-        v.add(dependency);
-        return v;
-      });
-
-      dependenciesByDestination.compute(dependency.destination(), (unused, v) -> {
-        if (v == null) {
-          v = new ArrayList<>();
-        }
-
-        v.add(dependency);
-        return v;
-      });
-    }
-
-    if (rootStages.size() == 1) {
-      this.rootStage = rootStages.iterator().next();
-      this.potentialRootStages = null;
-    } else {
-      this.rootStage = null;
-      this.potentialRootStages = rootStages;
     }
   }
 
@@ -229,6 +165,21 @@ public class MicroArchitecture extends Definition {
     return requireNonNull(rootStage);
   }
 
+  /**
+   * Sets the root stage for future retrieval by {@link #rootStage()}.
+   *
+   * <p>This method may only be called once during construction of the VIAM.
+   *
+   * @param rootStage The MiA's root stage.
+   */
+  public void setRootStage(Stage rootStage) {
+    if (this.rootStage != null) {
+      throw new IllegalStateException("Tried setting MiA's root stage more than once.");
+    }
+
+    this.rootStage = requireNonNull(rootStage);
+  }
+
   public List<Stage> stages() {
     return stages;
   }
@@ -278,32 +229,5 @@ public class MicroArchitecture extends Definition {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
-  }
-
-  @Override
-  public void verify() {
-    super.verify();
-
-    if (potentialRootStages != null) {
-      if (stages.isEmpty()) {
-        throw error("Micro Architecture Does Not Contain Any Stages", identifier)
-            .description("At least one initial stage is required.")
-            .build();
-      } else if (potentialRootStages.isEmpty()) {
-        throw error("No Initial Stage Found", identifier)
-            .description("Could not find any stages that have no inputs.")
-            .build();
-      } else {
-        final var err = error("Multiple Initial Stages Found", identifier)
-            .description("Found more than one stage that have no inputs.");
-
-        for (var root : potentialRootStages) {
-          err.locationDescription(root, "Could be this stage");
-        }
-
-        throw err.build();
-      }
-    }
-
   }
 }
