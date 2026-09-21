@@ -1139,7 +1139,7 @@ class EnableAnnotation extends Annotation {
   }
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     verifyValuesCntBetween(definition, 0, 1);
 
     definition.values.forEach(value -> value.accept(resolver));
@@ -1285,7 +1285,7 @@ abstract class FormatFieldAnnotation extends Annotation {
   Constant.BitSlice slice;
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     // Intentionally skip name resolution for values, since they are relative
     // to the annotated value, and thus not available here.
   }
@@ -1359,7 +1359,7 @@ class ConstantAnnotation extends Annotation {
   }
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     verifyValuesCnt(definition, 1);
 
     definition.values.getFirst().accept(resolver);
@@ -1424,7 +1424,7 @@ class StringAnnotation extends Annotation {
   }
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     verifyValuesCnt(definition, 1);
 
     var firstValue = definition.values.getFirst();
@@ -1474,7 +1474,7 @@ class EnumAnnotation extends Annotation {
   }
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     verifyValuesNonEmpty(definition);
 
     for (var value : definition.values) {
@@ -1564,7 +1564,7 @@ class IdentifersAnnotation extends Annotation {
   }
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     if (singleMode) {
       verifyValuesCnt(definition, 1);
     } else {
@@ -1624,7 +1624,7 @@ class OptExprAnnotation extends Annotation {
   Expr expr;
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     verifyValuesCntBetween(definition, 0, 1);
 
     if (!definition.values.isEmpty()) {
@@ -1680,7 +1680,7 @@ class ExprAnnotation extends Annotation {
   }
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     verifyValuesCnt(definition, 1);
     expr = definition.values.getFirst();
     expr.accept(resolver);
@@ -1779,7 +1779,7 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
 class EncodingConstraintAnnotation extends ExprAnnotation {
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     var format = requireNonNull(((EncodingDefinition) definition.target).formatNode);
 
     // Extend annotation's symbol table by the symbol table of the encoding's format.
@@ -1792,7 +1792,7 @@ class EncodingConstraintAnnotation extends ExprAnnotation {
 class InstructionUndefinedAnnotation extends ExprAnnotation {
 
   @Override
-  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+  void resolveName(AnnotationDefinition definition, SymbolTable.NameResolver resolver) {
     var format = requireNonNull(((InstructionDefinition) definition.target).formatNode);
 
     // Extend annotation's symbol table by the symbol table of the encoding's format.

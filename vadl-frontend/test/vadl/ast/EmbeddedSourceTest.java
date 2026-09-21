@@ -36,7 +36,7 @@ public class EmbeddedSourceTest {
         }
         """;
 
-    var ast = VadlParser.parse(prog);
+    var ast = Frontend.parseToNameResolvedAst(prog);
     var mip = (ProcessorDefinition) ast.definitions.get(2);
     var source = (SourceDefinition) mip.definitions.get(0);
     assertEquals("Hello, world!", source.source.trim());

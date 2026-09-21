@@ -21,7 +21,7 @@ import vadl.utils.SourceLocation;
 
 /**
  * A reference to a named entity in the specification.
- * The {@link #target} field is resolved during symbol resolving to point to the
+ * The {@link #target} field is resolved during name resolving to point to the
  * referenced {@link Node}.
  */
 @SuppressWarnings("MissingJavadocMethod")

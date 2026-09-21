@@ -43,7 +43,7 @@ public class Ast {
 
 
   SymbolTable rootSymbolTable() {
-    return Objects.requireNonNull(rootSymbolTable, "Symbol collector has not been applied");
+    return Objects.requireNonNull(rootSymbolTable, "Name collector has not been applied");
   }
 
   public <T> T withPassTiming(String name, Supplier<T> pass) {
