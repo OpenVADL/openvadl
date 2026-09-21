@@ -507,32 +507,30 @@ public class AnnotationTable {
         }).build();
 
     annotationOn(LogicDefinition.class, "size", ConstantAnnotation::new)
-        .applyViam((def, annotation, lowering) -> {
-          def.ensure(
-              def instanceof Logic.ReservationStation,
-              "`size` annotation is not supported on `%s` logic elements.",
-              def.getClass().getSimpleName()
-          );
+        .check((def, annotation, tc) -> {
+          if (def.logicType != LogicDefinition.LogicType.ReservationStation) {
+            throw error("Invalid Annotation", def)
+                .description("`size` annotation is only allowed on `logic [reservation station]`")
+                .build();
+          }
 
           annotation.verifyGreaterThan(BigInteger.ZERO);
           annotation.verifyLessThanEqual(BigInteger.valueOf(Integer.MAX_VALUE));
-
-          final var size = annotation.constant.value();
-
-          ((Logic.ReservationStation) def).setSize(size.intValue());
-        }).build();
+        }).applyViam((def, annotation, lowering) ->
+          ((Logic.ReservationStation) def).setSize(annotation.constant.value().intValue())
+        ).build();
 
     annotationOn(
         LogicDefinition.class,
         "filter",
         () -> IdentifersAnnotation.single(OperationDefinition.class)
-    ).applyViam((def, annotation, lowering) -> {
-      def.ensure(
-          def instanceof Logic.ReservationStation,
-          "`filter` annotation is not supported on `%s` logic elements.",
-          def.getClass().getSimpleName()
-      );
-
+    ).check((def, annotation, tc) -> {
+      if (def.logicType != LogicDefinition.LogicType.ReservationStation) {
+        throw error("Invalid Annotation", def)
+            .description("`filter` annotation is only allowed on `logic [reservation station]`")
+            .build();
+      }
+    }).applyViam((def, annotation, lowering) -> {
       final var operation = (Operation) lowering
           .fetch((Definition) requireNonNull(annotation.identifiers.getFirst().target()))
           .get();
@@ -544,7 +542,11 @@ public class AnnotationTable {
         .check((def, annotation, tc) -> {
           annotation.verifyExprType(tc, MicroArchitectureType.instruction());
 
-          if (!(annotation.expr instanceof CallIndexExpr expr)
+          if (def.logicType != LogicDefinition.LogicType.ReservationStation) {
+            throw error("Invalid Annotation", def)
+                .description("`source` annotation is only allowed on `logic [reservation station]`")
+                .build();
+          } else if (!(annotation.expr instanceof CallIndexExpr expr)
               || !(expr.target instanceof Identifier stageId)
               || expr.subCalls.size() != 1
               || !(expr.subCalls.getFirst().id instanceof Identifier outputId)
@@ -567,16 +569,16 @@ public class AnnotationTable {
                     stageId.name
                 ).build();
           } else {
-            boolean referencesOutput = false;
+            boolean referencesStageOutput = false;
 
             for (var output : stage.outputs) {
               if (output.identifier.equals(outputId)) {
-                referencesOutput = true;
+                referencesStageOutput = true;
                 break;
               }
             }
 
-            if (!referencesOutput) {
+            if (!referencesStageOutput) {
               throw error("Invalid source Annotation Value", annotation.expr)
                   .locationDescription(
                       annotation.expr,
@@ -585,12 +587,6 @@ public class AnnotationTable {
             }
           }
         }).applyViam((def, annotation, lowering) -> {
-          def.ensure(
-              def instanceof Logic.ReservationStation,
-              "`source` annotation is not supported on `%s` logic elements.",
-              def.getClass().getSimpleName()
-          );
-
           final var expr = (CallIndexExpr) annotation.expr;
 
           final var stage = requireNonNull((StageDefinition) ((Identifier) expr.target).target);
