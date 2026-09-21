@@ -1,0 +1,30 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Duplicated `size` annotation.
+  [size : 1]
+  [size : 2]
+  [source : Decode.ir]
+  logic [reservation station] RS4
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Duplicate Annotation
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSizeDuplicate.vadl:5:3
+//       │
+//     4 │   [size : 1]
+//       │   ---------- note: First usage here
+//       │
+//     5 │   [size : 2]
+//       │   ^^^^^^^^^^ note: Second usage here
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

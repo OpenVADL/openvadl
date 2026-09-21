@@ -1,0 +1,26 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Multiple values in `size` annotation.
+  [size : 1, 2]
+  [source : Decode.ir]
+  logic [reservation station] RS6
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid annotation arguments
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSizeTooManyValues.vadl:4:3
+//       │
+//     4 │   [size : 1, 2]
+//       │   ^^^^^^^^^^^^^ Expected 1 arguments but got 2
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

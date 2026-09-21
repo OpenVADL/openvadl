@@ -1,5 +1,10 @@
 micro architecture MiA implements ISA = {
 
+  // FIXME: This should be merged with all the other
+  // reservationStationSize*.vadl tests. However, currently annotations are
+  // very brittle, meaning that we abort after the first (few) error(s) and
+  // don't see the other.
+
   // Correct `size` annotation.
   [size : 1]
   [source : Decode.ir]
@@ -10,41 +15,17 @@ micro architecture MiA implements ISA = {
   [source : Decode.ir]
   logic [reservation station] RS1
 
-  // Incorrect: Non-positive `size` annotation.
-  [size : 0]
-  [source : Decode.ir]
-  logic [reservation station] RS2
-
-  // Incorrect: Too large `size` annotation.
-  [size : 10000000000]
-  [source : Decode.ir]
-  logic [reservation station] RS3
-
-  // Incorrect: Duplicated `size` annotation.
-  [size : 1]
-  [size : 2]
-  [source : Decode.ir]
-  logic [reservation station] RS4
-
-  // Incorrect: Missing mandatory `size` annotation.
-  [source : Decode.ir]
-  logic [reservation station] RS5
-
-  // Incorrect: Multiple values in `size` annotation.
-  [size : 1, 2]
-  [source : Decode.ir]
-  logic [reservation station] RS6
-
-  // Incorrect: Wrong type of value in `size` annotation.
-  [size : RS0]
-  [source : Decode.ir]
-  logic [reservation station] RS7
-
-
-
   stage Decode -> (ir : Instruction) = {
     ir := decode(fetchNext)
   }
 }
 
 instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

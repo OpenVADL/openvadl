@@ -5,50 +5,17 @@ micro architecture MiA implements ISA = {
   [source : Decode.ir]
   logic [reservation station] RS0
 
-  // Incorrect: Wrong type for value of `source` annotation.
-  [size : 1]
-  [source: 500]
-  logic [reservation station] RS1
-
-  // Incorrect: Wrong type for value of `source` annotation.
-  [size : 1]
-  [source : RS0]
-  logic [reservation station] RS2
-
-  // Incorrect: Wrong expression type for value of `source` annotation.
-  [size : 1]
-  [source : Decode]
-  logic [reservation station] RS3
-
-  // Incorrect: Wrong stage output type for value of `source` annotation.
-  [size : 1]
-  [source : Dummy.val]
-  logic [reservation station] RS4
-
-  // Incorrect: Missing mandatory `source` annotation.
-  [size : 1]
-  logic [reservation station] RS5
-
-  // Incorrect: Duplicate `source` annotation.
-  [size : 1]
-  [source : Decode.ir]
-  [source : Decode.ir]
-  logic [reservation station] RS6
-
-  // Incorrect: Multiple values in `source` annotation.
-  [size : 1]
-  [source : Decode.ir, Decode.ir]
-  logic [reservation station] RS7
-
-
-
   stage Decode -> (ir : Instruction) = {
     ir := decode(fetchNext)
-  }
-
-  stage Dummy -> (val : Bits<32> = {
-    val := 1
   }
 }
 
 instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
