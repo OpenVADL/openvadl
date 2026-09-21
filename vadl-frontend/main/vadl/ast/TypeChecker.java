@@ -427,7 +427,11 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       // for the whole group as the check for one (correct) annotation may
       // reference other (incorrect) annotations in the same group.
       // This is yucky.
-      if (annotations.stream().anyMatch(annotation -> erroredDefinitions.contains(annotation.definition))) {
+      final var hasErroredAnnotations = annotations
+          .stream()
+          .anyMatch(annotation -> erroredDefinitions.contains(annotation.definition));
+
+      if (hasErroredAnnotations) {
         return;
       }
       group.check(def, annotations, this);
