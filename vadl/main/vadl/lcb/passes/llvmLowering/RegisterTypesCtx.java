@@ -22,10 +22,14 @@ import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.RegisterTensor;
 
-public class RegisterCtx extends DefinitionExtension<RegisterTensor> {
+/**
+ * An extension for {@link RegisterTensor}. It is used
+ * to assign a {@link List} of {@link ValueType}.
+ */
+public class RegisterTypesCtx extends DefinitionExtension<RegisterTensor> {
   private final List<ValueType> valueTypes;
 
-  public RegisterCtx(List<ValueType> valueTypes) {
+  public RegisterTypesCtx(List<ValueType> valueTypes) {
     this.valueTypes = valueTypes;
   }
 
