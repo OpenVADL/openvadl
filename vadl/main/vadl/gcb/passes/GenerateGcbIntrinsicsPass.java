@@ -27,7 +27,6 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.gcb.passes.operands.InstructionOperandsCtx;
-import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionImmediateOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
@@ -179,7 +178,6 @@ public class GenerateGcbIntrinsicsPass extends Pass {
     return operands.stream()
         .allMatch(operand -> operand instanceof GcbInstructionRegisterFileOperand
             || operand instanceof GcbInstructionImmediateOperand
-            || operand instanceof GcbInstructionBareSymbolOperand
         );
   }
 
