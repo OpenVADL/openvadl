@@ -403,9 +403,9 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
       final var isMulti = requireNonNull(annotation.annotation).allowMultiple();
       if (!isMulti && annotationNames.containsKey(annotation.name())) {
-        addErrorAndContinueChecking(error("Duplicate Annotation", def)
+        addErrorAndContinueChecking(error("Duplicate Annotation", annotation)
             .locationNote(annotationNames.get(annotation.name()), "First usage here")
-            .locationNote(def, "Second usage here")
+            .locationNote(annotation, "Second usage here")
             .build()
         );
       }
@@ -413,7 +413,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       // check annotation definition itself
       check(annotation);
 
-      if (isMulti) {
+      if (!isMulti) {
         annotationNames.put(annotation.name(), annotation);
       }
     });

@@ -104,6 +104,6 @@ public abstract class Annotation implements AnnotationDeclaration, WithLocation 
   }
 
   protected boolean allowMultiple() {
-    return false;
+    return allowMultiple;
   }
 }
