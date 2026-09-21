@@ -52,7 +52,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.lcb.template.lld.ELF.Arch.EmitLldVadlBuiltinsHeaderFilePass;
 import vadl.pass.PassOrder;
-import vadl.viam.passes.MiaDependencyPass;
+import vadl.viam.passes.MiaInstructionFlowPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
@@ -95,7 +95,7 @@ public final class LcbPassOrder {
     order.add(new GenerateLinkerComponentsPass(configuration));
     order.add(new WrapInIntegralPass(configuration));
     order.add(new AsmGrammarRuleGenerationPass(configuration));
-    order.add(new MiaDependencyPass(configuration));
+    order.add(new MiaInstructionFlowPass(configuration));
 
     OrderSupport.addHtmlDump(order, configuration,
         "lcbLlvmLowering",

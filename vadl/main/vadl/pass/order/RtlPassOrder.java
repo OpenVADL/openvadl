@@ -50,7 +50,7 @@ import vadl.rtl.passes.MiaMappingInlinePass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
 import vadl.rtl.passes.RtlConfigurationPass;
 import vadl.rtl.passes.StageOrderingPass;
-import vadl.viam.passes.MiaDependencyPass;
+import vadl.viam.passes.MiaInstructionFlowPass;
 import vadl.viam.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 
 /**
@@ -70,7 +70,7 @@ public final class RtlPassOrder {
     order.skip(RenamingConflictingRegistersPass.class);
     order.skip(OverwriteInputOperandsPass.class);
 
-    order.add(new MiaDependencyPass(config));
+    order.add(new MiaInstructionFlowPass(config));
     order.add(new RtlConfigurationPass(config));
     order.add(new StageOrderingPass(config));
     order.add(new InstructionProgressGraphCreationPass(config))

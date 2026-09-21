@@ -45,10 +45,10 @@ public class MicroArchitecture extends Definition {
   private final List<Function> functions;
   private final List<Operation> operations;
 
-  // Dependencies between MiA elements (stages and logic).
-  private final List<MiaDependency> allDependencies;
-  private final HashMap<Definition, List<MiaDependency>> dependenciesBySource;
-  private final HashMap<Definition, List<MiaDependency>> dependenciesByDestination;
+  // Instruction Flow between MiA elements (stages and logic).
+  private final List<MiaInstructionFlow> allInstructionFlows;
+  private final HashMap<Definition, List<MiaInstructionFlow>> instructionFlowsBySource;
+  private final HashMap<Definition, List<MiaInstructionFlow>> instructionFlowsByDestination;
 
   private @LazyInit Stage rootStage;
 
@@ -86,9 +86,9 @@ public class MicroArchitecture extends Definition {
     this.memories = memories;
     this.functions = functions;
     this.operations = operations;
-    this.allDependencies = new ArrayList<>();
-    this.dependenciesBySource = new HashMap<>();
-    this.dependenciesByDestination = new HashMap<>();
+    this.allInstructionFlows = new ArrayList<>();
+    this.instructionFlowsBySource = new HashMap<>();
+    this.instructionFlowsByDestination = new HashMap<>();
 
     for (Stage stage : stages) {
       stage.setMia(this);
@@ -104,56 +104,56 @@ public class MicroArchitecture extends Definition {
   }
 
   /**
-   * A list containing all the {@link MiaDependency MiaDependencies} in the
+   * A list containing all the {@link MiaInstructionFlow MiaInstructionFlows} in the
    * MiA.
    *
-   * @return A list of all {@code MiaDependencies}.
+   * @return A list of all {@code MiaInstructionFlows}.
    *
-   * @see #dependenciesBySource()
-   * @see #dependenciesByDestination()
+   * @see #instructionFlowsBySource()
+   * @see #instructionFlowsByDestination()
    */
-  public List<MiaDependency> allDependencies() {
-    return allDependencies;
+  public List<MiaInstructionFlow> allInstructionFlows() {
+    return allInstructionFlows;
   }
 
   /**
    * A map from {@link Definition Definitions} to lists of
-   * {@link MiaDependency MiaDependencies}. Each list contains all the
-   * dependencies for which the key {@link Definition} is found as the
-   * {@link MiaDependency#source() source}.
+   * {@link MiaInstructionFlow MiaInstructionFlows}. Each list contains all the
+   * instruction flows for which the key {@link Definition} is found as the
+   * {@link MiaInstructionFlow#source() source}.
    *
-   * @return A map from {@code Definitions} to lists of {@code MiaDependencies}
-   *         containing them in their {@link MiaDependency#source() source}
+   * @return A map from {@code Definitions} to lists of {@code MiaInstructionFlows}
+   *         containing them in their {@link MiaInstructionFlow#source() source}
    *         field.
    *
-   * @see #allDependencies()
-   * @see #dependenciesBySource()
+   * @see #allInstructionFlows()
+   * @see #instructionFlowsBySource()
    */
-  public Map<Definition, List<MiaDependency>> dependenciesBySource() {
-    return dependenciesBySource;
+  public Map<Definition, List<MiaInstructionFlow>> instructionFlowsBySource() {
+    return instructionFlowsBySource;
   }
 
   /**
    * A map from {@link Definition Definitions} to lists of
-   * {@link MiaDependency MiaDependencies}. Each list contains all the
-   * dependencies for which the key {@link Definition} is found as the
-   * {@link MiaDependency#destination() destination}.
+   * {@link MiaInstructionFlow MiaInstructionFlows}. Each list contains all the
+   * instruction flows for which the key {@link Definition} is found as the
+   * {@link MiaInstructionFlow#destination() destination}.
    *
-   * @return A map from {@code Definitions} to lists of {@code MiaDependencies}
+   * @return A map from {@code Definitions} to lists of {@code MiaInstructionFlows}
    *         containing them in their
-   *         {@link MiaDependency#destination() destination} field.
+   *         {@link MiaInstructionFlow#destination() destination} field.
    *
-   * @see #allDependencies()
-   * @see #dependenciesBySource()
+   * @see #allInstructionFlows()
+   * @see #instructionFlowsBySource()
    */
-  public Map<Definition, List<MiaDependency>> dependenciesByDestination() {
-    return dependenciesByDestination;
+  public Map<Definition, List<MiaInstructionFlow>> instructionFlowsByDestination() {
+    return instructionFlowsByDestination;
   }
 
   /**
    * The one stage that has no inputs, i.e., is never returned by
-   * {@link MiaDependency#destination()}. This is useful as a starting point
-   * for traversals of the MiA's dependency graph.
+   * {@link MiaInstructionFlow#destination()}. This is useful as a starting point
+   * for traversals of the MiA's instruction flow graph.
    *
    * <p>The root stage is guaranteed to be unique. If there are multiple stages
    * that would qualify as roots, an error is issued during creation of the

@@ -27,7 +27,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.MiaDependency;
+import vadl.viam.MiaInstructionFlow;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
@@ -36,15 +36,15 @@ import vadl.viam.graph.dependency.ReadStageOutputNode;
  * Enriches the VIAM's {@link vadl.viam.MicroArchitecture} by constructing a
  * graph modeling the flow of instructions through the MiA's stages.
  */
-public class MiaDependencyPass extends Pass {
+public class MiaInstructionFlowPass extends Pass {
 
-  public MiaDependencyPass(GeneralConfiguration configuration) {
+  public MiaInstructionFlowPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("MiaDependencyPass");
+    return PassName.of("MiaInstructionFlowPass");
   }
 
   @Override
@@ -57,11 +57,11 @@ public class MiaDependencyPass extends Pass {
 
     final var stages = mia.stages();
 
-    final var allDependencies = mia.allDependencies();
-    final var dependenciesBySource = mia.dependenciesBySource();
-    final var dependenciesByDestination = mia.dependenciesByDestination();
+    final var allInstructionFlows = mia.allInstructionFlows();
+    final var instructionFlowsBySource = mia.instructionFlowsBySource();
+    final var instructionFlowsByDestination = mia.instructionFlowsByDestination();
 
-    // Find all dependencies from stages on stage outputs. This is done by
+    // Find all instruction flows from stage outputs to stages. This is done by
     // inspecting each stage's behavior for `ReadStageOutputNode`s and
     // following them.
     for (var stage : stages) {
@@ -71,7 +71,7 @@ public class MiaDependencyPass extends Pass {
           .map(ReadStageOutputNode::stageOutput)
           .filter(Objects::nonNull)
           .distinct()
-          .forEach(read -> allDependencies.add(new MiaDependency.StageToStageOutputDependency(
+          .forEach(read -> allInstructionFlows.add(new MiaInstructionFlow.StageOutputToStage(
               read,
               stage
           )));
@@ -79,31 +79,31 @@ public class MiaDependencyPass extends Pass {
 
     final var rootStages = new HashSet<>(stages);
 
-    // Construct indices over the dependencies, both by source and by
+    // Construct indices over the instruction flows, both by source and by
     // destination. This facilitates quick access for traversals.
     // At the same time we also find the root stage by excluding all stages
     // that read from others. This should only leave one stage in a well-formed
     // MiA.
-    for (var dependency : allDependencies) {
-      if (dependency.destination() instanceof Stage destinationStage) {
+    for (var instructionFlow : allInstructionFlows) {
+      if (instructionFlow.destination() instanceof Stage destinationStage) {
         rootStages.remove(destinationStage);
       }
 
-      dependenciesBySource.compute(dependency.source(), (unused, v) -> {
+      instructionFlowsBySource.compute(instructionFlow.source(), (unused, v) -> {
         if (v == null) {
           v = new ArrayList<>();
         }
 
-        v.add(dependency);
+        v.add(instructionFlow);
         return v;
       });
 
-      dependenciesByDestination.compute(dependency.destination(), (unused, v) -> {
+      instructionFlowsByDestination.compute(instructionFlow.destination(), (unused, v) -> {
         if (v == null) {
           v = new ArrayList<>();
         }
 
-        v.add(dependency);
+        v.add(instructionFlow);
         return v;
       });
     }

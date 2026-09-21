@@ -30,7 +30,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
-import vadl.viam.MiaDependency;
+import vadl.viam.MiaInstructionFlow;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -72,11 +72,11 @@ public class StageOrderingPass extends Pass {
 
     // input/output dependencies
     var dep = new HashSet<Pair<Stage, Stage>>(); // stage read from -> stage reading
-    for (var dependency : mia.allDependencies()) {
-      if (dependency instanceof MiaDependency.StageToStageOutputDependency(var src, var dst)) {
+    for (var instructionFlow : mia.allInstructionFlows()) {
+      if (instructionFlow instanceof MiaInstructionFlow.StageOutputToStage(var src, var dst)) {
         dep.add(new Pair<>(src.stage(), dst));
       } else {
-        throw error("Unexpected Dependency", dependency.destination())
+        throw error("Unexpected Dependency", instructionFlow.destination())
             .description("Stage ordering currently only handles reads from stage outputs.")
             .build();
       }
