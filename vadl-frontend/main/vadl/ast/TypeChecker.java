@@ -420,6 +420,16 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     // Find annotations in groups and execute the check of the groups.
     AnnotationTable.groupings(def).forEach((group, annotations) -> {
+
+      // If one of the annotations in the group has previously been identified
+      // as erroneous, we need to skip checking the whole group, as the errored
+      // annotation may be in an inconsistent state. We need to stop checking
+      // for the whole group as the check for one (correct) annotation may
+      // reference other (incorrect) annotations in the same group.
+      // This is yucky.
+      if (annotations.stream().anyMatch(annotation -> erroredDefinitions.contains(annotation.definition))) {
+        return;
+      }
       group.check(def, annotations, this);
       group.applyAst(def, annotations);
     });
