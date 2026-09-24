@@ -20,6 +20,8 @@ instruction set architecture AArch32v6 = {
   constant Size  = 32                 // 32 bit architecture
 
   using Index    = Bits<4>            // register file index for 16 registers
+  using Bits1    = Bits<1>            // size flags
+  using Bits2    = Bits<2>            // size flags
   using Bits5    = Bits<5>            // size for shift/rotate amounts
   using Byte     = Bits<8>            // memory size
   using Word     = Bits<Size>         // word size
@@ -444,6 +446,124 @@ instruction set architecture AArch32v6 = {
     encoding AsId ($i.id, $c.condStr) = {cond = CondCode::$c.condId, op = $i.opcode, setflags = 1, rn = 0b1111, imm5 = 0b11110, type = 0b011}
     assembly AsId ($i.id, $c.condStr) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', register(rm))
     }
+
+
+// vector models ***************************************************************
+
+  format ArithVectorFormat : Word =   // arithmetic vector format
+    { cond     [31..28]               // condition
+    , op       [27..25]               // arithmetic opcode = 0b011
+    , op12     [24..20,7..4]          // combined op1 and op2
+    , rn       [19..16]               // 1st source register
+    , rd       [15..12]               // destination register
+    , ones     [11..8]                // fixed opcode to 0b1111
+    , rm       [3..0]                 // 2nd source register
+    }
+
+  model Select  () : Ex = {(if APSR.GE(3) = 0 then R(rm)(31..24) else  R(rm)(31..24),
+                            if APSR.GE(2) = 0 then R(rm)(23..16) else  R(rm)(23..16),
+                            if APSR.GE(1) = 0 then R(rm)(15.. 8) else  R(rm)(15.. 8),
+                            if APSR.GE(0) = 0 then R(rm)( 7.. 0) else  R(rm)( 7.. 0))}
+
+  model VArith16 (op : BinOp) : Ex = {
+    (R(rn)(31..16) $op R(rm)(31..16), R(rn)(15.. 0) $op R(rm)(15.. 0))}
+
+  model VArith8  (op : BinOp) : Ex = {
+    (R(rn)(31..24) $op R(rm)(31..24), R(rn)(23..16) $op R(rm)(23..16),
+     R(rn)(15.. 8) $op R(rm)(15.. 8), R(rn)( 7.. 0) $op R(rm)( 7.. 0))}
+
+  model VHArith16 (type : Id, op : BinOp) : Ex = {
+    (let resh = R(rn)(31..16) as $type $op R(rm)(31..16) as $type in resh(16..1),
+     let resl = R(rn)(15.. 0) as $type $op R(rm)(15.. 0) as $type in resl(16..1))}
+
+  model VHArith8  (type : Id, op : BinOp) : Ex = {
+    (let res3 = R(rn)(31..24) as $type $op R(rm)(31..24) as $type in res3(8..1),
+     let res2 = R(rn)(23..16) as $type $op R(rm)(23..16) as $type in res2(8..1),
+     let res1 = R(rn)(15.. 8) as $type $op R(rm)(15.. 8) as $type in res1(8..1),
+     let res0 = R(rn)( 7.. 0) as $type $op R(rm)( 7.. 0) as $type in res0(8..1))}
+
+  model FlagS16 (op : BinOp) : Ex = {
+    (let resh = R(rn)(31..16) as SIntW $op R(rm)(31..16) as SIntW in if resh >= 0 then 3 as Bits2 else 0 as Bits2,
+     let resl = R(rn)(15.. 0) as SIntW $op R(rm)(15.. 0) as SIntW in if resl >= 0 then 3 as Bits2 else 0 as Bits2)}
+
+  model FlagS8  (op : BinOp) : Ex = {
+    (let res3 = R(rn)(31..24) as SIntW $op R(rm)(31..24) as SIntW in res3 >= 0,
+     let res2 = R(rn)(23..16) as SIntW $op R(rm)(23..16) as SIntW in res2 >= 0,
+     let res1 = R(rn)(15.. 8) as SIntW $op R(rm)(15.. 8) as SIntW in res1 >= 0,
+     let res0 = R(rn)( 7.. 0) as SIntW $op R(rm)( 7.. 0) as SIntW in res0 >= 0)}
+
+  model FlagSAdd16 () : Ex = { $FlagS16 (+) }
+  model FlagSAdd8  () : Ex = { $FlagS8  (+) }
+  model FlagSSub16 () : Ex = { $FlagS16 (-) }
+  model FlagSSub8  () : Ex = { $FlagS8  (-) }
+
+  model FlagUAdd16 () : Ex = {
+    (let resh = R(rn)(31..16) as Word + R(rm)(31..16) as Word in if resh(16) then 3 as Bits2 else 0 as Bits2,
+     let resl = R(rn)(15.. 0) as Word + R(rm)(15.. 0) as Word in if resl(16) then 3 as Bits2 else 0 as Bits2)}
+
+  model FlagUAdd8  () : Ex = {
+    (let res3 = R(rn)(31..24) as Word + R(rm)(31..24) as Word in res3(8),
+     let res2 = R(rn)(23..16) as Word + R(rm)(23..16) as Word in res2(8),
+     let res1 = R(rn)(15.. 8) as Word + R(rm)(15.. 8) as Word in res1(8),
+     let res0 = R(rn)( 7.. 0) as Word + R(rm)( 7.. 0) as Word in res0(8))}
+
+  model FlagUSub16 () : Ex = {
+    (if R(rn)(31..16) >= R(rm)(31..16) then 3 as Bits2 else 0 as Bits2,
+     if R(rn)(15.. 0) >= R(rm)(15.. 0) then 3 as Bits2 else 0 as Bits2)}
+
+  model FlagUSub8  () : Ex = {
+    (R(rn)(31..24) >= R(rm)(31..24),
+     R(rn)(23..16) >= R(rm)(23..16),
+     R(rn)(15.. 8) >= R(rm)(15.. 8),
+     R(rn)( 7.. 0) >= R(rm)( 7.. 0))}
+
+  model VAdd16 () : Ex = {$VArith16 ( + )}
+  model VAdd8  () : Ex = {$VArith8  ( + )}
+  model VSub16 () : Ex = {$VArith16 ( - )}
+  model VSub8  () : Ex = {$VArith8  ( - )}
+
+  model SHAdd16 () : Ex = {$VHArith16 ( SIntW ; + )}
+  model SHAdd8  () : Ex = {$VHArith8  ( SIntW ; + )}
+  model SHSub16 () : Ex = {$VHArith16 ( SIntW ; - )}
+  model SHSub8  () : Ex = {$VHArith8  ( SIntW ; - )}
+  model UHAdd16 () : Ex = {$VHArith16 ( Word  ; + )}
+  model UHAdd8  () : Ex = {$VHArith8  ( Word  ; + )}
+  model UHSub16 () : Ex = {$VHArith16 ( Word  ; - )}
+  model UHSub8  () : Ex = {$VHArith8  ( Word  ; - )}
+
+  model VectorEncAsm (c : CondRec, i : InstrRec) : IsaDefs = {
+    encoding AsId ($i.id, $c.condStr) = {cond = CondCode::$c.condId, op = 0b011, op12 = $i.opcode, ones = 0b1111}
+    assembly AsId ($i.id, $c.condStr) = (AsStr($i.name, $c.condStr), ' ', register(rd), ',', register(rn), ',', register(rm))
+    }
+
+  model VectorInstr (c : CondRec, i : InstrRec) : IsaDefs = {
+    [undefined when : rd = 15 || rn = 15 || rm = 15]
+    instruction AsId ($i.id, $c.condStr) : ArithVectorFormat =
+      if ($c.condEx) then
+        R(rd) := $i.funct()
+    $VectorEncAsm ($c ; $i)
+    }
+
+  model VectorFlagInstr (c : CondRec, i : InstrRec, flagEx : Ex) : IsaDefs = {
+    [undefined when : rd = 15 || rn = 15 || rm = 15]
+    instruction AsId ($i.id, $c.condStr) : ArithVectorFormat =
+      if ($c.condEx) then
+        let result = $i.funct() in {
+          R(rd) := result
+          APSR.GE := $flagEx
+          }
+    $VectorEncAsm ($c ; $i)
+    }
+
+  model VectorFlagSAdd16Instr (c : CondRec, i : InstrRec) : IsaDefs = { $VectorFlagInstr ($c ; $i ; $FlagSAdd16) }
+  model VectorFlagSAdd8Instr  (c : CondRec, i : InstrRec) : IsaDefs = { $VectorFlagInstr ($c ; $i ; $FlagSAdd8 ) }
+  model VectorFlagSSub16Instr (c : CondRec, i : InstrRec) : IsaDefs = { $VectorFlagInstr ($c ; $i ; $FlagSSub16) }
+  model VectorFlagSSub8Instr  (c : CondRec, i : InstrRec) : IsaDefs = { $VectorFlagInstr ($c ; $i ; $FlagSSub8 ) }
+  model VectorFlagUAdd16Instr (c : CondRec, i : InstrRec) : IsaDefs = { $VectorFlagInstr ($c ; $i ; $FlagUAdd16) }
+  model VectorFlagUAdd8Instr  (c : CondRec, i : InstrRec) : IsaDefs = { $VectorFlagInstr ($c ; $i ; $FlagUAdd8 ) }
+  model VectorFlagUSub16Instr (c : CondRec, i : InstrRec) : IsaDefs = { $VectorFlagInstr ($c ; $i ; $FlagUSub16) }
+  model VectorFlagUSub8Instr  (c : CondRec, i : InstrRec) : IsaDefs = { $VectorFlagInstr ($c ; $i ; $FlagUSub8 ) }
+
 
 
 // multiply models *************************************************************
@@ -1163,6 +1283,24 @@ instruction set architecture AArch32v6 = {
   $CondInstr            (MultiplySMLALInstr   ; (SMLALBT ; "smlalbt" ; SMLALbt ; 0b000'1010'1100 ))
   $CondInstr            (MultiplySMLALInstr   ; (SMLALTB ; "smlaltb" ; SMLALtb ; 0b000'1010'1010 ))
   $CondInstr            (MultiplySMLALInstr   ; (SMLALTT ; "smlaltt" ; SMLALtt ; 0b000'1010'1110 ))
+
+  $CondInstr            (VectorInstr          ; (SEL     ; "sel"     ; Select  ; 0b01'000'1011 ))
+  $CondInstr            (VectorFlagSAdd16Instr; (SADD16  ; "sadd16"  ; VAdd16  ; 0b00'001'0001 ))
+  $CondInstr            (VectorFlagSAdd8Instr ; (SADD8   ; "sadd8"   ; VAdd8   ; 0b00'001'1001 ))
+  $CondInstr            (VectorFlagSSub16Instr; (SSUB16  ; "ssub16"  ; VSub16  ; 0b00'001'0111 ))
+  $CondInstr            (VectorFlagSSub8Instr ; (SSUB8   ; "ssub8"   ; VSub8   ; 0b00'001'1111 ))
+  $CondInstr            (VectorFlagUAdd16Instr; (UADD16  ; "uadd16"  ; VAdd16  ; 0b00'101'0001 ))
+  $CondInstr            (VectorFlagUAdd8Instr ; (UADD8   ; "uadd8"   ; VAdd8   ; 0b00'101'1001 ))
+  $CondInstr            (VectorFlagUSub16Instr; (USUB16  ; "usub16"  ; VSub16  ; 0b00'101'0111 ))
+  $CondInstr            (VectorFlagUSub8Instr ; (USUB8   ; "usub8"   ; VSub8   ; 0b00'101'1111 ))
+  $CondInstr            (VectorInstr          ; (SHADD16 ; "shadd16" ; SHAdd16 ; 0b00'011'0001 ))
+  $CondInstr            (VectorInstr          ; (SHADD8  ; "shadd8"  ; SHAdd8  ; 0b00'011'1001 ))
+  $CondInstr            (VectorInstr          ; (SHSUB16 ; "shsub16" ; SHSub16 ; 0b00'011'0111 ))
+  $CondInstr            (VectorInstr          ; (SHSUB8  ; "shsub8"  ; SHSub8  ; 0b00'011'1111 ))
+  $CondInstr            (VectorInstr          ; (UHADD16 ; "uhadd16" ; UHAdd16 ; 0b00'111'0001 ))
+  $CondInstr            (VectorInstr          ; (UHADD8  ; "uhadd8"  ; UHAdd8  ; 0b00'111'1001 ))
+  $CondInstr            (VectorInstr          ; (UHSUB16 ; "uhsub16" ; UHSub16 ; 0b00'111'0111 ))
+  $CondInstr            (VectorInstr          ; (UHSUB8  ; "uhsub8"  ; UHSub8  ; 0b00'111'1111 ))
 
   $CondInstr            (ExtendInstr          ; (SXTB    ; "sxtb"    ; ExtSB   ; 0b0110'1010))
   $CondInstr            (ExtendInstr          ; (SXTH    ; "sxth"    ; ExtSH   ; 0b0110'1011))
