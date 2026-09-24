@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -117,6 +117,10 @@ public class GenerateTableGenRegistersPass extends Pass {
     }
 
     for (var compilerRegisterClass : compilerRegisterClasses) {
+      if (!compilerRegisterClass.registerFile().expectExtension(RegisterTypesCtx.class).used()) {
+        continue;
+      }
+
       var classRegisters = new ArrayList<TableGenRegister>();
       for (var compilerRegister : compilerRegisterClass.registers()) {
         var register = new TableGenRegister(
@@ -133,13 +137,14 @@ public class GenerateTableGenRegistersPass extends Pass {
         classRegisters.add(register);
       }
 
-      var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
+      var types =
+          compilerRegisterClass.registerFile().expectExtension(RegisterTypesCtx.class).valueTypes();
       registerClasses.add(
           new TableGenRegisterClass(
               configuration.targetName(),
               compilerRegisterClass.name(),
               compilerRegisterClass.alignment().bitAlignment(),
-              List.of(type),
+              types,
               classRegisters,
               compilerRegisterClass.registerFile())
       );
@@ -183,8 +188,8 @@ public class GenerateTableGenRegistersPass extends Pass {
     var orderedRegisters = sortRegisters(registers);
 
     nameSubRegisterIndices(orderedRegisters);
-    
-    var smallestRegisterClassType = getSmallestRegisterClassType(viam, registerClasses, 
+
+    var smallestRegisterClassType = getSmallestRegisterClassType(viam, registerClasses,
         aliasRegisterClasses);
 
     return new Output(registerClasses, aliasRegisterClasses, orderedRegisters, aliasRegisters,
@@ -193,11 +198,11 @@ public class GenerateTableGenRegistersPass extends Pass {
 
   private static ValueType getSmallestRegisterClassType(
       Specification viam,
-      List<TableGenRegisterClass> registerClasses, 
+      List<TableGenRegisterClass> registerClasses,
       List<TableGenAliasRegisterClass> aliasRegisterClasses) {
     var allClasses = Stream.concat(
-          registerClasses.stream(),
-          aliasRegisterClasses.stream());
+        registerClasses.stream(),
+        aliasRegisterClasses.stream());
 
     var type = allClasses
         .flatMap(r -> r.regTypes().stream())
@@ -208,7 +213,7 @@ public class GenerateTableGenRegistersPass extends Pass {
           }
         });
 
-    return ensurePresent(type, 
+    return ensurePresent(type,
         () -> Diagnostic.error("At least on register-class must be defined.", viam.location()));
   }
 

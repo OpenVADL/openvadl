@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
+import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.gcb.valuetypes.ValueType;
@@ -40,6 +41,7 @@ import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
@@ -136,6 +138,15 @@ public class EmitBuiltinsTableGenPass extends LcbTemplateRenderingPass {
 
       if (ty == null) {
         throw Diagnostic.error("Register file has no C++ type", registerFileOperand.origin())
+            .build();
+      }
+
+      return CppTypeMap.getCppBuiltinTypeNameByVadlType(ValueType.from(ty).get());
+    } else if (o instanceof GcbInstructionBareSymbolOperand bareSymbolOperand) {
+      var ty = ((FuncParamNode) bareSymbolOperand.origin()).type().asDataType().fittingCppType();
+
+      if (ty == null) {
+        throw Diagnostic.error("Bare symbol operand has no C++ type", bareSymbolOperand.origin())
             .build();
       }
 

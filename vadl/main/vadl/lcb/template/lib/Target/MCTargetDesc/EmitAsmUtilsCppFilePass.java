@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.annotations.RelocationSyntaxAnnotation;
 import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
+import vadl.lcb.passes.llvmLowering.RegisterTypesCtx;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -147,6 +148,7 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
   public static List<RegisterUtils.Register> registers(Specification specification, Abi abi) {
     var all = new ArrayList<RegisterUtils.Register>();
     var real = specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+        .filter(registerFile -> registerFile.expectExtension(RegisterTypesCtx.class).used())
         .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
         .flatMap(x -> x.registers().stream())
         .toList();
@@ -169,6 +171,7 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
                                                                   Abi abi) {
     var all = new ArrayList<RegisterUtils.RegisterClass>();
     var real = specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+        .filter(registerFile -> registerFile.expectExtension(RegisterTypesCtx.class).used())
         .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
         .toList();
     var aliases = specification.artificialResources()
