@@ -616,15 +616,18 @@ public class SymbolTable {
     var originLoc = getIdentifierLocation(origin);
 
     var error = error("Symbol name already used: " + name, originLoc)
+        .applyIf(otherSymbol != null, builder -> {
+          var otherLoc = getIdentifierLocation(otherSymbol);
+          builder.locationDescription(otherLoc, "First defined here.");
+          return builder;
+        })
         .locationDescription(originLoc, "Second definition here.")
-        .note("All symbols must have a unique name.");
+        .locationNote(originLoc, "This is the violation.")
+        .description("All symbols must have a unique name.")
+        .help("Find another name here.")
+        .build();
 
-    if (otherSymbol != null) {
-      var otherLoc = getIdentifierLocation(otherSymbol);
-      error.locationDescription(otherLoc, "First defined here.");
-    }
-
-    errors.add(error.build());
+    errors.add(error);
   }
 
   private void verifyMacroAvailable(String name, Node origin) {

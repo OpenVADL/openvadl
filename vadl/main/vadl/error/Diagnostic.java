@@ -345,10 +345,7 @@ public class Diagnostic extends RuntimeException {
         return false;
       }
 
-      return this.primaryLocation.equalsIgnoringExpandedFrom(other.primaryLocation)
-          && Streams.zip(this.secondaryLocations.stream(), other.secondaryLocations.stream(),
-              (a, b) -> Pair.of(a, b))
-          .allMatch(pair -> pair.left().equalsIgnoringExpandedFrom(pair.right()));
+      return this.primaryLocation.equalsIgnoringExpandedFrom(other.primaryLocation);
     }
   }
 
