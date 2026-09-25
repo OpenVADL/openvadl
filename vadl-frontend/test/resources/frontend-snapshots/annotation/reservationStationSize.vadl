@@ -1,9 +1,8 @@
-micro architecture MiA implements ISA = {
+// FIXME: This should be merged with all the other reservationStationSize*.vadl
+// tests. However, currently annotations are very brittle, meaning that we
+// abort after the first (few) error(s) and don't see the other.
 
-  // FIXME: This should be merged with all the other
-  // reservationStationSize*.vadl tests. However, currently annotations are
-  // very brittle, meaning that we abort after the first (few) error(s) and
-  // don't see the other.
+micro architecture MiA implements ISA = {
 
   // Correct `size` annotation.
   [size : 1]
