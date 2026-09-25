@@ -136,15 +136,15 @@ public class IssTbChainExitTest extends QemuIssTest {
         /* dynamic write */
         testWith(cfg_all(12, false, false, 0, 0, Behavior.END_NO_CHAIN)),
         /* direct jump + dynamic write */
-        testWith(cfg_all(13, false, true,  0, 0, Behavior.CHAIN_1)),
-        testWith(cfg_all(13, false, true,  0, 1, Behavior.END_NO_CHAIN)),
+        testWith(cfg_all(13, false, false,  1, 0, Behavior.END_NO_CHAIN)),
+        testWith(cfg_all(13, false, false,  1, 1, Behavior.END_NO_CHAIN)),
         /* indirect jump + dynamic write */
         testWith(cfg_all(14, false, false, 1, 0, Behavior.END_NO_CHAIN)),
         testWith(cfg_all(14, false, false, 1, 1, Behavior.END_NO_CHAIN)),
         /* direct + indirect jump + dynamic write */
-        testWith(cfg_all(15, false, true,  1, 0, Behavior.CHAIN_1)),
-        testWith(cfg_all(15, false, true,  1, 1, Behavior.END_NO_CHAIN)),
-        testWith(cfg_all(15, false, true,  1, 2, Behavior.END_NO_CHAIN))
+        testWith(cfg_all(15, false, false,  2, 0, Behavior.END_NO_CHAIN)),
+        testWith(cfg_all(15, false, false,  2, 1, Behavior.END_NO_CHAIN)),
+        testWith(cfg_all(15, false, false,  2, 2, Behavior.END_NO_CHAIN))
     );
   }
 
