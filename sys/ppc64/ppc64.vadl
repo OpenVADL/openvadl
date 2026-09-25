@@ -651,7 +651,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($asm, $laStr($lk; $aa)) =
       {opcd = 0b010000, aa = $aa, lk = $lk}
     assembly AsId($asm, $laStr($lk; $aa)) =
-      ($asm, $laStr($lk; $aa), " ", udec(bo), ",", udec(crbs), ",", udec($TargetAddrImm(extBd; $aa)))
+      ($asm, $laStr($lk; $aa), " ", udec(bo), ",", udec(crbs), ",", sdec(extBd))
   }
 
   // instructions: bc[l][a]
@@ -774,7 +774,7 @@ instruction set architecture PPC64SFS = {
     encoding AsId($asm, $laStr($lk; $aa)) =
       {opcd = 0b010010, aa = $aa, lk = $lk}
     assembly AsId($asm, $laStr($lk; $aa)) =
-      ($asm, $laStr($lk; $aa), " ", udec($TargetAddrImm(extLi; $aa)))
+      ($asm, $laStr($lk; $aa), " ", sdec(extLi))
   }
 
   // instructions: b[l][a]
