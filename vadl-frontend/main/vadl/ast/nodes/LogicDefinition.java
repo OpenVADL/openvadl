@@ -43,7 +43,8 @@ public class LogicDefinition extends Definition implements IdentifiableNode {
   public enum LogicType {
     Forwarding,
     BranchPrediction,
-    Control;
+    Control,
+    ReservationStation;
 
     @Override
     public String toString() {
@@ -51,6 +52,7 @@ public class LogicDefinition extends Definition implements IdentifiableNode {
         case Forwarding -> "forwarding";
         case BranchPrediction -> "branch prediction";
         case Control -> "control";
+        case ReservationStation -> "reservation station";
       };
     }
   }

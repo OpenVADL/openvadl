@@ -420,6 +420,20 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     // Find annotations in groups and execute the check of the groups.
     AnnotationTable.groupings(def).forEach((group, annotations) -> {
+
+      // If one of the annotations in the group has previously been identified
+      // as erroneous, we need to skip checking the whole group, as the errored
+      // annotation may be in an inconsistent state. We need to stop checking
+      // for the whole group as the check for one (correct) annotation may
+      // reference other (incorrect) annotations in the same group.
+      // This is yucky.
+      final var hasErroredAnnotations = annotations
+          .stream()
+          .anyMatch(annotation -> erroredDefinitions.contains(annotation.definition));
+
+      if (hasErroredAnnotations) {
+        return;
+      }
       group.check(def, annotations, this);
       group.applyAst(def, annotations);
     });
@@ -3253,7 +3267,8 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     var logicTypeMapping = Map.of(
         "branch prediction", LogicDefinition.LogicType.BranchPrediction,
         "control", LogicDefinition.LogicType.Control,
-        "forwarding", LogicDefinition.LogicType.Forwarding
+        "forwarding", LogicDefinition.LogicType.Forwarding,
+        "reservation station", LogicDefinition.LogicType.ReservationStation
     );
     if (!logicTypeMapping.containsKey(logicTypeString)) {
       addErrorAndStopChecking(

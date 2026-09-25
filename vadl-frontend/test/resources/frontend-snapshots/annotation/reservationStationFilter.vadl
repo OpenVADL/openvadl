@@ -1,0 +1,29 @@
+// FIXME: This should be merged with all the other
+// reservationStationFilter*.vadl tests. However, currently annotations are
+// very brittle, meaning that we abort after the first (few) error(s) and don't
+// see the other.
+
+micro architecture MiA implements ISA = {
+
+  // Correct `filter` annotation.
+  [size : 1]
+  [source : Decode.ir]
+  [filter : Ops]
+  logic [reservation station] RS0
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+
+  operation Ops = {}
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

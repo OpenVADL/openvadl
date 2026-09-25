@@ -1,0 +1,31 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Wrong value type for `filter` annotation.
+  [size : 1]
+  [source : Decode.ir]
+  [filter : 1]
+  logic [reservation station] RS1
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+
+  operation Ops = {}
+
+  operation OtherOps = {}
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Annotation Argument
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationFilterWrongValue.vadl:6:13
+//       │
+//     6 │   [filter : 1]
+//       │             ^ Expected an identifier but got integer literal
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

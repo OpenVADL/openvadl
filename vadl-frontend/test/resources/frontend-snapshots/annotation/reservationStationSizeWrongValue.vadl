@@ -1,0 +1,26 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Wrong type of value in `size` annotation.
+  [size : Decode]
+  [source : Decode.ir]
+  logic [reservation station] RS7
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Expression
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSizeWrongValue.vadl:4:11
+//       │
+//     4 │   [size : Decode]
+//       │           ^^^^^^ The name 'Decode' points to a `stage definition` which cannot be used as an expression.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
