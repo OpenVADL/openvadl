@@ -39,6 +39,7 @@ import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.common.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.common.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.common.safeResourceRead.nodes.ExprSaveNode;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssGvecOpNode;
@@ -552,7 +553,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Handler
   void handle(TruncateNode toHandle) {
     toHandle.fail(
-        "Shouldn't exist at this point. The ExtractNormalizationPass should have replaced it.");
+        "Shouldn't exist at this point. The IssNormalizationPass should have replaced it.");
   }
 
   /**
@@ -563,7 +564,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Handler
   void handle(ZeroExtendNode toHandle) {
     toHandle.fail(
-        "Shouldn't exist at this point. The ExtractNormalizationPass should have replaced it.");
+        "Shouldn't exist at this point. The IssNormalizationPass should have replaced it.");
   }
 
   /**
@@ -574,7 +575,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Handler
   void handle(SignExtendNode toHandle) {
     toHandle.fail(
-        "Shouldn't exist at this point. The ExtractNormalizationPass should have replaced it.");
+        "Shouldn't exist at this point. The IssNormalizationPass should have replaced it.");
   }
 
   /**
@@ -621,6 +622,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(ReadRegTensorNode toHandle) {
+    var info = toHandle.regTensor().expectExtension(RegInfo.class);
+    if (info.isLazy()) {
+      var dest = singleDestOf(toHandle);
+      replaceCurrent(new TcgHelperCall(
+          dest, new NodeList<>(), true, "lazy_read_" + info.nameLower()
+      ));
+      return;
+    }
     if (toHandle instanceof IssReadRegNode issRead
         && issRead.windowKind() == IssReadRegNode.WindowKind.CHUNK) {
       var dest = singleDestOf(toHandle);
@@ -658,8 +667,15 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       var isStatic = toHandle instanceof IssWriteRegNode issWrite && issWrite.isStatic();
       addBeforeCurrent(new TcgIsJmpTbStateWrite(isStatic));
     }
-    var destVar = singleDestOf(toHandle);
     var srcVar = singleDestOf(toHandle.value());
+    var info = toHandle.regTensor().expectExtension(RegInfo.class);
+    if (info.isLazy()) {
+      replaceCurrent(new TcgHelperCall(
+          null, new NodeList<>(srcVar), true, "lazy_write_" + info.nameLower()
+      ));
+      return;
+    }
+    var destVar = singleDestOf(toHandle);
     if (toHandle instanceof IssWriteRegNode issWrite
         && issWrite.windowKind() == IssWriteRegNode.WindowKind.CHUNK) {
       replaceCurrent(new TcgDepositNode(destVar, destVar, srcVar,
