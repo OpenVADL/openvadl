@@ -36,11 +36,19 @@ public class IssRiscvEmbenchTest extends QemuIssTest {
 
   @Test
   void rv64imEmbenchTest() throws IOException {
+    // compiles for 64-bit riscv using soft-float
     runEmbenchTest("sys/risc-v/rv64v.vadl", "build_spike-rv64im.sh", "qemu-system-rv64imv");
   }
 
   @Test
+  void rv64dEmbenchTest() throws IOException {
+    // compiles for 64-bit riscv using hard-float
+    runEmbenchTest("sys/risc-v/rv64d.vadl", "build_spike-rv64imd.sh", "qemu-system-rv64imd");
+  }
+
+  @Test
   void rv32imEmbenchTest() throws IOException {
+    // compiles for 32-bit riscv using soft-float
     runEmbenchTest("sys/risc-v/rv32im.vadl", "build_spike-rv32im.sh", "qemu-system-rv32im");
   }
 
