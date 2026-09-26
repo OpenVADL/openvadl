@@ -256,17 +256,32 @@ fn add_plain_report_summary(buf: &mut String, report: &Report) {
 
     buf.push_str("\nThe divergence occurred after the following instructions were executed:\n");
 
-    let min_insns = report
+    let min_insns_client = report
         .diff_context
         .iter()
-        .map(|ctx| &ctx.error_instruction.0)
-        .min_by_key(|insns| insns.len());
+        .min_by_key(|ctx| ctx.error_instruction.0.len());
 
-    if let Some(min_insns) = min_insns {
-        for insn in min_insns {
+    if let Some(min_insns_client) = min_insns_client {
+        let other_client_insns = if min_insns_client.client_id == report.diff_context[0].client_id {
+            &report.diff_context[1].error_instruction.0
+        } else {
+            &report.diff_context[0].error_instruction.0
+        };
+
+        for insn in &min_insns_client.error_instruction.0 {
             let pc = &insn.pc;
-            let disas = &insn.disas;
             let insn_data = &insn.insn_data;
+            let mut disas = &insn.disas;
+            if disas.is_empty() {
+                let same_insn = other_client_insns
+                    .iter()
+                    .find(|i| i.insn_data == *insn_data);
+
+                if let Some(same_insn) = same_insn {
+                    disas = &same_insn.disas;
+                }
+            }
+
             buf.push_str(&format!("- (pc={pc}): {disas} ({insn_data})\n"));
         }
     }
