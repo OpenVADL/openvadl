@@ -445,13 +445,13 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
 
 fn data_slice_fmt(bytes: &[u8], endian: Endian) -> String {
     let res = match endian {
-        Endian::Little => {
+        Endian::Big => {
             bytes
                 .iter()
                 .map(|b| format!("{b:02X?}"))
                 .collect::<String>()
         },
-        Endian::Big => {
+        Endian::Little => {
             bytes
                 .iter()
                 .rev()

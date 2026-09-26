@@ -67,7 +67,7 @@ pub struct DiffContextClient {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientState {
-    pub pc: u64,
+    pub pc: String,
     pub content: DiffContextClientStateContent,
 }
 
@@ -80,7 +80,7 @@ pub enum DiffContextClientStateContent {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientStateMemory {
-    pub vaddr: u64,
+    pub vaddr: String,
     pub size: u8,
     pub data: String,
 }
@@ -101,7 +101,7 @@ pub struct DiffContextClientInstructions(pub Vec<DiffContextClientInstruction>);
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientInstruction {
-    pub pc: u64,
+    pub pc: String,
     pub hwaddr: String,
     pub disas: String,
     pub insn_data: String,
@@ -191,7 +191,7 @@ pub fn get_client_instructions(client: &Client, config: &Config) -> DiffContextC
 impl From<&TBInsnInfo> for DiffContextClientInstruction {
     fn from(value: &TBInsnInfo) -> Self {
         DiffContextClientInstruction {
-            pc: value.pc,
+            pc: u64_fmt_hex(value.pc),
             hwaddr: value.hwaddr.as_str().to_owned(),
             disas: value.disas.as_str().to_owned(),
             insn_data: value.data.buffer_slice_fmt(),
@@ -289,7 +289,7 @@ fn diffcontext_tb(
     let content = DiffContextClientStateContent::CPUs(cpus);
 
     DiffContextClientState {
-        pc: tb.tb_info.pc,
+        pc: u64_fmt_hex(tb.tb_info.pc),
         content,
     }
 }
@@ -316,7 +316,7 @@ fn diffcontext_insn(insn: &BrokerSHMInsn, config: &Config, client_config: &confi
     };
 
     DiffContextClientState {
-        pc: insn.insn_info.pc,
+        pc: u64_fmt_hex(insn.insn_info.pc),
         content,
     }
 }
@@ -327,7 +327,7 @@ fn diffcontext_memory_access(
     client_config: &config::Client
 ) -> DiffContextClientStateMemory {
     DiffContextClientStateMemory {
-        vaddr: mem_access.vaddr,
+        vaddr: u64_fmt_hex(mem_access.vaddr),
         size: mem_access.size,
         data: mem_access.data_slice_fmt(client_config.endian),
     }
@@ -356,4 +356,8 @@ fn diffcontext_register(
         name: register.mapped_name(config).to_owned(),
         value: register.data_slice_fmt(client_config.endian),
     }
+}
+
+fn u64_fmt_hex(num: u64) -> String {
+    format!("0x{num:08X?}")
 }
