@@ -23,6 +23,7 @@ pub struct Client {
     pub run_count: u64,
     pub stdout: Option<PathBuf>,
     pub stderr: Option<PathBuf>,
+    pub config_idx: usize,
 }
 
 impl Client {
@@ -153,6 +154,7 @@ impl Client {
             run_count: 0,
             stdout: client_stdout,
             stderr: client_stderr,
+            config_idx: client_idx,
         })
     }
 
