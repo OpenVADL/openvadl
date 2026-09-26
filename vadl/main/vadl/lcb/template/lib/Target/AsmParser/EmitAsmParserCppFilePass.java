@@ -16,6 +16,7 @@
 
 package vadl.lcb.template.lib.Target.AsmParser;
 
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,34 +83,29 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  record TableGenOperand(String name,
-                         boolean requiresPredicate,
-                         String predicateMethod,
-                         boolean isFieldOperand,
-                         String targetName,
-                         String decodeMethod,
-                         String params,
-                         int fieldBitWidth,
-                         long lowest,
-                         long highest) implements Renderable {
-
-    public TableGenOperand(String name, String targetName) {
-      this(name, false, "", false, targetName, "", "", 0, 0, 0);
+  record ParsedImmediateOperand(String name,
+                                boolean requiresPredicate,
+                                String predicateMethod,
+                                boolean isFieldOperand,
+                                String targetName,
+                                String decodeMethod,
+                                String params,
+                                int fieldBitWidth,
+                                long lowest,
+                                long highest) implements Renderable {
+    public ParsedImmediateOperand(String name, String targetName, long lowest, long highest) {
+      this(name, false, "", false, targetName, "", "", 0, lowest, highest);
     }
 
-    public TableGenOperand(String name, String targetName, long lowest, long highest) {
-      this(name, false, "", false, targetName, "", "", 0, lowest,
-          highest);
-    }
-
-    public TableGenOperand(String name, String targetName, boolean requiresPredicate,
-                           String predicateMethod) {
+    public ParsedImmediateOperand(String name, String targetName, boolean requiresPredicate,
+                                  String predicateMethod) {
       this(name, requiresPredicate, predicateMethod, false, targetName, "", "", 0, 0, 0);
     }
 
     @Override
     public Map<String, Object> renderObj() {
-      return Map.of("name", name,
+      return Map.of(
+          "name", name,
           "requiresPredicate", requiresPredicate,
           "predicateMethod", predicateMethod,
           "isFieldOperand", isFieldOperand,
@@ -123,18 +119,34 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  record ParsedRegisterOperand(String name, String targetName, String registerFileName)
+      implements Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "targetName", targetName,
+          "registerFileName", registerFileName
+      );
+    }
+  }
+
   record ParseInstruction(String name,
-                          List<TableGenOperand> operands,
+                          String targets,
                           int numOperands,
-                          String targets)
+                          List<ParsedImmediateOperand> immediateOperands,
+                          List<ParsedRegisterOperand> registerOperands)
       implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of("name", name,
           "targets", targets,
-          "operands", operands,
-          "numOperands", numOperands);
+          "numOperands", numOperands,
+          "immediateOperands", immediateOperands,
+          "registerOperands", registerOperands
+      );
     }
   }
 
@@ -159,15 +171,16 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     var machine = tableGenMachineInstructions.stream()
         .map(instruction -> {
           var name = instruction.getName();
-          var operands = createOperands(instruction);
+          var operandsPair = createOperands(instruction);
           var targets = targets(instruction);
           int numOperands = numberOfParsedOperands(instruction);
           return new ParseInstruction(name,
-              operands,
-              numOperands,
               targets.stream()
                   .map(t -> "\"" + t + "\"")
-                  .collect(Collectors.joining(", "))
+                  .collect(Collectors.joining(", ")),
+              numOperands,
+              operandsPair.right(),
+              operandsPair.left()
           );
         })
         .toList();
@@ -175,15 +188,16 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     var pseudo = tableGenPseudoInstructions.stream()
         .map(instruction -> {
           var name = instruction.getName();
-          var operands = createOperands(instruction);
+          var operandsPair = createOperands(instruction);
           var targets = targets(instruction);
           int numOperands = numberOfParsedOperands(instruction);
           return new ParseInstruction(name,
-              operands,
-              numOperands,
               targets.stream()
                   .map(t -> "\"" + t + "\"")
-                  .collect(Collectors.joining(", "))
+                  .collect(Collectors.joining(", ")),
+              numOperands,
+              operandsPair.right(),
+              operandsPair.left()
           );
         })
         .toList();
@@ -245,16 +259,18 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
    * takes multiple fields as input.
    * </p>
    */
-  private List<TableGenOperand> createOperands(TableGenMachineInstruction instruction) {
-    var result = new ArrayList<TableGenOperand>();
+  private Pair<List<ParsedRegisterOperand>,
+      List<ParsedImmediateOperand>> createOperands(TableGenMachineInstruction instruction) {
+    var parsedImmediateOps = new ArrayList<ParsedImmediateOperand>();
+    var parsedRegisterOps = new ArrayList<ParsedRegisterOperand>();
     // Output
     for (var output : instruction.getOutOperands()) {
       var casted = (GcbDefaultInstructionOperand) output;
-      result.add(new TableGenOperand(casted.name(), casted.name()));
+      parsedRegisterOps.add(new ParsedRegisterOperand(casted.name(), casted.name(), casted.type()));
 
       // field access register operands
       if (output instanceof GcbInstructionRegisterFileOperand regOperand) {
-        createRegisterFieldAccessOperands(regOperand, casted, result);
+        createRegisterFieldAccessOperands(regOperand, casted, parsedRegisterOps);
       }
     }
 
@@ -263,39 +279,47 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
       var casted = (GcbDefaultInstructionOperand) input;
       if (input instanceof TableGenInstructionImmediateOperand immediateOperand) {
         addMachineInstImmediateOperand(immediateOperand.name(), input.origin().location(),
-            immediateOperand.formatFields(), immediateOperand.immediateOperand(), result);
+            immediateOperand.formatFields(), immediateOperand.immediateOperand(),
+            parsedImmediateOps);
       } else if (input instanceof TableGenInstructionLabelOperand immediateOperand) {
         addMachineInstImmediateOperand(immediateOperand.name(), input.origin().location(),
-            immediateOperand.formatFields(), immediateOperand.immediateOperand(), result);
+            immediateOperand.formatFields(), immediateOperand.immediateOperand(),
+            parsedImmediateOps);
       } else if (input instanceof GcbInstructionRegisterFileOperand regOperand) {
         if (regOperand.formatField() instanceof RenamedFieldRefNode.RenamedField renamedField) {
-          var operand = new TableGenOperand(renamedField.inner().simpleName(), casted.name());
-          result.add(operand);
+          var operand =
+              new ParsedRegisterOperand(renamedField.inner().simpleName(), casted.name(),
+                  casted.type());
+          parsedRegisterOps.add(operand);
         } else {
           // normal register operand
-          result.add(new TableGenOperand(casted.name(), casted.name()));
+          parsedRegisterOps.add(
+              new ParsedRegisterOperand(casted.name(), casted.name(), casted.type()));
 
           // field access register operands
-          createRegisterFieldAccessOperands(regOperand, casted, result);
+          createRegisterFieldAccessOperands(regOperand, casted, parsedRegisterOps);
         }
 
       } else {
-        result.add(new TableGenOperand(casted.name(), casted.name()));
+        parsedRegisterOps.add(
+            new ParsedRegisterOperand(casted.name(), casted.name(), casted.type()));
       }
 
     }
 
-    return result;
+    return new Pair<>(parsedRegisterOps, parsedImmediateOps);
 
   }
 
-  private List<TableGenOperand> createOperands(TableGenPseudoInstruction instruction) {
-    var result = new ArrayList<TableGenOperand>();
+  private Pair<List<ParsedRegisterOperand>,
+      List<ParsedImmediateOperand>> createOperands(TableGenPseudoInstruction instruction) {
+    var parsedImmediateOps = new ArrayList<ParsedImmediateOperand>();
+    var parsedRegisterOps = new ArrayList<ParsedRegisterOperand>();
 
     // Output
     for (var output : instruction.getOutOperands()) {
       var casted = (GcbDefaultInstructionOperand) output;
-      result.add(new TableGenOperand(casted.name(), casted.name()));
+      parsedRegisterOps.add(new ParsedRegisterOperand(casted.name(), casted.name(), casted.type()));
     }
 
     // Inputs
@@ -305,21 +329,37 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         var type = ((FuncParamNode) operand.origin()).type().asDataType();
         var valueRange = computeValueRange(type.bitWidth(), type.isSigned());
 
-        result.add(new TableGenOperand(casted.name(), casted.name(), valueRange.left(),
+        parsedImmediateOps.add(
+            new ParsedImmediateOperand(casted.name(), casted.name(), valueRange.left(),
+            valueRange.right()));
+      } else if (input instanceof TableGenInstructionImmediateOperand operand) {
+        var type = operand.immediateOperand().rawType().asDataType();
+        var valueRange = computeValueRange(type.bitWidth(), type.isSigned());
+
+        parsedImmediateOps.add(
+            new ParsedImmediateOperand(casted.name(), casted.name(), valueRange.left(),
+            valueRange.right()));
+      } else if (input instanceof TableGenInstructionLabelOperand operand) {
+        var type = operand.immediateOperand().rawType().asDataType();
+        var valueRange = computeValueRange(type.bitWidth(), type.isSigned());
+
+        parsedImmediateOps.add(
+            new ParsedImmediateOperand(casted.name(), casted.name(), valueRange.left(),
             valueRange.right()));
       } else {
-        result.add(new TableGenOperand(casted.name(), casted.name()));
+        parsedRegisterOps.add(
+            new ParsedRegisterOperand(casted.name(), casted.name(), casted.type()));
       }
     }
 
-    return result;
+    return new Pair<>(parsedRegisterOps, parsedImmediateOps);
   }
 
   private void addMachineInstImmediateOperand(String operandName,
                                               SourceLocation originLocation,
                                               List<Format.Field> formatFields,
                                               TableGenImmediateRecord tableGenImmediate,
-                                              List<TableGenOperand> result) {
+                                              List<ParsedImmediateOperand> result) {
     if (formatFields.size() != 1) {
       DeferredDiagnosticStore.add(Diagnostic.warning(
           "The AsmParser cannot deal with access functions with multiple fields.",
@@ -327,7 +367,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     }
 
     var field = formatFields.get(0);
-    var fieldOperand = new TableGenOperand(
+    var fieldOperand = new ParsedImmediateOperand(
         field.simpleName(),
         true,
         tableGenImmediate.predicateMethod().lower(),
@@ -343,7 +383,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
     // only add field access operand if field access is actually used in behavior
     if (!field.simpleName().equals(operandName)) {
-      var fieldAccessOperand = new TableGenOperand(operandName,
+      var fieldAccessOperand = new ParsedImmediateOperand(operandName,
           operandName,
           true,
           tableGenImmediate.predicateMethod().lower()
@@ -362,12 +402,12 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
   private void createRegisterFieldAccessOperands(
       GcbInstructionRegisterFileOperand regOperand,
       GcbDefaultInstructionOperand casted,
-      List<TableGenOperand> result) {
+      List<ParsedRegisterOperand> result) {
     var fieldAccesses = regOperand.formatField().format().fieldAccesses().stream().filter(
         fa -> fa.fieldRefs().getFirst().simpleName().equals(casted.name())).toList();
     fieldAccesses.forEach(
         fa -> result.add(
-            new TableGenOperand(fa.simpleName(), casted.name()))
+            new ParsedRegisterOperand(fa.simpleName(), casted.name(), casted.type()))
     );
   }
 
