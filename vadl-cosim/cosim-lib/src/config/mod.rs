@@ -18,6 +18,7 @@ pub struct Config {
 }
 
 impl Config {
+    #[inline]
     pub fn for_client(&self, idx: usize) -> &Client {
         &self.qemu.clients[idx]
     }
@@ -219,7 +220,7 @@ pub struct Client {
     pub endian: Endian,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Endian {
     #[default]

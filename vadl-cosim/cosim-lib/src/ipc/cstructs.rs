@@ -1,7 +1,6 @@
 use std::{mem, time::Duration};
 
 use color_eyre::{Result, eyre::bail};
-use serde::{Serialize, ser::SerializeStruct};
 use tracing::debug;
 
 use crate::{
@@ -22,15 +21,6 @@ pub const MAX_INSN_DATA_SIZE: usize = 64;
 pub struct SHMString {
     pub len: usize,
     value: [u8; SHMSTRING_MAX_LEN],
-}
-
-impl Serialize for SHMString {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(self.as_str())
-    }
 }
 
 impl SHMString {
@@ -70,14 +60,8 @@ impl SHMRegister {
         &self.data[..self.size as usize]
     }
 
-    pub fn data_slice_fmt(&self) -> String {
-        let s = self
-            .data_slice()
-            .iter()
-            .map(|b| format!("{b:02X?}"))
-            .collect::<String>();
-
-        format!("0x{s}")
+    pub fn data_slice_fmt(&self, endian: Endian) -> String {
+        data_slice_fmt(self.data_slice(), endian)
     }
 
     pub fn mapped_name<'a>(&'a self, config: &'a Config) -> &'a str {
@@ -89,7 +73,7 @@ impl SHMRegister {
         }
     }
 
-    pub fn to_u64(&self, endian: &Endian) -> u64 {
+    pub fn to_u64(&self, endian: Endian) -> u64 {
         const BUF_LEN: usize = 8;
         let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
         match endian {
@@ -102,19 +86,6 @@ impl SHMRegister {
                 u64::from_be_bytes(buf)
             }
         }
-    }
-}
-
-impl Serialize for SHMRegister {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("register", 3)?;
-        s.serialize_field("size", &self.size)?;
-        s.serialize_field("data", &self.data_slice_fmt())?;
-        s.serialize_field("name", &self.name)?;
-        s.end()
     }
 }
 
@@ -144,19 +115,6 @@ impl SHMCPU {
     }
 }
 
-impl Serialize for SHMCPU {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("cpu", 3)?;
-        s.serialize_field("idx", &self.idx)?;
-        s.serialize_field("registers_size", &self.registers_size)?;
-        s.serialize_field("registers", &self.registers_slice())?;
-        s.end()
-    }
-}
-
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct InsnData {
@@ -181,18 +139,6 @@ impl InsnData {
             .collect::<String>();
 
         format!("0x{s}")
-    }
-}
-
-impl Serialize for InsnData {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("insn-data", 2)?;
-        s.serialize_field("size", &self.size)?;
-        s.serialize_field("buffer", &self.buffer_slice())?;
-        s.end()
     }
 }
 
@@ -227,22 +173,6 @@ impl TBInsnInfo {
     }
 }
 
-impl Serialize for TBInsnInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("tb-insn-info", 6)?;
-        s.serialize_field("pc", &self.pc)?;
-        s.serialize_field("size", &self.size)?;
-        s.serialize_field("symbol", &self.symbol)?;
-        s.serialize_field("hwaddr", &self.hwaddr)?;
-        s.serialize_field("disas", &self.disas)?;
-        s.serialize_field("data", &self.data)?;
-        s.end()
-    }
-}
-
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct TBInfo {
@@ -269,19 +199,6 @@ impl TBInfo {
     }
 }
 
-impl Serialize for TBInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("tb-info", 3)?;
-        s.serialize_field("pc", &self.pc)?;
-        s.serialize_field("insns_info_size", &self.insns_info_size)?;
-        s.serialize_field("insns_info", self.insns_info_slice())?;
-        s.end()
-    }
-}
-
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct BrokerSHMTB {
@@ -289,28 +206,6 @@ pub struct BrokerSHMTB {
     pub init_mask: i32,
     pub cpus: [SHMCPU; MAX_CPU_COUNT],
     pub tb_info: TBInfo,
-}
-
-impl Serialize for BrokerSHMTB {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("shm-tb", 3)?;
-        s.serialize_field("init_mask", &self.init_mask)?;
-
-        let mut cpus = vec![];
-        for idx in 0..MAX_CPU_COUNT {
-            let flag = self.init_mask & (1 << idx);
-            if flag == 1 {
-                cpus.push(&self.cpus[idx]);
-            }
-        }
-
-        s.serialize_field("cpus", &cpus)?;
-        s.serialize_field("tb_info", &self.tb_info)?;
-        s.end()
-    }
 }
 
 impl BrokerSHMTB {
@@ -324,7 +219,7 @@ impl BrokerSHMTB {
 }
 
 #[repr(C)]
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub enum BrokerSHMInsnDataType {
     InsnExec = 0,
     InsnMem = 1 << 0,
@@ -339,36 +234,6 @@ pub struct BrokerSHMInsn {
     pub cpus: [SHMCPU; MAX_CPU_COUNT],
     pub insn_info: TBInsnInfo,
     pub mem_access_info: MemAccessInfo,
-}
-
-impl Serialize for BrokerSHMInsn {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("shm-tb", 5)?;
-        s.serialize_field("init_mask", &self.init_mask)?;
-        s.serialize_field("insn_data_type", &self.insn_data_type)?;
-
-        if let Some(cpus) = self.cpus() {
-            let mut used_cpus = vec![];
-            #[allow(clippy::needless_range_loop)]
-            for idx in 0..MAX_CPU_COUNT {
-                let flag = self.init_mask & (1 << idx);
-                if flag == 1 {
-                    used_cpus.push(&cpus[idx]);
-                }
-            }
-            s.serialize_field("cpus", &Some(used_cpus))?;
-        } else {
-            s.serialize_field("cpus", &None::<Vec<&SHMCPU>>)?;
-        }
-
-        s.serialize_field("insn_info", &self.insn_info)?;
-        s.serialize_field("mem_access_info", &self.mem_access_info())?;
-
-        s.end()
-    }
 }
 
 impl BrokerSHMInsn {
@@ -415,20 +280,6 @@ pub struct MemAccessInfo {
     pub is_store: bool,
 }
 
-impl Serialize for MemAccessInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("shm-mem", 4)?;
-        s.serialize_field("size", &self.size)?;
-        s.serialize_field("data", &self.data)?;
-        s.serialize_field("vaddr", &self.vaddr)?;
-        s.serialize_field("is_store", &self.is_store)?;
-        s.end()
-    }
-}
-
 impl MemAccessInfo {
     const BUF_LEN: usize = 16;
 
@@ -450,17 +301,11 @@ impl MemAccessInfo {
         u128::from_ne_bytes(self.data)
     }
 
-    pub fn data_slice_fmt(&self) -> String {
-        let s = self
-            .data_slice()
-            .iter()
-            .map(|b| format!("{b:02X?}"))
-            .collect::<String>();
-
-        format!("0x{s}")
+    pub fn data_slice_fmt(&self, endian: Endian) -> String {
+        data_slice_fmt(self.data_slice(), endian)
     }
 
-    pub fn to_u128(&self, endian: &Endian) -> u128 {
+    pub fn to_u128(&self, endian: Endian) -> u128 {
         let mut buf: [u8; Self::BUF_LEN] = [0; Self::BUF_LEN];
         let source_slice = self.data_slice();
         match endian {
@@ -596,4 +441,25 @@ impl<const SIZE: usize> BrokerSHMRingBuffer<SIZE> {
         self.rb_mutex.signal()?;
         Ok(())
     }
+}
+
+fn data_slice_fmt(bytes: &[u8], endian: Endian) -> String {
+    let res = match endian {
+        Endian::Little => {
+            bytes
+                .iter()
+                .map(|b| format!("{b:02X?}"))
+                .collect::<String>()
+        },
+        Endian::Big => {
+            bytes
+                .iter()
+                .rev()
+                .map(|b| format!("{b:02X?}"))
+                .collect::<String>()
+
+        },
+    };
+
+    format!("0x{res}")
 }
