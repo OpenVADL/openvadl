@@ -67,6 +67,25 @@ instruction set architecture RV3264Base = {
     , shamt  = rs2 as UInt                // 5 bit unsigned shift ammount
     }
 
+  // crc_32_tab[(crc ^ ((BYTE) octet)) & 0xff] ^ (crc >> 8)
+  // 
+  // <=> CRC2(crc_32_tab[CRC1(crc, octet)], crc)
+  //
+
+  // (crc ^ ((BYTE) octet)) & 0xff
+  instruction CRC1 : Rtype = 
+    X(rd) := VADL::and(VADL::xor(X(rs1), X(rs2)), 0xff)
+  assembly CRC1 = ("crc1 ", register(rd), ",", register(rs1), ",", register(rs2))
+  // stub encoding
+  encoding CRC1 = { opcode = 0b01, funct3 = 0b01, funct7 = 0b01 }
+
+  // x ^ (crc >> 8)
+  instruction CRC2 : Rtype = 
+    X(rd) := VADL::xor(X(rs1), VADL::lsr(X(rs2), 8))
+  assembly CRC2 = ("crc2 ", register(rd), ",", register(rs1), ",", register(rs2))
+  // stub encoding
+  encoding CRC2 = { opcode = 0b10, funct3 = 0b01, funct7 = 0b01 }
+
   model FtypeModel (zero45 : Id, shift : Id) : IsaDefs = {
     format Ftype : Inst =                 // Ftype shift immediate instruction format
       { funct2 : Bits<2>                  // [31..30] 2 bit function code
