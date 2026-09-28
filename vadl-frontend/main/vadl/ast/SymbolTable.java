@@ -594,10 +594,9 @@ public class SymbolTable {
     if (Type.builtinTypeBases.contains(name) && (origin instanceof UsingDefinition
         || origin instanceof FormatDefinition)) {
       var originLoc = getIdentifierLocation(origin);
-      var error = error("Symbol name already used: " + name, originLoc)
+      errors.add(error("Symbol name already used: " + name, originLoc)
           .locationDescription(originLoc, "This name is already claimed by a built-in type.")
-          .build();
-      errors.add(error);
+          .build());
       return;
     }
 
@@ -615,16 +614,14 @@ public class SymbolTable {
 
     var originLoc = getIdentifierLocation(origin);
 
-    var error = error("Symbol name already used: " + name, originLoc)
+    errors.add(error("Symbol name already used: " + name, originLoc)
+        .applyIf(otherSymbol != null, builder -> {
+          var otherLoc = getIdentifierLocation(otherSymbol);
+          return builder.locationDescription(otherLoc, "First defined here.");
+        })
         .locationDescription(originLoc, "Second definition here.")
-        .note("All symbols must have a unique name.");
-
-    if (otherSymbol != null) {
-      var otherLoc = getIdentifierLocation(otherSymbol);
-      error.locationDescription(otherLoc, "First defined here.");
-    }
-
-    errors.add(error.build());
+        .note("All symbols must have a unique name.")
+        .build());
   }
 
   private void verifyMacroAvailable(String name, Node origin) {
@@ -641,14 +638,12 @@ public class SymbolTable {
     }
 
     var originLocation = getIdentifierLocation(origin);
-    var error = error("Macro name already used: " + name, originLocation)
-        .locationDescription(originLocation, "Second definition here.")
-        .note("All macros must have a unique name.");
-
     var otherLoc = getIdentifierLocation(other);
-    error.locationDescription(otherLoc, "First defined here.");
-
-    errors.add(error.build());
+    errors.add(error("Macro name already used: " + name, originLocation)
+        .locationDescription(otherLoc, "First defined here.")
+        .locationDescription(originLocation, "Second definition here.")
+        .note("All macros must have a unique name." )
+        .build());
   }
 
   private void reportUnkownError(String type, String actual, WithLocation locatable,
@@ -668,7 +663,7 @@ public class SymbolTable {
 
   private void reportAlreadyDefined(String error, SourceLocation location,
                                     SourceLocation firstOccurence) {
-    errors.add(Diagnostic.error(error, location)
+    errors.add(error(error, location)
         .locationNote(firstOccurence, "Already defined here.")
         .build());
   }

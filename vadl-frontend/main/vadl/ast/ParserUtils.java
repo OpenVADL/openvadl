@@ -653,23 +653,22 @@ class ParserUtils {
     // them and therefore only know that too many exist but not how many were provided.
     // The macro may not exist if we are calling a macro that is passed to the current macro, in
     // which case we need to rely on the type.
-    var builder = error("Invalid Model Invocation", location);
-    if (macro != null) {
-      builder.locationDescription(location,
-          "Model `%s` only expected %d arguments but, you provided at least %d.",
-          macro.name().name,
-          macro.params().size(), macro.params().size() + 1);
-    } else {
-      var argCount = switch (type) {
-        case ProjectionType pt -> pt.arguments.size();
-        default -> 1;
-      };
+    return error("Invalid Model Invocation", location)
+        .applyIf(macro != null, builder -> builder.locationDescription(location,
+            "Model `%s` only expected %d arguments but, you provided at least %d.",
+            macro.name().name,
+            macro.params().size(), macro.params().size() + 1))
+        .applyIf(macro == null, builder -> {
+          var argCount = switch (type) {
+            case ProjectionType pt -> pt.arguments.size();
+            default -> 1;
+          };
 
-      builder.locationDescription(location,
-          "The model only expected %d arguments but, you provided at least %d.",
-          argCount, argCount + 1);
-    }
-    return builder.build();
+          return builder.locationDescription(location,
+              "The model only expected %d arguments but, you provided at least %d.",
+              argCount, argCount + 1);
+        })
+        .build();
   }
 
   static Diagnostic tooManyRecordArgumentsError(RecordType recordType, SourceLocation location) {
