@@ -4,8 +4,7 @@ use color_eyre::{eyre::anyhow, Result};
 use serde::Serialize;
 
 use crate::{
-    config::Config,
-    ipc::{
+    config::{self, Config}, ipc::{
         cstructs::{BrokerSHMInsn, BrokerSHMTB, MemAccessInfo, SHMCPU, SHMRegister, TBInsnInfo},
         qemu::Client,
     },
@@ -68,7 +67,7 @@ pub struct DiffContextClient {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientState {
-    pub pc: u64,
+    pub pc: String,
     pub content: DiffContextClientStateContent,
 }
 
@@ -81,7 +80,7 @@ pub enum DiffContextClientStateContent {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientStateMemory {
-    pub vaddr: u64,
+    pub vaddr: String,
     pub size: u8,
     pub data: String,
 }
@@ -102,7 +101,7 @@ pub struct DiffContextClientInstructions(pub Vec<DiffContextClientInstruction>);
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DiffContextClientInstruction {
-    pub pc: u64,
+    pub pc: String,
     pub hwaddr: String,
     pub disas: String,
     pub insn_data: String,
@@ -123,38 +122,38 @@ impl DiffEntry {
 }
 
 impl DiffContextClient {
-    pub fn new_without_after_state<T: Into<DiffContextClientState>>(
+    pub fn new_without_after_state(
         client_id: String,
         client_name: Option<String>,
         client_run_count: u64,
-        before_state: T,
+        before_state: DiffContextClientState,
         error_instruction: DiffContextClientInstructions,
     ) -> Self {
         Self {
             client_id,
             client_name,
             client_run_count,
-            before_state: before_state.into(),
+            before_state,
             error_instruction,
             after_state: None,
         }
     }
 
-    pub fn new_with_after_state<T: Into<DiffContextClientState>>(
+    pub fn new_with_after_state(
         client_id: String,
         client_name: Option<String>,
         client_run_count: u64,
-        before_state: T,
+        before_state: DiffContextClientState,
         error_instruction: DiffContextClientInstructions,
-        after_state: T,
+        after_state: DiffContextClientState,
     ) -> Self {
         Self {
             client_id,
             client_name,
             client_run_count,
-            before_state: before_state.into(),
+            before_state,
             error_instruction,
-            after_state: Some(after_state.into()),
+            after_state: Some(after_state),
         }
     }
 }
@@ -192,7 +191,7 @@ pub fn get_client_instructions(client: &Client, config: &Config) -> DiffContextC
 impl From<&TBInsnInfo> for DiffContextClientInstruction {
     fn from(value: &TBInsnInfo) -> Self {
         DiffContextClientInstruction {
-            pc: value.pc,
+            pc: u64_fmt_hex(value.pc),
             hwaddr: value.hwaddr.as_str().to_owned(),
             disas: value.disas.as_str().to_owned(),
             insn_data: value.data.buffer_slice_fmt(),
@@ -206,17 +205,25 @@ pub fn get_all_clients_contexts_before(
 ) -> VecDeque<DiffContextClientState> {
     clients
         .iter()
-        .map(|client| get_client_context_before(client, config))
+        .map(|client| get_client_context_before(config, client))
         .collect()
 }
 
-pub fn get_client_context_before(client: &Client, config: &Config) -> DiffContextClientState {
+pub fn get_client_context_before(config: &Config, client: &Client) -> DiffContextClientState {
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            (client.shm.read_buffer_prev().as_insn(), config).into()
+            diffcontext_insn(
+                client.shm.read_buffer_prev().as_insn(),
+                config,
+                config.for_client(client.config_idx),
+            )
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            (client.shm.read_buffer_prev().as_tb(), config).into()
+            diffcontext_tb(
+                client.shm.read_buffer_prev().as_tb(),
+                config,
+                config.for_client(client.config_idx),
+            )
         }
     }
 }
@@ -235,98 +242,122 @@ pub fn get_client_context_current(
     client: &mut Client,
     config: &Config,
 ) -> Result<DiffContextClientState> {
+    let client_config = config.for_client(client.config_idx);
     match config.testing.protocol.layer {
         crate::config::ProtocolLayer::Insn => {
-            let ctx = (
-                client
-                    .shm
-                    .read_buffer()?
-                    .ok_or(anyhow!("expected to be able to read ringbuffer"))?
-                    .as_insn(),
+            let insn = client
+                .shm
+                .read_buffer()?
+                .ok_or(anyhow!("expected to be able to read ringbuffer"))?
+                .as_insn();
+
+            let ctx = diffcontext_insn(
+                insn,
                 config,
-            )
-                .into();
+                client_config,
+            );
+
             Ok(ctx)
         }
         crate::config::ProtocolLayer::TB | crate::config::ProtocolLayer::TBStrict => {
-            let ctx = (
-                client
-                    .shm
-                    .read_buffer()?
-                    .ok_or(anyhow!("expected to be able to read ringbuffer"))?
-                    .as_tb(),
+            let tb = client
+                .shm
+                .read_buffer()?
+                .ok_or(anyhow!("expected to be able to read ringbuffer"))?
+                .as_tb();
+
+            let ctx = diffcontext_tb(
+                tb,
                 config,
-            )
-                .into();
+                client_config,
+            );
+
             Ok(ctx)
         }
     }
 }
 
-impl From<(&BrokerSHMTB, &Config)> for DiffContextClientState {
-    fn from((value, config): (&BrokerSHMTB, &Config)) -> Self {
-        let cpus = value.cpus.iter().map(|cpu| (cpu, config).into()).collect();
-        let content = DiffContextClientStateContent::CPUs(cpus);
+fn diffcontext_tb(
+    tb: &BrokerSHMTB,
+    config: &Config,
+    client_config: &config::Client
+) -> DiffContextClientState {
+    let cpus = tb.cpus
+        .iter()
+        .map(|cpu| diffcontext_cpu(cpu, config, client_config))
+        .collect();
+    let content = DiffContextClientStateContent::CPUs(cpus);
 
-        DiffContextClientState {
-            pc: value.tb_info.pc,
-            content,
-        }
+    DiffContextClientState {
+        pc: u64_fmt_hex(tb.tb_info.pc),
+        content,
     }
 }
 
-impl From<(&BrokerSHMInsn, &Config)> for DiffContextClientState {
-    fn from((value, config): (&BrokerSHMInsn, &Config)) -> Self {
-        let content = match value.insn_data_type {
-            crate::ipc::cstructs::BrokerSHMInsnDataType::InsnExec => {
-                let cpus = value
-                    .cpus()
-                    .unwrap()
-                    .iter()
-                    .map(|cpu| (cpu, config).into())
-                    .collect();
-                DiffContextClientStateContent::CPUs(cpus)
-            }
-            crate::ipc::cstructs::BrokerSHMInsnDataType::InsnMem => {
-                let mem = value.mem_access_info().unwrap().into();
-                DiffContextClientStateContent::Memory(mem)
-            }
-        };
-
-        DiffContextClientState {
-            pc: value.insn_info.pc,
-            content,
+fn diffcontext_insn(insn: &BrokerSHMInsn, config: &Config, client_config: &config::Client) -> DiffContextClientState {
+    let content = match insn.insn_data_type {
+        crate::ipc::cstructs::BrokerSHMInsnDataType::InsnExec => {
+            let cpus = insn
+                .cpus()
+                .unwrap()
+                .iter()
+                .map(|cpu| diffcontext_cpu(cpu, config, client_config))
+                .collect();
+            DiffContextClientStateContent::CPUs(cpus)
         }
+        crate::ipc::cstructs::BrokerSHMInsnDataType::InsnMem => {
+            let mem = diffcontext_memory_access(
+                insn.mem_access_info().unwrap(),
+                config,
+                client_config,
+            );
+            DiffContextClientStateContent::Memory(mem)
+        }
+    };
+
+    DiffContextClientState {
+        pc: u64_fmt_hex(insn.insn_info.pc),
+        content,
     }
 }
 
-impl From<&MemAccessInfo> for DiffContextClientStateMemory {
-    fn from(value: &MemAccessInfo) -> Self {
-        DiffContextClientStateMemory {
-            vaddr: value.vaddr,
-            size: value.size,
-            data: value.data_slice_fmt(),
-        }
+fn diffcontext_memory_access(
+    mem_access: &MemAccessInfo,
+    _config: &Config,
+    client_config: &config::Client
+) -> DiffContextClientStateMemory {
+    DiffContextClientStateMemory {
+        vaddr: u64_fmt_hex(mem_access.vaddr),
+        size: mem_access.size,
+        data: mem_access.data_slice_fmt(client_config.endian),
     }
 }
 
-impl From<(&SHMCPU, &Config)> for DiffContextClientStateCPU {
-    fn from((value, config): (&SHMCPU, &Config)) -> Self {
-        let registers = value
-            .registers_slice()
-            .iter()
-            .map(|r| (r, config).into())
-            .collect();
+fn diffcontext_cpu(
+    cpu: &SHMCPU,
+    config: &Config,
+    client_config: &config::Client,
+) -> DiffContextClientStateCPU {
+    let registers = cpu
+        .registers_slice()
+        .iter()
+        .map(|reg| diffcontext_register(reg, config, client_config))
+        .collect();
 
-        DiffContextClientStateCPU { registers }
+    DiffContextClientStateCPU { registers }
+}
+
+fn diffcontext_register(
+    register: &SHMRegister,
+    config: &Config,
+    client_config: &config::Client,
+) -> DiffContextClientStateRegister {
+    DiffContextClientStateRegister {
+        name: register.mapped_name(config).to_owned(),
+        value: register.data_slice_fmt(client_config.endian),
     }
 }
 
-impl From<(&SHMRegister, &Config)> for DiffContextClientStateRegister {
-    fn from((value, config): (&SHMRegister, &Config)) -> Self {
-        DiffContextClientStateRegister {
-            name: value.mapped_name(config).to_owned(),
-            value: value.data_slice_fmt(),
-        }
-    }
+fn u64_fmt_hex(num: u64) -> String {
+    format!("0x{num:08X?}")
 }
