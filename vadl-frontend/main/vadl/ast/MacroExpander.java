@@ -819,9 +819,14 @@ class MacroExpander
 
   @Override
   public Definition visit(RegisterDefinition definition) {
+    var relationTypeLiteral = new RegisterDefinition.RelationTypeLiteral(
+        expandExprs(definition.typeLiteral.argTypes),
+        expandExpr(definition.typeLiteral.resultType)
+    );
+
     return new RegisterDefinition(
         expandExpr(definition.identifier),
-        expandExpr(definition.typeLiteral),
+        relationTypeLiteral,
         copyLoc(definition.loc)
     );
   }
