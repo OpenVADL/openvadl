@@ -1,0 +1,17 @@
+// Previously this used to crash because the register definition was wrongly expanded
+
+model defs(): IsaDefs = {
+  register        S : Bits<5> -> Bits<32>
+}
+
+instruction set architecture ISA = {
+  $defs()
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
