@@ -144,6 +144,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_machine_lower", configuration().machineName().toLowerCase());
     vars.put("register_tensors", mapRegTensors(specification));
     vars.put("float_builtins", getFloatBuiltins(floatBuiltinConfigs));
+    vars.put("is_ume", specification.userModeEmulation().isPresent());
     vars.put("float_facts", getFloatFacts(specification, floatBuiltinConfigs));
     vars.put("pc_info", getPcInfo(specification));
     vars.put("target_size", configuration().targetSize().width);
