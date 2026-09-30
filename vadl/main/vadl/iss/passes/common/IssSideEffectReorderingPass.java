@@ -80,6 +80,8 @@ import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolver;
  * <p>TODO: Grouping conjunct conditions into static and dynamic preserves much optimization
  *     potential. A thorough condition analysis pass could expose more potential by extracting
  *     static parts out of otherwise dynamic conditions.
+ *     This could be done with some form of shannon expansion, but must be done carefully to
+ *     avoid an exponential blowup in code size.
  */
 public class IssSideEffectReorderingPass extends Pass {
 
@@ -100,6 +102,9 @@ public class IssSideEffectReorderingPass extends Pass {
     for (var def : defs) {
       ((DefProp.WithBehavior) def).behaviors().forEach(this::moveInstrExitSideEffectsToInstrEnd);
     }
+    // FIXME: first find all instr exit side effects that must be moved
+    //        then move them to instr end (or instr start)
+    //        finally clean up CFG
     return null;
   }
 
@@ -111,7 +116,7 @@ public class IssSideEffectReorderingPass extends Pass {
    * @param behaviour The graph to process.
    */
   private void moveInstrExitSideEffectsToInstrEnd(Graph behaviour) {
-    var sideEffectConditions = SideEffectConditionCollector.collectConditions(behaviour);
+    var sideEffectInstances = SideEffectInstanceCollector.collectInstances(behaviour);
     var instrEndNodeClass = switch (behaviour.parentDefinition()) {
       case Instruction i -> InstrEndNode.class;
       case Procedure p -> ProcEndNode.class;
@@ -127,12 +132,22 @@ public class IssSideEffectReorderingPass extends Pass {
     for (var instrExit : instrExitSideEffects) {
       // this is a list of all places the side effect is scheduled. for each place, it contains
       // a list of all the conditions of the if-clauses containing the side effect
-      var conditions = requireNonNull(sideEffectConditions.get(instrExit));
-      instrExit.usages().filter(AbstractEndNode.class::isInstance).toList()
-          .forEach(user -> ((AbstractEndNode) user).removeSideEffect(instrExit));
+      var instances = requireNonNull(sideEffectInstances.get(instrExit));
+      instrExit.ensure(instances.stream()
+          .anyMatch(SideEffectInstanceCollector.SideEffectInstance::insideForall),
+          "Side effects causing an instruction exit are not supported inside forall statements"
+      );
       // go through all scheduled instances of the side effect
-      for (var instanceCondition : conditions) {
-        if (instanceCondition.isEmpty()) {
+      for (var instance : instances) {
+        if (!instance.hasIfSibling()) {
+          // The side effect must not be moved into a new if-construct, since ordering
+          // the side effects inside the containing if-constructs is sufficient to ensure
+          // a correct order (this is done by SideEffectSchedulingPass).
+          continue;
+        }
+        requireNonNull(instance.location()).removeSideEffect(instrExit);
+        // TODO: remove the if-construct if it is now empty
+        if (instance.conditions().isEmpty()) {
           instrEnd.addSideEffect(instrExit);
         } else {
           // For each, create nested if-blocks, with the conditions of the original if-blocks.
@@ -144,7 +159,7 @@ public class IssSideEffectReorderingPass extends Pass {
           //  allow the translation function to evaluate parts of the condition at translation time.
           var pred = requireNonNull(instrEnd.predecessor());
           pred.unlinkNext();
-          var collapsedInstanceCondition = collapseConditions(instanceCondition);
+          var collapsedInstanceCondition = collapseConditions(instance.conditions());
           pred.setNext(addInNestedIf(collapsedInstanceCondition, instrEnd, behaviour, instrExit));
         }
       }
@@ -197,13 +212,53 @@ public class IssSideEffectReorderingPass extends Pass {
   }
 }
 
-class SideEffectConditionCollector {
-
-  private final HashMap<SideEffectNode, List<List<ExpressionNode>>> conditions = new HashMap<>();
+class SideEffectInstanceCollector {
 
   /**
-   * Collect all side effect conditions. Each side effect gets a list of all instances, in
-   * which the side effect node is scheduled. Each instance is a list of all the conditions
+   * Stores the condition under which a side effect is executed. Represents the conditions
+   * for a single instance of the side effect (so if e.g. a register write is scheduled
+   * in multiple locations in the CFG, each location is represented by a separate instance of
+   * this record).
+   *
+   * @param conditions The conjunctive conditions of the side effect instance.
+   * @param location The control node at which the side effect is scheduled.
+   * @param insideForall Whether the side effect is inside a forall construct.
+   * @param hasIfSibling Whether any of the surrounding if-constructs has a sibling.
+   */
+  public record SideEffectInstance(List<ExpressionNode> conditions,
+                                   @Nullable AbstractEndNode location,
+                                   boolean insideForall, boolean hasIfSibling) {
+
+    public void push(ExpressionNode condition) {
+      conditions.addLast(condition);
+    }
+
+    public void pop() {
+      conditions.removeLast();
+    }
+
+    public SideEffectInstance withInsideForall() {
+      return new SideEffectInstance(conditions, location, true, hasIfSibling);
+    }
+
+    public SideEffectInstance withIfSibling() {
+      return new SideEffectInstance(conditions, location, insideForall, true);
+    }
+
+    public SideEffectInstance createInstance(AbstractEndNode location) {
+      return new SideEffectInstance(List.copyOf(conditions), location, insideForall, hasIfSibling);
+    }
+
+    static SideEffectInstance empty() {
+      return new SideEffectInstance(new ArrayList<>(), null, false, false);
+    }
+  }
+
+  private final HashMap<SideEffectNode, List<SideEffectInstance>> conditions = new HashMap<>();
+
+  /**
+   * Collect all side effect instances. Each side effect gets a list of all instances, in
+   * which the side effect node is scheduled. Each instance contains a list of all the conditions
    * which must be met, such that that instance is reached.
    *
    * <p>For example:
@@ -213,19 +268,18 @@ class SideEffectConditionCollector {
    * }</pre>
    * yields:
    * <pre>{@code
-   * { se_0: [ [a, -b], [c] ] }
+   * { se_0: [ { [a, -b], ...}, { [c], ... } ] }
    * }</pre>
    */
-  public static Map<SideEffectNode, List<List<ExpressionNode>>> collectConditions(
-      Graph behavior) {
-    var collector = new SideEffectConditionCollector();
+  public static Map<SideEffectNode, List<SideEffectInstance>> collectInstances(Graph behavior) {
+    var collector = new SideEffectInstanceCollector();
     collector.collect(behavior);
     return collector.conditions;
   }
 
   private void collect(Graph behavior) {
     var start = getSingleNode(behavior, StartNode.class);
-    resolveBranch(start, new ArrayList<>());
+    resolveBranch(start, SideEffectInstance.empty());
   }
 
   /**
@@ -234,42 +288,52 @@ class SideEffectConditionCollector {
    * and removed afterward. The same is done for the negation of the condition for the false-branch.
    */
   private @Nullable MergeNode resolveBranch(AbstractBeginNode beginNode,
-                                            List<ExpressionNode> branchCondition) {
+                                            SideEffectInstance branchCondition) {
     // the current control node
     ControlNode current = beginNode;
+    var ifNodes = new ArrayList<IfNode>();
+    var forallNodes = new ArrayList<ForallNode>();
 
     // loop is only terminated by return of AbstractEndNode
     while (true) {
 
       switch (current) {
         case AbstractEndNode endNode -> {
+          var ifNodeCond = ifNodes.size() > 1 ? branchCondition.withIfSibling() : branchCondition;
+          ifNodes.forEach(node -> handleIf(node, ifNodeCond));
+          forallNodes.forEach(node -> handleForall(node, branchCondition));
           return handleEndNode(endNode, branchCondition);
         }
-        case IfNode ifNode -> current = handleIf(ifNode, branchCondition);
-        // forall as no special handling required, as it doesn't influence the condition
-        case ForallNode forallNode -> current = forallNode.beginNode();
+        case IfNode ifNode -> {
+          current = ifNode.mergeNode();
+          ifNodes.add(ifNode);
+        }
+        case ForallNode forallNode -> {
+          current = forallNode.mergeNode();
+          forallNodes.add(forallNode);
+        }
         // handle normal singled directed node by just skipping it and continue
         case DirectionalNode directionalNode -> current = directionalNode.next();
         // there should not be an other control node that was not handled yet
         default -> //noinspection DataFlowIssue
             current.ensure(false,
-                "Not an expected node in the SideEffectConditionCollector. "
+                "Not an expected node in the SideEffectInstanceCollector. "
                     + "You want to implement it.");
       }
     }
   }
 
   @Nullable
-  private MergeNode handleEndNode(AbstractEndNode endNode, List<ExpressionNode> branchCondition) {
+  private MergeNode handleEndNode(AbstractEndNode endNode, SideEffectInstance branchCondition) {
     // handle the end of the current branch
     var graph = endNode.graph();
     endNode.ensure(graph != null,
-        "Node is not active, but control flow must be stable for SideEffectConditionResolver");
+        "Node is not active, but control flow must be stable for IssSideEffectReorderingPass");
 
     // add the condition to all side effects
     for (var sideEffect : endNode.sideEffects()) {
-      conditions.computeIfAbsent(sideEffect, s -> new ArrayList<>())
-          .add(List.copyOf(branchCondition));
+      conditions.computeIfAbsent(sideEffect,
+          s -> new ArrayList<>()).add(branchCondition.createInstance(endNode));
     }
 
     // find and return the merge node if available
@@ -282,15 +346,15 @@ class SideEffectConditionCollector {
   }
 
   @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
-  private MergeNode handleIf(IfNode ifNode, List<ExpressionNode> branchCondition) {
+  private MergeNode handleIf(IfNode ifNode, SideEffectInstance branchCondition) {
 
-    branchCondition.addLast(ifNode.condition());
+    branchCondition.push(ifNode.condition());
     var trueMergeNode = resolveBranch(ifNode.trueBranch(), branchCondition);
-    branchCondition.removeLast();
+    branchCondition.pop();
 
-    branchCondition.addLast(BuiltInCall.of(BuiltInTable.NOT, ifNode.condition()));
+    branchCondition.push(BuiltInCall.of(BuiltInTable.NOT, ifNode.condition()));
     var falseMergeNode = resolveBranch(ifNode.falseBranch(), branchCondition);
-    branchCondition.removeLast();
+    branchCondition.pop();
 
     // MergeNode must be the same for all branches and not null
     ifNode.ensure(trueMergeNode == falseMergeNode,
@@ -300,6 +364,14 @@ class SideEffectConditionCollector {
 
     // continue with the found mergeNode
     return trueMergeNode;
+  }
+
+  private MergeNode handleForall(ForallNode forallNode, SideEffectInstance branchCondition) {
+    // forall nodes must be handled in its own resolveBranch call to ensure
+    // it is correctly stepped out of
+    var mergeNode = resolveBranch(forallNode.beginNode(), branchCondition.withInsideForall());
+    forallNode.ensure(mergeNode != null, "Couldn't find merge node for forall branch");
+    return mergeNode;
   }
 
 }
