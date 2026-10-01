@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.iss.SideEffectUtils;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -122,6 +123,10 @@ public class SideEffectSchedulingPass extends Pass {
  */
 class SideEffectScheduler {
 
+  record SeTypesResult<T>(T node, SideEffectUtils.SideEffectTypes seTypes) {}
+
+  record BranchTraversalResult(AbstractEndNode endNode, DirectionalNode seInsertionPoint) {}
+
   /**
    * Runs the side effect scheduling on the given instruction.
    *
@@ -141,32 +146,35 @@ class SideEffectScheduler {
    * @param beginNode The starting node of the branch.
    * @return The corresponding end node of the branch.
    */
-  private AbstractEndNode processBranch(AbstractBeginNode beginNode) {
+  private SeTypesResult<AbstractEndNode> processBranch(AbstractBeginNode beginNode) {
     // Process until the corresponding end node of the branch
-    var endNode = traverseUntilMatchingBranchEnd(beginNode);
+    // and find the insertion point for SE effects
+    var result = traverseUntilMatchingBranchEnd(beginNode);
 
-    var partitionedEffects = endNode.sideEffects().stream()
-        // find side effects that cause instruction exits
-        .collect(Collectors.partitioningBy(
-            s ->
-                (s instanceof WriteRegTensorNode write && write.isPcAccess())
-                    || (s instanceof ProcCallNode procCall && procCall.exceptionRaise())
-        ));
+    var groupedEffects = result.endNode.sideEffects().stream()
+        // group side effects into the three types MEM, SE and PC
+        .collect(Collectors.groupingBy(SideEffectUtils.SideEffectType::classify));
 
-    var nonPcUpdateEffects = partitionedEffects.getOrDefault(false, List.of());
-    var instrExitSideEffects = partitionedEffects.getOrDefault(true, List.of());
+    var memEffects = groupedEffects.getOrDefault(SideEffectUtils.SideEffectType.MEM, List.of());
+    var seEffects = groupedEffects.getOrDefault(SideEffectUtils.SideEffectType.SE, List.of());
+    var pcEffects = groupedEffects.getOrDefault(SideEffectUtils.SideEffectType.PC, List.of());
 
-    // All non-PC updates should be inserted directly at the beginning of the branch
-    for (var effect : Lists.reverse(nonPcUpdateEffects)) {
+    // All MEM effects should be inserted directly at the beginning of the branch
+    for (var effect : Lists.reverse(memEffects)) {
       beginNode.addAfter(new ScheduledNode(effect));
     }
 
-    // Add PC updates directly in front of branch end
-    instrExitSideEffects.forEach(exitCause -> {
+    // All SE effects should be inserted at their insertion point
+    for (var effect : Lists.reverse(seEffects)) {
+      result.seInsertionPoint.addAfter(new ScheduledNode(effect));
+    }
+
+    // Add PC effects directly in front of branch end
+    pcEffects.forEach(exitCause -> {
           if (exitCause instanceof ProcCallNode procCall) {
-            endNode.addBefore(new InstrExitNode.Raise(procCall));
+            result.endNode.addBefore(new InstrExitNode.Raise(procCall));
           } else if (exitCause instanceof WriteResourceNode write) {
-            endNode.addBefore(new InstrExitNode.PcChange(write));
+            result.endNode.addBefore(new InstrExitNode.PcChange(write));
           } else {
             throw new IllegalStateException("Unexpected exit cause: " + exitCause);
           }
@@ -174,7 +182,12 @@ class SideEffectScheduler {
 
     );
 
-    return endNode;
+    var seTypes = result.endNode.sideEffects().stream()
+        .map(SideEffectUtils.SideEffectTypes::of)
+        .reduce(SideEffectUtils.SideEffectTypes::combine)
+        .orElse(SideEffectUtils.SideEffectTypes.empty());
+
+    return new SeTypesResult<>(result.endNode, seTypes);
   }
 
   /**
@@ -183,9 +196,10 @@ class SideEffectScheduler {
    * @param beginNode The begin node to start traversal from.
    * @return The matching end node.
    */
-  private AbstractEndNode traverseUntilMatchingBranchEnd(AbstractBeginNode beginNode) {
+  private BranchTraversalResult traverseUntilMatchingBranchEnd(AbstractBeginNode beginNode) {
 
     ControlNode currNode = beginNode;
+    DirectionalNode seInsertionPoint = beginNode;
 
     while (true) {
       // Skip all directional nodes
@@ -193,12 +207,16 @@ class SideEffectScheduler {
 
       if (currNode instanceof AbstractEndNode) {
         // When we find the end node, we return it
-        return (AbstractEndNode) currNode;
+        return new BranchTraversalResult((AbstractEndNode) currNode, seInsertionPoint);
 
       } else if (currNode instanceof ControlSplitNode splitNode) {
         // Handle all branches of the nested control split node
-        currNode = handleControlSplit(splitNode);
-
+        var result = handleControlSplit(splitNode);
+        currNode = result.node;
+        if (result.seTypes.covers(SideEffectUtils.SideEffectType.MEM)) {
+          // we must schedule SE side effects after MEM side effects
+          seInsertionPoint = result.node;
+        }
       } else {
         currNode.ensure(false,
             "Expected directional or control split node, but got this node in CFG."
@@ -213,15 +231,18 @@ class SideEffectScheduler {
    * @param splitNode The control split node to process.
    * @return The merge node corresponding to the control split.
    */
-  private MergeNode handleControlSplit(ControlSplitNode splitNode) {
+  private SeTypesResult<MergeNode> handleControlSplit(ControlSplitNode splitNode) {
     @Nullable AbstractEndNode someEnd = null;
+    var seTypes = SideEffectUtils.SideEffectTypes.empty();
     for (var branch : splitNode.branches()) {
-      someEnd = processBranch(branch);
+      var result = processBranch(branch);
+      someEnd = result.node;
+      seTypes = seTypes.combine(result.seTypes);
     }
     splitNode.ensure(someEnd != null, "Control split has no branches.");
     splitNode.ensure(someEnd.usageCount() == 1, "End should have exactly one usage: MergeNode");
     // Get the merge node from the end of the branch
-    return (MergeNode) someEnd.usages().findFirst().get();
+    return new SeTypesResult<>((MergeNode) someEnd.usages().findFirst().get(), seTypes);
   }
 
   /**
