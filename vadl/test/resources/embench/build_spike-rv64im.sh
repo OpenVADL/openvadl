@@ -5,6 +5,6 @@ cd $(realpath $(dirname "$0"))
 arch="rv64im"
 abi="lp64"
 
-cflags="-march=$arch -mabi=$abi"
+cflags="-march=$arch -mabi=$abi -std=gnu17"
 ldflags="-march=$arch -mabi=$abi"
 ./build_all.py --arch riscv64 --chip generic --board spike --cflags="$cflags" --ldflags="$ldflags" --clean  "$@"
