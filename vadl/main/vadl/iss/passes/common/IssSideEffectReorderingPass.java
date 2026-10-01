@@ -22,6 +22,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +41,6 @@ import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.Procedure;
 import vadl.viam.Specification;
-import vadl.viam.Stage;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
@@ -49,44 +49,76 @@ import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
-import vadl.viam.graph.control.ProcEndNode;
-import vadl.viam.graph.control.StageEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ProcCallNode;
-import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolver;
+import vadl.viam.passes.CfgTraverser;
+import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 
 /**
- * Moves all side effects which cause an instruction exit to the end of the instruction, while
- * preserving the condition under which the moved side effects are executed. It only executes
- * on instruction and procedure behaviors.
+ * Reorders side effects such that memory writes come before all other side effects
+ * and instruction exiting side effects (such as PC changes and exception raises) come last.
  *
- * <p>The pass first traverses the graph and saves the conditions of the side effects. This is
- * done in a similar way as {@link SideEffectConditionResolver} does it. The conditions are not
- * combined using dis- and conjunctions however, but kept separate. This way, the original
- * control flow structure can be reconstructed exactly.
+ * <p>Runs two passes over each graph: The first collects information about the CFG structure,
+ * conditions and side effects. The second uses that information to reorder side effects only
+ * where necessary and uses a heuristical approach to make minimal changes.
  *
- * <p>The pass then inserts nested if-blocks just before the end of the graph. Disjunct conditions
- * are translated to disjunct if-blocks. Conjunct conditions are grouped two groups: Static and
- * dynamic. Inside the groups, the conditions are then conjoined and then used to emit at most
- * two nested if-blocks (one static and one dynamic). Conjoining all conditions could hide static
- * conditions, which would then be emitted as dynamic (TCG instructions).
+ * <p>The algorithm to reorder the side effects and their containing control flow constructs
+ * works as follows:
+ * <ul>
+ *   <li>Find and classify all side effects in the graph. The three classes are
+ *   {@code MEM}, {@code SE} and {@code PC}. See {@link SideEffectReorderer.SideEffectType}.</li>
+ *   <li>Traverse the CFG and find sibling control flow blocks.</li>
+ *   <li>Extract side effects out of blocks into their own blocks at the same level until
+ *   all blocks can be ordered such that the ordering of all side effects is guaranteed.</li>
+ *   <li>Reorder the blocks.</li>
+ * </ul>
  *
- * <p>TODO: In the future this pass should also move non-memory side effects behind memory
- *     side effects, see Issue #1082.
+ * <p>The hard part of the algorithm is finding the smallest set of side effects to extract,
+ * such that all sibling blocks at a level can be ordered. For each block, we first find out
+ * what range of side effect types it covers (e.g. {@code MEM..SE}). We realize that (excluding all
+ * blocks covering only one type) only the following two cases are allowed:
  *
- * <p>TODO: Grouping conjunct conditions into static and dynamic preserves much optimization
- *     potential. A thorough condition analysis pass could expose more potential by extracting
- *     static parts out of otherwise dynamic conditions.
- *     This could be done with some form of shannon expansion, but must be done carefully to
- *     avoid an exponential blowup in code size.
+ * <ul>
+ *   <li>A single block covering all three types {@code MEM..PC}.</li>
+ *   <li>Two blocks covering {@code MEM..SE} and {@code SE..PC}.</li>
+ * </ul>
+ *
+ * <p>All other blocks may at most cover one side effect type. We prefer to keep blocks with
+ * the many side effects and also prefer the second case. We choose up to two blocks to keep
+ * (let's call them "frozen"), and must extract side effects out of all other blocks until only
+ * one type remains in each block. We keep track of the number of each side effect type in each
+ * block, and keep the type with the highest count.
+ *
+ * <p>Example:
+ * <pre>{@code
+ * if (a) { PC, SE, SE }
+ * if (b) { PC, SE, SE, SE }
+ * }</pre>
+ *
+ * <p>Here the two blocks cannot be reordered (they are conflicting). We freeze the second block,
+ * since it has the most side effects. We choose to extract all {@code PC} side effects out of
+ * the first block, because that type has the least occurrences in the block. The final, reordered
+ * code looks like this:
+ *
+ * <pre>{@code
+ * if (a) { PC }
+ * if (b) { PC, SE, SE, SE }
+ * if (a) { SE, SE }
+ * }</pre>
+ *
+ * <p>The scheduling of side effects inside blocks in the correct order is handled by
+ * {@link SideEffectSchedulingPass}. TODO: this must be implemented
+ *
+ * <p>TODO: memory loads are a different story. They are not side effects and cannot be handled
+ *          here. I think the IssSafeResourceReadPass could be adapted to ensure that all
+ *          memory loads happen before all side effects. Also, using reg dest TCGvs as temp
+ *          storage before memory loads is a source of errors.
  */
 public class IssSideEffectReorderingPass extends Pass {
 
@@ -105,128 +137,48 @@ public class IssSideEffectReorderingPass extends Pass {
     var defs = ViamUtils.findDefinitionsByFilter(viam, def ->
         def instanceof Instruction || def instanceof Procedure);
     for (var def : defs) {
-      ((DefProp.WithBehavior) def).behaviors().forEach(this::moveInstrExitSideEffectsToInstrEnd);
+      ((DefProp.WithBehavior) def).behaviors().forEach(SideEffectReorderer::run);
     }
-    // FIXME: first find all instr exit side effects that must be moved
-    //        then move them to instr end (or instr start)
-    //        finally clean up CFG
     return null;
-  }
-
-  /**
-   * Moves all side effects causing an instruction exit to the end of the instruction graph.
-   * Unconditional side effects are simply added to the instruction end node. Conditional
-   * side effect nodes are put in if-blocks.
-   *
-   * @param behaviour The graph to process.
-   */
-  private void moveInstrExitSideEffectsToInstrEnd(Graph behaviour) {
-    var sideEffectInstances = SideEffectInstanceCollector.collectInstances(behaviour);
-    var instrEndNodeClass = switch (behaviour.parentDefinition()) {
-      case Instruction i -> InstrEndNode.class;
-      case Procedure p -> ProcEndNode.class;
-      case Stage s -> StageEndNode.class;
-      default -> throw new IllegalStateException("Unexpected graph parent");
-    };
-    var instrEnd = GraphUtils.getSingleNode(behaviour, instrEndNodeClass);
-    var instrExitSideEffects = behaviour.getNodes(SideEffectNode.class).filter(
-        s -> (s instanceof WriteRegTensorNode write && write.isPcAccess())
-            || (s instanceof ProcCallNode procCall && procCall.exceptionRaise())
-    ).toList();
-
-    for (var instrExit : instrExitSideEffects) {
-      // this is a list of all places the side effect is scheduled. for each place, it contains
-      // a list of all the conditions of the if-clauses containing the side effect
-      var instances = requireNonNull(sideEffectInstances.get(instrExit));
-      instrExit.ensure(instances.stream()
-          .anyMatch(SideEffectInstanceCollector.SideEffectInstance::insideForall),
-          "Side effects causing an instruction exit are not supported inside forall statements"
-      );
-      // go through all scheduled instances of the side effect
-      for (var instance : instances) {
-        if (!instance.hasIfSibling()) {
-          // The side effect must not be moved into a new if-construct, since ordering
-          // the side effects inside the containing if-constructs is sufficient to ensure
-          // a correct order (this is done by SideEffectSchedulingPass).
-          continue;
-        }
-        requireNonNull(instance.location()).removeSideEffect(instrExit);
-        // TODO: remove the if-construct if it is now empty
-        if (instance.conditions().isEmpty()) {
-          instrEnd.addSideEffect(instrExit);
-        } else {
-          // For each, create nested if-blocks, with the conditions of the original if-blocks.
-          // We could use a conjunction of all the conditions, but that makes the simulation slower:
-          // Say we have a static and dynamic condition, then the conjunction is dynamic, and
-          // optimization potential is lost.
-          // TODO: In the future, we should make the branch lowering more intelligent: It should
-          //  be able to take apart conditions into their static and dynamic parts, which would
-          //  allow the translation function to evaluate parts of the condition at translation time.
-          var pred = requireNonNull(instrEnd.predecessor());
-          pred.unlinkNext();
-          var collapsedInstanceCondition = collapseConditions(instance.conditions());
-          pred.setNext(addInNestedIf(collapsedInstanceCondition, instrEnd, behaviour, instrExit));
-        }
-      }
-    }
-  }
-
-  /**
-   * Groups the conditions into static and dynamic. Creates a conjunction out of each group.
-   * Returns the conjunctions in a list. May return list of size 2, 1 or empty.
-   */
-  private static List<ExpressionNode> collapseConditions(List<ExpressionNode> conditions) {
-    return conditions.stream().collect(Collectors.partitioningBy(
-        c -> GraphUtils.hasDependencies(c, dep -> dep instanceof ReadResourceNode)
-    )).values().stream().flatMap(
-        c -> c.stream().reduce((a, b) -> BuiltInCall.of(BuiltInTable.AND, a, b)).stream()
-    ).toList();
-  }
-
-  /**
-   * Puts the given side effect into nested if-blocks. For each given condition in the list,
-   * an if-block is created.
-   */
-  private static ControlNode addInNestedIf(List<ExpressionNode> conditions, ControlNode next,
-                                           Graph graph, SideEffectNode se) {
-    if (conditions.isEmpty()) {
-      throw new IllegalStateException("Expected non-empty list of conditions");
-    }
-    if (conditions.size() == 1) {
-      return GraphUtils.ifElseSideEffect(
-          graph,
-          conditions.getFirst(),
-          List.of(se),
-          List.of(),
-          next,
-          se.location()
-      );
-    }
-    var pair = GraphUtils.insertIfElse(
-        graph,
-        conditions.getFirst(),
-        (g, end) -> addInNestedIf(
-            conditions.subList(1, conditions.size()),
-            end, graph, se
-        ),
-        (g, end) -> end,
-        se.location()
-    );
-    pair.right().setNext(next);
-    return pair.left();
   }
 }
 
 class SideEffectReorderer {
 
+  /**
+   * The side effect types this reorderer considers.
+   *
+   * <p>There are currently the following types:
+   * <ul>
+   *   <li>MEM: Memory writes (and any instruction that may cause a TCG TB to be recompiled
+   *   and re-executed by accessing MMIO memory)</li>
+   *   <li>SE: All other side effects (e.g. register writes)</li>
+   *   <li>PC: All side effects causing an instruction exit (writes to the program counter
+   *   and exception raises)</li>
+   * </ul>
+   *
+   * <p>Each type also has an ordinal, which defines the (non-strict) total order in which
+   * side effects must be in. If two side effects have the same type, they may be ordered
+   * in any way. If they have different types, then they must be ordered according to their
+   * type ordinals: MEM < SE < PC.
+   */
   enum SideEffectType {
-    MEM, SE, PC
+    MEM(0), SE(1), PC(2);
+
+    private final int ord;
+
+    SideEffectType(int ord) {
+      this.ord = ord;
+    }
+
+    public int ord() {
+      return ord;
+    }
   }
 
-  enum SideEffectTypeTransition {
-    MEM_SE, SE_PC
-  }
-
+  /**
+   * Stores a count for each of the side effect types (see {@link SideEffectType}).
+   */
   static class SideEffectCount {
     public int memCnt = 0;
     public int seCnt = 0;
@@ -234,32 +186,20 @@ class SideEffectReorderer {
 
     public SideEffectCount() {}
 
-    private SideEffectCount(int memCnt, int seCnt, int pcCnt) {
-      this.memCnt = memCnt;
-      this.seCnt = seCnt;
-      this.pcCnt = pcCnt;
-    }
-
-    public static SideEffectCount add(SideEffectCount first, SideEffectCount second) {
-      return new SideEffectCount(
-          first.memCnt + second.memCnt,
-          first.seCnt + second.seCnt,
-          first.pcCnt + second.pcCnt
-      );
-    }
-
-    public void add(SideEffectCount other) {
+    public SideEffectCount add(SideEffectCount other) {
       memCnt += other.memCnt;
       seCnt  += other.seCnt;
       pcCnt  += other.pcCnt;
+      return this;
     }
 
-    public void inc(SideEffectType type) {
+    public SideEffectCount inc(SideEffectType type) {
       switch (type) {
         case MEM -> memCnt++;
         case SE  -> seCnt++;
         case PC  -> pcCnt++;
       }
+      return this;
     }
 
     public int total() {
@@ -280,6 +220,9 @@ class SideEffectReorderer {
     }
   }
 
+  /**
+   * Stores a set of side effect types (see {@link SideEffectType}).
+   */
   record SideEffectTypes(Set<SideEffectType> types) {
     public static SideEffectTypes of(Set<SideEffectType> types) {
       return new SideEffectTypes(types);
@@ -294,50 +237,66 @@ class SideEffectReorderer {
       return types.contains(type);
     }
 
+    public boolean covers(SideEffectType type) {
+      return !types.isEmpty() && min() <= type.ord() && type.ord() <= max();
+    }
+
     private int min() {
-      return types.stream().mapToInt(Enum::ordinal).min()
+      return types.stream().mapToInt(SideEffectType::ord).min()
           .orElseThrow(() -> new IllegalStateException("Statement without side effects"));
     }
 
     private int max() {
-      return types.stream().mapToInt(Enum::ordinal).max()
+      return types.stream().mapToInt(SideEffectType::ord).max()
           .orElseThrow(() -> new IllegalStateException("Statement without side effects"));
     }
 
-    private int range() {
-      return max() - min();
-    }
-
     private boolean isMemSe() {
-      return min() == SideEffectType.MEM.ordinal() && max() == SideEffectType.SE.ordinal();
+      return min() == SideEffectType.MEM.ord() && max() == SideEffectType.SE.ord();
     }
 
     private boolean isSePc() {
-      return min() == SideEffectType.SE.ordinal() && max() == SideEffectType.PC.ordinal();
+      return min() == SideEffectType.SE.ord() && max() == SideEffectType.PC.ord();
     }
 
     private boolean isMemPc() {
-      return min() == SideEffectType.MEM.ordinal() && max() == SideEffectType.PC.ordinal();
+      return min() == SideEffectType.MEM.ord() && max() == SideEffectType.PC.ord();
     }
 
     boolean conflictsWith(SideEffectTypes other) {
       if (types.isEmpty() || other.types.isEmpty()) {
-        return true;
+        return false;
       }
       return max() > other.min() && min() < other.max();
+    }
+
+    int compare(SideEffectTypes other) {
+      if (conflictsWith(other)) {
+        throw new IllegalStateException("Comparing two conflicting side effect type lists");
+      }
+      if (types.equals(other.types)) {
+        return 0;
+      } else if (types.isEmpty()) {
+        return -1;
+      } else if (other.types.isEmpty()) {
+        return 1;
+      }
+      int comp = min() - other.min();
+      return comp != 0 ? comp : max() - other.max();
     }
   }
 
   private final Graph behavior;
-  private final HashMap<ControlSplitNode, SideEffectTypes> sideEffectTypes;
-  private final HashMap<ControlSplitNode, SideEffectCount> sideEffectCount;
-  private final HashMap<SideEffectNode, List<List<ExpressionNode>>> sideEffectConditions;
+  private final IdentityHashMap<ControlSplitNode, SideEffectTypes> sideEffectTypes;
+  private final IdentityHashMap<ControlSplitNode, SideEffectCount> sideEffectCount;
+  private final IdentityHashMap<SideEffectNode, Map<AbstractEndNode, List<ExpressionNode>>>
+      sideEffectConditions;
 
   SideEffectReorderer(Graph behavior) {
     this.behavior = behavior;
-    this.sideEffectTypes = new HashMap<>();
-    this.sideEffectCount = new HashMap<>();
-    this.sideEffectConditions = new HashMap<>();
+    this.sideEffectTypes = new IdentityHashMap<>();
+    this.sideEffectCount = new IdentityHashMap<>();
+    this.sideEffectConditions = new IdentityHashMap<>();
   }
 
   public static void run(Graph behavior) {
@@ -346,11 +305,19 @@ class SideEffectReorderer {
 
   private void reorder() {
     new SideEffectInfoCollector().run();
+    new Reorderer().run();
   }
 
   /**
-   * Collects conditions for all side effects.
-   * Collects types and amount of side effects for each control flow split (so if-else and forall).
+   * Collects information about the CFG and the side effects in a graph, which is later
+   * used by the {@link Reorderer}.
+   *
+   * <p>For each side effect, all instances of that side effect in the CFG are stored. The storage
+   * maps the node at which the instance is scheduled to a list of conditions, which is the
+   * conditions of all surrounding if-blocks.
+   *
+   * <p>For each if-block and forall-block, a set and count of the side effect types in the block
+   * is stored.
    */
   class SideEffectInfoCollector {
 
@@ -373,7 +340,7 @@ class SideEffectReorderer {
             var sideEffects = endNode.sideEffects();
             for (var se : sideEffects) {
               sideEffectConditions.computeIfAbsent(se,
-                  s -> new ArrayList<>()).add(List.copyOf(conditions));
+                  s -> new HashMap<>()).put(endNode, List.copyOf(conditions));
               seCount.inc(classify(se));
             }
             var mergeNode = endNode.usages()
@@ -382,7 +349,8 @@ class SideEffectReorderer {
                 .findAny()
                 .orElse(null);
             seTypes = seTypes.combine(new SideEffectTypes(
-                sideEffects.stream().map(this::classify).collect(Collectors.toSet())));
+                sideEffects.stream().map(SideEffectReorderer.this::classify)
+                    .collect(Collectors.toSet())));
             return new Result(mergeNode, seTypes, seCount);
           }
           case IfNode ifNode -> {
@@ -430,42 +398,53 @@ class SideEffectReorderer {
       return new Result(
           trueResult.mergeNode,
           trueResult.seTypes.combine(falseResult.seTypes),
-          SideEffectCount.add(trueResult.seCount, falseResult.seCount)
+          new SideEffectCount().add(trueResult.seCount).add(falseResult.seCount)
       );
     }
 
     private Result handleForall(ForallNode forallNode, List<ExpressionNode> conditions) {
-      // forall nodes must be handled in its own resolveBranch call to ensure
-      // it is correctly stepped out of
       var result = resolveBranch(forallNode.beginNode(), conditions);
       forallNode.ensure(result.mergeNode != null, "Couldn't find merge node for forall branch");
       return result;
     }
-
-    private SideEffectType classify(SideEffectNode node) {
-      if (node instanceof WriteMemNode) {
-        return SideEffectType.MEM;
-      } else if (node instanceof WriteRegTensorNode write && write.isPcAccess()
-          || node instanceof ProcCallNode procCall && procCall.exceptionRaise()) {
-        return SideEffectType.PC;
-      }
-      return SideEffectType.SE;
-    }
   }
 
+  /**
+   * Uses the information collected by the {@link SideEffectInfoCollector} to reorder the
+   * side effects in the graph, such that the total order imposed by their types
+   * (see {@link SideEffectType}) is upheld.
+   *
+   * <p>Note: modifies the information provided by {@link SideEffectInfoCollector} for its
+   * own purposes and leaves it in an incomplete/inconsistent state.
+   */
   class Reorderer {
 
     public void run() {
       var start = getSingleNode(behavior, StartNode.class);
-      handleBranch(start);
+      reorderBranch(start, 0);
     }
 
-    private void handleBranch(AbstractBeginNode beginNode) {
+    /**
+     * Reorders the side effects inside a branch if necessary. It does this in two steps:
+     *
+     * <p>First, it finds all conflicting sibling if- and forall-constructs and extracts
+     * side effects out of if-constructs until no siblings are conflicting anymore.
+     *
+     * <p>It then reorders the sibling constructs such that all MEM side effects come before
+     * all other side effects and all PC side effects come after all other side effects
+     * (see {@link SideEffectType}).
+     *
+     * @param beginNode The begin node of the branch.
+     * @param depth The number of if-constructs this branch is inside of.
+     */
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
+    private void reorderBranch(AbstractBeginNode beginNode, int depth) {
       ControlNode current = beginNode;
 
       var ifNodes = new ArrayList<IfNode>();
       var forallNodes = new ArrayList<ForallNode>();
 
+      // collect all if- and forall-blocks at the current branch level
       loop: while (true) {
         switch (current) {
           case AbstractEndNode endNode -> {
@@ -487,6 +466,11 @@ class SideEffectReorderer {
         }
       }
 
+      if (ifNodes.size() + forallNodes.size() <= 1) {
+        // if zero or only inner if- or forall-block exists, then nothing must be reordered
+        return;
+      }
+
       // ensure than no two forall blocks have conflicting side effects, since we cannot
       // extract from forall blocks
       // TODO: or maybe we can? e.g. if in a forall both MEM and some register are written,
@@ -495,8 +479,8 @@ class SideEffectReorderer {
         for (int j = 0; j < i; j++) {
           var forall0 = forallNodes.get(i);
           var forall1 = forallNodes.get(j);
-          var seTypes0 = sideEffectTypes.get(forall0);
-          var seTypes1 = sideEffectTypes.get(forall1);
+          var seTypes0 = requireNonNull(sideEffectTypes.get(forall0));
+          var seTypes1 = requireNonNull(sideEffectTypes.get(forall1));
           if (seTypes0.conflictsWith(seTypes1)) {
             throw Diagnostic.error(
                 "Side-effects in two forall constructs cannot be ordered", forall0
@@ -506,269 +490,235 @@ class SideEffectReorderer {
       }
 
       // there can only be a few constructs with multiple side effect types:
-      // either both MEM -> SE and SE -> PC
-      // or just MEM -> PC
+      // - either both MEM -> SE and SE -> PC
+      // - or just MEM -> PC
       // lets call those "slots"
       boolean memSeTransitionUsed = false;
       boolean sePcTransitionUsed = false;
+      boolean forallCoveringSeExits = false;
 
       // forall nodes cannot be extracted out of, so those are fixed
       for (var forall : forallNodes) {
-        var seTypes = sideEffectTypes.get(forall);
-        if (seTypes.min() <= SideEffectType.MEM.ordinal()
-            && seTypes.max() >= SideEffectType.SE.ordinal()) {
+        var seTypes = requireNonNull(sideEffectTypes.get(forall));
+        if (seTypes.isMemSe()) {
           memSeTransitionUsed = true;
-        }
-        if (seTypes.min() <= SideEffectType.SE.ordinal()
-            && seTypes.max() >= SideEffectType.PC.ordinal()) {
+        } else if (seTypes.isSePc()) {
           sePcTransitionUsed = true;
+        } else if (seTypes.isMemPc()) {
+          memSeTransitionUsed = sePcTransitionUsed = true;
+        }
+        if (seTypes.covers(SideEffectType.SE)) {
+          forallCoveringSeExits = true;
         }
       }
 
       // sort by side effect count (largest to smallest), such that if-constructs with many
       // side effects are more likely to be frozen
-      ifNodes.sort((n0, n1) -> sideEffectCount.get(n1).total() - sideEffectCount.get(n0).total());
+      ifNodes.sort((n0, n1) -> requireNonNull(sideEffectCount.get(n1)).total()
+          - requireNonNull(sideEffectCount.get(n0)).total());
 
       // we try to find if-constructs to fit into the slots
       // these are "frozen", meaning we will not extract side effects out of them
       var frozenIfNodes = new ArrayList<>();
 
       if (!memSeTransitionUsed) { // MEM -> SE slot
-        var candidate = ifNodes.stream().filter(n -> sideEffectTypes.get(n).isMemSe()).findFirst();
+        var candidate = ifNodes.stream()
+            .filter(n -> requireNonNull(sideEffectTypes.get(n)).isMemSe()).findFirst();
         if (candidate.isPresent()) {
           frozenIfNodes.add(candidate.get());
           memSeTransitionUsed = true;
         }
       }
       if (!sePcTransitionUsed) { // SE -> PC slot
-        var candidate = ifNodes.stream().filter(n -> sideEffectTypes.get(n).isSePc()).findFirst();
+        var candidate = ifNodes.stream()
+            .filter(n -> requireNonNull(sideEffectTypes.get(n)).isSePc()).findFirst();
         if (candidate.isPresent()) {
           frozenIfNodes.add(candidate.get());
           sePcTransitionUsed = true;
         }
       }
-      if (!memSeTransitionUsed && !sePcTransitionUsed) { // MEM -> PC slot
-        var candidate = ifNodes.stream().filter(n -> sideEffectTypes.get(n).isMemPc()).findFirst();
-        if (candidate.isPresent()) {
-          frozenIfNodes.add(candidate.get());
-          memSeTransitionUsed = sePcTransitionUsed = true;
-        }
+      if (!memSeTransitionUsed && !sePcTransitionUsed && !forallCoveringSeExits) { // MEM -> PC slot
+        // freezing an if-block which covers all three types should also be possible,
+        // but only if nothing else CONTAINS an SE side effect
+        var ifBlockWithSeCount = ifNodes.stream()
+            .filter(n -> requireNonNull(sideEffectTypes.get(n)).contains(SideEffectType.SE))
+            .count();
+        var candidate = ifNodes.stream()
+            .filter(n -> {
+              var seTypes = requireNonNull(sideEffectTypes.get(n));
+              if (!seTypes.isMemPc()) {
+                // only blocks covering all three types are candidates
+                return false;
+              }
+              if (seTypes.contains(SideEffectType.SE)) {
+                // this block contains a SE, make sure no other block does
+                return ifBlockWithSeCount <= 1;
+              }
+              // this block contains no SE, make sure no other block does
+              return ifBlockWithSeCount <= 0;
+            }).findFirst();
+        candidate.ifPresent(frozenIfNodes::add);
       }
 
+      var end = new CfgTraverser(){}.traverseBranch(beginNode);
+
       // extract out of remaining if-constructs, such that they each only contain one se type
-      ifNodes.forEach(node -> {
-        var isolatedType = handleIf(node, !frozenIfNodes.contains(node));
-        if (isolatedType != null) {
-          // update the type, such that the reordering later knows that only one type remains
-          sideEffectTypes.put(node, SideEffectTypes.of(Set.of(isolatedType)));
+      ifNodes.stream().toList().forEach(node -> {
+        if (frozenIfNodes.contains(node)) {
+          // only if we do not extract and multiple se types remain do we need to reorder
+          reorderIfNode(node, depth);
+        } else {
+          extractOutOfIf(node, ifNodes, end, depth);
         }
       });
-      forallNodes.forEach(this::handleForall);
+      forallNodes.forEach(node -> reorderForall(node, depth));
 
       // now it is possible to reorder everything
-      // TODO: reorder the if- and forall-constructs
-      //       the side-effects themselves also need to be scheduled, which is done by the
-      //       SideEffectSchedulingPass, but it must be adapted to handle three types now
+      var nodes = new ArrayList<ControlSplitNode>(ifNodes);
+      nodes.addAll(forallNodes);
+
+      // sort if- and forall-constructs by their side effect types
+      nodes.sort((n0, n1) -> requireNonNull(sideEffectTypes.get(n0))
+          .compare(requireNonNull(sideEffectTypes.get(n1))));
+
+      // chain together the constructs in the right order
+      DirectionalNode prev = beginNode;
+      for (var node : nodes) {
+        var next = prev.next();
+        if (next != node) {
+          var oldPrev = requireNonNull(node.predecessor());
+          oldPrev.unlinkNext();
+          prev.unlinkNext();
+          oldPrev.setNext(next);
+          prev.setNext(node);
+        }
+        prev = node.findCorrespondingMergeNode();
+      }
     }
 
     /**
-     * Reorders the side effects inside the if-construct. If necessary, extracts side effects
-     * until only one type of side effect remains.
+     * Extracts side effects until only one type of side effect remains.
+     * The extracted side effects are placed in new if-constructs, which are added to
+     * the given {@code ifNodeList}.
+     *
+     * <p>{@link #sideEffectCount} is not updated and left in an inconsistent state.
+     *
+     * <p>{@link #sideEffectTypes} is updated for the new if-constructs and the given if-blocks,
+     * but not for any of the inner blocks.
+     *
+     * @param ifNode The node to extract out of.
+     * @param ifNodeList The list of if nodes to add to.
+     * @param endNode The end node of the branch surrounding the if-node, where the new
+     *                if-nodes should be prepended.
+     * @param depth The number of if-constructs the given if-node is inside of.
+     */
+    private void extractOutOfIf(IfNode ifNode, List<IfNode> ifNodeList,
+                                AbstractEndNode endNode, int depth) {
+      var keptSeType = requireNonNull(sideEffectCount.get(ifNode)).mostCommonType();
+      sideEffectTypes.put(ifNode, SideEffectTypes.of(Set.of(keptSeType)));
+      new CfgTraverser() {
+        @Override
+        public ControlNode onEnd(AbstractEndNode localEndNode) {
+          localEndNode.sideEffects().stream().toList().forEach(se -> {
+            var seType = classify(se);
+            if (seType == keptSeType) {
+              return;
+            }
+            localEndNode.removeSideEffect(se);
+            var lol = requireNonNull(sideEffectConditions.get(se));
+            var conditions = requireNonNull(lol.get(localEndNode));
+            var relevantConditions = conditions.subList(depth, conditions.size());
+
+            var pred = requireNonNull(endNode.predecessor());
+            pred.unlinkNext();
+            var newIfNode = addInNestedIf(relevantConditions, endNode,
+                requireNonNull(endNode.graph()), se);
+            pred.setNext(newIfNode);
+
+            sideEffectTypes.put(newIfNode, new SideEffectTypes(Set.of(seType)));
+            ifNodeList.add(newIfNode);
+          });
+          return localEndNode;
+        }
+      }.traverseControlSplit(ifNode);
+    }
+
+    /**
+     * Puts the given side effect into nested if-blocks. For each given condition in the list,
+     * an if-block is created.
+     *
+     * @param conditions The conditions, for each of which a nested if-block is created.
+     * @param next The node to prepend the new if-blocks to.
+     * @param graph The graph to add to.
+     * @param se The side effect to place in nested if-blocks.
+     * @return The outermost created if-node.
+     */
+    private static IfNode addInNestedIf(List<ExpressionNode> conditions, ControlNode next,
+                                        Graph graph, SideEffectNode se) {
+      if (conditions.isEmpty()) {
+        throw new IllegalStateException("Expected non-empty list of conditions");
+      }
+      if (conditions.size() == 1) {
+        return GraphUtils.ifElseSideEffect(
+            graph,
+            conditions.getFirst(),
+            List.of(se),
+            List.of(),
+            next,
+            se.location()
+        );
+      }
+      var pair = GraphUtils.insertIfElse(
+          graph,
+          conditions.getFirst(),
+          (g, end) -> addInNestedIf(
+              conditions.subList(1, conditions.size()),
+              end, graph, se
+          ),
+          (g, end) -> end,
+          se.location()
+      );
+      pair.right().setNext(next);
+      return pair.left();
+    }
+
+    /**
+     * Reorders the side effects inside the if-construct.
      *
      * @param ifNode The node to handle.
-     * @param extract Whether to extract side effects.
-     * @return If extracting, the side effect type remaining inside, otherwise null.
+     * @param depth The number of if-constructs the given if-node is inside of.
      */
-    @Nullable
-    private SideEffectType handleIf(IfNode ifNode, boolean extract) {
-      if (extract) {
-        var seType = sideEffectCount.get(ifNode).mostCommonType();
-        // TODO: extract everything that is different
-        return seType;
-      }
-      // only if we do not extract and multiple se types remain do we need to reorder
-      handleBranch(ifNode.trueBranch());
-      handleBranch(ifNode.falseBranch());
-      return null;
+    private void reorderIfNode(IfNode ifNode, int depth) {
+      reorderBranch(ifNode.trueBranch(), depth + 1);
+      reorderBranch(ifNode.falseBranch(), depth + 1);
     }
 
     /**
      * Reorders the side effects inside the forall-construct.
      *
      * @param forallNode The node to handle.
+     * @param depth The number of if-constructs the given forall-node is inside of.
      */
-    private void handleForall(ForallNode forallNode) {
-      handleBranch(forallNode.beginNode());
+    private void reorderForall(ForallNode forallNode, int depth) {
+      reorderBranch(forallNode.beginNode(), depth);
     }
 
   }
 
-
-
-
-
-}
-
-class SideEffectInstanceCollector {
-
   /**
-   * Stores the condition under which a side effect is executed. Represents the conditions
-   * for a single instance of the side effect (so if e.g. a register write is scheduled
-   * in multiple locations in the CFG, each location is represented by a separate instance of
-   * this record).
+   * Classifies the given side effect into one of three types (see {@link SideEffectType}).
    *
-   * @param conditions The conjunctive conditions of the side effect instance.
-   * @param location The control node at which the side effect is scheduled.
-   * @param insideForall Whether the side effect is inside a forall construct.
-   * @param hasIfSibling Whether any of the surrounding if-constructs has a sibling.
+   * @param node The side effect node to classify.
+   * @return The class (or type) of the side effect.
    */
-  public record SideEffectInstance(List<ExpressionNode> conditions,
-                                   @Nullable AbstractEndNode location,
-                                   boolean insideForall, boolean hasIfSibling) {
-
-    public void push(ExpressionNode condition) {
-      conditions.addLast(condition);
+  private SideEffectType classify(SideEffectNode node) {
+    if (node instanceof WriteMemNode) {
+      return SideEffectType.MEM;
+    } else if ((node instanceof WriteRegTensorNode write && write.isPcAccess())
+        || (node instanceof ProcCallNode procCall && procCall.exceptionRaise())) {
+      return SideEffectType.PC;
     }
-
-    public void pop() {
-      conditions.removeLast();
-    }
-
-    public SideEffectInstance withInsideForall() {
-      return new SideEffectInstance(conditions, location, true, hasIfSibling);
-    }
-
-    public SideEffectInstance withIfSibling() {
-      return new SideEffectInstance(conditions, location, insideForall, true);
-    }
-
-    public SideEffectInstance createInstance(AbstractEndNode location) {
-      return new SideEffectInstance(List.copyOf(conditions), location, insideForall, hasIfSibling);
-    }
-
-    static SideEffectInstance empty() {
-      return new SideEffectInstance(new ArrayList<>(), null, false, false);
-    }
-  }
-
-  private final HashMap<SideEffectNode, List<SideEffectInstance>> conditions = new HashMap<>();
-
-  /**
-   * Collect all side effect instances. Each side effect gets a list of all instances, in
-   * which the side effect node is scheduled. Each instance contains a list of all the conditions
-   * which must be met, such that that instance is reached.
-   *
-   * <p>For example:
-   * <pre>{@code
-   * if (a) { if (b) {} else { se_0 } }
-   * if (c) { se_0 }
-   * }</pre>
-   * yields:
-   * <pre>{@code
-   * { se_0: [ { [a, -b], ...}, { [c], ... } ] }
-   * }</pre>
-   */
-  public static Map<SideEffectNode, List<SideEffectInstance>> collectInstances(Graph behavior) {
-    var collector = new SideEffectInstanceCollector();
-    collector.collect(behavior);
-    return collector.conditions;
-  }
-
-  private void collect(Graph behavior) {
-    var start = getSingleNode(behavior, StartNode.class);
-    resolveBranch(start, SideEffectInstance.empty());
-  }
-
-  /**
-   * Recursively traverses the CFG. Jumps over regular directional nodes. When an if-block
-   * is encountered, its condition is added to branchCondition while traversing the true-branch
-   * and removed afterward. The same is done for the negation of the condition for the false-branch.
-   */
-  private @Nullable MergeNode resolveBranch(AbstractBeginNode beginNode,
-                                            SideEffectInstance branchCondition) {
-    // the current control node
-    ControlNode current = beginNode;
-    var ifNodes = new ArrayList<IfNode>();
-    var forallNodes = new ArrayList<ForallNode>();
-
-    // loop is only terminated by return of AbstractEndNode
-    while (true) {
-
-      switch (current) {
-        case AbstractEndNode endNode -> {
-          var ifNodeCond = ifNodes.size() > 1 ? branchCondition.withIfSibling() : branchCondition;
-          ifNodes.forEach(node -> handleIf(node, ifNodeCond));
-          forallNodes.forEach(node -> handleForall(node, branchCondition));
-          return handleEndNode(endNode, branchCondition);
-        }
-        case IfNode ifNode -> {
-          current = ifNode.mergeNode();
-          ifNodes.add(ifNode);
-        }
-        case ForallNode forallNode -> {
-          current = forallNode.mergeNode();
-          forallNodes.add(forallNode);
-        }
-        // handle normal singled directed node by just skipping it and continue
-        case DirectionalNode directionalNode -> current = directionalNode.next();
-        // there should not be an other control node that was not handled yet
-        default -> //noinspection DataFlowIssue
-            current.ensure(false,
-                "Not an expected node in the SideEffectInstanceCollector. "
-                    + "You want to implement it.");
-      }
-    }
-  }
-
-  @Nullable
-  private MergeNode handleEndNode(AbstractEndNode endNode, SideEffectInstance branchCondition) {
-    // handle the end of the current branch
-    var graph = endNode.graph();
-    endNode.ensure(graph != null,
-        "Node is not active, but control flow must be stable for IssSideEffectReorderingPass");
-
-    // add the condition to all side effects
-    for (var sideEffect : endNode.sideEffects()) {
-      conditions.computeIfAbsent(sideEffect,
-          s -> new ArrayList<>()).add(branchCondition.createInstance(endNode));
-    }
-
-    // find and return the merge node if available
-    // (only in case of an InstrEndNode the MergeNode is not available)
-    return endNode.usages()
-        .filter(user -> user instanceof MergeNode)
-        .map(MergeNode.class::cast)
-        .findAny()
-        .orElse(null);
-  }
-
-  @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
-  private MergeNode handleIf(IfNode ifNode, SideEffectInstance branchCondition) {
-
-    branchCondition.push(ifNode.condition());
-    var trueMergeNode = resolveBranch(ifNode.trueBranch(), branchCondition);
-    branchCondition.pop();
-
-    branchCondition.push(BuiltInCall.of(BuiltInTable.NOT, ifNode.condition()));
-    var falseMergeNode = resolveBranch(ifNode.falseBranch(), branchCondition);
-    branchCondition.pop();
-
-    // MergeNode must be the same for all branches and not null
-    ifNode.ensure(trueMergeNode == falseMergeNode,
-        "Branches of node don't result in the same merge node");
-    ifNode.ensure(trueMergeNode != null,
-        "Couldn't find merge node for true branch");
-
-    // continue with the found mergeNode
-    return trueMergeNode;
-  }
-
-  private MergeNode handleForall(ForallNode forallNode, SideEffectInstance branchCondition) {
-    // forall nodes must be handled in its own resolveBranch call to ensure
-    // it is correctly stepped out of
-    var mergeNode = resolveBranch(forallNode.beginNode(), branchCondition.withInsideForall());
-    forallNode.ensure(mergeNode != null, "Couldn't find merge node for forall branch");
-    return mergeNode;
+    return SideEffectType.SE;
   }
 
 }
