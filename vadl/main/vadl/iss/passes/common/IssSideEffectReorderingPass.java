@@ -27,10 +27,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
+import vadl.iss.SideEffectUtils;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -53,10 +53,7 @@ import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 
@@ -72,7 +69,7 @@ import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
  * works as follows:
  * <ul>
  *   <li>Find and classify all side effects in the graph. The three classes are
- *   {@code MEM}, {@code SE} and {@code PC}. See {@link SideEffectReorderer.SideEffectType}.</li>
+ *   {@code MEM}, {@code SE} and {@code PC}. See {@link SideEffectUtils.SideEffectType}.</li>
  *   <li>Traverse the CFG and find sibling control flow blocks.</li>
  *   <li>Extract side effects out of blocks into their own blocks at the same level until
  *   all blocks can be ordered such that the ordering of all side effects is guaranteed.</li>
@@ -113,7 +110,7 @@ import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
  * }</pre>
  *
  * <p>The scheduling of side effects inside blocks in the correct order is handled by
- * {@link SideEffectSchedulingPass}. TODO: this must be implemented
+ * {@link SideEffectSchedulingPass}.
  *
  * <p>TODO: memory loads are a different story. They are not side effects and cannot be handled
  *          here. I think the IssSafeResourceReadPass could be adapted to ensure that all
@@ -146,38 +143,7 @@ public class IssSideEffectReorderingPass extends Pass {
 class SideEffectReorderer {
 
   /**
-   * The side effect types this reorderer considers.
-   *
-   * <p>There are currently the following types:
-   * <ul>
-   *   <li>MEM: Memory writes (and any instruction that may cause a TCG TB to be recompiled
-   *   and re-executed by accessing MMIO memory)</li>
-   *   <li>SE: All other side effects (e.g. register writes)</li>
-   *   <li>PC: All side effects causing an instruction exit (writes to the program counter
-   *   and exception raises)</li>
-   * </ul>
-   *
-   * <p>Each type also has an ordinal, which defines the (non-strict) total order in which
-   * side effects must be in. If two side effects have the same type, they may be ordered
-   * in any way. If they have different types, then they must be ordered according to their
-   * type ordinals: MEM < SE < PC.
-   */
-  enum SideEffectType {
-    MEM(0), SE(1), PC(2);
-
-    private final int ord;
-
-    SideEffectType(int ord) {
-      this.ord = ord;
-    }
-
-    public int ord() {
-      return ord;
-    }
-  }
-
-  /**
-   * Stores a count for each of the side effect types (see {@link SideEffectType}).
+   * Stores a count for each of the side effect types (see {@link SideEffectUtils.SideEffectType}).
    */
   static class SideEffectCount {
     public int memCnt = 0;
@@ -193,7 +159,7 @@ class SideEffectReorderer {
       return this;
     }
 
-    public SideEffectCount inc(SideEffectType type) {
+    public SideEffectCount inc(SideEffectUtils.SideEffectType type) {
       switch (type) {
         case MEM -> memCnt++;
         case SE  -> seCnt++;
@@ -206,88 +172,22 @@ class SideEffectReorderer {
       return memCnt + seCnt + pcCnt;
     }
 
-    public SideEffectType mostCommonType() {
+    public SideEffectUtils.SideEffectType mostCommonType() {
       if (memCnt > seCnt) {
         if (memCnt > pcCnt) {
-          return SideEffectType.MEM;
+          return SideEffectUtils.SideEffectType.MEM;
         }
-        return SideEffectType.PC;
+        return SideEffectUtils.SideEffectType.PC;
       }
       if (seCnt > pcCnt) {
-        return SideEffectType.SE;
+        return SideEffectUtils.SideEffectType.SE;
       }
-      return SideEffectType.PC;
-    }
-  }
-
-  /**
-   * Stores a set of side effect types (see {@link SideEffectType}).
-   */
-  record SideEffectTypes(Set<SideEffectType> types) {
-    public static SideEffectTypes of(Set<SideEffectType> types) {
-      return new SideEffectTypes(types);
-    }
-
-    public SideEffectTypes combine(SideEffectTypes other) {
-      return new SideEffectTypes(
-          Stream.concat(other.types.stream(), types.stream()).collect(Collectors.toSet()));
-    }
-
-    public boolean contains(SideEffectType type) {
-      return types.contains(type);
-    }
-
-    public boolean covers(SideEffectType type) {
-      return !types.isEmpty() && min() <= type.ord() && type.ord() <= max();
-    }
-
-    private int min() {
-      return types.stream().mapToInt(SideEffectType::ord).min()
-          .orElseThrow(() -> new IllegalStateException("Statement without side effects"));
-    }
-
-    private int max() {
-      return types.stream().mapToInt(SideEffectType::ord).max()
-          .orElseThrow(() -> new IllegalStateException("Statement without side effects"));
-    }
-
-    private boolean isMemSe() {
-      return min() == SideEffectType.MEM.ord() && max() == SideEffectType.SE.ord();
-    }
-
-    private boolean isSePc() {
-      return min() == SideEffectType.SE.ord() && max() == SideEffectType.PC.ord();
-    }
-
-    private boolean isMemPc() {
-      return min() == SideEffectType.MEM.ord() && max() == SideEffectType.PC.ord();
-    }
-
-    boolean conflictsWith(SideEffectTypes other) {
-      if (types.isEmpty() || other.types.isEmpty()) {
-        return false;
-      }
-      return max() > other.min() && min() < other.max();
-    }
-
-    int compare(SideEffectTypes other) {
-      if (conflictsWith(other)) {
-        throw new IllegalStateException("Comparing two conflicting side effect type lists");
-      }
-      if (types.equals(other.types)) {
-        return 0;
-      } else if (types.isEmpty()) {
-        return -1;
-      } else if (other.types.isEmpty()) {
-        return 1;
-      }
-      int comp = min() - other.min();
-      return comp != 0 ? comp : max() - other.max();
+      return SideEffectUtils.SideEffectType.PC;
     }
   }
 
   private final Graph behavior;
-  private final IdentityHashMap<ControlSplitNode, SideEffectTypes> sideEffectTypes;
+  private final IdentityHashMap<ControlSplitNode, SideEffectUtils.SideEffectTypes> sideEffectTypes;
   private final IdentityHashMap<ControlSplitNode, SideEffectCount> sideEffectCount;
   private final IdentityHashMap<SideEffectNode, Map<AbstractEndNode, List<ExpressionNode>>>
       sideEffectConditions;
@@ -321,8 +221,9 @@ class SideEffectReorderer {
    */
   class SideEffectInfoCollector {
 
-    record Result(@Nullable MergeNode mergeNode, SideEffectTypes seTypes, SideEffectCount seCount) {
-    }
+    record Result(@Nullable MergeNode mergeNode,
+                  SideEffectUtils.SideEffectTypes seTypes,
+                  SideEffectCount seCount) {}
 
     public void run() {
       var start = getSingleNode(behavior, StartNode.class);
@@ -332,7 +233,7 @@ class SideEffectReorderer {
     private Result resolveBranch(AbstractBeginNode beginNode,
                                  List<ExpressionNode> conditions) {
       ControlNode current = beginNode;
-      var seTypes = new SideEffectTypes(Set.of());
+      var seTypes = SideEffectUtils.SideEffectTypes.empty();
       var seCount = new SideEffectCount();
       while (true) {
         switch (current) {
@@ -341,15 +242,15 @@ class SideEffectReorderer {
             for (var se : sideEffects) {
               sideEffectConditions.computeIfAbsent(se,
                   s -> new HashMap<>()).put(endNode, List.copyOf(conditions));
-              seCount.inc(classify(se));
+              seCount.inc(SideEffectUtils.SideEffectType.classify(se));
             }
             var mergeNode = endNode.usages()
                 .filter(user -> user instanceof MergeNode)
                 .map(MergeNode.class::cast)
                 .findAny()
                 .orElse(null);
-            seTypes = seTypes.combine(new SideEffectTypes(
-                sideEffects.stream().map(SideEffectReorderer.this::classify)
+            seTypes = seTypes.combine(new SideEffectUtils.SideEffectTypes(
+                sideEffects.stream().map(SideEffectUtils.SideEffectType::classify)
                     .collect(Collectors.toSet())));
             return new Result(mergeNode, seTypes, seCount);
           }
@@ -412,7 +313,7 @@ class SideEffectReorderer {
   /**
    * Uses the information collected by the {@link SideEffectInfoCollector} to reorder the
    * side effects in the graph, such that the total order imposed by their types
-   * (see {@link SideEffectType}) is upheld.
+   * (see {@link SideEffectUtils.SideEffectType}) is upheld.
    *
    * <p>Note: modifies the information provided by {@link SideEffectInfoCollector} for its
    * own purposes and leaves it in an incomplete/inconsistent state.
@@ -432,7 +333,7 @@ class SideEffectReorderer {
      *
      * <p>It then reorders the sibling constructs such that all MEM side effects come before
      * all other side effects and all PC side effects come after all other side effects
-     * (see {@link SideEffectType}).
+     * (see {@link SideEffectUtils.SideEffectType}).
      *
      * @param beginNode The begin node of the branch.
      * @param depth The number of if-constructs this branch is inside of.
@@ -507,7 +408,7 @@ class SideEffectReorderer {
         } else if (seTypes.isMemPc()) {
           memSeTransitionUsed = sePcTransitionUsed = true;
         }
-        if (seTypes.covers(SideEffectType.SE)) {
+        if (seTypes.covers(SideEffectUtils.SideEffectType.SE)) {
           forallCoveringSeExits = true;
         }
       }
@@ -541,7 +442,8 @@ class SideEffectReorderer {
         // freezing an if-block which covers all three types should also be possible,
         // but only if nothing else CONTAINS an SE side effect
         var ifBlockWithSeCount = ifNodes.stream()
-            .filter(n -> requireNonNull(sideEffectTypes.get(n)).contains(SideEffectType.SE))
+            .filter(n -> requireNonNull(sideEffectTypes.get(n))
+                .contains(SideEffectUtils.SideEffectType.SE))
             .count();
         var candidate = ifNodes.stream()
             .filter(n -> {
@@ -550,7 +452,7 @@ class SideEffectReorderer {
                 // only blocks covering all three types are candidates
                 return false;
               }
-              if (seTypes.contains(SideEffectType.SE)) {
+              if (seTypes.contains(SideEffectUtils.SideEffectType.SE)) {
                 // this block contains a SE, make sure no other block does
                 return ifBlockWithSeCount <= 1;
               }
@@ -615,12 +517,12 @@ class SideEffectReorderer {
     private void extractOutOfIf(IfNode ifNode, List<IfNode> ifNodeList,
                                 AbstractEndNode endNode, int depth) {
       var keptSeType = requireNonNull(sideEffectCount.get(ifNode)).mostCommonType();
-      sideEffectTypes.put(ifNode, SideEffectTypes.of(Set.of(keptSeType)));
+      sideEffectTypes.put(ifNode, SideEffectUtils.SideEffectTypes.of(Set.of(keptSeType)));
       new CfgTraverser() {
         @Override
         public ControlNode onEnd(AbstractEndNode localEndNode) {
           localEndNode.sideEffects().stream().toList().forEach(se -> {
-            var seType = classify(se);
+            var seType = SideEffectUtils.SideEffectType.classify(se);
             if (seType == keptSeType) {
               return;
             }
@@ -635,7 +537,7 @@ class SideEffectReorderer {
                 requireNonNull(endNode.graph()), se);
             pred.setNext(newIfNode);
 
-            sideEffectTypes.put(newIfNode, new SideEffectTypes(Set.of(seType)));
+            sideEffectTypes.put(newIfNode, SideEffectUtils.SideEffectTypes.empty());
             ifNodeList.add(newIfNode);
           });
           return localEndNode;
@@ -703,22 +605,6 @@ class SideEffectReorderer {
       reorderBranch(forallNode.beginNode(), depth);
     }
 
-  }
-
-  /**
-   * Classifies the given side effect into one of three types (see {@link SideEffectType}).
-   *
-   * @param node The side effect node to classify.
-   * @return The class (or type) of the side effect.
-   */
-  private SideEffectType classify(SideEffectNode node) {
-    if (node instanceof WriteMemNode) {
-      return SideEffectType.MEM;
-    } else if ((node instanceof WriteRegTensorNode write && write.isPcAccess())
-        || (node instanceof ProcCallNode procCall && procCall.exceptionRaise())) {
-      return SideEffectType.PC;
-    }
-    return SideEffectType.SE;
   }
 
 }
