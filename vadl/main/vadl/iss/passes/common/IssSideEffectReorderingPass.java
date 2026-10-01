@@ -24,9 +24,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -42,6 +45,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.control.IfNode;
@@ -55,6 +59,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolver;
 
@@ -210,6 +215,398 @@ public class IssSideEffectReorderingPass extends Pass {
     pair.right().setNext(next);
     return pair.left();
   }
+}
+
+class SideEffectReorderer {
+
+  enum SideEffectType {
+    MEM, SE, PC
+  }
+
+  enum SideEffectTypeTransition {
+    MEM_SE, SE_PC
+  }
+
+  static class SideEffectCount {
+    public int memCnt = 0;
+    public int seCnt = 0;
+    public int pcCnt = 0;
+
+    public SideEffectCount() {}
+
+    private SideEffectCount(int memCnt, int seCnt, int pcCnt) {
+      this.memCnt = memCnt;
+      this.seCnt = seCnt;
+      this.pcCnt = pcCnt;
+    }
+
+    public static SideEffectCount add(SideEffectCount first, SideEffectCount second) {
+      return new SideEffectCount(
+          first.memCnt + second.memCnt,
+          first.seCnt + second.seCnt,
+          first.pcCnt + second.pcCnt
+      );
+    }
+
+    public void add(SideEffectCount other) {
+      memCnt += other.memCnt;
+      seCnt  += other.seCnt;
+      pcCnt  += other.pcCnt;
+    }
+
+    public void inc(SideEffectType type) {
+      switch (type) {
+        case MEM -> memCnt++;
+        case SE  -> seCnt++;
+        case PC  -> pcCnt++;
+      }
+    }
+
+    public int total() {
+      return memCnt + seCnt + pcCnt;
+    }
+
+    public SideEffectType mostCommonType() {
+      if (memCnt > seCnt) {
+        if (memCnt > pcCnt) {
+          return SideEffectType.MEM;
+        }
+        return SideEffectType.PC;
+      }
+      if (seCnt > pcCnt) {
+        return SideEffectType.SE;
+      }
+      return SideEffectType.PC;
+    }
+  }
+
+  record SideEffectTypes(Set<SideEffectType> types) {
+    public static SideEffectTypes of(Set<SideEffectType> types) {
+      return new SideEffectTypes(types);
+    }
+
+    public SideEffectTypes combine(SideEffectTypes other) {
+      return new SideEffectTypes(
+          Stream.concat(other.types.stream(), types.stream()).collect(Collectors.toSet()));
+    }
+
+    public boolean contains(SideEffectType type) {
+      return types.contains(type);
+    }
+
+    private int min() {
+      return types.stream().mapToInt(Enum::ordinal).min()
+          .orElseThrow(() -> new IllegalStateException("Statement without side effects"));
+    }
+
+    private int max() {
+      return types.stream().mapToInt(Enum::ordinal).max()
+          .orElseThrow(() -> new IllegalStateException("Statement without side effects"));
+    }
+
+    private int range() {
+      return max() - min();
+    }
+
+    private boolean isMemSe() {
+      return min() == SideEffectType.MEM.ordinal() && max() == SideEffectType.SE.ordinal();
+    }
+
+    private boolean isSePc() {
+      return min() == SideEffectType.SE.ordinal() && max() == SideEffectType.PC.ordinal();
+    }
+
+    private boolean isMemPc() {
+      return min() == SideEffectType.MEM.ordinal() && max() == SideEffectType.PC.ordinal();
+    }
+
+    boolean conflictsWith(SideEffectTypes other) {
+      if (types.isEmpty() || other.types.isEmpty()) {
+        return true;
+      }
+      return max() > other.min() && min() < other.max();
+    }
+  }
+
+  private final Graph behavior;
+  private final HashMap<ControlSplitNode, SideEffectTypes> sideEffectTypes;
+  private final HashMap<ControlSplitNode, SideEffectCount> sideEffectCount;
+  private final HashMap<SideEffectNode, List<List<ExpressionNode>>> sideEffectConditions;
+
+  SideEffectReorderer(Graph behavior) {
+    this.behavior = behavior;
+    this.sideEffectTypes = new HashMap<>();
+    this.sideEffectCount = new HashMap<>();
+    this.sideEffectConditions = new HashMap<>();
+  }
+
+  public static void run(Graph behavior) {
+    new SideEffectReorderer(behavior).reorder();
+  }
+
+  private void reorder() {
+    new SideEffectInfoCollector().run();
+  }
+
+  /**
+   * Collects conditions for all side effects.
+   * Collects types and amount of side effects for each control flow split (so if-else and forall).
+   */
+  class SideEffectInfoCollector {
+
+    record Result(@Nullable MergeNode mergeNode, SideEffectTypes seTypes, SideEffectCount seCount) {
+    }
+
+    public void run() {
+      var start = getSingleNode(behavior, StartNode.class);
+      resolveBranch(start, new ArrayList<>());
+    }
+
+    private Result resolveBranch(AbstractBeginNode beginNode,
+                                 List<ExpressionNode> conditions) {
+      ControlNode current = beginNode;
+      var seTypes = new SideEffectTypes(Set.of());
+      var seCount = new SideEffectCount();
+      while (true) {
+        switch (current) {
+          case AbstractEndNode endNode -> {
+            var sideEffects = endNode.sideEffects();
+            for (var se : sideEffects) {
+              sideEffectConditions.computeIfAbsent(se,
+                  s -> new ArrayList<>()).add(List.copyOf(conditions));
+              seCount.inc(classify(se));
+            }
+            var mergeNode = endNode.usages()
+                .filter(user -> user instanceof MergeNode)
+                .map(MergeNode.class::cast)
+                .findAny()
+                .orElse(null);
+            seTypes = seTypes.combine(new SideEffectTypes(
+                sideEffects.stream().map(this::classify).collect(Collectors.toSet())));
+            return new Result(mergeNode, seTypes, seCount);
+          }
+          case IfNode ifNode -> {
+            var result = handleIf(ifNode, conditions);
+            sideEffectTypes.put(ifNode, result.seTypes);
+            sideEffectCount.put(ifNode, result.seCount);
+            seTypes = seTypes.combine(result.seTypes);
+            seCount.add(result.seCount);
+            current = requireNonNull(result.mergeNode);
+          }
+          case ForallNode forallNode -> {
+            var result = handleForall(forallNode, conditions);
+            sideEffectTypes.put(forallNode, result.seTypes);
+            sideEffectCount.put(forallNode, result.seCount);
+            seTypes = seTypes.combine(result.seTypes);
+            seCount.add(result.seCount);
+            current = requireNonNull(result.mergeNode);
+          }
+          case DirectionalNode directionalNode -> current = directionalNode.next();
+          default -> //noinspection DataFlowIssue
+              current.ensure(false,
+                  "Not an expected node in the SideEffectReorderer. "
+                      + "You want to implement it.");
+        }
+      }
+    }
+
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
+    private Result handleIf(IfNode ifNode, List<ExpressionNode> conditions) {
+
+      conditions.addLast(ifNode.condition());
+      var trueResult = resolveBranch(ifNode.trueBranch(), conditions);
+      conditions.removeLast();
+
+      conditions.addLast(BuiltInCall.of(BuiltInTable.NOT, ifNode.condition()));
+      var falseResult = resolveBranch(ifNode.falseBranch(), conditions);
+      conditions.removeLast();
+
+      // MergeNode must be the same for all branches and not null
+      ifNode.ensure(trueResult.mergeNode == falseResult.mergeNode,
+          "Branches of node don't result in the same merge node");
+      ifNode.ensure(trueResult.mergeNode != null,
+          "Couldn't find merge node for true branch");
+
+      return new Result(
+          trueResult.mergeNode,
+          trueResult.seTypes.combine(falseResult.seTypes),
+          SideEffectCount.add(trueResult.seCount, falseResult.seCount)
+      );
+    }
+
+    private Result handleForall(ForallNode forallNode, List<ExpressionNode> conditions) {
+      // forall nodes must be handled in its own resolveBranch call to ensure
+      // it is correctly stepped out of
+      var result = resolveBranch(forallNode.beginNode(), conditions);
+      forallNode.ensure(result.mergeNode != null, "Couldn't find merge node for forall branch");
+      return result;
+    }
+
+    private SideEffectType classify(SideEffectNode node) {
+      if (node instanceof WriteMemNode) {
+        return SideEffectType.MEM;
+      } else if (node instanceof WriteRegTensorNode write && write.isPcAccess()
+          || node instanceof ProcCallNode procCall && procCall.exceptionRaise()) {
+        return SideEffectType.PC;
+      }
+      return SideEffectType.SE;
+    }
+  }
+
+  class Reorderer {
+
+    public void run() {
+      var start = getSingleNode(behavior, StartNode.class);
+      handleBranch(start);
+    }
+
+    private void handleBranch(AbstractBeginNode beginNode) {
+      ControlNode current = beginNode;
+
+      var ifNodes = new ArrayList<IfNode>();
+      var forallNodes = new ArrayList<ForallNode>();
+
+      loop: while (true) {
+        switch (current) {
+          case AbstractEndNode endNode -> {
+            break loop;
+          }
+          case IfNode ifNode -> {
+            ifNodes.add(ifNode);
+            current = ifNode.mergeNode(); // TODO: this is kinda slow
+          }
+          case ForallNode forallNode -> {
+            forallNodes.add(forallNode);
+            current = forallNode.mergeNode(); // TODO: same here
+          }
+          case DirectionalNode directionalNode -> current = directionalNode.next();
+          default -> //noinspection DataFlowIssue
+              current.ensure(false,
+                  "Not an expected node in the SideEffectReorderer. "
+                      + "You want to implement it.");
+        }
+      }
+
+      // ensure than no two forall blocks have conflicting side effects, since we cannot
+      // extract from forall blocks
+      // TODO: or maybe we can? e.g. if in a forall both MEM and some register are written,
+      //       we could split that into two forall constructs...
+      for (int i = 0; i < forallNodes.size(); i++) {
+        for (int j = 0; j < i; j++) {
+          var forall0 = forallNodes.get(i);
+          var forall1 = forallNodes.get(j);
+          var seTypes0 = sideEffectTypes.get(forall0);
+          var seTypes1 = sideEffectTypes.get(forall1);
+          if (seTypes0.conflictsWith(seTypes1)) {
+            throw Diagnostic.error(
+                "Side-effects in two forall constructs cannot be ordered", forall0
+            ).locationNote(forall1, "Conflicting forall construct").build();
+          }
+        }
+      }
+
+      // there can only be a few constructs with multiple side effect types:
+      // either both MEM -> SE and SE -> PC
+      // or just MEM -> PC
+      // lets call those "slots"
+      boolean memSeTransitionUsed = false;
+      boolean sePcTransitionUsed = false;
+
+      // forall nodes cannot be extracted out of, so those are fixed
+      for (var forall : forallNodes) {
+        var seTypes = sideEffectTypes.get(forall);
+        if (seTypes.min() <= SideEffectType.MEM.ordinal()
+            && seTypes.max() >= SideEffectType.SE.ordinal()) {
+          memSeTransitionUsed = true;
+        }
+        if (seTypes.min() <= SideEffectType.SE.ordinal()
+            && seTypes.max() >= SideEffectType.PC.ordinal()) {
+          sePcTransitionUsed = true;
+        }
+      }
+
+      // sort by side effect count (largest to smallest), such that if-constructs with many
+      // side effects are more likely to be frozen
+      ifNodes.sort((n0, n1) -> sideEffectCount.get(n1).total() - sideEffectCount.get(n0).total());
+
+      // we try to find if-constructs to fit into the slots
+      // these are "frozen", meaning we will not extract side effects out of them
+      var frozenIfNodes = new ArrayList<>();
+
+      if (!memSeTransitionUsed) { // MEM -> SE slot
+        var candidate = ifNodes.stream().filter(n -> sideEffectTypes.get(n).isMemSe()).findFirst();
+        if (candidate.isPresent()) {
+          frozenIfNodes.add(candidate.get());
+          memSeTransitionUsed = true;
+        }
+      }
+      if (!sePcTransitionUsed) { // SE -> PC slot
+        var candidate = ifNodes.stream().filter(n -> sideEffectTypes.get(n).isSePc()).findFirst();
+        if (candidate.isPresent()) {
+          frozenIfNodes.add(candidate.get());
+          sePcTransitionUsed = true;
+        }
+      }
+      if (!memSeTransitionUsed && !sePcTransitionUsed) { // MEM -> PC slot
+        var candidate = ifNodes.stream().filter(n -> sideEffectTypes.get(n).isMemPc()).findFirst();
+        if (candidate.isPresent()) {
+          frozenIfNodes.add(candidate.get());
+          memSeTransitionUsed = sePcTransitionUsed = true;
+        }
+      }
+
+      // extract out of remaining if-constructs, such that they each only contain one se type
+      ifNodes.forEach(node -> {
+        var isolatedType = handleIf(node, !frozenIfNodes.contains(node));
+        if (isolatedType != null) {
+          // update the type, such that the reordering later knows that only one type remains
+          sideEffectTypes.put(node, SideEffectTypes.of(Set.of(isolatedType)));
+        }
+      });
+      forallNodes.forEach(this::handleForall);
+
+      // now it is possible to reorder everything
+      // TODO: reorder the if- and forall-constructs
+      //       the side-effects themselves also need to be scheduled, which is done by the
+      //       SideEffectSchedulingPass, but it must be adapted to handle three types now
+    }
+
+    /**
+     * Reorders the side effects inside the if-construct. If necessary, extracts side effects
+     * until only one type of side effect remains.
+     *
+     * @param ifNode The node to handle.
+     * @param extract Whether to extract side effects.
+     * @return If extracting, the side effect type remaining inside, otherwise null.
+     */
+    @Nullable
+    private SideEffectType handleIf(IfNode ifNode, boolean extract) {
+      if (extract) {
+        var seType = sideEffectCount.get(ifNode).mostCommonType();
+        // TODO: extract everything that is different
+        return seType;
+      }
+      // only if we do not extract and multiple se types remain do we need to reorder
+      handleBranch(ifNode.trueBranch());
+      handleBranch(ifNode.falseBranch());
+      return null;
+    }
+
+    /**
+     * Reorders the side effects inside the forall-construct.
+     *
+     * @param forallNode The node to handle.
+     */
+    private void handleForall(ForallNode forallNode) {
+      handleBranch(forallNode.beginNode());
+    }
+
+  }
+
+
+
+
+
 }
 
 class SideEffectInstanceCollector {
