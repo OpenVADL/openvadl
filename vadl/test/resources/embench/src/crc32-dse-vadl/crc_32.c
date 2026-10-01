@@ -17,6 +17,7 @@
 /* CRC - 32 BIT ANSI X3.66 CRC checksum files */
 
 #include "support.h"
+#include "random.h"
 
 /* This scale factor will be changed to equalise the runtime of the
    benchmarks. */
@@ -157,7 +158,7 @@ crc32pseudo ()
 
   for (i = 0; i < 1024; ++i)
     {
-      oldcrc32 = UPDC32 (rand_beebs (), oldcrc32);
+      oldcrc32 = UPDC32 (random_numbers[i], oldcrc32);
     }
 
   return ~oldcrc32;
@@ -166,6 +167,7 @@ crc32pseudo ()
 void
 initialise_benchmark (void)
 {
+  srand_precomputed (0);
 }
 
 
@@ -195,7 +197,6 @@ benchmark_body (int rpt)
 
   for (i = 0; i < rpt; i++)
     {
-      srand_beebs (0);
       r = crc32pseudo ();
     }
 
