@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Linker wrapper: runs ld.lld, then sets e_machine to RISC-V (243) on the output ELF.
+
+set -e
+
+LD=/src/llvm-final/build/bin/ld.lld
+UPDATER=/work/elf_machine_updater
+EM_RISCV=243
+
+# Link with all given arguments
+"$LD" "$@"
+
+# Find the output file (-o <file>, -o<file>, --output <file>, --output=<file>)
+out="a.out"
+args=("$@")
+for ((i = 0; i < ${#args[@]}; i++)); do
+  case "${args[$i]}" in
+    -o|--output)
+      out="${args[$((i + 1))]}"
+      ;;
+    --output=*)
+      out="${args[$i]#--output=}"
+      ;;
+    -o?*)
+      out="${args[$i]#-o}"
+      ;;
+  esac
+done
+
+if [ ! -f "$out" ]; then
+  echo "lcb-ld-wrapper: output '$out' not found" >&2
+  exit 1
+fi
+
+"$UPDATER" update-machine --elf "$out" --value "$EM_RISCV"
