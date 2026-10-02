@@ -49,7 +49,7 @@ public class IssFloatBuiltinCollectionPass extends AbstractIssPass {
 
   @Override
   public PassName getName() {
-    return PassName.of("Float Built-in Collection");
+    return PassName.of("Iss Float Built-in Collection Pass");
   }
 
   /**
