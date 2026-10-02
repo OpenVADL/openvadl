@@ -1,0 +1,124 @@
+// A micro architecture description of the PowerPC 604 architecture.
+//
+// Information used in modelling collected from:
+// - PowerPC 604 RISC Microprocessor Technical Summary
+//   (gitea: complang/etc/literature/comparch/ppc604_technical_summary.pdf)
+//
+// This description currently mostly ignores the frontend and memory subsystem,
+// instead focusing solely on the Zen4 execution engine.
+// Instruction dispatch has been ignored for now, as the author is not familiar
+// with the PPC ISA and could not find good resources on this.
+// The execution pipes have also only been modelled as single stages with no
+// real behaviour. The single-stage description should however be accurate at
+// least for SCIU_0 and SCIU_1.
+micro architecture PPC604 implements PPC = {
+
+  // A silly frontend.
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+
+
+  [size : 16]
+  [controls : GP_PRF, FP_PRF, CR_PRF]
+  [consume : DECODE]
+  logic [reorder buffer] ROB
+
+  // Note that the PPC604 does not have the usual distinction of architectural
+  // register files vs. physical register files, but rather just keeps a subset
+  // of recently written architectural registers in its "rename buffers", which
+  // are then copied over to the ARF upon instruction commit.
+  // There is currently no way of modelling this in OpenVADL. Two possibilities
+  // that were considered are to declare a separate `logic [rename buffer]`
+  // logic type, and to just add an extra `[separate]` annotation to the
+  // existing `logic [physical register file]` to indicate that the ARF is kept
+  // separately. The below description tentatively uses this latter approach.
+
+  [size : 12]
+  [renames : R]
+  [separate]
+  logic [physical register file] GP_PRF
+
+  [size : 8]
+  [renames : FPR]
+  [separate]
+  logic [physical register file] FP_PRF
+
+  [size : 8]
+  [renames : CR]
+  [separate]
+  logic [physical register file] CR_PRF
+
+
+
+  // Execution pipelines.
+
+  [size : 2]
+  [consume : ROB]
+  logic [reservation station] SCIU_0_RS
+
+  stage SCIU_0 -> Instruction = {
+    let insn = consume(SCIU_0_RS) in {
+      // TODO: Your behaviour here :)
+      SCIU_0 := insn
+    }
+  }
+
+
+
+  [size : 2]
+  [consume : ROB]
+  logic [reservation station] SCIU_1_RS
+
+  stage SCIU_1 -> Instruction = {
+    let insn = consume(SCIU_1_RS) in {
+      // TODO: Your behaviour here :)
+      SCIU_1 := insn
+    }
+  }
+
+
+
+  [size : 2]
+  [consume : ROB]
+  logic [reservation station] MCIU_RS
+
+  stage MCIU -> Instruction = {
+    let insn = consume(MCIU_RS) in {
+      // TODO: Your behaviour here :)
+      MCIU := insn
+    }
+  }
+
+
+
+  [size : 2]
+  [consume : ROB]
+  logic [reservation station] LSU_RS
+
+  stage LSU -> Instruction = {
+    let insn = consume(LSU_RS) in {
+      // TODO: Your behaviour here :)
+      LSU := insn
+    }
+  }
+
+
+
+  [size : 2]
+  [consume : ROB]
+  logic [reservation station] FPU_RS
+
+  stage FPU -> Instruction = {
+    let insn = consume(FPU_RS) in {
+      // TODO: Your behaviour here :)
+      FPU := insn
+    }
+  }
+}
