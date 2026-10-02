@@ -20,13 +20,13 @@ import java.util.List;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
-import vadl.viam.RegisterTensor;
+import vadl.viam.RegisterResource;
 
 /**
- * An extension for {@link RegisterTensor}. It is used
+ * An extension for {@link RegisterResource}. It is used
  * to assign a {@link List} of {@link ValueType}.
  */
-public class RegisterTypesCtx extends DefinitionExtension<RegisterTensor> {
+public class RegisterTypesCtx extends DefinitionExtension<RegisterResource> {
   private final List<ValueType> valueTypes;
 
   public RegisterTypesCtx(List<ValueType> valueTypes) {

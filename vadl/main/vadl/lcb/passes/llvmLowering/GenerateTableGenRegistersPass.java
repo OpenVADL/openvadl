@@ -151,6 +151,10 @@ public class GenerateTableGenRegistersPass extends Pass {
     }
 
     for (var compilerRegisterClass : output.aliasRegisterClasses()) {
+      if (!compilerRegisterClass.registerFile().expectExtension(RegisterTypesCtx.class).used()) {
+        continue;
+      }
+
       var classRegisters = new ArrayList<TableGenRegister>();
       for (var compilerRegister : compilerRegisterClass.registers()) {
         var register = new TableGenRegister(
@@ -167,7 +171,8 @@ public class GenerateTableGenRegistersPass extends Pass {
         classRegisters.add(register);
       }
 
-      var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
+      var types =
+          compilerRegisterClass.registerFile().expectExtension(RegisterTypesCtx.class).valueTypes();
 
       ensure(compilerRegisterClass.registerFile() instanceof ArtificialResource,
           () -> Diagnostic.error("This must be an alias.",
@@ -178,7 +183,7 @@ public class GenerateTableGenRegistersPass extends Pass {
               configuration.targetName(),
               compilerRegisterClass.name(),
               compilerRegisterClass.alignment().bitAlignment(),
-              List.of(type),
+              types,
               classRegisters,
               (ArtificialResource) compilerRegisterClass.registerFile())
       );

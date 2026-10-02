@@ -41,8 +41,8 @@ import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.types.FloatEncoding;
 import vadl.types.FloatType;
-import vadl.viam.ArtificialResource;
 import vadl.viam.Instruction;
+import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -84,7 +84,7 @@ public class InferRegisterTypesPass extends Pass {
       return null;
     }
 
-    Map<RegisterTensor, Set<ValueType>> registerValueTypes = new HashMap<>();
+    Map<RegisterResource, Set<ValueType>> registerValueTypes = new HashMap<>();
 
     isa.ownInstructions().forEach(instruction -> {
       var operands = instruction.expectExtension(InstructionOperandsCtx.class);
@@ -102,13 +102,7 @@ public class InferRegisterTypesPass extends Pass {
       Stream.concat(operands.inputs().stream(), operands.outputs().stream())
           .filter(GcbInstructionRegisterFileOperand.class::isInstance)
           .map(GcbInstructionRegisterFileOperand.class::cast)
-          .map(operand ->
-              (operand.registerFile() instanceof RegisterTensor)
-                  ?
-                  (RegisterTensor) operand.registerFile() :
-                  (RegisterTensor) ((ArtificialResource) operand.registerFile()).innerResourceRef()
-          )
-
+          .map(GcbInstructionRegisterFileOperand::registerFile)
           .forEach(registerFile ->
               registerValueTypes
                   .computeIfAbsent(registerFile, ignored -> new HashSet<>())
@@ -121,19 +115,22 @@ public class InferRegisterTypesPass extends Pass {
           );
     });
 
-    var compilerRegisterClasses = ((GenerateCompilerRegistersPass.Output) passResults.lastResultOf(
-        GenerateCompilerRegistersPass.class)).registerClasses();
+    var output = (GenerateCompilerRegistersPass.Output) passResults.lastResultOf(
+        GenerateCompilerRegistersPass.class);
+    var registerClasses = output.registerClasses();
+    var aliasRegisterClasses = output.aliasRegisterClasses();
 
-    compilerRegisterClasses.forEach(compilerRegisterClass -> {
-      var registerFile = (RegisterTensor) compilerRegisterClass.registerFile();
-      var valueTypes = registerValueTypes.getOrDefault(registerFile, Collections.emptySet());
+    Stream.concat(registerClasses.stream(), aliasRegisterClasses.stream())
+        .forEach(registerClass -> {
+          var registerFile = registerClass.registerFile();
+          var valueTypes = registerValueTypes.getOrDefault(registerFile, Collections.emptySet());
 
-      registerFile.attachExtension(
-          new RegisterTypesCtx(
-              valueTypes.stream().toList()
-          )
-      );
-    });
+          registerFile.attachExtension(
+              new RegisterTypesCtx(
+                  valueTypes.stream().toList()
+              )
+          );
+        });
 
     return null;
   }
