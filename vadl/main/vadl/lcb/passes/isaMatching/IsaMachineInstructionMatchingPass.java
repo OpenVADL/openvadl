@@ -530,7 +530,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     });
 
     var labels = createLabelMap(viam);
-    return new Result(labels, flipIsaMatching(labels));
+    return new Result(labels, createReversedLabelMap(viam));
   }
 
   private Function<BuiltInCall, Boolean> comparesRegisterWithConstantFn(
@@ -854,8 +854,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       var hasAddi = isa.ownInstructions().stream().anyMatch(instruction -> {
         var ext = instruction.extension(clazz);
 
-        return ext != null && (ext.label() == MachineInstructionLabel.ADDI_64
-            || ext.label() == MachineInstructionLabel.ADDI_32);
+        return ext != null && (ext.labels().contains(MachineInstructionLabel.ADDI_64)
+            || ext.labels().contains(MachineInstructionLabel.ADDI_32));
       });
 
       ensure(hasAddi, () -> Diagnostic.error(
