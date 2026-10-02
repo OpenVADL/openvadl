@@ -99,8 +99,7 @@ import vadl.utils.WithLocation;
 public class SymbolTable {
 
   // Collecting names is expensive and providing many suggestions makes levenshtein slower.
-  // FIXME: Increase this limit if once the levenshtein algorightm is faster
-  private static final int MAX_COLLECTED_NAME_SUGGESTIONS = 100;
+  private static final int MAX_COLLECTED_NAME_SUGGESTIONS = 400;
 
   /// Collecting names across the AST is quite expensive so to improve this
   /// we limit the amount of diagnostics that get that expensive treatment.
