@@ -32,7 +32,6 @@ import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.DetermineRegisterUsesAndDefsPass;
-import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.RegisterRef;
 import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
@@ -460,24 +459,5 @@ public class LlvmLoweringPass extends Pass {
         });
 
     return tableGenRecords;
-  }
-
-  /**
-   * The {@link IsaMachineInstructionMatchingPass} computes a hashmap with the instruction label
-   * as a key and all the matched instructions as value.
-   * However, we would like to check whether {@link LlvmInstructionLoweringStrategy} supports this
-   * {@link Instruction} in this pass. That's why we have the flip the hashmap.
-   */
-  public static IdentityHashMap<Instruction, MachineInstructionLabel> flipMachineInstructions(
-      Map<MachineInstructionLabel, List<Instruction>> isaMatched) {
-    IdentityHashMap<Instruction, MachineInstructionLabel> inverse = new IdentityHashMap<>();
-
-    for (var entry : isaMatched.entrySet()) {
-      for (var item : entry.getValue()) {
-        inverse.put(item, entry.getKey());
-      }
-    }
-
-    return inverse;
   }
 }

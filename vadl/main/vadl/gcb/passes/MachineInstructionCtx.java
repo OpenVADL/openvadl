@@ -26,6 +26,7 @@ import vadl.viam.Instruction;
 /**
  * An extension for the {@link Instruction}. It will be used to
  * label the instruction with a list of {@link TypedMachineInstructionLabel}.
+ * The first label is seen as the primary label.
  */
 public class MachineInstructionCtx extends DefinitionExtension<Instruction> {
   private final List<TypedMachineInstructionLabel> labels;
@@ -46,5 +47,12 @@ public class MachineInstructionCtx extends DefinitionExtension<Instruction> {
 
   public Optional<BitsType> type() {
     return labels.getFirst().type();
+  }
+
+  /**
+   * Get all {@link MachineInstructionLabel} of the instruction in the order they were matched.
+   */
+  public List<MachineInstructionLabel> labels() {
+    return labels.stream().map(TypedMachineInstructionLabel::label).toList();
   }
 }

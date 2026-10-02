@@ -28,7 +28,6 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.pass.PassResults;
 import vadl.utils.SourceLocation;
 import vadl.viam.Instruction;
@@ -41,6 +40,7 @@ import vadl.viam.Specification;
  */
 public class Database {
   private final Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions;
+  private final Map<Instruction, MachineInstructionLabel> reversedMachineInstructions;
   private final Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions;
 
   /**
@@ -57,6 +57,7 @@ public class Database {
             IsaPseudoInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.location()));
     this.labelledMachineInstructions = labelingResult.labels();
+    this.reversedMachineInstructions = labelingResult.reverse();
     this.labelledPseudoInstructions = labelingPseudoResult.labels();
   }
 
@@ -65,6 +66,7 @@ public class Database {
    */
   public Database(IsaMachineInstructionMatchingPass.Result labelingResult) {
     this.labelledMachineInstructions = labelingResult.labels();
+    this.reversedMachineInstructions = labelingResult.reverse();
     this.labelledPseudoInstructions = Collections.emptyMap();
   }
 
@@ -125,6 +127,10 @@ public class Database {
       });
     }
 
+    // An instruction with multiple labels can be matched more than once.
+    var seen = Collections.newSetFromMap(new IdentityHashMap<Instruction, Boolean>());
+    resultMachineInstructions.removeIf(instruction -> !seen.add(instruction));
+
     return new QueryResult(query, resultMachineInstructions, resultPseudoInstructions);
   }
 
@@ -133,11 +139,11 @@ public class Database {
    * The compiler generator has a pass which tries to assign {@link MachineInstructionLabel} for
    * an {@link Instruction}. This is useful when we want to find an {@link Instruction} with
    * a certain property. However, in some cases, we need to do opposite. We have an
-   * {@link Instruction} and require the {@link MachineInstructionLabel}. This method flips the
-   * matched {@link Map}.
+   * {@link Instruction} and require the {@link MachineInstructionLabel}. This method returns
+   * the primary {@link MachineInstructionLabel} of every labelled {@link Instruction}.
    */
-  public IdentityHashMap<Instruction, MachineInstructionLabel> flipMachineInstructions() {
-    return LlvmLoweringPass.flipMachineInstructions(labelledMachineInstructions);
+  public Map<Instruction, MachineInstructionLabel> flipMachineInstructions() {
+    return reversedMachineInstructions;
   }
 
   /**

@@ -57,8 +57,9 @@ public class LcbEnricherCollection {
                 Optional.ofNullable(
                         instruction.extension(
                             MachineInstructionCtx.class))
-                    .map(MachineInstructionCtx::label)
-                    .map(Enum::name).orElse("No label");
+                    .map(ctx -> ctx.labels().stream().map(Enum::name)
+                        .collect(Collectors.joining(", ")))
+                    .orElse("No label");
             var info = Info.Tag.of("Instruction Label", label);
             definitionEntity.addInfo(info);
           }
