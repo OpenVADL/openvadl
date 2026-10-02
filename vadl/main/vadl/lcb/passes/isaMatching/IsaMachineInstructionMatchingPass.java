@@ -61,6 +61,7 @@ import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -78,6 +79,7 @@ import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.gcb.passes.IsaMatchingUtils;
 import vadl.gcb.passes.MachineInstructionCtx;
 import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.TypedMachineInstructionLabel;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -187,287 +189,343 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
     isa.ownInstructions().forEach(instruction -> {
       // Get uninlined or the normal behaviors if nothing was uninlined.
-      var behavior = ensureNonNull(uninlined.get(instruction),
+      final var behavior = ensureNonNull(uninlined.get(instruction),
           () -> Diagnostic.error("Cannot find the uninlined graph of this instruction",
               instruction.location()));
-      var originalGraph = ensureNonNull(snapshots.get(instruction),
+      final var originalGraph = ensureNonNull(snapshots.get(instruction),
           () -> Diagnostic.error("Cannot find the unmodified graph of this instruction",
               instruction.location()));
 
-      var ty = getType(behavior);
+      final var ty = getType(behavior);
 
       // Some are typed and some aren't.
       // The reason is that most of the time we do not care because
       // the instruction selection will figure out the types anyway.
       // The raw cases where we need the type are typed like addition.
+      var labelList = new ArrayList<TypedMachineInstructionLabel>();
       if (findLui(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LUI, ty));
-      } else if (findAdd32Bit(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.ADD_32, Optional.empty()));
-      } else if (findAdd64Bit(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.ADD_64, Optional.empty()));
-      } else if (findAddWithImmediate32Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_32, ty));
-      } else if (findAddWithImmediate64Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_64, ty));
-      } else if (weakFindRR(behavior,
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.LUI, ty));
+      }
+      if (findAdd32Bit(behavior)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.ADD_32, Optional.empty()));
+      }
+      if (findAdd64Bit(behavior)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.ADD_64, Optional.empty()));
+      }
+      if (findAddWithImmediate32Bit(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.ADDI_32, ty));
+      }
+      if (findAddWithImmediate64Bit(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.ADDI_64, ty));
+      }
+      if (weakFindRR(behavior,
           List.of(SDIV, SDIVS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SDIV, ty));
-      } else if (weakFindRR(behavior,
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SDIV, ty));
+      }
+      if (weakFindRR(behavior,
           List.of(UDIV, UDIVS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UDIV, ty));
-      } else if (weakFindRR(behavior,
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.UDIV, ty));
+      }
+      if (weakFindRR(behavior,
           List.of(SMOD, SMODS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SMOD, ty));
-      } else if (weakFindRR(behavior,
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SMOD, ty));
+      }
+      if (weakFindRR(behavior,
           List.of(UMOD, UMODS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD, ty));
-      } else if (findSubS(behavior, originalGraph, Type.bits(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64,
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.UMOD, ty));
+      }
+      if (findSubS(behavior, originalGraph, Type.bits(64))) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_64,
                 Optional.empty()));
-      } else if (findSubS(behavior, originalGraph, Type.bits(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32,
+      }
+      if (findSubS(behavior, originalGraph, Type.bits(32))) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.SUB_RR_WITH_STATUS_REGISTER_32,
                 Optional.empty()));
-      } else if (findCSEL_EQ(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_EQ_I32,
-                Optional.empty()));
-      } else if (findCSEL_EQ(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_EQ_I64,
-                Optional.empty()));
-      } else if (findCSEL_NEQ(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NEQ_I32,
-                Optional.empty()));
-      } else if (findCSEL_NEQ(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NEQ_I64,
-                Optional.empty()));
-      } else if (findCSEL_SLTH(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_SLTH_I64,
-                Optional.empty()));
-      } else if (findCSEL_SLTH(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_SLTH_I32,
-                Optional.empty()));
-      } else if (findCSEL_SGEQ(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_SGEQ_I64,
-                Optional.empty()));
-      } else if (findCSEL_SGEQ(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_SGEQ_I32,
-                Optional.empty()));
-      } else if (findCSEL_SLEQ(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_SLEQ_I64,
-                Optional.empty()));
-      } else if (findCSEL_SLEQ(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_SLEQ_I32,
-                Optional.empty()));
-      } else if (findCSEL_SGTH(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_SGTH_I64,
-                Optional.empty()));
-      } else if (findCSEL_SGTH(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_SGTH_I32,
-                Optional.empty()));
-
-      } else if (findCSEL_CC(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_CC_I64,
-                Optional.empty()));
-      } else if (findCSEL_CC(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_CC_I32,
-                Optional.empty()));
-      } else if (findCSEL_CS(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_CS_I64,
-                Optional.empty()));
-      } else if (findCSEL_CS(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_CS_I32,
-                Optional.empty()));
-      } else if (findCSEL_NS(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NS_I64,
-                Optional.empty()));
-      } else if (findCSEL_NS(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NS_I32,
-                Optional.empty()));
-      } else if (findCSEL_NC(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NC_I64,
-                Optional.empty()));
-      } else if (findCSEL_NC(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_NC_I32,
-                Optional.empty()));
-      } else if (findCSEL_VS(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_VS_I64,
-                Optional.empty()));
-      } else if (findCSEL_VS(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_VS_I32,
-                Optional.empty()));
-      } else if (findCSEL_VC(originalGraph, Type.signedInt(64))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_VC_I64,
-                Optional.empty()));
-      } else if (findCSEL_VC(originalGraph, Type.signedInt(32))) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.CSEL_VC_I32,
-                Optional.empty()));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+      }
+      if (findCSEL_EQ(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_EQ_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_EQ(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_EQ_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_NEQ(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_NEQ_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_NEQ(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_NEQ_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_SLTH(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_SLTH_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_SLTH(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_SLTH_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_SGEQ(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_SGEQ_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_SGEQ(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_SGEQ_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_SLEQ(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_SLEQ_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_SLEQ(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_SLEQ_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_SGTH(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_SGTH_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_SGTH(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_SGTH_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_CC(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_CC_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_CC(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_CC_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_CS(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_CS_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_CS(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_CS_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_NS(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_NS_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_NS(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_NS_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_NC(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_NC_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_NC(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_NC_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_VS(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_VS_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_VS(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_VS_I32,
+            Optional.empty()));
+      }
+      if (findCSEL_VC(originalGraph, Type.signedInt(64))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_VC_I64,
+            Optional.empty()));
+      }
+      if (findCSEL_VC(originalGraph, Type.signedInt(32))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.CSEL_VC_I32,
+            Optional.empty()));
+      }
+      if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SUB, ty));
+      }
+      if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(SUBB, SUBSB))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBB, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SUBB, ty));
+      }
+      if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(SUBC, SUBSC))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBC, ty));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SUBC, ty));
+      }
+      if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(AND, ANDS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.AND, ty));
-      } else if (findRR(behavior, List.of(OR, ORS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.OR, ty));
-      } else if (findRR_MultiplicationHigh(behavior, Set.of(SMULL, SMULLS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MULHS, ty));
-      } else if (findRR_MultiplicationHigh(behavior, Set.of(UMULL, UMULLS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MULHU, ty));
-      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(OR, ORS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ORI, ty));
-      } else if (findRR(behavior, List.of(XOR, XORS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.XOR, ty));
-      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(XOR, XORS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.AND, ty));
+      }
+      if (findRR(behavior, List.of(OR, ORS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.OR, ty));
+      }
+      if (findRR_MultiplicationHigh(behavior, Set.of(SMULL, SMULLS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.MULHS, ty));
+      }
+      if (findRR_MultiplicationHigh(behavior, Set.of(UMULL, UMULLS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.MULHU, ty));
+      }
+      if (findRegisterImmediateOrImmediateRegister(behavior, List.of(OR, ORS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.ORI, ty));
+      }
+      if (findRR(behavior, List.of(XOR, XORS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.XOR, ty));
+      }
+      if (findRegisterImmediateOrImmediateRegister(behavior, List.of(XOR, XORS))) {
         // Here is an exception:
         // Usually, it is good enough to group RR and RI together.
         // However, when generating alternative patterns for conditionals,
         // then we need the XORI instruction. Therefore, we put it extra.
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.XORI, ty));
-      } else if (findRR_Mul(behavior, List.of(MUL, MULS, SMULL, SMULLS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MUL, ty));
-      } else if (findRR(behavior, List.of(LSL, LSLS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLL, ty));
-      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(LSL, LSLS)) && hasNot(
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.XORI, ty));
+      }
+      if (findRR_Mul(behavior, List.of(MUL, MULS, SMULL, SMULLS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.MUL, ty));
+      }
+      if (findRR(behavior, List.of(LSL, LSLS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SLL, ty));
+      }
+      if (findRegisterImmediateOrImmediateRegister(behavior, List.of(LSL, LSLS)) && hasNot(
           behavior, TruncateNode.class) && hasNot(behavior, SignExtendNode.class)) {
         /* the `hasNot` constraints are to differentiate between `SLLI` and `SLLIW` */
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLLI, ty));
-      } else if (findRR(behavior, List.of(LSR, LSRS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SRL, ty));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, EQU)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BEQ_BY_STATUS_REGISTER,
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SLLI, ty));
+      }
+      if (findRR(behavior, List.of(LSR, LSRS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SRL, ty));
+      }
+      if (findBranchWithConditionalWithStatusRegisters(behavior, EQU)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BEQ_BY_STATUS_REGISTER,
                 Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, NEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER,
+      }
+      if (findBranchWithConditionalWithStatusRegisters(behavior, NEQ)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BNEQ_BY_STATUS_REGISTER,
                 Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, SGEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER,
+      }
+      if (findBranchWithConditionalWithStatusRegisters(behavior, SGEQ)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BSGEQ_BY_STATUS_REGISTER,
                 Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, SGTH)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER,
+      }
+      if (findBranchWithConditionalWithStatusRegisters(behavior, SGTH)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BSGTH_BY_STATUS_REGISTER,
                 Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, SLEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER,
+      }
+      if (findBranchWithConditionalWithStatusRegisters(behavior, SLEQ)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BSLEQ_BY_STATUS_REGISTER,
                 Optional.empty()));
-      } else if (findBranchWithConditionalWithStatusRegisters(behavior, SLTH)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER,
+      }
+      if (findBranchWithConditionalWithStatusRegisters(behavior, SLTH)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BSLTH_BY_STATUS_REGISTER,
                 Optional.empty()));
-      } else if (findBranchCarrySet(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.B_CS,
-                Optional.empty()));
-      } else if (findBranchCarryClear(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.B_CC,
-                Optional.empty()));
-      } else if (findBranchNegativeSet(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.B_NS,
-                Optional.empty()));
-      } else if (findBranchNegativeClear(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.B_NC,
-                Optional.empty()));
-      } else if (findBranchOverflowSet(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.B_VS,
-                Optional.empty()));
-      } else if (findBranchOverflowClear(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.B_VC,
-                Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, EQU)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BEQ, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, NEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BNEQ, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, SGEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BSGEQ, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, UGEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BUGEQ, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, SLEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BSLEQ, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, ULEQ)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BULEQ, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, SLTH)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BSLTH, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, ULTH)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BULTH, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, SGTH)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BSGTH, Optional.empty()));
-      } else if (findBranchWithConditionalWithoutStatusRegisters(behavior, UGTH)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.BUGTH, Optional.empty()));
-      } else if (findRR(behavior, List.of(SLTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTS, ty));
-      } else if (findRR(behavior, List.of(ULTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTU, ty));
-      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(SLTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTI, ty));
-      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(ULTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTIU, ty));
-      } else if (findWriteMem(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(
+      }
+      if (findBranchCarrySet(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.B_CS,
+            Optional.empty()));
+      }
+      if (findBranchCarryClear(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.B_CC,
+            Optional.empty()));
+      }
+      if (findBranchNegativeSet(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.B_NS,
+            Optional.empty()));
+      }
+      if (findBranchNegativeClear(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.B_NC,
+            Optional.empty()));
+      }
+      if (findBranchOverflowSet(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.B_VS,
+            Optional.empty()));
+      }
+      if (findBranchOverflowClear(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.B_VC,
+            Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, EQU)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BEQ, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, NEQ)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BNEQ, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, SGEQ)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BSGEQ, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, UGEQ)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BUGEQ, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, SLEQ)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BSLEQ, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, ULEQ)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BULEQ, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, SLTH)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BSLTH, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, ULTH)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BULTH, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, SGTH)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BSGTH, Optional.empty()));
+      }
+      if (findBranchWithConditionalWithoutStatusRegisters(behavior, UGTH)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.BUGTH, Optional.empty()));
+      }
+      if (findRR(behavior, List.of(SLTH))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.LTS, ty));
+      }
+      if (findRR(behavior, List.of(ULTH))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.LTU, ty));
+      }
+      if (findRegisterImmediateOrImmediateRegister(behavior, List.of(SLTH))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.LTI, ty));
+      }
+      if (findRegisterImmediateOrImmediateRegister(behavior, List.of(ULTH))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.LTIU, ty));
+      }
+      if (findWriteMem(behavior)) {
+        labelList.add(new TypedMachineInstructionLabel(
             MachineInstructionLabel.STORE_MEM_WITH_IMMEDIATE, ty));
-      } else if (findLoadMem(behavior)) {
-        instruction.attachExtension(
-            new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE, ty));
-      } else if (findBlr(behavior, pc)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BLR, ty));
-      } else if (findJalr(behavior, pc)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JALR, ty));
-      } else if (findJal(behavior, pc)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JAL, ty));
-      } else if (findJ(behavior, pc)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.J, ty));
-      } else if (findJR(behavior, pc)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JR, ty));
+      }
+      if (findLoadMem(behavior)) {
+        labelList.add(
+            new TypedMachineInstructionLabel(MachineInstructionLabel.LOAD_MEM_WITH_IMMEDIATE, ty));
+      }
+      if (findBlr(behavior, pc)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.BLR, ty));
+      }
+      if (findJalr(behavior, pc)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.JALR, ty));
+      }
+      if (findJal(behavior, pc)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.JAL, ty));
+      }
+      if (findJ(behavior, pc)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.J, ty));
+      }
+      if (findJR(behavior, pc)) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.JR, ty));
+      }
+
+      if (!labelList.isEmpty()) {
+        labelList.trimToSize();
+        instruction.attachExtension(new MachineInstructionCtx(labelList));
       }
     });
 
@@ -481,149 +539,149 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       Constant constant) {
     return (bc) -> {
       return bc.builtIn() == cond
-        && bc.arg(0) instanceof ReadsRegisterTensor r1 
-        && bc.arg(1) instanceof ConstantNode c2
-        && r1.registerResource().hasAnnotation(annotation)
-        && c2.constant().equals(constant);
+          && bc.arg(0) instanceof ReadsRegisterTensor r1
+          && bc.arg(1) instanceof ConstantNode c2
+          && r1.registerResource().hasAnnotation(annotation)
+          && c2.constant().equals(constant);
     };
   }
 
   private Function<BuiltInCall, Boolean> comparesStatusRegistersFn(
       BuiltIn cond,
-      Class<? extends StatusRegisterAnnotation> reg1, 
+      Class<? extends StatusRegisterAnnotation> reg1,
       Class<? extends StatusRegisterAnnotation> reg2) {
     return (bc) -> {
       return bc.builtIn() == cond
-        && this.hasAllAnnotations(bc.arguments(), Set.of(reg1, reg2));
+          && this.hasAllAnnotations(bc.arguments(), Set.of(reg1, reg2));
     };
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_NegativeEqualsOverflow() {
     return this.comparesStatusRegistersFn(EQU,
-          StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
-          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class);
+        StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+        StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class);
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_NegativeNotEqualsOverflow() {
     return this.comparesStatusRegistersFn(NEQ,
-          StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
-          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class);
+        StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+        StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class);
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_ZeroStatusRegisterIsZero() {
     return this.comparesRegisterWithConstantFn(EQU,
-          StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class, 
-          Constant.Value.zero(DataType.bits(1)));
+        StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class,
+        Constant.Value.zero(DataType.bits(1)));
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_ZeroStatusRegisterIsOne() {
     return this.comparesRegisterWithConstantFn(EQU,
-          StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class, 
-          Constant.Value.one(DataType.bits(1)));
+        StatusRegisterAnnotation.ZeroStatusRegisterAnnotation.class,
+        Constant.Value.one(DataType.bits(1)));
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_CarryStatusRegisterIsZero() {
     return this.comparesRegisterWithConstantFn(EQU,
-          StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class, 
-          Constant.Value.zero(DataType.bits(1)));
+        StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class,
+        Constant.Value.zero(DataType.bits(1)));
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_CarryStatusRegisterIsOne() {
     return this.comparesRegisterWithConstantFn(EQU,
-          StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class, 
-          Constant.Value.one(DataType.bits(1)));
+        StatusRegisterAnnotation.CarryStatusRegisterAnnotation.class,
+        Constant.Value.one(DataType.bits(1)));
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_NegativeStatusRegisterIsZero() {
     return this.comparesRegisterWithConstantFn(EQU,
-          StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class, 
-          Constant.Value.zero(DataType.bits(1)));
+        StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+        Constant.Value.zero(DataType.bits(1)));
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_NegativeStatusRegisterIsOne() {
     return this.comparesRegisterWithConstantFn(EQU,
-          StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class, 
-          Constant.Value.one(DataType.bits(1)));
+        StatusRegisterAnnotation.NegativeStatusRegisterAnnotation.class,
+        Constant.Value.one(DataType.bits(1)));
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_OverflowStatusRegisterIsZero() {
     return this.comparesRegisterWithConstantFn(EQU,
-          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class, 
-          Constant.Value.zero(DataType.bits(1)));
+        StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class,
+        Constant.Value.zero(DataType.bits(1)));
   }
 
   private Function<BuiltInCall, Boolean> compareStatusRegisters_OverflowStatusRegisterIsOne() {
     return this.comparesRegisterWithConstantFn(EQU,
-          StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class, 
-          Constant.Value.one(DataType.bits(1)));
+        StatusRegisterAnnotation.OverflowStatusRegisterAnnotation.class,
+        Constant.Value.one(DataType.bits(1)));
   }
 
   private boolean findCSEL_CC(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_CarryStatusRegisterIsZero());
   }
 
   private boolean findCSEL_CS(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_CarryStatusRegisterIsOne());
   }
 
   private boolean findCSEL_NS(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_NegativeStatusRegisterIsOne());
   }
 
   private boolean findCSEL_NC(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_NegativeStatusRegisterIsZero());
   }
 
   private boolean findCSEL_VS(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_OverflowStatusRegisterIsOne());
   }
 
   private boolean findCSEL_VC(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_OverflowStatusRegisterIsZero());
   }
 
   private boolean findCSEL_EQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_ZeroStatusRegisterIsOne());
   }
 
   private boolean findCSEL_NEQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_ZeroStatusRegisterIsZero());
   }
 
   private boolean findCSEL_SLTH(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_NegativeNotEqualsOverflow());
   }
 
   private boolean findCSEL_SGEQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_UnaryCondition(originalGraph, ty, 
+    return findCSEL_UnaryCondition(originalGraph, ty,
         this.compareStatusRegisters_NegativeEqualsOverflow());
   }
 
   private boolean findCSEL_SLEQ(Graph originalGraph, SIntType ty) {
-    return findCSEL_BinaryCondition(originalGraph, ty, 
-        OR, 
-        this.compareStatusRegisters_NegativeNotEqualsOverflow(), 
+    return findCSEL_BinaryCondition(originalGraph, ty,
+        OR,
+        this.compareStatusRegisters_NegativeNotEqualsOverflow(),
         this.compareStatusRegisters_ZeroStatusRegisterIsOne());
   }
 
   private boolean findCSEL_SGTH(Graph originalGraph, SIntType ty) {
-    return findCSEL_BinaryCondition(originalGraph, ty, 
-        AND, 
-        this.compareStatusRegisters_NegativeEqualsOverflow(), 
+    return findCSEL_BinaryCondition(originalGraph, ty,
+        AND,
+        this.compareStatusRegisters_NegativeEqualsOverflow(),
         this.compareStatusRegisters_ZeroStatusRegisterIsZero());
   }
 
   private boolean findCSEL_BinaryCondition(
-      Graph originalGraph, 
+      Graph originalGraph,
       SIntType ty,
       BuiltIn binaryCondition,
       Function<BuiltInCall, Boolean> meetsCondition1,
@@ -666,7 +724,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
           var hasTruncNode = originalGraph.getNodes(TruncateNode.class)
               .anyMatch(x -> x.type().bitWidth() == Type.signedInt(32).bitWidth());
           return hasTruncNode;
-        } else if (ty.bitWidth() == 64) {
+        }
+        if (ty.bitWidth() == 64) {
           var hasNoTruncNode = originalGraph.getNodes(TruncateNode.class).findAny().isEmpty();
           return hasNoTruncNode;
         }
@@ -677,7 +736,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean findCSEL_UnaryCondition(
-      Graph originalGraph, 
+      Graph originalGraph,
       SIntType ty,
       Function<BuiltInCall, Boolean> meetsCondition) {
     var selectNode = originalGraph.getNodes(SelectNode.class).findFirst();
@@ -707,7 +766,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
           var hasTruncNode = originalGraph.getNodes(TruncateNode.class)
               .anyMatch(x -> x.type().bitWidth() == Type.signedInt(32).bitWidth());
           return hasTruncNode;
-        } else if (ty.bitWidth() == 64) {
+        }
+        if (ty.bitWidth() == 64) {
           var hasNoTruncNode = originalGraph.getNodes(TruncateNode.class).findAny().isEmpty();
           return hasNoTruncNode;
         }
@@ -955,37 +1015,37 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean findBranchCarrySet(UninlinedGraph behavior) {
-    return this.findBranchWithCondition(behavior, 
+    return this.findBranchWithCondition(behavior,
         this.compareStatusRegisters_CarryStatusRegisterIsOne());
   }
 
   private boolean findBranchCarryClear(UninlinedGraph behavior) {
-    return this.findBranchWithCondition(behavior, 
+    return this.findBranchWithCondition(behavior,
         this.compareStatusRegisters_CarryStatusRegisterIsZero());
   }
 
   private boolean findBranchNegativeSet(UninlinedGraph behavior) {
-    return this.findBranchWithCondition(behavior, 
+    return this.findBranchWithCondition(behavior,
         this.compareStatusRegisters_NegativeStatusRegisterIsOne());
   }
 
   private boolean findBranchNegativeClear(UninlinedGraph behavior) {
-    return this.findBranchWithCondition(behavior, 
+    return this.findBranchWithCondition(behavior,
         this.compareStatusRegisters_NegativeStatusRegisterIsZero());
   }
 
   private boolean findBranchOverflowSet(UninlinedGraph behavior) {
-    return this.findBranchWithCondition(behavior, 
+    return this.findBranchWithCondition(behavior,
         this.compareStatusRegisters_OverflowStatusRegisterIsOne());
   }
 
   private boolean findBranchOverflowClear(UninlinedGraph behavior) {
-    return this.findBranchWithCondition(behavior, 
+    return this.findBranchWithCondition(behavior,
         this.compareStatusRegisters_OverflowStatusRegisterIsZero());
   }
 
   private boolean findBranchWithCondition(
-      UninlinedGraph behavior, 
+      UninlinedGraph behavior,
       Function<BuiltInCall, Boolean> cond) {
     var meetsCondition = this.checkConditionsForBaseUnary(behavior, cond);
     var writesPc = behavior
@@ -1020,9 +1080,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         behavior.getNodes(WriteRegTensorNode.class).anyMatch(x -> x.staticCounterAccess() != null);
     var hasIfNode = behavior.getNodes(IfNode.class).toList();
 
-    return !hasIfNode.isEmpty() 
-      && writesPc 
-      && checkConditionsForBase(builtin, behavior);
+    return !hasIfNode.isEmpty()
+        && writesPc
+        && checkConditionsForBase(builtin, behavior);
   }
 
   /**
@@ -1031,27 +1091,32 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * status register which is the Zero Register and a constant which is {@code 1}.
    */
   private boolean checkConditionsForBase(
-      BuiltInTable.BuiltIn base, 
+      BuiltInTable.BuiltIn base,
       UninlinedGraph behavior) {
     if (base == EQU) {
-      return this.checkConditionsForBaseUnary(behavior, 
+      return this.checkConditionsForBaseUnary(behavior,
           this.compareStatusRegisters_ZeroStatusRegisterIsOne());
-    } else if (base == NEQ) {
-      return this.checkConditionsForBaseUnary(behavior, 
+    }
+    if (base == NEQ) {
+      return this.checkConditionsForBaseUnary(behavior,
           this.compareStatusRegisters_ZeroStatusRegisterIsZero());
-    } else if (base == SGEQ) {
-      return this.checkConditionsForBaseUnary(behavior, 
+    }
+    if (base == SGEQ) {
+      return this.checkConditionsForBaseUnary(behavior,
           this.compareStatusRegisters_NegativeEqualsOverflow());
-    } else if (base == SLTH) {
-      return this.checkConditionsForBaseUnary(behavior, 
+    }
+    if (base == SLTH) {
+      return this.checkConditionsForBaseUnary(behavior,
           this.compareStatusRegisters_NegativeNotEqualsOverflow());
-    } else if (base == SGTH) {
-      return this.checkConditionsForBaseBinary(behavior, 
+    }
+    if (base == SGTH) {
+      return this.checkConditionsForBaseBinary(behavior,
           AND,
           this.compareStatusRegisters_ZeroStatusRegisterIsZero(),
           this.compareStatusRegisters_NegativeEqualsOverflow());
-    } else if (base == SLEQ) {
-      return this.checkConditionsForBaseBinary(behavior, 
+    }
+    if (base == SLEQ) {
+      return this.checkConditionsForBaseBinary(behavior,
           OR,
           this.compareStatusRegisters_ZeroStatusRegisterIsOne(),
           this.compareStatusRegisters_NegativeNotEqualsOverflow());
@@ -1062,24 +1127,24 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean checkConditionsForBaseUnary(
-      UninlinedGraph behavior, 
+      UninlinedGraph behavior,
       Function<BuiltInCall, Boolean> condition) {
     return behavior.getNodes(IfNode.class)
-      .anyMatch(x -> x.condition() instanceof BuiltInCall bc && condition.apply(bc));
+        .anyMatch(x -> x.condition() instanceof BuiltInCall bc && condition.apply(bc));
   }
 
   private boolean checkConditionsForBaseBinary(
-      UninlinedGraph behavior, 
+      UninlinedGraph behavior,
       BuiltIn connector,
-      Function<BuiltInCall, Boolean> condition1, 
+      Function<BuiltInCall, Boolean> condition1,
       Function<BuiltInCall, Boolean> condition2) {
     return behavior.getNodes(IfNode.class)
-      .anyMatch(x -> x.condition() instanceof BuiltInCall bc 
-          && bc.builtIn() == connector
-          && bc.arguments().stream()
-              .anyMatch(a -> a instanceof BuiltInCall abc && condition1.apply(abc))
-          && bc.arguments().stream()
-              .anyMatch(a -> a instanceof BuiltInCall abc && condition2.apply(abc)));
+        .anyMatch(x -> x.condition() instanceof BuiltInCall bc
+            && bc.builtIn() == connector
+            && bc.arguments().stream()
+            .anyMatch(a -> a instanceof BuiltInCall abc && condition1.apply(abc))
+            && bc.arguments().stream()
+            .anyMatch(a -> a instanceof BuiltInCall abc && condition2.apply(abc)));
   }
 
   private boolean hasAllAnnotations(NodeList<ExpressionNode> arguments,
