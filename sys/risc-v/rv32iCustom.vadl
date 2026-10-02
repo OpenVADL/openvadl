@@ -6,35 +6,41 @@
 import rv3264im::{RV3264I}
 
 instruction set architecture RV32ICustomCrcBase extending RV3264I = {
-  model RtypeCustomInstr (name : Id, funct3 : Bin, funct7 : Bin, rhs : Ex) : IsaDefs = {
+  model RtypeCustomInstr (name : Id, funct7 : Lit, rhs : Ex) : IsaDefs = {
     instruction $name : Rtype =                        // 3 register operand instructions
       X(rd) := $rhs
-    encoding $name = { opcode = 0b000'1011, funct3 = $funct3, funct7 = $funct7}
+    encoding $name = { opcode = 0b000'1011, funct3 = 0, funct7 = $funct7}
     assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
   }
 }
 
 instruction set architecture RV32ICustomCrc0 extending RV32ICustomCrcBase = {
-  $RtypeCustomInstr (crc1 ; 0b000 ; 0b000'0000 ; (X(rs1) ^ X(rs2)) & 255 )
+  $RtypeCustomInstr (crc0 ; 0 ; (X(rs1) ^ X(rs2)) & 255 )
 }
 
 instruction set architecture RV32ICustomCrc1 extending RV32ICustomCrcBase = {
-  $RtypeCustomInstr (crc2 ; 0b000 ; 0b000'0001 ; (X(rs1) ^ (X(rs2) >> 8)  ))
+  $RtypeCustomInstr (crc1 ; 1 ; MEM<4>(X(rs1) + (X(rs2) << 2)) )
 }
 
 instruction set architecture RV32ICustomCrc2 extending RV32ICustomCrcBase = {
-  $RtypeCustomInstr (crc4 ; 0b000 ; 0b000'0011 ; MEM<4>(X(rs1) + (X(rs2) << 2)))
+  $RtypeCustomInstr (crc2 ; 2 ; X(rs1) ^ (X(rs2) >> 8) )
 }
 
 instruction set architecture RV32ICustomCrc3 extending RV32ICustomCrcBase = {
-  $RtypeCustomInstr (crc3 ; 0b000 ; 0b000'0010 ; ((X(rs1) ^ X(rs2)) & 255) << 2)
+  $RtypeCustomInstr (crc3 ; 3 ; ((X(rs1) ^ X(rs2)) & 255) << 2)
 }
 
 instruction set architecture RV32ICustomCrc_0_1 
   extending RV32ICustomCrc0, RV32ICustomCrc1 = {}
 
-instruction set architecture RV32ICustomCrc_0_1_2 
-  extending RV32ICustomCrc0, RV32ICustomCrc1, RV32ICustomCrc2 = {}
+instruction set architecture RV32ICustomCrc_0_2 
+  extending RV32ICustomCrc0, RV32ICustomCrc2 = {}
+
+instruction set architecture RV32ICustomCrc_1_2 
+  extending RV32ICustomCrc1, RV32ICustomCrc2 = {}
 
 instruction set architecture RV32ICustomCrc 
+  extending RV32ICustomCrc0, RV32ICustomCrc1, RV32ICustomCrc2 = {}
+
+instruction set architecture RV32ICustomCrc_0_1_2_3 
   extending RV32ICustomCrc0, RV32ICustomCrc1, RV32ICustomCrc2, RV32ICustomCrc3 = {}
