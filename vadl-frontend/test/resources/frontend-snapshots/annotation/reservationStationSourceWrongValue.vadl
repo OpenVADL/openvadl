@@ -1,0 +1,26 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Wrong type for value of `source` annotation.
+  [size : 1]
+  [source: 500]
+  logic [reservation station] RS1
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid annotation expression
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSourceWrongValue.vadl:5:12
+//       │
+//     5 │   [source: 500]
+//       │            ^^^ Expression must be a Instruction
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

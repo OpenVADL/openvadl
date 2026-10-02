@@ -86,7 +86,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -105,7 +105,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -131,7 +131,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -155,7 +155,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -174,7 +174,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -192,7 +192,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -213,7 +213,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -233,7 +233,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -250,7 +250,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -268,7 +268,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -285,7 +285,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -307,7 +307,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -330,7 +330,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -350,7 +350,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -370,7 +370,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
   }
@@ -383,7 +383,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -400,7 +400,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -418,7 +418,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -434,7 +434,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -448,7 +448,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -465,7 +465,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -479,7 +479,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -494,7 +494,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -510,7 +510,7 @@ public class TypecheckerAsmTest {
             }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -525,7 +525,7 @@ public class TypecheckerAsmTest {
             }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -541,7 +541,7 @@ public class TypecheckerAsmTest {
             }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -559,7 +559,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -577,7 +577,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
@@ -595,7 +595,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -610,7 +610,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -625,7 +625,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -640,7 +640,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -655,7 +655,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -670,7 +670,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -685,7 +685,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -700,7 +700,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -715,7 +715,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -730,7 +730,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -745,7 +745,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -760,7 +760,7 @@ public class TypecheckerAsmTest {
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
 
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();

@@ -84,7 +84,7 @@ public class ExceptionTest {
         raise E1(1, 2)
         """;
     var spec = base.formatted(body);
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(() -> Frontend.parseToNameResolvedAst(spec), "Cannot parse input");
     var diagnostics = assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     org.assertj.core.api.Assertions.assertThat(diagnostics.items.getFirst().getMessage())
@@ -97,7 +97,7 @@ public class ExceptionTest {
         raise E2(200, 2)
         """;
     var spec = base.formatted(body);
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(() -> Frontend.parseToNameResolvedAst(spec), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -113,7 +113,7 @@ public class ExceptionTest {
         raise F1
         """;
     var spec = base.formatted(body);
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(() -> Frontend.parseToNameResolvedAst(spec), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();

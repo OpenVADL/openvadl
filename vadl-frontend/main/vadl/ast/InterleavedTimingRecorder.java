@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 
 /**
  * A timing recorder of AST passes that can handling the tightly interleaved nature of the passes.
- * It's quite common that parsing can be interrupted by symbol resolving or macro expansion.
+ * It's quite common that parsing can be interrupted by name resolving or macro expansion.
  * Or that typechecking is interrupted by constatnt folding.
  * This recorder can will suspend the current timing recording of the current pass and continue
  * with the next before returning to the current pass.

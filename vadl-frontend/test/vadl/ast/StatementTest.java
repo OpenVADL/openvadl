@@ -58,7 +58,7 @@ public class StatementTest {
           }
         }
         """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(() -> Frontend.parseToNameResolvedAst(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
   }
 
@@ -76,7 +76,7 @@ public class StatementTest {
           }
         }
         """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(() -> Frontend.parseToNameResolvedAst(prog), "Cannot parse input");
     var expectedAst = new Ast();
     var loc = SourceLocation.INVALID_SOURCE_LOCATION;
     List<Definition> definitions = List.of(
@@ -140,7 +140,7 @@ public class StatementTest {
           }
         }
         """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(() -> Frontend.parseToNameResolvedAst(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
   }
 

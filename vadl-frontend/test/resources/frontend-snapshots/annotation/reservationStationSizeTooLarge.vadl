@@ -1,0 +1,26 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Too large `size` annotation.
+  [size : 10000000000]
+  [source : Decode.ir]
+  logic [reservation station] RS3
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid annotation expression
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSizeTooLarge.vadl:4:11
+//       │
+//     4 │   [size : 10000000000]
+//       │           ^^^^^^^^^^^ Constant expression must less than or equal to 2147483647, but was 10000000000
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

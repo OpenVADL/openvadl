@@ -1,0 +1,22 @@
+instruction set architecture TEST =
+{
+  [ current ]
+  [ current ]
+  program counter PC : Bits<32>
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Duplicate Annotation
+//       ╭── test/resources/frontend-snapshots/annotation/duplicateAnnotation.vadl:4:3
+//       │
+//     3 │   [ current ]
+//       │   ----------- note: First usage here
+//       │
+//     4 │   [ current ]
+//       │   ^^^^^^^^^^^ note: Second usage here
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

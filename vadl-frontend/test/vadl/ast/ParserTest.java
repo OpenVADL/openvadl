@@ -40,7 +40,7 @@ public class ParserTest {
         // Some invalid code here 
         /* also here */
         """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(() -> Frontend.parseToNameResolvedAst(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
   }
 }

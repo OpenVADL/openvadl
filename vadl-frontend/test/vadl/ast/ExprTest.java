@@ -29,7 +29,7 @@ public class ExprTest {
     var prog = """
         constant a = if (5 > 9) then 32 else 2
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -37,7 +37,7 @@ public class ExprTest {
     var prog = """
         constant a = let result = 9 in result - 2
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -46,7 +46,7 @@ public class ExprTest {
         constant a: Bits<31 > 2> = 9
         """;
 
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(prog));
   }
 
   @Test
@@ -62,8 +62,8 @@ public class ExprTest {
         constant c = 9 + (1 as Bits<3>)
         """;
 
-    var ast = VadlParser.parse(prog);
-    var expected = VadlParser.parse(equiv);
+    var ast = Frontend.parseToNameResolvedAst(prog);
+    var expected = Frontend.parseToNameResolvedAst(equiv);
     assertAstEquality(ast, expected);
   }
 
@@ -76,8 +76,8 @@ public class ExprTest {
         constant a = ((-4) as SInt<3>) as Bits
         """;
 
-    var ast = VadlParser.parse(prog);
-    var expected = VadlParser.parse(equiv);
+    var ast = Frontend.parseToNameResolvedAst(prog);
+    var expected = Frontend.parseToNameResolvedAst(equiv);
     assertAstEquality(ast, expected);
   }
 
@@ -92,8 +92,8 @@ public class ExprTest {
         constant b = (9 + (1 as Bits<3><4>)) < 5
         """;
 
-    var ast = VadlParser.parse(prog);
-    var expected = VadlParser.parse(equiv);
+    var ast = Frontend.parseToNameResolvedAst(prog);
+    var expected = Frontend.parseToNameResolvedAst(equiv);
     assertAstEquality(ast, expected);
   }
 
@@ -116,8 +116,8 @@ public class ExprTest {
         }
         """;
 
-    var ast = VadlParser.parse(prog);
-    var expected = VadlParser.parse(equiv);
+    var ast = Frontend.parseToNameResolvedAst(prog);
+    var expected = Frontend.parseToNameResolvedAst(equiv);
     assertAstEquality(ast, expected);
   }
 
@@ -147,7 +147,7 @@ public class ExprTest {
         }
         """;
 
-    var ast = VadlParser.parse(prog);
+    var ast = Frontend.parseToNameResolvedAst(prog);
     verifyPrettifiedAst(ast);
   }
 
@@ -163,7 +163,7 @@ public class ExprTest {
         }
         """;
 
-    var ast = VadlParser.parse(prog);
+    var ast = Frontend.parseToNameResolvedAst(prog);
     verifyPrettifiedAst(ast);
   }
 }

@@ -23,6 +23,7 @@ pub struct Client {
     pub run_count: u64,
     pub stdout: Option<PathBuf>,
     pub stderr: Option<PathBuf>,
+    pub config_idx: usize,
 }
 
 impl Client {
@@ -134,10 +135,14 @@ impl Client {
             let stderr_file = File::create(stderr_path)?;
 
             client_process
+                .stdin(Stdio::null())
                 .stdout(stdout_file.try_clone()?)
                 .stderr(stderr_file.try_clone()?);
         } else {
-            client_process.stdout(Stdio::null()).stderr(Stdio::null());
+            client_process
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
         }
 
         let client_process = client_process.spawn().wrap_err_with(|| {
@@ -153,6 +158,7 @@ impl Client {
             run_count: 0,
             stdout: client_stdout,
             stderr: client_stderr,
+            config_idx: client_idx,
         })
     }
 

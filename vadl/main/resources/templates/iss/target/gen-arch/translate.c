@@ -17,7 +17,7 @@
 #undef  HELPER_H
 
 // define the registers tcgs
-[# th:each="reg : ${register_tensors}" th:if="${reg.is_tcg}"]
+[# th:each="reg : ${register_tensors}" th:if="${reg.is_tcg && !reg.isLazy}"]
 static TCGv cpu_[(${reg.name_lower})][(${reg.c_array_def})];
 [/]
 
@@ -94,7 +94,7 @@ static inline uint32_t [(${reg.gvec_offset_helper_name})](DisasContext *ctx[(${r
 }
 [/]
 
-[# th:each="reg : ${register_tensors}" th:if="${reg.is_tcg}"]
+[# th:each="reg : ${register_tensors}" th:if="${reg.is_tcg && !reg.isLazy}"]
 static TCGv get_[(${reg.name_lower})](DisasContext *ctx [(${reg.getter_params})])
 {   [# th:each="dim : ${reg.index_dims}"]
     assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
@@ -150,6 +150,8 @@ static void gen_update_pc_diff(DisasContext *ctx, target_long diff) {
     gen_update_pc(ctx, dest);
 }
 
+
+[# th:if="${is_ume}"]
 static void gen_raise_ume_syscall(DisasContext *ctx) {
     gen_update_pc(ctx, ctx->pc_curr);
 
@@ -157,7 +159,7 @@ static void gen_raise_ume_syscall(DisasContext *ctx) {
 
     ctx->base.is_jmp = DISAS_NORETURN;
 }
-
+[/]
 
 /*
  * Jumps to the given target_pc and sets is_jmp to NORETURN. n indicates the jump slot
@@ -206,7 +208,7 @@ typedef struct IsJmpState {
 	bool jmpslt_free;
 } IsJmpState;
 
-IsJmpState is_jmp_create_state() {
+static IsJmpState is_jmp_create_state(void) {
   IsJmpState state = {
     .end_tb = false,
     .can_chain = true,
@@ -215,7 +217,7 @@ IsJmpState is_jmp_create_state() {
   return state;
 }
 
-void is_jmp_direct_jmp(DisasContext *ctx, IsJmpState *s, bool use_jmpslt, target_ulong addr) {
+static void is_jmp_direct_jmp(DisasContext *ctx, IsJmpState *s, bool use_jmpslt, target_ulong addr) {
 	if (use_jmpslt && s->can_chain && s->jmpslt_free) {
 		s->jmpslt_free = false;
 		gen_goto_tb(ctx, 1, addr);
@@ -226,26 +228,26 @@ void is_jmp_direct_jmp(DisasContext *ctx, IsJmpState *s, bool use_jmpslt, target
 	s->end_tb = true;
 }
 
-void is_jmp_indirect_jmp(IsJmpState *s) {
+static void is_jmp_indirect_jmp(IsJmpState *s) {
   // pc update happens in translation function
 	tcg_gen_lookup_and_goto_ptr();
 	s->end_tb = true;
 }
 
-void is_jmp_static_tb_state_write(IsJmpState *s) {
+static void is_jmp_static_tb_state_write(IsJmpState *s) {
 	s->end_tb = true;
 }
 
-void is_jmp_dynamic_tb_state_write(IsJmpState *s) {
+static void is_jmp_dynamic_tb_state_write(IsJmpState *s) {
 	s->end_tb = true;
 	s->can_chain = false;
 }
 
-void is_jmp_helper_call(IsJmpState *s) {
+static void is_jmp_helper_call(IsJmpState *s) {
   s->end_tb = true;
 }
 
-void is_jmp_set(DisasContext *ctx, IsJmpState* s) {
+static void is_jmp_set(DisasContext *ctx, IsJmpState* s) {
 	if (s->end_tb) {
 		if (s->can_chain) {
 			// the TB must end, but we can chain

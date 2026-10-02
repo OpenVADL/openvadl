@@ -354,4 +354,6 @@ processor Spike implements RV32IM with ABI = {
 //[ dataBusWidth : 32 ]
 micro architecture FiveStage implements RV32IM = {
 
+  // Just a single dummy stage so we have a first stage as required by a MiA.
+  stage DUMMY -> ( ) = {}
 }

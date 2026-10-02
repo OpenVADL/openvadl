@@ -16,7 +16,6 @@
 
 package vadl.utils;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -222,7 +221,7 @@ public class Levenshtein {
    * @param dictionary of all available options.
    * @return a sorted list to be provided as suggestions.
    */
-  public static List<String> suggestions(String target, Collection<String> dictionary) {
+  public static List<String> suggestions(String target, Iterable<String> dictionary) {
     return suggestions(target, dictionary, Function.identity());
   }
 }

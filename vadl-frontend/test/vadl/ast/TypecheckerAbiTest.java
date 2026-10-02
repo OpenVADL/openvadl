@@ -73,7 +73,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
   }
 
@@ -96,7 +96,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
   }
 
@@ -119,7 +119,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -146,7 +146,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -173,7 +173,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -201,7 +201,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -229,7 +229,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -257,7 +257,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -285,7 +285,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -313,7 +313,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -341,7 +341,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -369,7 +369,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -397,7 +397,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -426,7 +426,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -454,7 +454,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -482,7 +482,7 @@ public class TypecheckerAbiTest {
           //callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -511,7 +511,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
@@ -541,7 +541,7 @@ public class TypecheckerAbiTest {
           callee saved = zero
         """;
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAbi(prog)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();

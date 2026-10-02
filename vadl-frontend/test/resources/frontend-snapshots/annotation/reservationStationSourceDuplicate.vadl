@@ -1,0 +1,30 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Duplicate `source` annotation.
+  [size : 1]
+  [source : Decode.ir]
+  [source : Decode.ir]
+  logic [reservation station] RS6
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Duplicate Annotation
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSourceDuplicate.vadl:6:3
+//       │
+//     5 │   [source : Decode.ir]
+//       │   -------------------- note: First usage here
+//       │
+//     6 │   [source : Decode.ir]
+//       │   ^^^^^^^^^^^^^^^^^^^^ note: Second usage here
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

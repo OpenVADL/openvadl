@@ -1,0 +1,26 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Non-positive `size` annotation.
+  [size : 0]
+  [source : Decode.ir]
+  logic [reservation station] RS2
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid annotation expression
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSizeTooLow.vadl:4:11
+//       │
+//     4 │   [size : 0]
+//       │           ^ Constant expression must be greater than 0, but was 0
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

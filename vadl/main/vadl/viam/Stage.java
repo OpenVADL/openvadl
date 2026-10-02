@@ -77,8 +77,9 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     // outputs give in the spec
     this.behavior.getNodes(WriteStageOutputNode.class)
         .map(WriteStageOutputNode::stageOutput).forEach(output -> {
-          if (!this.outputs.contains(output)) {
+          if (output != null && !this.outputs.contains(output)) {
             this.outputs.add(output);
+            output.setStage(this);
           }
         });
 
@@ -120,17 +121,6 @@ public class Stage extends Definition implements DefProp.WithBehavior {
   public List<Resource> resourceWrites() {
     return behavior.getNodes(WriteResourceNode.class)
         .map(WriteResourceNode::resourceDefinition)
-        .toList();
-  }
-
-  /**
-   * Get all stage output definitions used by this stage as inputs.
-   *
-   * @return list of stage outputs
-   */
-  public List<StageOutput> inputs() {
-    return behavior.getNodes(ReadStageOutputNode.class)
-        .map(ReadStageOutputNode::stageOutput)
         .toList();
   }
 

@@ -151,7 +151,7 @@ public class CallIndexExprTest {
   @ParameterizedTest
   void invalidReads(String input, String error) {
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(wrapProg(input)), "Cannot parse input");
+        () -> Frontend.parseToNameResolvedAst(wrapProg(input)), "Cannot parse input");
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();

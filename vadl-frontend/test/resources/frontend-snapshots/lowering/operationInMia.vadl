@@ -17,6 +17,8 @@ instruction set architecture ISA = {
 micro architecture MIA implements ISA = {
   // Define the operation here and not in the ISA.
   operation BranchOp   = {Branch}                // empty branch set, elements added by annotation
+
+  stage DUMMY -> ( ) = {}
 }
 
 
@@ -31,13 +33,22 @@ micro architecture MIA implements ISA = {
 //    . Definitions: 1
 //    . MicroArchitecture name: "MIA"
 //    . : ISA: ISA
-//    . : StageCount: 0
+//    . : StageCount: 1
 //    . : LogicCount: 0
 //    . : SignalCount: 0
 //    . : RegisterCount: 0
 //    . : MemoryCount: 0
 //    . : FunctionCount: 0
 //    . : OperationCount: 1
+//    . : Stage name: "DUMMY"
+//    . : ' Outputs: []
+//    . : ' Signals: []
+//    . : ' Registers: []
+//    . : ' Prev: -
+//    . : ' Next: []
+//    . : ' Behavior Graph:
+//    . : ' | n0 InstrEnd in: () succ: ()     effects: 0
+//    . : ' | n1 Start    in: () succ: (n0)   next: set
 //    . : Operation name: "BranchOp"
 //    . : ' Instructions: [Branch]
 //    . : InstructionSetArchitecture name: "ISA"

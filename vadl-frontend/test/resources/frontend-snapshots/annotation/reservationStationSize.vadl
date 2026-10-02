@@ -1,0 +1,30 @@
+// FIXME: This should be merged with all the other reservationStationSize*.vadl
+// tests. However, currently annotations are very brittle, meaning that we
+// abort after the first (few) error(s) and don't see the other.
+
+micro architecture MiA implements ISA = {
+
+  // Correct `size` annotation.
+  [size : 1]
+  [source : Decode.ir]
+  logic [reservation station] RS0
+
+  // Correct `size` annotation with more complex value expression.
+  [size : 5 + 10]
+  [source : Decode.ir]
+  logic [reservation station] RS1
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

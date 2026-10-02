@@ -43,7 +43,7 @@ public class AstTestUtils {
     var injectedFileSystem = new OverlayVirtualFileSystem(new SingleFileVirtualFileSystem(progPretty,
         ast.filePath), fileSystem);
     var astPretty =
-        Assertions.assertDoesNotThrow(() -> VadlParser.parse(ast.filePath, injectedFileSystem),
+        Assertions.assertDoesNotThrow(() -> Frontend.parseToNameResolvedAst(ast.filePath, injectedFileSystem),
         "Cannot parse prettified input \n" + progPretty);
     Ungrouper.ungroup(astPretty);
     assertAstEquality(astPretty, ast);

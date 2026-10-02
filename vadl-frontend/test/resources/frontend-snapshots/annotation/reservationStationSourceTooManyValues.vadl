@@ -1,0 +1,26 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Multiple values in `source` annotation.
+  [size : 1]
+  [source : Decode.ir, Decode.ir]
+  logic [reservation station] RS7
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid annotation arguments
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSourceTooManyValues.vadl:5:3
+//       │
+//     5 │   [source : Decode.ir, Decode.ir]
+//       │   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected 1 arguments but got 2
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

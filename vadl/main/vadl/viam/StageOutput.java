@@ -16,6 +16,9 @@
 
 package vadl.viam;
 
+import static java.util.Objects.requireNonNull;
+
+import javax.annotation.Nullable;
 import vadl.types.Type;
 
 /**
@@ -28,9 +31,20 @@ public class StageOutput extends Definition implements DefProp.WithType {
 
   private final Type type;
 
+  @Nullable
+  private Stage stage;
+
   public StageOutput(Identifier identifier, Type type) {
     super(identifier);
     this.type = type;
+  }
+
+  public Stage stage() {
+    return requireNonNull(stage);
+  }
+
+  void setStage(Stage stage) {
+    this.stage = stage;
   }
 
   @Override

@@ -39,7 +39,7 @@ public class MacroTests {
         """;
     var prog2 = "constant n = 1 + 2";
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
   @Test
@@ -53,7 +53,7 @@ public class MacroTests {
         """;
     var prog2 = "constant n = 1 + 2";
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
   @Test
@@ -76,7 +76,7 @@ public class MacroTests {
         constant b = ((1 + (2 * 3)) = 8) && ((7 + 9) > 10)
         """;
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
   @Test
@@ -90,7 +90,7 @@ public class MacroTests {
         """;
     var prog2 = "constant n = 3 * (1 + 2)";
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
   @Test
@@ -103,7 +103,7 @@ public class MacroTests {
         constant n = 3 * $example(3 ; 5)
         """;
     var prog2 = "constant n = 3 * (1 + 2)";
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
 
@@ -135,7 +135,7 @@ public class MacroTests {
         }
         """;
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
 
@@ -168,7 +168,7 @@ public class MacroTests {
         }
         """;
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
   @Test
@@ -203,7 +203,7 @@ public class MacroTests {
         }
         """;
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
   @Test
@@ -222,7 +222,7 @@ public class MacroTests {
     var path = Paths.get("hardcoded");
     var fileSystem = new SingleFileVirtualFileSystem(prog, path);
     var exception = Assertions.assertThrows(DiagnosticList.class,
-        () -> VadlParser.parse(path, fileSystem));
+        () -> Frontend.parseToNameResolvedAst(path, fileSystem));
     var location = exception.items.get(0).multiLocation.primaryLocation().location();
     Assertions.assertEquals(1, location.expandedFromStack().size());
     Assertions.assertEquals(5, location.expandedFromStack().getFirst().begin().line());
@@ -245,7 +245,7 @@ public class MacroTests {
         constant name = $outer()
         """;
 
-    var exception = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    var exception = Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(prog));
     var location = exception.items.get(0).multiLocation.primaryLocation().location();
     Assertions.assertEquals(2, location.expandedFromStack().size());
     var firstExpanded = location.expandedFromStack().getFirst();
@@ -275,7 +275,7 @@ public class MacroTests {
         }
         """;
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
   @Test
@@ -297,7 +297,7 @@ public class MacroTests {
         }
         """;
 
-    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(Frontend.parseToNameResolvedAst(prog1), Frontend.parseToNameResolvedAst(prog2));
   }
 
   @ParameterizedTest
@@ -306,7 +306,7 @@ public class MacroTests {
     var prog = """
         constant AsId("%s") = 6
         """.formatted(string);
-    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> Frontend.parseToNameResolvedAst(prog));
     var diagnostic = diagnostics.items.getFirst();
     Assertions.assertTrue(
         diagnostic.reason.contains("Invalid") && diagnostic.reason.contains("Identifier"),

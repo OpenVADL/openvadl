@@ -43,15 +43,18 @@ pub fn diff_mem_access(
         ));
     }
 
+    let client1_endian = config.for_client(0).endian;
+    let client2_endian = config.for_client(1).endian;
+
     if mem_access_info1.data_slice() != mem_access_info2.data_slice()
-        && mem_access_info1.to_u128(&config.qemu.clients[0].endian)
-            != mem_access_info2.to_u128(&config.qemu.clients[1].endian)
+        && mem_access_info1.to_u128(client1_endian)
+            != mem_access_info2.to_u128(client2_endian)
     {
         diffs.push(DiffEntry::new(
             "mem.data",
             vec![
-                mem_access_info1.data_slice_fmt(),
-                mem_access_info2.data_slice_fmt(),
+                mem_access_info1.data_slice_fmt(client1_endian),
+                mem_access_info2.data_slice_fmt(client2_endian),
             ],
             "Memory-Access data did not match",
         ));
@@ -171,14 +174,17 @@ pub fn diff_register(
     config: &Config,
     diffs: &mut Vec<DiffEntry>,
 ) {
-    let reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
-    let reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
+    let client1_endian = config.for_client(0).endian;
+    let client2_endian = config.for_client(1).endian;
+
+    let reg1val = reg1.to_u64(client1_endian);
+    let reg2val = reg2.to_u64(client2_endian);
 
     if reg1val != reg2val {
         let r1name = reg1.mapped_name(config);
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers[{reg_index}].data"),
-            vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
+            vec![reg1.data_slice_fmt(client1_endian), reg2.data_slice_fmt(client2_endian)],
             format!("different register data for {r1name}"),
         ));
     }
@@ -195,10 +201,13 @@ pub fn diff_sliced_register(
     config: &Config,
     diffs: &mut Vec<DiffEntry>,
 ) {
-    let mut reg1val = reg1.to_u64(&config.qemu.clients[0].endian);
+    let client1_endian = config.for_client(0).endian;
+    let client2_endian = config.for_client(1).endian;
+
+    let mut reg1val = reg1.to_u64(client1_endian);
     slice_info1.apply(&mut reg1val);
 
-    let mut reg2val = reg2.to_u64(&config.qemu.clients[1].endian);
+    let mut reg2val = reg2.to_u64(client2_endian);
     slice_info2.apply(&mut reg2val);
 
     if reg1val != reg2val {
@@ -206,7 +215,7 @@ pub fn diff_sliced_register(
         let r2name = reg2.mapped_name(config);
         diffs.push(DiffEntry::new(
             format!("cpu[{cpu_index}].registers[{reg_index}].data"),
-            vec![reg1.data_slice_fmt(), reg2.data_slice_fmt()],
+            vec![reg1.data_slice_fmt(client1_endian), reg2.data_slice_fmt(client2_endian)],
             format!("different (sliced) register data for {r1name} (sliced to {reg1val}) and {r2name} (sliced to {reg2val})"),
         ));
     }

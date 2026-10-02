@@ -1,0 +1,26 @@
+micro architecture MiA implements ISA = {
+
+  // Incorrect: Wrong expression type for value of `source` annotation.
+  [size : 1]
+  [source : Decode]
+  logic [reservation station] RS3
+
+  stage Decode -> (ir : Instruction) = {
+    ir := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Expression
+//       ╭── test/resources/frontend-snapshots/annotation/reservationStationSourceWrongValuePart.vadl:5:13
+//       │
+//     5 │   [source : Decode]
+//       │             ^^^^^^ The name 'Decode' points to a `stage definition` which cannot be used as an expression.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

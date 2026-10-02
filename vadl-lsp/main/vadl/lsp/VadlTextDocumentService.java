@@ -54,6 +54,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.ast.Ast;
 import vadl.ast.Frontend;
+import vadl.ast.SymbolTable;
 import vadl.ast.VadlParser;
 import vadl.ast.nodes.IdentifiableNode;
 import vadl.ast.nodes.IsId;
@@ -135,6 +136,7 @@ public class VadlTextDocumentService implements TextDocumentService {
       Ast ast;
       try {
         ast = VadlParser.parse(document.path, snapshots);
+        SymbolTable.collectAndResolveNames(ast);
 
       } catch (DiagnosticList dl) {
         log.debug("UNABLE definition: Parser produced diagnostics instead of AST for {}",
