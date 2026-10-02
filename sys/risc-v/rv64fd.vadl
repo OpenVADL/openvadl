@@ -1,7 +1,7 @@
 
-import rv64csr::{RV64IZicsr}
+import rv64csr::{RV64IMZicsr}
 
-instruction set architecture RV64IFD extending RV64IZicsr = {
+instruction set architecture RV64IMFD extending RV64IMZicsr = {
 
   // TODO: generate illegal instruction exception when float is not enabled
 

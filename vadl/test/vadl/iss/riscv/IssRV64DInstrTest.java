@@ -76,7 +76,7 @@ public class IssRV64DInstrTest extends AbstractIssRiscv64InstrTest {
 
   @Override
   public Tool simulator() {
-    return new Tool("/qemu/build/qemu-system-rv64id", "-bios");
+    return new Tool("/qemu/build/qemu-system-rv64imd", "-bios");
   }
 
   @Override

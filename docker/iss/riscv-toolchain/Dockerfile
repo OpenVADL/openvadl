@@ -20,9 +20,11 @@ RUN ../configure --prefix=/opt/riscv  \
     rv32i-ilp32--;\
     rv32im-ilp32--;\
     rv32im_zicsr-ilp32--;\
+    rv32imf-ilp32f--;\
     rv64i-lp64--;\
     rv64im-lp64--;\
-    rv64im_zicsr-lp64--"
+    rv64im_zicsr-lp64--;\
+    rv64imfd-lp64d--"
 RUN make -j8
 
 # Separate final stages for different architectures
