@@ -471,14 +471,17 @@ public class SymbolTable {
    * There is a hard limit described by {@link #MAX_COLLECTED_NAME_SUGGESTIONS}.
    */
   private void collectAllSymbolNamesWhere(Collection<String> collector, Predicate<Node> pred) {
-    symbols.entrySet().stream()
-        .filter(entry -> entry.getValue() != null && pred.test(entry.getValue()))
-        .map(Map.Entry::getKey)
-        .limit(Math.max(0, MAX_COLLECTED_NAME_SUGGESTIONS - collector.size()))
-        .forEach(collector::add);
 
-    if (collector.size() >= MAX_COLLECTED_NAME_SUGGESTIONS) {
-      return;
+    for (var entry : symbols.entrySet()) {
+      var value = entry.getValue();
+      if (value == null || !pred.test(value)) {
+        continue;
+      }
+
+      collector.add(entry.getKey());
+      if (collector.size() > MAX_COLLECTED_NAME_SUGGESTIONS) {
+        break;
+      }
     }
 
     if (parent != null) {
