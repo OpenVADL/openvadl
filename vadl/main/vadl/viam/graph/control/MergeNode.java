@@ -69,7 +69,13 @@ public class MergeNode extends AbstractBeginNode {
     ControlNode curr = trueBranchEnd();
     while (!(curr instanceof ControlSplitNode controlSplitNode)) {
       ensure(curr != null, "Reached node with no predecessor, which should be impossible.");
-      curr = GraphUtils.predecessorSkippingMerges(curr);
+      if (curr instanceof MergeNode merge) {
+        // skip merge nodes by jumping straight to the node before the control split start
+        curr = merge.controlSplit().predecessor();
+      } else {
+        var pred = curr.predecessor();
+        curr = pred instanceof ControlNode cn ? cn : null;
+      }
     }
     return controlSplitNode;
   }

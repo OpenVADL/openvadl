@@ -99,7 +99,8 @@ public class TcgStoreMemory extends TcgNode {
 
   @Override
   public Set<TcgVRefNode> usedVars() {
-    return Set.of(addr, val);
+    // if addr is the same as val, just using Set.of throws
+    return Set.copyOf(List.of(addr, val));
   }
 
   @Override

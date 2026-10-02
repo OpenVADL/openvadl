@@ -28,6 +28,7 @@ import vadl.AbstractTest;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.common.IssSideEffectReorderingPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BuiltInTable;
@@ -50,6 +51,7 @@ public class IssTcgSchedulingPassTest extends AbstractTest {
 
     var setup = setupPassManagerAndRunSpec("passes/issTcgScheduling/valid_branch_1.vadl",
         PassOrders.iss(config)
+            .skip(IssSideEffectReorderingPass.class)
             .untilFirst(SideEffectSchedulingPass.class)
     );
     var viam = setup.specification();

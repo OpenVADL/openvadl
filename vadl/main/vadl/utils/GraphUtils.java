@@ -47,12 +47,15 @@ import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.ForallEndNode;
+import vadl.viam.graph.control.ForallNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ForIdxNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -365,10 +368,9 @@ public class GraphUtils {
   }
 
   /**
-   * Inserts an if-else region into the graph at the specified position.
+   * Inserts an if-else region into the graph.
    *
-   * @param position          The node at which the if-else structure is inserted.
-   *                          Must be part of a valid graph.
+   * @param graph             The graph into which the if-else structure is inserted.
    * @param condition         The condition node that determines the branching
    *                          of the if-else structure.
    * @param createTrueBranch  A function that defines the true branch of the if-else structure,
@@ -380,23 +382,58 @@ public class GraphUtils {
    * @return A pair containing the created {@code IfNode} and the {@code MergeNode}
    *     that merges the true and false branches of the if-else.
    */
-
   public static Pair<IfNode, MergeNode> insertIfElse(
-      DirectionalNode position,
+      Graph graph,
       ExpressionNode condition,
       BiFunction<Graph, BranchEndNode, ControlNode> createTrueBranch,
-      BiFunction<Graph, BranchEndNode, ControlNode> createFalseBranch) {
-    var graph = position.ensureGraph();
+      BiFunction<Graph, BranchEndNode, ControlNode> createFalseBranch,
+      SourceLocation location) {
     var trueEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>()));
+    trueEnd.setSourceLocationRecursively(location);
     var falseEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>()));
+    falseEnd.setSourceLocationRecursively(location);
     var trueBranch = createTrueBranch.apply(graph, trueEnd);
+    trueBranch.setSourceLocationRecursively(location);
     var falseBranch = createFalseBranch.apply(graph, falseEnd);
+    falseBranch.setSourceLocationRecursively(location);
     var trueBegin = graph.addWithInputs(new BranchBeginNode(trueBranch));
+    trueBegin.setSourceLocationRecursively(location);
     var falseBegin = graph.addWithInputs(new BranchBeginNode(falseBranch));
+    falseBegin.setSourceLocationRecursively(location);
     var ifNode = graph.addWithInputs(new IfNode(condition, trueBegin, falseBegin));
+    ifNode.setSourceLocationRecursively(location);
 
     var mergeNode = graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd)));
     return Pair.of(ifNode, mergeNode);
+  }
+
+  /**
+   * Inserts a forall region into the graph.
+   *
+   * @param graph             The graph into which the forall structure is inserted.
+   * @param index             The index node that determines the looping
+   *                          of the forall structure.
+   * @param createBranch      A function that defines the inner branch of the forall structure,
+   *                          taking the graph and the branch
+   *                          end node as input to generate the required control flow node.
+   * @return A pair containing the created {@code ForallNode} and the {@code ForallEndNode}.
+   */
+  public static Pair<ForallNode, ForallEndNode> insertForall(
+      Graph graph,
+      ForIdxNode index,
+      BiFunction<Graph, BranchEndNode, ControlNode> createBranch,
+      SourceLocation location) {
+    var branchEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>()));
+    branchEnd.setSourceLocationRecursively(location);
+    var branch = createBranch.apply(graph, branchEnd);
+    branch.setSourceLocationRecursively(location);
+    var branchBegin = graph.addWithInputs(new BranchBeginNode(branch));
+    branchBegin.setSourceLocationRecursively(location);
+    var forallNode = graph.addWithInputs(new ForallNode(index, branchBegin));
+    forallNode.setSourceLocationRecursively(location);
+
+    var forallEndNode = graph.addWithInputs(new ForallEndNode(branchEnd));
+    return Pair.of(forallNode, forallEndNode);
   }
 
   /**
