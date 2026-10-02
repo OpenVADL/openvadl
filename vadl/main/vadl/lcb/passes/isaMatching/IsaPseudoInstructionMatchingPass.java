@@ -96,7 +96,7 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
     });
 
     var labels = createPseudoLabelMap(viam);
-    return new Result(labels, flipIsaMatching(labels));
+    return new Result(labels, flipPseudoIsaMatching(labels));
   }
 
   private boolean findLi(Map<Instruction, MachineInstructionLabel> flipped,
