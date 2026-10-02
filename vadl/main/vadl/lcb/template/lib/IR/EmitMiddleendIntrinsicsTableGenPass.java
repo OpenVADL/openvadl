@@ -30,7 +30,6 @@ import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.InstructionIntrinsicAttributesCtx;
-import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionRegisterFileOperand;
 import vadl.gcb.valuetypes.ValueType;
@@ -48,7 +47,6 @@ import vadl.utils.SourceLocation;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.passes.SnapshotInstructionBehaviorPass;
@@ -152,8 +150,6 @@ public class EmitMiddleendIntrinsicsTableGenPass extends LcbTemplateRenderingPas
   private Optional<String> mapParam(GcbInstructionOperand gcbInstructionOperand) {
     if (gcbInstructionOperand instanceof GcbInstructionRegisterFileOperand op) {
       return Optional.of(mapType(op.registerFile().resultType()));
-    } else if (gcbInstructionOperand instanceof GcbInstructionBareSymbolOperand op) {
-      return Optional.of(mapType(((FuncParamNode) op.origin()).type().asDataType()));
     } else if (gcbInstructionOperand instanceof TableGenInstructionImmediateOperand op) {
       return Optional.of(mapType((DataType) createType(op.immediateOperand().llvmType())));
     }
