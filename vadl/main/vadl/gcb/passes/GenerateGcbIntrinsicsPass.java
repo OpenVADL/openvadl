@@ -177,7 +177,8 @@ public class GenerateGcbIntrinsicsPass extends Pass {
   private boolean hasValidInputOperands(List<GcbInstructionOperand> operands) {
     return operands.stream()
         .allMatch(operand -> operand instanceof GcbInstructionRegisterFileOperand
-            || operand instanceof GcbInstructionImmediateOperand);
+            || operand instanceof GcbInstructionImmediateOperand
+        );
   }
 
   private boolean hasValidOutputOperands(List<GcbInstructionOperand> operands) {
