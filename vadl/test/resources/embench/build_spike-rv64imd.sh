@@ -18,4 +18,4 @@ ldflags="-march=$arch -mabi=$abi"
 # need fcsr to work with csr instructions
 EXCL="cubic,st"
 
-./build_all.py --verbose --arch riscv64 --chip generic --board spike --cflags="$cflags" --ldflags="$ldflags" --clean --exclude "$EXCL" "$@"
+./build_all.py --verbose --arch riscv64 --chip generic --board spike-float --cflags="$cflags" --ldflags="$ldflags" --clean --exclude "$EXCL" "$@"
