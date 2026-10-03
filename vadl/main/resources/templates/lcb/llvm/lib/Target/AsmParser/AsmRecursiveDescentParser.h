@@ -15,9 +15,11 @@ namespace llvm {
 template <typename T> struct ParsedValue {
     T Value;
     SMLoc S, E;
+    bool IsConstantToRegisterCast = false;
 
     ParsedValue(T Value): Value(Value), S(SMLoc()), E(SMLoc()) {}
     ParsedValue(T Value, SMLoc S, SMLoc E): Value(Value), S(S), E(E) {}
+    ParsedValue(T Value, bool IsConstantToRegisterCast, SMLoc S, SMLoc E): Value(Value), IsConstantToRegisterCast(IsConstantToRegisterCast), S(S), E(E) {}
 };
 
 template <typename T> class RuleParsingResult {

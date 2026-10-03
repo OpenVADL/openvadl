@@ -17,6 +17,10 @@ namespace llvm {
       return (Kind == k_Register && Reg.Kind == rk_IntReg);
     }
 
+    bool [(${namespace})]ParsedOperand::isConstToReg() const {
+      return (Kind == k_Register && Reg.Kind == rk_ConstToReg);
+    }
+
     StringRef [(${namespace})]ParsedOperand::getToken() const {
       assert(Kind == k_Token && "Invalid access!");
       return StringRef(Tok.Data, Tok.Length);

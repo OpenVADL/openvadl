@@ -429,6 +429,15 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
     ADDI_L { rd = rd, func5 = 0, imm = symbol }
   }
   assembly LA = (mnemonic, " ", register(rd), ",", hex( symbol ))
+
+
+  // Test instruction for register printed as immediate
+  instruction ADD_TEST : TYPE_R = {
+    let res = R(rs1) + R(rs2) in
+      R(rd) := res as Regs
+  }
+  encoding ADD_TEST = { opcode = RegCode, $InitScale(), func9 = 27 }
+  assembly ADD_TEST = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', udec(rs2) )
 }
 
 processor Test implements VarRISC32 = { }
