@@ -27,12 +27,9 @@ instruction set architecture Test = {
 
   $Instr (2 ; {
     // check forall-block ordering
-    /*
-    // loop unroller fails for some reason
     forall i: Bits<8> in 0..10 do R(15) := i as Bits<32>     // PC
     forall i: Bits<8> in 1..10 do R(0) := i as Bits<32>      // SE
     forall i: Bits<8> in 2..10 do MEM<4>(2) := i as Bits<32> // MEM
-    */
   })
 
   $Instr (3 ; {
