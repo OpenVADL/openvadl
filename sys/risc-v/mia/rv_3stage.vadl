@@ -7,6 +7,10 @@ import "../rv32im"::RV32IM
 import "../rv64i"::RV64I
 import "../rv64im"::RV64IM
 
+import "../rv32iCustom"::{
+    RV32ICustomCrc_0_1, RV32ICustomCrc_0_2, RV32ICustomCrc_1_2, RV32ICustomCrc, RV32ICustomCrc_0_1_2_3
+}
+
 model Isa() : Id = {RV32I}               // invoke vadl -m "Isa=RV64I" for 64 bit arch
 
 /**
