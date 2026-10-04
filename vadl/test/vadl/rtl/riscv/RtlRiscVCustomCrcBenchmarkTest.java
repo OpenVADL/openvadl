@@ -16,8 +16,6 @@
 
 package vadl.rtl.riscv;
 
-import static vadl.configuration.DecoderOptions.Generator.IRREGULAR;
-import static vadl.configuration.DecoderOptions.Generator.REGULAR;
 import static vadl.configuration.DecoderOptions.Generator.RTL_TABLE;
 
 import java.nio.file.Path;
@@ -32,31 +30,37 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
 import vadl.utils.Quadruple;
 
-public class RtlRiscVBenchmarkTest extends RtlBenchmarkTest {
+public class RtlRiscVCustomCrcBenchmarkTest extends RtlBenchmarkTest {
 
   @Override
   protected String getResultCsvEnv() {
-    return "RTL_BENCHMARK_RESULT_HOST_PATH";
+    return "RTL_BENCHMARK_CUSTOM_CRC_RESULT_HOST_PATH";
   }
 
   @Override
   protected String getResultCsvFallback() {
-    return "build/test-output/bench/rtl-result.csv";
+    return "build/test-output/bench/rtl-custom-crc-result.csv";
   }
 
   /**
-   * RTL RISC-V benchmark variants.
+   * RTL RISC-V Custom CRC benchmark variants.
    *
    * @return test arguments
    */
   static Stream<Arguments> benchmarkTestSource() {
     return Stream.of(
-        Quadruple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-rtl-table", RTL_TABLE, "RV32I"),
-        Quadruple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-vdt-regular", REGULAR, "RV32I"),
-        Quadruple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-vdt-irregular", IRREGULAR, "RV32I"),
-        Quadruple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-rtl-table", RTL_TABLE, "RV32I"),
-        Quadruple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-vdt-regular", REGULAR, "RV32I"),
-        Quadruple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-vdt-irregular", IRREGULAR, "RV32I")
+        // CRC Benchmarks
+        Quadruple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-crc01", RTL_TABLE, "RV32ICustomCrc_0_1"),
+        Quadruple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-crc02", RTL_TABLE, "RV32ICustomCrc_0_2"),
+        Quadruple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-crc12", RTL_TABLE, "RV32ICustomCrc_1_2"),
+        Quadruple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-crc", RTL_TABLE, "RV32ICustomCrc"),
+        Quadruple.of("sys/risc-v/mia/rv_3stage.vadl", "rv32i-3stage-crc0123", RTL_TABLE, "RV32ICustomCrc_0_1_2_3"),
+
+        Quadruple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-crc01", RTL_TABLE, "RV32ICustomCrc_0_1"),
+        Quadruple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-crc02", RTL_TABLE, "RV32ICustomCrc_0_2"),
+        Quadruple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-crc12", RTL_TABLE, "RV32ICustomCrc_1_2"),
+        Quadruple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-crc", RTL_TABLE, "RV32ICustomCrc"),
+        Quadruple.of("sys/risc-v/mia/rv_5stage.vadl", "rv32i-5stage-crc0123", RTL_TABLE, "RV32ICustomCrc_0_1_2_3")
     ).map(args -> {
 
       var generalConfig =

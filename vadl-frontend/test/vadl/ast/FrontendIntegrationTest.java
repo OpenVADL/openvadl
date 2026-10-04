@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import java.nio.file.Paths;
+import java.util.Collections;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import vadl.utils.DiskVirtualFileSystem;
@@ -48,7 +49,8 @@ public class FrontendIntegrationTest {
       "../sys/v-risc/ABI.vadl"
   })
   public void testFrontendPassingOnSysSpecs(String filename) {
-    var spec = Frontend.compileToViam(Paths.get(filename), new DiskVirtualFileSystem());
+    var spec = Frontend.compileToViam(Paths.get(filename), new DiskVirtualFileSystem(),
+        Collections.emptyMap());
     ViamVerifier.verifyAllIn(spec);
     ViamLocationExistenceChecker.verify(spec);
   }

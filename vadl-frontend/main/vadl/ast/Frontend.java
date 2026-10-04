@@ -17,6 +17,8 @@
 package vadl.ast;
 
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Map;
 import vadl.utils.Pair;
 import vadl.utils.SingleFileVirtualFileSystem;
 import vadl.utils.VirtualFileSystem;
@@ -66,7 +68,7 @@ public class Frontend {
   }
 
   /**
-   * Compile a single program to an valid AST.
+   * Compile a single program to a valid AST.
    * This entails all passes (but not including) until Viam lowering.
    *
    * @param program to compile.
@@ -79,7 +81,7 @@ public class Frontend {
   }
 
   /**
-   * Compile a program from a provided path to an valid AST.
+   * Compile a program from a provided path to a valid AST.
    * This entails all passes (but not including) until Viam lowering.
    *
    * @param path to compile.
@@ -88,7 +90,22 @@ public class Frontend {
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
   public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) {
-    var ast = VadlParser.parse(path, fileSystem);
+    return compileToAst(path, fileSystem, Collections.emptyMap());
+  }
+
+  /**
+   * Compile a program from a provided path to a valid AST.
+   * This entails all passes (but not including) until Viam lowering.
+   *
+   * @param path to compile.
+   * @param fileSystem to load the files from.
+   * @param macroOverrides macro overrides
+   * @return  the parsed and checked AST.
+   * @throws vadl.error.DiagnosticList  if the program isn't valid.
+   */
+  public static Ast compileToAst(Path path, VirtualFileSystem fileSystem,
+                                 Map<String, String> macroOverrides) {
+    var ast = VadlParser.parse(path, fileSystem, macroOverrides);
     SymbolTable.collectAndResolveNames(ast);
     ModelRemover.removeModels(ast);
     Ungrouper.ungroup(ast);
@@ -105,7 +122,7 @@ public class Frontend {
    */
   public static Specification compileToViam(String program) {
     return compileToViam(SingleFileVirtualFileSystem.DEFAULT_PATH,
-        new SingleFileVirtualFileSystem(program));
+        new SingleFileVirtualFileSystem(program), Collections.emptyMap());
   }
 
   /**
@@ -113,11 +130,13 @@ public class Frontend {
    *
    * @param path to compile.
    * @param fileSystem to load the files from.
+   * @param macroOverrides macro overrides
    * @return  the parsed and checked VIAM spec.
    * @throws vadl.error.DiagnosticList  if the program isn't valid.
    */
-  public static Specification compileToViam(Path path, VirtualFileSystem fileSystem) {
-    var ast = compileToAst(path, fileSystem);
+  public static Specification compileToViam(Path path, VirtualFileSystem fileSystem,
+                                            Map<String, String> macroOverrides) {
+    var ast = compileToAst(path, fileSystem, macroOverrides);
     return ViamLowering.generate(ast);
   }
 
