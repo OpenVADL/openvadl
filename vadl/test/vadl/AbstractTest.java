@@ -35,7 +35,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
@@ -248,7 +250,7 @@ public abstract class AbstractTest {
    */
   public void runAndAssumeFailure(String testSourcePath, @Nullable String failureMessage) {
     var sourcePath = getTestSourcePath(testSourcePath);
-    var success = testFrontend.runSpecification(sourcePath);
+    var success = testFrontend.runSpecification(sourcePath, Collections.emptyMap());
     if (success) {
       fail("Assumed failure for specification " + testSourcePath + " but succeeded");
     }
@@ -270,8 +272,20 @@ public abstract class AbstractTest {
    * @return the VIAM specification
    */
   public Specification runAndGetViamSpecification(String testSourcePath) {
+    return runAndGetViamSpecification(testSourcePath, Collections.emptyMap());
+  }
+
+  /**
+   * Runs the specification and returns the VIAM representation.
+   *
+   * @param testSourcePath the resource {@code testSource} relative path of the test source file
+   * @param macroOverrides macro overrides
+   * @return the VIAM specification
+   */
+  public Specification runAndGetViamSpecification(String testSourcePath,
+                                                  Map<String, String> macroOverrides) {
     var sourcePath = getTestSourcePath(testSourcePath);
-    return runAndGetViamSpecification(sourcePath);
+    return runAndGetViamSpecification(sourcePath, macroOverrides);
   }
 
   /**
@@ -281,10 +295,22 @@ public abstract class AbstractTest {
    * @return the VIAM specification
    */
   public Specification runAndGetViamSpecification(Path sourcePath) {
+    return runAndGetViamSpecification(sourcePath, Collections.emptyMap());
+  }
+
+  /**
+   * Runs the specification and returns the VIAM representation.
+   *
+   * @param sourcePath the absolute path to the test source file
+   * @param macroOverrides macro overrides
+   * @return the VIAM specification
+   */
+  public Specification runAndGetViamSpecification(Path sourcePath,
+                                                  Map<String, String> macroOverrides) {
     if (!sourcePath.isAbsolute()) {
       throw new IllegalArgumentException("Source path must be absolute");
     }
-    tryToRunSpecificationWithFrontend(sourcePath, testFrontend);
+    tryToRunSpecificationWithFrontend(sourcePath, testFrontend, macroOverrides);
     return testFrontend.getViam();
   }
 
@@ -293,9 +319,12 @@ public abstract class AbstractTest {
    * It will fail if the run was not successful.
    *
    * @param sourcePath The concrete resolved source path of the specification
+   * @param frontend test frontend
+   * @param macroOverrides macro overrides
    */
-  private static void tryToRunSpecificationWithFrontend(Path sourcePath, TestFrontend frontend) {
-    var success = frontend.runSpecification(sourcePath);
+  private static void tryToRunSpecificationWithFrontend(Path sourcePath, TestFrontend frontend,
+                                                        Map<String, String> macroOverrides) {
+    var success = frontend.runSpecification(sourcePath, macroOverrides);
     if (!success) {
       var logs = frontend.getLogAsString();
       var errorIndex = logs.indexOf(" error: ");
@@ -312,7 +341,7 @@ public abstract class AbstractTest {
 
   /**
    * Returns the current test source code as a formatted string.
-   * This must be called after calling {@link #runAndGetViamSpecification(String)}.
+   * This must be called after calling {@link #runAndGetViamSpecification(String,Map)}.
    * The output also includes line numbers.
    */
   public static String testSourceToString(URI sourceUri) {
@@ -350,7 +379,14 @@ public abstract class AbstractTest {
   public TestSetup setupPassManagerAndRunSpec(String specPath,
                                               PassOrder passes)
       throws IOException, DuplicatedPassKeyException {
-    var spec = runAndGetViamSpecification(specPath);
+    return setupPassManagerAndRunSpec(specPath, passes, Collections.emptyMap());
+  }
+
+  public TestSetup setupPassManagerAndRunSpec(String specPath,
+                                              PassOrder passes,
+                                              Map<String, String> macroOverrides)
+      throws IOException, DuplicatedPassKeyException {
+    var spec = runAndGetViamSpecification(specPath, macroOverrides);
 
     var passManager = new PassManager();
     passManager.add(passes);
@@ -363,13 +399,26 @@ public abstract class AbstractTest {
   /**
    * Sets the PassManager and runs the provided specification with the pass order.
    *
-   * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder)} instead and use the
+   * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder, Map)} instead and use the
    *     {@link PassOrder#untilFirst(Class)} method instead.
    */
   @Deprecated
   public TestSetup setupPassManagerAndRunSpecUntil(String specPath, PassOrder passes, PassKey until)
       throws IOException, DuplicatedPassKeyException {
-    var spec = runAndGetViamSpecification(specPath);
+    return setupPassManagerAndRunSpecUntil(specPath, passes, until, Collections.emptyMap());
+  }
+
+  /**
+   * Sets the PassManager and runs the provided specification with the pass order.
+   *
+   * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder, Map)} instead and use the
+   *     {@link PassOrder#untilFirst(Class)} method instead.
+   */
+  @Deprecated
+  public TestSetup setupPassManagerAndRunSpecUntil(String specPath, PassOrder passes, PassKey until,
+                                                   Map<String, String> macroOverrides)
+      throws IOException, DuplicatedPassKeyException {
+    var spec = runAndGetViamSpecification(specPath, macroOverrides);
 
     var passManager = new PassManager();
     passManager.add(passes);

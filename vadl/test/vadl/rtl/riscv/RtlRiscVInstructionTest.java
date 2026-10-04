@@ -16,15 +16,17 @@
 
 package vadl.rtl.riscv;
 
+import static vadl.rtl.passes.EmitRtlDevcontainerDockerComposePass.RTL_BASE_IMAGE;
+
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import vadl.DockerExecutionTest;
 import vadl.configuration.DecoderOptions;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
-import vadl.rtl.RtlDockerTest;
 
-class RtlRiscVInstructionTest extends RtlDockerTest {
+class RtlRiscVInstructionTest extends DockerExecutionTest {
 
     @Test
     void rv64imFiveTest() {
@@ -39,9 +41,7 @@ class RtlRiscVInstructionTest extends RtlDockerTest {
       decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
       config.setDecoderOptions(decoderOptions);
 
-      var image = generateRtlImage("sys/risc-v/mia/rv_5stage.vadl", config);
-
-      runContainer(image,
+      runContainer(RTL_BASE_IMAGE,
           /* WHEN */
           c -> c.withCommand("/scripts/test.sh"),
           /* THEN */
