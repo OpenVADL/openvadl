@@ -163,6 +163,13 @@ public class SideEffectUtils {
     }
 
     /**
+     * Returns whether more than one type of side effect is in the set.
+     */
+    public boolean isMultiple() {
+      return types.size() > 1;
+    }
+
+    /**
      * Returns whether this and the given set conflict.
      *
      * <p>Two type set conflict, if there is no way to order them such that the resulting

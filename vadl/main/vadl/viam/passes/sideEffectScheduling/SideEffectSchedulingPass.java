@@ -159,14 +159,14 @@ class SideEffectScheduler {
     var seEffects = groupedEffects.getOrDefault(SideEffectUtils.SideEffectType.SE, List.of());
     var pcEffects = groupedEffects.getOrDefault(SideEffectUtils.SideEffectType.PC, List.of());
 
-    // All MEM effects should be inserted directly at the beginning of the branch
-    for (var effect : Lists.reverse(memEffects)) {
-      beginNode.addAfter(new ScheduledNode(effect));
-    }
-
     // All SE effects should be inserted at their insertion point
     for (var effect : Lists.reverse(seEffects)) {
       result.seInsertionPoint.addAfter(new ScheduledNode(effect));
+    }
+
+    // All MEM effects should be inserted directly at the beginning of the branch
+    for (var effect : Lists.reverse(memEffects)) {
+      beginNode.addAfter(new ScheduledNode(effect));
     }
 
     // Add PC effects directly in front of branch end

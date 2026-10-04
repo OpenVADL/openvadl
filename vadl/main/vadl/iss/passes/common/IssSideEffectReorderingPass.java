@@ -170,6 +170,15 @@ class SideEffectReorderer {
       return this;
     }
 
+    public SideEffectCount dec(SideEffectUtils.SideEffectType type) {
+      switch (type) {
+        case MEM -> memCnt--;
+        case SE  -> seCnt--;
+        case PC  -> pcCnt--;
+      }
+      return this;
+    }
+
     public int total() {
       return memCnt + seCnt + pcCnt;
     }
@@ -380,6 +389,14 @@ class SideEffectReorderer {
         }
       }
 
+      var end = new CfgTraverser(){}.traverseBranch(beginNode);
+
+      // extract out of all forall blocks with more than one side effect type
+      blocks.stream().filter(b -> b instanceof ForallNode
+              && requireNonNull(sideEffectTypes.get(b)).isMultiple())
+          .toList().forEach(node -> extractOutOfBlock(node, blocks, end, depth));
+
+
       if (blocks.size() <= 1) {
         // if zero or only one inner blocks exists, then nothing on this level must be reordered
         blocks.forEach(b -> reorderBlock(b, depth));
@@ -443,8 +460,6 @@ class SideEffectReorderer {
         candidate.ifPresent(frozenNodes::add);
       }
 
-      var end = new CfgTraverser(){}.traverseBranch(beginNode);
-
       // extract out of remaining blocks, such that they each only contain one se type
       blocks.stream().toList().forEach(node -> {
         if (frozenNodes.contains(node)) {
@@ -480,10 +495,8 @@ class SideEffectReorderer {
      * The extracted side effects are placed in new blocks, which are added to
      * the given {@code nodeList}.
      *
-     * <p>{@link #sideEffectCount} is not updated and left in an inconsistent state.
-     *
-     * <p>{@link #sideEffectTypes} is updated for the new blocks and the given block,
-     * but not for any of the inner blocks.
+     * <p>{@link #sideEffectTypes} and {@link #sideEffectCount} are updated for the new blocks
+     * and the given block, but not for any of the inner blocks.
      *
      * @param node The start node of the block to extract out of.
      * @param nodeList The list of nodes to add the new blocks to.
@@ -503,6 +516,7 @@ class SideEffectReorderer {
             if (seType == keptSeType) {
               return;
             }
+            requireNonNull(sideEffectCount.get(node)).dec(seType);
             localEndNode.removeSideEffect(se);
             var conditions = requireNonNull(requireNonNull(sideEffectConditions.get(se))
                 .get(localEndNode));
@@ -514,7 +528,8 @@ class SideEffectReorderer {
                 requireNonNull(endNode.graph()), se);
             pred.setNext(newIfNode);
 
-            sideEffectTypes.put(newIfNode, SideEffectUtils.SideEffectTypes.empty());
+            sideEffectCount.put(newIfNode, new SideEffectCount().inc(seType));
+            sideEffectTypes.put(newIfNode, SideEffectUtils.SideEffectTypes.of(Set.of(seType)));
             nodeList.add(newIfNode);
           });
           return localEndNode;
