@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,310 +16,152 @@
 
 package vadl.lsp;
 
-import static vadl.lsp.LspUtils.toPath;
-
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
-import org.eclipse.lsp4j.TextDocumentItem;
-import vadl.utils.SourceLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import vadl.ast.Frontend;
+import vadl.ast.Frontend.BestEffortCompilation;
 
 /**
- * Represents one version of a file currently owned by (i.e. opened in) the LSP Client. This
- * effectively snapshots the file at one point in time.
+ * Represents one document that is currently open in the language server. This is a mutable object
+ * that always provides the current state. Caches the latest compilation result of this document
+ * (if it is still valid).
  *
- * @see org.eclipse.lsp4j.TextDocumentItem
+ * @see DocumentSnapshot
  */
 public class Document {
-  /**
-   * End-of-line sequences defined by LSP.
-   */
-  private static final Pattern EOL_REGEX = Pattern.compile("(\\r\\n|\\n|\\r)");
+  private static final Logger log = LoggerFactory.getLogger(Document.class);
 
-  public final Path path;
-  public final int version;
+  private volatile DocumentSnapshot currentSnapshot;
+  private final DocumentStore documentStore;
 
-  public final List<String> textLines;
+  @Nullable
+  private Future<CompilationInputAndResult> compilationTask = null;
 
   /**
    * Creates a new Document.
    *
-   * @param textLines List of individual lines. Each item MUST NOT contain a newline character.
+   * @param snapshot the initial file content
+   * @param documentStore which this document is managed by
    */
-  public Document(Path path, int version, List<String> textLines) {
-    this.path = path;
-    this.version = version;
-    this.textLines = Collections.unmodifiableList(textLines);
+  Document(DocumentSnapshot snapshot, DocumentStore documentStore) {
+    this.currentSnapshot = snapshot;
+    this.documentStore = documentStore;
   }
 
-
-  public Document(Path path, int version, String text) {
-    this(path, version, splitLines(text));
+  public Path getPath() {
+    return currentSnapshot.path;
   }
 
   /**
-   * Creates a new lsp document based on the data provided by the client.
+   * Returns this document's current snapshot. Thread-safe.
+   */
+  public DocumentSnapshot getCurrentSnapshot() {
+    return currentSnapshot;
+  }
+
+  /**
+   * Updates this document's snapshot. Thread-safe.
    *
-   * @param tdi as provided by the LSP didOpen request
+   * @throws IllegalStateException if {@code newVersion} is older than the current snapshot's
+   *                               version
    */
-  public Document(TextDocumentItem tdi) {
-    this(toPath(tdi.getUri()), tdi.getVersion(), tdi.getText());
+  public synchronized void changeSnapshot(
+      int newVersion, List<TextDocumentContentChangeEvent> contentChanges) {
+    currentSnapshot = currentSnapshot.withChanges(newVersion, contentChanges);
   }
 
   /**
-   * Creates an updated version of this document.
+   * Clears the current compilation. I.e. the next call to {@link #getCurrentCompilation()} will
+   * trigger a re-compilation.
+   *
+   * <p>If a compilation is currently being produced, then that task and all tasks waiting for that
+   * compilation are interrupted.
    */
-  public Document withChanges(int newVersion, List<TextDocumentContentChangeEvent> contentChanges) {
-    if (newVersion <= this.version) {
-      throw new IllegalStateException(
-          "Cannot update LSP document to version " + newVersion
-              + " as current version is already " + this.version
+  public synchronized void clearCompilation() {
+    if (compilationTask != null) {
+      log.debug(
+          "{} compilation of {}", compilationTask.isDone() ? "Discard" : "Interrupt", getPath()
       );
+      compilationTask.cancel(true);
+      compilationTask = null;
     }
-
-    // Shortcuts
-    if (contentChanges.isEmpty()) {
-      return new Document(this.path, newVersion, this.textLines);
-    }
-    if (contentChanges.size() == 1) {
-      var change = contentChanges.getFirst();
-      if (change.getRange() == null) {
-        // Single change which replaces entire document
-        return new Document(this.path, newVersion, change.getText());
-      }
-    }
-
-    List<String> newTextLines = new ArrayList<>(this.textLines);
-    for (var change : contentChanges) {
-      var range = change.getRange();
-
-      if (range == null) {
-        // Change replaces entire document
-        newTextLines = new ArrayList<>(splitLines(change.getText()));
-        continue;
-      }
-
-      // Character offsets count UTF-16 words (see server capabilities)
-      int startLine = normalizeLineOffset(range.getStart().getLine(), newTextLines);
-      String startLineText = newTextLines.get(startLine);
-      int startCharacter = normalizeCharacterOffset(range.getStart().getCharacter(), startLineText);
-
-      int endLine = normalizeLineOffset(range.getEnd().getLine(), newTextLines);
-      String endLineText = newTextLines.get(endLine);
-      int endCharacter = normalizeCharacterOffset(range.getEnd().getCharacter(), endLineText);
-
-      if (endLine < startLine || (endLine == startLine && endCharacter < startCharacter)) {
-        // Ignore invalid combination
-        continue;
-      }
-
-      var insertTextLines = splitLines(
-          startLineText.substring(0, startCharacter) + change.getText()
-              + endLineText.substring(endCharacter)
-      );
-
-      if (endLine == startLine && insertTextLines.size() == 1) {
-        // Shortcut
-        newTextLines.set(startLine, insertTextLines.getFirst());
-        continue;
-      }
-
-      newTextLines.subList(startLine, endLine + 1).clear();
-      newTextLines.addAll(startLine, insertTextLines);
-    }
-
-    return new Document(path, newVersion, newTextLines);
-  }
-
-  public String getText() {
-    return String.join("\n", textLines);
   }
 
   /**
-   * Calculates LSP UTF-16 range from given VADL compiler UTF-8 location (within this document).
+   * Compilation result with full context.
    *
-   * @param utf8Location VADL location, which is UTF-8 1-based (end inclusive)
-   * @return UTF-16 0-based (end exclusive) range
+   * @param result The compiler's result
+   * @param documentSnapshot Document state that was used in this compilation
+   * @param fileSystemSnapshot Snapshot of all files at time of compilation
+   * @param publishedDiagnostics True if diagnostics have already been published for this
+   *                             compilation. Initially {@code false}.
    */
-  public Range calculateUtf16Range(SourceLocation utf8Location) {
-    return new Range(
-        calculateUtf16Position(utf8Location.begin(), false),
-        calculateUtf16Position(utf8Location.end(), true)
-      );
-  }
+  public record CompilationInputAndResult(
+      BestEffortCompilation result,
+      DocumentSnapshot documentSnapshot,
+      LspSnapshotFileSystem fileSystemSnapshot,
+      AtomicBoolean publishedDiagnostics
+  ) {}
 
   /**
-   * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position (within this document).
+   * Returns the current compilation of this document. This will either re-use an existing (still
+   * valid) compilation or wait until a new compilation has been produced.
    *
-   * @see #calculateUtf8Position(Position, boolean)
-   * @param utf8Position VADL position, which is UTF-8 1-based
-   * @param endPosition true: this is an end position, i.e. it is inclusive in VADL but exclusive in
-   *                    LSP
-   * @return UTF-16 0-based position
-   */
-  public Position calculateUtf16Position(
-      SourceLocation.Position utf8Position, boolean endPosition) {
-    // Change from 1-based to 0-based ...
-    int line = Math.max(utf8Position.line() - 1, 0);
-    // ... but end positions are exclusive in LSP
-    int column = Math.max(utf8Position.column() - (endPosition ? 0 : 1), 0);
-
-    String lineText = textLines.get(line);
-    for (int i = 0; i < column; i++) {
-      if (i >= lineText.length()) {
-        column = lineText.length();
-        break;
-      }
-      column -= utf8Utf16LengthDifference(lineText.charAt(i));
-    }
-
-    return new Position(line, column);
-  }
-
-  /**
-   * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position, which are given in
-   * the special optimized Semantic Tokens format.
+   * <p>This method is thread-safe.
    *
-   * @param semanticTokens Token list encoded for a semanticTokens response, with UTF-8 positions,
-   *                       tokens do not span multiple lines.
-   * @return {@code semanticTokens} but with correct UTF-16 positions
+   * @return All the relevant data associated with this compilation. This data MUST NOT be modified
+   *         as it is shared with other operations.
+   * @throws InterruptedException if producing the compilation was interrupted because it would no
+   *                              longer be up-to-date (and thus the LSP operation calling this
+   *                              should be considered outdated as well)
    */
-  public List<Integer> calculateUtf16Positions(
-      List<Integer> semanticTokens) {
-    if (semanticTokens.isEmpty()) {
-      return semanticTokens;
+  public CompilationInputAndResult getCurrentCompilation() throws InterruptedException {
+    Future<CompilationInputAndResult> currentCompilationTask;
+    synchronized (this) {
+      currentCompilationTask = compilationTask == null ? startCompilation() : compilationTask;
     }
 
-    int line = 0;
-    String lineText = textLines.getFirst();
-    int linePos;
-    int previousTargetPos = 0;
-    int targetPos = semanticTokens.get(1);
-    for (int i = 0; i < semanticTokens.size(); i += 5) {
-      // semanticTokens: deltaLine, deltaStart, length, tokenType, tokenModifiers
+    try {
+      return currentCompilationTask.get();
+    } catch (CancellationException | ExecutionException e) {
+      throw new InterruptedException();
+    }
+  }
 
-      int deltaLine = semanticTokens.get(i);
-      if (deltaLine != 0) {
-        line += deltaLine;
-        lineText = textLines.get(line);
-        previousTargetPos = 0;
+  private synchronized Future<CompilationInputAndResult> startCompilation()
+      throws InterruptedException {
+    final var fileSystemSnapshot = documentStore.createSnapshotFileSystem();
+
+    compilationTask = documentStore.documentService.server.executor.submit(() -> {
+      // Reading document snapshot from VFS to be consistent with it
+      var documentSnapshot = fileSystemSnapshot.getDocumentSnapshot(getPath());
+      if (documentSnapshot == null) {
+        // Document may simply not be open anymore
+        throw new InterruptedException();
       }
-      linePos = previousTargetPos;
-      targetPos = semanticTokens.get(i + 1) + previousTargetPos;
 
-      // deltaStart
-      for (; linePos < targetPos; linePos++) {
-        if (linePos >= lineText.length()) {
-          linePos = targetPos = lineText.length();
-          break;
-        }
-        targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
+      var compilerResult = Frontend.compileToAstBestEffort(documentSnapshot.path,
+          fileSystemSnapshot);
+
+      var result = new CompilationInputAndResult(compilerResult, documentSnapshot,
+          fileSystemSnapshot, new AtomicBoolean(false));
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
       }
-      semanticTokens.set(i + 1, targetPos - previousTargetPos);
-      previousTargetPos = targetPos;
+      documentStore.updateDependencies(result);
 
-      // length
-      targetPos = targetPos + semanticTokens.get(i + 2);
-      for (; linePos < targetPos; linePos++) {
-        if (linePos >= lineText.length()) {
-          targetPos = lineText.length();
-          break;
-        }
-        targetPos -= utf8Utf16LengthDifference(lineText.charAt(linePos));
-      }
-      semanticTokens.set(i + 2, targetPos - previousTargetPos);
-      // No update of previousTargetPos - next token is calculated based on start pos of the
-      // current token
-    }
+      log.debug("Compiled {} (version {})", getPath(), documentSnapshot.version);
+      return result;
+    });
 
-    return semanticTokens;
-  }
-
-  /**
-   * Calculates VADL UTF-8 position from given LSP UTF-16 position (within this document).
-   *
-   * @see #calculateUtf16Position(SourceLocation.Position, boolean)
-   * @param utf16Position LSP position, which is UTF-16 0-based
-   * @param endPosition true: this is an end position, i.e. it is exclusive in LSP but inclusive in
-   *                    VADL
-   * @return UTF-8 1-based position
-   */
-  public SourceLocation.Position calculateUtf8Position(
-      Position utf16Position, boolean endPosition) {
-    int line = utf16Position.getLine();
-    int character = utf16Position.getCharacter();
-    int column = character;
-
-    String lineText = textLines.get(line);
-    for (int i = 0; i < character; i++) {
-      if (i >= lineText.length()) {
-        break;
-      }
-      column += utf8Utf16LengthDifference(lineText.charAt(i));
-    }
-
-    // Change from 0-based to 1-based ...
-    line += 1;
-    // ... but end positions are inclusive in VADL
-    column += (endPosition ? 0 : 1);
-
-    return new SourceLocation.Position(line, column);
-  }
-
-  @Override
-  public String toString() {
-    return "Document " + path + " (version " + version + "):\n================\n  "
-        + getText().replace("\n", "\n  ") + "\n================";
-  }
-
-
-  /**
-   * Splits the given String into individual lines (as stored in {@code textLines}).
-   *
-   * @return text lines. This List has a fixed size! (see {@link Arrays#asList(Object[])})
-   */
-  private static List<String> splitLines(String text) {
-    // Note: We don't distinguish between the different line endings; and as long as this server
-    //       doesn't make editing suggestions to the client (which may use different eol sequences
-    //       than the user) this should be fine.
-    return Arrays.asList(EOL_REGEX.split(text, -1));
-  }
-
-  private static int normalizeLineOffset(int lineOffset, List<String> textLines) {
-    return Math.clamp(lineOffset, 0, textLines.size() - 1);
-  }
-
-  private static int normalizeCharacterOffset(int characterOffset, String textLine) {
-    // According to LSP spec, character offsets that are too large shall be interpreted as the
-    // maximum value for the resp. text line.
-    return Math.clamp(characterOffset, 0, textLine.length());
-  }
-
-  private static int utf8Utf16LengthDifference(char character) {
-    // UTF-8 position counts bytes; UTF-16 position counts 16bit words
-    // E.g. if a character needs 2 bytes in UTF-8 and 16bit in UTF-16, the difference is 1
-
-    if (character < 128) {
-      // UTF-8: 1 byte
-      return 0;
-    }
-    if (character < 0x800) {
-      // UTF-8: 2 bytes
-      return 1;
-    }
-    if (character >= 0xD800 && character <= 0xDFFF) {
-      // UTF-16: 2 words (surrogate pair - above Basic Multilingual Plane)
-      // UTF-8: 4 bytes
-      // => 1 difference per UTF-16 word
-      return 1;
-    }
-    // UTF-8: 3 bytes
-    return 2;
+    return compilationTask;
   }
 }
