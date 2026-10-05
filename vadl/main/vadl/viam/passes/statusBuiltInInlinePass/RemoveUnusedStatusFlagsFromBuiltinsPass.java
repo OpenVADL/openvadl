@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,6 @@ import vadl.utils.VadlBuiltInStatusOnlyDispatcher;
 import vadl.utils.ViamUtils;
 import vadl.viam.DefProp;
 import vadl.viam.Specification;
-import vadl.viam.ViamError;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.StructGetFieldNode;
@@ -142,12 +141,13 @@ class ResultInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
 
   @Override
   public void handleSSATADDC(BuiltInCall input) {
-    throw new ViamError("not implemented");
+    // there is no non-status saturated built-in with carry, so we inline the saturation logic
+    SaturatedArithmeticInliner.ssatAddc(input).replaceByResult();
   }
 
   @Override
   public void handleUSATADDC(BuiltInCall input) {
-    throw new ViamError("not implemented");
+    SaturatedArithmeticInliner.usatAddc(input).replaceByResult();
   }
 
   @Override
@@ -191,26 +191,24 @@ class ResultInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
 
   @Override
   public void handleSSATSUBC(BuiltInCall input) {
-    // this is not just a USATSUB with carry like SUBB but requires special handling like
-    // handleSUBC
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.ssatSubc(input).replaceByResult();
   }
 
   @Override
   public void handleUSATSUBC(BuiltInCall input) {
-    // this is not just a USATSUB with carry like SUBB but requires special handling like
-    // handleSUBC
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.usatSubc(input).replaceByResult();
   }
 
   @Override
   public void handleSSATSUBB(BuiltInCall input) {
-    inlineDefaultCarry(input, BuiltInTable.SSATSUB);
+    // nesting two saturated subtractions is not equivalent, as the first one
+    // might saturate before the borrow is subtracted
+    SaturatedArithmeticInliner.ssatSubb(input).replaceByResult();
   }
 
   @Override
   public void handleUSATSUBB(BuiltInCall input) {
-    inlineDefaultCarry(input, BuiltInTable.USATSUB);
+    SaturatedArithmeticInliner.usatSubb(input).replaceByResult();
   }
 
   @Override
