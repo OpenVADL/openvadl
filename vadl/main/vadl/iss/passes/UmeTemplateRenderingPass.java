@@ -16,6 +16,7 @@
 
 package vadl.iss.passes;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
@@ -24,6 +25,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
+import vadl.viam.RegisterRef;
 import vadl.viam.Specification;
 import vadl.viam.UserModeEmulation;
 
@@ -65,37 +67,38 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
 
     Abi abi = ume.abi();
 
-    vars.put("config", Map.ofEntries(
-        Map.entry("sysReg", ume.getSyscallNumber().singleIndex()),
-        Map.entry("sysRegFile", ume.getSyscallNumber().resource().simpleName().toLowerCase()),
-        Map.entry("retReg", ume.getSyscallReturn().singleIndex()),
-        Map.entry("retRegFile", ume.getSyscallReturn().resource().simpleName().toLowerCase()),
-        Map.entry("spReg", abi.stackPointer().addr()),
-        Map.entry("spRegFile",  abi.stackPointer().registerFile().simpleName().toLowerCase()),
-        /*
-        * tries to find the most idiomatic name for the stack pointer register;
-        * "sp" is the default; if user defines an alias -> uses that instead
-        * */
-        Map.entry("spRegName",  abi.aliases()
-            .getOrDefault(
-                Pair.of(abi.stackPointer().registerFile(), abi.stackPointer().addr()),
-                List.of(new Abi.RegisterAlias("sp"))
-            )
-            .getFirst().value()),
-        Map.entry("raReg", abi.returnAddress().addr()),
-        Map.entry("tpReg", abi.threadPointer()
-            .map(Abi.AbiRegister::addr)
-            .orElse(-1)),
-        Map.entry("args", ume.args().stream()
-            .map(ref -> Map.of(
-                "index", ref.singleIndex(),
-                "file",  ref.resource().simpleName().toLowerCase()
-            ))
-            .toList()),
-        Map.entry("syscallInstr", ume.syscallInstr().simpleName()),
-        Map.entry("insn_width_bytes", ume.syscallInstr().format().type().bitWidth() / 8)
-    ));
+    var config = new HashMap<String, Object>();
+    config.put("sysReg", accessor(ume.getSyscallNumber()));
+    config.put("retReg", accessor(ume.getSyscallReturn()));
+    config.put("spReg", accessor(abi.stackPointer().registerRef()));
+    /*
+     * tries to find the most idiomatic name for the stack pointer register;
+     * "sp" is the default; if user defines an alias -> uses that instead
+     * */
+    config.put("spRegName", abi.aliases()
+        .getOrDefault(
+            Pair.of(abi.stackPointer().registerFile(), abi.stackPointer().addr()),
+            List.of(new Abi.RegisterAlias("sp")))
+        .getFirst().value());
+    config.put("raReg", accessor(abi.returnAddress().registerRef()));
+    abi.threadPointer().ifPresent(tp -> config.put("tpReg", accessor(tp.registerRef())));
+    config.put("args", ume.args().stream()
+        .map(this::accessor)
+        .toList());
+    config.put("syscallInstr", ume.syscallInstr().simpleName());
+    config.put("insn_width_bytes", ume.syscallInstr().format().type().bitWidth() / 8);
 
+    vars.put("config", config);
     return vars;
+  }
+
+  private String accessor(RegisterRef ref) {
+    var refName = ref.resource().simpleName().toLowerCase();
+
+    if(ref.indices().isEmpty()) {
+      return refName;
+    }
+
+    return refName + "[ " + ref.singleIndex() + " ]";
   }
 }
