@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,30 +32,46 @@ import vadl.utils.VirtualFileSystem;
 
 /**
  * Virtual file system used by the language server. This contains one snapshot containing several
- * {@link Document}s; the contents of those documents (which are snapshots themselves, i.e. frozen
- * in time) is made available instead of reading from the underlying file system. All other files
- * are read from the underlying file system directly.
+ * {@link DocumentSnapshot}s; the contents of those documents (which are snapshots themselves, i.e.
+ * frozen in time) is made available instead of reading from the underlying file system. All other
+ * files are read from the underlying file system directly.
  *
  * <p>Note: As the contained documents are immutable, a new instance of this VFS must be created
  * when a new file state shall be parsed.
  *
  * <p>Note: If {@link #getReadFiles()} shall be used, you can reset this data by creating a new
- * copy of this VFs (via the copy constructor).
+ * copy of this VFS (via the copy constructor).
  */
 class LspSnapshotFileSystem implements VirtualFileSystem {
-  private final Map<Path, Document> documents;
+  private final Map<Path, DocumentSnapshot> documentSnapshots;
   private final VirtualFileSystem underlyingFileSystem;
   private final Set<Path> readFiles = new HashSet<>();
 
   /**
-   * Creates a VirtualFileSystem backed with the given documents.
+   * Creates a VirtualFileSystem backed with the given document snapshots.
    *
-   * @param documents Maps file path to corresponding document. This map is copied.
+   * @param documentSnapshots Maps file path to corresponding document snapshot. This map is copied.
    * @param underlyingFileSystem is used for all files for which this instance has no corresponding
-   *                             document.
+   *                             document snapshot.
    */
-  LspSnapshotFileSystem(Map<Path, Document> documents, VirtualFileSystem underlyingFileSystem) {
-    this.documents = Map.copyOf(documents);
+  LspSnapshotFileSystem(Map<Path, DocumentSnapshot> documentSnapshots,
+      VirtualFileSystem underlyingFileSystem) {
+    this.documentSnapshots = Map.copyOf(documentSnapshots);
+    this.underlyingFileSystem = underlyingFileSystem;
+  }
+
+  /**
+   * Creates a VirtualFileSystem backed with snapshots of the given documents. This constructor is
+   * more efficient as it avoids an unnecessary map copy.
+   *
+   * @param underlyingFileSystem is used for all files for which this instance has no corresponding
+   *                             document snapshot.
+   */
+  LspSnapshotFileSystem(Iterable<Document> documents, VirtualFileSystem underlyingFileSystem) {
+    this.documentSnapshots = new HashMap<>();
+    for (var document : documents) {
+      this.documentSnapshots.put(document.getPath(), document.getCurrentSnapshot());
+    }
     this.underlyingFileSystem = underlyingFileSystem;
   }
 
@@ -62,13 +79,13 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
    * Copy constructor.
    */
   LspSnapshotFileSystem(LspSnapshotFileSystem snapshots) {
-    this.documents = snapshots.documents;
+    this.documentSnapshots = snapshots.documentSnapshots;
     this.underlyingFileSystem = snapshots.underlyingFileSystem;
   }
 
   @Override
   public boolean exists(Path path) {
-    if (documents.containsKey(path)) {
+    if (documentSnapshots.containsKey(path)) {
       return true;
     }
     return underlyingFileSystem.exists(path);
@@ -78,24 +95,24 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
   public InputStream getInputStream(Path path) {
     readFiles.add(path);
 
-    var document = documents.get(path);
-    if (document == null) {
+    var documentSnapshot = documentSnapshots.get(path);
+    if (documentSnapshot == null) {
       return underlyingFileSystem.getInputStream(path);
     }
 
-    return new ByteArrayInputStream(document.getText().getBytes(StandardCharsets.UTF_8));
+    return new ByteArrayInputStream(documentSnapshot.getText().getBytes(StandardCharsets.UTF_8));
   }
 
   @Override
   public Stream<String> readLines(Path path) {
     readFiles.add(path);
 
-    var document = documents.get(path);
-    if (document == null) {
+    var documentSnapshot = documentSnapshots.get(path);
+    if (documentSnapshot == null) {
       return underlyingFileSystem.readLines(path);
     }
 
-    return document.textLines.stream();
+    return documentSnapshot.textLines.stream();
   }
 
   @Override
@@ -108,15 +125,16 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
     return underlyingFileSystem.toRelativePath(path);
   }
 
-  public @Nullable Document getDocument(Path path) {
-    return documents.get(path);
+  public @Nullable DocumentSnapshot getDocumentSnapshot(Path path) {
+    return documentSnapshots.get(path);
   }
 
   /**
-   * Attempts to always return a Document, even if it has to be read from the underlying filesystem.
+   * Attempts to always return a DocumentSnapshot, even if it has to be read from the underlying
+   * filesystem.
    */
-  public @Nullable Document getFileBasedDocument(Path path) {
-    var result = getDocument(path);
+  public @Nullable DocumentSnapshot getFileBasedDocumentSnapshot(Path path) {
+    var result = getDocumentSnapshot(path);
     if (result != null) {
       return result;
     }
@@ -127,14 +145,14 @@ class LspSnapshotFileSystem implements VirtualFileSystem {
     } catch (Diagnostic e) {
       return null;
     }
-    return new Document(path, -1, textLines);
+    return new DocumentSnapshot(path, -1, textLines);
   }
 
   /**
    * The URIs of all files that have been read via this virtual file system so far.
    *
-   * <p>Note: This is not affected by non-VFS methods like {@link #getDocument(Path)} and
-   * {@link #getFileBasedDocument(Path)}.
+   * <p>Note: This is not affected by non-VFS methods like {@link #getDocumentSnapshot(Path)} and
+   * {@link #getFileBasedDocumentSnapshot(Path)}.
    *
    * <p>In order to "reset" this data, you can create a copy of this VFS instance by using the
    * copy constructor.

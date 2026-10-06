@@ -31,9 +31,9 @@ import org.junit.jupiter.api.Test;
 import vadl.utils.SourceLocation;
 
 /**
- * Tests for language Server Document.
+ * Tests for language Server DocumentSnapshot.
  */
-public class DocumentTest {
+public class DocumentSnapshotTest {
   static final String TEST_URI = "file:///virtual/file.vadl";
   static final Path TEST_PATH = toPath(TEST_URI);
   static final String TEST_URI2 = "file:///somewhere/else/test.vadl";
@@ -67,7 +67,7 @@ public class DocumentTest {
 
   @Test
   void textLinesConstructor() {
-    Document document = new Document(TEST_PATH, 13, TEST_LINES);
+    DocumentSnapshot document = new DocumentSnapshot(TEST_PATH, 13, TEST_LINES);
 
     assertThat(toUri(document.path)).isEqualTo(TEST_URI);
     assertThat(document.version).isEqualTo(13);
@@ -77,7 +77,7 @@ public class DocumentTest {
 
   @Test
   void textConstructor() {
-    Document document = new Document(TEST_PATH2, 6, TEST_TEXT);
+    DocumentSnapshot document = new DocumentSnapshot(TEST_PATH2, 6, TEST_TEXT);
 
     assertThat(toUri(document.path)).isEqualTo(TEST_URI2);
     assertThat(document.version).isEqualTo(6);
@@ -89,7 +89,7 @@ public class DocumentTest {
   void textDocumentItemConstructor() {
     var tdi = new TextDocumentItem(TEST_URI, "vadl", 0, TEST_TEXT2);
 
-    Document document = new Document(tdi);
+    DocumentSnapshot document = new DocumentSnapshot(tdi);
 
     assertThat(toUri(document.path)).isEqualTo(TEST_URI);
     assertThat(document.version).isEqualTo(0);
@@ -99,7 +99,7 @@ public class DocumentTest {
 
   @Test
   void withChanges_failsIfInvalidVersion() {
-    Document document = new Document(TEST_PATH, 5, TEST_TEXT);
+    DocumentSnapshot document = new DocumentSnapshot(TEST_PATH, 5, TEST_TEXT);
 
     assertThrows(IllegalStateException.class, () -> document.withChanges(4, List.of()));
   }
@@ -107,8 +107,8 @@ public class DocumentTest {
   @Test
   void withChanges() {
     var snapshot = new TestSnapshot();
-    Document document = new Document(TEST_PATH, 0, TEST_TEXT);
-    snapshot.add("Initial document", document);
+    DocumentSnapshot document = new DocumentSnapshot(TEST_PATH, 0, TEST_TEXT);
+    snapshot.add("Initial documentSnapshot", document);
 
     // 1)
     var contentChanges = List.of(
@@ -119,7 +119,7 @@ public class DocumentTest {
     document = document.withChanges(1, contentChanges);
 
     assertThat(document.getText()).isEqualTo(TEST_TEXT2);
-    snapshot.add("Changed document (1)", document);
+    snapshot.add("Changed documentSnapshot (1)", document);
 
     // 2)
     contentChanges = List.of(
@@ -132,7 +132,7 @@ public class DocumentTest {
     snapshot.add("2nd change (single-line replacement)", contentChanges);
 
     document = document.withChanges(2, contentChanges);
-    snapshot.add("Changed document (2)", document);
+    snapshot.add("Changed documentSnapshot (2)", document);
 
     // 3)
     contentChanges = List.of(
@@ -145,7 +145,7 @@ public class DocumentTest {
     snapshot.add("3rd change (single-line insertion)", contentChanges);
 
     document = document.withChanges(3, contentChanges);
-    snapshot.add("Changed document (3)", document);
+    snapshot.add("Changed documentSnapshot (3)", document);
 
     // 4)
     contentChanges = List.of(
@@ -158,7 +158,7 @@ public class DocumentTest {
     snapshot.add("4th change (single-line removal)", contentChanges);
 
     document = document.withChanges(4, contentChanges);
-    snapshot.add("Changed document (4)", document);
+    snapshot.add("Changed documentSnapshot (4)", document);
 
     // 5)
     contentChanges = List.of(
@@ -171,7 +171,7 @@ public class DocumentTest {
     snapshot.add("5th change (multi-line removal)", contentChanges);
 
     document = document.withChanges(5, contentChanges);
-    snapshot.add("Changed document (5)", document);
+    snapshot.add("Changed documentSnapshot (5)", document);
 
     // 6)
     contentChanges = List.of(
@@ -184,7 +184,7 @@ public class DocumentTest {
     snapshot.add("6th change (multi-line insertion)", contentChanges);
 
     document = document.withChanges(6, contentChanges);
-    snapshot.add("Changed document (6)", document);
+    snapshot.add("Changed documentSnapshot (6)", document);
 
     // 7)
     contentChanges = List.of(
@@ -197,7 +197,7 @@ public class DocumentTest {
     snapshot.add("7th change (multi-line removal)", contentChanges);
 
     document = document.withChanges(7, contentChanges);
-    snapshot.add("Changed document (7)", document);
+    snapshot.add("Changed documentSnapshot (7)", document);
 
     // Fin
     snapshot.addNote("That is all.");
@@ -206,7 +206,7 @@ public class DocumentTest {
 
   @Test
   public void positionCalculation_asciiOnly() {
-    Document document = new Document(TEST_PATH2, 0, TEST_TEXT2);
+    DocumentSnapshot document = new DocumentSnapshot(TEST_PATH2, 0, TEST_TEXT2);
 
     var vadlPosition = new SourceLocation.Position(2, 25);
 
@@ -225,7 +225,7 @@ public class DocumentTest {
 
   @Test
   public void rangeCalculation_asciiOnly() {
-    Document document = new Document(TEST_PATH, 0, TEST_TEXT);
+    DocumentSnapshot document = new DocumentSnapshot(TEST_PATH, 0, TEST_TEXT);
 
     var vadlRange = SourceLocation.of(null,
         new SourceLocation.Position(1, 3),
@@ -243,7 +243,7 @@ public class DocumentTest {
 
   @Test
   public void positionCalculation_unicode() {
-    Document document = new Document(TEST_PATH, 0, TEST_UNICODE_TEXT);
+    DocumentSnapshot document = new DocumentSnapshot(TEST_PATH, 0, TEST_UNICODE_TEXT);
 
     // 2 byte UTF-8
     var vadlPosition = new SourceLocation.Position(1, 15);

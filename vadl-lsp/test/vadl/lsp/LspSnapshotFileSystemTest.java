@@ -37,8 +37,8 @@ public class LspSnapshotFileSystemTest {
   @Test
   public void emptyVfsDelegates() {
     var existingPath = SingleFileVirtualFileSystem.DEFAULT_PATH.toAbsolutePath();
-    var invalidPath = DocumentTest.TEST_PATH;
-    var underlyingFs = new SingleFileVirtualFileSystem(DocumentTest.TEST_TEXT, existingPath);
+    var invalidPath = DocumentSnapshotTest.TEST_PATH;
+    var underlyingFs = new SingleFileVirtualFileSystem(DocumentSnapshotTest.TEST_TEXT, existingPath);
 
     LspSnapshotFileSystem vfs = new LspSnapshotFileSystem(Map.of(), underlyingFs);
 
@@ -73,27 +73,27 @@ public class LspSnapshotFileSystemTest {
         .isEqualTo(underlyingFs.toRelativePath(invalidPath));
 
     // getDocument()
-    assertThat(vfs.getDocument(existingPath)).isNull();
-    assertThat(vfs.getDocument(DocumentTest.TEST_PATH)).isNull();
+    assertThat(vfs.getDocumentSnapshot(existingPath)).isNull();
+    assertThat(vfs.getDocumentSnapshot(DocumentSnapshotTest.TEST_PATH)).isNull();
 
     // getFileBasedDocument()
-    assertThat(vfs.getFileBasedDocument(existingPath))
-        .extracting("path", "text").containsExactly(existingPath, DocumentTest.TEST_TEXT);
-    assertThat(vfs.getFileBasedDocument(DocumentTest.TEST_PATH)).isNull();
+    assertThat(vfs.getFileBasedDocumentSnapshot(existingPath))
+        .extracting("path", "text").containsExactly(existingPath, DocumentSnapshotTest.TEST_TEXT);
+    assertThat(vfs.getFileBasedDocumentSnapshot(DocumentSnapshotTest.TEST_PATH)).isNull();
 
-    assertThat(vfs.getReadFiles()).hasSize(2).contains(existingPath, DocumentTest.TEST_PATH);
+    assertThat(vfs.getReadFiles()).hasSize(2).contains(existingPath, DocumentSnapshotTest.TEST_PATH);
   }
 
   @Test
   public void vfsWithDocuments() {
-    var existingPath = DocumentTest.TEST_PATH;
-    var overridenDocument = new Document(DocumentTest.TEST_PATH, 3, DocumentTest.TEST_TEXT);
+    var existingPath = DocumentSnapshotTest.TEST_PATH;
+    var overridenDocument = new DocumentSnapshot(DocumentSnapshotTest.TEST_PATH, 3, DocumentSnapshotTest.TEST_TEXT);
 
-    var newPath = DocumentTest.TEST_PATH2;
-    var newDocument = new Document(DocumentTest.TEST_PATH2, 1, DocumentTest.TEST_TEXT2);
+    var newPath = DocumentSnapshotTest.TEST_PATH2;
+    var newDocument = new DocumentSnapshot(DocumentSnapshotTest.TEST_PATH2, 1, DocumentSnapshotTest.TEST_TEXT2);
 
     var invalidPath = SingleFileVirtualFileSystem.DEFAULT_PATH.toAbsolutePath();
-    var underlyingFs = new SingleFileVirtualFileSystem(DocumentTest.TEST_UNICODE_TEXT, existingPath);
+    var underlyingFs = new SingleFileVirtualFileSystem(DocumentSnapshotTest.TEST_UNICODE_TEXT, existingPath);
 
     LspSnapshotFileSystem vfs = new LspSnapshotFileSystem(
         Map.of(overridenDocument.path, overridenDocument, newDocument.path, newDocument),
@@ -108,17 +108,17 @@ public class LspSnapshotFileSystemTest {
 
     // getInputStream()
     assertThat(inputStreamToString(vfs.getInputStream(existingPath)))
-        .isEqualTo(DocumentTest.TEST_TEXT)
+        .isEqualTo(DocumentSnapshotTest.TEST_TEXT)
         .isNotEqualTo(inputStreamToString(underlyingFs.getInputStream(existingPath)));
     assertThat(inputStreamToString(vfs.getInputStream(newPath)))
-        .isEqualTo(DocumentTest.TEST_TEXT2);
+        .isEqualTo(DocumentSnapshotTest.TEST_TEXT2);
     assertThrows(Diagnostic.class, () -> vfs.getInputStream(invalidPath));
 
     // readLines()
     assertThat(vfs.readLines(existingPath).collect(Collectors.joining("\n")))
-        .isEqualTo(DocumentTest.TEST_TEXT);
+        .isEqualTo(DocumentSnapshotTest.TEST_TEXT);
     assertThat(vfs.readLines(newPath).collect(Collectors.joining("\n")))
-        .isEqualTo(DocumentTest.TEST_TEXT2);
+        .isEqualTo(DocumentSnapshotTest.TEST_TEXT2);
     assertThrows(Diagnostic.class, () -> vfs.readLines(invalidPath));
 
     // toAbsolutePath()
@@ -138,16 +138,16 @@ public class LspSnapshotFileSystemTest {
         .isEqualTo(underlyingFs.toRelativePath(invalidPath));
 
     // getDocument()
-    assertThat(vfs.getDocument(existingPath)).isEqualTo(overridenDocument);
-    assertThat(vfs.getDocument(newPath)).isEqualTo(newDocument);
-    assertThat(vfs.getDocument(invalidPath)).isNull();
+    assertThat(vfs.getDocumentSnapshot(existingPath)).isEqualTo(overridenDocument);
+    assertThat(vfs.getDocumentSnapshot(newPath)).isEqualTo(newDocument);
+    assertThat(vfs.getDocumentSnapshot(invalidPath)).isNull();
 
     // getFileBasedDocument()
-    assertThat(vfs.getFileBasedDocument(existingPath))
+    assertThat(vfs.getFileBasedDocumentSnapshot(existingPath))
         .isEqualTo(overridenDocument);
-    assertThat(vfs.getFileBasedDocument(newPath))
+    assertThat(vfs.getFileBasedDocumentSnapshot(newPath))
         .isEqualTo(newDocument);
-    assertThat(vfs.getFileBasedDocument(invalidPath)).isNull();
+    assertThat(vfs.getFileBasedDocumentSnapshot(invalidPath)).isNull();
 
     assertThat(vfs.getReadFiles()).hasSize(3)
         .contains(existingPath, newPath, invalidPath);

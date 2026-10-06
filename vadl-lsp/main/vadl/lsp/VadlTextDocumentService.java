@@ -21,9 +21,7 @@ import static vadl.lsp.LspUtils.toUri;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -52,15 +50,11 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.ast.Ast;
 import vadl.ast.Frontend;
-import vadl.ast.SymbolTable;
-import vadl.ast.VadlParser;
 import vadl.ast.nodes.IdentifiableNode;
 import vadl.ast.nodes.IsId;
 import vadl.error.Diagnostic.MsgType;
 import vadl.error.DiagnosticList;
-import vadl.utils.DiskVirtualFileSystem;
 import vadl.utils.SourceLocation;
 
 /**
@@ -71,10 +65,8 @@ public class VadlTextDocumentService implements TextDocumentService {
 
   private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
 
-  private final VadlLanguageServer server;
-
-  private final Map<Path, Document> openDocuments = new HashMap<>();
-  private final DependencyMap<Path> documentDependencies = new DependencyMap<>();
+  final VadlLanguageServer server;
+  final DocumentStore documentStore = new DocumentStore(this);
 
   VadlTextDocumentService(VadlLanguageServer server) {
     this.server = server;
@@ -83,40 +75,23 @@ public class VadlTextDocumentService implements TextDocumentService {
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
     log.debug(">> didOpen: {}", params);
-
-    Document document = new Document(params.getTextDocument());
-    LspSnapshotFileSystem snapshots;
-    synchronized (openDocuments) {
-      openDocuments.put(document.path, document);
-      snapshots = createSnapshotFileSystem();
-    }
-    publishDiagnostics(document, snapshots);
+    documentStore.open(params.getTextDocument());
   }
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
     log.debug(">> didClose: {}", params);
-    synchronized (openDocuments) {
-      openDocuments.remove(toPath(params.getTextDocument().getUri()));
-    }
+    documentStore.close(toPath(params.getTextDocument().getUri()));
   }
 
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
     log.debug(">> didChange: {}", params);
-
-    Document document;
-    LspSnapshotFileSystem snapshots;
-    synchronized (openDocuments) {
-      document = openDocuments.computeIfPresent(toPath(params.getTextDocument().getUri()), (k, d) ->
-          d.withChanges(params.getTextDocument().getVersion(), params.getContentChanges()));
-      snapshots = createSnapshotFileSystem();
-    }
-    if (document == null) {
-      return;
-    }
-
-    publishDiagnostics(document, snapshots);
+    documentStore.change(
+        toPath(params.getTextDocument().getUri()),
+        params.getTextDocument().getVersion(),
+        params.getContentChanges()
+    );
   }
 
   @Override
@@ -130,24 +105,28 @@ public class VadlTextDocumentService implements TextDocumentService {
       definition(DefinitionParams params) {
     log.debug(">> definition: {}", params);
 
-    LspSnapshotFileSystem snapshots = createSnapshotFileSystem();
     return CompletableFuture.supplyAsync(() -> {
-      Document document = getDocumentForParams(params, snapshots, "(Go to) definition");
-      Ast ast;
+      Document.CompilationInputAndResult compilation;
       try {
-        ast = VadlParser.parse(document.path, snapshots);
-        SymbolTable.collectAndResolveNames(ast);
-
-      } catch (DiagnosticList dl) {
-        log.debug("UNABLE definition: Parser produced diagnostics instead of AST for {}",
-            document.path);
+        compilation = getCurrentCompilationForParams(params, "definition");
+      } catch (InterruptedException e) {
         return emptyDefinitionResult();
       }
 
-      var position = document.calculateUtf8Position(params.getPosition(), false);
+      if (compilation.result().ast() == null
+          || !compilation.result().completedPass()
+          .includes(Frontend.AstPass.PARTIALLY_NAMES_RESOLVED)
+      ) {
+        log.debug("UNABLE definition: Parser produced no AST for {}",
+            compilation.documentSnapshot().path);
+        return emptyDefinitionResult();
+      }
+
+      var position = compilation.documentSnapshot()
+          .calculateUtf8Position(params.getPosition(), false);
       IsId identifier = AstFinderByPosition.findIdentifier(
-          ast,
-          document.path,
+          compilation.result().ast(),
+          compilation.documentSnapshot().path,
           position
       );
       if (identifier == null) {
@@ -158,7 +137,8 @@ public class VadlTextDocumentService implements TextDocumentService {
         return emptyDefinitionResult();
       }
       var targetPath = Objects.requireNonNull(target.location().path());
-      var targetDocument = snapshots.getFileBasedDocument(targetPath);
+      var targetDocument = compilation.fileSystemSnapshot()
+          .getFileBasedDocumentSnapshot(targetPath);
       if (targetDocument == null) {
         log.debug("Unexpected: Definition target file {} does not exist", targetPath);
         return emptyDefinitionResult();
@@ -179,11 +159,13 @@ public class VadlTextDocumentService implements TextDocumentService {
           return emptyDefinitionResult();
         }
       }
-      var originSelectionRange = document.calculateUtf16Range(identifier.location());
+      var originSelectionRange = compilation.documentSnapshot()
+          .calculateUtf16Range(identifier.location());
 
       return definitionResult(targetDocument.path, targetRange, targetSelectionRange,
           originSelectionRange);
-    });
+
+    }, server.executor);
   }
 
   private Either<List<? extends Location>, List<? extends LocationLink>> definitionResult(
@@ -226,54 +208,62 @@ public class VadlTextDocumentService implements TextDocumentService {
   public CompletableFuture<Hover> hover(HoverParams params) {
     log.debug(">> hover: {}", params);
 
-    LspSnapshotFileSystem snapshots = createSnapshotFileSystem();
     return CompletableFuture.supplyAsync(() -> {
-      Document document = getDocumentForParams(params, snapshots, "hover");
-      Ast ast;
+      Document.CompilationInputAndResult compilation;
       try {
-        ast = Frontend.compileToAst(document.path, snapshots);
-
-      } catch (DiagnosticList dl) {
-        log.debug("UNABLE hover: Parser produced diagnostics instead of AST for {}", document.path);
+        compilation = getCurrentCompilationForParams(params, "hover");
+      } catch (InterruptedException e) {
         log.debug("<<- hover: null");
         return null;
       }
 
-      var position = document.calculateUtf8Position(params.getPosition(), false);
+      if (compilation.result().ast() == null
+          || !compilation.result().completedPass().includes(Frontend.AstPass.PARTIALLY_TYPE_CHECKED)
+      ) {
+        log.debug("UNABLE hover: Parser didn't typecheck AST for {}",
+            compilation.documentSnapshot().path);
+        log.debug("<<- hover: null");
+        return null;
+      }
+
+      var position = compilation.documentSnapshot()
+          .calculateUtf8Position(params.getPosition(), false);
 
       // 1) Show type information
-      Hover result = typeHover(ast, document.path, position, document);
+      Hover result = typeHover(compilation, position);
 
       // 2) Show expanded code (for model invocations)
       if (result == null) {
-        result = modelExpansionHover(ast, document.path, position, document);
+        result = modelExpansionHover(compilation, position);
       }
 
       log.debug("<<- hover: {}", result);
       return result;
-    });
+    }, server.executor);
   }
 
-  private @Nullable Hover typeHover(Ast ast, Path path, SourceLocation.Position position,
-      Document document) {
-    var node = AstFinderByPosition.findTypedNode(ast, path, position);
+  private @Nullable Hover typeHover(Document.CompilationInputAndResult compilation,
+                                    SourceLocation.Position position) {
+    var node = AstFinderByPosition.findTypedNode(Objects.requireNonNull(compilation.result().ast()),
+        compilation.documentSnapshot().path, position);
     if (node == null) {
       return null;
     }
 
     return hoverResult(null, node.type().name(),
-        document.calculateUtf16Range(node.location()));
+        compilation.documentSnapshot().calculateUtf16Range(node.location()));
   }
 
-  private @Nullable Hover modelExpansionHover(Ast ast, Path path, SourceLocation.Position position,
-      Document document) {
-    var nodes = AstFinder.findExpandedNodes(ast, path, position);
+  private @Nullable Hover modelExpansionHover(
+      Document.CompilationInputAndResult compilation, SourceLocation.Position position) {
+    var nodes = AstFinder.findExpandedNodes(Objects.requireNonNull(compilation.result().ast()),
+        compilation.documentSnapshot().path, position);
     if (nodes.isEmpty()) {
       return null;
     }
 
-    var range = document.calculateUtf16Range(
-        nodes.getFirst().location().expandedFromStack().getLast());
+    var range = compilation.documentSnapshot().calculateUtf16Range(
+        nodes.getFirst().location().outermostDirectLocation());
     var prettyPrinted = new ArrayList<String>(nodes.size());
     for (var node : nodes) {
       var builder = new StringBuilder();
@@ -318,57 +308,44 @@ public class VadlTextDocumentService implements TextDocumentService {
   }
 
   /**
-   * Manages diagnostic publishing for a given document, incl. version checking, and
-   * updating dependent documents.
-   *
-   * @param document  Must be contained in {@code snapshots}
-   * @param snapshots Must be fresh, i.e. not used in the VADL parser yet
+   * Publishes new diagnostics for a particular document.
    */
-  private void publishDiagnostics(Document document, LspSnapshotFileSystem snapshots) {
+  void publishDiagnostics(Document document) {
     if (!clientSupportsPublishDiagnostics()) {
       return;
     }
 
-    var unused = server.executor().submit(() -> {
-      publishDiagnosticsForOneDocument(document, snapshots);
-
-      // Update diagnostics for all dependent documents
-      for (Path path : documentDependencies.getDependents(document.path)) {
-        Document d = snapshots.getDocument(path);
-        if (d != null) {
-          publishDiagnosticsForOneDocument(d, new LspSnapshotFileSystem(snapshots));
-        }
-      }
-    });
-  }
-
-  /**
-   * Takes care of the actual diagnostic processing for one document.
-   *
-   * @param document  Must be contained in {@code snapshots}
-   * @param snapshots Must be fresh, i.e. not used in the VADL parser yet
-   */
-  private void publishDiagnosticsForOneDocument(Document document,
-                                                LspSnapshotFileSystem snapshots) {
-    var unused = server.executor().submit(() -> {
-      List<Diagnostic> lspItems = new ArrayList<>();
+    var unused = server.executor.submit(() -> {
+      Document.CompilationInputAndResult compilation;
       try {
-        Frontend.compileToAst(document.path, snapshots);
-      } catch (DiagnosticList dl) {
-        log.debug("Raw diagnostics ({}): {}", document.path, dl.getMessage());
+        compilation = document.getCurrentCompilation();
+      } catch (InterruptedException e) {
+        return;
+      }
+      if (!compilation.publishedDiagnostics().compareAndSet(false, true)) {
+        // Several publishDiagnostics() instances attached to the same compilation (race condition);
+        // let's avoid doing the exact same work more than once.
+        return;
+      }
+
+      DiagnosticList diagnostics = compilation.result().diagnostics();
+      List<Diagnostic> lspItems = new ArrayList<>();
+      if (diagnostics != null) {
+        log.debug("Raw diagnostics ({}): {}", document.getPath(), diagnostics.getMessage());
+
+        Path path = compilation.documentSnapshot().path;
         List<String> importedFileErrors = new ArrayList<>();
-        for (vadl.error.Diagnostic item : dl.collapseSimilar().items) {
+        for (vadl.error.Diagnostic item : diagnostics.collapseSimilar().items) {
           Path itemPath = item.multiLocation.primaryLocation().location().path();
-          if (!Objects.equals(itemPath, document.path)) {
+          if (!Objects.equals(itemPath, path)) {
             if (itemPath == null) {
               continue;
             }
             // Error in imported file
-            importedFileErrors.add(LspUtils.relativePath(itemPath, document.path));
+            importedFileErrors.add(LspUtils.relativePath(itemPath, path));
             continue;
           }
-
-          lspItems.add(buildLspDiagnostic(item, document));
+          lspItems.add(buildLspDiagnostic(item, compilation.documentSnapshot()));
         }
 
         if (!importedFileErrors.isEmpty()) {
@@ -391,29 +368,25 @@ public class VadlTextDocumentService implements TextDocumentService {
       // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
       //      has no clear() method (i.e. outdated diagnostics remain visible)
 
-      if (!documentVersionIsCurrent(document)) {
-        log.debug(
-            "ABORT publishDiagnostics: outdated version {} of document {}",
-            document.version,
-            document.path
-        );
+      if (!documentStore.documentVersionIsCurrent(compilation.documentSnapshot())) {
         return;
       }
-      documentDependencies.setDependencies(document.path, snapshots.getReadFiles());
-      var data = new PublishDiagnosticsParams(toUri(document.path), lspItems, document.version);
-      log.debug("<< publishDiagnostics ({}: {}", document.path, data);
+
+      var data = new PublishDiagnosticsParams(toUri(document.getPath()), lspItems,
+          compilation.documentSnapshot().version);
+      log.debug("<< publishDiagnostics ({}: {}", document.getPath(), data);
       server.client().publishDiagnostics(data);
     });
   }
 
   private Diagnostic buildLspDiagnostic(vadl.error.Diagnostic vadlDiagnostic,
-                                        Document document) {
+                                        DocumentSnapshot documentSnapshot) {
     // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
     //      diagnostic message there as well?
     SourceLocation location = vadlDiagnostic.multiLocation.primaryLocation().location();
 
     Diagnostic lspDiagnostic = new Diagnostic();
-    lspDiagnostic.setRange(document.calculateUtf16Range(location));
+    lspDiagnostic.setRange(documentSnapshot.calculateUtf16Range(location));
     lspDiagnostic.setSeverity(
         switch (vadlDiagnostic.level) {
           case ERROR -> DiagnosticSeverity.Error;
@@ -463,37 +436,19 @@ public class VadlTextDocumentService implements TextDocumentService {
     return capabilities != null && capabilities.getPublishDiagnostics() != null;
   }
 
-
-  private boolean documentVersionIsCurrent(Document document) {
-    Document currentDocument = getDocument(document.path);
-    if (currentDocument == null) {
-      return false;
-    }
-    return document.version == currentDocument.version;
-  }
-
   /**
-   * Returns the open document identified by {@code path}.
+   * Wrapper for {@link DocumentStore#getCurrentCompilation(Path)}.
    *
-   * @return Null if desired document is currently not opened in the client.
-   */
-  private @Nullable Document getDocument(Path path) {
-    synchronized (openDocuments) {
-      return openDocuments.get(path);
-    }
-  }
-
-  /**
-   * Returns the document identified by given LSP {@code params} and contained in {@code snapshots}.
-   *
+   * @see DocumentStore#getCurrentCompilation(Path)
    * @param action Used in Exception message.
-   * @throws ResponseErrorException If desired document cannot be found in {@code snapshots}.
+   * @throws ResponseErrorException If desired document is currently not open in the client.
    */
-  private Document getDocumentForParams(
-      TextDocumentPositionParams params, LspSnapshotFileSystem snapshots, String action) {
+  private Document.CompilationInputAndResult getCurrentCompilationForParams(
+      TextDocumentPositionParams params, String action) throws InterruptedException {
 
-    var document = snapshots.getDocument(toPath(params.getTextDocument().getUri()));
-    if (document == null) {
+    var compilation = documentStore.getCurrentCompilation(
+        toPath(params.getTextDocument().getUri()));
+    if (compilation == null) {
       throw new ResponseErrorException(new ResponseError(
           ResponseErrorCode.RequestFailed,
           "Requested " + action + " for a document that is not open.",
@@ -501,12 +456,6 @@ public class VadlTextDocumentService implements TextDocumentService {
       ));
     }
 
-    return document;
-  }
-
-  private LspSnapshotFileSystem createSnapshotFileSystem() {
-    synchronized (openDocuments) {
-      return new LspSnapshotFileSystem(openDocuments, new DiskVirtualFileSystem());
-    }
+    return compilation;
   }
 }
