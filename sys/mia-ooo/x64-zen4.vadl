@@ -7,7 +7,7 @@
 //   (https://chipsandcheese.com/p/amds-zen-4-part-1-frontend-and-execution-engine)
 //
 // This description currently mostly ignores the frontend and memory subsystem,
-// instead focusing solely on the Zen4 execution engine.
+// instead focusing on the Zen4 execution engine.
 // Dispatch for individual instructions is derived from the LLVM scheduling
 // model without consulting the exact assignment `SchedWriteRes`s, meaning it
 // is not necessarily 100% accurate, and certainly leaves some ambiguities.
@@ -16,7 +16,9 @@
 // real behaviour. The exact length of the pipes is not entirely clear to me.
 micro architecture Zen4 implements x86_64 = {
 
-  // A silly frontend.
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
 
   stage FETCH -> FetchResult = {
     FETCH := fetchNext
@@ -300,10 +302,10 @@ micro architecture Zen4 implements x86_64 = {
   //-------------------------------------------------------------------------//
 
   [size : 72]
-  logic [load queue] LoadQueue
+  logic [load buffer] LoadQueue
 
   [size : 64]
-  logic [store queue] StoreQueue
+  logic [store buffer] StoreQueue
 
   // FIXME: AMD SOG Zen4, 2.12 Load-Store Unit:
   //        > The LS unit contains three largely independent pipe-lines

@@ -5,7 +5,7 @@
 //   (gitea: complang/etc/literature/comparch/ppc604_technical_summary.pdf)
 //
 // This description currently mostly ignores the frontend and memory subsystem,
-// instead focusing solely on the Zen4 execution engine.
+// instead focusing solely on the 604's execution engine.
 // Instruction dispatch has been ignored for now, as the author is not familiar
 // with the PPC ISA and could not find good resources on this.
 // The execution pipes have also only been modelled as single stages with no
@@ -13,7 +13,9 @@
 // least for SCIU_0 and SCIU_1.
 micro architecture PPC604 implements PPC = {
 
-  // A silly frontend.
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
 
   stage FETCH -> FetchResult = {
     FETCH := fetchNext
@@ -24,6 +26,10 @@ micro architecture PPC604 implements PPC = {
   }
 
 
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
 
   [size : 16]
   [controls : GP_PRF, FP_PRF, CR_PRF]
@@ -57,7 +63,9 @@ micro architecture PPC604 implements PPC = {
 
 
 
-  // Execution pipelines.
+  //-------------------------------------------------------------------------//
+  //            Execution Pipelines and their Reservation Stations           //
+  //-------------------------------------------------------------------------//
 
   [size : 2]
   [consume : ROB]
