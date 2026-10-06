@@ -136,8 +136,7 @@ public class Document {
     }
   }
 
-  private synchronized Future<CompilationInputAndResult> startCompilation()
-      throws InterruptedException {
+  private synchronized Future<CompilationInputAndResult> startCompilation() {
     final var fileSystemSnapshot = documentStore.createSnapshotFileSystem();
 
     compilationTask = documentStore.documentService.server.executor.submit(() -> {
