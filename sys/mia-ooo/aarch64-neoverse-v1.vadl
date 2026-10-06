@@ -1,0 +1,225 @@
+// A micro architectural description of the AMD Zen4 x86-64 architecture.
+//
+// Information used in modelling collected from:
+// - LLVM's Neoverse V1 scheduling model
+//   (https://github.com/llvm/llvm-project/blob/main/llvm/lib/Target/AArch64/AArch64SchedNeoverseV1.td)
+//
+// This description is super-incomplete since there appears to be very little
+// public information on the Neoverse V1 microarchitecture's details. (This is
+// also the case for other ARM microarchitectures)
+micro architecture NeoverseV1 = {
+
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
+
+  [size : 256]
+  [consume : DECODE]
+  [controls : GP_PRF, FP_PRF]
+  logic [reorder buffer] ROB
+
+  // FIXME: The sizes for these physical register files were picked via the
+  //        empirical route of randomizing an exponent in the range 7 to 9
+  //        using https://www.calculator.net/random-number-generator.html,
+  //        since those seemed kind of realistic.
+  [size : 256]
+  [renames : X]
+  logic [physical register file] GP_PRF
+
+  [size : 512]
+  [renames : Q]
+  logic [physical register file] FP_PRF
+
+  // FIXME: This is pure guesswork. I could not find any docs on ARM's
+  //        scheduling strategy and chose a unified RS simply because it is the
+  //        least effort to describe.
+  [size : 256]
+  [consume : ROB]
+  logic [reservation station] Sched
+
+  // FIXME: I could not find any information on L/S buffer sizes, or if they
+  //        even exist given ARM's memory model. I at least a store buffer has
+  //        to be present in some fashion, since otherwise there is no way to
+  //        get OoO stores back to in-order. As such, we only have a store
+  //        buffer with a size plucked out of thin air. Yay!
+  [size : 64]
+  logic [store buffer] StoreBuffer
+
+
+
+  //-------------------------------------------------------------------------//
+  //                     Instruction Classes for Dispatch                    //
+  //-------------------------------------------------------------------------//
+
+  operation BranchOps = {}
+
+  operation IntSingleCycleOps = {}
+
+  operation IntMultiCycle0Ops = {}
+
+  operation IntMultiCycle1Ops = {}
+
+  operation LoadOps = {}
+
+  operation StoreOps = {}
+
+  operation FP0Ops = {}
+
+  operation FP1Ops = {}
+
+  operation FP2Ops = {}
+
+  operation FP3Ops = {}
+
+  operation FlagOps = {}
+
+
+
+  //-------------------------------------------------------------------------//
+  //                           Execution Pipelines                           //
+  //-------------------------------------------------------------------------//
+
+  stage UnitB0 -> Instruction = {
+    let insn = consume(Sched, BranchOps) in {
+      // TODO: Your behaviour here :)
+      UnitB0 := insn
+    }
+  }
+
+  stage UnitB1 -> Instruction = {
+    let insn = consume(Sched, BranchOps) in {
+      // TODO: Your behaviour here :)
+      UnitB1 := insn
+    }
+  }
+
+  stage UnitS0 -> Instruction = {
+    let insn = consume(Sched, IntSingleCycleOps) in {
+      // TODO: Your behaviour here :)
+      UnitS0 := insn
+    }
+  }
+
+  stage UnitS1 -> Instruction = {
+    let insn = consume(Sched, IntSingleCycleOps) in {
+      // TODO: Your behaviour here :)
+      UnitS1 := insn
+    }
+  }
+
+  stage UnitM0 -> Instruction = {
+    let insn = consume(Sched, IntMultiCycle0Ops) in {
+      // TODO: Your behaviour here :)
+      UnitM0 := insn
+    }
+  }
+
+  stage UnitM1 -> Instruction = {
+    let insn = consume(Sched, IntMultiCycle1Ops) in {
+      // TODO: Your behaviour here :)
+      UnitM1 := insn
+    }
+  }
+
+  stage UnitL0 -> Instruction = {
+    let insn = consume(Sched, LoadOps + StoreOps) in {
+      // TODO: Your behaviour here :)
+      UnitL0 := insn
+    }
+  }
+
+  stage UnitL1 -> Instruction = {
+    let insn = consume(Sched, LoadOps + StoreOps) in {
+      // TODO: Your behaviour here :)
+      UnitL1 := insn
+    }
+  }
+
+  stage UnitL2 -> Instruction = {
+    let insn = consume(Sched, LoadOps) in {
+      // TODO: Your behaviour here :)
+      UnitL2 := insn
+    }
+  }
+
+  // FIXME: D0 and D1 handle the store data micro-ops, while L0-L2 handle
+  //        address generation. This means that one ISA-level store is
+  //        dispatched to *both* and L and a D unit, which cannot currently be
+  //        modelled in OpenVADL.
+  stage UnitD0 -> Instruction = {
+    let insn = consume(Sched, StoreOps) in {
+      // TODO: Your behaviour here :)
+      UnitD0 := insn
+    }
+  }
+
+  stage UnitD1 -> Instruction = {
+    let insn = consume(Sched, StoreOps) in {
+      // TODO: Your behaviour here :)
+      UnitD1 := insn
+    }
+  }
+
+  stage UnitV0 -> Instruction = {
+    let insn = consume(Sched, FP0Ops) in {
+      // TODO: Your behaviour here :)
+      UnitV0 := insn
+    }
+  }
+
+  stage UnitV1 -> Instruction = {
+    let insn = consume(Sched, FP1Ops) in {
+      // TODO: Your behaviour here :)
+      UnitV1 := insn
+    }
+  }
+
+  stage UnitV2 -> Instruction = {
+    let insn = consume(Sched, FP2Ops) in {
+      // TODO: Your behaviour here :)
+      UnitV2 := insn
+    }
+  }
+
+  stage UnitV3 -> Instruction = {
+    let insn = consume(Sched, FP3Ops) in {
+      // TODO: Your behaviour here :)
+      UnitV3 := insn
+    }
+  }
+
+  stage UnitFlg0 -> Instruction = {
+    let insn = consume(Sched, FlagOps) in {
+      // TODO: Your behaviour here :)
+      UnitFlg0 := insn
+    }
+  }
+
+  stage UnitFlg1 -> Instruction = {
+    let insn = consume(Sched, FlagOps) in {
+      // TODO: Your behaviour here :)
+      UnitFlg1 := insn
+    }
+  }
+
+  stage UnitFlg2 -> Instruction = {
+    let insn = consume(Sched, FlagOps) in {
+      // TODO: Your behaviour here :)
+      UnitFlg2 := insn
+    }
+  }
+}
