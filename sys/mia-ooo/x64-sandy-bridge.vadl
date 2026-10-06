@@ -1,0 +1,152 @@
+// Description of the Intel Sandy Bridge Microarchitecture.
+//
+// Information used in modelling collected from:
+// - Real World Tech's Sandy Bridge Microarchitecture writeup by David Kanter
+//   (https://www.realworldtech.com/sandy-bridge)
+// - LLVM's Sandy Bridge scheduling model
+//   (https://github.com/llvm/llvm-project/blob/main/llvm/lib/Target/X86/X86SchedSandyBridge.td)
+//
+// This description currently mostly ignores the frontend and memory subsystem,
+// instead focusing on the Sandy Bridge execution engine.
+// Dispatch for individual instructions is derived from the LLVM scheduling
+// model without consulting the exact assignment `SchedWriteRes`s, meaning it
+// is not necessarily 100% accurate, and certainly leaves some ambiguities.
+// This can of course be fixed with sufficient effort.
+// The execution pipes have also only been modelled as single stages with no
+// real behaviour. The exact length of the pipes is not entirely clear to me.
+micro architecture SandyBridge = {
+
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
+
+  [size : 168]
+  [controls : GP_PRF, FP_PRF]
+  [consume : DECODE]
+  logic [reorder buffer] ROB
+
+  [size : 144]
+  [renames : X]
+  logic [physical register file] GP_PRF
+
+  [size : 160]
+  [renames : YMM]
+  logic [physical register file] FP_PRF
+
+  [size : 54]
+  [consume : ROB]
+  logic [reservation station] SCHEDULER
+
+  [size : 64]
+  logic [load buffer] LoadBuffer
+
+  [size : 32]
+  logic [store buffer] StoreBuffer
+
+
+
+  //-------------------------------------------------------------------------//
+  //                     Instruction Classes for Dispatch                    //
+  //-------------------------------------------------------------------------//
+
+  operation LoadOps = {}
+
+  operation StoreOps = {}
+
+  operation ALUOps = {}
+
+  operation LEAOps = {}
+
+  operation ShiftOps = {}
+
+  operation IMulOps = {}
+
+  operation FMulOps = {}
+
+  operation FAddOps = {}
+
+  operation VecOps = {}
+
+  operation VecBlendOps = {}
+
+  operation VecShuffleOps = {}
+
+  operation BranchOps = {}
+
+
+
+  //-------------------------------------------------------------------------//
+  //                 Execution Units ("Ports" in intel speak)                //
+  //-------------------------------------------------------------------------//
+
+  // FIXME: Each Sandy Bridge Port contains three "domains", meaning separate
+  // execution HW. Forwarding is only done within such a domain. This means
+  // that OpenVADL's forwarding mechanism will need to be instruction-aware.
+
+  stage PORT0 -> Instruction = {
+    let insn = consume(SCHEDULER, ALUOps + LEAOps + ShiftOps + IMulOps + FMulOps + VecOps + VecBlendOps) in {
+      // TODO: Your behaviour here :)
+      PORT0 := insn
+    }
+  }
+
+  stage PORT1 -> Instruction = {
+    let insn = consume(SCHEDULER, ALUOps + LEAOps + IMulOps + FAddOps + VecOps + VecShuffleOps) in {
+      // TODO: Your behaviour here :)
+      PORT1 := insn
+    }
+  }
+
+  stage PORT5 -> Instruction = {
+    let insn = consume(SCHEDULER, ALUOps + ShiftOps + BranchOps + VecOps + VecShuffleOps + VecBlendOps) in {
+      // TODO: Your behaviour here :)
+      PORT5 := insn
+    }
+  }
+
+  stage PORT2 -> Instruction = {
+    let insn = consume(SCHEDULER, LoadOps + StoreOps) in {
+      insn.compute
+      insn.write(LoadBuffer)
+      insn.write(StoreBuffer)
+      PORT2 := insn
+    }
+  }
+
+  stage PORT3 -> Instruction = {
+    let insn = consume(SCHEDULER, LoadOps + StoreOps) in {
+      insn.compute
+      insn.write(LoadBuffer)
+      insn.write(StoreBuffer)
+      PORT3 := insn
+    }
+  }
+
+  // Store data port.
+  // FIXME: A single store instruction (such as mov [mem], reg) gets dispatched
+  //        to one of PORT2 or PORT3 *as well as* PORT4. Port 2 or 3 takes care
+  //        of the address calculation, while port 4 takes care of the written
+  //        data.
+  //        This parallel dispatch of one instruction to two pipelines cannot
+  //        currently be modelled in OpenVADL, and would realistically require
+  //        the introduction of micro operations. For now, PORT4 simply remains
+  //        unused.
+  stage PORT4 -> Instruction = {
+    let insn = consume(SCHEDULER, {}) in {
+      insn.write(StoreBuffer)
+      PORT4 := insn
+    }
+  }
+}
