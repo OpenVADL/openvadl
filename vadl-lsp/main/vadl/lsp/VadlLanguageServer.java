@@ -49,7 +49,7 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   private LanguageClient client;
   @Nullable
   private Future<Void> listeningFuture;
-  final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+  public final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
   
   private final VadlTextDocumentService textService = new VadlTextDocumentService(this);
 

@@ -16,6 +16,7 @@
 
 package vadl.lsp;
 
+import static vadl.lsp.LspUtils.isWithin;
 import static vadl.lsp.LspUtils.toPath;
 import static vadl.lsp.LspUtils.toUri;
 
@@ -24,11 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.eclipse.lsp4j.DefinitionParams;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -39,8 +37,6 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
@@ -53,24 +49,27 @@ import org.slf4j.LoggerFactory;
 import vadl.ast.Frontend;
 import vadl.ast.nodes.IdentifiableNode;
 import vadl.ast.nodes.IsId;
-import vadl.error.Diagnostic.MsgType;
-import vadl.error.DiagnosticList;
+import vadl.lsp.document.Document;
+import vadl.lsp.document.DocumentStore;
 import vadl.utils.SourceLocation;
 
 /**
- * Handles document-related features of the language server.
+ * Handles document-related features of the language server (responds to client requests).
+ *
+ * @see DiagnosticsPublisher
  */
 public class VadlTextDocumentService implements TextDocumentService {
   private static final String LANGUAGE_IDENTIFIER = "vadl";
 
   private static final Logger log = LoggerFactory.getLogger(VadlTextDocumentService.class);
 
-  final VadlLanguageServer server;
+  public final VadlLanguageServer server;
   final DocumentStore documentStore = new DocumentStore(this);
 
   VadlTextDocumentService(VadlLanguageServer server) {
     this.server = server;
   }
+
 
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
@@ -99,6 +98,7 @@ public class VadlTextDocumentService implements TextDocumentService {
     log.debug(">> didSave: {}", params);
     // Nothing (server capabilities currently don't support this)
   }
+
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
@@ -188,21 +188,6 @@ public class VadlTextDocumentService implements TextDocumentService {
     return Either.forLeft(List.of());
   }
 
-  private boolean isWithin(Range a, Range b) {
-    if (a.getStart().getLine() < b.getStart().getLine()
-        || a.getEnd().getLine() > b.getEnd().getLine()) {
-      return false;
-    }
-    if (a.getStart().getLine() == b.getStart().getLine()
-        && a.getStart().getCharacter() < b.getStart().getCharacter()) {
-      return false;
-    }
-    if (a.getEnd().getLine() == b.getEnd().getLine()
-        && a.getEnd().getCharacter() > b.getEnd().getCharacter()) {
-      return false;
-    }
-    return true;
-  }
 
   @Override
   public CompletableFuture<Hover> hover(HoverParams params) {
@@ -307,111 +292,6 @@ public class VadlTextDocumentService implements TextDocumentService {
     return result;
   }
 
-  /**
-   * Publishes new diagnostics for a particular document.
-   */
-  void publishDiagnostics(Document document) {
-    if (!clientSupportsPublishDiagnostics()) {
-      return;
-    }
-
-    var unused = server.executor.submit(() -> {
-      Document.CompilationInputAndResult compilation;
-      try {
-        compilation = document.getCurrentCompilation();
-      } catch (InterruptedException e) {
-        return;
-      }
-      if (!compilation.publishedDiagnostics().compareAndSet(false, true)) {
-        // Several publishDiagnostics() instances attached to the same compilation (race condition);
-        // let's avoid doing the exact same work more than once.
-        return;
-      }
-
-      DiagnosticList diagnostics = compilation.result().diagnostics();
-      List<Diagnostic> lspItems = new ArrayList<>();
-      if (diagnostics != null) {
-        log.debug("Raw diagnostics ({}): {}", document.getPath(), diagnostics.getMessage());
-
-        Path path = compilation.documentSnapshot().path;
-        List<String> importedFileErrors = new ArrayList<>();
-        for (vadl.error.Diagnostic item : diagnostics.collapseSimilar().items) {
-          Path itemPath = item.multiLocation.primaryLocation().location().path();
-          if (!Objects.equals(itemPath, path)) {
-            if (itemPath == null) {
-              continue;
-            }
-            // Error in imported file
-            importedFileErrors.add(LspUtils.relativePath(itemPath, path));
-            continue;
-          }
-          lspItems.add(buildLspDiagnostic(item, compilation.documentSnapshot()));
-        }
-
-        if (!importedFileErrors.isEmpty()) {
-          // Putting one diagnostic at the top of the file, which points out which imported files
-          // have errors
-          Diagnostic importedFilesDiagnostic = new Diagnostic();
-          importedFilesDiagnostic.setRange(new Range(new Position(0, 0),
-              new Position(0, 0)));
-          // TODO Consider using different severity if all diagnostics represented by this are only
-          //      Warnings
-          importedFilesDiagnostic.setSeverity(DiagnosticSeverity.Error);
-
-          String message = importedFileErrors.size() == 1
-              ? "Errors in imported file: \n" + importedFileErrors.getFirst()
-              : "Errors in imported files:\n- " + String.join("\n- ", importedFileErrors);
-          importedFilesDiagnostic.setMessage(message);
-          lspItems.addFirst(importedFilesDiagnostic);
-        }
-      }
-      // TODO There may be diagnostics in DeferredDiagnosticStore, but that is a static list and
-      //      has no clear() method (i.e. outdated diagnostics remain visible)
-
-      if (!documentStore.documentVersionIsCurrent(compilation.documentSnapshot())) {
-        return;
-      }
-
-      var data = new PublishDiagnosticsParams(toUri(document.getPath()), lspItems,
-          compilation.documentSnapshot().version);
-      log.debug("<< publishDiagnostics ({}: {}", document.getPath(), data);
-      server.client().publishDiagnostics(data);
-    });
-  }
-
-  private Diagnostic buildLspDiagnostic(vadl.error.Diagnostic vadlDiagnostic,
-                                        DocumentSnapshot documentSnapshot) {
-    // TODO Look into secondary locations too? Maybe as relatedInformation? Or to put a
-    //      diagnostic message there as well?
-    SourceLocation location = vadlDiagnostic.multiLocation.primaryLocation().location();
-
-    Diagnostic lspDiagnostic = new Diagnostic();
-    lspDiagnostic.setRange(documentSnapshot.calculateUtf16Range(location));
-    lspDiagnostic.setSeverity(
-        switch (vadlDiagnostic.level) {
-          case ERROR -> DiagnosticSeverity.Error;
-          case WARNING -> DiagnosticSeverity.Warning;
-        }
-    );
-    // labels (aka messages) per location
-    String labelsString = vadlDiagnostic.multiLocation.primaryLocation().labels().stream()
-        .map(vadl.error.Diagnostic.Message::content)
-        .collect(Collectors.joining("\n"));
-    // messages per Diagnostic - they may offer help or give additional notes
-    String messagesString = vadlDiagnostic.messages.stream()
-        .filter(m -> !m.type().equals(MsgType.PLAIN)
-            || !m.content().contains("parser got confused at this point"))
-        .map(vadl.error.Diagnostic.Message::content)
-        .collect(Collectors.joining("\n"));
-
-    String fullMessage = vadlDiagnostic.reason
-        + (!labelsString.isBlank() ? "\n" + labelsString : "")
-        + (!messagesString.isBlank() ? "\n" + messagesString : "");
-    lspDiagnostic.setMessage(fullMessage);
-
-    return lspDiagnostic;
-  }
-
 
   private boolean clientSupportsDefinitionLink() {
     var capabilities = server.params().getCapabilities().getTextDocument();
@@ -429,11 +309,6 @@ public class VadlTextDocumentService implements TextDocumentService {
       return List.of();
     }
     return capabilities.getHover().getContentFormat();
-  }
-
-  private boolean clientSupportsPublishDiagnostics() {
-    var capabilities = server.params().getCapabilities().getTextDocument();
-    return capabilities != null && capabilities.getPublishDiagnostics() != null;
   }
 
   /**

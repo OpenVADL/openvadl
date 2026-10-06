@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lsp;
+package vadl.lsp.document;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -42,7 +42,7 @@ import vadl.utils.VirtualFileSystem;
  * <p>Note: If {@link #getReadFiles()} shall be used, you can reset this data by creating a new
  * copy of this VFS (via the copy constructor).
  */
-class LspSnapshotFileSystem implements VirtualFileSystem {
+public class LspSnapshotFileSystem implements VirtualFileSystem {
   private final Map<Path, DocumentSnapshot> documentSnapshots;
   private final VirtualFileSystem underlyingFileSystem;
   private final Set<Path> readFiles = new HashSet<>();
