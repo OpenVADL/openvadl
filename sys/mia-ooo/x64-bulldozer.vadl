@@ -1,0 +1,151 @@
+// Description of the AMD Bulldozer Microarchitecture.
+//
+// Information used in modelling collected from:
+// - Real World Tech's Bulldozer Microarchitecture writeup by David Kanter
+//   (https://www.realworldtech.com/bulldozer)
+micro architecture Bulldozer = {
+
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
+
+  // FIXME: The realwordtech article this is based on calls this a "retirement
+  //        queue", not a reorder buffer. I think it's essentially the same
+  //        thing, but I'm not sure.
+  [size : 128]
+  [controls : GP_PRF, FP_PRF]
+  [consume : DECODE]
+  logic [reorder buffer] ROB
+
+  [size : 96]
+  [renames : X]
+  logic [physical register file] GP_PRF
+
+  // FIXME: These 160 entries seem to be 128-bit wide, so they are effectively
+  //        XMM and not YMM. This cannot currently be described in OpenVADL.
+  [size : 160]
+  [renames : YMM]
+  logic [physical register file] FP_PRF
+
+  [size : 40]
+  [consume : ROB, ALUOps + IDIVOps + CountOps + IMULOps + BranchOps + AGUOps]
+  logic [reservation station] GP_SCHEDULER
+
+  [size : 60]
+  [consume : ROB, VecOps + FMACOps + IMACOps + XBAROps + MMXOps + FSTOOps]
+  logic [reservation station] FP_SCHEDULER
+
+  [size : 40]
+  logic [load buffer] LoadBuffer
+
+  [size : 24]
+  logic [store buffer] StoreBuffer
+
+
+
+  //-------------------------------------------------------------------------//
+  //                     Instruction Classes for Dispatch                    //
+  //-------------------------------------------------------------------------//
+
+  operation ALUOps = {}
+
+  operation IDIVOps = {}
+
+  operation CountOps = {}
+
+  operation IMULOps = {}
+
+  operation BranchOps = {}
+
+  operation AGUOps = {}
+
+  operation VecOps = {}
+
+  operation FMACOps = {}
+
+  operation IMACOps = {}
+
+  operation XBAROps = {}
+
+  operation MMXOps = {}
+
+  operation FSTOOps = {}
+
+
+
+  //-------------------------------------------------------------------------//
+  //                           Execution Pipelines                           //
+  //-------------------------------------------------------------------------//
+
+  stage FP_0 -> Instruction = {
+    let insn = consume(FP_SCHEDULER, VecOps + FMACOps + IMACOps) in {
+      // TODO: Your behaviour here :)
+      FPU_0 := insn
+    }
+  }
+
+  stage FP_1 -> Instruction = {
+    let insn = consume(FP_SCHEDULER, VecOps + FMACOps + XBAROps) in {
+      // TODO: Your behaviour here :)
+      FPU_1 := insn
+    }
+  }
+
+  stage FP_2 -> Instruction = {
+    let insn = consume(FP_SCHEDULER, VecOps + MMXOps) in {
+      // TODO: Your behaviour here :)
+      FPU_2 := insn
+    }
+  }
+
+  stage FPU_3 -> Instruction = {
+    let insn = consume(FP_SCHEDULER, VecOps + MMXOps + FSTOOps) in {
+      // TODO: Your behaviour here :)
+      FPU_3 := insn
+    }
+  }
+
+  stage ALU_0 -> Instruction = {
+    let insn = consume(GP_SCHEDULER, ALUOps + IDIVOps + CountOps) in {
+      // TODO: Your behaviour here :)
+      ALU_0 := insn
+    }
+  }
+
+  stage ALU_1 -> Instruction = {
+    let insn = consume(GP_SCHEDULER, ALUOps + IMULOps + BranchOps) in {
+      // TODO: Your behaviour here :)
+      ALU_1 := insn
+    }
+  }
+
+  stage AGU_0 -> Instruction = {
+    let insn = consume(GP_SCHEDULER, AGUOps) in {
+      insn.compute
+      insn.write(LoadBuffer)
+      insn.write(StoreBuffer)
+      AGU_0 := insn
+    }
+  }
+
+  stage AGU_1 -> Instruction = {
+    let insn = consume(GP_SCHEDULER, AGUOps) in {
+      insn.compute
+      insn.write(LoadBuffer)
+      insn.write(StoreBuffer)
+      AGU_1 := insn
+    }
+  }
+}
