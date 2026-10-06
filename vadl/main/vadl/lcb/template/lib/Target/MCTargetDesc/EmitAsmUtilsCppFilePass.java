@@ -148,12 +148,17 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
   public static List<RegisterUtils.Register> registers(Specification specification, Abi abi) {
     var all = new ArrayList<RegisterUtils.Register>();
     var real = specification.registerTensors().filter(RegisterTensor::isRegisterFile)
-        .filter(registerFile -> registerFile.expectExtension(RegisterTypesCtx.class).used())
+        .filter(registerFile ->
+            registerFile.expectExtension(RegisterTypesCtx.class).used()
+        )
         .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
         .flatMap(x -> x.registers().stream())
         .toList();
     var aliases = specification.artificialResources()
         .filter(ArtificialResource::isRegisterFile)
+        .filter(registerFile ->
+            registerFile.expectExtension(RegisterTypesCtx.class).used()
+        )
         .map(RegisterUtils::getRegisterClass)
         .flatMap(x -> x.registers().stream())
         .toList();
@@ -176,6 +181,9 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
         .toList();
     var aliases = specification.artificialResources()
         .filter(ArtificialResource::isRegisterFile)
+        .filter(registerFile ->
+            registerFile.expectExtension(RegisterTypesCtx.class).used()
+        )
         .map(RegisterUtils::getRegisterClass)
         .toList();
 

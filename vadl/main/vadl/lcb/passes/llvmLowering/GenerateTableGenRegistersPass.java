@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -94,11 +95,13 @@ public class GenerateTableGenRegistersPass extends Pass {
     final var aliasRegisters = new ArrayList<TableGenRegisterAlias>();
 
     for (var compilerRegister : output.generalRegisters()) {
+      var usedSubRegs = getUsedSubRegs(compilerRegister);
+
       var register = new TableGenRegister(
           configuration.targetName(),
           compilerRegister,
-          compilerRegister.subRegs(),
-          compilerRegister.subRegIndices(),
+          usedSubRegs.subRegs(),
+          usedSubRegs.subRegIndices(),
           compilerRegister.hwEncodingValue(),
           Optional.empty(),
           compilerRegister.isArtificial()
@@ -123,11 +126,13 @@ public class GenerateTableGenRegistersPass extends Pass {
 
       var classRegisters = new ArrayList<TableGenRegister>();
       for (var compilerRegister : compilerRegisterClass.registers()) {
+        var usedSubRegs = getUsedSubRegs(compilerRegister);
+
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
-            compilerRegister.subRegs(),
-            compilerRegister.subRegIndices(),
+            usedSubRegs.subRegs(),
+            usedSubRegs.subRegIndices(),
             Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
                 - 1,
             Optional.of(compilerRegister.hwEncodingValue()),
@@ -157,11 +162,13 @@ public class GenerateTableGenRegistersPass extends Pass {
 
       var classRegisters = new ArrayList<TableGenRegister>();
       for (var compilerRegister : compilerRegisterClass.registers()) {
+        var usedSubRegs = getUsedSubRegs(compilerRegister);
+
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
-            compilerRegister.subRegs(),
-            compilerRegister.subRegIndices(),
+            usedSubRegs.subRegs(),
+            usedSubRegs.subRegIndices(),
             Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
                 - 1,
             Optional.of(compilerRegister.hwEncodingValue()),
@@ -211,6 +218,7 @@ public class GenerateTableGenRegistersPass extends Pass {
 
     var type = allClasses
         .flatMap(r -> r.regTypes().stream())
+        .filter(t -> t != ValueType.F32 && t != ValueType.F64)
         .min(new Comparator<>() {
           @Override
           public int compare(ValueType o1, ValueType o2) {
@@ -247,7 +255,11 @@ public class GenerateTableGenRegistersPass extends Pass {
 
     while (result.size() != registers.size()) {
       for (var register : registers) {
-        var allSubRegisters = ready.containsAll(register.subRegs());
+        var allSubRegisters = ready.containsAll(
+            register.subRegs().stream().filter(subReg ->
+                subReg.registerFile().expectExtension(RegisterTypesCtx.class).used()
+            ).collect(Collectors.toCollection(ArrayList::new))
+        );
         if (allSubRegisters && !ready.contains(register.compilerRegister())) {
           ready.add(register.compilerRegister());
           result.add(register);
@@ -279,5 +291,32 @@ public class GenerateTableGenRegistersPass extends Pass {
       }
     }
     return constraints;
+  }
+
+  private record UsedSubRegs(
+      List<CompilerRegister> subRegs,
+      List<CompilerRegister.SubRegIndex> subRegIndices
+  ) {}
+
+  private UsedSubRegs getUsedSubRegs(CompilerRegister register) {
+    var subRegs = register.subRegs();
+    var subRegIndices = register.subRegIndices();
+
+    var usedSubRegs = new ArrayList<CompilerRegister>();
+    var usedSubRegIndices = new ArrayList<CompilerRegister.SubRegIndex>();
+
+    for (int i = 0; i < subRegs.size(); i++) {
+      var subReg = subRegs.get(i);
+
+      if (subReg.registerFile().expectExtension(RegisterTypesCtx.class).used()) {
+        usedSubRegs.add(subReg);
+        usedSubRegIndices.add(subRegIndices.get(i));
+      }
+    }
+
+    return new UsedSubRegs(
+        usedSubRegs,
+        usedSubRegIndices
+    );
   }
 }
