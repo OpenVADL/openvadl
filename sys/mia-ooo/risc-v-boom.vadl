@@ -1,0 +1,152 @@
+// Description of the AMD Bulldozer Microarchitecture.
+//
+// Information used in modelling collected from:
+// - "The Boom Pipeline" documentation
+//   (https://docs.boom-core.org/en/latest/sections/intro-overview/boom-pipeline.html)
+//
+// BOOM is a configurable architecture, meaning that the sizes of individual
+// logic elements can be configured to arrive at an actual concrete
+// microarchitecture. The sizes used here are the defaults presented in the
+// BOOM docs.
+micro architecture Boom = {
+
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
+
+  [size : 128]
+  [controls : INT_PRF, FP_PRF]
+  [consume : DECODE]
+  logic [reorder buffer] ROB
+
+  [size : 128]
+  [renames : X]
+  logic [physical register file] INT_PRF
+
+  [size : 128]
+  [renames : F]
+  logic [physical register file] FP_PRF
+
+  [size : 32]
+  [consume : ROB, ALUOps + Int2FPOps + IMulOps + IDivOps + BranchOps]
+  logic [reservation station] INT_ISSUE_QUEUE
+
+  [size : 32]
+  [consume : ROB, MemOps]
+  logic [reservation station] MEM_ISSUE_QUEUE
+
+  [size : 32]
+  [consume : ROB, FPOps]
+  logic [reservation station] FP_ISSUE_QUEUE
+
+  [size : 32]
+  logic [load buffer] LOAD_QUEUE
+
+  [size : 32]
+  logic [store buffer] STORE_BUFFER
+
+
+
+  //-------------------------------------------------------------------------//
+  //                     Instruction Classes for Dispatch                    //
+  //-------------------------------------------------------------------------//
+
+  operation ALUOps = {}
+
+  operation Int2FPOps = {}
+
+  operation IMulOps = {}
+
+  operation IDivOps = {}
+
+  operation BranchOps = {}
+
+  operation FPOps = {}
+
+  operation MemOps = {}
+
+
+
+  //-------------------------------------------------------------------------//
+  //                           Execution Pipelines                           //
+  //-------------------------------------------------------------------------//
+
+  stage ALU0 -> Instruction = {
+    let insn = consume(INT_ISSUE_QUEUE, ALUOps) in {
+      // TODO: Your behaviour here :)
+      ALU0 := insn
+    }
+  }
+
+  stage ALU1 -> Instruction = {
+    let insn = consume(INT_ISSUE_QUEUE, ALUOps) in {
+      // TODO: Your behaviour here :)
+      ALU1 := insn
+    }
+  }
+
+  stage ALU2 -> Instruction = {
+    let insn = consume(INT_ISSUE_QUEUE, ALUOps + Int2FPOps + IMulOps + IDivOps + BranchOps) in {
+      // TODO: Your behaviour here :)
+      ALU2 := insn
+    }
+  }
+
+  stage ALU3 -> Instruction = {
+    let insn = consume(INT_ISSUE_QUEUE, ALUOps + Int2FPOps + IMulOps + IDivOps + BranchOps) in {
+      // TODO: Your behaviour here :)
+      ALU3 := insn
+    }
+  }
+
+
+
+  stage FPU0 -> Instruction = {
+    let insn = consume(FP_ISSUE_QUEUE) in {
+      // TODO: Your behaviour here :)
+      FPU0 := insn
+    }
+  }
+
+  stage FPU1 -> Instruction = {
+    let insn = consume(FP_ISSUE_QUEUE) in {
+      // TODO: Your behaviour here :)
+      FPU1 := insn
+    }
+  }
+
+  stage FPU2 -> Instruction = {
+    let insn = consume(FP_ISSUE_QUEUE) in {
+      // TODO: Your behaviour here :)
+      FPU2 := insn
+    }
+  }
+
+
+
+  stage AGU0 -> Instruction = {
+    let insn = consume(MEM_ISSUE_QUEUE) in {
+      // TODO: Your behaviour here :)
+      AGU0 := insn
+    }
+  }
+
+  stage AGU1 -> Instruction = {
+    let insn = consume(MEM_ISSUE_QUEUE) in {
+      // TODO: Your behaviour here :)
+      AGU1 := insn
+    }
+  }
+}
