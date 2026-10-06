@@ -92,7 +92,9 @@ public class SideEffectSchedulingPassTest extends AbstractTest {
           current = scheduledNode.next();
         }
         case InstrExitNode instrExit -> {
-          checkOrder(prev, SideEffectUtils.SideEffectType.PC, current.graph());
+          var type = SideEffectUtils.SideEffectType.PC;
+          checkOrder(prev, type, current.graph());
+          prev.add(type);
           current = instrExit.next();
         }
         case IfNode splitNode -> {

@@ -74,7 +74,8 @@ import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
  *   {@code MEM}, {@code SE} and {@code PC}. See {@link SideEffectUtils.SideEffectType}.</li>
  *   <li>Traverse the CFG and find sibling control flow blocks.</li>
  *   <li>Extract side effects out of blocks into their own blocks at the same level until
- *   all blocks can be ordered such that the ordering of all side effects is guaranteed.</li>
+ *   all blocks (and the side effects in the surrounding block) can be ordered such that the
+ *   ordering of all side effects is guaranteed.</li>
  *   <li>Reorder the blocks.</li>
  * </ul>
  *
@@ -106,9 +107,9 @@ import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
  * code looks like this:
  *
  * <pre>{@code
- * if (a) { PC }
- * if (b) { PC, SE, SE, SE }
  * if (a) { SE, SE }
+ * if (b) { PC, SE, SE, SE }
+ * if (a) { PC }
  * }</pre>
  *
  * <p>The scheduling of side effects inside blocks in the correct order is handled by
@@ -389,19 +390,17 @@ class SideEffectReorderer {
         }
       }
 
+      if (blocks.isEmpty()) {
+        // nothing to reorder or extract
+        return;
+      }
+
       var end = new CfgTraverser(){}.traverseBranch(beginNode);
 
       // extract out of all forall blocks with more than one side effect type
       blocks.stream().filter(b -> b instanceof ForallNode
               && requireNonNull(sideEffectTypes.get(b)).isMultiple())
           .toList().forEach(node -> extractOutOfBlock(node, blocks, end, depth));
-
-
-      if (blocks.size() <= 1) {
-        // if zero or only one inner blocks exists, then nothing on this level must be reordered
-        blocks.forEach(b -> reorderBlock(b, depth));
-        return;
-      }
 
       // there can only be a few blocks with multiple side effect types:
       // - either both MEM -> SE and SE -> PC
@@ -435,8 +434,14 @@ class SideEffectReorderer {
         frozenNodes.add(sePcCandidate.get());
         sePcTransitionUsed = true;
       }
+
+      // SE side effects outside blocks conflict with MEM -> PC blocks
+      boolean blockContainsSe = end.sideEffects().stream()
+          .map(SideEffectUtils.SideEffectType::classify)
+          .anyMatch(type -> type == SideEffectUtils.SideEffectType.SE);
+
       // MEM -> PC slot
-      if (!memSeTransitionUsed && !sePcTransitionUsed) {
+      if (!memSeTransitionUsed && !sePcTransitionUsed && !blockContainsSe) {
         // freezing a block which covers all three types should also be possible,
         // but only if nothing else CONTAINS an SE side effect
         var blocksWithSeCount = blocks.stream()
@@ -459,6 +464,9 @@ class SideEffectReorderer {
             }).findFirst();
         candidate.ifPresent(frozenNodes::add);
       }
+
+      // TODO: It' possible that the slots are still not filled, and that a MEM -> PC block
+      //       is present. We could extract one side effect type from that block and fill a slot.
 
       // extract out of remaining blocks, such that they each only contain one se type
       blocks.stream().toList().forEach(node -> {
