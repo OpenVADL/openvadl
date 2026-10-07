@@ -19,7 +19,14 @@ mkdir -p "results/$name"
 cd ..
 
 for i in $(seq 1 2); do
-    $runner "$@" > "benchmark-extras/results/$name/$i.json"
+	if "$runner" "$@" > "benchmark-extras/results/$name/$i.json"; then
+		:
+	else
+		status=$?
+		echo "Benchmark run $i failed (exit $status):" >&2
+		cat "benchmark-extras/results/$name/$i.json" >&2
+		exit "$status"
+	fi
 done
 
 cd "benchmark-extras"

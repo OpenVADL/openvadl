@@ -1,21 +1,12 @@
 
 .section .text.init;
-.align  4;
+.align 4;
 
-.extern  main
-.type    main, @function
-
-.extern  _halt
-.type    _halt, @function
-
-# .extern _trap_start
-# .type _trap_start, @function
-
+.extern main
+.type main, @function
 .global _start
-.type   _start, @function
+.type _start, @function
 
-// https://github.com/ucb-bar/libgloss-htif/blob/master/misc/crt0.S
-// https://github.com/bminor/newlib/blob/master/libgloss/riscv/crt0.S
 _start:
     li ra, 0
     li gp, 0
@@ -64,23 +55,23 @@ _start:
     add sp, tp, t0
 
     call main
-    // HTIF exit request: (main's status << 1) | 1.
-    // Embench returns 0 on successful verification and 1 on failure.
+    // HTIF exit request: (main's verification status << 1) | 1.
     slli a0, a0, 1
     ori a0, a0, 1
     la t0, tohost
-    // QEMU HTIF requires low word first; the high-word write commits the request.
+    // QEMU commits the request on the high-word write.
     sw a0, 0(t0)
     sw zero, 4(t0)
 .Lhalt:
     j .Lhalt
 
-    .section .tohost, "aw", @progbits
-    .align 6;
-    .global tohost;
-    tohost: .dword 0;
-    .size tohost, 8;
-    .align 6;
-    .global fromhost;
-    fromhost: .dword 0;
-    .size fromhost, 8;
+.section .tohost, "aw", @progbits
+.align 6;
+.global tohost;
+tohost: .dword 0;
+.size tohost, 8;
+.align 6;
+.global fromhost;
+fromhost: .dword 0;
+.size fromhost, 8;
+

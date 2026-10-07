@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -e
+set -x
+
+CLANG_CFLAGS="--target=riscv32 -mno-relax -march=rv32im -mabi=ilp32"
+LCB_CFLAGS="--target=rv32icustomcrc1  -D__SIZEOF_POINTER__=4 -D__riscv_xlen=32"
+CLANG=/src/llvm-final/build/bin/clang
+
+LCB_ASM=/src/llvm-final/build/bin/llvm-mc
+LCB_ASM_FLAGS="--arch=rv32icustomcrc1 -filetype=obj"
+
+last="${@:(-1):1}"
+extension="${last##*.}"
+filename="${last%.*}"
+basefilename=$(basename -- "$filename")
+
+array=( "$@" )
+unset "array[${#array[@]}-1]"
+unset "array[${#array[@]}-1]"
+unset "array[${#array[@]}-1]"
+
+case "$extension" in
+  c)
+    $CLANG $LCB_CFLAGS "${array[@]}" -S -o "$basefilename.s" "$last"
+    $LCB_ASM $LCB_ASM_FLAGS "$basefilename.s" -o "$basefilename.o"
+    ;;
+  S)
+    # preprocess assembly to plain .s
+    $CLANG $CLANG_CFLAGS "${array[@]}" -E -x assembler-with-cpp "$last" -o "$basefilename.s"
+    $LCB_ASM $LCB_ASM_FLAGS "$basefilename.s" -o "$basefilename.o"
+    ;;
+  s)
+    $LCB_ASM $LCB_ASM_FLAGS "$last" -o "$basefilename.o"
+    ;;
+  *)
+    # fallback
+    $CLANG $CLANG_CFLAGS -c "$@"
+    ;;
+esac

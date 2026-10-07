@@ -5,21 +5,34 @@ ENTRY(_start)
 /* https://github.com/ucb-bar/libgloss-htif/blob/master/util/htif.ld */
 SECTIONS
 {
-  . = 0x80000000;
-  .text.init : { *(.text.init) }
+    /* Startup must remain at the processor's reset address. */
+    . = 0x80000000;
+    .text.init : {
+      KEEP(*(.text.init .text.init.*))
+    }
 
-  . = ALIGN(0x1000);
-  .text.startup : { *(.text.startup) }
+    . = ALIGN(0x1000);
+    .text.startup : {
+      *(.text.startup .text.startup.*)
+    }
 
-  . = ALIGN(0x1000);
-  .text : { *(.text) }
+    . = ALIGN(0x1000);
+    .text : {
+      *(.text .text.*)
+    }
 
-  . = ALIGN(0x1000);
-  .data : { *(.data) }
-  .data.string : { *(.data.string)}
+    /* Explicit placement prevents orphan .rodata from preceding startup. */
+    . = ALIGN(0x1000);
+    .rodata : {
+      *(.rodata .rodata.*)
+      *(.srodata .srodata.*)
+    }
 
-  . = ALIGN(0x1000);
-  .tohost : { *(.tohost) }
+    . = ALIGN(0x1000);
+    .data : {
+      *(.data .data.*)
+      *(.sdata .sdata.*)
+    }
 
   . = ALIGN(0x1000);
   /* place Thread Control Block (TCB) at bottom of hart stack */

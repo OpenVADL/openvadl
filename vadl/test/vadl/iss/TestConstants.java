@@ -16,9 +16,9 @@
 
 package vadl.iss;
 
-class TestConstants {
+public class TestConstants {
 
-  static final String TEST_BASE_IMAGE =
+  public static final String TEST_BASE_IMAGE =
       "ghcr.io/openvadl/iss-test-base@sha256:b06d35aac32965ef48e1e6c8aced83af1bfc2253eccac44e079053f7021d5e3a";
 
 }
