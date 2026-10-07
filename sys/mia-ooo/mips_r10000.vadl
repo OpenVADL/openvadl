@@ -1,0 +1,119 @@
+// Description of the MIPS R10000 Microarchitecture.
+//
+// Information used in modelling collected from:
+// - "The MIPS R10000 Superscalar Microprocessor" by Kenneth C. Yeager
+//   (https://ieeexplore.ieee.org/document/491460)
+//   Also available in the complang gitea under etc/literature/comparch/mips_r10000.pdf
+micro architecture R10000 = {
+
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
+
+  [size : 32]
+  [controls : INT_PRF, FP_PRF]
+  [consume : DECODE]
+  logic [reorder buffer] ROB
+
+  [size : 64]
+  [renames : R]
+  logic [physical register file] INT_PRF
+
+  [size : 64]
+  [renames : F]
+  logic [physical register file] FP_PRF
+
+  [size : 16]
+  [consume : ROB, ALUOps + BranchOps + ShiftOps + ConditionalMoveOps + IMulOps + IDivOps]
+  logic [reservation station] INTEGER_QUEUE
+
+  [size : 16]
+  [consume : ROB, FPOps]
+  logic [reservation station] FP_QUEUE
+
+  [size : 16]
+  [consume : ROB, MemOps]
+  logic [reservation station] ADDRESS_QUEUE
+
+
+
+  //-------------------------------------------------------------------------//
+  //                     Instruction Classes for Dispatch                    //
+  //-------------------------------------------------------------------------//
+
+  operation ALUOps = {}
+
+  operation BranchOps = {}
+
+  operation ShiftOps = {}
+
+  operation ConditionalMoveOps = {}
+
+  operation IMulOps = {}
+
+  operation IDivOps = {}
+
+  operation FPOps = {}
+
+  operation MemOps = {}
+
+
+
+  //-------------------------------------------------------------------------//
+  //                           Execution Pipelines                           //
+  //-------------------------------------------------------------------------//
+
+  stage ALU1 -> Instruction = {
+    let insn = consume(INTEGER_QUEUE, ALUOps + BranchOps + ShiftOps + ConditionalMoveOps) in {
+      // TODO: Your behaviour here :)
+      ALU1 := insn
+    }
+  }
+
+  stage ALU2 -> Instruction = {
+    let insn = consume(INTEGER_QUEUE, ALUOps + IMulOps + IDivOps) in {
+      // TODO: Your behaviour here :)
+      ALU2 := insn
+    }
+  }
+
+
+
+  stage FP_ADD -> Instruction = {
+    let insn = consume(FP_QUEUE, FPAddOps) in {
+      // TODO: Your behaviour here :)
+      FPU0 := insn
+    }
+  }
+
+  // FIXME: It is not 100% clear to me inhowfar the multiplier, divider and
+  //        square root units overlap in hardware. They *might* in fact be more
+  //        accurately modelled as three separate pipelines.
+  stage FP_MUL -> Instruction = {
+    let insn = consume(FP_QUEUE, FPMulOps + FPDivOps + FPSqrtOps) in {
+      // TODO: Your behaviour here :)
+      FPU1 := insn
+    }
+  }
+
+
+
+  stage AGU -> Instruction = {
+    let insn = consume(ADDRESS_QUEUE) in {
+      // TODO: Your behaviour here :)
+      FPU0 := insn
+    }
+  }
+}
