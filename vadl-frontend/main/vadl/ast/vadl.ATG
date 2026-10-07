@@ -31,6 +31,7 @@ import vadl.ast.nodes.*;
 import static vadl.ast.nodes.CounterDefinition.CounterKind.GROUP;
 import static vadl.ast.nodes.CounterDefinition.CounterKind.PROGRAM;
 import static vadl.ast.ParserUtils.*;
+import static vadl.ast.MacroUtils.*;
 
 COMPILER vadl
   @Nullable Path sourceFile = null;
@@ -444,7 +445,7 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
                                                                     }); .)
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out LinkedList<Definition> definitions.>       (. macroTable = macroTable.pop(); .)
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, ParserUtils.expandAssemblyDefinitionsInIsa(this, definitions), startLocation.join(lastTokenLoc()));
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, expandAssemblyDefinitionsInIsa(this, definitions), startLocation.join(lastTokenLoc()));
                                                                    macroTable.defineSymbol(isaDef); .)
   .
 
@@ -1844,7 +1845,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | SYM_SAT_SUB                   (. op = Operator.SaturatedSubtract; .)
   | SYM_SHL                       (. op = Operator.ShiftLeft; .)
   | SYM_SHR                       (. op = Operator.ShiftRight; .)
-  // When adding a new operator here, it must also be added to the "BIN_OPS" list in ParserUtils.java !!!
+  // When adding a new operator here, it must also be added to the "BIN_OPS" list in java !!!
   .
 
   unary<out Expr expr, boolean[] allowedOps>
@@ -1861,7 +1862,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = SYM_MINUS                    (. op = new UnOp(UnaryOperator.NEGATIVE, lastTokenLoc()); .)
   | SYM_EXCL                     (. op = new UnOp(UnaryOperator.LOG_NOT, lastTokenLoc()); .)
   | SYM_TILDE                    (. op = new UnOp(UnaryOperator.COMPLEMENT, lastTokenLoc()); .)
-  // When adding a new operator here, it must also be added to the "UN_OPS" list in ParserUtils.java !!!
+  // When adding a new operator here, it must also be added to the "UN_OPS" list in java !!!
   | macroReplacement<out Node n> (. op = (IsUnOp) n; .)
   .
 
@@ -2093,7 +2094,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = (identifierToken | allowedIdentifierKeywords) (. identifier = new Identifier(t.val, lastTokenLoc()); .)
   .
 
-  // Must be kept in sync with ParserUtils.ID_TOKENS !!!
+  // Must be kept in sync with ID_TOKENS !!!
   allowedIdentifierKeywords
   = ADDRESS
   | ALIAS
@@ -2272,7 +2273,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                       // If too many arguments exist we cannot parse them because we
                                                       // need the information from the model signature to know how to
                                                       // parse them so instead we must abort parsing and throw an error.
-                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, paramType, nextTokenLoc());
+                                                      if (!params.hasNext()) throw tooManyMacroArgumentsError(macro, paramType, nextTokenLoc());
                                                   .)
         macroBody<out Node arg1, params.next()>   (. args.add(arg1); .)
         {
@@ -2280,7 +2281,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                       // If too many arguments exist we cannot parse them because we
                                                       // need the information from the model signature to know how to
                                                       // parse them so instead we must abort parsing and throw an error.
-                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, paramType,nextTokenLoc());
+                                                      if (!params.hasNext()) throw tooManyMacroArgumentsError(macro, paramType,nextTokenLoc());
                                                   .)
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
@@ -2446,7 +2447,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                 // Unfortunately, we need this type to be correctly parsed because,
                                                 // depending on it, we parse the body of the macro differently. So if we
                                                 // don't know what it is, we must exit early.
-                                                throwException(ParserUtils.unknownSyntaxTypeError(t.val, macroTable, lastTokenLoc()));
+                                                throwException(unknownSyntaxTypeError(t.val, macroTable, lastTokenLoc()));
                                             .)
   .
 
