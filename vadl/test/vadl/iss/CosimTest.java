@@ -112,7 +112,7 @@ public abstract class CosimTest extends DockerExecutionTest {
 
     return new DockerImage()
         .withDockerfile(new StringSubstitutor(Map.of(
-            "qemu", TestConstants.TEST_BASE_IMAGE,
+            "qemu", IssTestConstants.TEST_BASE_IMAGE,
             "soft", softmmuTarget + refTarget,
             "qemu-bin", qemuBin)
         ).replace("""
