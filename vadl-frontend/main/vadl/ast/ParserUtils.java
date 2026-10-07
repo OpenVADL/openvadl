@@ -37,9 +37,7 @@ import vadl.ast.nodes.BasicSyntaxType;
 import vadl.ast.nodes.BinOp;
 import vadl.ast.nodes.BinaryExpr;
 import vadl.ast.nodes.CallIndexExpr;
-import vadl.ast.nodes.CallStatement;
 import vadl.ast.nodes.CastExpr;
-import vadl.ast.nodes.ConstantDefinition;
 import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.DefinitionList;
 import vadl.ast.nodes.EncodingDefinition;
@@ -108,14 +106,6 @@ class ParserUtils {
 
   // Must be kept in sync with allowedIdentifierKeywords
   static boolean[] ID_TOKENS;
-
-  // Dummy nodes - for use in scenarios where the parser encountered an error, but since the parser
-  // keeps going, using null would lead to a NullPointerException.
-  static Identifier DUMMY_ID = new Identifier("dummy", SourceLocation.INVALID_SOURCE_LOCATION);
-  static Expr DUMMY_EXPR = DUMMY_ID;
-  static Definition DUMMY_DEF =
-      new ConstantDefinition(DUMMY_ID, null, DUMMY_EXPR, SourceLocation.INVALID_SOURCE_LOCATION);
-  static Statement DUMMY_STAT = new CallStatement(DUMMY_ID);
 
   static {
     NO_OPS = new boolean[Parser.maxT + 1];
@@ -354,8 +344,9 @@ class ParserUtils {
    *
    * @param p The parser instance for error reporting
    * @param n The node to cast
-   * @return The node if it's IsBinOp or IsId, otherwise a dummy node with an error reported
+   * @return The node if it's IsBinOp or IsId, otherwise null with an error reported
    */
+  @Nullable
   static Node castBinOpOrId(Parser p, Node n) {
     if (n instanceof IsBinOp || n instanceof IsId) {
       return n;
@@ -381,7 +372,7 @@ class ParserUtils {
               .build());
     }
 
-    return DUMMY_ID;
+    return null;
   }
 
   static MacroOrPlaceholder macroOrPlaceholder(@Nullable Macro macro, SyntaxType syntaxType,
@@ -453,6 +444,7 @@ class ParserUtils {
     }
   }
 
+  @Nullable
   static Node createMacroReference(Parser parser, Identifier id) {
     @Nullable Macro macro = parser.macroTable.getMacro(id.name);
     if (macro == null) {
@@ -460,7 +452,7 @@ class ParserUtils {
           Diagnostic.error("Unknown Model `%s`".formatted(id.name), id)
               .help("Make sure the macro is defined before (above) they are used.")
               .build());
-      return DUMMY_ID;
+      return null;
     } else {
       List<SyntaxType> params = new ArrayList<>(macro.params().size());
       for (MacroParam param : macro.params()) {
@@ -689,10 +681,8 @@ class ParserUtils {
         || n instanceof PlaceholderStatement;
   }
 
-  private static <T> T castOrDummy(Parser parser, Node node,
-                                   Class<T> type,
-                                   T dummy,
-                                   String expected) {
+  @Nullable
+  private static <T> T castOrNull(Parser parser, Node node, Class<T> type, String expected) {
     if (type.isInstance(node)) {
       return type.cast(node);
     }
@@ -715,40 +705,45 @@ class ParserUtils {
               .build());
     }
 
-    return dummy;
+    return null;
   }
 
+  @Nullable
   static Expr castExpr(Parser p, Node n) {
-    return castOrDummy(p, n, Expr.class, DUMMY_EXPR, "Expr");
+    return castOrNull(p, n, Expr.class, "Expr");
   }
 
+  @Nullable
   static StringLiteral castForceStringLiteral(Parser p, Node n) {
-    return castOrDummy(p, n, StringLiteral.class, new StringLiteral(""), "Str");
+    return castOrNull(p, n, StringLiteral.class, "Str");
   }
 
+  @Nullable
   static IsEncs castEncs(Parser p, Node n) {
-    return castOrDummy(p, n, IsEncs.class,
-        new EncodingDefinition.EncodingField(DUMMY_ID, DUMMY_ID), "Encs");
+    return castOrNull(p, n, IsEncs.class, "Encs");
   }
 
+  @Nullable
   static IdentifierOrPlaceholder castId(Parser p, Node n) {
-    return castOrDummy(p, n, IdentifierOrPlaceholder.class, DUMMY_ID, "Id");
+    return castOrNull(p, n, IdentifierOrPlaceholder.class, "Id");
   }
 
+  @Nullable
   static IsBinOp castBinOp(Parser p, Node n) {
-    return castOrDummy(p, n, IsBinOp.class, new BinOp(Operator.Xor, n.location()), "BinOp");
+    return castOrNull(p, n, IsBinOp.class, "BinOp");
   }
 
+  @Nullable
   static Definition castCommonDef(Parser p, Node n) {
     if (n instanceof Definition d && d.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
       return d;
     }
 
     // Only here is a special syntax type check required because the syntax type
-    // Isa Def is not allowed here but doesn't really exist in the AST and therefore castOrDummy
+    // Isa Def is not allowed here but doesn't really exist in the AST and therefore castOrNull
     // doesn't really handle them.
-    var casted = castOrDummy(p, n, Definition.class, DUMMY_DEF, "CommonDefs");
-    if (!casted.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
+    var casted = castOrNull(p, n, Definition.class,  "CommonDefs");
+    if (casted != null && !casted.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
       var message =
           "Expected node of type Defs, received "
               + casted.syntaxType().print();
@@ -760,19 +755,23 @@ class ParserUtils {
     return casted;
   }
 
+  @Nullable
   static Definition castIsaDef(Parser p, Node n) {
     return (n instanceof Definition d && d.syntaxType().isSubTypeOf(BasicSyntaxType.ISA_DEFS))
-        ? d : castOrDummy(p, n, Definition.class, DUMMY_DEF, "IsaDefs");
+        ? d : castOrNull(p, n, Definition.class, "IsaDefs");
   }
 
+  @Nullable
   static Statement castStat(Parser p, Node n) {
-    return castOrDummy(p, n, Statement.class, DUMMY_STAT, "Stat");
+    return castOrNull(p, n, Statement.class, "Stat");
   }
 
+  @Nullable
   static Statement castStats(Parser p, Node n) {
-    return castOrDummy(p, n, Statement.class, DUMMY_STAT, "Stats");
+    return castOrNull(p, n, Statement.class, "Stats");
   }
 
+  @Nullable
   static Node expandNode(Parser parser, Node node) {
     var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, List.of());
     var expanded = macroExpander.expandNode(node, parser.ast);
@@ -872,6 +871,7 @@ class ParserUtils {
    *                        for model substitution
    * @return An import definition node
    */
+  @Nullable
   static Definition importModules(Parser parser,
                                   @Nullable Identifier fileId, @Nullable StringLiteral filePath,
                                   List<List<Identifier>> importedSymbols,
@@ -880,7 +880,7 @@ class ParserUtils {
         ? resolveImportPath(parser, requireNonNull(fileId))
         : resolveImportPath(parser, filePath.value, filePath);
     if (modulePath == null) {
-      return DUMMY_DEF;
+      return null;
     }
 
     if (importedSymbols.isEmpty() || importedSymbols.stream().allMatch(List::isEmpty)) {
@@ -895,6 +895,10 @@ class ParserUtils {
 
     var macroOverrides = new HashMap<String, String>();
     for (StringLiteral arg : args) {
+      if (arg == null) {
+        continue;
+      }
+
       var keyValue = arg.value.split("=", 2);
       if (keyValue.length != 2) {
         throw error("Invalid Import", arg)
