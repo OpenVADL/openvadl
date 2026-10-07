@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lsp;
+package vadl.lsp.document;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -24,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentItem;
+import vadl.lsp.DiagnosticsPublisher;
+import vadl.lsp.VadlTextDocumentService;
 import vadl.utils.DiskVirtualFileSystem;
 
 /**
@@ -33,12 +35,13 @@ import vadl.utils.DiskVirtualFileSystem;
  * <p>All methods are thread-safe.
  */
 public class DocumentStore {
-  final VadlTextDocumentService documentService;
+  public final VadlTextDocumentService documentService;
+  private final DiagnosticsPublisher diagnosticsPublisher = new DiagnosticsPublisher(this);
 
   private final Map<Path, Document> openDocuments = new ConcurrentHashMap<>();
   private final DependencyMap<Path> documentDependencies = new DependencyMap<>();
 
-  DocumentStore(VadlTextDocumentService documentService) {
+  public DocumentStore(VadlTextDocumentService documentService) {
     this.documentService = documentService;
   }
 
@@ -52,7 +55,7 @@ public class DocumentStore {
     openDocuments.put(document.getPath(), document);
     clearDependentCompilations(document);
 
-    documentService.publishDiagnostics(document);
+    diagnosticsPublisher.publishDiagnostics(document);
     publishDiagnosticsForDependentDocuments(document);
   }
 
@@ -92,7 +95,7 @@ public class DocumentStore {
     document.clearCompilation();
     clearDependentCompilations(document);
 
-    documentService.publishDiagnostics(document);
+    diagnosticsPublisher.publishDiagnostics(document);
     publishDiagnosticsForDependentDocuments(document);
   }
 
@@ -166,7 +169,7 @@ public class DocumentStore {
     for (Path path : documentDependencies.getDependents(document.getPath())) {
       var d = openDocuments.get(path);
       if (d != null) {
-        documentService.publishDiagnostics(d);
+        diagnosticsPublisher.publishDiagnostics(d);
       }
     }
   }

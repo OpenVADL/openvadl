@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lsp;
+package vadl.lsp.document;
 
 import java.util.HashMap;
 import java.util.HashSet;
