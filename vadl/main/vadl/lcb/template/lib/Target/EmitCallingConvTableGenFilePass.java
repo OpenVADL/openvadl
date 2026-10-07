@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ValueType;
+import vadl.lcb.passes.llvmLowering.RegisterTypesCtx;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -89,7 +90,8 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
     List<ReturnCCIfType> result = new ArrayList<>();
 
     for (var def : abi.returnRegisters()) {
-      var ty = ValueType.from(def.get(0).registerFile().resultType()).get();
+      var ty =
+          def.get(0).registerFile().expectExtension(RegisterTypesCtx.class).valueTypes().get(0);
       var regs = def.stream().map(this::renderRegister).toList();
       var obj = new ReturnCCIfType(ty, regs);
       result.add(obj);

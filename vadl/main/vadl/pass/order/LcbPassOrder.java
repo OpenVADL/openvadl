@@ -29,6 +29,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
+import vadl.lcb.passes.llvmLowering.InferRegisterTypesPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.RemoveRegisterWritesPass;
 import vadl.lcb.passes.llvmLowering.RemoveTruncationAndAnyExtPass;
@@ -76,6 +77,7 @@ public final class LcbPassOrder {
     order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
     order.add(new AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass(configuration));
     order.add(new RemoveTruncationAndAnyExtPass(configuration));
+    order.add(new InferRegisterTypesPass(configuration));
     order.add(new GenerateTableGenRegistersPass(configuration));
     order.add(new RemoveRegisterWritesPass(configuration));
     order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));

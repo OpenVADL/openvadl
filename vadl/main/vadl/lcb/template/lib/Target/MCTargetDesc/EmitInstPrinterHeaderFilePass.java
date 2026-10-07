@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.passes.llvmLowering.RegisterTypesCtx;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -55,6 +56,7 @@ public class EmitInstPrinterHeaderFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var registerFiles =
         specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+            .filter(registerFile -> registerFile.expectExtension(RegisterTypesCtx.class).used())
             .map(x -> new RegisterClass(x.identifier.simpleName()))
             .toList();
     return Map.of(CommonVarNames.NAMESPACE,

@@ -47,6 +47,7 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
+import vadl.lcb.passes.llvmLowering.RegisterTypesCtx;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediatePredicateFunctionProvider;
@@ -304,6 +305,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
           var destAliases = viam.isa().get().artificialResources()
               .stream()
               .filter(ArtificialResource::isRegisterFile)
+              .filter(artificialResource ->
+                  artificialResource.expectExtension(RegisterTypesCtx.class).used()
+              )
               .filter(x -> 
                   x != destRegisterFile
                   && x.innerResourceRef() == destRegisterFileInner 
@@ -324,6 +328,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
           var srcAliases = viam.isa().get().artificialResources()
               .stream()
               .filter(ArtificialResource::isRegisterFile)
+              .filter(artificialResource ->
+                  artificialResource.expectExtension(RegisterTypesCtx.class).used()
+              )
               .filter(x -> x != srcRegisterFile 
                   && x.innerResourceRef() == srcRegisterFileInner 
                   && x.type().asDataType().bitWidth() 

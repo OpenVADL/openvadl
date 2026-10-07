@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.template.Renderable;
 import vadl.types.BitsType;
+import vadl.types.FloatType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -42,7 +43,10 @@ public enum ValueType implements Renderable {
   U16("u16", "Uint16", "Int16", 16),
   U32("u32", "Uint32", "Int32", 32),
   U64("u64", "Uint64", "Int64", 64),
-  U128("u128", "Int128", "Int128", 128);
+  U128("u128", "Int128", "Int128", 128),
+
+  F32("f32", "Float32", "Float32", 32),
+  F64("f64", "Float64", "Float64", 64);
 
   private final String llvmType;
   private final String fancyName;
@@ -71,6 +75,8 @@ public enum ValueType implements Renderable {
       case U32 -> 32;
       case U64 -> 64;
       case U128 -> 128;
+      case F32 -> 32;
+      case F64 -> 64;
     };
   }
 
@@ -115,6 +121,12 @@ public enum ValueType implements Renderable {
         return Optional.of(ValueType.I64);
       } else if (bitsType.bitWidth() == 128) {
         return Optional.of(ValueType.I128);
+      }
+    } else if (type instanceof FloatType floatType) {
+      if (floatType.bitWidth() == 32) {
+        return Optional.of(ValueType.F32);
+      } else if (floatType.bitWidth() == 64) {
+        return Optional.of(ValueType.F64);
       }
     }
 
