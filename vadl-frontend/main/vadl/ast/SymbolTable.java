@@ -461,7 +461,7 @@ public class SymbolTable {
     // Unfortunately, we need this type to be correctly parsed because,
     // depending on it, we parse the body of the macro differently. So if we
     // don't know what it is, we must exit early.
-    throw ParserUtils.unknownSyntaxTypeError(identifier.name, this, identifier.location());
+    throw MacroUtils.unknownSyntaxTypeError(identifier.name, this, identifier.location());
   }
 
   /**
