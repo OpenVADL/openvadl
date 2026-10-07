@@ -79,18 +79,37 @@ import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
  *   <li>Reorder the blocks.</li>
  * </ul>
  *
- * <p>The hard part of the algorithm is finding the smallest set of side effects to extract,
- * such that all sibling blocks at a level can be ordered. For each block, we first find out
- * what range of side effect types it covers (e.g. {@code MEM..SE}). We realize that (excluding all
- * blocks covering only one type) only the following two cases are allowed:
+ * <p>The hard part of the algorithm is finding a <strong>small</strong> set of side effects to
+ * extract, such that all sibling blocks at a level can be ordered. For each block, we first find
+ * out what range of side effect types it covers (e.g. {@code MEM..SE}).
+ * The range spans from the minimum to the maximum side effect type found in the blocks, according
+ * to the ordinals.
  *
- * <ul>
- *   <li>A single block covering all three types {@code MEM..PC}.</li>
- *   <li>Two blocks covering {@code MEM..SE} and {@code SE..PC}.</li>
- * </ul>
+ * <p>Example:
+ * <pre>{@code
+ * if (a) { SE }          // has the interval (SE..SE)
+ * if (b) { PC, SE, SE }  // has the interval (SE..PC)
+ * if (c) { PC, MEM }     // has the interval (MEM..PC)
+ * if (d) { SE, PC, MEM } // has the interval (MEM..PC)
+ * }</pre>
  *
- * <p>All other blocks may at most cover one side effect type. We prefer to keep blocks with
- * the many side effects and also prefer the second case. We choose up to two blocks to keep
+ * <p>The two intervals {@code MEM..SE} and {@code SE..PC} are called slots, and we need to
+ * decide which blocks to keep to fill these slots.
+ * We realize that (excluding all blocks covering only one type) only the following
+ * cases are allowed:
+ *
+ * <ol>
+ *   <li>A single block covering all three types {@code MEM..PC} (fills both slots).
+ *   This block however conflicts with every other {@code SE} side effect present in
+ *   the entire branch.</li>
+ *   <li>Two blocks covering {@code MEM..SE} and {@code SE..PC} (each fills a slot).</li>
+ *   <li>A single block covering one of {@code MEM..SE} or {@code SE..PC} (fills one slot).</li>
+ *   <li>No block with more than one type (no slots are filled).</li>
+ * </ol>
+ *
+ * <p>All other blocks may at most cover one side effect type. Of the blocks containing multiple
+ * side effect types, we prefer to keep blocks with the most side effects and also prefer the
+ * second case. We choose up to two blocks to keep
  * (let's call them "frozen"), and must extract side effects out of all other blocks until only
  * one type remains in each block. We keep track of the number of each side effect type in each
  * block, and keep the type with the highest count.
@@ -102,7 +121,8 @@ import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
  * }</pre>
  *
  * <p>Here the two blocks cannot be reordered (they are conflicting). We freeze the second block,
- * since it has the most side effects. We choose to extract all {@code PC} side effects out of
+ * since it has the most side effects (it fills the slot {@code SE..PC}).
+ * We choose to extract all {@code PC} side effects out of
  * the first block, because that type has the least occurrences in the block. The final, reordered
  * code looks like this:
  *
@@ -119,6 +139,7 @@ import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
  *          here. I think the IssSafeResourceReadPass could be adapted to ensure that all
  *          memory loads happen before all side effects. Also, using reg dest TCGvs as temp
  *          storage before memory loads is a source of errors.
+ *          See: <a href="https://github.com/OpenVADL/openvadl/issues/1141">Issue #1141</a>
  */
 public class IssSideEffectReorderingPass extends Pass {
 
@@ -211,9 +232,9 @@ class SideEffectReorderer {
   private final IdentityHashMap<ControlSplitNode, SideEffectCount> sideEffectCount;
 
   /**
-   * Maps each side effect to a map, which maps each occurrence to the list of expressions,
-   * which represent the conditions/indices of all if-/forall-blocks surrounding the instance
-   * (from outer to inner).
+   * Stores all occurrences of each side effect node. An occurrence is an {@link AbstractEndNode}
+   * that references the side effect node. For each occurrence, the conditions and loop indices
+   * of the if-/forall-blocks (from outer to inner) containing that occurrence are stored.
    */
   private final IdentityHashMap<SideEffectNode, Map<AbstractEndNode, List<ExpressionNode>>>
       sideEffectConditions;
@@ -371,16 +392,18 @@ class SideEffectReorderer {
       ControlNode current = beginNode;
 
       var blocks = new ArrayList<ControlSplitNode>();
+      AbstractEndNode end;
 
       // collect all if- and forall-blocks at the current branch level
       loop: while (true) {
         switch (current) {
           case AbstractEndNode endNode -> {
+            end = endNode;
             break loop;
           }
           case ControlSplitNode splitNode -> {
             blocks.add(splitNode);
-            current = splitNode.mergeNode(); // TODO: this is kinda slow
+            current = splitNode.mergeNode();
           }
           case DirectionalNode directionalNode -> current = directionalNode.next();
           default -> //noinspection DataFlowIssue
@@ -394,8 +417,6 @@ class SideEffectReorderer {
         // nothing to reorder or extract
         return;
       }
-
-      var end = new CfgTraverser(){}.traverseBranch(beginNode);
 
       // extract out of all forall blocks with more than one side effect type
       blocks.stream().filter(b -> b instanceof ForallNode
