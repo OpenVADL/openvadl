@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -166,6 +166,7 @@ public final class TableGenInstructionRenderer {
             let isBarrier     = %d;
             let isReMaterializable = %d;
             let isAsCheapAsAMove   = %d;
+            let hasSideEffects     = %d;
             
             let Constraints = "";
             let AddedComplexity = 0;
@@ -193,6 +194,7 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().isBarrier()),
         toInt(instruction.getFlags().isRematerialisable()),
         toInt(instruction.getFlags().isAsCheapAsAMove()),
+        toInt(instruction.getFlags().hasSideEffects()),
         instruction.getUses().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         anonymousPatterns.stream()
@@ -232,6 +234,7 @@ public final class TableGenInstructionRenderer {
             let isBarrier     = %d;
             let isReMaterializable = %d;
             let isAsCheapAsAMove   = %d;
+            let hasSideEffects     = %d;
             
             let Constraints = "";
             let AddedComplexity = 0;
@@ -259,6 +262,7 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().isBarrier()),
         toInt(instruction.getFlags().isRematerialisable()),
         toInt(instruction.getFlags().isAsCheapAsAMove()),
+        toInt(instruction.getFlags().hasSideEffects()),
         instruction.getUses().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         anonymousPatterns.stream()
