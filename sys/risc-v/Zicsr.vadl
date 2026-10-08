@@ -1,0 +1,87 @@
+// RISC-V Zicsr instruction set (CSR - Control and Status Registers)
+
+import rv3264im::{RV3264Base, RV3264I, RV3264M} with ("ArchSize=Arch64")
+
+instruction set architecture RV64IMZicsr extending RV3264I, RV3264M = {
+
+  // name = instruction id, funct3 opcode, offset = 4 for immediate else 0, csrStat = behavior
+  model CsrBaseInstr (name : Id, funct3 : Bin, offset : Int, csrIdx : Val, csrName : Str, csrStat : Stat) : IsaDefs = {
+    instruction $name : Itype = $csrStat
+    encoding $name = { opcode = 0b111'0011, funct3 = $funct3 + $offset, imm = $csrIdx }
+    assembly $name = (mnemonic, ' ', register(rd), ',', $csrName, ',', register(rs1))
+  }
+
+  /*
+   *  | Instruction |  rd | rs1 | read CSR? | write CSR? |
+   *  | CSRRW/I     |  x0 |  -  |     no    |     yes    |
+   *  | CSRRW/I     | !x0 |  -  |    yes    |     yes    |
+   *  | CSRRS/C/I   |  -  |  x0 |    yes    |      no    |
+   *  | CSRRS/C/I   |  -  | !x0 |    yes    |     yes    |
+   */
+
+  // extend = "" or "I", offset = 0 or 4, rs1imm = X(rs1) or rs1 as Regs
+  model CsrRWRSRCInstrs (extend : Str, offset : Int, rs1imm : Ex, regExpr : Ex, csrIdx : Val, name : Str, len : Ex) : IsaDefs = {
+    $CsrBaseInstr (AsId(CSRRW, $extend, $name) ; 0b001 ; $offset ; $csrIdx ; $name ; // atomic CSR Read / Write
+            let rs1imm = $rs1imm in {
+              if rd != 0 then
+                X(rd) := $regExpr as Regs
+                $regExpr := rs1imm as Bits<$len>
+            }
+      )
+    $CsrBaseInstr (AsId(CSRRS, $extend, $name) ; 0b010 ; $offset ; $csrIdx ; $name ; // atomic CSR Read and Set bits
+            let csr_csridx = $regExpr in {
+              if rs1 != 0 then
+                $regExpr := csr_csridx | $rs1imm as Bits<$len>
+                X(rd) := csr_csridx as Regs
+            }
+      )
+    $CsrBaseInstr (AsId(CSRRC, $extend, $name) ; 0b011 ; $offset ; $csrIdx ; $name ; // atomic CSR Read and Clear bits
+            let csr_csridx = $regExpr in {
+              if rs1 != 0 then
+                $regExpr := csr_csridx & ~($rs1imm as Bits<$len>)
+                X(rd) := csr_csridx as Regs
+            }
+      )
+  }
+
+  model DefineCsrReg (csrIdx : Val, regExpr : Ex, name : Str, len : Ex) : IsaDefs = {
+    $CsrRWRSRCInstrs (  "" ; 0 ; X(rs1)      ; $regExpr ; $csrIdx ; $name ; $len )    // CSR register instructions
+    $CsrRWRSRCInstrs ( "I" ; 4 ; rs1 as Regs ; $regExpr ; $csrIdx ; $name ; $len )    // CSR immediate instructions
+  }
+
+  // --- mstatus
+
+  register MSTATUS : MachineStatus
+
+  // https://five-embeddev.com/riscv-priv-isa-manual/Priv-v1.12/machine.html#machine-status-registers-mstatus-and-mstatush
+  format MachineStatus : Regs =
+  { sd    [63]
+  , wpri4  [62..38]
+  , mbe   [37]
+  , sbe   [36]
+  , sxl   [35..34]
+  , uxl   [33..32]
+  , wpri3 [31..23]
+  , tsr   [22]          // Trap SRET (supports intercepting SRET instruction)
+  , tw    [21]          // Timeout Wait (supports interception WFI instruction)
+  , tvm   [20]          // Trap Virtual Memory
+  , mxr   [19]          // Make eXecutable Readable
+  , sum   [18]          // Supervisor User Memory access permit
+  , mprv  [17]          // Modify PRiVilege
+  , xs    [16..15]      // additional eXtension user-mode Status (RO)
+  , fs    [14..13]      // Floating-point unit Status (WARL)
+  , mpp   [12..11]      // Previous Privilege Machine (WARL)
+  , wpri2 [10..9]
+  , spp   [8]           // Previous Privilege Supervisor (WARL)
+  , mpie  [7]           // Prior To Trap Interrupt-Enable Machine
+  , wpri1 [6]
+  , spie  [5]           // Prior To Trap Interrupt-Enable Supervisor
+  , upie  [4]           // Prior To Trap Interrupt-Enable User
+  , mie   [3]           // Interrupt-Enable Machine
+  , wpri0 [2]
+  , sie   [1]           // Interrupt-Enable Supervisor
+  , uie   [0]           // Interrupt-Enable User
+  }
+
+  $DefineCsrReg ( 0x300 ; MSTATUS ; "mstatus"   ; MLen )
+}

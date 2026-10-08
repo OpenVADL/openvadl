@@ -1,11 +1,10 @@
-
-import rv64csr::{RV64IMZicsr}
+import Zicsr::{RV64IMZicsr}
 
 instruction set architecture RV64IMFD extending RV64IMZicsr = {
 
   // TODO: generate illegal instruction exception when float is not enabled
 
-  model ExtensionFD    () : Id = {F}
+  model ExtensionFD    () : Id = {D}
   model InstructionsFD (f : IsaDefs, d : IsaDefs) : IsaDefs = {
     match : IsaDefs ($ExtensionFD = F => $f; _ => $f $d)
   }
@@ -20,12 +19,22 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
   constant FSize64  : ConstTy = 64
   constant FSize128 : ConstTy = 128
 
+  constant CNaN128 : IEEE128 = 0x7FFF'8000'0000'0000'0000'0000'0000'0000
+  constant CNaN64  : IEEE64  = 0x7FF8'0000'0000'0000 as Bits<64> as IEEE64
+  constant CNaN32  : IEEE32  = 0x7FC0'0000 as Bits<32> as IEEE32
+  constant CNaN16  : IEEE16  = 0x7E00
+
   using SIntH = SInt<16>
   using UIntH = UInt<16>
   using SIntD = SInt<64>
   using UIntD = UInt<64>
   using SIntQ = SInt<128>
   using UIntQ = UInt<128>
+
+  using Bits16 = Bits<16>
+  using Bits32 = Bits<32>
+  using Bits64 = Bits<64>
+  using Bits128 = Bits<128>
 
   using FRegs = Bits<FLEN>
 
@@ -40,7 +49,6 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
   [ sticky fe flag inexact     : nx ]
   [ execution state : frm ]
   register FCSR : FCsrFormat
-  //alias register fcsr : FCsrFormat = CSR(CsrDefToImpl(CsrDef::fcsr))
 
   format FCsrFormat : Bits<32> =
   { reserved [31..8]
@@ -51,6 +59,10 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
   , uf       [1]     // Float exception flag: Underflow
   , nx       [0]     // Float exception flag: Inexact
   }
+
+  $DefineCsrReg ( 0x003 ; FCSR       ; "fcsr"   ; 32 )
+  $DefineCsrReg ( 0x002 ; FCSR.frm   ; "frm"    ; 3  )
+  $DefineCsrReg ( 0x001 ; FCSR(4..0) ; "fflags" ; 5  )
 
   // rounding modes
   enumeration Frm : Bits3 =
@@ -141,14 +153,14 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
   using IEEE16  = Bits<16>
   using IEEE128 = Bits<128>
 
-  record FSizeRec (suffix : Id, mvSuffix : Id, cvtSuffix : Id, fmt : Ex, sTy : Id, uTy : Id, fTy : Id, size : Int)
+  record FSizeRec (suffix : Id, mvSuffix : Id, cvtSuffix : Id, fmt : Ex, sTy : Id, uTy : Id, fTy : Id, bTy : Id, size : Int, cNaN : Id)
 
   // TODO: IEEE16 and IEEE128 are not yet implemented
   // TODO: naming of half and quad (see 'x' values)
-  model FSize16  () : FSizeRec = {(x ; x ; x ; Fmt::h ; SIntH ; UIntH ; IEEE16  ; 16 )}
-  model FSize32  () : FSizeRec = {(S ; W ; W ; Fmt::s ; SIntW ; UIntW ; IEEE32  ; 32 )}
-  model FSize64  () : FSizeRec = {(D ; D ; L ; Fmt::d ; SIntD ; UIntD ; IEEE64  ; 64 )}
-  model FSize128 () : FSizeRec = {(x ; x ; x ; Fmt::q ; SIntQ ; UIntQ ; IEEE128 ; 128)}
+  model FSize16  () : FSizeRec = {(x ; x ; x ; Fmt::h ; SIntH ; UIntH ; IEEE16  ; Bits16  ; 16  ; CNaN16  )}
+  model FSize32  () : FSizeRec = {(S ; W ; W ; Fmt::s ; SIntW ; UIntW ; IEEE32  ; Bits32  ; 32  ; CNaN32  )}
+  model FSize64  () : FSizeRec = {(D ; D ; L ; Fmt::d ; SIntD ; UIntD ; IEEE64  ; Bits64  ; 64  ; CNaN64  )}
+  model FSize128 () : FSizeRec = {(x ; x ; x ; Fmt::q ; SIntQ ; UIntQ ; IEEE128 ; Bits128 ; 128 ; CNaN128 )}
 
   function NaNBoxHS(val : IEEE16) -> IEEE32  = (0xffff               , val) as IEEE32
   function NaNBoxSD(val : IEEE32) -> IEEE64  = (0xffff'ffff          , val) as IEEE64
@@ -167,6 +179,37 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
       _                  => $NaNBoxQ($val)
     )
   }
+
+  model CheckBox (size : FSizeRec, val : Ex) : Ex = {
+    let valBits = $val as Bits<FLEN> in
+      let upperBits = (1 << (FLEN - $size.size)) - 1 in
+        if valBits(FLEN-1..$size.size) = upperBits then $val as $size.fTy else $size.cNaN
+  }
+
+  model Cast (size : FSizeRec, val : Ex) : Ex = {
+    match : Ex (
+      $size.fTy = IEEE16 => match : Ex ($FSize = FSize16 => $val; _ => $CheckBox($size ; $val));
+      $size.fTy = IEEE32 => match : Ex ($FSize = FSize32 => $val; _ => $CheckBox($size ; $val));
+      $size.fTy = IEEE64 => match : Ex ($FSize = FSize64 => $val; _ => $CheckBox($size ; $val));
+      _                  => $val
+    ) as $size.fTy
+  }
+
+  // workaround for bug in #1153
+  model CheckBox_ (iSize : FSizeRec, val : Ex) : Ex = {
+    let valBits = $val as Bits<FLEN> in
+      let upperBits = (1 << (FLEN - $iSize.size)) - 1 in
+        if valBits(FLEN-1..$iSize.size) = upperBits then $val as $iSize.fTy else $iSize.cNaN
+  }
+  model Cast_ (iSize : FSizeRec, val : Ex) : Ex = {
+    match : Ex (
+      $iSize.fTy = IEEE16 => match : Ex ($FSize = FSize16 => $val; _ => $CheckBox_($iSize ; $val));
+      $iSize.fTy = IEEE32 => match : Ex ($FSize = FSize32 => $val; _ => $CheckBox_($iSize ; $val));
+      $iSize.fTy = IEEE64 => match : Ex ($FSize = FSize64 => $val; _ => $CheckBox_($iSize ; $val));
+      _                  => $val
+    ) as $iSize.fTy
+  }
+  // end of workaround
 
   model-type BoolModelId  = (Id,  Id)  -> Id
   model-type BoolModelStr = (Str, Str) -> Str
@@ -192,7 +235,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
     $FRtypeInstr2rm ((
       AsId($name, $size.suffix, $FrmName($rm)) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; $funct5 ;
-      F(rd) := $NaNBox($size ; VADL::$fun(F(rs1) as $size.fTy, F(rs2) as $size.fTy, frm($rm))) as FRegs
+      F(rd) := $NaNBox($size ; VADL::$fun($Cast($size ; F(rs1)), $Cast($size ; F(rs2)), frm($rm))) as FRegs
     ))
   }
 
@@ -200,7 +243,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
     $FRtypeInstr2 ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b0'0101 ;
-      F(rd) := $NaNBox($size ; VADL::$fun(F(rs1) as $size.fTy, F(rs2) as $size.fTy)) as FRegs
+      F(rd) := $NaNBox($size ; VADL::$fun($Cast($size ; F(rs1)), $Cast($size ; F(rs2)))) as FRegs
     ))
   }
 
@@ -208,7 +251,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
     $FRtypeInstr1rm ((
       AsId($name, $size.suffix, $FrmName($rm)) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b0'1011 ;
-      F(rd) := $NaNBox($size ; VADL::$fun(F(rs1) as $size.fTy, frm($rm))) as FRegs
+      F(rd) := $NaNBox($size ; VADL::$fun($Cast($size ; F(rs1)), frm($rm))) as FRegs
     ) ; 0b0'0000 )
   }
 
@@ -216,7 +259,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
     $FRtypeInstr2 ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b1'0100 ;
-      X(rd) := VADL::$fun(F(rs1) as $size.fTy, F(rs2) as $size.fTy) as Bits<$size.size> as UIntR // zero extend
+      X(rd) := VADL::$fun($Cast($size ; F(rs1)), $Cast($size ; F(rs2))) as $size.bTy as UIntR // zero extend
     ))
   }
 
@@ -224,10 +267,12 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
     $FRtypeInstr2 ((
       AsId($name, $size.suffix) ; AsStr($name, ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b0'0100 ;
-      let lower = F(rs1)(($size.size-2)..0) in
-        let rs1Sgn = F(rs1)($size.size-1) in
-          let rs2Sgn = F(rs2)($size.size-1) in
-            F(rd) := $NaNBox($size ; ($sgn, lower) as $size.fTy) as FRegs
+      let Frs1 = $Cast($size ; F(rs1)) as $size.bTy in
+        let Frs2 = $Cast($size ; F(rs2)) as $size.bTy in
+          let lower = Frs1(($size.size-2)..0) in
+            let rs1Sgn = Frs1($size.size-1) in
+              let rs2Sgn = Frs2($size.size-1) in
+                F(rd) := $NaNBox($size ; ($sgn, lower) as $size.fTy) as FRegs
     ))
   }
 
@@ -236,7 +281,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
       AsId($name, "X", $size.mvSuffix) ; AsStr($name, ".X.", $size.mvSuffix) ;
       0b000 ; $size.fmt ; 0b1'1100 ;
       // first cast to the correct float type and then sign extend
-      X(rd) := F(rs1) as Bits<$size.size> as SIntR
+      X(rd) := F(rs1) as $size.bTy as SIntR
     ) ; 0b0'0000 )
   }
 
@@ -263,7 +308,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
       AsStr($name, ".", $iSize.mvSuffix, $u.str("U" ; ""), ".", $size.suffix) ;
       $rm ; $size.fmt ; 0b1'1000 ;
       // always sign extend the result, even unsigned results
-      X(rd) := VADL::fcvt<$u.id($iSize.uTy ; $iSize.sTy)>(F(rs1) as $size.fTy, frm($rm)) as SIntR
+      X(rd) := VADL::fcvt<$u.id($iSize.uTy ; $iSize.sTy)>($Cast($size ; F(rs1)), frm($rm)) as $iSize.bTy as SIntR
     ) ; $rs2 )
   }
 
@@ -272,22 +317,22 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
       AsId($name, $size.suffix, $iSize.suffix, $FrmName($rm)) ;
       AsStr($name, ".", $size.suffix, ".", $iSize.suffix) ;
       $rm ; $size.fmt ; 0b0'1000 ;
-      F(rd) := $NaNBox($size ; VADL::fcvt<$size.fTy>(F(rs1) as $iSize.fTy, frm($rm))) as FRegs
+      F(rd) := $NaNBox($size ; VADL::fcvt<$size.fTy>($Cast_($iSize ; F(rs1)), frm($rm))) as FRegs
     ) ; $rs2 )
   }
 
   model FRtypeInstrClass (name : Id, size : FSizeRec) : IsaDefs = {
     instruction AsId($name, $size.suffix) : FRtype =
-      let f = F(rs1) as $size.fTy in
+      let f = $Cast($size ; F(rs1)) in
         // TODO: this is from QEMU's risc-v vector_helper.c fclass_s(...)
         //       what predicates should we implement?
-        let neg = VADL::fisneg(f as $size.fTy) in
-          X(rd) := if VADL::fisinf   (f as $size.fTy) then ( if neg then 1 << 0 else 1 << 7 ) else
-                   if VADL::fiszero  (f as $size.fTy) then ( if neg then 1 << 3 else 1 << 4 ) else
-                   if VADL::fisdenorm(f as $size.fTy) then ( if neg then 1 << 2 else 1 << 5 ) else
-                   if VADL::fissnan  (f as $size.fTy) then 1 << 8 else
-                   if VADL::fisqnan  (f as $size.fTy) then 1 << 9 else
-                                             ( if neg then 1 << 1 else 1 << 6 )
+        let neg = VADL::fisneg(f) in
+          X(rd) := if VADL::fisinf   (f) then ( if neg then 1 << 0 else 1 << 7 ) else
+                   if VADL::fiszero  (f) then ( if neg then 1 << 3 else 1 << 4 ) else
+                   if VADL::fisdenorm(f) then ( if neg then 1 << 2 else 1 << 5 ) else
+                   if VADL::fissnan  (f) then 1 << 8 else
+                   if VADL::fisqnan  (f) then 1 << 9 else
+                                ( if neg then 1 << 1 else 1 << 6 )
     encoding AsId($name, $size.suffix) = {opcode = 0b101'0011, funct3 = 0b001, rs2 = 0b0'0000, fmt = $size.fmt, funct5 = 0b111'00}
     assembly AsId($name, $size.suffix) = (AsStr($name), ".", AsStr($size.suffix), " ", register(rd), ",", register(rs1))
   }
@@ -305,14 +350,14 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
     instruction $name : Stype =
       let addr = X(rs1) + immS in
         let bytes = $size.size / 8 in
-          MEM<bytes>(addr) := F(rs2) as Bits<$size.size>
+          MEM<bytes>(addr) := F(rs2) as $size.bTy
     encoding $name = {opcode = 0b010'0111, funct3 = $funct3}
     assembly $name = (mnemonic, " ", register(rs2), ",", decimal(imm as SInt<12>), "(", register(rs1), ")")
   }
 
   model FR4typeInstr (name : Id, size : FSizeRec, fun : Id, rm : Ex, opcode : Bin) : IsaDefs = {
     instruction AsId($name, $size.suffix, $FrmName($rm)) : R4type =
-      F(rd) := $NaNBox($size ; VADL::$fun(F(rs1) as $size.fTy, F(rs2) as $size.fTy, F(rs3) as $size.fTy, frm($rm))) as FRegs
+      F(rd) := $NaNBox($size ; VADL::$fun($Cast($size ; F(rs1)), $Cast($size ; F(rs2)), $Cast($size ; F(rs3)), frm($rm))) as FRegs
     encoding AsId($name, $size.suffix, $FrmName($rm)) = {opcode = $opcode, funct3 = $rm, fmt = $size.fmt}
     assembly AsId($name, $size.suffix, $FrmName($rm)) = (AsStr($name, ".", $size.suffix), " ", register(rd), ",", register(rs1), ",", register(rs2), ",", $FrmName($rm))
   }
