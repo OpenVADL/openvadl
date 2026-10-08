@@ -4,7 +4,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
 
   // TODO: generate illegal instruction exception when float is not enabled
 
-  model ExtensionFD    () : Id = {D}
+  model ExtensionFD    () : Id = {F}
   model InstructionsFD (f : IsaDefs, d : IsaDefs) : IsaDefs = {
     match : IsaDefs ($ExtensionFD = F => $f; _ => $f $d)
   }
@@ -20,8 +20,8 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
   constant FSize128 : ConstTy = 128
 
   constant CNaN128 : IEEE128 = 0x7FFF'8000'0000'0000'0000'0000'0000'0000
-  constant CNaN64  : IEEE64  = 0x7FF8'0000'0000'0000 as Bits<64> as IEEE64
-  constant CNaN32  : IEEE32  = 0x7FC0'0000 as Bits<32> as IEEE32
+  constant CNaN64  : IEEE64  = 0x7FF8'0000'0000'0000 as Bits64 as IEEE64
+  constant CNaN32  : IEEE32  = 0x7FC0'0000 as Bits32 as IEEE32
   constant CNaN16  : IEEE16  = 0x7E00
 
   using SIntH = SInt<16>
@@ -50,7 +50,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
   [ execution state : frm ]
   register FCSR : FCsrFormat
 
-  format FCsrFormat : Bits<32> =
+  format FCsrFormat : Bits32 =
   { reserved [31..8]
   , frm      [7..5]  // Rounding mode
   , nv       [4]     // Float exception flag: Invalid operation
@@ -150,8 +150,8 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
   [ IEEE : 64 ]
   float-type IEEE64
 
-  using IEEE16  = Bits<16>
-  using IEEE128 = Bits<128>
+  using IEEE16  = Bits16
+  using IEEE128 = Bits128
 
   record FSizeRec (suffix : Id, mvSuffix : Id, cvtSuffix : Id, fmt : Ex, sTy : Id, uTy : Id, fTy : Id, bTy : Id, size : Int, cNaN : Id)
 
