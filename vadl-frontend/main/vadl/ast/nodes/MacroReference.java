@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,30 +18,48 @@ package vadl.ast.nodes;
 
 import vadl.utils.SourceLocation;
 
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
+/**
+ * A reference is a simple wrapper around a {@link ModelDefinition} with the main point that it is
+ * another indirection so it doesn't get evaluated directly.
+ * This also means that the syntax type differs.
+ *
+ * <p><pre>{@code
+ * model ABC(): Ex = {
+ *   42
+ * }
+ *
+ * model-type ExGen = () -> Ex
+ *
+ * model Wrapper(inner: ExGen): Ex = {
+ *   inner()
+ * }
+ *
+ * constant flo = $Wrapper(ABC)
+ *                         ^^^ This is the reference.
+ * }</pre>
+ *
+ * <p>This node should never leave the parser!
+ */
 public class MacroReference extends Node {
-  public Macro macro;
-  public ProjectionType type;
-  public SourceLocation sourceLocation;
+  public ModelDefinition model;
 
-  public MacroReference(Macro macro, ProjectionType type, SourceLocation sourceLocation) {
-    this.macro = macro;
-    this.type = type;
-    this.sourceLocation = sourceLocation;
-  }
-
-  @Override
-  public SourceLocation location() {
-    return sourceLocation;
+  public MacroReference(ModelDefinition model) {
+    this.model = model;
   }
 
   @Override
   public SyntaxType syntaxType() {
-    return type;
+    return model.projectionType();
   }
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    macro.name().prettyPrint(indent, builder);
+    // No need to implement this will always be expanded before pretty printing.
+    throw new IllegalStateException("This shouldn't be reachable");
+  }
+
+  @Override
+  public SourceLocation location() {
+    return model.location();
   }
 }

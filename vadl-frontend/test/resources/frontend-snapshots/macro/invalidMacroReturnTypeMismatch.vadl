@@ -8,7 +8,7 @@ constant n = 3 * $example()
 //  Reported Diagnostics:
 //
 //  error: Parsing Error
-//       ╭── test/resources/frontend-snapshots/macro/invalidInvalidMacroReturnType.vadl:2:6
+//       ╭── test/resources/frontend-snapshots/macro/invalidMacroReturnTypeMismatch.vadl:2:6
 //       │
 //     2 │    1 + 2
 //       │      ^ The parser expected `}` here.

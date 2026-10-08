@@ -20,5 +20,7 @@ package vadl.ast.nodes;
 public interface SyntaxType {
   public boolean isSubTypeOf(SyntaxType other);
 
+  public boolean isValid();
+
   public String print();
 }

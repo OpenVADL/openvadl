@@ -55,8 +55,7 @@ import vadl.ast.nodes.ImportDefinition;
 import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.InstructionSetDefinition;
 import vadl.ast.nodes.LogicDefinition;
-import vadl.ast.nodes.MacroInstanceDefinition;
-import vadl.ast.nodes.MacroInstructionDefinition;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.MicroArchitectureDefinition;
@@ -66,7 +65,6 @@ import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
 import vadl.ast.nodes.PatchDefinition;
 import vadl.ast.nodes.PipelineDefinition;
-import vadl.ast.nodes.PlaceholderDefinition;
 import vadl.ast.nodes.PortBehaviorDefinition;
 import vadl.ast.nodes.PredicateFormatField;
 import vadl.ast.nodes.ProcessDefinition;
@@ -240,12 +238,7 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
-  public Definition visit(PlaceholderDefinition definition) {
-    return definition;
-  }
-
-  @Override
-  public Definition visit(MacroInstanceDefinition definition) {
+  public Definition visit(MacroCall.Definition definition) {
     return definition;
   }
 
@@ -356,11 +349,6 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   public Definition visit(MicroArchitectureDefinition definition) {
     definition.definitions.replaceAll(def -> def.accept(this));
     definition.definitions.removeIf(this::shouldRemove);
-    return definition;
-  }
-
-  @Override
-  public Definition visit(MacroInstructionDefinition definition) {
     return definition;
   }
 

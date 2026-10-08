@@ -26,6 +26,7 @@ public class FrontendIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {
+      "../sys/aarch32/aarch32.vadl",
       "../sys/aarch64/aarch64-abi.vadl",
       "../sys/aarch64/aarch64.vadl",
       "../sys/aarch64/sve.vadl",
@@ -39,12 +40,12 @@ public class FrontendIntegrationTest {
       "../sys/risc-v/mia/rv_5stage.vadl",
       "../sys/risc-v/rv32i.vadl",
       "../sys/risc-v/rv32im.vadl",
+      "../sys/risc-v/rv64d.vadl",
+      "../sys/risc-v/rv64f.vadl",
       "../sys/risc-v/rv64i.vadl",
       "../sys/risc-v/rv64im.vadl",
       "../sys/risc-v/rv64v.vadl",
       "../sys/risc-v/rvcsr.vadl",
-      "../sys/risc-v/rv64f.vadl",
-      "../sys/risc-v/rv64d.vadl",
       "../sys/v-risc/ABI.vadl"
   })
   public void testFrontendPassingOnSysSpecs(String filename) {

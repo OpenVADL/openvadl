@@ -1,0 +1,21 @@
+// Previously this produced too many errors
+// https://github.com/OpenVADL/openvadl/issues/934
+
+model example(arg: Bool) : Ex =  {
+   1 + 2
+}
+
+constant n = 3 * $example(5)
+
+
+//  Reported Diagnostics:
+//
+//  error: Parsing Error
+//       ╭── test/resources/frontend-snapshots/macro/invalidMacroWrongArgumentType.vadl:8:27
+//       │
+//     8 │ constant n = 3 * $example(5)
+//       │                           ^ invalid macroBody
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

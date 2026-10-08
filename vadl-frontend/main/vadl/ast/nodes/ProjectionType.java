@@ -61,6 +61,11 @@ public class ProjectionType implements SyntaxType {
   }
 
   @Override
+  public boolean isValid() {
+    return resultType.isValid();
+  }
+
+  @Override
   public String print() {
     return arguments.stream().map(SyntaxType::print).collect(Collectors.joining(",", "(", ")"))
         + " -> " + resultType.print();

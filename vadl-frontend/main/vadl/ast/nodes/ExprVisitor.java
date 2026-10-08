@@ -34,9 +34,7 @@ public interface ExprVisitor<R> {
 
   public R visit(StringLiteral expr);
 
-  public R visit(PlaceholderExpr expr);
-
-  public R visit(MacroInstanceExpr expr);
+  public R visit(MacroCall.Expr expr);
 
   public R visit(RangeExpr expr);
 

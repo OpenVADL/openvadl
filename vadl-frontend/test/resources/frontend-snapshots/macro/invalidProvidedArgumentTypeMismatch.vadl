@@ -4,13 +4,11 @@ model example(arg: Bool) : Ex =  {
 
 constant n = 3 * $example(5)
 
-// FIXME: Investigate the surplus of diagnostics
-
 
 //  Reported Diagnostics:
 //
 //  error: Parsing Error
-//       ╭── test/resources/frontend-snapshots/macro/invalidInvalidProvidedArgumentType.vadl:5:27
+//       ╭── test/resources/frontend-snapshots/macro/invalidProvidedArgumentTypeMismatch.vadl:5:27
 //       │
 //     5 │ constant n = 3 * $example(5)
 //       │                           ^ invalid macroBody

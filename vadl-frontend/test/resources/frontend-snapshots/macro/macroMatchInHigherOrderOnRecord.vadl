@@ -1,0 +1,25 @@
+// Previously this used to crash as the match escaped the parser and was never resolved.
+// https://github.com/OpenVADL/openvadl/issues/1044
+
+instruction set architecture Test = {
+
+  constant C = 0
+  record Wrapper (id : Id)
+  model Match (x : Wrapper) : IsaDefs = {
+    match : IsaDefs (
+      $x.id = C => constant A = C;
+      _ => constant A = C
+    )
+  }
+  model M (w : Wrapper) : IsaDefs = { $Match($w) }
+  $M((C))
+
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

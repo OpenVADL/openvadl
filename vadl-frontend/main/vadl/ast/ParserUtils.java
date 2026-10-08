@@ -49,6 +49,14 @@ import vadl.error.DiagnosticList;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
+/**
+ * A collection of static methods that implement logic that is core to the parser.
+ * The main reason to put that here is that developer-tooling often doesn't recognize the vadl.ATG
+ * nor the Parser.frame file and in here we get propper support.
+ * As such many methods take a parser instance as their first argument and behave closer to methods
+ * on the parser.
+ * These utils don't contain the ones that deal with macros, see {@link MacroUtils}.
+ */
 class ParserUtils {
 
   static String VADL_EXTENSION = ".vadl";
@@ -286,6 +294,11 @@ class ParserUtils {
   static boolean isIdType(SyntaxType type) {
     return type == BasicSyntaxType.ID || type.isSubTypeOf(BasicSyntaxType.ID);
   }
+
+  static boolean isStrType(SyntaxType type) {
+    return type == BasicSyntaxType.STR || type.isSubTypeOf(BasicSyntaxType.STR);
+  }
+
 
   static boolean isDefType(SyntaxType type) {
     return type.isSubTypeOf(BasicSyntaxType.ISA_DEFS);
@@ -558,4 +571,15 @@ class ParserUtils {
     }
   }
 
+  static void incrementFollowupErrors(Parser parser) {
+    parser.hiddenFollowupErrors++;
+  }
+
+  static int totalErrorSnapshot(Parser parser) {
+    return parser.diagnostics.size() + parser.hiddenFollowupErrors;
+  }
+
+  static boolean hadAnyErrorSince(Parser parser, int snapshot) {
+    return snapshot != totalErrorSnapshot(parser);
+  }
 }

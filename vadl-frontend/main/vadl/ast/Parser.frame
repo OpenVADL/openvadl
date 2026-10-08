@@ -51,6 +51,11 @@ public class Parser {
   */
   List<Diagnostic> diagnostics = new ArrayList<>();
 
+  /**
+  * All the errors that we don't report but are still important to track whether everything worked out.
+  */
+  int hiddenFollowupErrors = 0;
+
 -->constants
 
 	static final boolean _T = true;

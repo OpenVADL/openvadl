@@ -1,5 +1,3 @@
-// FIXME: Improve the presented errors
-
 model WithTarget(): Ex = {
   42
 }
@@ -14,15 +12,12 @@ constant flo = $numPlusOne()
 //  Reported Diagnostics:
 //
 //  error: SyntaxType Mismatch
-//       ╭── test/resources/frontend-snapshots/imports/invalidImportWhereWithIsMacroOfWrongType.vadl:4:3
+//       ╭── test/resources/frontend-snapshots/imports/invalidImportWhereWithIsMacroOfWrongType.vadl:6:31
 //       │
-//     4 │   42
-//       │   ^^
+//     6 │ import base::numPlusOne with ($WithTarget())
+//       │                               ^^^^^^^^^^^^^
 //       │
-//       ├─ From this model invocation (outermost call first):
-//       │       test/resources/frontend-snapshots/imports/invalidImportWhereWithIsMacroOfWrongType.vadl:8:31
-//       │
-//       Expected node of type `Str` but received `Ex` (grouped expression)
+//       Expected node of type `Str` but received `Ex`
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests
