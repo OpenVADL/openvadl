@@ -100,3 +100,15 @@ SGEI_L r28, 0x7fffffff
 # CHECK-NEXT: <MCOperand Reg:30>
 # CHECK-NEXT: <MCOperand Reg:30>
 # CHECK-NEXT: <MCOperand Imm:2147483647>>
+
+add_test r0, r1, 2
+# CHECK: <MCInst #{{[0-9]+}} ADD_TEST
+# CHECK-NEXT: <MCOperand Reg:2>
+# CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:4>>
+
+add_test r0, r1, 3
+# CHECK: <MCInst #{{[0-9]+}} ADD_TEST
+# CHECK-NEXT: <MCOperand Reg:2>
+# CHECK-NEXT: <MCOperand Reg:3>
+# CHECK-NEXT: <MCOperand Reg:5>>
