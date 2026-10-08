@@ -94,9 +94,7 @@ public interface DefinitionVisitor<R> {
 
   public R visit(LogicDefinition definition);
 
-  public R visit(MacroInstanceDefinition definition);
-
-  public R visit(MacroInstructionDefinition definition);
+  public R visit(MacroCall.Definition definition);
 
   public R visit(MacroMatchDefinition definition);
 
@@ -117,8 +115,6 @@ public interface DefinitionVisitor<R> {
   public R visit(PatchDefinition definition);
 
   public R visit(PipelineDefinition definition);
-
-  public R visit(PlaceholderDefinition definition);
 
   public R visit(PortBehaviorDefinition definition);
 

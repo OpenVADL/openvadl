@@ -1,0 +1,31 @@
+// Previously this used to crash because the macro expander left a placeholder
+// https://github.com/OpenVADL/openvadl/issues/1153#issuecomment-6069121176
+
+record R (id : Id)
+
+model M0 (x : R) : Ex = {
+  0 as $x.id
+}
+
+model M1 (y : R) : Ex = {
+  $M0($y)
+}
+
+constant C = $M1 ((T))
+
+
+//  Reported Diagnostics:
+//
+//  error: Unknown Type `T`
+//       ╭── test/resources/frontend-snapshots/macro/longHigherOrderMacroCallChain.vadl:7:8
+//       │
+//     7 │   0 as $x.id
+//       │        ^^^^^ No type with that name exists.
+//       │
+//       ├─ From this model invocation (outermost call first):
+//       │       test/resources/frontend-snapshots/macro/longHigherOrderMacroCallChain.vadl:14:14
+//       │       test/resources/frontend-snapshots/macro/longHigherOrderMacroCallChain.vadl:11:3
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -21,8 +21,8 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public sealed interface IsId extends IsSymExpr
-    permits AsIdExpr, Identifier, IdentifierOrPlaceholder, IdentifierPath, MacroInstanceExpr,
-    MacroMatchExpr, PlaceholderExpr {
+    permits Identifier, IdentifierOrPlaceholder, IdentifierPath, AsIdExpr, MacroCall.Expr,
+    MacroMatchExpr {
   @Override
   public default IsId path() {
     return this;

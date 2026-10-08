@@ -11,7 +11,7 @@ constant n = 3 * $example(1;2)
 //       ╭── test/resources/frontend-snapshots/macro/invalidInvalidTooManyArguments.vadl:5:29
 //       │
 //     5 │ constant n = 3 * $example(1;2)
-//       │                             ^ Model `example` only expected 1 arguments but, you provided at least 2.
+//       │                             ^ The model only expected 1 arguments but, you provided at least 2.
 //       │
 //
 //
