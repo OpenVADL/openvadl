@@ -139,6 +139,7 @@ public class HandlerProcessor extends AbstractProcessor {
     TypeMirror baseType = dispatchForData.baseType;
     List<String> includePackages = dispatchForData.includePackages;
 
+
     // Collect handler methods from the class and its supertypes
     Map<String, HandlerMethod> handlerMethods =
         collectHandlerMethods(handlerClass, baseType, dispatchForData.returnType,
@@ -227,7 +228,67 @@ public class HandlerProcessor extends AbstractProcessor {
     if (returnType == null) {
       returnType = elementUtils.getTypeElement("java.lang.Void").asType();
     }
+
+    if (isTypeRefSubType(returnType)) {
+      returnType = expandTypeRef(returnType);
+    }
+
     return new DispatchForData(baseType, includePackages, returnType, contextClasses);
+  }
+
+  /**
+   * If the {@param type} is an instance of {@link TypeRef}, the type argument of the TypeRef is
+   * used, rather than the declared type itself.
+   *
+   * @param type subtype of {@link TypeRef}
+   * @return the referenced type.
+   */
+  private TypeMirror expandTypeRef(TypeMirror type) {
+
+    final var typeUtils = processingEnv.getTypeUtils();
+    final var superTypes = typeUtils.directSupertypes(type)
+        .stream()
+        .filter(this::isTypeRefSubType)
+        .toList();
+
+    if (superTypes.size() != 1) {
+      throw new IllegalStateException("@DispatchFor returnType is instance of multiple type refs");
+    }
+
+    final TypeMirror typeRef = superTypes.getFirst();
+
+    if (!isTypeRefType(typeRef)) {
+      // Walk up the inheritance tree, until we find the interface
+      return expandTypeRef(typeRef);
+    }
+
+    if (!(typeRef instanceof DeclaredType declaredType)) {
+      throw new IllegalStateException("Unexpected state during resolving type ref");
+    }
+
+    return declaredType.getTypeArguments().getFirst();
+  }
+
+  private boolean isTypeRefSubType(TypeMirror type) {
+    final var typeUtils = processingEnv.getTypeUtils();
+    final var typeRefType = processingEnv.getElementUtils()
+        .getTypeElement(TypeRef.class.getCanonicalName()).asType();
+
+    return typeUtils.isAssignable(
+        typeUtils.erasure(type),
+        typeUtils.erasure(typeRefType)
+    );
+  }
+
+  private boolean isTypeRefType(TypeMirror type) {
+    final var typeUtils = processingEnv.getTypeUtils();
+    final var typeRefType = processingEnv.getElementUtils()
+        .getTypeElement(TypeRef.class.getCanonicalName()).asType();
+
+    return typeUtils.isSameType(
+        typeUtils.erasure(type),
+        typeUtils.erasure(typeRefType)
+    );
   }
 
   /**
