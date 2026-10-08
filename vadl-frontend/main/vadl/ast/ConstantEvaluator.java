@@ -71,6 +71,7 @@ import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
+import vadl.types.FloatType;
 import vadl.types.StringType;
 import vadl.types.Type;
 import vadl.utils.BigIntUtils;
@@ -652,7 +653,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 }
 
 /**
- * This class is quite similar to VIAM's Constant.Value but unfortunatley that cannot handle values
+ * This class is quite similar to VIAM's Constant.Value but unfortunately that cannot handle values
  * of types which bit widths aren't known, as it stores negative values 2-compliment encoded.
  *
  * <p>The ConstantValue instead stores the sign bit just as a native BigInteger would.
@@ -664,6 +665,8 @@ record ConstantValue(BigInteger value, Type type) {
     if (v.type() instanceof BitsType) {
       return new ConstantValue(v.integer(), v.type());
     } else if (v.type() instanceof BoolType) {
+      return new ConstantValue(v.integer(), v.type());
+    } else if (v.type() instanceof FloatType) {
       return new ConstantValue(v.integer(), v.type());
     }
 
