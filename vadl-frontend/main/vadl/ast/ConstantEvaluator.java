@@ -53,12 +53,11 @@ import vadl.ast.nodes.IdentifierPath;
 import vadl.ast.nodes.IfExpr;
 import vadl.ast.nodes.IntegerLiteral;
 import vadl.ast.nodes.LetExpr;
-import vadl.ast.nodes.MacroInstanceExpr;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MatchExpr;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.Parameter;
-import vadl.ast.nodes.PlaceholderExpr;
 import vadl.ast.nodes.RangeExpr;
 import vadl.ast.nodes.ResourceReferenceExression;
 import vadl.ast.nodes.SequenceCallExpr;
@@ -420,13 +419,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   }
 
   @Override
-  public ConstantValue visit(PlaceholderExpr expr) {
-    throw new IllegalStateException(
-        "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public ConstantValue visit(MacroInstanceExpr expr) {
+  public ConstantValue visit(MacroCall.Expr expr) {
     throw new IllegalStateException(
         "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
   }

@@ -20,17 +20,18 @@ import static java.util.Objects.requireNonNull;
 import static vadl.ast.ParserUtils.isDefType;
 import static vadl.ast.ParserUtils.isExprType;
 import static vadl.ast.ParserUtils.isStmtType;
+import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.ast.nodes.AsIdExpr;
+import vadl.ast.nodes.AsStrExpr;
 import vadl.ast.nodes.AssemblyDefinition;
 import vadl.ast.nodes.BasicSyntaxType;
 import vadl.ast.nodes.CallIndexExpr;
@@ -46,27 +47,16 @@ import vadl.ast.nodes.IntegerLiteral;
 import vadl.ast.nodes.IsBinOp;
 import vadl.ast.nodes.IsEncs;
 import vadl.ast.nodes.IsId;
-import vadl.ast.nodes.Macro;
-import vadl.ast.nodes.MacroInstanceDefinition;
-import vadl.ast.nodes.MacroInstanceExpr;
-import vadl.ast.nodes.MacroInstanceNode;
-import vadl.ast.nodes.MacroInstanceStatement;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatch;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MacroMatchNode;
 import vadl.ast.nodes.MacroMatchStatement;
-import vadl.ast.nodes.MacroOrPlaceholder;
 import vadl.ast.nodes.MacroParam;
-import vadl.ast.nodes.MacroPlaceholder;
-import vadl.ast.nodes.MacroReference;
 import vadl.ast.nodes.ModelDefinition;
 import vadl.ast.nodes.ModelTypeDefinition;
 import vadl.ast.nodes.Node;
-import vadl.ast.nodes.PlaceholderDefinition;
-import vadl.ast.nodes.PlaceholderExpr;
-import vadl.ast.nodes.PlaceholderNode;
-import vadl.ast.nodes.PlaceholderStatement;
 import vadl.ast.nodes.ProjectionType;
 import vadl.ast.nodes.RangeExpr;
 import vadl.ast.nodes.RecordInstance;
@@ -77,43 +67,12 @@ import vadl.ast.nodes.Statement;
 import vadl.ast.nodes.StringLiteral;
 import vadl.ast.nodes.SyntaxType;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.utils.Levenshtein;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 
 public class MacroUtils {
-
-  static MacroOrPlaceholder macroOrPlaceholder(@Nullable Macro macro, SyntaxType syntaxType,
-                                               List<String> segments) {
-    if (macro != null) {
-      return macro;
-    }
-    return new MacroPlaceholder((ProjectionType) syntaxType, segments);
-  }
-
-  static Node createMacroInstance(MacroOrPlaceholder macroOrPlaceholder, List<Node> args,
-                                  SourceLocation sourceLocation) {
-    if (isDefType(macroOrPlaceholder.returnType())) {
-      return new MacroInstanceDefinition(macroOrPlaceholder, args, sourceLocation);
-    } else if (isStmtType(macroOrPlaceholder.returnType())) {
-      return new MacroInstanceStatement(macroOrPlaceholder, args, sourceLocation);
-    } else if (isExprType(macroOrPlaceholder.returnType())) {
-      return new MacroInstanceExpr(macroOrPlaceholder, args, sourceLocation);
-    } else {
-      return new MacroInstanceNode(macroOrPlaceholder, args, sourceLocation);
-    }
-  }
-
-  static Node createPlaceholder(SyntaxType type, List<String> path, SourceLocation sourceLocation) {
-    if (isDefType(type)) {
-      return new PlaceholderDefinition(path, type, sourceLocation);
-    } else if (isStmtType(type)) {
-      return new PlaceholderStatement(path, type, sourceLocation);
-    } else if (isExprType(type)) {
-      return new PlaceholderExpr(path, type, sourceLocation);
-    } else {
-      return new PlaceholderNode(path, type, sourceLocation);
-    }
-  }
 
   static RecordInstance createRecordInstance(RecordType recordType, List<Node> entries,
                                              SourceLocation location) {
@@ -151,10 +110,13 @@ public class MacroUtils {
     }
   }
 
+  // TODO: Replace by simply resolving the name to an model (either in scope)
   @Nullable
   static Node createMacroReference(Parser parser, Identifier id) {
-    @Nullable Macro macro = parser.macroTable.getMacro(id.name);
-    if (macro == null) {
+    throw new RuntimeException("Found a reference  need");
+    /*
+    var model = parser.macroTable.getModel(id.name);
+    if (model == null) {
       parser.diagnostics.add(
           Diagnostic.error("Unknown Model `%s`".formatted(id.name), id)
               .help("Make sure the macro is defined before (above) they are used.")
@@ -168,30 +130,9 @@ public class MacroUtils {
       return new MacroReference(macro, new ProjectionType(params, macro.returnType()),
           id.location());
     }
+    */
   }
 
-  /**
-   * Returns either the given macro's parameter types or, if null, the given syntax type's
-   * {@link ProjectionType#arguments}.
-   */
-  static Iterator<SyntaxType> instanceParamTypes(MacroOrPlaceholder macroOrPlaceholder) {
-    if (macroOrPlaceholder instanceof Macro macro) {
-      return new Iterator<>() {
-        final Iterator<MacroParam> params = macro.params().iterator();
-
-        @Override
-        public boolean hasNext() {
-          return params.hasNext();
-        }
-
-        @Override
-        public SyntaxType next() {
-          return params.next().type();
-        }
-      };
-    }
-    return ((MacroPlaceholder) macroOrPlaceholder).syntaxType().arguments.iterator();
-  }
 
 
   /**
@@ -216,11 +157,11 @@ public class MacroUtils {
     parser.scanner.ResetPeek();
     var token = parser.scanner.Peek();
     var nextToken = parser.scanner.Peek();
-    var foundMacro = parser.macroTable.getMacro(token.val);
+    var foundMacro = parser.macroTable.getModel(token.val);
     if (foundMacro != null) {
       parser.scanner.ResetPeek();
       if (nextToken.kind == Parser._SYM_PAREN_OPEN) {
-        return foundMacro.returnType().isSubTypeOf(syntaxType);
+        return foundMacro.returnType.isSubTypeOf(syntaxType);
       } else {
         return false;
       }
@@ -297,7 +238,7 @@ public class MacroUtils {
         .build();
   }
 
-  static Diagnostic tooManyMacroArgumentsError(@Nullable Macro macro, SyntaxType type,
+  static Diagnostic tooManyMacroArgumentsError(/*@Nullable Macro macro,*/ SyntaxType type,
                                                SourceLocation location) {
     // Unfortunately, we need the types of the macro parameters to parse the invocation to
     // completion. But if more arguments are provided than parameter are defined we cannot parse
@@ -305,12 +246,12 @@ public class MacroUtils {
     // The macro may not exist if we are calling a macro that is passed to the current macro, in
     // which case we need to rely on the type.
     var builder = error("Invalid Model Invocation", location);
-    if (macro != null) {
-      builder.locationDescription(location,
-          "Model `%s` only expected %d arguments but, you provided at least %d.",
-          macro.name().name,
-          macro.params().size(), macro.params().size() + 1);
-    } else {
+//    if (macro != null) {
+//      builder.locationDescription(location,
+//          "Model `%s` only expected %d arguments but, you provided at least %d.",
+//          macro.name().name,
+//          macro.params().size(), macro.params().size() + 1);
+//    } else {
       var argCount = switch (type) {
         case ProjectionType pt -> pt.arguments.size();
         default -> 1;
@@ -319,7 +260,7 @@ public class MacroUtils {
       builder.locationDescription(location,
           "The model only expected %d arguments but, you provided at least %d.",
           argCount, argCount + 1);
-    }
+    //}
     return builder.build();
   }
 
@@ -333,12 +274,6 @@ public class MacroUtils {
         .build();
   }
 
-  private static boolean isPlaceholder(Node n) {
-    return n instanceof PlaceholderNode
-        || n instanceof PlaceholderDefinition
-        || n instanceof PlaceholderExpr
-        || n instanceof PlaceholderStatement;
-  }
 
   @Nullable
   private static <T> T castOrNull(Parser parser, Node node, Class<T> type, String expected) {
@@ -346,23 +281,16 @@ public class MacroUtils {
       return type.cast(node);
     }
 
-    if (isPlaceholder(node)) {
-      var sb = new StringBuilder("");
-      node.prettyPrint(0, sb);
-      var name = sb.toString();
+    if (node == null) {
+      return null;
+    }
 
-      parser.diagnostics.add(
-          Diagnostic.error("Unknown Model `%s`".formatted(name), node)
-              .help("Make sure the macro is defined before (above) they are used.")
-              .build());
 
-    } else {
       parser.diagnostics.add(
           Diagnostic.error("SyntaxType Mismatch", node)
               .description("Expected node of type `%s` but received `%s` (%s)", expected,
                   node.syntaxType().print(), node.nodeName())
               .build());
-    }
 
     return null;
   }
@@ -408,16 +336,16 @@ public class MacroUtils {
     }
 
     String message;
-    if (isPlaceholder(n)) {
-      var sb = new StringBuilder("");
-      n.prettyPrint(0, sb);
-      var name = sb.toString();
-
-      p.diagnostics.add(
-          Diagnostic.error("Unknown Model `%s`".formatted(name), n)
-              .help("Make sure the macro is defined before (above) they are used.")
-              .build());
-    } else {
+//    if (isPlaceholder(n)) {
+//      var sb = new StringBuilder("");
+//      n.prettyPrint(0, sb);
+//      var name = sb.toString();
+//
+//      p.diagnostics.add(
+//          Diagnostic.error("Unknown Model `%s`".formatted(name), n)
+//              .help("Make sure the macro is defined before (above) they are used.")
+//              .build());
+//    } else {
       message =
           "Expected node of type BinOp or Id, received "
               + n.syntaxType().print() + " - " + n;
@@ -425,7 +353,7 @@ public class MacroUtils {
           Diagnostic.error("SyntaxType Mismatch", n)
               .description("%s", message)
               .build());
-    }
+//    }
 
     return null;
   }
@@ -468,13 +396,46 @@ public class MacroUtils {
     return castOrNull(p, n, Statement.class, "Stats");
   }
 
+
   @Nullable
-  static Node expandNode(Parser parser, Node node) {
-    var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, List.of());
-    var expanded = macroExpander.expandNode(node, parser.ast);
-    parser.diagnostics.addAll(macroExpander.errors);
-    return expanded;
+  static Node expandTopLevelMacroCall(Parser parser, MacroCall macroCall) {
+    // Resolve the model
+    ensure(macroCall.subcalls().isEmpty(), () -> error("Invalid model call", macroCall));
+    var model = parser.macroTable.getModel(macroCall.name().name);
+    if (model == null) {
+      throw new IllegalStateException("Invalid model call: " + macroCall);
+    }
+
+    // TODO don't evaluate if broken
+
+    try {
+      return MacroExpander.expandMacroCall(model, macroCall, parser.macroOverrides);
+    } catch (DiagnosticList e) {
+      parser.diagnostics.addAll(e.items);
+      return null;
+    }
   }
+
+  @Nullable
+  static Node expandTopLevelAsId(Parser parser, AsIdExpr asId) {
+    try {
+      return MacroExpander.expandAsId(asId);
+    } catch (DiagnosticList e) {
+      parser.diagnostics.addAll(e.items);
+      return null;
+    }
+  }
+
+  @Nullable
+  static Node expandTopLevelAsStr(Parser parser, AsStrExpr asStr) {
+    try {
+      return MacroExpander.expandAsStr(asStr);
+    } catch (DiagnosticList e) {
+      parser.diagnostics.addAll(e.items);
+      return null;
+    }
+  }
+
 
   /**
    * Assembly definitions can be written with multiple identifiers to be bound to multiple
@@ -494,9 +455,7 @@ public class MacroUtils {
         continue;
       }
 
-      var expander = new MacroExpander(Map.of(), Map.of(), def.location().fullExpandedFromStack());
-      var expanded = expander.expandAssemblies(assembly);
-      parser.diagnostics.addAll(expander.errors);
+      var expanded = MacroExpander.expandAssemblyDefs(assembly);
       iter.set(expanded.getFirst());
       expanded.subList(1, expanded.size()).forEach(iter::add);
     }
@@ -505,15 +464,16 @@ public class MacroUtils {
   }
 
   /**
-   * Defines all provided macro definitions in the provided macroTable.
+   * Defines all provided macro definitions into the provided macroTable.
+   * This is mostly useful because macros ca generate macros and these generated macros need to be
+   * injected into the symbol table to be accessable.
    *
    * @param macroTable  to be modified.
    * @param definitions to be inserted.
    */
-  static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
-    for (Definition definition : definitions) {
+  static void defineGeneratedMacroSymbols(SymbolTable macroTable, Definition definition) {
       if (definition instanceof DefinitionList list) {
-        readMacroSymbols(macroTable, list.items);
+        defineGeneratedMacroSymbols(macroTable, list.items);
       } else if (definition instanceof ModelDefinition modelDefinition) {
         macroTable.defineSymbol(modelDefinition);
       } else if (definition instanceof ModelTypeDefinition modelTypeDefinition) {
@@ -521,6 +481,19 @@ public class MacroUtils {
       } else if (definition instanceof RecordTypeDefinition recordTypeDefinition) {
         macroTable.defineSymbol(recordTypeDefinition);
       }
+  }
+
+  /**
+   * Defines all provided macro definitions into the provided macroTable.
+   * This is mostly useful because macros ca generate macros and these generated macros need to be
+   * injected into the symbol table to be accessable.
+   *
+   * @param macroTable  to be modified.
+   * @param definitions to be inserted.
+   */
+  static void defineGeneratedMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
+    for (Definition definition : definitions) {
+      defineGeneratedMacroSymbols(macroTable, definition);
     }
   }
 
@@ -530,21 +503,24 @@ public class MacroUtils {
    * @param macroTable the macro table that should be fed with found macro symbols
    * @param isa        the isa that should be (recursively) traversed to find all macro definitions.
    */
-  static void readMacroSymbols(SymbolTable macroTable, InstructionSetDefinition isa) {
-    readMacroSymbols(macroTable, isa.definitions);
+  static void defineGeneratedMacroSymbols(SymbolTable macroTable, InstructionSetDefinition isa) {
+    defineGeneratedMacroSymbols(macroTable, isa.definitions);
     // FIXME: This is not optimal as we traverse an ISA potentially multiple times.
     // as we don't have access to the macroTable of the referenced ISA, we must
     // do the traversal again.
     for (IsId extending : isa.extending) {
       var extendingIsa = (InstructionSetDefinition) requireNonNull(extending.target());
-      readMacroSymbols(macroTable, extendingIsa);
+      defineGeneratedMacroSymbols(macroTable, extendingIsa);
     }
   }
 
-  static void verifyCorrectModelOverride(Parser parser, ModelDefinition def,
+  // If this model is overwritten then we need to verify that the return type is a `Id` as those
+  // are the only ones that are allowed to overriden.
+  static void verifyModelOverrideType(Parser parser, ModelDefinition def,
                                          SourceLocation location) {
-    if (parser.macroOverrides.containsKey(def.id.pathToString()) && !def.returnType.equals(
-        BasicSyntaxType.ID)) {
+    if (def.id != null
+        && parser.macroOverrides.containsKey(def.id.pathToString())
+        && !def.returnType.equals(BasicSyntaxType.ID)) {
       parser.diagnostics.add(
           error("Invalid Model Override", location)
               .locationNote(location,
@@ -604,6 +580,53 @@ public class MacroUtils {
       }
     }
     return expandedCalls;
+  }
+
+  /**
+   * Returns the macroType of anything that can be evaluated by the macro system.
+   * Most usually these are macros or parameters of the currently parsed macro or one of the
+   * enclosing macros for macro-in-macro cases.
+   *
+   * @param parser that is active.
+   * @param name to be resolved.
+   * @return the type if found, null otherwise.
+   */
+  @Nullable
+  static SyntaxType macroCallableType(Parser parser, Identifier name) {
+    // Search the symbol table
+    var model = parser.macroTable.getModel(name.name);
+    if (model != null) {
+      return model.projectionType();
+    }
+
+    // Search the enclosing params
+    for (var modelParams : parser.macroContext) {
+      for (var param : modelParams) {
+        if (param.name().name.equals(name.name)) {
+          return param.type();
+        }
+      }
+    }
+
+    // Error out and return null
+    // FIXME: Add suggestions
+    parser.diagnostics.add(
+        error("Unknown Macro: %s".formatted(name.name), name)
+            .build()
+    );
+
+    return null;
+  }
+
+  static boolean isInsideModel(Parser parser) {
+      return !parser.macroContext.isEmpty();
+  }
+
+  static void addSyntaxTypeError(Parser parser, SyntaxType required, SyntaxType actual, WithLocation loc) {
+    parser.diagnostics.add(
+        Diagnostic.error("SyntaxType Mismatch", loc)
+            .description("Required `%s`, but got `%s`", required, actual)
+            .build());
   }
 
   private static void reportError(Parser parser, String error, SourceLocation location) {

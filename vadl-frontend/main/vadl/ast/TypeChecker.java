@@ -118,10 +118,7 @@ import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
 import vadl.ast.nodes.LogicDefinition;
-import vadl.ast.nodes.MacroInstanceDefinition;
-import vadl.ast.nodes.MacroInstanceExpr;
-import vadl.ast.nodes.MacroInstanceStatement;
-import vadl.ast.nodes.MacroInstructionDefinition;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MacroMatchStatement;
@@ -138,9 +135,6 @@ import vadl.ast.nodes.Operator;
 import vadl.ast.nodes.Parameter;
 import vadl.ast.nodes.PatchDefinition;
 import vadl.ast.nodes.PipelineDefinition;
-import vadl.ast.nodes.PlaceholderDefinition;
-import vadl.ast.nodes.PlaceholderExpr;
-import vadl.ast.nodes.PlaceholderStatement;
 import vadl.ast.nodes.PortBehaviorDefinition;
 import vadl.ast.nodes.PredicateFormatField;
 import vadl.ast.nodes.ProcessDefinition;
@@ -2233,12 +2227,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   }
 
   @Override
-  public Void visit(PlaceholderDefinition definition) {
-    throw foreignNodeException(definition);
-  }
-
-  @Override
-  public Void visit(MacroInstanceDefinition definition) {
+  public Void visit(MacroCall.Definition definition) {
     throw foreignNodeException(definition);
   }
 
@@ -3220,11 +3209,6 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   }
 
   @Override
-  public Void visit(MacroInstructionDefinition definition) {
-    throw addErrorAndStopChecking(unimplementedError(definition));
-  }
-
-  @Override
   public Void visit(PortBehaviorDefinition definition) {
     throw addErrorAndStopChecking(unimplementedError(definition));
   }
@@ -3677,12 +3661,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   }
 
   @Override
-  public Void visit(PlaceholderExpr expr) {
-    throw foreignNodeException(expr);
-  }
-
-  @Override
-  public Void visit(MacroInstanceExpr expr) {
+  public Void visit(MacroCall.Expr expr) {
     throw foreignNodeException(expr);
   }
 
@@ -5213,12 +5192,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   }
 
   @Override
-  public Void visit(PlaceholderStatement statement) {
-    throw addErrorAndStopChecking(unimplementedError(statement));
-  }
-
-  @Override
-  public Void visit(MacroInstanceStatement statement) {
+  public Void visit(MacroCall.Statement statement) {
     throw addErrorAndStopChecking(unimplementedError(statement));
   }
 

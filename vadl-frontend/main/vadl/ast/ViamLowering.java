@@ -90,8 +90,7 @@ import vadl.ast.nodes.ImportDefinition;
 import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.InstructionSetDefinition;
 import vadl.ast.nodes.LogicDefinition;
-import vadl.ast.nodes.MacroInstanceDefinition;
-import vadl.ast.nodes.MacroInstructionDefinition;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.MicroArchitectureDefinition;
@@ -101,7 +100,6 @@ import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
 import vadl.ast.nodes.PatchDefinition;
 import vadl.ast.nodes.PipelineDefinition;
-import vadl.ast.nodes.PlaceholderDefinition;
 import vadl.ast.nodes.PortBehaviorDefinition;
 import vadl.ast.nodes.PredicateFormatField;
 import vadl.ast.nodes.ProcessDefinition;
@@ -1768,13 +1766,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
-  public Optional<vadl.viam.Definition> visit(MacroInstanceDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(MacroInstructionDefinition definition) {
+  public Optional<vadl.viam.Definition> visit(MacroCall.Definition definition) {
     throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
         definition.getClass().getSimpleName()));
   }
@@ -1922,12 +1914,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(PipelineDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(PlaceholderDefinition definition) {
     throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
         definition.getClass().getSimpleName()));
   }

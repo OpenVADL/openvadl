@@ -62,7 +62,6 @@ import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ExprVisitor;
-import vadl.ast.nodes.FloatTypeDefinition;
 import vadl.ast.nodes.ForallExpr;
 import vadl.ast.nodes.ForallStatement;
 import vadl.ast.nodes.ForallThenExpr;
@@ -81,8 +80,7 @@ import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
-import vadl.ast.nodes.MacroInstanceExpr;
-import vadl.ast.nodes.MacroInstanceStatement;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MacroMatchStatement;
 import vadl.ast.nodes.MatchExpr;
@@ -92,8 +90,6 @@ import vadl.ast.nodes.NewLabelStatement;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
-import vadl.ast.nodes.PlaceholderExpr;
-import vadl.ast.nodes.PlaceholderStatement;
 import vadl.ast.nodes.PseudoInstructionDefinition;
 import vadl.ast.nodes.RaiseStatement;
 import vadl.ast.nodes.RangeExpr;
@@ -133,7 +129,6 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Definition;
 import vadl.viam.ExceptionDef;
-import vadl.viam.FloatFormat;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
@@ -1175,14 +1170,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         new Constant.Str(expr.value));
   }
 
-  @Override
-  public ExpressionNode visit(PlaceholderExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
-  }
+
 
   @Override
-  public ExpressionNode visit(MacroInstanceExpr expr) {
+  public ExpressionNode visit(MacroCall.Expr expr) {
     throw new RuntimeException(
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
@@ -2096,7 +2087,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   @Override
-  public SubgraphContext visit(MacroInstanceStatement statement) {
+  public SubgraphContext visit(MacroCall.Statement statement) {
     throw new RuntimeException(
         "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
@@ -2151,12 +2142,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     return SubgraphContext.of(statement, requireNonNull(start),
         requireNonNull(end));
-  }
-
-  @Override
-  public SubgraphContext visit(PlaceholderStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override

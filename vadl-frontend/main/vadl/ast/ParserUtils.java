@@ -287,6 +287,11 @@ class ParserUtils {
     return type == BasicSyntaxType.ID || type.isSubTypeOf(BasicSyntaxType.ID);
   }
 
+  static boolean isStrType(SyntaxType type) {
+    return type == BasicSyntaxType.STR || type.isSubTypeOf(BasicSyntaxType.STR);
+  }
+
+
   static boolean isDefType(SyntaxType type) {
     return type.isSubTypeOf(BasicSyntaxType.ISA_DEFS);
   }

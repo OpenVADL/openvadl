@@ -36,13 +36,11 @@ public interface StatementVisitor<T> {
 
   T visit(LockStatement statement);
 
-  T visit(MacroInstanceStatement statement);
+  T visit(MacroCall.Statement statement);
 
   T visit(MacroMatchStatement statement);
 
   T visit(MatchStatement statement);
-
-  T visit(PlaceholderStatement statement);
 
   T visit(RaiseStatement statement);
 

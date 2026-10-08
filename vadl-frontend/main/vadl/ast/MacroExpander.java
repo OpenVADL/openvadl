@@ -45,7 +45,6 @@ import vadl.ast.nodes.AsmGrammarTypeDefinition;
 import vadl.ast.nodes.AsmModifierDefinition;
 import vadl.ast.nodes.AssemblyDefinition;
 import vadl.ast.nodes.AssignmentStatement;
-import vadl.ast.nodes.BasicSyntaxType;
 import vadl.ast.nodes.BinOp;
 import vadl.ast.nodes.BinaryExpr;
 import vadl.ast.nodes.BinaryLiteral;
@@ -102,20 +101,12 @@ import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
 import vadl.ast.nodes.LogicDefinition;
-import vadl.ast.nodes.Macro;
-import vadl.ast.nodes.MacroInstanceDefinition;
-import vadl.ast.nodes.MacroInstanceExpr;
-import vadl.ast.nodes.MacroInstanceNode;
-import vadl.ast.nodes.MacroInstanceStatement;
-import vadl.ast.nodes.MacroInstructionDefinition;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatch;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MacroMatchNode;
 import vadl.ast.nodes.MacroMatchStatement;
-import vadl.ast.nodes.MacroOrPlaceholder;
-import vadl.ast.nodes.MacroPlaceholder;
-import vadl.ast.nodes.MacroReference;
 import vadl.ast.nodes.MatchExpr;
 import vadl.ast.nodes.MatchStatement;
 import vadl.ast.nodes.MemoryDefinition;
@@ -128,10 +119,6 @@ import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
 import vadl.ast.nodes.PatchDefinition;
 import vadl.ast.nodes.PipelineDefinition;
-import vadl.ast.nodes.PlaceholderDefinition;
-import vadl.ast.nodes.PlaceholderExpr;
-import vadl.ast.nodes.PlaceholderNode;
-import vadl.ast.nodes.PlaceholderStatement;
 import vadl.ast.nodes.PortBehaviorDefinition;
 import vadl.ast.nodes.PredicateFormatField;
 import vadl.ast.nodes.ProcessDefinition;
@@ -164,6 +151,7 @@ import vadl.ast.nodes.UnaryExpr;
 import vadl.ast.nodes.UsingDefinition;
 import vadl.ast.nodes.WildcardLiteral;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.utils.RopeList;
 import vadl.utils.SourceLocation;
 
@@ -184,17 +172,77 @@ class MacroExpander
     implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
   final Map<String, Node> args;
   final Map<String, Identifier> macroOverrides;
+  final SymbolTable macroTable;
   final List<Diagnostic> errors = new ArrayList<>();
   @Nullable
   final RopeList<SourceLocation.DirectLocation> expandingFrom;
 
-  MacroExpander(Map<String, Node> args, Map<String, Identifier> macroOverrides,
-                @Nullable List<SourceLocation.DirectLocation> expandingFrom) {
+  private MacroExpander(Map<String, Node> args,
+                        SymbolTable macroTable,
+                        Map<String, Identifier> macroOverrides,
+                        @Nullable RopeList<SourceLocation.DirectLocation> expandingFrom) {
     this.args = args;
+    this.macroTable = macroTable;
     this.macroOverrides = macroOverrides;
-    this.expandingFrom = expandingFrom == null || expandingFrom.isEmpty()
-        ? null
-        : RopeList.of(expandingFrom);
+    this.expandingFrom = expandingFrom;
+  }
+
+  public static Node expandMacroCall(ModelDefinition definition, MacroCall call,
+                                     Map<String, Identifier> macroOverrides) {
+
+    var args = new HashMap<String, Node>();
+    var positionalArgs = call.arguments();
+    for (int i = 0; i < definition.params.size(); i++) {
+      args.put(definition.params.get(i).name().name, positionalArgs.get(i));
+    }
+
+    var expander = new MacroExpander(
+        args,
+        definition.macroTable,
+        macroOverrides,
+        RopeList.of(call.location().fullExpandedFromStack()));
+    var result = expander.expandNode(definition.body);
+
+    if (!expander.errors.isEmpty()) {
+      throw new DiagnosticList(expander.errors);
+    }
+
+    return result;
+  }
+
+  public static Node expandAsId(AsIdExpr asId) {
+    var expander = new MacroExpander(Map.of(), new SymbolTable(), Map.of(), null);
+
+    var result = asId.accept(expander);
+
+    if (!expander.errors.isEmpty()) {
+      throw new DiagnosticList(expander.errors);
+    }
+
+    return result;
+  }
+
+  public static Node expandAsStr(AsStrExpr asStr) {
+    var expander = new MacroExpander(Map.of(), new SymbolTable(), Map.of(), null);
+
+    var result = asStr.accept(expander);
+
+    if (!expander.errors.isEmpty()) {
+      throw new DiagnosticList(expander.errors);
+    }
+
+    return result;
+  }
+
+  public static List<AssemblyDefinition> expandAssemblyDefs(AssemblyDefinition def) {
+    var expander = new MacroExpander(Map.of(), new SymbolTable(), Map.of(), null);
+    var result = expander.expandAssemblies(def);
+
+    if (!expander.errors.isEmpty()) {
+      throw new DiagnosticList(expander.errors);
+    }
+
+    return result;
   }
 
   /**
@@ -323,8 +371,7 @@ class MacroExpander
             copyLoc(recordInstance.sourceLocation));
       }
       case EncodingDefinition.EncsNode encs -> expandEncs(encs);
-      case PlaceholderNode placeholderNode -> expand(placeholderNode);
-      case MacroInstanceNode macroInstanceNode -> expand(macroInstanceNode);
+      case MacroCall.Node macroCallNode -> expand(macroCallNode);
       case MacroMatchNode macroMatchNode -> expand(macroMatchNode);
       case BinOp binOp -> new BinOp(binOp.operator, copyLoc(binOp.location));
       case UnOp unOp -> new UnOp(unOp.operator, copyLoc(unOp.location));
@@ -346,7 +393,7 @@ class MacroExpander
    * @param definition to be expanded.
    * @return a list of the expanded definitions.
    */
-  public List<AssemblyDefinition> expandAssemblies(AssemblyDefinition definition) {
+  private List<AssemblyDefinition> expandAssemblies(AssemblyDefinition definition) {
     var result = new ArrayList<AssemblyDefinition>(definition.identifiers.size());
     for (var identifier : definition.identifiers) {
       result.add(new AssemblyDefinition(
@@ -356,6 +403,45 @@ class MacroExpander
       ));
     }
     return result;
+  }
+
+  private Node expand(MacroCall macroCall) {
+    // Resolve the model
+    Node value = null;
+    value = args.get(macroCall.name().name);
+    if (value == null) {
+      value = macroTable.findMacroAs(macroCall.name().name, Node.class);
+    }
+    if (value == null) {
+      throw new IllegalStateException("Macro " + macroCall.name().name + " not found");
+      //return null;
+    }
+
+    for (var subcall : macroCall.subcalls()) {
+      if (!(value instanceof RecordInstance record)) {
+        throw new IllegalStateException("Macro " + macroCall.name().name + " not found");
+        //return null;
+      }
+      value = record.findEntry(subcall);
+      if (value == null) {
+        throw new IllegalStateException("Macro " + macroCall.name().name + " not found");
+      }
+    }
+
+
+    if (value instanceof ModelDefinition model) {
+      // Args need to be exanded because they might contain other macro calls.
+      var expandedArgs = macroCall.arguments().stream().map(this::expandNode).toList();
+      var patchedCall = MacroCall.of(macroCall.name(), macroCall.subcalls(), expandedArgs, macroCall.syntaxType(), macroCall.location());
+      value = MacroExpander.expandMacroCall(model, patchedCall, macroOverrides);
+    } else {
+      if (!macroCall.arguments().isEmpty()) {
+        throw new IllegalStateException("Macro " + macroCall.name().name + " not callable");
+        //return null;
+      }
+    }
+
+    return value;
   }
 
   @Override
@@ -406,53 +492,46 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(PlaceholderExpr expr) {
-    Node arg = resolveArg(expr.segments);
-    if (!(arg instanceof Expr argExpr)) {
-      return expr;
-    }
-    return argExpr;
-  }
-
-  @Override
-  public Expr visit(MacroInstanceExpr expr) {
-    var macro = resolveMacro(expr.macro);
-    if (macro == null) {
-      // Macro reference passed down multiple layers - let parent layer expand
-      var arguments = new ArrayList<>(expr.arguments);
-      arguments.replaceAll(this::expandNode);
-      var placeholder = (MacroPlaceholder) expr.macro;
-      var resolved = resolveArg(placeholder.segments());
-      var newSegments =
-          resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
-      return new MacroInstanceExpr(new MacroPlaceholder(placeholder.syntaxType(), newSegments),
-          arguments, copyLoc(expr.loc));
-    }
-
-    // Overrides can be passed via the CLI or the API
-    if (macro.returnType().equals(BasicSyntaxType.ID)
-        && macroOverrides.containsKey(macro.name().name)) {
-      return macroOverrides.get(macro.name().name);
-    }
-
-    try {
-      assertValidMacro(macro, expr.location());
-      var arguments = collectMacroParameters(macro, expr.arguments, expr.location());
-      var body = (Expr) macro.body();
-      var subpass =
-          new MacroExpander(arguments, macroOverrides, copyLoc(expr.loc).fullExpandedFromStack());
-      var expanded = subpass.expandExpr(body);
-      if (macro.returnType().equals(BasicSyntaxType.EX)) {
-        var group = new GroupedExpr(new ArrayList<>(), expanded.location());
-        group.expressions.add(expanded);
-        return group;
-      } else {
-        return expanded;
-      }
-    } catch (MacroExpansionException e) {
-      reportError(e.message, e.sourceLocation);
-      return expr;
-    }
+  public Expr visit(MacroCall.Expr expr) {
+    return (Expr)expand(expr);
+    //throw new UnsupportedOperationException("Not yet implemented");
+//    var macro = resolveMacro(expr.macro);
+//    if (macro == null) {
+//      // Macro reference passed down multiple layers - let parent layer expand
+//      var arguments = new ArrayList<>(expr.arguments);
+//      arguments.replaceAll(this::expandNode);
+//      var placeholder = (MacroPlaceholder) expr.macro;
+//      var resolved = resolveArg(placeholder.segments());
+//      var newSegments =
+//          resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
+//      return new MacroInstanceExpr(new MacroPlaceholder(placeholder.syntaxType(), newSegments),
+//          arguments, copyLoc(expr.loc));
+//    }
+//
+//    // Overrides can be passed via the CLI or the API
+//    if (macro.returnType().equals(BasicSyntaxType.ID)
+//        && macroOverrides.containsKey(macro.name().name)) {
+//      return macroOverrides.get(macro.name().name);
+//    }
+//
+//    try {
+//      assertValidMacro(macro, expr.location());
+//      var arguments = collectMacroParameters(macro, expr.arguments, expr.location());
+//      var body = (Expr) macro.body();
+//      var subpass =
+//          new MacroExpander(arguments, macroOverrides, copyLoc(expr.loc).fullExpandedFromStack());
+//      var expanded = subpass.expandExpr(body);
+//      if (macro.returnType().equals(BasicSyntaxType.EX)) {
+//        var group = new GroupedExpr(new ArrayList<>(), expanded.location());
+//        group.expressions.add(expanded);
+//        return group;
+//      } else {
+//        return expanded;
+//      }
+//    } catch (MacroExpansionException e) {
+//      reportError(e.message, e.sourceLocation);
+//      return expr;
+//    }
   }
 
   @Override
@@ -576,8 +655,7 @@ class MacroExpander
         nameBuilder.append(binaryLiteral.token);
       } else if (inner instanceof BoolLiteral bool) {
         nameBuilder.append(bool.value);
-      } else if (inner instanceof PlaceholderExpr
-          || inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
+      } else if (inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
         // Will be expanded as soon as the used placeholders are bound
         return null;
       } else {
@@ -987,36 +1065,32 @@ class MacroExpander
   }
 
   @Override
-  public Definition visit(PlaceholderDefinition definition) {
-    var arg = resolveArg(definition.segments);
-    return Objects.requireNonNullElse((Definition) arg, definition);
-  }
-
-  @Override
-  public Definition visit(MacroInstanceDefinition definition) {
-    try {
-      var macro = resolveMacro(definition.macro);
-      if (macro == null) {
-        var arguments = expandNodes(definition.arguments);
-        var placeholder = (MacroPlaceholder) definition.macro;
-        var resolved = resolveArg(placeholder.segments());
-        var newSegments =
-            resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
-        return new MacroInstanceDefinition(
-            new MacroPlaceholder(placeholder.syntaxType(), newSegments), arguments,
-            copyLoc(definition.loc));
-      }
-      assertValidMacro(macro, definition.location());
-      var arguments =
-          collectMacroParameters(macro, definition.arguments, definition.location());
-      var body = (Definition) macro.body();
-      var subpass = new MacroExpander(arguments, macroOverrides,
-          copyLoc(definition.location()).fullExpandedFromStack());
-      return body.accept(subpass);
-    } catch (MacroExpansionException e) {
-      reportError(e.message, e.sourceLocation);
-      return definition;
-    }
+  public Definition visit(MacroCall.Definition definition) {
+    return (Definition) expand(definition);
+    //throw new RuntimeException("Not implemented yet");
+//    try {
+//      var macro = resolveMacro(definition.macro);
+//      if (macro == null) {
+//        var arguments = expandNodes(definition.arguments);
+//        var placeholder = (MacroPlaceholder) definition.macro;
+//        var resolved = resolveArg(placeholder.segments());
+//        var newSegments =
+//            resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
+//        return new MacroInstanceDefinition(
+//            new MacroPlaceholder(placeholder.syntaxType(), newSegments), arguments,
+//            copyLoc(definition.loc));
+//      }
+//      assertValidMacro(macro, definition.location());
+//      var arguments =
+//          collectMacroParameters(macro, definition.arguments, definition.location());
+//      var body = (Definition) macro.body();
+//      var subpass = new MacroExpander(arguments, macroOverrides,
+//          copyLoc(definition.location()).fullExpandedFromStack());
+//      return body.accept(subpass);
+//    } catch (MacroExpansionException e) {
+//      reportError(e.message, e.sourceLocation);
+//      return definition;
+//    }
   }
 
   @Override
@@ -1041,15 +1115,20 @@ class MacroExpander
 
   @Override
   public Definition visit(ModelDefinition definition) {
-    var boundModel = new ModelDefinition(
+    // Create a new layer of symboltable where we bound all the current args in so the inner model
+    // here can resolve them.
+    var table = macroTable.createChild();
+    for (var arg : args.entrySet()) {
+      table.defineSymbol(arg.getKey(), arg.getValue());
+    }
+
+    return new ModelDefinition(
         expandExpr(definition.id),
         definition.params,
         definition.body,
         definition.returnType,
+        table,
         copyLoc(definition.loc));
-    boundModel.boundArguments = new HashMap<>(definition.boundArguments);
-    boundModel.boundArguments.putAll(args);
-    return boundModel;
   }
 
   @Override
@@ -1213,17 +1292,6 @@ class MacroExpander
         expandExpr(definition.id),
         expandExpr(definition.isa),
         expandDefinitions(definition.definitions),
-        copyLoc(definition.loc)
-    );
-  }
-
-  @Override
-  public Definition visit(MacroInstructionDefinition definition) {
-    return new MacroInstructionDefinition(
-        definition.kind,
-        expandParams(definition.inputs),
-        expandParams(definition.outputs),
-        expandStatement(definition.statement),
         copyLoc(definition.loc)
     );
   }
@@ -1445,36 +1513,31 @@ class MacroExpander
   }
 
   @Override
-  public Statement visit(PlaceholderStatement statement) {
-    var arg = resolveArg(statement.segments);
-    return Objects.requireNonNullElse((Statement) arg,
-        new PlaceholderStatement(statement.segments, statement.syntaxType, copyLoc(statement.loc)));
-  }
-
-  @Override
-  public Statement visit(MacroInstanceStatement stmt) {
-    try {
-      var macro = resolveMacro(stmt.macro);
-      if (macro == null) {
-        var arguments = expandNodes(stmt.arguments);
-        var placeholder = (MacroPlaceholder) stmt.macro;
-        var resolved = resolveArg(placeholder.segments());
-        var newSegments =
-            resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
-        return new MacroInstanceStatement(
-            new MacroPlaceholder(placeholder.syntaxType(), newSegments), arguments,
-            copyLoc(stmt.loc));
-      }
-      assertValidMacro(macro, copyLoc(stmt.location()));
-      var arguments = collectMacroParameters(macro, stmt.arguments, copyLoc(stmt.location()));
-      var body = (Statement) macro.body();
-      var subpass = new MacroExpander(arguments, macroOverrides,
-          copyLoc(stmt.location()).fullExpandedFromStack());
-      return body.accept(subpass);
-    } catch (MacroExpansionException e) {
-      reportError(e.message, e.sourceLocation);
-      return stmt;
-    }
+  public Statement visit(MacroCall.Statement stmt) {
+    return (Statement)expand(stmt);
+    //throw new RuntimeException("not implemented");
+//    try {
+//      var macro = resolveMacro(stmt.macro);
+//      if (macro == null) {
+//        var arguments = expandNodes(stmt.arguments);
+//        var placeholder = (MacroPlaceholder) stmt.macro;
+//        var resolved = resolveArg(placeholder.segments());
+//        var newSegments =
+//            resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
+//        return new MacroInstanceStatement(
+//            new MacroPlaceholder(placeholder.syntaxType(), newSegments), arguments,
+//            copyLoc(stmt.loc));
+//      }
+//      assertValidMacro(macro, copyLoc(stmt.location()));
+//      var arguments = collectMacroParameters(macro, stmt.arguments, copyLoc(stmt.location()));
+//      var body = (Statement) macro.body();
+//      var subpass = new MacroExpander(arguments, macroOverrides,
+//          copyLoc(stmt.location()).fullExpandedFromStack());
+//      return body.accept(subpass);
+//    } catch (MacroExpansionException e) {
+//      reportError(e.message, e.sourceLocation);
+//      return stmt;
+//    }
   }
 
   @Override
@@ -1564,40 +1627,6 @@ class MacroExpander
         copyLoc(forallStatement.loc));
   }
 
-  private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
-      throws MacroExpansionException {
-    if (macro.returnType() == BasicSyntaxType.INVALID) {
-      throw new MacroExpansionException(
-          "Skipped expanding macro %s due to previous error".formatted(macro.name().name),
-          sourceLocation);
-    }
-  }
-
-  Map<String, Node> collectMacroParameters(Macro macro, List<Node> actualArguments,
-                                           SourceLocation instanceLoc)
-      throws MacroExpansionException {
-    var formalParams = macro.params();
-    if (formalParams.size() != actualArguments.size()) {
-      throw new MacroExpansionException(
-          "The macro `%s` expects %d arguments but %d were provided.".formatted(macro.name().name,
-              formalParams.size(), actualArguments.size()), instanceLoc);
-    }
-    var arguments = new HashMap<>(macro.boundArguments());
-    for (int i = 0; i < formalParams.size(); i++) {
-      var formalParam = formalParams.get(i);
-      var actualParam = expandNode(actualArguments.get(i));
-      if (actualParam.syntaxType().isSubTypeOf(formalParam.type())) {
-        arguments.put(formalParam.name().name, actualParam);
-      } else {
-        throw new MacroExpansionException(
-            "Macro %s expects parameter %s to be of type %s, got %s instead".formatted(
-                macro.name().name, formalParam.name().name, formalParam.type(),
-                actualParam.syntaxType()), instanceLoc);
-      }
-    }
-    return arguments;
-  }
-
   private EncodingDefinition.EncsNode expandEncs(EncodingDefinition.EncsNode encs) {
     var encodings = new ArrayList<IsEncs>(encs.items.size());
     for (var enc : encs.items) {
@@ -1616,11 +1645,6 @@ class MacroExpander
         encs.addAll(expandEnc(enc));
       }
       return encs;
-    } else if (encoding instanceof PlaceholderNode placeholder) {
-      var expanded = expand(placeholder);
-      if (expanded instanceof EncodingDefinition.EncsNode encs) {
-        return encs.items;
-      }
     } else if (encoding instanceof MacroMatchNode macroMatchNode) {
       var expanded = expand(macroMatchNode);
       if (expanded instanceof EncodingDefinition.EncsNode encs) {
@@ -1628,8 +1652,8 @@ class MacroExpander
       } else {
         return List.of((IsEncs) expanded);
       }
-    } else if (encoding instanceof MacroInstanceNode macroInstanceNode) {
-      var expanded = expand(macroInstanceNode);
+    } else if (encoding instanceof MacroCall.Node macroCallNode) {
+      var expanded = expand(macroCallNode);
       if (expanded instanceof EncodingDefinition.EncsNode encs) {
         return encs.items;
       } else {
@@ -1671,72 +1695,70 @@ class MacroExpander
     return expandNode(macroMatch.defaultChoice());
   }
 
-  private @Nullable Node resolveArg(List<String> segments) {
-    Node arg = args.get(segments.getFirst());
-    if (arg == null) {
-      return null;
-    }
-    if (segments.size() > 1 && !(arg instanceof RecordInstance)) {
-      return null;
-    }
-    for (int i = 1; i < segments.size(); i++) {
-      var nextName = segments.get(i);
-      var tuple = (RecordInstance) arg;
-      for (int j = 0; j < tuple.type.entries.size(); j++) {
-        if (tuple.type.entries.get(j).name().equals(nextName)) {
-          arg = tuple.entries.get(j);
-          break;
-        }
-      }
-    }
+//  private @Nullable Node resolveArg(List<String> segments) {
+//    Node arg = args.get(segments.getFirst());
+//    if (arg == null) {
+//      return null;
+//    }
+//    if (segments.size() > 1 && !(arg instanceof RecordInstance)) {
+//      return null;
+//    }
+//    for (int i = 1; i < segments.size(); i++) {
+//      var nextName = segments.get(i);
+//      var tuple = (RecordInstance) arg;
+//      for (int j = 0; j < tuple.type.entries.size(); j++) {
+//        if (tuple.type.entries.get(j).name().equals(nextName)) {
+//          arg = tuple.entries.get(j);
+//          break;
+//        }
+//      }
+//    }
+//
+//    // Need to copy the arguments becuase otherwise all usages will point to the same
+//    //  instance, but depending on their usage, they can have different names etc.
+//    if (AstUtils.isFullyExpanded(arg)) {
+//      arg = expandNode(arg);
+//    }
+//
+//    return arg;
+//  }
+//
+//  private @Nullable Macro resolveMacro(MacroOrPlaceholder macroOrPlaceholder) {
+//    if (macroOrPlaceholder instanceof Macro macro) {
+//      return macro;
+//    }
+//    var arg = resolveArg(((MacroPlaceholder) macroOrPlaceholder).segments());
+//    if (arg instanceof MacroReference macroReference) {
+//      return macroReference.macro;
+//    }
+//    return null;
+//  }
 
-    // Need to copy the arguments becuase otherwise all usages will point to the same
-    //  instance, but depending on their usage, they can have different names etc.
-    if (AstUtils.isFullyExpanded(arg)) {
-      arg = expandNode(arg);
-    }
-
-    return arg;
-  }
-
-  private @Nullable Macro resolveMacro(MacroOrPlaceholder macroOrPlaceholder) {
-    if (macroOrPlaceholder instanceof Macro macro) {
-      return macro;
-    }
-    var arg = resolveArg(((MacroPlaceholder) macroOrPlaceholder).segments());
-    if (arg instanceof MacroReference macroReference) {
-      return macroReference.macro;
-    }
-    return null;
-  }
-
-  private Node expand(PlaceholderNode node) {
-    return Objects.requireNonNullElse(resolveArg(node.segments), node);
-  }
-
-  private Node expand(MacroInstanceNode node) {
-    var macro = resolveMacro(node.macro);
-    if (macro == null) {
-      // Macro reference passed down multiple layers - let parent layer expand
-      var arguments = expandNodes(node.arguments);
-      var placeholder = (MacroPlaceholder) node.macro;
-      var resolved = resolveArg(placeholder.segments());
-      var newSegments =
-          resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
-      return new MacroInstanceNode(new MacroPlaceholder(placeholder.syntaxType(), newSegments),
-          arguments, node.loc);
-    }
-
-    try {
-      assertValidMacro(macro, node.location());
-      var arguments = collectMacroParameters(macro, node.arguments, node.location());
-      var subpass =
-          new MacroExpander(arguments, macroOverrides, copyLoc(node.loc).fullExpandedFromStack());
-      return subpass.expandNode(macro.body());
-    } catch (MacroExpansionException e) {
-      reportError(e.message, e.sourceLocation);
-      return node;
-    }
+  public Node expand(MacroCall.Node node) {
+    return expand((MacroCall)node);
+    //throw new RuntimeException("Macro expanding not implemented yet");
+//    var macro = resolveMacro(node.macro);
+//    if (macro == null) {
+//      // Macro reference passed down multiple layers - let parent layer expand
+//      var arguments = expandNodes(node.arguments);
+//      var placeholder = (MacroPlaceholder) node.macro;
+//      var resolved = resolveArg(placeholder.segments());
+//      var newSegments =
+//          resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
+//      return new MacroInstanceNode(new MacroPlaceholder(placeholder.syntaxType(), newSegments),
+//          arguments, node.loc);
+//    }
+//
+//    try {
+//      assertValidMacro(macro, node.location());
+//      var arguments = collectMacroParameters(macro, node.arguments, node.location());
+//      var subpass =
+//          new MacroExpander(arguments, macroOverrides, copyLoc(node.loc).fullExpandedFromStack());
+//      return subpass.expandNode(macro.body());
+//    } catch (MacroExpansionException e) {
+//      reportError(e.message, e.sourceLocation);
+//      return node;
+//    }
   }
 
   private Node expand(MacroMatchNode node) {
@@ -1764,12 +1786,10 @@ class MacroExpander
   }
 
   private boolean isReplacementNode(Node node) {
-    return node instanceof PlaceholderNode || node instanceof PlaceholderDefinition
-        || node instanceof PlaceholderExpr || node instanceof PlaceholderStatement
-        || node instanceof MacroMatchNode || node instanceof MacroMatchDefinition
+    return node instanceof MacroMatchNode || node instanceof MacroMatchDefinition
         || node instanceof MacroMatchExpr || node instanceof MacroMatchStatement
-        || node instanceof MacroInstanceNode || node instanceof MacroInstanceDefinition
-        || node instanceof MacroInstanceExpr || node instanceof MacroInstanceStatement
+        || node instanceof MacroCall.Node || node instanceof MacroCall.Definition
+        || node instanceof MacroCall.Expr || node instanceof MacroCall.Statement
         || node instanceof AsIdExpr || node instanceof AsStrExpr;
 
   }

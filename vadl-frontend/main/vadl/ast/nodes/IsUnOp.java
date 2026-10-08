@@ -19,7 +19,7 @@ package vadl.ast.nodes;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsUnOp permits UnOp, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
+public sealed interface IsUnOp permits UnOp, MacroCall.Node, MacroMatchNode {
   public void prettyPrint(int indent, StringBuilder builder);
 
   public SourceLocation location();

@@ -16,10 +16,9 @@
 
 package vadl.ast.nodes;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import vadl.ast.SymbolTable;
 import vadl.utils.SourceLocation;
 
 /**
@@ -49,27 +48,30 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
   public SyntaxType returnType;
 
   /**
+   * The macro table this model is defined in.
+   * It is used for resolving calls to other macros and bound arguments in model-model situations.
+   */
+  public SymbolTable macroTable;
+
+  /**
    * In a model-in-model situation, the parent model's arguments can be referenced in the inner
    * model. To preserve their value during macro expansion, the bound arguments field is used.
-   *
-   * @see MacroExpander#visit(ModelDefinition)
-   * @see MacroExpander#collectMacroParameters(Macro, List, SourceLocation)
    */
-  public Map<String, Node> boundArguments = new HashMap<>();
+  //public Map<String, Node> boundArguments = new HashMap<>();
   public SourceLocation loc;
 
   public ModelDefinition(IdentifierOrPlaceholder id, List<MacroParam> params, Node body,
-                  SyntaxType returnType, SourceLocation loc) {
+                  SyntaxType returnType, SymbolTable macroTable, SourceLocation loc) {
     this.id = id;
     this.params = params;
     this.body = body;
     this.returnType = returnType;
+    this.macroTable = macroTable;
     this.loc = loc;
   }
 
-  public Macro toMacro() {
-    return new Macro(new Identifier(id.pathToString(), id.location()), params, body, returnType,
-        boundArguments);
+  public SyntaxType projectionType() {
+    return new ProjectionType(params.stream().map(p -> p.type()).toList() , returnType);
   }
 
   @Override
@@ -122,14 +124,15 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
       return false;
     }
     ModelDefinition that = (ModelDefinition) o;
-    return Objects.equals(id, that.id) && Objects.equals(params, that.params)
+    return Objects.equals(id, that.id)
+        && Objects.equals(params, that.params)
         && Objects.equals(body, that.body)
         && Objects.equals(returnType, that.returnType)
-        && Objects.equals(boundArguments, that.boundArguments);
+        && Objects.equals(macroTable, that.macroTable);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, params, body, returnType, boundArguments);
+    return Objects.hash(id, params, body, returnType, macroTable);
   }
 }
