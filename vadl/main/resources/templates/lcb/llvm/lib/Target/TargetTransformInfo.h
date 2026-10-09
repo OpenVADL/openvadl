@@ -36,8 +36,8 @@ public:
 
   bool isLSRCostLess(const TargetTransformInfo::LSRCost &C1,
                      const TargetTransformInfo::LSRCost &C2) {
-    // specify that here "instruction number 1 priority".
-    // this is true from the view of a RISCy architecture.
+    // specify that "instructions are number 1 priority".
+    // this should be true from the view of a RISCy architecture.
     return std::tie(C1.Insns, C1.NumRegs, C1.AddRecCost, C1.NumIVMuls,
                     C1.NumBaseAdds, C1.ScaleCost, C1.ImmCost, C1.SetupCost) <
            std::tie(C2.Insns, C2.NumRegs, C2.AddRecCost, C2.NumIVMuls,
