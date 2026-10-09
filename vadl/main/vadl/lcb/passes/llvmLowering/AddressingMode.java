@@ -23,12 +23,21 @@ import vadl.gcb.passes.ValueRange;
  * An addressing mode in the shape of LLVM's {@code TargetLowering::AddrMode}:
  * {@code BaseReg + Scale * ScaledReg + BaseOffs}. A base register is always present.
  *
- * @param accessBytes the number of bytes the memory access reads.
+ * @param kind        whether the mode was found on a load or a store.
+ * @param accessBytes the number of bytes the memory access reads or writes.
  * @param scale       which values {@code AM.Scale} may take.
  * @param offset      which values {@code AM.BaseOffs} may take. {@code null} when the mode
  *                    has no immediate offset, i.e., {@code AM.BaseOffs} must be zero.
  */
-public record AddressingMode(int accessBytes, Scale scale, @Nullable Offset offset) {
+public record AddressingMode(Kind kind, int accessBytes, Scale scale, @Nullable Offset offset) {
+
+  /**
+   * The kind of memory access the addressing mode is available for.
+   */
+  public enum Kind {
+    LOAD,
+    STORE
+  }
 
   /**
    * Which multipliers LLVM's {@code AM.Scale} may take.

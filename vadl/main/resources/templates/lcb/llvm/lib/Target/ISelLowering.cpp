@@ -9,6 +9,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Intrinsics[(${namespace})].h"
 #include <iostream>
@@ -1036,19 +1037,36 @@ bool [(${namespace})]TargetLowering::isLegalAddImmediate(int64_t Imm) const {
   return Imm >= [(${addImmediateInstruction.minValue})] && Imm <= [(${addImmediateInstruction.maxValue})];
 }
 
+static bool isLegalLoadAddressingMode(const TargetLowering::AddrMode &AM, uint64_t NumBytes) {
+  [# th:each="check : ${loadAddressingModeChecks}" ]
+  if ([(${check.condition})])
+    return true;
+  [/]
+  return false;
+}
+
+static bool isLegalStoreAddressingMode(const TargetLowering::AddrMode &AM, uint64_t NumBytes) {
+  [# th:each="check : ${storeAddressingModeChecks}" ]
+  if ([(${check.condition})])
+    return true;
+  [/]
+  return false;
+}
+
 bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
-                                                const AddrMode &AM, Type *Ty,
+                                                const AddrMode &AMode, Type *Ty,
                                                 unsigned AS,
                                                 Instruction *I) const {
   // No global is ever allowed as a base.
-  if (AM.BaseGV)
+  if (AMode.BaseGV)
     return false;
 
   // Scalable offsets are not supported.
-  if (AM.ScalableOffset)
+  if (AMode.ScalableOffset)
     return false;
 
   // Canonicalise `1*ScaledReg` into `BaseReg` and `2*ScaledReg` into `BaseReg + ScaledReg`.
+  AddrMode AM = AMode;
   if (AM.Scale == 1 && !AM.HasBaseReg) {
     AM.HasBaseReg = true;
     AM.Scale = 0;
@@ -1064,12 +1082,14 @@ bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
   uint64_t NumBytes = 0;
   if (Ty->isSized() && !Ty->isScalableTy())
     NumBytes = DL.getTypeStoreSize(Ty).getFixedValue();
-  (void) NumBytes;
 
-  [# th:each="check : ${addressingModeChecks}" ]
-  if ([(${check.condition})])
-    return true;
-  [/]
+  // Without an instruction, the addressing mode must be legal for loads and stores.
+  bool IsLoad = !I || !isa<StoreInst>(I);
+  bool IsStore = !I || !isa<LoadInst>(I);
 
-  return false;
+  if (IsLoad && !isLegalLoadAddressingMode(AM, NumBytes))
+    return false;
+  if (IsStore && !isLegalStoreAddressingMode(AM, NumBytes))
+    return false;
+  return true;
 }

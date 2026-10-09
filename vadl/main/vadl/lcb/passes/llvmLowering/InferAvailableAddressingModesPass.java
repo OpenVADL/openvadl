@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -22,6 +23,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.Matcher;
@@ -33,7 +35,7 @@ import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.WriteResourceMatcherForValue;
 
 /**
- * Infers the {@link AddressingMode}s which the load instructions of the ISA support.
+ * Infers the {@link AddressingMode}s which the load and store instructions of the ISA support.
  * The result is a {@link java.util.Set} of {@link AddressingMode}.
  */
 public class InferAvailableAddressingModesPass extends Pass {
@@ -56,17 +58,31 @@ public class InferAvailableAddressingModesPass extends Pass {
 
     var instructions = viam.isa().stream()
         .flatMap(isa -> isa.ownInstructions().stream())
-        .filter(InferAvailableAddressingModesPass::isLoadInstruction);
+        .toList();
 
-    return instructions.map(instruction -> {
-      var read = instruction.behavior().getNodes(ReadMemNode.class).findFirst().orElseThrow();
-      return findRegReg(read) // *(ra + rb)
-          .or(() -> findRegImm(read)) // *(ra + imm)
-          .or(() -> findRegScaledRegConstantShift(read)) // *(ra + rb << constant)
-          .or(() -> findRegScaledRegImmShift(read)) // *(ra + reg << imm)
-          .or(() -> findRegScaledRegImmMul(read)) // *(ra + rb * imm)
-          .or(() -> findRegScaledImmConstantShift(read)); // *(ra + imm << constant)
-    }).flatMap(Optional::stream).collect(Collectors.toSet());
+    // `isLoadInstruction` and `isStoreInstruction` guarantee exactly one memory access.
+    var loads = instructions.stream()
+        .filter(InferAvailableAddressingModesPass::isLoadInstruction)
+        .map(instruction -> MemoryAccess.of(
+            instruction.behavior().getNodes(ReadMemNode.class).findFirst().orElseThrow()));
+    var stores = instructions.stream()
+        .filter(InferAvailableAddressingModesPass::isStoreInstruction)
+        .map(instruction -> MemoryAccess.of(
+            instruction.behavior().getNodes(WriteMemNode.class).findFirst().orElseThrow()));
+
+    return Stream.concat(loads, stores)
+        .map(InferAvailableAddressingModesPass::findAddressingMode)
+        .flatMap(Optional::stream)
+        .collect(Collectors.toSet());
+  }
+
+  private static Optional<AddressingMode> findAddressingMode(MemoryAccess access) {
+    return findRegReg(access) // *(ra + rb)
+        .or(() -> findRegImm(access)) // *(ra + imm)
+        .or(() -> findRegScaledRegConstantShift(access)) // *(ra + rb << constant)
+        .or(() -> findRegScaledRegImmShift(access)) // *(ra + reg << imm)
+        .or(() -> findRegScaledRegImmMul(access)) // *(ra + rb * imm)
+        .or(() -> findRegScaledImmConstantShift(access)); // *(ra + imm << constant)
   }
 
   private static Matcher commutativeMatcher(Matcher matcher) {
@@ -84,8 +100,23 @@ public class InferAvailableAddressingModesPass extends Pass {
         .orElseThrow();
   }
 
-  private static int accessBytes(ReadMemNode read) {
-    return read.readBitWidth() / 8;
+  /**
+   * The parts of a load's {@link ReadMemNode} or a store's {@link WriteMemNode} which
+   * are needed to infer its addressing mode.
+   */
+  private record MemoryAccess(AddressingMode.Kind kind, ExpressionNode address, int accessBytes) {
+    static MemoryAccess of(ReadMemNode read) {
+      return new MemoryAccess(AddressingMode.Kind.LOAD, read.address(), read.readBitWidth() / 8);
+    }
+
+    static MemoryAccess of(WriteMemNode write) {
+      return new MemoryAccess(AddressingMode.Kind.STORE, write.address(),
+          write.writeBitWidth() / 8);
+    }
+
+    AddressingMode mode(AddressingMode.Scale scale, @Nullable AddressingMode.Offset offset) {
+      return new AddressingMode(kind, accessBytes, scale, offset);
+    }
   }
 
   private static long constantValue(ExpressionNode node) {
@@ -109,7 +140,7 @@ public class InferAvailableAddressingModesPass extends Pass {
   }
 
   // *(ra + imm << constant)
-  private static Optional<AddressingMode> findRegScaledImmConstantShift(ReadMemNode read) {
+  private static Optional<AddressingMode> findRegScaledImmConstantShift(MemoryAccess access) {
     var readsReg = new AnyReadRegisterFileMatcher();
     Matcher readsConstant = node -> node instanceof ConstantNode;
     Matcher readsImm = node -> node instanceof FieldAccessRefNode;
@@ -119,22 +150,22 @@ public class InferAvailableAddressingModesPass extends Pass {
     var addsRegs =
         commutativeMatcher(new BuiltInMatcher(BuiltInTable.ADD, readsReg, scalesImm));
 
-    if (!addsRegs.matches(read.address())) {
+    if (!addsRegs.matches(access.address())) {
       return Optional.empty();
     }
 
-    var shift = argMatching(read.address(), scalesImm);
+    var shift = argMatching(access.address(), scalesImm);
     var range = immediateRange(argMatching(shift, readsImm));
     var amount = constantValue(argMatching(shift, readsConstant));
     var offset = new AddressingMode.Offset(
         range.lowest() << amount, range.highest() << amount, 1L << amount);
     return Optional.of(
-        new AddressingMode(accessBytes(read), new AddressingMode.Scale.None(), offset));
+        access.mode(new AddressingMode.Scale.None(), offset));
   }
 
 
   // *(ra + rb << constant)
-  private static Optional<AddressingMode> findRegScaledRegConstantShift(ReadMemNode read) {
+  private static Optional<AddressingMode> findRegScaledRegConstantShift(MemoryAccess access) {
     var readsReg = new AnyReadRegisterFileMatcher();
     Matcher readsConstant = node -> node instanceof ConstantNode;
 
@@ -143,18 +174,17 @@ public class InferAvailableAddressingModesPass extends Pass {
     var addsRegs =
         commutativeMatcher(new BuiltInMatcher(BuiltInTable.ADD, readsReg, scalesReg));
 
-    if (!addsRegs.matches(read.address())) {
+    if (!addsRegs.matches(access.address())) {
       return Optional.empty();
     }
 
-    var shift = argMatching(read.address(), scalesReg);
+    var shift = argMatching(access.address(), scalesReg);
     var amount = constantValue(argMatching(shift, readsConstant));
-    return Optional.of(new AddressingMode(accessBytes(read),
-        new AddressingMode.Scale.Fixed(1L << amount), null));
+    return Optional.of(access.mode(new AddressingMode.Scale.Fixed(1L << amount), null));
   }
 
   // *(ra + rb << imm)
-  private static Optional<AddressingMode> findRegScaledRegImmShift(ReadMemNode read) {
+  private static Optional<AddressingMode> findRegScaledRegImmShift(MemoryAccess access) {
     var readsReg = new AnyReadRegisterFileMatcher();
     Matcher readsImm = node -> node instanceof FieldAccessRefNode;
 
@@ -163,18 +193,17 @@ public class InferAvailableAddressingModesPass extends Pass {
     var addsRegs =
         commutativeMatcher(new BuiltInMatcher(BuiltInTable.ADD, readsReg, scalesReg));
 
-    if (!addsRegs.matches(read.address())) {
+    if (!addsRegs.matches(access.address())) {
       return Optional.empty();
     }
 
-    var shift = argMatching(read.address(), scalesReg);
+    var shift = argMatching(access.address(), scalesReg);
     var range = immediateRange(argMatching(shift, readsImm));
-    return Optional.of(new AddressingMode(accessBytes(read),
-        new AddressingMode.Scale.EncodedShift(range), null));
+    return Optional.of(access.mode(new AddressingMode.Scale.EncodedShift(range), null));
   }
 
   // *(ra + imm * rb)
-  private static Optional<AddressingMode> findRegScaledRegImmMul(ReadMemNode read) {
+  private static Optional<AddressingMode> findRegScaledRegImmMul(MemoryAccess access) {
     var readsReg = new AnyReadRegisterFileMatcher();
     Matcher readsImm = node -> node instanceof FieldAccessRefNode;
 
@@ -183,45 +212,44 @@ public class InferAvailableAddressingModesPass extends Pass {
     var addsRegs =
         commutativeMatcher(new BuiltInMatcher(BuiltInTable.ADD, readsReg, scalesReg));
 
-    if (!addsRegs.matches(read.address())) {
+    if (!addsRegs.matches(access.address())) {
       return Optional.empty();
     }
 
-    var mul = argMatching(read.address(), scalesReg);
+    var mul = argMatching(access.address(), scalesReg);
     var range = immediateRange(argMatching(mul, readsImm));
-    return Optional.of(new AddressingMode(accessBytes(read),
-        new AddressingMode.Scale.EncodedMul(range), null));
+    return Optional.of(access.mode(new AddressingMode.Scale.EncodedMul(range), null));
   }
 
   // *(ra + imm)
-  private static Optional<AddressingMode> findRegImm(ReadMemNode read) {
+  private static Optional<AddressingMode> findRegImm(MemoryAccess access) {
     Matcher readsImmediate = node -> node instanceof FieldAccessRefNode;
     var addsRegAndImm = commutativeMatcher(
         new BuiltInMatcher(BuiltInTable.ADD, new AnyReadRegisterFileMatcher(), readsImmediate));
 
-    if (!addsRegAndImm.matches(read.address())) {
+    if (!addsRegAndImm.matches(access.address())) {
       return Optional.empty();
     }
 
-    var range = immediateRange(argMatching(read.address(), readsImmediate));
+    var range = immediateRange(argMatching(access.address(), readsImmediate));
     var offset = new AddressingMode.Offset(range.lowest(), range.highest(), 1);
     return Optional.of(
-        new AddressingMode(accessBytes(read), new AddressingMode.Scale.None(), offset));
+        access.mode(new AddressingMode.Scale.None(), offset));
   }
 
   // *(ra + rb)
-  private static Optional<AddressingMode> findRegReg(ReadMemNode read) {
+  private static Optional<AddressingMode> findRegReg(MemoryAccess access) {
     var operand = new AnyReadRegisterFileMatcher();
 
     var addsTwoRegs =
         new BuiltInMatcher(BuiltInTable.ADD, operand, operand);
 
-    if (!addsTwoRegs.matches(read.address())) {
+    if (!addsTwoRegs.matches(access.address())) {
       return Optional.empty();
     }
 
     return Optional.of(
-        new AddressingMode(accessBytes(read), new AddressingMode.Scale.Fixed(1), null));
+        access.mode(new AddressingMode.Scale.Fixed(1), null));
   }
 
   private static boolean isLoadInstruction(Instruction instruction) {
@@ -251,5 +279,24 @@ public class InferAvailableAddressingModesPass extends Pass {
         new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadMemMatcher())));
 
     return !matched.isEmpty();
+  }
+
+  private static boolean isStoreInstruction(Instruction instruction) {
+    var behavior = instruction.behavior();
+
+    var writesRegFile =
+        behavior.getNodes(WritesRegisterTensor.class).filter(HasRegisterTensor::hasRegisterFile)
+            .count();
+
+    var writesReg =
+        behavior.getNodes(WriteRegTensorNode.class).filter(e -> e.regTensor().isSingleRegister())
+            .count();
+
+    var readsMem = behavior.getNodes(ReadMemNode.class).count();
+    var writesMem = behavior.getNodes(WriteMemNode.class).count();
+
+    // A plain store writes exactly one memory location and no registers.
+    // This excludes e.g. stores with register write-back (pre/post-increment).
+    return writesMem == 1 && readsMem == 0 && writesRegFile == 0 && writesReg == 0;
   }
 }

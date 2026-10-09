@@ -187,7 +187,10 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         abi.localAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
     map.put("addImmediateInstruction", getAddImmediate(database));
     map.put("branchInstructions", getBranchInstructions(database));
-    map.put("addressingModeChecks", getAddressingModeChecks(addressingModes));
+    map.put("loadAddressingModeChecks",
+        getAddressingModeChecks(addressingModes, AddressingMode.Kind.LOAD));
+    map.put("storeAddressingModeChecks",
+        getAddressingModeChecks(addressingModes, AddressingMode.Kind.STORE));
     map.put("hasRegRegAddressingMode", addressingModes.stream().anyMatch(
         mode -> mode.scale() instanceof AddressingMode.Scale.Fixed fixed && fixed.value() == 1
             && mode.offset() == null));
@@ -384,8 +387,10 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private List<AddressingModeCheck> getAddressingModeChecks(Set<AddressingMode> modes) {
+  private List<AddressingModeCheck> getAddressingModeChecks(Set<AddressingMode> modes,
+                                                            AddressingMode.Kind kind) {
     return modes.stream()
+        .filter(mode -> mode.kind() == kind)
         .map(mode -> {
           var conditions = new ArrayList<String>();
 
