@@ -421,31 +421,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       return getViamType(tensorType.flattenBitsType());
     }
 
-    if (astType instanceof PseudoFormatType pseudoFormat) {
-      return toOperationType(pseudoFormat);
-    }
-
     if (astType instanceof GroupType groupType) {
       return new GroupType(getViamType(groupType.elementType()),
           groupType.lengthType(), groupType.bitLengthType());
     }
 
     return astType;
-  }
-
-  /**
-   * Convert frontend pseudo-format type to VIAM operation type.
-   *
-   * @param format the {@link PseudoFormatType}
-   * @return the {@link OperationType}
-   */
-  public OperationType toOperationType(PseudoFormatType format) {
-    final List<Operation> ops = format.operations().stream()
-        .map(this::fetch)
-        .filter(Optional::isPresent).map(Optional::get)
-        .map(Operation.class::cast)
-        .toList();
-    return OperationType.of(ops);
   }
 
   private vadl.viam.Identifier generateViamID(Identifier id) {
