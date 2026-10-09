@@ -20,13 +20,16 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
@@ -39,9 +42,11 @@ import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.isaMatching.database.QueryResult;
+import vadl.lcb.passes.llvmLowering.AddressingMode;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
+import vadl.lcb.passes.llvmLowering.InferAvailableAddressingModesPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
@@ -155,6 +160,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                 GenerateGcbIntrinsicsPass.class);
     var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
+    var addressingModes = (Set<AddressingMode>) passResults.lastResultOf(
+        InferAvailableAddressingModesPass.class);
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
@@ -180,7 +187,10 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         abi.localAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
     map.put("addImmediateInstruction", getAddImmediate(database));
     map.put("branchInstructions", getBranchInstructions(database));
-    map.put("memoryInstructions", getMemoryInstructions(database));
+    map.put("addressingModeChecks", getAddressingModeChecks(addressingModes));
+    map.put("hasRegRegAddressingMode", addressingModes.stream().anyMatch(
+        mode -> mode.scale() instanceof AddressingMode.Scale.Fixed fixed && fixed.value() == 1
+            && mode.offset() == null));
     map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
     map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
@@ -362,23 +372,82 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private List<ISelInstruction> getMemoryInstructions(Database database) {
-    var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(
-        MachineInstructionLabelGroup.MEMORY_INSTRUCTIONS).build());
-    return queryResult.machineInstructions().stream()
-        .map(instruction -> {
-          Supplier<DiagnosticBuilder> error =
-              () -> Diagnostic.error("Memory instruction requires a value range",
-                  instruction.location());
+  /**
+   * A single check in {@code isLegalAddressingMode}. The {@code condition} is a C++ expression
+   * over the canonicalized {@code AM} and {@code NumBytes} which is true when the
+   * addressing mode can be folded into the memory access.
+   */
+  record AddressingModeCheck(String condition) implements Renderable {
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of("condition", condition);
+    }
+  }
 
-          var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
-          var valueRange = ensurePresent(ctx.getFirst(), error);
+  private List<AddressingModeCheck> getAddressingModeChecks(Set<AddressingMode> modes) {
+    return modes.stream()
+        .map(mode -> {
+          var conditions = new ArrayList<String>();
 
-          return new ISelInstruction(instruction.simpleName(), valueRange);
+          // Unscaled modes are allowed for every access size, like the upstream RISCV and Mips
+          // targets do. A scaled register or offset is usually tied to the access size
+          // (e.g. AArch64's `ldr x0, [x1, x2, lsl #3]`), so only allow it for that size.
+          if (isSizeSpecific(mode)) {
+            conditions.add("NumBytes == " + mode.accessBytes());
+          }
+
+          conditions.add(scaleCondition(mode.scale()));
+          conditions.addAll(offsetConditions(mode.offset()));
+
+          return new AddressingModeCheck(String.join(" && ", conditions));
         })
-        .sorted(Comparator.comparing(ISelInstruction::instructionName))
+        .distinct()
+        .sorted(Comparator.comparing(AddressingModeCheck::condition))
         .toList();
   }
+
+  private static boolean isSizeSpecific(AddressingMode mode) {
+    return isScaled(mode.scale())
+        || (mode.offset() != null && mode.offset().multipleOf() > 1);
+  }
+
+  private static boolean isScaled(AddressingMode.Scale scale) {
+    return switch (scale) {
+      case AddressingMode.Scale.None none -> false;
+      case AddressingMode.Scale.Fixed fixed -> fixed.value() != 1;
+      case AddressingMode.Scale.EncodedShift shift -> true;
+      case AddressingMode.Scale.EncodedMul mul -> true;
+    };
+  }
+
+  private static String scaleCondition(AddressingMode.Scale scale) {
+    return switch (scale) {
+      case AddressingMode.Scale.None none -> "AM.Scale == 0";
+      case AddressingMode.Scale.Fixed fixed -> "AM.Scale == " + fixed.value();
+      case AddressingMode.Scale.EncodedShift shift -> String.format(
+          "AM.Scale > 0 && isPowerOf2_64(AM.Scale) && Log2_64(AM.Scale) >= %d"
+              + " && Log2_64(AM.Scale) <= %d",
+          shift.shiftAmounts().lowest(), shift.shiftAmounts().highest());
+      case AddressingMode.Scale.EncodedMul mul -> String.format(
+          "AM.Scale >= %d && AM.Scale <= %d",
+          mul.factors().lowest(), mul.factors().highest());
+    };
+  }
+
+  private static List<String> offsetConditions(@Nullable AddressingMode.Offset offset) {
+    if (offset == null) {
+      return List.of("AM.BaseOffs == 0");
+    }
+
+    var conditions = new ArrayList<String>();
+    conditions.add(String.format("AM.BaseOffs >= %dLL", offset.min()));
+    conditions.add(String.format("AM.BaseOffs <= %dLL", offset.max()));
+    if (offset.multipleOf() > 1) {
+      conditions.add(String.format("AM.BaseOffs %% %d == 0", offset.multipleOf()));
+    }
+    return conditions;
+  }
+
 
   private List<BranchInstruction> getBranchInstructions(Database database) {
     var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(

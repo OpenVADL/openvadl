@@ -1044,22 +1044,32 @@ bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
   if (AM.BaseGV)
     return false;
 
-  if(I != nullptr) {
-    auto withInRange = false;
-    switch(I->getOpcode()) {
-    [# th:each="mem : ${memoryInstructions}" ]
-      case [(${namespace})]::[(${mem.instructionName})]:
-        withInRange = AM.BaseOffs >= [(${mem.minValue})] && AM.BaseOffs <= [(${mem.maxValue})];
-        break;
-    [/]
-      default:
-        // because not affected
-        return true;
-    }
-    // Only return when false
-    if(!withInRange)
-      return false;
-  }
+  // Scalable offsets are not supported.
+  if (AM.ScalableOffset)
+    return false;
 
-  return true;
+  // Canonicalise `1*ScaledReg` into `BaseReg` and `2*ScaledReg` into `BaseReg + ScaledReg`.
+  if (AM.Scale == 1 && !AM.HasBaseReg) {
+    AM.HasBaseReg = true;
+    AM.Scale = 0;
+  }[# th:if="${hasRegRegAddressingMode}"] else if (AM.Scale == 2 && !AM.HasBaseReg) {
+    AM.HasBaseReg = true;
+    AM.Scale = 1;
+  }[/]
+
+  // Every inferred addressing mode requires a base register.
+  if (!AM.HasBaseReg)
+    return false;
+
+  uint64_t NumBytes = 0;
+  if (Ty->isSized() && !Ty->isScalableTy())
+    NumBytes = DL.getTypeStoreSize(Ty).getFixedValue();
+  (void) NumBytes;
+
+  [# th:each="check : ${addressingModeChecks}" ]
+  if ([(${check.condition})])
+    return true;
+  [/]
+
+  return false;
 }
