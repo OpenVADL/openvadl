@@ -16,7 +16,10 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,19 +29,26 @@ import javax.annotation.Nullable;
 import vadl.ast.nodes.AsIdExpr;
 import vadl.ast.nodes.AsStrExpr;
 import vadl.ast.nodes.CallIndexExpr;
+import vadl.ast.nodes.DerivedFormatField;
 import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.FormatDefinition;
 import vadl.ast.nodes.ModelDefinition;
 import vadl.ast.nodes.Node;
+import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Operator;
 import vadl.ast.nodes.PlaceholderDefinition;
 import vadl.ast.nodes.PlaceholderExpr;
 import vadl.ast.nodes.PlaceholderNode;
 import vadl.ast.nodes.PlaceholderStatement;
+import vadl.ast.nodes.RangeFormatField;
+import vadl.ast.nodes.TypedFormatField;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.OperationType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.utils.Pair;
 
 class AstUtils {
 
@@ -102,7 +112,7 @@ class AstUtils {
 
 
         final var firstArgType = argTypes.getFirst().getClass();
-        if (firstArgType == PseudoFormatType.class) {
+        if (firstArgType == OperationType.class) {
           // For opequ/opneq, we select the overload only upon exact match
           builtIns = builtIns.stream()
               .filter(b -> b.signature().argTypeClasses().getFirst() == OperationType.class)
@@ -192,5 +202,31 @@ class AstUtils {
     });
     return areChildrenExpanded.get();
 
+  }
+
+  public static Collection<Map<String, Type>> pseudoFields(
+      Collection<OperationDefinition> operations
+  ) {
+    final var fields = new ArrayList<Map<String, Type>>();
+
+    for (var operation : operations) {
+      for (var instruction : operation.instructions) {
+        fields.add(AstUtils.formatToPseudoFields(requireNonNull(instruction.formatNode)));
+      }
+    }
+
+    return fields;
+  }
+
+  private static Map<String, Type> formatToPseudoFields(FormatDefinition format) {
+    return format.fieldsWithoutEncodingPredicate().map(f -> {
+      final DataType fieldType = switch (f) {
+        case DerivedFormatField field -> field.expr.type().asDataType();
+        case RangeFormatField field -> requireNonNull(field.type).asDataType();
+        case TypedFormatField field -> field.typeLiteral.type().asDataType();
+        default -> throw new IllegalStateException();
+      };
+      return Pair.of(f.identifier().name, fieldType);
+    }).collect(Collectors.toMap(Pair::left, Pair::right));
   }
 }

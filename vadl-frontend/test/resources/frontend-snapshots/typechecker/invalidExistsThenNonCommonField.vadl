@@ -37,7 +37,7 @@ instruction set architecture ISA = {
 //    27 │   [assert : exists i in {OpA, OpB} then i.c = 0b01]
 //       │                                         ^^^
 //       │
-//       Intersection format `(AType ∩ BType)` doesn't have any field with this name
+//       Intersection format `Operation<a: Bits<20>, b: Bits<5>>` doesn't have any field with this name
 //       help: Did you maybe mean one of: a, b
 //
 //

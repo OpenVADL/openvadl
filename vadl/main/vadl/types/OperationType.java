@@ -16,17 +16,11 @@
 
 package vadl.types;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Operation;
 
@@ -43,107 +37,95 @@ import vadl.viam.Operation;
  */
 public class OperationType extends StructType {
 
-  private final Set<Operation> operations;
-  private final Set<Instruction> instructions;
-  private final Set<Format> formats;
-
-  /**
-   * Constructor of the operation type.
-   *
-   * @param operations   The operations
-   * @param instructions The instructions
-   * @param formats      The formats
-   * @param types        The field types
-   */
-  protected OperationType(
-      Collection<Operation> operations,
-      Collection<Instruction> instructions,
-      Collection<Format> formats,
-      Map<String, Type> types
-  ) {
+  private OperationType(Map<String, Type> types) {
     super(types);
-    this.operations = new LinkedHashSet<>(operations);
-    this.instructions = new LinkedHashSet<>(instructions);
-    this.formats = new LinkedHashSet<>(formats);
   }
 
   /**
-   * Construct operation types from a set of operations.
+   * Creates an `OperationType` representing all the given instructions.
+   * Duplicate instructions are only represented once.
    *
-   * @param operations The operations involved in the type.
-   * @return The {@link OperationType}
+   * @param fields The fields of all the instructions which the resulting type
+   *               represents. Each map describes the fields of one
+   *               instruction.
+   * @return The resulting {@code OperationType}.
    */
-  public static OperationType of(Collection<Operation> operations) {
+  public static OperationType of(Collection<Map<String, Type>> fields) {
 
-    if (operations.isEmpty()) {
-      return new OperationType(Set.of(), Set.of(), Set.of(), Map.of());
+    // Early-out since we rely on at least one instruction being present to
+    // initialize the map of common fields.
+    if (fields.isEmpty()) {
+      return new OperationType(
+          Collections.emptyMap()
+      );
     }
 
-    final var formats = new ArrayList<Format>();
-    final var insns = new ArrayList<Instruction>();
+    var commonFieldTypes = fields.iterator().next();
 
-    final var types = new LinkedHashMap<String, Type>();
+    for (var format : fields) {
+      commonFieldTypes = fieldUnion(commonFieldTypes, format);
+    }
 
-    boolean first = true;
-    for (Operation op : operations) {
-      for (Instruction insn : op.getInstructions()) {
+    return new OperationType(commonFieldTypes);
+  }
 
-        insns.add(insn);
+  /**
+   * Creates an {@code OperationType} that represents the union of the instructions
+   * contained in the given operation types.
+   *
+   * @param operations The {@code OperationType}s whose union is formed.
+   * @return The resulting {@code OperationType}.
+   */
+  public static OperationType union(Collection<Operation> operations) {
 
-        final var format = requireNonNull(insn.format());
-        formats.add(format);
+    final var fields = new ArrayList<Map<String, Type>>();
 
-        final var fields = resolveFields(format);
-
-        if (first) {
-          types.putAll(fields);
-          first = false;
-          continue;
-        }
-
-        // Retain only fields common to all formats
-        types.entrySet().removeIf(e ->
-            !fields.containsKey(e.getKey())
-                || !Objects.equals(fields.get(e.getKey()), e.getValue()));
+    for (var operation : operations) {
+      for (var instruction : operation.getInstructions()) {
+        fields.add(instructionFieldTypes(instruction));
       }
     }
 
-    return new OperationType(operations, insns, formats, types);
+    return of(fields);
   }
 
-  /**
-   * The set of operations combined in this type.
-   *
-   * @return the operations.
-   */
-  public Set<Operation> operations() {
-    return operations;
+
+
+  private static Map<String, Type> fieldUnion(Map<String, Type> a, Map<String, Type> b) {
+
+    final var result = new HashMap<>(a);
+
+    result.entrySet().removeIf(field -> {
+      final var match = b.get(field.getKey());
+
+      return match == null || !match.equals(field.getValue());
+    });
+
+    return result;
   }
 
-  /**
-   * The set of instructions combined in this type.
-   *
-   * @return the instructions.
-   */
-  public Set<Instruction> instructions() {
-    return instructions;
-  }
+  private static Map<String, Type> instructionFieldTypes(Instruction instruction) {
 
-  /**
-   * The set of instruction formats combined in this type.
-   *
-   * @return the formats.
-   */
-  public Set<Format> formats() {
-    return formats;
-  }
+    final var fieldTypes = new HashMap<String, Type>();
 
-  private static Map<String, Type> resolveFields(Format format) {
-    final Map<String, Type> map = new HashMap<>();
-    for (Format.Field f : format.fields()) {
-      map.put(f.simpleName(), f.type());
+    for (var field : instruction.format().fields()) {
+      fieldTypes.put(field.simpleName(), field.type());
     }
-    return map;
+
+    return fieldTypes;
   }
 
+  @Override
+  public String name() {
+    return toString();
+  }
+
+  @Override
+  public String toString() {
+    final var sb = new StringBuilder("Operation<");
+
+    appendMemberNames(sb);
+
+    return sb.append(">").toString();
+  }
 }
