@@ -883,17 +883,20 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     // TODO: Calling a helper function for performing complex slice
     //  operations might be more efficient.
     // constructed result
-    var res = constant(intU(0, toHandle.type().bitWidth()));
+    var res = tmp(0);
+    var constZero = constant(intU(0, toHandle.type().bitWidth()));
     // holds value that is deposit next
     var bit = tmp(1);
     var destOffset = 0;
     var ops = new ArrayList<TcgNode>();
+    boolean resInit = false;
     for (var part : bitSlice.parts().toList().reversed()) {
       var len = part.size();
       var offset = part.lsb();
       // extract value to set
       ops.add(new TcgExtractNode(bit, srcVar, offset, len, TcgExtend.ZERO));
-      ops.add(new TcgDepositNode(res, res, bit, destOffset, len));
+      ops.add(new TcgDepositNode(res, resInit ? res : constZero, bit, destOffset, len));
+      resInit = true;
       destOffset += len;
     }
     ops.add(new TcgMoveNode(destVar, res));
