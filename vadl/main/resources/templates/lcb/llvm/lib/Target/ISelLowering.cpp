@@ -1065,15 +1065,20 @@ bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
   if (AMode.ScalableOffset)
     return false;
 
-  // Canonicalise `1*ScaledReg` into `BaseReg` and `2*ScaledReg` into `BaseReg + ScaledReg`.
+  // Canonicalise `1*ScaledReg + imm` into `BaseReg + imm` and
+  // `2*ScaledReg` into `BaseReg + ScaledReg` (if applicable)
   AddrMode AM = AMode;
-  if (AM.Scale == 1 && !AM.HasBaseReg) {
-    AM.HasBaseReg = true;
-    AM.Scale = 0;
-  }[# th:if="${hasRegRegAddressingMode}"] else if (AM.Scale == 2 && !AM.HasBaseReg) {
-    AM.HasBaseReg = true;
-    AM.Scale = 1;
-  }[/]
+  if (AM.Scale && !AM.HasBaseReg) {
+    if (AM.Scale == 1) {
+      AM.HasBaseReg = true;
+      AM.Scale = 0;
+    }[# th:if="${hasRegRegAddressingMode}"] else if (AM.Scale == 2) {
+       AM.HasBaseReg = true;
+       AM.Scale = 1;
+    } [/] else {
+      return false;
+    }
+  }
 
   // Every inferred addressing mode requires a base register.
   if (!AM.HasBaseReg)
