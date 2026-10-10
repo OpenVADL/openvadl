@@ -34,8 +34,10 @@ import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1034,9 +1036,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .filter(idx -> idx.identifier().name.equals(innerName))
           .findFirst()
           .orElseThrow();
-      final var frontendType = (PseudoFormatType) index.identifier().type();
-      final var operationType = viamLowering.toOperationType(frontendType);
-      return new OperationForAllNode.Index(getViamType(operationType), operationType.operations());
+      final var operationType = (OperationType) index.identifier().type();
+
+      final var operations = new ArrayList<Operation>();
+      for (var op : index.operations) {
+        final var opDef = (OperationDefinition) requireNonNull(op.target());
+        operations.add((Operation) viamLowering.fetch(opDef).get());
+      }
+
+      return new OperationForAllNode.Index(getViamType(operationType), operations);
     }
 
     if (computedTarget instanceof ExistsInThenExpr existsInThenExpr) {
@@ -1044,9 +1052,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           .filter(idx -> idx.identifier().name.equals(innerName))
           .findFirst()
           .orElseThrow();
-      final var frontendType = (PseudoFormatType) index.identifier().type();
-      final var operationType = viamLowering.toOperationType(frontendType);
-      return new OperationForAllNode.Index(getViamType(operationType), operationType.operations());
+      final var operationType = (OperationType) index.identifier().type();
+
+      final var operations = new ArrayList<Operation>();
+      for (var op : index.operations) {
+        final var opDef = (OperationDefinition) requireNonNull(op.target());
+        operations.add((Operation) viamLowering.fetch(opDef).get());
+      }
+
+      return new OperationForAllNode.Index(getViamType(operationType), operations);
     }
 
     // Reference to a Group Definition
@@ -1594,16 +1608,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public ExpressionNode visit(ExistsInExpr expr) {
 
-    final var ops = new ArrayList<Operation>();
+    final var operations = new ArrayList<Operation>();
 
-    for (IsId op : expr.operations) {
-      final var opDef = requireNonNull((OperationDefinition) op.target());
-      viamLowering.fetch(opDef)
-          .ifPresent(o -> ops.add((Operation) o));
+    for (var op : expr.operations) {
+      final var operationDefinition = (OperationDefinition) requireNonNull(op.target());
+      final var operation = (Operation) viamLowering.fetch(operationDefinition).get();
+      operations.add(operation);
     }
 
-    final var idxType = getViamType(OperationType.of(ops));
-    final var idx = new OperationForAllNode.Index(idxType, ops);
+    final var idxType = getViamType(OperationType.union(operations));
+    final var idx = new OperationForAllNode.Index(idxType, operations);
 
     var type = getViamType(expr.type());
     return new OperationExistsNode(type, idx);
@@ -1613,11 +1627,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public ExpressionNode visit(ExistsInThenExpr expr) {
 
     final List<OperationForAllNode.Index> indices = new ArrayList<>();
-    for (ExistsInThenExpr.Index idx : expr.indices) {
-      final var frontendType = (PseudoFormatType) idx.identifier().type();
-      final var operationType = viamLowering.toOperationType(frontendType);
-      final var idxNode =
-          new OperationForAllNode.Index(getViamType(operationType), operationType.operations());
+    for (ExistsInThenExpr.Index index : expr.indices) {
+      final var operationType = (OperationType) index.identifier().type();
+
+      final var operations = new ArrayList<Operation>();
+      for (var op : index.operations) {
+        final var opDef = (OperationDefinition) requireNonNull(op.target());
+        operations.add((Operation) viamLowering.fetch(opDef).get());
+      }
+
+      final var idxNode = new OperationForAllNode.Index(getViamType(operationType), operations);
       indices.add(idxNode);
     }
 
@@ -1630,11 +1649,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public ExpressionNode visit(ForallThenExpr expr) {
 
     final List<OperationForAllNode.Index> indices = new ArrayList<>();
-    for (ForallThenExpr.Index idx : expr.indices) {
-      final var frontendType = (PseudoFormatType) idx.identifier().type();
-      final var operationType = viamLowering.toOperationType(frontendType);
+    for (ForallThenExpr.Index index : expr.indices) {
+      final var operationType = (OperationType) index.identifier().type();
+
+      final var operations = new ArrayList<Operation>();
+      for (var op : index.operations) {
+        final var opDef = (OperationDefinition) requireNonNull(op.target());
+        operations.add((Operation) viamLowering.fetch(opDef).get());
+      }
+
       final var idxNode =
-          new OperationForAllNode.Index(getViamType(operationType), operationType.operations());
+          new OperationForAllNode.Index(getViamType(operationType), operations);
       indices.add(idxNode);
     }
 
