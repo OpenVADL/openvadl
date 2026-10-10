@@ -41,7 +41,6 @@ public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
     return visitNode(expression);
   }
 
-
   @Override
   public T visit(AbiSequenceDefinition definition) {
     return visitDefinition(definition);
@@ -228,12 +227,7 @@ public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
   }
 
   @Override
-  public T visit(MacroInstanceDefinition definition) {
-    return visitDefinition(definition);
-  }
-
-  @Override
-  public T visit(MacroInstructionDefinition definition) {
+  public T visit(MacroCall.Definition definition) {
     return visitDefinition(definition);
   }
 
@@ -284,11 +278,6 @@ public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
 
   @Override
   public T visit(PipelineDefinition definition) {
-    return visitDefinition(definition);
-  }
-
-  @Override
-  public T visit(PlaceholderDefinition definition) {
     return visitDefinition(definition);
   }
 
@@ -408,12 +397,7 @@ public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
   }
 
   @Override
-  public T visit(PlaceholderExpr expr) {
-    return visitExpression(expr);
-  }
-
-  @Override
-  public T visit(MacroInstanceExpr expr) {
+  public T visit(MacroCall.Expr expr) {
     return visitExpression(expr);
   }
 
@@ -576,7 +560,7 @@ public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
   }
 
   @Override
-  public T visit(MacroInstanceStatement statement) {
+  public T visit(MacroCall.Statement statement) {
     return visitStatement(statement);
 
   }
@@ -589,12 +573,6 @@ public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
 
   @Override
   public T visit(MatchStatement statement) {
-    return visitStatement(statement);
-
-  }
-
-  @Override
-  public T visit(PlaceholderStatement statement) {
     return visitStatement(statement);
 
   }

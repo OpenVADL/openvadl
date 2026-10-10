@@ -19,8 +19,8 @@ package vadl.ast.nodes;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsEncs permits EncodingDefinition.EncsNode,
-    EncodingDefinition.EncodingField, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
+public sealed interface IsEncs permits MacroCall.Node, EncodingDefinition.EncsNode,
+    EncodingDefinition.EncodingField, MacroMatchNode {
   public SourceLocation location();
 
   public void prettyPrint(int indent, StringBuilder builder);

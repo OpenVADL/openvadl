@@ -30,10 +30,6 @@ import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.ModelDefinition;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.Operator;
-import vadl.ast.nodes.PlaceholderDefinition;
-import vadl.ast.nodes.PlaceholderExpr;
-import vadl.ast.nodes.PlaceholderNode;
-import vadl.ast.nodes.PlaceholderStatement;
 import vadl.types.BuiltInTable;
 import vadl.types.OperationType;
 import vadl.types.SIntType;
@@ -175,10 +171,6 @@ class AstUtils {
 
   static boolean isFullyExpanded(Node node) {
     if (node instanceof ModelDefinition
-        || node instanceof PlaceholderNode
-        || node instanceof PlaceholderDefinition
-        || node instanceof PlaceholderStatement
-        || node instanceof PlaceholderExpr
         || node instanceof AsIdExpr
         || node instanceof AsStrExpr) {
       return false;

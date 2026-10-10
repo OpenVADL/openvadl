@@ -85,10 +85,7 @@ import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
 import vadl.ast.nodes.LogicDefinition;
-import vadl.ast.nodes.MacroInstanceDefinition;
-import vadl.ast.nodes.MacroInstanceExpr;
-import vadl.ast.nodes.MacroInstanceStatement;
-import vadl.ast.nodes.MacroInstructionDefinition;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MacroMatchStatement;
@@ -103,9 +100,6 @@ import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
 import vadl.ast.nodes.PatchDefinition;
 import vadl.ast.nodes.PipelineDefinition;
-import vadl.ast.nodes.PlaceholderDefinition;
-import vadl.ast.nodes.PlaceholderExpr;
-import vadl.ast.nodes.PlaceholderStatement;
 import vadl.ast.nodes.PortBehaviorDefinition;
 import vadl.ast.nodes.PredicateFormatField;
 import vadl.ast.nodes.ProcessDefinition;
@@ -213,12 +207,7 @@ public class Ungrouper
   }
 
   @Override
-  public Expr visit(PlaceholderExpr expr) {
-    return expr;
-  }
-
-  @Override
-  public Expr visit(MacroInstanceExpr expr) {
+  public Expr visit(MacroCall.Expr expr) {
     return expr;
   }
 
@@ -549,13 +538,7 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(PlaceholderDefinition definition) {
-    ungroupAnnotations(definition);
-    return null;
-  }
-
-  @Override
-  public Void visit(MacroInstanceDefinition definition) {
+  public Void visit(MacroCall.Definition definition) {
     ungroupAnnotations(definition);
     return null;
   }
@@ -702,13 +685,6 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(MacroInstructionDefinition definition) {
-    ungroupAnnotations(definition);
-    definition.statement.accept(this);
-    return null;
-  }
-
-  @Override
   public Void visit(PortBehaviorDefinition definition) {
     ungroupAnnotations(definition);
     definition.statement.accept(this);
@@ -838,12 +814,7 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(PlaceholderStatement placeholderStatement) {
-    return null;
-  }
-
-  @Override
-  public Void visit(MacroInstanceStatement macroInstanceStatement) {
+  public Void visit(MacroCall.Statement statement) {
     return null;
   }
 

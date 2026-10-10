@@ -31,6 +31,7 @@ import vadl.ast.nodes.*;
 import static vadl.ast.nodes.CounterDefinition.CounterKind.GROUP;
 import static vadl.ast.nodes.CounterDefinition.CounterKind.PROGRAM;
 import static vadl.ast.ParserUtils.*;
+import static vadl.ast.MacroUtils.*;
 
 COMPILER vadl
   @Nullable Path sourceFile = null;
@@ -39,8 +40,6 @@ COMPILER vadl
   Ast ast = new Ast();
   SymbolTable macroTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
-
-
 
   {
     ast.rootSymbolTable = new SymbolTable();
@@ -337,7 +336,6 @@ ISA section (#instructionsetDefinition). It is also possible to define macros (#
     SYNC
     topLevelDefinition<out Definition def>     (. addDef(ast.definitions, def); .)
     | macroDefinition<out ModelDefinition def> (. addDef(ast.definitions, def);
-                                                 //SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def);
                                                  macroTable.addModelDefinition(def);
                                                .)
   }SYNC.
@@ -377,7 +375,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
 #topLevelDefinition is referenced by \refFrom.
 */
-  topLevelDefinition<out Definition def>                         (. def = DUMMY_DEF; .)
+  topLevelDefinition<out Definition def>                         (. def = null; .)
   =
   (
     annotations<.out List<AnnotationDefinition> annotations.>
@@ -388,11 +386,11 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     | commonDefinition<out def>
     | importDefinition<out def>
     | assemblyDescriptionDefinition<out def>
-    )                                                            (. def.withAnnotations(annotations); .)
+    )                                                            (. if (def != null) def.withAnnotations(annotations); .)
   )
-  | macroReplacement<out Node n>                                 (. def = castCommonDef(this, n);
+  | macroReplacement<out Node n, BasicSyntaxType.COMMON_DEFS>           (. def = castCommonDef(this, n);
                                                                     if (def instanceof DefinitionList list) {
-                                                                      readMacroSymbols(macroTable, list.items);
+                                                                      defineGeneratedMacroSymbols(macroTable, list.items);
                                                                     }
                                                                  .)
   .
@@ -407,17 +405,15 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
     annotations<.out List<AnnotationDefinition> annotations.>
     commonDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
   | macroDefinition<out ModelDefinition def>               (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
-  | macroReplacement<out Node n>                           (. var def = castCommonDef(this, n);
-                                                              if (def instanceof DefinitionList list) {
-                                                                readMacroSymbols(macroTable, list.items);
-                                                              }
-                                                              addDef(definitions, def); .)
-
+  | macroReplacement<out Node n, BasicSyntaxType.COMMON_DEFS>     (. var def = (Definition)n;
+                                                              defineGeneratedMacroSymbols(macroTable, def);
+                                                              addDef(definitions, def);
+                                                           .)
   | NONE
   }
   .
 
-  commonDefinition<out Definition def>    (. def = DUMMY_DEF; .)
+  commonDefinition<out Definition def>    (. def = null; .)
   = constantDefinition<out def>
   | floatTypeDefinition<out def>
   | formatDefinition<out def>
@@ -441,25 +437,23 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
     ]                                                           (. extending.forEach(e -> {
                                                                       var extendingIsa = macroTable.requireAs(e, InstructionSetDefinition.class);
                                                                       if (extendingIsa != null)
-                                                                          readMacroSymbols(macroTable, extendingIsa);
+                                                                          defineGeneratedMacroSymbols(macroTable, extendingIsa);
                                                                     }); .)
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out LinkedList<Definition> definitions.>       (. macroTable = macroTable.pop(); .)
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, ParserUtils.expandAssemblyDefinitionsInIsa(this, definitions), startLocation.join(lastTokenLoc()));
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, expandAssemblyDefinitionsInIsa(this, definitions), startLocation.join(lastTokenLoc()));
                                                                    macroTable.defineSymbol(isaDef); .)
   .
 
   isaDefinitionList<.out LinkedList<Definition> definitions.> (. definitions = new LinkedList<>(); .)
   = {
     annotations<.out List<AnnotationDefinition> annotations.>
-    isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
-  | macroDefinition<out ModelDefinition def>            (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
-    // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-  | macroReplacement<out Node n>                        (. var def = castIsaDef(this, n);
-                                                           if (def instanceof DefinitionList list) {
-                                                             readMacroSymbols(macroTable, list.items);
-                                                           }
-                                                           addDef(definitions, def); .)
+    isaDefinition<out Definition def>                       (. def.withAnnotations(annotations); definitions.add(def); .)
+  | macroDefinition<out ModelDefinition def>                (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
+  | macroReplacement<out Node n, BasicSyntaxType.ISA_DEFS>  (. var def = (Definition)n;
+                                                               defineGeneratedMacroSymbols(macroTable, def);
+                                                               addDef(definitions, def);
+                                                            .)
   | NONE
   }
   .
@@ -493,7 +487,7 @@ elements. A single annotation is described in the #annotation production rule.
     SYM_BRACK_CLOSE                     (. annotation = new AnnotationDefinition(keywords, values, startLocation.join(lastTokenLoc())); .)
   .
 
-  isaDefinition<out Definition def> (. def = DUMMY_DEF; .)
+  isaDefinition<out Definition def> (. def = null; .)
   = commonDefinition<out def>
   | IF (la.kind == _GROUP && scanner.Peek().kind != _COUNTER)
     groupDefinition<out def>
@@ -627,9 +621,9 @@ elements. A single annotation is described in the #annotation production rule.
     expression<out Expr expr, BIN_OPS>        (. def = new RelocationDefinition(id, params, resultType, expr, startLocation.join(lastTokenLoc())); .)
   .
 
-  identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = DUMMY_ID; .)
+  identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
   = identifier<out id>
-  | macroReplacement<out Node node>                       (. id = castId(this, node); .)
+  | macroReplacement<out Node node, BasicSyntaxType.ID>                 (. id = (IdentifierOrPlaceholder) node; .)
   .
 
   encodingDefinition<out EncodingDefinition def>                        (. var startLocation = nextTokenLoc(); .)
@@ -656,13 +650,13 @@ elements. A single annotation is described in the #annotation production rule.
   encodingEntry<out IsEncs enc>        (. enc = null; .)
   = IF (la.kind == _NONE)
     NONE
-  | macroReplacement<out Node node>    (. enc = castEncs(this, node); .)
+  | macroReplacement<out Node node, BasicSyntaxType.ENCS>    (. enc = castEncs(this, node); .)
   | identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_EQ
     expression<out Expr expr, BIN_OPS> (. enc = new EncodingDefinition.EncodingField(id, expr); .)
   .
 
-  assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = nextTokenLoc(); .)
+  assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var startLocation = nextTokenLoc(); .)
   = ASSEMBLY
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>             (. ids.add(id); .)
     {
@@ -670,7 +664,7 @@ elements. A single annotation is described in the #annotation production rule.
       identifierOrPlaceholder<out IdentifierOrPlaceholder additionalId> (. ids.add(additionalId); .)
     }
     SYM_EQ
-    expression<out Expr expr, BIN_OPS>                                  (. def = new AssemblyDefinition(ids, expr, start.join(lastTokenLoc())); .)
+    expression<out Expr expr, BIN_OPS>                                  (. def = new AssemblyDefinition(ids, expr, startLocation.join(lastTokenLoc())); .)
   .
 
   stringLiteral<out StringLiteral lit>
@@ -681,7 +675,7 @@ elements. A single annotation is described in the #annotation production rule.
   = MEMORY
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON typeLiteral<out TypeLiteral t1>
-    SYM_ARROW typeLiteral<out TypeLiteral t2>               (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
+    SYM_ARROW typeLiteral<out TypeLiteral t2>               (. def = new MemoryDefinition(id, t1, t2, startLocation.join(lastTokenLoc())); .)
   .
 
   registerDefinition<out RegisterDefinition def>            (. var startLocation = nextTokenLoc(); .)
@@ -852,12 +846,12 @@ elements. A single annotation is described in the #annotation production rule.
       WITH
       SYM_PAREN_OPEN
       ( stringLiteral<out StringLiteral arg>    (. args.add(arg); .)
-      | macroReplacement<out Node node>         (. args.add(castForceStringLiteral(this, node)); .)
+      | macroReplacement<out Node node, BasicSyntaxType.STR>         (. args.add(castForceStringLiteral(this, node)); .)
       )
       {
         SYM_COMMA
         ( stringLiteral<out StringLiteral arg>  (. args.add(arg); .)
-        | macroReplacement<out Node node>       (. args.add(castForceStringLiteral(this, node)); .)
+        | macroReplacement<out Node node, BasicSyntaxType.STR>       (. args.add(castForceStringLiteral(this, node)); .)
         )
       }
       SYM_PAREN_CLOSE
@@ -986,7 +980,7 @@ elements. A single annotation is described in the #annotation production rule.
     SYM_BRACE_CLOSE                             (. def = new ApplicationBinaryInterfaceDefinition(id, isaPath, elements, start.join(lastTokenLoc())); .)
   .
 
-  abiElementDefinition<out Definition def> (. def = DUMMY_DEF; .)
+  abiElementDefinition<out Definition def> (. def = null; .)
   = annotations<.out List<AnnotationDefinition> annotations.> (. var peek = scanner.Peek(); .)
     ( specialPurposeRegisterSingleDef<out def>
     | aliasDefinition<out def>
@@ -996,13 +990,13 @@ elements. A single annotation is described in the #annotation production rule.
     | clangNumericTypeDefinition<out def>
   )                                        (. def.withAnnotations(annotations); .)
     // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
-  | macroReplacement<out Node n>           (. def = castCommonDef(this, n);
-                                              if (def instanceof DefinitionList list) {
-                                                readMacroSymbols(macroTable, list.items);
-                                              } .)
+  | macroReplacement<out Node n, BasicSyntaxType.COMMON_DEFS>  (.
+                                                           def = castCommonDef(this, n);
+                                                           defineGeneratedMacroSymbols(macroTable, def);
+                                                        .)
   .
 
-  clangTypeDefinition<out Definition def>                     (. def = DUMMY_DEF; var startLoc = nextTokenLoc(); .)
+  clangTypeDefinition<out Definition def>                     (. def = null; var startLoc = nextTokenLoc(); .)
   =
   (
     SIZE_T TYPE SYM_EQ typeSizeDefinition<out AbiClangTypeDefinition.TypeSize size1> (. def = new AbiClangTypeDefinition(AbiClangTypeDefinition.TypeName.SIZE_TYPE, size1, startLoc.join(lastTokenLoc())); .)
@@ -1010,7 +1004,7 @@ elements. A single annotation is described in the #annotation production rule.
   )
   .
 
-  clangNumericTypeDefinition<out Definition def>    (. def = DUMMY_DEF; var startLoc = nextTokenLoc(); AbiClangNumericTypeDefinition.NumTypeName typeName = null; .)
+  clangNumericTypeDefinition<out Definition def>    (. def = null; var startLoc = nextTokenLoc(); AbiClangNumericTypeDefinition.NumTypeName typeName = null; .)
   =
   (
     POINTER (
@@ -1108,7 +1102,7 @@ elements. A single annotation is described in the #annotation production rule.
     SYM_BRACE_CLOSE                        (. def = new ProcessorDefinition(id, isa, abi, definitions, start.join(lastTokenLoc())); .)
   .
 
-  cpuDefinition<out Definition def> (. def = DUMMY_DEF; .)
+  cpuDefinition<out Definition def> (. def = null; .)
   = annotations<.out List<AnnotationDefinition> annotations.>
     ( commonDefinition<out def>
     | memoryRegionDefinition<out def>
@@ -1118,11 +1112,11 @@ elements. A single annotation is described in the #annotation production rule.
     | cpuFunctionDefinition<out def>
     | cpuProcessDefinition<out def>
     )                               (. def.withAnnotations(annotations); .)
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
-    macroReplacement<out Node n>    (. def = castCommonDef(this, n);
-                                       if (def instanceof DefinitionList list) {
-                                         readMacroSymbols(macroTable, list.items);
-                                       } .)
+  |
+    macroReplacement<out Node n, BasicSyntaxType.COMMON_DEFS> (.
+                                                          def = castCommonDef(this, n);
+                                                          defineGeneratedMacroSymbols(macroTable, def);
+                                                       .)
   .
 
   // memory region [ROM] MROM in MEM = {...}
@@ -1257,7 +1251,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
 #miaDefinition is referenced by \refFrom.
 */
-  miaDefinition<out Definition def> (. def = DUMMY_DEF; .)
+  miaDefinition<out Definition def> (. def = null; .)
   = annotations<.out List<AnnotationDefinition> annotations.>
     ( pipelineDefinition<out def>
     | stageDefinition<out def>
@@ -1272,11 +1266,10 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     | operationDefinition<out def>
     | commonDefinition<out def>
     )                             (. def.withAnnotations(annotations); .)
-    // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
-  | macroReplacement<out Node n>  (. def = castCommonDef(this, n);
-                                     if (def instanceof DefinitionList list) {
-                                       readMacroSymbols(macroTable, list.items);
-                                     } .)
+  | macroReplacement<out Node n, BasicSyntaxType.COMMON_DEFS>
+                                  (. def = castCommonDef(this, n);
+                                     defineGeneratedMacroSymbols(macroTable, def);
+                                  .)
   .
 
   pipelineDefinition<out Definition def>                      (. var start = nextTokenLoc(); .)
@@ -1403,7 +1396,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     SYM_BRACE_CLOSE                                                             (. asmDescription = new AsmDescriptionDefinition(id, abi, modifiers, directives, rules, commonDefs, start.join(lastTokenLoc())); .)
   .
 
-  assemblyCommonDefinition<out Definition def>                                    (. def = DUMMY_DEF; .)
+  assemblyCommonDefinition<out Definition def>                                    (. def = null; .)
   = constantDefinition<out def>
   | usingDefinition<out def>
   | functionDefinition<out def>
@@ -1550,15 +1543,14 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
-  statement<out Statement statement> (. statement = DUMMY_STAT; .)
+  statement<out Statement statement> (. statement = null; .)
   = letStatement<out statement>
   | ifStatement<out statement>
   | blockStatement<out statement>
   | raiseStatement<out statement>
   | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON)
     matchStatement<out statement>
-  | IF (isMacroReplacementOfType(this, BasicSyntaxType.STAT))
-    macroReplacement<out Node n>     (. statement = castStat(this, n); .)
+  | macroReplacement<out Node n, BasicSyntaxType.STAT>     (. statement = castStat(this, n); .)
   | assignmentOrCallStmt<out statement>
   | lockStatement<out statement>
   | forallStatement<out statement>
@@ -1572,18 +1564,17 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   statementList<.out List<Statement> stmts.> (. stmts = new ArrayList<>(); .)
   = {
-      IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
-      macroReplacement<out Node n>           (. addStats(stmts, castStats(this, n)); .)
+      macroReplacement<out Node n, BasicSyntaxType.STATS>           (. addStats(stmts, castStats(this, n)); .)
     | statement<out Statement statement>     (. addStats(stmts, statement); .)
     }
   .
 
-  assignmentOrCallStmt<out Statement statement> (. statement = DUMMY_STAT; .)
+  assignmentOrCallStmt<out Statement statement> (. statement = null; .)
   = callOrBinaryExpression<out Expr target, false, false>
     [
       SYM_ASSIGN
       expression<out Expr expr, BIN_OPS>        (. statement = new AssignmentStatement(target, expr); .)
-    ]                                           (. if (statement.equals(DUMMY_STAT)) statement = new CallStatement(target); .)
+    ]                                           (. if (statement == null) statement = new CallStatement(target); .)
   .
 
   instructionCallStmt<out InstructionCallStatement statement> (. var start = nextTokenLoc(); var namedArguments = new ArrayList<InstructionCallStatement.NamedArgument>(); .)
@@ -1619,7 +1610,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
       SYM_COMMA
       identifierOrPlaceholder<out IdentifierOrPlaceholder nextId>    (. identifiers.add(nextId); .)
     }
-    SYM_EQ                                        (. Expr valueExpr = DUMMY_EXPR; .)
+    SYM_EQ                                        (. Expr valueExpr = null; .)
     ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | IF (la.kind == _FORALL)
@@ -1730,7 +1721,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
       (
         binaryOperator<out Operator op>           (. var operator = new BinOp(op, lastTokenLoc()); .)
         term<out Expr right, allowedOps>          (. expr = new BinaryExpr(expr, operator, right); .)
-      | macroReplacement<out Node node>
+      | macroReplacement<out Node node, BasicSyntaxType.BIN_OP>
         term<out Expr right, allowedOps>          (. expr = new BinaryExpr(expr, castBinOp(this, node), right); .)
       | SYM_AS                                    (. var typeStart = nextTokenLoc(); .)
         identifierPath<out IsId path>             (. TypeLiteral castTarget = new TypeLiteral(path, new ArrayList<>(), typeStart.join(lastTokenLoc()));
@@ -1751,7 +1742,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   /// Call expressions of form "a::b<3>(1,2)(3,4).c()".
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  callOrBinaryExpression<out Expr expr, boolean allowLtOp, boolean allowWildcardArgs> (. expr = DUMMY_EXPR; .)
+  callOrBinaryExpression<out Expr expr, boolean allowLtOp, boolean allowWildcardArgs> (. expr = null; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.SYM_EX))
     symbolOrBinaryExpression<out expr, allowLtOp>               (. List<CallIndexExpr.Arguments> argsIndices = new ArrayList<>(); .)
     {
@@ -1771,7 +1762,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     }                                                           (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
                                                                      expr = new CallIndexExpr(symExpr, argsIndices, subCalls, expr.location().join(lastTokenLoc()));
                                                                 .)
-  | macroReplacement<out Node node>                             (. expr = castExpr(this, node); .)
+  | macroReplacement<out Node node, BasicSyntaxType.EX>         (. expr = castExpr(this, node); .)
   .
 
   /// Represents one set of invocation arguments.
@@ -1802,7 +1793,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   // Symbol expressions of form "a::b<3>".
   // Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   // Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; boolean isLtOp = false; var terms = new ArrayList<Expr>(); SourceLocation ltLoc = null; SourceLocation gtLoc = null; .)
+  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = null; boolean isLtOp = false; var terms = new ArrayList<Expr>(); SourceLocation ltLoc = null; SourceLocation gtLoc = null; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.ID))
     identifierPath<out IsId path>
     {
@@ -1814,7 +1805,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
         SYM_GT                                               (. gtLoc = lastTokenLoc(); .)
       ]
     }                                                        (. expr = createSymExprOrBinOp(path, terms, isLtOp, ltLoc, gtLoc); .)
-  | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
+  | macroReplacement<out Node node, BasicSyntaxType.EX>      (. expr = castExpr(this, node); .)
   .
 
   binaryOperator<out Operator op> (. op = null; .)
@@ -1845,7 +1836,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | SYM_SAT_SUB                   (. op = Operator.SaturatedSubtract; .)
   | SYM_SHL                       (. op = Operator.ShiftLeft; .)
   | SYM_SHR                       (. op = Operator.ShiftRight; .)
-  // When adding a new operator here, it must also be added to the "BIN_OPS" list in ParserUtils.java !!!
+  // When adding a new operator here, it must also be added to the "BIN_OPS" list in java !!!
   .
 
   unary<out Expr expr, boolean[] allowedOps>
@@ -1862,11 +1853,11 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = SYM_MINUS                    (. op = new UnOp(UnaryOperator.NEGATIVE, lastTokenLoc()); .)
   | SYM_EXCL                     (. op = new UnOp(UnaryOperator.LOG_NOT, lastTokenLoc()); .)
   | SYM_TILDE                    (. op = new UnOp(UnaryOperator.COMPLEMENT, lastTokenLoc()); .)
-  // When adding a new operator here, it must also be added to the "UN_OPS" list in ParserUtils.java !!!
-  | macroReplacement<out Node n> (. op = (IsUnOp) n; .)
+  // When adding a new operator here, it must also be added to the "UN_OPS" list in java !!!
+  | macroReplacement<out Node n,  BasicSyntaxType.UN_OP> (. op = (IsUnOp) n; .)
   .
 
-  term<out Expr expr, boolean[] allowedOps>            (. expr = DUMMY_EXPR; .)
+  term<out Expr expr, boolean[] allowedOps>            (. expr = null; .)
   = literal<out expr>
   | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON) // Disambiguate from macro match
     matchExpression<out expr>
@@ -1881,7 +1872,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | existsExpression<out expr>
   | forallExpression<out expr, allowedOps>
     // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
-  | macroReplacement<out Node n> (. expr = castExpr(this, n); .)
+  | macroReplacement<out Node n,  BasicSyntaxType.EX> (. expr = castExpr(this, n); .)
   .
 
   groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), nextTokenLoc()); .)
@@ -1894,12 +1885,12 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     SYM_PAREN_CLOSE                       (. expr.loc = expr.loc.join(lastTokenLoc()); .)
   .
 
-  literal<out Expr expr> (. expr = DUMMY_EXPR; .)
+  literal<out Expr expr> (. expr = null; .)
   = valLiteral<out expr>
   | stringLiteral<out expr>
   .
 
-  valLiteral<out Expr expr> (. expr = DUMMY_EXPR; .)
+  valLiteral<out Expr expr> (. expr = null; .)
   = boolLiteral<out expr>
   | intLiteral<out expr>
   | binLiteral<out expr>
@@ -1913,7 +1904,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = (hexLit | binLit) (. expr = new BinaryLiteral(t.val, lastTokenLoc()); .)
   .
 
-  boolLiteral<out Expr expr> (. expr = DUMMY_EXPR; .)
+  boolLiteral<out Expr expr> (. expr = null; .)
   = TRUE                     (. expr = new BoolLiteral(true, lastTokenLoc()); .)
   | FALSE                    (. expr = new BoolLiteral(false, lastTokenLoc()); .)
   .
@@ -1944,7 +1935,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
       SYM_COMMA
       identifierOrPlaceholder<out IdentifierOrPlaceholder nextId>                (. identifiers.add(nextId); .)
     }
-    SYM_EQ                                                    (. Expr valueExpr = DUMMY_EXPR; .)
+    SYM_EQ                                                    (. Expr valueExpr = null; .)
     ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | IF (la.kind == _FORALL)
@@ -1991,7 +1982,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     SYM_BRACE_CLOSE                           (. expr = new MatchExpr(candidate, cases, defaultResult, start.join(lastTokenLoc())); .)
   .
 
-  existsExpression<out Expr expr>                   (. expr = DUMMY_EXPR; var start = nextTokenLoc(); .)
+  existsExpression<out Expr expr>                   (. expr = null; var start = nextTokenLoc(); .)
   = EXISTS
     ( IF (la.kind == _SYM_IN)
       SYM_IN
@@ -2020,7 +2011,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     SYM_BRACE_CLOSE
   .
 
-  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = DUMMY_EXPR; var start = nextTokenLoc(); TypeLiteral typeLiteral = null; .)
+  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = null; var start = nextTokenLoc(); TypeLiteral typeLiteral = null; .)
   = FORALL
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
    [
@@ -2063,17 +2054,19 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   // The forall fold action can be a identifier, identifierPath or Operator.
   // Unfortunatley because of LL1 conflicts we need to reimplement them again so that macros work.
-  foldAction<out Node node>                                 (. node = DUMMY_ID; .)
+  foldAction<out Node node>                                 (. node = null; .)
   = binaryOperator<out Operator op>                         (. node = new BinOp(op, lastTokenLoc()); .)
   |
   (
     ( identifier<out Identifier id>                                     (. node = id; .)
-    | macroReplacement<out Node replacement>                            (. node = castBinOpOrId(this, replacement); .)
+                                                                        (. // TODO, is there a solution instead of null?
+                                                                        .)
+    | macroReplacement<out Node replacement, null>                      (. node = castBinOpOrId(this, replacement); .)
     )                                                                   (. var parts = new ArrayList<IdentifierOrPlaceholder>(); .)
     { IF ((la.kind == _SYM_NAMESPACE && isIdType(node.syntaxType()) ))  (. if (parts.isEmpty()) {parts.add((IdentifierOrPlaceholder)node);}.)
        SYM_NAMESPACE
        ( identifier<out Identifier id2>                                 (. parts.add(id2); .)
-       | macroReplacement<out Node replacement>                         (. parts.add(castId(this, replacement)); .)
+       | macroReplacement<out Node replacement, BasicSyntaxType.ID>     (. parts.add(castId(this, replacement)); .)
        )
     }                                                                   (. if (parts.size() > 1)  { node = new IdentifierPath(parts); } .)
   )
@@ -2081,20 +2074,20 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
-  typeLiteral<out TypeLiteral type>
+  typeLiteral<out TypeLiteral type>                      (. var startLocation = nextTokenLoc(); .)
   = identifierPath<out IsId path>                        (. List<Expr> sizeIndices = new ArrayList<>(); .)
     {
       SYM_LT
       expression<out Expr sizeExpr, BIN_OPS_EXCEPT_GT>   (. sizeIndices.add(sizeExpr); .)
       SYM_GT
-    }                                                    (. type = new TypeLiteral(path, sizeIndices, path.location().join(lastTokenLoc())); .)
+    }                                                    (. type = new TypeLiteral(path, sizeIndices, startLocation.join(lastTokenLoc())); .)
   .
 
   identifier<out Identifier identifier>
   = (identifierToken | allowedIdentifierKeywords) (. identifier = new Identifier(t.val, lastTokenLoc()); .)
   .
 
-  // Must be kept in sync with ParserUtils.ID_TOKENS !!!
+  // Must be kept in sync with ID_TOKENS !!!
   allowedIdentifierKeywords
   = ADDRESS
   | ALIAS
@@ -2192,39 +2185,50 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   // -- MACROS -------------------------------------------------------------------------------------------------------
 
-  macroReplacement<out Node body> (. body = DUMMY_ID; var errCountBefore = diagnostics.size(); .)
-  = ( macroMatch<out body>
-    | maximumMacroExpr<out body>
-    | AsId<out body>
-    | AsStr<out body>
-    )                             (.  // There is no need to expand macros if the arguments to a macro are unparsable.
-                                      if (errCountBefore == diagnostics.size()) {
-                                        body = expandNode(this, body);
+  // requiredType can be null (because for macro match there is no pereference in the condition).
+  macroReplacement<out Node body, SyntaxType requiredType> (. body = null; .)
+  = ( macroMatch<out body, requiredType>
+    | maximumMacroCall<out body, requiredType>
+    | AsId<out body>              (. if (requiredType != null && !isIdType(requiredType)) { addSyntaxTypeError(this, BasicSyntaxType.ID, requiredType, body); body = null; } .)
+    | AsStr<out body>             (. if (requiredType != null && !isStrType(requiredType)) { addSyntaxTypeError(this, BasicSyntaxType.STR, requiredType, body); body = null; } .)
+    )                             (.
+                                      // Only expand if we are not inside a macro
+                                      if (body != null && !isInsideModel(this)) {
+                                        if (body instanceof MacroCall macroCall) {
+                                          body = expandTopLevelMacroCall(this, macroCall);
+                                        } else if (body instanceof IsMacroMatch) {
+                                          // Is that allowed?
+                                          throw new RuntimeException();
+                                        } else if (body instanceof AsIdExpr asId) {
+                                          body = expandTopLevelAsId(this, asId);
+                                        } else if (body instanceof AsStrExpr asStr) {
+                                          body = expandTopLevelAsStr(this, asStr);
+                                        }
                                       }
                                   .)
   .
 
   AsId<out Node body>                   (. var start = nextTokenLoc(); .)
   = AS_ID
-    groupedExpression<out GroupedExpr expr> (. body = new AsIdExpr(expr.expressions, start.join(lastTokenLoc())); .)
+    groupedExpression<out GroupedExpr expr> (. body = new AsIdExpr(expr != null ? expr.expressions : null, start.join(lastTokenLoc())); .)
   .
 
   AsStr<out Node body> (. var start = nextTokenLoc(); .)
   = AS_STR
-    groupedExpression<out GroupedExpr expr> (. body = new AsStrExpr(expr.expressions, start.join(lastTokenLoc())); .)
+    groupedExpression<out GroupedExpr expr> (. body = new AsStrExpr(expr != null ? expr.expressions : null, start.join(lastTokenLoc())); .)
   .
 
-  macroMatch<out Node node>                           (. var start = nextTokenLoc(); .)
+  macroMatch<out Node node, SyntaxType requiredType>  (. var start = nextTokenLoc();  node=null; .)
   = MATCH
     SYM_COLON
     basicSyntaxType<out SyntaxType type>
     SYM_PAREN_OPEN                                    (. var choices = new ArrayList<MacroMatch.Choice>(); .)
-    macroReplacement<out Node candidate>              (. var patterns = new ArrayList<MacroMatch.Pattern>(); .)
+    macroReplacement<out Node candidate, null>        (. var patterns = new ArrayList<MacroMatch.Pattern>(); .)
     (SYM_EQ | SYM_NEQ )                               (. var comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
     macroBody<out Node match, candidate.syntaxType()> (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
     {
       SYM_COMMA
-      macroReplacement<out candidate>
+      macroReplacement<out candidate, null>
       (SYM_EQ | SYM_NEQ )                             (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
       macroBody<out match, candidate.syntaxType()>    (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
     }
@@ -2232,12 +2236,12 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     macroBody<out Node result, type>                  (. choices.add(new MacroMatch.Choice(patterns, result)); .)
     SYM_SEMICOLON
     {                                                 (. patterns = new ArrayList<MacroMatch.Pattern>(); .)
-      macroReplacement<out candidate>
+      macroReplacement<out candidate, null>
       (SYM_EQ | SYM_NEQ )                             (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
       macroBody<out match, candidate.syntaxType()>    (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
       {
         SYM_COMMA
-        macroReplacement<out candidate>
+        macroReplacement<out candidate, null>
         (SYM_EQ | SYM_NEQ )                           (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
         macroBody<out match, candidate.syntaxType()>  (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
       }
@@ -2248,24 +2252,32 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     SYM_UNDERSCORE
     SYM_BIGARROW
     macroBody<out Node defaultChoice, type>
-    SYM_PAREN_CLOSE                                   (. node = createMacroMatch(type, choices, defaultChoice, start.join(lastTokenLoc())); .)
+    SYM_PAREN_CLOSE                                   (.
+                                                          // Only return a node if it is a hygenic macro and the types are matching
+                                                          if (requiredType != null && !type.isSubTypeOf(requiredType)) {
+                                                            addSyntaxTypeError(this, requiredType, type, start.join(lastTokenLoc()));
+                                                          } else {
+                                                            node = createMacroMatch(type, choices, defaultChoice, start.join(lastTokenLoc()));
+                                                          }
+                                                      .)
   .
 
   /// Parses the longest macro expression (either instance or placeholder) from the parser.
-  maximumMacroExpr<out Node node>                 (. node = null; var startLoc = nextTokenLoc(); var segments = new ArrayList<String>(); .)
+  maximumMacroCall<out Node node, SyntaxType requiredType>                 (. node = null; var startLoc = nextTokenLoc(); var subCalls = new ArrayList(); var args = new ArrayList<Node>(); .)
   = SYM_DOLLAR
-    identifier<out Identifier id>                 (. var macro = macroTable.getMacro(id.name);
-                                                     var paramType = paramSyntaxType(this, id.name);
-                                                     segments.add(id.name); .)
-    { IF (macro == null && la.kind == _SYM_DOT && paramType instanceof RecordType record)
+    identifier<out Identifier id>                 (. var targetType = macroCallableType(this, id); .)
+    { IF (la.kind == _SYM_DOT && targetType instanceof RecordType record)
       SYM_DOT
-      identifier<out Identifier next>             (. paramType = record.findEntry(next.name); segments.add(next.name); .)
+                                                  (. //FIXME: better than findEntry here!, better error hadling
+                                                  .)
+      identifier<out Identifier next>             (. targetType = record.findEntry(next.name); subCalls.add(next.name); .)
     }
     [
-      IF (la.kind == _SYM_PAREN_OPEN && (macro != null || paramType instanceof ProjectionType))
-      SYM_PAREN_OPEN                              (. var macroOrPlaceholder = macroOrPlaceholder(macro, paramType, segments);
-                                                     var params = instanceParamTypes(macroOrPlaceholder);
-                                                     var args = new ArrayList<Node>(); .)
+      IF (la.kind == _SYM_PAREN_OPEN && (targetType instanceof ProjectionType projectionType))
+      SYM_PAREN_OPEN                              (.
+                                                     targetType = projectionType.resultType;
+                                                     var params = projectionType.arguments.iterator();
+                                                  .)
       (
         IF (la.kind == _SYM_PAREN_CLOSE)
         SYM_PAREN_CLOSE
@@ -2273,7 +2285,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                       // If too many arguments exist we cannot parse them because we
                                                       // need the information from the model signature to know how to
                                                       // parse them so instead we must abort parsing and throw an error.
-                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, paramType, nextTokenLoc());
+                                                      if (!params.hasNext()) throw tooManyMacroArgumentsError(projectionType, nextTokenLoc());
                                                   .)
         macroBody<out Node arg1, params.next()>   (. args.add(arg1); .)
         {
@@ -2281,23 +2293,28 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                       // If too many arguments exist we cannot parse them because we
                                                       // need the information from the model signature to know how to
                                                       // parse them so instead we must abort parsing and throw an error.
-                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, paramType,nextTokenLoc());
+                                                      if (!params.hasNext()) throw tooManyMacroArgumentsError(projectionType, nextTokenLoc());
                                                   .)
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
-      )                                           (. node = createMacroInstance(macroOrPlaceholder, args, startLoc.join(lastTokenLoc())); .)
+      )
     ]                                             (.
-                                                     node = Objects.requireNonNullElse(
-                                                       node,
-                                                       macro == null
-                                                       ? createPlaceholder(paramType, segments, startLoc.join(lastTokenLoc()))
-                                                       : createMacroInstance(macro, List.of(), startLoc.join(lastTokenLoc()))
-                                                     );
+
+                                                      // FIXME: What if too few args were provided?
+
+                                                      if (targetType == null || targetType == BasicSyntaxType.INVALID) {
+                                                        // Errors were already emitted if the macro couldn't be found
+                                                      }  else if (requiredType != null && !targetType.isSubTypeOf(requiredType)) {
+                                                        // Emit this error
+                                                        addSyntaxTypeError(this, requiredType, targetType, startLoc.join(lastTokenLoc()));
+                                                      } else {
+                                                        node = (Node)MacroCall.of(id, subCalls, args, targetType, startLoc.join(lastTokenLoc()));
+                                                      }
                                                   .)
   .
 
-  macroDefinition<out ModelDefinition def>  (. var startLoc = nextTokenLoc(); .)
+  macroDefinition<out ModelDefinition def>  (. var startLoc = nextTokenLoc(); var errorCntBefore = diagnostics.size(); .)
   = MODEL
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_PAREN_OPEN                          (. var params = new ArrayList<MacroParam>(); .)
@@ -2322,12 +2339,18 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     SYM_BRACE_CLOSE                         (. macroContext.removeFirst();
                                                SyntaxType macroType = assertSyntaxType(this, body, returnType, "Macro body does not match signature")
                                                  ? returnType : BasicSyntaxType.INVALID;
-                                               def = new ModelDefinition(id, params, body, macroType, startLoc.join(lastTokenLoc()));
-                                               verifyCorrectModelOverride(this, def, signatureLoc);
+
+                                               // If the body is errornous let's mark the whole model as broken so that
+                                               // we don't expand it later which would crash the macro expander.
+                                               if (diagnostics.size() != errorCntBefore) {
+                                                 macroType = BasicSyntaxType.INVALID;
+                                               }
+                                               def = new ModelDefinition(id, params, body, macroType, macroTable, startLoc.join(lastTokenLoc()));
+                                               verifyModelOverrideType(this, def, signatureLoc);
                                             .)
   .
 
-  macroBody<out Node body, SyntaxType type>                 (. body = DUMMY_ID; var start = nextTokenLoc(); .)
+  macroBody<out Node body, SyntaxType type>                 (. body = null; var start = nextTokenLoc(); .)
   = (
     IF (type == BasicSyntaxType.STATS)
     statementList<.out List<Statement> stmts.>              (. body = new StatementList(stmts, start.join(lastTokenLoc())); .)
@@ -2343,27 +2366,27 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)
     ( literal<out body>
-    | macroReplacement<out body>
+    | macroReplacement<out body, BasicSyntaxType.LIT>
     )
   | IF (type == BasicSyntaxType.STR)
     ( stringLiteral<out body>
-    | macroReplacement<out body>
+    | macroReplacement<out body, BasicSyntaxType.STR>
     )
   | IF (type == BasicSyntaxType.VAL)
     ( valLiteral<out body>
-    | macroReplacement<out body>
+    | macroReplacement<out body, BasicSyntaxType.VAL>
     )
   | IF (type == BasicSyntaxType.BOOL)
     ( boolLiteral<out body>
-    | macroReplacement<out body>
+    | macroReplacement<out body, BasicSyntaxType.BOOL>
     )
   | IF (type == BasicSyntaxType.INT)
     ( intLiteral<out body>
-    | macroReplacement<out body>
+    | macroReplacement<out body, BasicSyntaxType.INT>
     )
   | IF (type == BasicSyntaxType.BIN)
     ( binLiteral<out body>
-    | macroReplacement<out body>
+    | macroReplacement<out body, BasicSyntaxType.BIN>
     )
   | IF (type == BasicSyntaxType.CALL_EX)
     callOrBinaryExpression<out body, false, false>
@@ -2373,7 +2396,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
   | IF (type == BasicSyntaxType.BIN_OP)
     ( binaryOperator<out Operator op>                       (. body = new BinOp(op, lastTokenLoc()); .)
-    | macroReplacement<out body>
+    | macroReplacement<out body, BasicSyntaxType.BIN_OP>
     )
   | IF (type == BasicSyntaxType.UN_OP)
     unaryOperator<out IsUnOp op>                            (. body = (Node) op; .)
@@ -2392,11 +2415,11 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
       }
       SYM_PAREN_CLOSE                                       (.
                                                                body = createRecordInstance(recordType, entries, start.join(lastTokenLoc())); .)
-    | macroReplacement<out body>
+    | macroReplacement<out body, recordType>
     )
   | IF (type instanceof ProjectionType projection)
     ( identifier<out Identifier id>                         (. body = createMacroReference(this, id); .)
-    | macroReplacement<out body>
+    | macroReplacement<out body, projection>
     )
   | IF (type == BasicSyntaxType.INVALID)                    (. .)
   | unreachableRule
@@ -2447,7 +2470,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                 // Unfortunately, we need this type to be correctly parsed because,
                                                 // depending on it, we parse the body of the macro differently. So if we
                                                 // don't know what it is, we must exit early.
-                                                throwException(ParserUtils.unknownSyntaxTypeError(t.val, macroTable, lastTokenLoc()));
+                                                throwException(unknownSyntaxTypeError(t.val, macroTable, lastTokenLoc()));
                                             .)
   .
 

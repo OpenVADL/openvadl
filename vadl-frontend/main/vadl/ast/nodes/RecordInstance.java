@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
@@ -29,6 +30,21 @@ public class RecordInstance extends Node {
     this.type = type;
     this.entries = entries;
     this.sourceLocation = sourceLocation;
+  }
+
+  /**
+   *
+   * @param name
+   * @return
+   */
+  @Nullable
+  public Node findEntry(String name) {
+    for (int i = 0; i < type.entries.size(); i++) {
+      if (type.entries.get(i).name().equals(name)) {
+        return entries.get(i);
+      }
+    }
+    return null;
   }
 
   @Override

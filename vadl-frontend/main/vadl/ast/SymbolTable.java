@@ -69,7 +69,6 @@ import vadl.ast.nodes.InstructionSetDefinition;
 import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
-import vadl.ast.nodes.Macro;
 import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.MicroArchitectureDefinition;
 import vadl.ast.nodes.ModelDefinition;
@@ -244,9 +243,10 @@ public class SymbolTable {
    * @param modelDefinition to be added to the scope, name will be automatically infered.
    */
   void addModelDefinition(ModelDefinition modelDefinition) {
-    // Note: We cannot use .identifier here because the identifier might not be initialized with
-    // macros that generate macros.
-    defineSymbol(modelDefinition.toMacro().name().name, modelDefinition);
+    // Only inject models that got a name.
+    if (modelDefinition.id instanceof Identifier id) {
+      defineSymbol(id.name, modelDefinition);
+    }
   }
 
   /**
@@ -375,12 +375,12 @@ public class SymbolTable {
    * @return the Macro if it exists otherwise null.
    */
   @Nullable
-  Macro getMacro(String name) {
+  ModelDefinition getModel(String name) {
     var model = findMacroAs(name, ModelDefinition.class);
     if (model == null) {
       return null;
     }
-    return model.toMacro();
+    return model;
   }
 
   /**
@@ -461,7 +461,7 @@ public class SymbolTable {
     // Unfortunately, we need this type to be correctly parsed because,
     // depending on it, we parse the body of the macro differently. So if we
     // don't know what it is, we must exit early.
-    throw ParserUtils.unknownSyntaxTypeError(identifier.name, this, identifier.location());
+    throw MacroUtils.unknownSyntaxTypeError(identifier.name, this, identifier.location());
   }
 
   /**
