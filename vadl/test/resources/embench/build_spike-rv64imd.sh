@@ -15,7 +15,4 @@ ldflags="-march=$arch -mabi=$abi"
 #   st: requires csr instructions to work with fcsr (because of quiet comparisons, which are emitted by the compiler using csr instructions to save/restore fflags)
 #   ud: works with D extension
 
-# need fcsr to work with csr instructions
-EXCL="cubic,st"
-
-./build_all.py --verbose --arch riscv64 --chip generic --board spike-float --cflags="$cflags" --ldflags="$ldflags" --clean --exclude "$EXCL" "$@"
+./build_all.py --verbose --arch riscv64 --chip generic --board spike-float --cflags="$cflags" --ldflags="$ldflags" --clean "$@"
