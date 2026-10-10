@@ -1,0 +1,139 @@
+// Description of the RISC-V SoomRV architecture.
+//
+// Information used in modelling collected from:
+// - The SoomRV github repository's README
+//   (https://github.com/mathis-s/SoomRV)
+//
+// SoomRV appears to be a very small RISC-V out-of-order implementation,
+// currently only listing three contributors. However, it is still mature
+// enough to boot a linux kernel.
+micro architecture SoomRV = {
+
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
+
+  [size : 64]
+  [controls : INT_PRF]
+  [consume : DECODE]
+  logic [reorder buffer] ROB
+
+  [size : 64]
+  [renames : X]
+  logic [physical register file] INT_PRF
+
+  [size : 8]
+  [consume : ROB, ALUOps + BranchOps + CSROps]
+  logic [reservation station] ALU_ISSUE_QUEUE_0
+
+  [size : 8]
+  [consume : ROB, ALUOps + BranchOps]
+  logic [reservation station] ALU_ISSUE_QUEUE_1
+
+  [size : 8]
+  [consume : ROB, LoadOps + StoreOps]
+  logic [reservation station] AGU_ISSUE_QUEUE_0
+
+  [size : 8]
+  [consume : ROB, LoadOps + StoreOps]
+  logic [reservation station] AGU_ISSUE_QUEUE_1
+
+  // FIXME: Every store is split into an address generation and a store data
+  //        uop. The address generation is dispatched to one of the
+  //        AGU_ISSUE_QUEUEs, while the store data is dispatched to one of the
+  //        STORE_DATA_ISSUE_QUEUEs. Such dual dispatch cannot currently be
+  //        modelled in OpenVADL.
+  [size : 8]
+  [consume : ROB, StoreOps]
+  logic [reservation station] STORE_DATA_ISSUE_QUEUE_0
+
+  [size : 8]
+  [consume : ROB, StoreOps]
+  logic [reservation station] STORE_DATA_ISSUE_QUEUE_1
+
+  [size : 16]
+  logic [load buffer] LOAD_QUEUE
+
+  [size : 16]
+  logic [store buffer] STORE_BUFFER
+
+
+
+  //-------------------------------------------------------------------------//
+  //                     Instruction Classes for Dispatch                    //
+  //-------------------------------------------------------------------------//
+
+  operation ALUOps = {}
+
+  operation BranchOps = {}
+
+  operation CSROps = {}
+
+  operation LoadOps = {}
+
+  operation StoreOps = {}
+
+
+
+  //-------------------------------------------------------------------------//
+  //                           Execution Pipelines                           //
+  //-------------------------------------------------------------------------//
+
+  stage ALU0 -> Instruction = {
+    let insn = consume(ALU_ISSUE_QUEUE_0, ALUOps) in {
+      // TODO: Your behaviour here :)
+      ALU0 := insn
+    }
+  }
+
+  stage ALU1 -> Instruction = {
+    let insn = consume(ALU_ISSUE_QUEUE_1, ALUOps) in {
+      // TODO: Your behaviour here :)
+      ALU1 := insn
+    }
+  }
+
+
+
+  stage AGU0 -> Instruction = {
+    let insn = consume(AGU_ISSUE_QUEUE_0) in {
+      // TODO: Your behaviour here :)
+      AGU0 := insn
+    }
+  }
+
+  stage AGU1 -> Instruction = {
+    let insn = consume(AGU_ISSUE_QUEUE_1) in {
+      // TODO: Your behaviour here :)
+      AGU1 := insn
+    }
+  }
+
+
+
+  stage STU0 -> Instruction = {
+    let insn = consume(STORE_DATA_ISSUE_QUEUE_0) in {
+      // TODO: Your behaviour here :)
+      STU0 := insn
+    }
+  }
+
+  stage STU1 -> Instruction = {
+    let insn = consume(STORE_DATA_ISSUE_QUEUE_1) in {
+      // TODO: Your behaviour here :)
+      STU1 := insn
+    }
+  }
+}
