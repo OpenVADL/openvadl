@@ -1084,12 +1084,14 @@ bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
     NumBytes = DL.getTypeStoreSize(Ty).getFixedValue();
 
   // Without an instruction, the addressing mode must be legal for loads and stores.
-  bool IsLoad = !I || !isa<StoreInst>(I);
-  bool IsStore = !I || !isa<LoadInst>(I);
+  if (!I)
+    return isLegalLoadAddressingMode(AM, NumBytes) && isLegalStoreAddressingMode(AM, NumBytes);
 
-  if (IsLoad && !isLegalLoadAddressingMode(AM, NumBytes))
-    return false;
-  if (IsStore && !isLegalStoreAddressingMode(AM, NumBytes))
-    return false;
-  return true;
+  if (isa<LoadInst>(I))
+    return isLegalLoadAddressingMode(AM, NumBytes);
+
+  if (isa<StoreInst>(I))
+    return isLegalStoreAddressingMode(AM, NumBytes);
+
+  return false;
 }
