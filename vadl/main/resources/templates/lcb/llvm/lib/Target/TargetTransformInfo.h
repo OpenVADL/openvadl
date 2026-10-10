@@ -33,6 +33,16 @@ public:
     // TODO: figure out what this does, as it is only used in RISCV it seems (not using this function breaks
     // loop strength reduce functionality though).
   }
+
+  bool isLSRCostLess(const TargetTransformInfo::LSRCost &C1,
+                     const TargetTransformInfo::LSRCost &C2) {
+    // specify that "instructions are number 1 priority".
+    // this should be true from the view of a RISCy architecture.
+    return std::tie(C1.Insns, C1.NumRegs, C1.AddRecCost, C1.NumIVMuls,
+                    C1.NumBaseAdds, C1.ScaleCost, C1.ImmCost, C1.SetupCost) <
+           std::tie(C2.Insns, C2.NumRegs, C2.AddRecCost, C2.NumIVMuls,
+                    C2.NumBaseAdds, C2.ScaleCost, C2.ImmCost, C2.SetupCost);
+  }
 };
 
 }
