@@ -1,0 +1,163 @@
+// Description of the SPARC64-V architecture.
+//
+// Information used in modelling collected from:
+// - "Microarchitecture and Performance Analysis of a SPARC-V9 Microprocessor for Enterprise Server Systems" by Sakamoto et al.
+//   (https://www.cs.ucr.edu/~gupta///hpca9/HPCA-PDFs/14-sakamoto.pdf)
+// - "A 1.3GHz Fifth Generation SPARC64 Microprocessor" by Hisashige et al.
+//   (https://www.cecs.uci.edu/~papers/compendium94-03/papers/2003/dac03/pdffiles/41_2.pdf)
+//
+// SPARC appears to have some surprisingly well-documented micro architectures
+// with some -- as far as I can tell -- unusual features, such as a "Commit
+// Stack" (which might just be a different name for a ROB though) or "Register
+// Update Buffers", which seem to combine aspects of ROB, PRF and forwarding
+// logic.
+micro architecture SPARC64V = {
+
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
+
+  // FIXME: Sakamoto et al. refer to this as a "CSE", or
+  //        "COMMIT STACK ENTRY[s]". I am not sure whether this exactly maps to
+  //        a reorder buffer.
+  //        In addition, there is also a "GUB" and "FUB", "General" and
+  //        "Floating Point Register Update Buffer" respectively. I believe
+  //        these mix parts of the ROB and PRFs as seen in other designs, but
+  //        the only information I could find on this is on pages 64 to 65 of
+  //        the "Fujitsu SPARC M12 and Fujitsu M10 Server Architecture White
+  //        Paper" (https://www.oracle.com/europe/a/ocom/docs/servers/fujitsu-sparc-servers/fujitsu-m12-m10-architecture-wp-3662172.pdf).
+  [size : 64]
+  [controls : GPR, FPR]
+  [consume : DECODE]
+  logic [reorder buffer] ROB
+
+  // FIXME:
+  [size : 156]
+  [renames : X]
+  logic [physical register file] GPR
+
+  [size : 64]
+  [renames : X]
+  logic [physical register file] FPR
+
+  [size : 8]
+  [consume : ROB, ALUOps]
+  logic [reservation station] RSE_A
+
+  [size : 8]
+  [consume : ROB, ALUOps]
+  logic [reservation station] RSE_B
+
+  [size : 8]
+  [consume : ROB, FloatOps]
+  logic [reservation station] RSF_A
+
+  [size : 8]
+  [consume : ROB, FloatOps]
+  logic [reservation station] RSF_B
+
+  [size : 10]
+  [consume : ROB, MemOps]
+  logic [reservation station] RSA
+
+  [size : 10]
+  [consume : ROB, BranchOps]
+  logic [reservation station] RSBR
+
+  [size : 16]
+  logic [load buffer] FETCH_PORT
+
+  [size : 10]
+  logic [store buffer] STORE_BUFFER
+
+
+
+  //-------------------------------------------------------------------------//
+  //                     Instruction Classes for Dispatch                    //
+  //-------------------------------------------------------------------------//
+
+  operation MemOps = {}
+
+  operation ALUOps = {}
+
+  operation BranchOps = {}
+
+  operation FloatOps = {}
+
+
+
+  //-------------------------------------------------------------------------//
+  //                           Execution Pipelines                           //
+  //-------------------------------------------------------------------------//
+
+  stage EAG_A -> Instruction = {
+    let insn = consume(RSA) in {
+      // TODO: Your behaviour here :)
+      EAG_A := insn
+    }
+  }
+
+  stage EAG_B -> Instruction = {
+    let insn = consume(RSA) in {
+      // TODO: Your behaviour here :)
+      EAG_B := insn
+    }
+  }
+
+
+
+  stage FX_A -> Instruction = {
+    let insn = consume(RSE_A) in {
+      // TODO: Your behaviour here :)
+      FX_A := insn
+    }
+  }
+
+  stage FX_B -> Instruction = {
+    let insn = consume(RSE_B) in {
+      // TODO: Your behaviour here :)
+      FX_B := insn
+    }
+  }
+
+
+
+  stage FP_A -> Instruction = {
+    let insn = consume(RSF_A) in {
+      // TODO: Your behaviour here :)
+      FP_A := insn
+    }
+  }
+
+  stage FP_B -> Instruction = {
+    let insn = consume(RSF_B) in {
+      // TODO: Your behaviour here :)
+      FP_B := insn
+    }
+  }
+
+
+
+  // FIXME: As far as I can tell, there is no branch pipeline. The RSBR
+  //        reservation station feeds straight into the branch predictor. This
+  //        cannot yet be modelled in OpenVADL as far as I can tell, and I am
+  //        not even sure about its semantics.
+  stage BR -> Instruction = {
+    let insn = consume(RSBR) in {
+      // TODO: Your behaviour here :)
+      BR := insn
+    }
+  }
+}
