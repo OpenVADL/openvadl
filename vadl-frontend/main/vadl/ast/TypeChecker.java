@@ -183,6 +183,7 @@ import vadl.types.FloatType;
 import vadl.types.GroupType;
 import vadl.types.InstructionType;
 import vadl.types.MicroArchitectureType;
+import vadl.types.OperationType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
 import vadl.types.StringType;
@@ -1027,13 +1028,13 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   private BuiltInCheckResult unCachedCheckBuiltin(BuiltInTable.BuiltIn builtIn,
                                                   List<Type> typeParams, List<Expr> args,
                                                   WithLocation location) {
-    int minArgCount = builtIn.argTypeClasses().size();
-    if (!(args.size() == minArgCount
-        || (builtIn.signature().hasVarArgs() && args.size() >= minArgCount))) {
+    final var expectedArgCount = builtIn.argTypeClasses().size();
+    if (args.size() != expectedArgCount
+        && !(builtIn.signature().hasVarArgs() && args.size() >= expectedArgCount)) {
       throw addErrorAndStopChecking(
           error("Type Mismatch", location)
               .locationDescription(location,
-                  "Expected %d arguments but got %d.", minArgCount, args.size())
+                  "Expected %d arguments but got %d.", expectedArgCount, args.size())
               .build());
     }
 
@@ -1063,19 +1064,19 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       final Expr l = args.getFirst();
       final Expr r = args.getLast();
 
-      if (!(l.type() instanceof PseudoFormatType)) {
+      if (!(l.type() instanceof OperationType)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
-            .locationDescription(location, "Expected an intersection format here but the left side "
-                + "was an `%s`", l.type())
-            .build());
+            .locationDescription(
+                location,
+                "Expected an operation here but the left side was an `%s`", l.type()
+          ).build());
 
-      } else if (!(r.type() instanceof PseudoFormatType)) {
+      } else if (!(r.type() instanceof OperationType)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location,
-                "Expected an intersection format here but the right side "
-                    + "was an `%s`", r.type())
+                "Expected an operation but the right side was an `%s`", r.type())
             .build());
 
       } else {
@@ -1086,35 +1087,18 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     if (args.size() == 2 && BuiltInTable.OP_ELEMENT_OF_PREDICATES.contains(builtIn)) {
 
-      if (!(args.getFirst().type() instanceof PseudoFormatType l)) {
+      if (!(args.getFirst().type() instanceof OperationType l)) {
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location, "Expected the left side to be an operation, but"
                 + "was an `%s`", args.getFirst().type())
             .build());
       }
 
-      if (!(args.getLast().type() instanceof PseudoFormatType r)) {
+      if (!(args.getLast().type() instanceof OperationType r)) {
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location, "Expected the right side to be an operation, but"
                 + "was an `%s`", args.getFirst().type())
             .build());
-      }
-
-      // Static checks for operation element predicates
-      final Set<InstructionDefinition> commonInsns = new LinkedHashSet<>(l.instructions());
-      commonInsns.retainAll(r.instructions());
-
-      if (commonInsns.isEmpty()) {
-        // If there is no static overlap, we can emit some diagnostics. For ∈ and `in`, the expr is
-        // always false, and for ∉ and `!in` it's always true.
-        final boolean constVal = builtIn == OP_NOT_ELEM_OF || builtIn == OP_NOT_IN;
-        final var op = Objects.requireNonNull(r.operations().stream().findFirst().orElse(null));
-        DeferredDiagnosticStore.add(
-            warning("This expression is always %s".formatted(constVal), location)
-                .description(
-                    "None of the possible concrete instructions matched by the left side "
-                        + "are part of operation `%s`.", op.identifier().name)
-                .build());
       }
 
       return new BuiltInCheckResult(List.of(l, r), Type.bool());
@@ -3460,7 +3444,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         addErrorAndContinueChecking(diagnostic.build());
       }
 
-      final var elemType = PseudoFormatType.of(group.operations());
+      final var elemType = OperationType.of(AstUtils.pseudoFields(group.operations()));
 
       final int maxLength = maxLength(constantEvaluator, group.expr());
       final var lengthType = UIntType.minimalTypeFor(maxLength);
@@ -3480,16 +3464,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     if (origin instanceof OperationDefinition op) {
       check(op);
 
-      var def = getCurrentlyVisitingDefinition();
-      if (!(def instanceof AnnotationDefinition annotation)
-          || !(annotation.target instanceof GroupDefinition)) {
-        final var diagnostic = error("Invalid Reference", expr)
-            .description("Reference to an `operation` definition is only allowed within "
-                + "`group` annotations.");
-        addErrorAndContinueChecking(diagnostic.build());
-      }
-
-      expr.type = PseudoFormatType.of(List.of(op));
+      expr.type = OperationType.of(AstUtils.pseudoFields(List.of(op)));
       return;
     }
 
@@ -4296,22 +4271,22 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         subCall.formatFieldType = fieldType;
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
-      } else if (type instanceof PseudoFormatType pseudoFormatType) {
-        if (!pseudoFormatType.contains(fieldName)) {
-          var formatFieldNames = pseudoFormatType.fieldNames();
+      } else if (type instanceof OperationType operationType) {
+        if (!operationType.contains(fieldName)) {
+          var formatFieldNames = operationType.fieldNames();
           var suggestions = Levenshtein.suggestions(fieldName, formatFieldNames);
           if (suggestions.isEmpty()) {
             suggestions = formatFieldNames.stream().limit(3).toList();
           }
 
           addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
-              .description("Intersection format `%s` doesn't have any field with this name",
-                  pseudoFormatType.name())
+              .description("Operation `%s` doesn't have any field with this name",
+                  operationType.name())
               .suggestions(suggestions)
               .build());
         }
 
-        subCall.formatFieldType = pseudoFormatType.get(fieldName);
+        subCall.formatFieldType = operationType.get(fieldName);
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
       } else if (type instanceof StatusType) {
@@ -4977,7 +4952,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     }
 
     if (identifier != null) {
-      identifier.type = PseudoFormatType.of(ops.values());
+      identifier.type = OperationType.of(AstUtils.pseudoFields(ops.values()));
     }
   }
 

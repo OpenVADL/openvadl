@@ -33,13 +33,7 @@ instruction set architecture ISA = {
 
 //  Reported Diagnostics:
 //
-//  warning: This expression is always false
-//       ╭── test/resources/frontend-snapshots/parser/group.vadl:29:13
-//       │
-//    29 │   [assert : VLIW(0) ∈ OpC]
-//       │             ^^^^^^^^^^^^^
-//       │
-//       None of the possible concrete instructions matched by the left side are part of operation `OpC`.
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests
