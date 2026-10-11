@@ -1,0 +1,136 @@
+// Description of the MIPS R10000 Microarchitecture.
+//
+// Information used in modelling collected from:
+// - "The Alpha 21264 Microprocessor" by R.E. Kessler
+//   (https://safari.ethz.ch/digitaltechnik/spring2020/lib/exe/fetch.php?media=alpha_21264.pdf)
+//   Also available in the complang gitea under etc/literature/comparch/AlphaAXP_21264.pdf
+// - "Alpha 21264 Microprocessor Data Sheet"
+//   (https://datasheets.chipdb.org/DEC/21264/21264-Alpha.pdf)
+//   Also available in the complang gitea under etc/literature/comparch/AlphaAXP_21264_data_sheet.pdf
+micro architecture R10000 = {
+
+  //-------------------------------------------------------------------------//
+  //                             (Silly) Frontend                            //
+  //-------------------------------------------------------------------------//
+
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext
+  }
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(consume(FETCH))
+  }
+
+  //-------------------------------------------------------------------------//
+  //              Centralized Resources in the Execution Engine              //
+  //-------------------------------------------------------------------------//
+
+  [size : 80]
+  [controls : GPR, FPR]
+  [consume : DECODE]
+  logic [reorder buffer] ROB
+
+  // FIXME: The Alpha 21264 duplicates its 80-entry integer register file, with
+  //        one register file per pair of integer execution units.
+  //        The results from each register file are broadcast to the other one
+  //        every cycle. This cannot currently be modelled in OpenVADL.
+  [size : 80]
+  [renames : R]
+  logic [physical register file] GPR
+
+  [size : 72]
+  [renames : F]
+  logic [physical register file] FPR
+
+  [size : 20]
+  [consume : ROB, ALUOps + MemOps + ShiftOps + BranchOps + MulOps + MVIOps + BitOps]
+  logic [reservation station] INTEGER_QUEUE
+
+  [size : 15]
+  [consume : ROB, FPOps]
+  logic [reservation station] FP_QUEUE
+
+  [size : 32]
+  logic [load buffer] LOAD_QUEUE
+
+  [size : 32]
+  logic [store buffer] STORE_QUEUE
+
+
+
+  //-------------------------------------------------------------------------//
+  //                     Instruction Classes for Dispatch                    //
+  //-------------------------------------------------------------------------//
+
+  operation ALUOps = {}
+
+  operation MemOps = {}
+
+  operation ShiftOps = {}
+
+  operation BranchOps = {}
+
+  operation MulOps = {}
+
+  operation MVIOps = {}
+
+  operation BitOps = {}
+
+  operation FMulOps = {}
+
+  operation FAddOps = {}
+
+  operation FDivOps = {}
+
+  operation FSqrtOps = {}
+
+
+
+  //-------------------------------------------------------------------------//
+  //                           Execution Pipelines                           //
+  //-------------------------------------------------------------------------//
+
+  stage ALU1 -> Instruction = {
+    let insn = consume(INTEGER_QUEUE, ALUOps + ShiftOps + BranchOps + MVIOps + BitOps) in {
+      // TODO: Your behaviour here :)
+      ALU1 := insn
+    }
+  }
+
+  stage ALU2 -> Instruction = {
+    let insn = consume(INTEGER_QUEUE, ALUOps + MemOps) in {
+      // TODO: Your behaviour here :)
+      ALU2 := insn
+    }
+  }
+
+  stage ALU3 -> Instruction = {
+    let insn = consume(INTEGER_QUEUE, ALUOps + ShiftOps + BranchOps + MulOps) in {
+      // TODO: Your behaviour here :)
+      ALU3 := insn
+    }
+  }
+
+  stage ALU4 -> Instruction = {
+    let insn = consume(INTEGER_QUEUE, ALUOps + MemOps) in {
+      // TODO: Your behaviour here :)
+      ALU4 := insn
+    }
+  }
+
+
+
+  stage FP_ADD -> Instruction = {
+    let insn = consume(FP_QUEUE, FMulOps) in {
+      // TODO: Your behaviour here :)
+      FP_ADD := insn
+    }
+  }
+
+  stage FP_MUL -> Instruction = {
+    let insn = consume(FP_QUEUE, FAddOps + FDivOps + FSqrtOps) in {
+      // TODO: Your behaviour here :)
+      FP_MUL := insn
+    }
+  }
+}
