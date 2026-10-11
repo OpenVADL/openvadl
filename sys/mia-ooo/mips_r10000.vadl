@@ -94,7 +94,7 @@ micro architecture R10000 = {
   stage FP_ADD -> Instruction = {
     let insn = consume(FP_QUEUE, FPAddOps) in {
       // TODO: Your behaviour here :)
-      FPU0 := insn
+      FP_ADD := insn
     }
   }
 
@@ -104,7 +104,7 @@ micro architecture R10000 = {
   stage FP_MUL -> Instruction = {
     let insn = consume(FP_QUEUE, FPMulOps + FPDivOps + FPSqrtOps) in {
       // TODO: Your behaviour here :)
-      FPU1 := insn
+      FP_MUL := insn
     }
   }
 
@@ -113,7 +113,7 @@ micro architecture R10000 = {
   stage AGU -> Instruction = {
     let insn = consume(ADDRESS_QUEUE) in {
       // TODO: Your behaviour here :)
-      FPU0 := insn
+      AGU := insn
     }
   }
 }
