@@ -1067,16 +1067,16 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       if (!(l.type() instanceof OperationType)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
-            .locationDescription(location, "Expected an intersection format here but the left side "
-                + "was an `%s`", l.type())
-            .build());
+            .locationDescription(
+                location,
+                "Expected a operation here but the left side was an `%s`", l.type()
+          ).build());
 
       } else if (!(r.type() instanceof OperationType)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location,
-                "Expected an intersection format here but the right side "
-                    + "was an `%s`", r.type())
+                "Expected an operation but the right side was an `%s`", r.type())
             .build());
 
       } else {
@@ -4280,7 +4280,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
           }
 
           addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
-              .description("Intersection format `%s` doesn't have any field with this name",
+              .description("Operation `%s` doesn't have any field with this name",
                   operationType.name())
               .suggestions(suggestions)
               .build());
