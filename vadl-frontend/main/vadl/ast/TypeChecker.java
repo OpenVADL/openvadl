@@ -1069,7 +1069,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(
                 location,
-                "Expected a operation here but the left side was an `%s`", l.type()
+                "Expected an operation here but the left side was an `%s`", l.type()
           ).build());
 
       } else if (!(r.type() instanceof OperationType)) {
