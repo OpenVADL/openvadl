@@ -184,6 +184,7 @@ import vadl.types.GroupType;
 import vadl.types.InstructionType;
 import vadl.types.MicroArchitectureType;
 import vadl.types.OperationType;
+import vadl.types.RelationType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
 import vadl.types.StringType;
@@ -1031,11 +1032,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     final var expectedArgCount = builtIn.argTypeClasses().size();
     if (args.size() != expectedArgCount
         && !(builtIn.signature().hasVarArgs() && args.size() >= expectedArgCount)) {
-      throw addErrorAndStopChecking(
-          error("Type Mismatch", location)
-              .locationDescription(location,
-                  "Expected %d arguments but got %d.", expectedArgCount, args.size())
-              .build());
+      throw addErrorAndStopChecking(wrongArgCountError(location, args.size(), expectedArgCount));
     }
 
     if (args.size() == 1) {
@@ -3484,12 +3481,18 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     // It's also possible to call functions without parenthesis if the function doesn't take any
     // arguments.
     var matchingBuiltins = BuiltInTable.builtIns()
-        .filter(b -> b.signature().argTypeClasses().isEmpty())
         .filter(b -> b.name().equals(innerName))
         .toList();
 
     if (matchingBuiltins.size() == 1) {
-      expr.type = matchingBuiltins.get(0).returns(List.of());
+      final var matchingBuiltin = matchingBuiltins.getFirst();
+      final var expectedArgCount = matchingBuiltin.signature().argTypeClasses().size();
+
+      if (expectedArgCount != 0) {
+        throw addErrorAndStopChecking(wrongArgCountError(expr, 0, expectedArgCount));
+      }
+
+      expr.type = matchingBuiltin.returns(List.of());
       return;
     }
 
@@ -5363,5 +5366,21 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     check(statement.body);
     return null;
+  }
+
+
+  private static Diagnostic wrongArgCountError(
+      WithLocation location,
+      int actualArgCount,
+      int expectedArgCount
+  ) {
+    return error("Type Mismatch", location)
+        .locationDescription(
+            location,
+            "Expected %d argument%s but got %d.",
+            expectedArgCount,
+            expectedArgCount == 1 ? "" : "s",
+            actualArgCount
+        ).build();
   }
 }
