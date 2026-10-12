@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 /**
  * An abstraction layer to inject behavior into file loading.
@@ -42,9 +44,8 @@ public class DiskVirtualFileSystem implements VirtualFileSystem {
 
   @Override
   public InputStream getInputStream(Path path) {
-    var file = new File(path.toUri());
     try {
-      return new FileInputStream(file);
+      return Files.newInputStream(path, StandardOpenOption.READ);
     } catch (IOException e) {
       throw error("File not found: " + path, SourceLocation.INVALID_SOURCE_LOCATION).build();
     }
