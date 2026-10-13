@@ -80,7 +80,7 @@ public class IssApplyMemoryEndiannessPass extends Pass {
 
   @Override
   public PassName getName() {
-    return new PassName("InsertMemoryEndiannessConditionPass");
+    return new PassName("Iss Apply Memory Endianness Pass");
   }
 
   @Nullable

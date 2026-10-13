@@ -125,7 +125,7 @@ class IssSelectLowerer extends GraphProcessor<Void> {
     // determine the result TCG variable in the assignments.
     var selectResultTcgVar = assignments.singleDestOf(resultExprNode);
 
-    var ifElse = GraphUtils.insertIfElse(insertionPoint, select.condition(),
+    var ifElse = GraphUtils.insertIfElse(insertionPoint.ensureGraph(), select.condition(),
         (graph, end) -> graph.addWithInputs(
             new ScheduledNode(
                 // emit IssMoveNode that moves the true expression into the result variable
@@ -139,7 +139,7 @@ class IssSelectLowerer extends GraphProcessor<Void> {
                 new IssMoveNode(selectResultTcgVar, select.falseCase()),
                 end
             )
-        ));
+        ), select.location());
 
 
     // set the insertion node's next to the ifNode

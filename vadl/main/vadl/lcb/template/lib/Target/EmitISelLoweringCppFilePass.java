@@ -160,8 +160,12 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
     map.put("registerFiles", registerFiles);
     map.put("mainRegisterFile",
-        registerFiles.stream().filter(x -> x.regTypes().get(0).equals(stackPointerType)).findFirst()
-            .get());
+        registerFiles.stream()
+            .filter(x -> x.regTypes().stream()
+                .anyMatch(type -> type.equals(stackPointerType)))
+            .findFirst()
+            .get()
+    );
     map.put("framePointer", framePointer);
     map.put("stackPointer", stackPointer);
     map.put("stackPointerByteSize", abi.stackPointer().registerFile().resultType().bitWidth() / 8);

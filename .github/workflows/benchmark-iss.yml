@@ -16,6 +16,16 @@ permissions:
   checks: write
 
 jobs:
+  aarch32:
+    uses: ./.github/workflows/reusable-benchmark-publish.yml
+    with:
+      runner: self-hosted-x64
+      benchmark-command: ./gradlew :vadl:benchmark-iss-aarch32 -i
+      artifact-source: vadl/build/iss-benchmarks/a32/normalized-results/a32-open-vadl.csv
+      destination-folder: data/iss/aarch32/embench/results
+      commit-message: 'data: Pushed ISS aarch32 embench data'
+    secrets: inherit
+
   aarch64:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
@@ -31,7 +41,7 @@ jobs:
     with:
       runner: self-hosted-x64
       benchmark-command: ./gradlew :vadl:benchmark-iss-riscv64 -i
-      artifact-source: vadl/build/iss-benchmarks/rv64im/normalized-results/rv64im-open-vadl.csv
+      artifact-source: vadl/build/iss-benchmarks/rv64imd/normalized-results/rv64imd-open-vadl.csv
       destination-folder: data/iss/riscv64/embench/results
       commit-message: 'data: Pushed ISS riscv64 embench data'
     secrets: inherit

@@ -52,31 +52,40 @@ public class Levenshtein {
     // NOTE: There are further performance optimizations that could be applied by using tries as
     // described here: https://stevehanov.ca/blog/fast-and-easy-levenshtein-distance-using-a-trie
 
-    Integer upperBound = maxChange != null ? (int) Math.round(target.length() * maxChange) :
+    var targetLength = target.length();
+    Integer upperBound = maxChange != null ? (int) Math.round(targetLength * maxChange) :
         Integer.MAX_VALUE;
 
-    var results = new PriorityQueue<Pair<T, Integer>>(
+    var results = new PriorityQueue<>(
         Comparator.<Pair<T, Integer>>comparingInt(Pair::right).reversed());
 
-    var lastRow = new int[target.length() + 1];
-    var currentRow = new int[target.length() + 1];
+    var lastRow = new int[targetLength + 1];
+    var currentRow = new int[targetLength + 1];
 
     for (var item : dictionary) {
       var word = toString.apply(item);
+      var wordLength = word.length();
       var skipWord = false;
 
       // Optimization if the words are of outrageously different lengths
-      if (Math.abs(target.length() - word.length()) > upperBound) {
+      if (Math.abs(targetLength - wordLength) > upperBound) {
         continue;
       }
 
       // Init the last row (since the current row will be moved into the last row first thing in
       // the loop below we actually have to write to the current row).
-      for (int i = 0; i <= target.length(); i++) {
+      for (int i = 0; i <= targetLength; i++) {
         currentRow[i] = i;
       }
 
-      for (int j = 1; j <= word.length(); j++) {
+      // Calculate the necessary band (Ukkonen's algorithm)
+      // With dymnamic band narrowing (Spouge's algorithm)
+      int finalDiagonalOffset = targetLength - wordLength;
+      int bandPadding = (upperBound - Math.abs(finalDiagonalOffset)) / 2;
+      int start = 0;
+      int end = Math.min(targetLength, Math.max(0, finalDiagonalOffset) + bandPadding);
+
+      for (int j = 1; j <= wordLength; j++) {
         // Move the current row (from the last iteration) to the lastRow.
         // Note: We swap them here to avoid allocating a new array. Since the current content from
         // lastrow is just not needed anymore.
@@ -84,11 +93,8 @@ public class Levenshtein {
         lastRow = currentRow;
         currentRow = tmp;
 
-        // Calculate the necessary band (Ukkonen's algorithm)
-        int start = upperBound == Integer.MAX_VALUE ? 1 : Math.max(1, j - upperBound);
-        int end = upperBound == Integer.MAX_VALUE
-            ? target.length()
-            : Math.min(target.length(), j + upperBound);
+        // Update the end from the last row to the current
+        end = Math.min(end + 1, targetLength);
 
         // Avoid skipped cells to influence the next row
         var skippedCellCost = upperBound == Integer.MAX_VALUE
@@ -97,14 +103,13 @@ public class Levenshtein {
         if (start > 1) {
           currentRow[start - 1] = skippedCellCost;
         }
-        if (end < target.length()) {
+        if (end < targetLength) {
           currentRow[end + 1] = skippedCellCost;
         }
 
         currentRow[0] = j;
-        var minCost = currentRow[0];
 
-        for (int i = start; i <= end; i++) {
+        for (int i = Math.max(start, 1); i <= end; i++) {
           var substituteCost = word.charAt(j - 1) == target.charAt(i - 1) ? 0 : 1;
           currentRow[i] = Math.min(
               Math.min(
@@ -113,18 +118,27 @@ public class Levenshtein {
               ),
               lastRow[i - 1] + substituteCost
           );
-          minCost = Math.min(minCost, currentRow[i]);
         }
 
-        // Optimization respecting upper bound, if all numbers in currentRow are larger than it we
-        // can abort this word.
-        if (minCost > upperBound) {
+        // Prefix cost plus unavoidable edits to reconcile remaining lengths.
+        while (start <= end
+            && currentRow[start] + Math.abs((targetLength - start) - (wordLength - j))
+            > upperBound) {
+          start++;
+        }
+
+        while (start <= end
+            && currentRow[end] + Math.abs((targetLength - end) - (wordLength - j)) > upperBound) {
+          end--;
+        }
+
+        if (start > end) {
           skipWord = true;
           break;
         }
       }
 
-      var cost = currentRow[target.length()];
+      var cost = currentRow[targetLength];
       if (skipWord || cost > upperBound) {
         continue;
       }

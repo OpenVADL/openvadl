@@ -43,6 +43,7 @@ import vadl.iss.passes.common.IssRegisterAccessInfoRetrievalPass;
 import vadl.iss.passes.common.IssRegisterAccessLoweringPass;
 import vadl.iss.passes.common.IssSaturatedArithmeticLoweringPass;
 import vadl.iss.passes.common.IssScheduleIndirectJumpsPass;
+import vadl.iss.passes.common.IssSideEffectReorderingPass;
 import vadl.iss.passes.common.IssTensorAssignmentToForallPass;
 import vadl.iss.passes.common.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.common.planning.IssExecStrategyPass;
@@ -130,6 +131,7 @@ public final class IssPassOrder {
     order.add(new IssInfoRetrievalPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssApplyMemoryEndiannessPass(config))
+        .add(new IssSideEffectReorderingPass(config))
         .add(new IssMemoryDetectionPass(config))
         .add(new IssRegisterAccessLoweringPass(config))
         .add(new IssBitfieldWriteLoweringPass(config))

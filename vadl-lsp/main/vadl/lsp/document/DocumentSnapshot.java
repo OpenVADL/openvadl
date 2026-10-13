@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lsp;
+package vadl.lsp.document;
 
 import static vadl.lsp.LspUtils.toPath;
 
@@ -31,12 +31,13 @@ import org.eclipse.lsp4j.TextDocumentItem;
 import vadl.utils.SourceLocation;
 
 /**
- * Represents one version of a file currently owned by (i.e. opened in) the LSP Client. This
+ * Represents one version of a document currently open in the LSP Client. This immutable object
  * effectively snapshots the file at one point in time.
  *
+ * @see Document
  * @see org.eclipse.lsp4j.TextDocumentItem
  */
-public class Document {
+public class DocumentSnapshot {
   /**
    * End-of-line sequences defined by LSP.
    */
@@ -48,50 +49,53 @@ public class Document {
   public final List<String> textLines;
 
   /**
-   * Creates a new Document.
+   * Creates a new DocumentSnapshot.
    *
    * @param textLines List of individual lines. Each item MUST NOT contain a newline character.
    */
-  public Document(Path path, int version, List<String> textLines) {
+  public DocumentSnapshot(Path path, int version, List<String> textLines) {
     this.path = path;
     this.version = version;
     this.textLines = Collections.unmodifiableList(textLines);
   }
 
 
-  public Document(Path path, int version, String text) {
+  public DocumentSnapshot(Path path, int version, String text) {
     this(path, version, splitLines(text));
   }
 
   /**
-   * Creates a new lsp document based on the data provided by the client.
+   * Creates a new lsp document snapshot based on the data provided by the client.
    *
    * @param tdi as provided by the LSP didOpen request
    */
-  public Document(TextDocumentItem tdi) {
+  public DocumentSnapshot(TextDocumentItem tdi) {
     this(toPath(tdi.getUri()), tdi.getVersion(), tdi.getText());
   }
 
   /**
-   * Creates an updated version of this document.
+   * Creates an updated version of this document snapshot.
+   *
+   * @throws IllegalStateException if {@code newVersion} is older than this snapshot's version
    */
-  public Document withChanges(int newVersion, List<TextDocumentContentChangeEvent> contentChanges) {
+  public DocumentSnapshot withChanges(
+      int newVersion, List<TextDocumentContentChangeEvent> contentChanges) {
     if (newVersion <= this.version) {
       throw new IllegalStateException(
-          "Cannot update LSP document to version " + newVersion
+          "Cannot update LSP DocumentSnapshot to version " + newVersion
               + " as current version is already " + this.version
       );
     }
 
     // Shortcuts
     if (contentChanges.isEmpty()) {
-      return new Document(this.path, newVersion, this.textLines);
+      return new DocumentSnapshot(this.path, newVersion, this.textLines);
     }
     if (contentChanges.size() == 1) {
       var change = contentChanges.getFirst();
       if (change.getRange() == null) {
         // Single change which replaces entire document
-        return new Document(this.path, newVersion, change.getText());
+        return new DocumentSnapshot(this.path, newVersion, change.getText());
       }
     }
 
@@ -134,7 +138,7 @@ public class Document {
       newTextLines.addAll(startLine, insertTextLines);
     }
 
-    return new Document(path, newVersion, newTextLines);
+    return new DocumentSnapshot(path, newVersion, newTextLines);
   }
 
   public String getText() {
@@ -142,7 +146,7 @@ public class Document {
   }
 
   /**
-   * Calculates LSP UTF-16 range from given VADL compiler UTF-8 location (within this document).
+   * Calculates LSP UTF-16 range from given VADL compiler UTF-8 location (within this snapshot).
    *
    * @param utf8Location VADL location, which is UTF-8 1-based (end inclusive)
    * @return UTF-16 0-based (end exclusive) range
@@ -155,7 +159,7 @@ public class Document {
   }
 
   /**
-   * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position (within this document).
+   * Calculates LSP UTF-16 position from given VADL compiler UTF-8 position (within this snapshot).
    *
    * @see #calculateUtf8Position(Position, boolean)
    * @param utf8Position VADL position, which is UTF-8 1-based
@@ -242,7 +246,7 @@ public class Document {
   }
 
   /**
-   * Calculates VADL UTF-8 position from given LSP UTF-16 position (within this document).
+   * Calculates VADL UTF-8 position from given LSP UTF-16 position (within this snapshot).
    *
    * @see #calculateUtf16Position(SourceLocation.Position, boolean)
    * @param utf16Position LSP position, which is UTF-16 0-based
@@ -274,7 +278,7 @@ public class Document {
 
   @Override
   public String toString() {
-    return "Document " + path + " (version " + version + "):\n================\n  "
+    return "DocumentSnapshot " + path + " (version " + version + "):\n================\n  "
         + getText().replace("\n", "\n  ") + "\n================";
   }
 
