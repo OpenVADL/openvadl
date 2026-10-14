@@ -1,3 +1,9 @@
+// This is checked because there used to be a mismatch between the name
+// resolver and the type checker for this edge case, leading to a crash.
+// The exact reason was that only zero-argument builtins were considered for
+// zero-argument calls in the typechecker, while the name resolver considered
+// all builtins.
+// Also see github PR #1164 (https://github.com/OpenVADL/openvadl/pull/1164).
 instruction set architecture ISA = {}
 
 micro architecture MiA implements ISA = {
@@ -10,9 +16,9 @@ micro architecture MiA implements ISA = {
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭── test/resources/frontend-snapshots/typechecker/zeroArgBuiltinCallExpectingArgs.vadl:5:11
+//       ╭── test/resources/frontend-snapshots/typechecker/zeroArgBuiltinCallExpectingArgs.vadl:11:11
 //       │
-//     5 │     ir := decode
+//    11 │     ir := decode
 //       │           ^^^^^^ Expected 1 argument but got 0.
 //       │
 //
