@@ -19,7 +19,6 @@ package vadl.utils;
 import static vadl.error.Diagnostic.error;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -45,6 +44,14 @@ public class DiskVirtualFileSystem implements VirtualFileSystem {
   @Override
   public InputStream getInputStream(Path path) {
     try {
+      // This originally used `new FileInputStream(path)`, which apparently
+      // doesn't set the FILE_SHARE_DELETE flag on Windows, preventing the
+      // deletion or renaming of the file until `close` is called -- which
+      // generally doesn't happen. Thus, the file cannot be deleted or renamed
+      // until the process terminates, which is especially annoying in the
+      // language server.
+      // `Files.newInputStream` with `StandardOpenOption.READ` apparently fixes
+      // this, though it does not seem to be explicitly documented.
       return Files.newInputStream(path, StandardOpenOption.READ);
     } catch (IOException e) {
       throw error("File not found: " + path, SourceLocation.INVALID_SOURCE_LOCATION).build();
