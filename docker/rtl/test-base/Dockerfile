@@ -35,6 +35,12 @@ RUN sed -i $'/ecall/s//la a4, tohost; \\\\\\\nsw TESTNUM, 0(a4); \\\\\\\n&/' ./e
 RUN autoconf
 RUN ./configure --prefix=/usr
 ENV RISCV_GCC_OPTS="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles"
+
+# Import Risc-V Toolchain
+COPY --from=toolchains /opt/riscv /opt/riscv
+ENV PATH=/opt/riscv/bin:$PATH
+# riscv gcc toolchain was not installed, thus make isa didnt work
+# make isa already creates all tests, no reason to copy it into the image later
 RUN make isa
 
 # Combine dependencies to the final runtime image
