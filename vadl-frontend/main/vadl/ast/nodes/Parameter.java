@@ -29,10 +29,10 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class Parameter extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder name;
+  public IdentifierOrMacro name;
   public TypeLiteral typeLiteral;
 
-  public Parameter(IdentifierOrPlaceholder name, TypeLiteral typeLiteral) {
+  public Parameter(IdentifierOrMacro name, TypeLiteral typeLiteral) {
     this.name = name;
     this.typeLiteral = typeLiteral;
   }

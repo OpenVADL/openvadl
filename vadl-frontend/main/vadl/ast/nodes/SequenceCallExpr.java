@@ -28,12 +28,12 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class SequenceCallExpr extends Expr {
-  public IsCallExpr target;
+  public CallIndexExprOrMacro target;
   @Nullable
   public Expr range;
   public SourceLocation loc;
 
-  public SequenceCallExpr(IsCallExpr target, @Nullable Expr range, SourceLocation loc) {
+  public SequenceCallExpr(CallIndexExprOrMacro target, @Nullable Expr range, SourceLocation loc) {
     this.target = target;
     this.range = range;
     this.loc = loc;

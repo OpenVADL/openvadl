@@ -25,12 +25,12 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MicroArchitectureDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder id;
-  public IsId isa;
+  public IdentifierOrMacro id;
+  public IdentifierPathOrMacro isa;
   public List<Definition> definitions;
   public SourceLocation loc;
 
-  public MicroArchitectureDefinition(IdentifierOrPlaceholder id, IsId isa,
+  public MicroArchitectureDefinition(IdentifierOrMacro id, IdentifierPathOrMacro isa,
                                      List<Definition> definitions, SourceLocation loc) {
     this.id = id;
     this.isa = isa;

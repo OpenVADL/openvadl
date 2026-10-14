@@ -23,8 +23,8 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class InstructionDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder identifier;
-  public IdentifierOrPlaceholder typeIdentifier;
+  public IdentifierOrMacro identifier;
+  public IdentifierOrMacro typeIdentifier;
   public Statement behavior;
   public SourceLocation loc;
 
@@ -37,8 +37,8 @@ public class InstructionDefinition extends Definition implements IdentifiableNod
   @Nullable
   public AssemblyDefinition assemblyDefinition;
 
-  public InstructionDefinition(IdentifierOrPlaceholder identifier,
-                               IdentifierOrPlaceholder typeIdentifier,
+  public InstructionDefinition(IdentifierOrMacro identifier,
+                               IdentifierOrMacro typeIdentifier,
                                Statement behavior, SourceLocation location) {
     this.identifier = identifier;
     this.typeIdentifier = typeIdentifier;

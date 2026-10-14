@@ -28,13 +28,13 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class LetStatement extends Statement {
-  public List<IsId> identifiers;
+  public List<IdentifierPathOrMacro> identifiers;
   public Expr valueExpr;
   public Statement body;
   public SourceLocation location;
 
-  public LetStatement(List<IsId> identifiers, Expr valueExpr, Statement body,
-               SourceLocation location) {
+  public LetStatement(List<IdentifierPathOrMacro> identifiers, Expr valueExpr, Statement body,
+                      SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;

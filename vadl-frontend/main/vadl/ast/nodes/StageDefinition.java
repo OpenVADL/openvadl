@@ -23,15 +23,15 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class StageDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   public List<StageOutputDefinition> outputs;
   public Statement statement;
   public SourceLocation loc;
 
-  public StageDefinition(IdentifierOrPlaceholder id,
-                  List<StageOutputDefinition> outputs,
-                  Statement statement,
-                  SourceLocation loc) {
+  public StageDefinition(IdentifierOrMacro id,
+                         List<StageOutputDefinition> outputs,
+                         Statement statement,
+                         SourceLocation loc) {
     this.id = id;
     this.outputs = outputs;
     this.statement = statement;

@@ -23,12 +23,12 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class PipelineDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   public List<Parameter> outputs;
   public Statement statement;
   public SourceLocation loc;
 
-  public PipelineDefinition(IdentifierOrPlaceholder id, List<Parameter> outputs,
+  public PipelineDefinition(IdentifierOrMacro id, List<Parameter> outputs,
                             Statement statement, SourceLocation loc) {
     this.id = id;
     this.outputs = outputs;

@@ -28,14 +28,14 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class EnumerationDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   @Nullable
   public TypeLiteral enumType;
   public List<Entry> entries;
   public SourceLocation loc;
 
-  public EnumerationDefinition(IdentifierOrPlaceholder id, @Nullable TypeLiteral enumType,
-                        List<Entry> entries, SourceLocation location) {
+  public EnumerationDefinition(IdentifierOrMacro id, @Nullable TypeLiteral enumType,
+                               List<Entry> entries, SourceLocation location) {
     this.id = id;
     this.enumType = enumType;
     entries.forEach(e -> e.enumDef = this);
@@ -138,7 +138,7 @@ public final class EnumerationDefinition extends Definition implements Identifia
   // FIXME: this should be a definition.
   public static class Entry extends Node implements IdentifiableNode {
 
-    public IdentifierOrPlaceholder name;
+    public IdentifierOrMacro name;
 
     /**
      * Potentially set by the typechecker if no value was explicitly assigned.
@@ -155,7 +155,7 @@ public final class EnumerationDefinition extends Definition implements Identifia
     public EnumerationDefinition enumDef;
 
 
-    public Entry(IdentifierOrPlaceholder name, @Nullable Expr value) {
+    public Entry(IdentifierOrMacro name, @Nullable Expr value) {
       this.name = name;
       this.value = value;
     }

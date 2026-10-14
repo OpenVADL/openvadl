@@ -24,7 +24,7 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CounterDefinition extends Definition implements IdentifiableNode, TypedNode {
   public CounterKind kind;
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
   public TypeLiteral typeLiteral;
   public SourceLocation loc;
 
@@ -38,7 +38,7 @@ public class CounterDefinition extends Definition implements IdentifiableNode, T
     GROUP
   }
 
-  public CounterDefinition(CounterKind kind, IdentifierOrPlaceholder identifier,
+  public CounterDefinition(CounterKind kind, IdentifierOrMacro identifier,
                            TypeLiteral typeLiteral,
                            SourceLocation location) {
     this.kind = kind;

@@ -34,7 +34,7 @@ import vadl.utils.SourceLocation;
  * Float types represent {@link vadl.viam.FloatFormat}s.
  */
 public class FloatTypeDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
 
   /**
    * Represents the encoding of the represented float format. This is used by the type-checker
@@ -50,7 +50,7 @@ public class FloatTypeDefinition extends Definition implements IdentifiableNode,
   @Nullable
   private FloatType type;
 
-  public FloatTypeDefinition(IdentifierOrPlaceholder identifier, SourceLocation loc) {
+  public FloatTypeDefinition(IdentifierOrMacro identifier, SourceLocation loc) {
     this.identifier = identifier;
     this.loc = loc;
   }

@@ -25,13 +25,13 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class GroupDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder name;
+  public IdentifierOrMacro name;
   @Nullable
   public TypeLiteral type;
   public Group.Sequence groupSequence;
   public SourceLocation loc;
 
-  public GroupDefinition(IdentifierOrPlaceholder name, @Nullable TypeLiteral type,
+  public GroupDefinition(IdentifierOrMacro name, @Nullable TypeLiteral type,
                          Group.Sequence groupSequence, SourceLocation loc) {
     this.name = name;
     this.type = type;

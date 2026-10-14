@@ -24,15 +24,15 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AssemblyDefinition extends Definition {
-  public List<IdentifierOrPlaceholder> identifiers;
+  public List<IdentifierOrMacro> identifiers;
   public Expr expr;
   public SourceLocation loc;
 
   // Can hold InstructionDefinition or PseudoInstructionDefinition
   public List<Definition> instructionNodes = new ArrayList<>();
 
-  public AssemblyDefinition(List<IdentifierOrPlaceholder> identifiers, Expr expr,
-                     SourceLocation location) {
+  public AssemblyDefinition(List<IdentifierOrMacro> identifiers, Expr expr,
+                            SourceLocation location) {
     this.identifiers = identifiers;
     this.expr = expr;
     this.loc = location;
@@ -54,7 +54,7 @@ public class AssemblyDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append("assembly ");
     var isFirst = true;
-    for (IdentifierOrPlaceholder identifier : identifiers) {
+    for (IdentifierOrMacro identifier : identifiers) {
       if (!isFirst) {
         builder.append(", ");
       }

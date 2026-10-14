@@ -92,7 +92,7 @@ public sealed interface Group {
   }
 
   public final class Literal extends Node implements Group {
-    public IsId id;
+    public IdentifierPathOrMacro id;
     @Nullable
     public Expr size;
     public SourceLocation loc;
@@ -103,7 +103,7 @@ public sealed interface Group {
     @LazyInit
     public OperationDefinition operation;
 
-    public Literal(IsId id, @Nullable Expr size, SourceLocation loc) {
+    public Literal(IdentifierPathOrMacro id, @Nullable Expr size, SourceLocation loc) {
       this.id = id;
       this.size = size;
       this.loc = loc;

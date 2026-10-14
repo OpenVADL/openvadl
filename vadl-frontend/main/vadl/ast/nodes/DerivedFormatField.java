@@ -37,7 +37,7 @@ import vadl.utils.SourceLocation;
 public class DerivedFormatField extends FormatField implements IdentifiableNode {
   public Expr expr;
 
-  public DerivedFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
+  public DerivedFormatField(IdentifierOrMacro identifier, Expr expr) {
     super(identifier);
     this.expr = expr;
   }

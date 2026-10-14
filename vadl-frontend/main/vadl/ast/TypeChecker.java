@@ -21,8 +21,6 @@ import static vadl.ast.GroupDefUtils.GroupExprBitLengthCollector.maxBitLength;
 import static vadl.ast.GroupDefUtils.GroupExprLengthCollector.maxLength;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
-import static vadl.types.BuiltInTable.OP_NOT_ELEM_OF;
-import static vadl.types.BuiltInTable.OP_NOT_IN;
 
 import com.google.common.collect.Streams;
 import java.math.BigInteger;
@@ -107,6 +105,7 @@ import vadl.ast.nodes.GroupedExpr;
 import vadl.ast.nodes.IdentifiableNode;
 import vadl.ast.nodes.Identifier;
 import vadl.ast.nodes.IdentifierPath;
+import vadl.ast.nodes.IdentifierPathOrMacro;
 import vadl.ast.nodes.IfExpr;
 import vadl.ast.nodes.IfStatement;
 import vadl.ast.nodes.ImportDefinition;
@@ -114,7 +113,6 @@ import vadl.ast.nodes.InstructionCallStatement;
 import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.InstructionSetDefinition;
 import vadl.ast.nodes.IntegerLiteral;
-import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
@@ -3262,8 +3260,8 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   private void visitIdentifiable(Expr expr) {
     Node origin;
     String innerName;
-    IsId isId = (IsId) expr;
-    origin = isId.target();
+    IdentifierPathOrMacro identifierPathOrMacro = (IdentifierPathOrMacro) expr;
+    origin = identifierPathOrMacro.target();
     if (expr instanceof Identifier identifier) {
       innerName = identifier.name;
     } else if (expr instanceof IdentifierPath path) {
@@ -3457,7 +3455,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       // We might be here from a call expr and it might be necessary to handle the call for another
       // definition.
 
-      var fullName = isId.pathToString();
+      var fullName = identifierPathOrMacro.pathToString();
       throw addErrorAndStopChecking(error("Invalid Expression", expr)
           .locationDescription(expr,
               "The name '%s' points to a `%s` which cannot be used as an expression.", fullName,
@@ -3472,7 +3470,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     if (builtin == null) {
       throw new IllegalStateException(
           "Cannot find symbol `%s` found at: %s (The name resolver should already have caught that)"
-              .formatted(isId.pathToString(), expr.location().toConciseString())
+              .formatted(identifierPathOrMacro.pathToString(), expr.location().toConciseString())
       );
     }
 
@@ -4919,10 +4917,11 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     return null;
   }
 
-  private void checkGroupQuantifier(@Nullable Identifier identifier, List<IsId> operations) {
+  private void checkGroupQuantifier(@Nullable Identifier identifier,
+                                    List<IdentifierPathOrMacro> operations) {
 
-    final Map<IsId, OperationDefinition> ops = new LinkedHashMap<>();
-    for (IsId o : operations) {
+    final Map<IdentifierPathOrMacro, OperationDefinition> ops = new LinkedHashMap<>();
+    for (IdentifierPathOrMacro o : operations) {
       if (o.target() instanceof OperationDefinition op) {
         ops.put(o, op);
         continue;

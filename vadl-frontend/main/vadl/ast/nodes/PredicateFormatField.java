@@ -28,7 +28,7 @@ import vadl.utils.SourceLocation;
 public class PredicateFormatField extends FormatField {
   public Expr expr;
 
-  public PredicateFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
+  public PredicateFormatField(IdentifierOrMacro identifier, Expr expr) {
     super(identifier);
     this.expr = expr;
   }

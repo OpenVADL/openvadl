@@ -22,13 +22,13 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class CacheDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   public TypeLiteral sourceType;
   public TypeLiteral targetType;
   public SourceLocation loc;
 
-  public CacheDefinition(IdentifierOrPlaceholder id, TypeLiteral sourceType, TypeLiteral targetType,
-                  SourceLocation loc) {
+  public CacheDefinition(IdentifierOrMacro id, TypeLiteral sourceType, TypeLiteral targetType,
+                         SourceLocation loc) {
     this.id = id;
     this.sourceType = sourceType;
     this.targetType = targetType;

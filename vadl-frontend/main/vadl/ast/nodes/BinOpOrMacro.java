@@ -16,15 +16,7 @@
 
 package vadl.ast.nodes;
 
-import java.util.List;
-import javax.annotation.Nullable;
-
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
-  @Override
-  public IsId path();
-
-  @Override
-  @Nullable
-  public List<Expr> symbolArgs();
+public sealed interface BinOpOrMacro permits BinOp, MacroCall.Node, MacroMatchNode {
+  public void prettyPrint(int indent, StringBuilder builder);
 }

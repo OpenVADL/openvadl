@@ -97,10 +97,10 @@ public class ForallThenExpr extends Expr {
   }
 
   public static final class Index extends Node implements IdentifiableNode {
-    public IsId id;
-    public List<IsId> operations;
+    public IdentifierPathOrMacro id;
+    public List<IdentifierPathOrMacro> operations;
 
-    public Index(IsId id, List<IsId> operations) {
+    public Index(IdentifierPathOrMacro id, List<IdentifierPathOrMacro> operations) {
       this.id = id;
       this.operations = operations;
     }
@@ -129,7 +129,7 @@ public class ForallThenExpr extends Expr {
       id.prettyPrint(0, builder);
       builder.append(" in {");
       var isFirstOp = true;
-      for (IsId operation : operations) {
+      for (IdentifierPathOrMacro operation : operations) {
         if (!isFirstOp) {
           builder.append(", ");
         }

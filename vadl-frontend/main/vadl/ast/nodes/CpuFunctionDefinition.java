@@ -26,11 +26,12 @@ public class CpuFunctionDefinition extends Definition implements IdentifiableNod
   public Identifier id;
   public BehaviorKind kind;
   @Nullable
-  public IsId stopWithReference;
+  public IdentifierPathOrMacro stopWithReference;
   public Expr expr;
   public SourceLocation loc;
 
-  public CpuFunctionDefinition(Identifier id, BehaviorKind kind, @Nullable IsId stopWithReference,
+  public CpuFunctionDefinition(Identifier id, BehaviorKind kind, @Nullable
+                               IdentifierPathOrMacro stopWithReference,
                         Expr expr,
                         SourceLocation loc) {
     this.id = id;

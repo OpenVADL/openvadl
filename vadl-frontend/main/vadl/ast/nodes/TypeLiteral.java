@@ -29,7 +29,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class TypeLiteral extends Expr {
-  public IsId baseType;
+  public IdentifierPathOrMacro baseType;
   /**
    * The sizes of the type literal.
    * Can be zero or more, written like {@code Bits<dimension1><dimension2><dimension3>} etc.
@@ -37,13 +37,13 @@ public final class TypeLiteral extends Expr {
   public List<Expr> sizeIndices;
   public SourceLocation loc;
 
-  public TypeLiteral(IsId baseType, List<Expr> sizeIndices, SourceLocation loc) {
+  public TypeLiteral(IdentifierPathOrMacro baseType, List<Expr> sizeIndices, SourceLocation loc) {
     this.baseType = baseType;
     this.sizeIndices = sizeIndices;
     this.loc = loc;
   }
 
-  public TypeLiteral(IsSymExpr symExpr) {
+  public TypeLiteral(SymExprOrMacro symExpr) {
     this.baseType = symExpr.path();
     var symbolArgs = symExpr.symbolArgs();
     this.sizeIndices = symbolArgs == null ? List.of() : List.of(symbolArgs.getFirst());

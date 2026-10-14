@@ -23,17 +23,17 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ProcessDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder name;
+  public IdentifierOrMacro name;
   public List<TemplateParam> templateParams;
   public List<Parameter> inputs;
   public List<Parameter> outputs;
   public Statement statement;
   public SourceLocation loc;
 
-  public ProcessDefinition(IdentifierOrPlaceholder name, List<TemplateParam> templateParams,
-                    List<Parameter> inputs, List<Parameter> outputs,
-                    Statement statement,
-                    SourceLocation loc) {
+  public ProcessDefinition(IdentifierOrMacro name, List<TemplateParam> templateParams,
+                           List<Parameter> inputs, List<Parameter> outputs,
+                           Statement statement,
+                           SourceLocation loc) {
     this.name = name;
     this.templateParams = templateParams;
     this.inputs = inputs;

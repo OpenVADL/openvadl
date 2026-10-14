@@ -29,13 +29,13 @@ import vadl.utils.SourceLocation;
  * <p>Example: {@code MyIsa::MyFormat::fieldName}
  */
 @SuppressWarnings("MissingJavadocMethod")
-public final class IdentifierPath extends Expr implements IsId {
+public final class IdentifierPath extends Expr implements IdentifierPathOrMacro {
   /**
    * List of segments in this path; the first N-1 segments are (nested) namespaces,
    * the last segment is an identifier in the (nested) namespace.
    * Size has to be at least 1
    */
-  public List<IdentifierOrPlaceholder> segments;
+  public List<IdentifierOrMacro> segments;
 
   /**
    * The node this identifier refers to.
@@ -43,7 +43,7 @@ public final class IdentifierPath extends Expr implements IsId {
   @Nullable
   public Node target;
 
-  public IdentifierPath(List<IdentifierOrPlaceholder> segments) {
+  public IdentifierPath(List<IdentifierOrMacro> segments) {
     this.segments = segments;
   }
 

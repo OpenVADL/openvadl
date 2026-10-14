@@ -22,11 +22,11 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class UsingDefinition extends Definition implements IdentifiableNode {
-  public final IdentifierOrPlaceholder id;
+  public final IdentifierOrMacro id;
   public final TypeLiteral typeLiteral;
   public final SourceLocation loc;
 
-  public UsingDefinition(IdentifierOrPlaceholder id, TypeLiteral typeLiteral,
+  public UsingDefinition(IdentifierOrMacro id, TypeLiteral typeLiteral,
                          SourceLocation location) {
     this.id = id;
     this.typeLiteral = typeLiteral;

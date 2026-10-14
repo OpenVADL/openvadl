@@ -29,7 +29,7 @@ public class TypedFormatField extends FormatField implements IdentifiableNode {
   @Nullable
   public FormatDefinition.BitRange range;
 
-  public TypedFormatField(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral) {
+  public TypedFormatField(IdentifierOrMacro identifier, TypeLiteral typeLiteral) {
     super(identifier);
     this.typeLiteral = typeLiteral;
   }

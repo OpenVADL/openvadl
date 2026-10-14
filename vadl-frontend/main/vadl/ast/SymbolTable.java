@@ -60,13 +60,13 @@ import vadl.ast.nodes.FormatField;
 import vadl.ast.nodes.FunctionDefinition;
 import vadl.ast.nodes.IdentifiableNode;
 import vadl.ast.nodes.Identifier;
-import vadl.ast.nodes.IdentifierOrPlaceholder;
+import vadl.ast.nodes.IdentifierOrMacro;
 import vadl.ast.nodes.IdentifierPath;
+import vadl.ast.nodes.IdentifierPathOrMacro;
 import vadl.ast.nodes.ImportDefinition;
 import vadl.ast.nodes.InstructionCallStatement;
 import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.InstructionSetDefinition;
-import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.MemoryDefinition;
@@ -202,11 +202,11 @@ public class SymbolTable {
   /**
    * Check if the identifier resolves to a builtin.
    *
-   * @param isId to be resolved
+   * @param identifierPathOrMacro to be resolved
    * @return true if the identifier resolves to a builtin, false otherwise
    */
-  boolean isBuiltin(IsId isId) {
-    var name = isId.pathToString();
+  boolean isBuiltin(IdentifierPathOrMacro identifierPathOrMacro) {
+    var name = identifierPathOrMacro.pathToString();
     return builtinNames.contains(name);
   }
 
@@ -299,7 +299,7 @@ public class SymbolTable {
    * @return the symbol if found, null otherwise
    */
   @Nullable
-  private Node find(IsId id) {
+  private Node find(IdentifierPathOrMacro id) {
     return switch (id) {
       case Identifier ident -> {
         var symbol = resolveName(ident.name);
@@ -347,7 +347,7 @@ public class SymbolTable {
    * @param type  of the node to be resolved
    * @return the origin if it could be found, null otherwise
    */
-  public <T extends Node> @Nullable T findAs(IsId usage, Class<T> type) {
+  public <T extends Node> @Nullable T findAs(IdentifierPathOrMacro usage, Class<T> type) {
     var symbol = find(usage);
     return type.isInstance(symbol) ? type.cast(symbol) : null;
   }
@@ -390,7 +390,7 @@ public class SymbolTable {
    * @param type  the type that the resolved node must have
    * @return the resolved node, or null if it could not be resolved with the given type
    */
-  <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
+  <T extends Node> @Nullable T requireAs(IdentifierPathOrMacro usage, Class<T> type) {
     var origin = findAs(usage, type);
     if (origin != null) {
       return origin;
@@ -407,7 +407,7 @@ public class SymbolTable {
    *
    * @param usage to be resolved.
    */
-  void requireAny(IsId usage) {
+  void requireAny(IdentifierPathOrMacro usage) {
     var origin = find(usage);
     if (origin != null || isBuiltin(usage)) {
       return;
@@ -1041,7 +1041,7 @@ public class SymbolTable {
         index.symbolTable = childTable;
         index.identifier().symbolTable = childTable;
 
-        for (IsId o : index.operations) {
+        for (IdentifierPathOrMacro o : index.operations) {
           withSymbols(currentSymbols(), () -> ((Identifier) o).accept(this));
         }
       });
@@ -1054,7 +1054,7 @@ public class SymbolTable {
     @Override
     public Void visit(ExistsInExpr expr) {
       beforeTravel(expr);
-      for (IsId o : expr.operations) {
+      for (IdentifierPathOrMacro o : expr.operations) {
         ((Identifier) o).accept(this);
       }
       afterTravel(expr);
@@ -1073,7 +1073,7 @@ public class SymbolTable {
         index.symbolTable = childTable;
         index.identifier().symbolTable = childTable;
 
-        for (IsId o : index.operations) {
+        for (IdentifierPathOrMacro o : index.operations) {
           withSymbols(currentSymbols(), () -> ((Identifier) o).accept(this));
         }
       });
@@ -1220,7 +1220,7 @@ public class SymbolTable {
       // Link instruction and import all symbols from the instruction format.
       beforeTravel(definition);
 
-      for (IdentifierOrPlaceholder identifier : definition.identifiers) {
+      for (IdentifierOrMacro identifier : definition.identifiers) {
         var pseudoInstr = definition.symbolTable()
             .findAs((Identifier) identifier, PseudoInstructionDefinition.class);
         if (pseudoInstr != null) {

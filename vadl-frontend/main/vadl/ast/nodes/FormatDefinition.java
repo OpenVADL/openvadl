@@ -26,7 +26,7 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class FormatDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
   public TypeLiteral typeLiteral;
   public List<FormatField> fields;
   public SourceLocation loc;
@@ -40,7 +40,7 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
   }
 
 
-  public FormatDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral,
+  public FormatDefinition(IdentifierOrMacro identifier, TypeLiteral typeLiteral,
                           List<FormatField> fields, SourceLocation location) {
     this.identifier = identifier;
     this.typeLiteral = typeLiteral;

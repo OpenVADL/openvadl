@@ -23,11 +23,11 @@ import vadl.utils.SourceLocation;
  * This node should never leave the parser.
  */
 @SuppressWarnings("MissingJavadocMethod")
-public final class MacroMatchDefinition extends Definition implements IsMacroMatch {
-  public MacroMatch macroMatch;
+public final class MacroMatchDefinition extends Definition implements MacroMatch {
+  public MacroMatchContent macroMatchContent;
 
-  public MacroMatchDefinition(MacroMatch macroMatch) {
-    this.macroMatch = macroMatch;
+  public MacroMatchDefinition(MacroMatchContent macroMatchContent) {
+    this.macroMatchContent = macroMatchContent;
   }
 
   @Override
@@ -37,17 +37,17 @@ public final class MacroMatchDefinition extends Definition implements IsMacroMat
 
   @Override
   public SourceLocation location() {
-    return macroMatch.sourceLocation();
+    return macroMatchContent.sourceLocation();
   }
 
   @Override
   public SyntaxType syntaxType() {
-    return macroMatch.resultType();
+    return macroMatchContent.resultType();
   }
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    macroMatch.prettyPrint(indent, builder);
+    macroMatchContent.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -61,11 +61,11 @@ public final class MacroMatchDefinition extends Definition implements IsMacroMat
     }
 
     MacroMatchDefinition that = (MacroMatchDefinition) o;
-    return macroMatch.equals(that.macroMatch);
+    return macroMatchContent.equals(that.macroMatchContent);
   }
 
   @Override
   public int hashCode() {
-    return macroMatch.hashCode();
+    return macroMatchContent.hashCode();
   }
 }

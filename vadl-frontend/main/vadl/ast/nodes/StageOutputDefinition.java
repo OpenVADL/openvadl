@@ -22,10 +22,10 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class StageOutputDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
   public TypeLiteral typeLiteral;
 
-  public StageOutputDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral) {
+  public StageOutputDefinition(IdentifierOrMacro identifier, TypeLiteral typeLiteral) {
     this.identifier = identifier;
     this.typeLiteral = typeLiteral;
   }

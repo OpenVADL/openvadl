@@ -21,8 +21,9 @@ import javax.annotation.Nullable;
 import vadl.utils.WithLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsCallExpr extends WithLocation permits CallIndexExpr, IsSymExpr {
-  public IsId path();
+public sealed interface CallIndexExprOrMacro extends WithLocation
+    permits CallIndexExpr, SymExprOrMacro {
+  public IdentifierPathOrMacro path();
 
   @Nullable
   public List<Expr> symbolArgs();

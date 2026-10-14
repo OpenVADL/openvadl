@@ -20,7 +20,7 @@ import java.util.Objects;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public final class BinOp extends Node implements IsBinOp {
+public final class BinOp extends Node implements BinOpOrMacro {
 
   public Operator operator;
   public SourceLocation location;

@@ -27,10 +27,10 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class ResourceReferenceExression extends Expr {
-  public IdentifierOrPlaceholder resource;
+  public IdentifierOrMacro resource;
   public SourceLocation location;
 
-  public ResourceReferenceExression(IdentifierOrPlaceholder resource, SourceLocation location) {
+  public ResourceReferenceExression(IdentifierOrMacro resource, SourceLocation location) {
     this.resource = resource;
     this.location = location;
   }

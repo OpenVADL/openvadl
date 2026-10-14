@@ -28,7 +28,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class ForallIndex extends Node implements IdentifiableNode {
-  public IsId name;
+  public IdentifierPathOrMacro name;
 
   @Nullable
   public TypeLiteral typeLiteral;
@@ -43,7 +43,7 @@ public final class ForallIndex extends Node implements IdentifiableNode {
   @Nullable
   public Integer computedTo;
 
-  public ForallIndex(IsId name, @Nullable TypeLiteral typeLiteral, Expr domain) {
+  public ForallIndex(IdentifierPathOrMacro name, @Nullable TypeLiteral typeLiteral, Expr domain) {
     this.name = name;
     this.typeLiteral = typeLiteral;
     this.domain = domain;

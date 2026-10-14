@@ -27,7 +27,7 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class FunctionDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder name;
+  public IdentifierOrMacro name;
   public List<Parameter> params;
   public TypeLiteral retType;
   public Expr expr;
@@ -36,9 +36,9 @@ public class FunctionDefinition extends Definition implements IdentifiableNode, 
   @Nullable
   public ConcreteRelationType type;
 
-  public FunctionDefinition(IdentifierOrPlaceholder name, List<Parameter> params,
-                     TypeLiteral retType,
-                     Expr expr, SourceLocation location) {
+  public FunctionDefinition(IdentifierOrMacro name, List<Parameter> params,
+                            TypeLiteral retType,
+                            Expr expr, SourceLocation location) {
     this.name = name;
     this.params = params;
     this.retType = retType;

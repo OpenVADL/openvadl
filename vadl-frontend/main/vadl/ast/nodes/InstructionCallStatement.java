@@ -30,7 +30,7 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class InstructionCallStatement extends Statement {
 
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   public List<NamedArgument> namedArguments;
   public List<Expr> unnamedArguments;
   public SourceLocation loc;
@@ -42,7 +42,7 @@ public final class InstructionCallStatement extends Statement {
   @Nullable
   public Definition instrDef;
 
-  public InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
+  public InstructionCallStatement(IdentifierOrMacro id, List<NamedArgument> namedArguments,
                                   List<Expr> unnamedArguments, SourceLocation loc) {
     this.id = id;
     this.namedArguments = namedArguments;
@@ -125,10 +125,10 @@ public final class InstructionCallStatement extends Statement {
   }
 
   public static final class NamedArgument extends Node {
-    public IdentifierOrPlaceholder name;
+    public IdentifierOrMacro name;
     public Expr value;
 
-    public NamedArgument(IdentifierOrPlaceholder name, Expr value) {
+    public NamedArgument(IdentifierOrMacro name, Expr value) {
       this.name = name;
       this.value = value;
     }

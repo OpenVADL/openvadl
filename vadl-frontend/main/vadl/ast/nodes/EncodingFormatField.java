@@ -28,7 +28,7 @@ import vadl.utils.SourceLocation;
 public class EncodingFormatField extends FormatField {
   public Expr expr;
 
-  public EncodingFormatField(IdentifierOrPlaceholder identifier, Expr expr) {
+  public EncodingFormatField(IdentifierOrMacro identifier, Expr expr) {
     super(identifier);
     this.expr = expr;
   }

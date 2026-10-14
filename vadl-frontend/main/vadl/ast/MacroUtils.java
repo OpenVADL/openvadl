@@ -42,11 +42,11 @@ import vadl.ast.nodes.DefinitionList;
 import vadl.ast.nodes.ExpandedAliasDefSequenceCallExpr;
 import vadl.ast.nodes.ExpandedSequenceCallExpr;
 import vadl.ast.nodes.Identifier;
+import vadl.ast.nodes.IdentifierPathOrMacro;
 import vadl.ast.nodes.InstructionSetDefinition;
 import vadl.ast.nodes.IntegerLiteral;
-import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.MacroCall;
-import vadl.ast.nodes.MacroMatch;
+import vadl.ast.nodes.MacroMatchContent;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MacroMatchNode;
@@ -96,9 +96,9 @@ class MacroUtils {
     return new RecordInstance(recordType, entries, location);
   }
 
-  static Node createMacroMatch(SyntaxType resultType, List<MacroMatch.Choice> choices,
+  static Node createMacroMatch(SyntaxType resultType, List<MacroMatchContent.Choice> choices,
                                Node defaultChoice, SourceLocation sourceLocation) {
-    var macroMatch = new MacroMatch(resultType, choices, defaultChoice, sourceLocation);
+    var macroMatch = new MacroMatchContent(resultType, choices, defaultChoice, sourceLocation);
     if (isDefType(resultType)) {
       return new MacroMatchDefinition(macroMatch);
     } else if (isStmtType(resultType)) {
@@ -449,7 +449,7 @@ class MacroUtils {
     // FIXME: This is not optimal as we traverse an ISA potentially multiple times.
     // as we don't have access to the macroTable of the referenced ISA, we must
     // do the traversal again.
-    for (IsId extending : isa.extending) {
+    for (IdentifierPathOrMacro extending : isa.extending) {
       var extendingIsa = (InstructionSetDefinition) requireNonNull(extending.target());
       defineGeneratedMacroSymbols(macroTable, extendingIsa);
     }

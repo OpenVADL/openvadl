@@ -33,11 +33,11 @@ import vadl.ast.nodes.CastExpr;
 import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.DefinitionList;
 import vadl.ast.nodes.EncodingDefinition;
+import vadl.ast.nodes.EncsOrMacro;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.Identifier;
+import vadl.ast.nodes.IdentifierPathOrMacro;
 import vadl.ast.nodes.ImportDefinition;
-import vadl.ast.nodes.IsEncs;
-import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.Operator;
 import vadl.ast.nodes.Statement;
 import vadl.ast.nodes.StatementList;
@@ -515,7 +515,7 @@ class ParserUtils {
    * @param gtLoc  The location of the last `>`, or `null` of none was parsed
    * @return       The right expression (either binary less-than or a symbol expression)
    */
-  static Expr createSymExprOrBinOp(IsId path, List<Expr> terms, boolean isLtOp,
+  static Expr createSymExprOrBinOp(IdentifierPathOrMacro path, List<Expr> terms, boolean isLtOp,
                                    SourceLocation ltLoc, SourceLocation gtLoc) {
     if (ltLoc == null) {
       // we parsed id::path
@@ -551,9 +551,9 @@ class ParserUtils {
     }
   }
 
-  static void addEncs(List<IsEncs> encs, @Nullable IsEncs enc) {
+  static void addEncs(List<EncsOrMacro> encs, @Nullable EncsOrMacro enc) {
     if (enc instanceof EncodingDefinition.EncsNode list) {
-      for (IsEncs item : list.items) {
+      for (EncsOrMacro item : list.items) {
         addEncs(encs, item);
       }
     } else if (enc != null) {

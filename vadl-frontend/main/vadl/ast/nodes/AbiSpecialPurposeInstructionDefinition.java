@@ -31,11 +31,11 @@ import vadl.utils.SourceLocation;
 public class AbiSpecialPurposeInstructionDefinition extends Definition {
 
   public Kind kind;
-  public IdentifierOrPlaceholder target;
+  public IdentifierOrMacro target;
   public SourceLocation loc;
 
   public AbiSpecialPurposeInstructionDefinition(Kind kind,
-                                         IdentifierOrPlaceholder target,
+                                         IdentifierOrMacro target,
                                          SourceLocation loc) {
     this.kind = kind;
     this.target = target;

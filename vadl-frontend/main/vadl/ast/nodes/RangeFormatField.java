@@ -38,7 +38,7 @@ public class RangeFormatField extends FormatField implements IdentifiableNode {
   @Nullable
   public List<FormatDefinition.BitRange> computedRanges;
 
-  public RangeFormatField(IdentifierOrPlaceholder identifier, List<Expr> ranges,
+  public RangeFormatField(IdentifierOrMacro identifier, List<Expr> ranges,
                           @Nullable TypeLiteral typeLiteral) {
     super(identifier);
     this.ranges = ranges;
