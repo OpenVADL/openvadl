@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,8 +61,8 @@ class AstUtils {
       Map.of("VADL::div", List.of("VADL::sdiv", "VADL::udiv"), "VADL::mod",
           List.of("VADL::smod", "VADL::umod"));
 
-  private static Map<String, BuiltInTable.BuiltIn> nameLookupTable =
-      BuiltInTable.builtIns().collect(Collectors.toMap(BuiltInTable.BuiltIn::name, b -> b));
+  private static Map<String, List<BuiltInTable.BuiltIn>> nameLookupTable = BuiltInTable.builtIns()
+      .collect(Collectors.groupingBy(BuiltInTable.BuiltIn::name));
 
   private static Map<String, String> operatorRewrites = Map.of(
       "&&", "&",
@@ -85,7 +86,39 @@ class AstUtils {
       name = "sdec";
     }
 
-    return nameLookupTable.get(name);
+    final var candidates = nameLookupTable.get(name);
+
+    if (candidates == null) {
+      return null;
+    }
+
+    // FIXME: This assumes that there is only one definition of each Builtin
+    //        per argument count. Currently, this is in fact fine.
+    for (var candidate : candidates) {
+      if (candidate.argTypeClasses().size() == argTypes.size()) {
+        return candidate;
+      }
+    }
+
+    return candidates.getFirst();
+  }
+
+  static @Nullable List<Integer> getBuiltInArgCounts(String name) {
+    final var builtins = nameLookupTable.get(name);
+
+    if (builtins == null) {
+      return null;
+    }
+
+    final var argCounts = new HashSet<Integer>();
+
+    for (var builtin : builtins) {
+      final var argCount = builtin.signature().argTypeClasses().size();
+
+      argCounts.add(argCount);
+    }
+
+    return argCounts.stream().sorted().toList();
   }
 
   static BuiltInTable.BuiltIn getOperatorBuiltIn(Operator operator, List<Type> argTypes) {

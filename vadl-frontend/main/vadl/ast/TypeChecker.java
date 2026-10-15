@@ -27,6 +27,7 @@ import static vadl.types.BuiltInTable.OP_NOT_IN;
 import com.google.common.collect.Streams;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -184,6 +185,7 @@ import vadl.types.GroupType;
 import vadl.types.InstructionType;
 import vadl.types.MicroArchitectureType;
 import vadl.types.OperationType;
+import vadl.types.RelationType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
 import vadl.types.StringType;
@@ -1031,11 +1033,9 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     final var expectedArgCount = builtIn.argTypeClasses().size();
     if (args.size() != expectedArgCount
         && !(builtIn.signature().hasVarArgs() && args.size() >= expectedArgCount)) {
-      throw addErrorAndStopChecking(
-          error("Type Mismatch", location)
-              .locationDescription(location,
-                  "Expected %d arguments but got %d.", expectedArgCount, args.size())
-              .build());
+      throw addErrorAndStopChecking(wrongArgCountError(
+          location, args.size(), List.of(expectedArgCount)
+      ));
     }
 
     if (args.size() == 1) {
@@ -3483,20 +3483,25 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     // It's also possible to call functions without parenthesis if the function doesn't take any
     // arguments.
-    var matchingBuiltins = BuiltInTable.builtIns()
-        .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().equals(innerName))
-        .toList();
+    final var builtin = AstUtils.getBuiltIn(innerName, List.of());
 
-    if (matchingBuiltins.size() == 1) {
-      expr.type = matchingBuiltins.get(0).returns(List.of());
+    if (builtin == null) {
+      throw new IllegalStateException(
+          "Cannot find symbol `%s` found at: %s (The name resolver should already have caught that)"
+              .formatted(isId.pathToString(), expr.location().toConciseString())
+      );
+    }
+
+    if (builtin.signature().argTypeClasses().isEmpty()) {
+      expr.type = builtin.returns(Collections.emptyList());
       return;
     }
 
-    var fullName = isId.pathToString();
-    throw new IllegalStateException(
-        "Cannot find symbol `%s` found at: %s (The name resolver should already have caught that)"
-            .formatted(fullName, expr.location().toConciseString()));
+    final var expectedBuiltinArgCounts = requireNonNull(AstUtils.getBuiltInArgCounts(innerName));
+
+    throw addErrorAndStopChecking(wrongArgCountError(
+        expr, 0, expectedBuiltinArgCounts
+    ));
   }
 
   @Override
@@ -5363,5 +5368,60 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     check(statement.body);
     return null;
+  }
+
+
+  private static Diagnostic wrongArgCountError(
+      WithLocation location,
+      int actualArgCount,
+      Collection<Integer> expectedArgCounts
+  ) {
+    final var err = error("Type Mismatch", location);
+
+    final var expectedArgCountString = new StringBuilder();
+
+    final boolean isPlural;
+
+    if (expectedArgCounts.isEmpty()) {
+      throw new IllegalArgumentException("Expected at least one expected argument count");
+    } else if (expectedArgCounts.size() == 1) {
+      final int expectedArgCount = expectedArgCounts.iterator().next();
+
+      isPlural = expectedArgCount != 1;
+      expectedArgCountString.append(expectedArgCount);
+    } else {
+      final var sortedArgCounts = expectedArgCounts.stream().sorted().distinct().toList();
+
+      final int minExpectedArgCount = sortedArgCounts.getFirst();
+      final int maxExpectedArgCount = sortedArgCounts.getLast();
+
+      if (sortedArgCounts.size() == maxExpectedArgCount - minExpectedArgCount + 1) {
+        // Special case a continuous range of expected argument counts by only
+        // printing the lower and upper bounds.
+        isPlural = true;
+        expectedArgCountString
+            .append(minExpectedArgCount)
+            .append(" to ")
+            .append(maxExpectedArgCount);
+      } else {
+        isPlural = true;
+        for (int i = 0; i != sortedArgCounts.size(); ++i) {
+          if (i == sortedArgCounts.size() - 1) {
+            expectedArgCountString.append(" or ");
+          } else if (i != 0) {
+            expectedArgCountString.append(", ");
+          }
+
+          expectedArgCountString.append(sortedArgCounts.get(i));
+        }
+      }
+    }
+    return err.locationDescription(
+        location,
+        "Expected %s argument%s but got %d.",
+        expectedArgCountString,
+        isPlural ? "s" : "",
+        actualArgCount
+    ).build();
   }
 }
