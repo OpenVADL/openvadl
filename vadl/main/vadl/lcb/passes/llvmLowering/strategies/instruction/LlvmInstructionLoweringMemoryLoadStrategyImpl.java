@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,6 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbNodeReplacementHa
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.operands.TableGenInstructionImmediateOperand;
-import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
@@ -67,9 +66,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
 
   @Override
   protected LlvmLoweringPass.Flags getFlags(Graph graph) {
-    var flags = super.getFlags(graph);
-
-    return LlvmLoweringPass.Flags.withSideEffects(flags);
+    return super.getFlags(graph);
   }
 
   @Override

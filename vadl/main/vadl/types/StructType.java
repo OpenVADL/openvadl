@@ -64,16 +64,22 @@ public class StructType extends Type {
   public String name() {
     final var sb = new StringBuilder("Struct<");
 
-    boolean first = true;
-    for (var entry : types.entrySet()) {
-      sb
-          .append(first ? "" : ", ")
-          .append(entry.getKey()).append(": ")
-          .append(entry.getValue().name());
-      first = false;
-    }
+    appendMemberNames(sb);
 
     sb.append(">");
     return sb.toString();
+  }
+
+  protected void appendMemberNames(StringBuilder sb) {
+    boolean isFirst = true;
+    for (var entry : types.entrySet()) {
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        sb.append(", ");
+      }
+
+      sb.append(entry.getKey()).append(": ").append(entry.getValue().name());
+    }
   }
 }

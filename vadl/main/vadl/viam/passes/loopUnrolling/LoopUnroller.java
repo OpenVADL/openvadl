@@ -19,6 +19,7 @@ package vadl.viam.passes.loopUnrolling;
 import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,6 +29,7 @@ import vadl.utils.GraphUtils;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.ForallEndNode;
@@ -45,7 +47,7 @@ public class LoopUnroller implements CfgTraverser {
 
   private Graph graph;
   private final ArrayDeque<ForallNode> forallStack = new ArrayDeque<>();
-  private Set<SideEffectNode> unrolledSideEffects = new HashSet<>();
+  private final ArrayDeque<Set<SideEffectNode>> branchStack = new ArrayDeque<>();
 
   public LoopUnroller(Graph graph) {
     this.graph = graph;
@@ -73,6 +75,21 @@ public class LoopUnroller implements CfgTraverser {
     // end node.
     // We keep track of visited forall start to have fast access to the end node's
     // corresponding start node.
+    // We also keep track of the stack of branches we are in right now: after unrolling
+    // a forall block, we might have to do some more work at the same branch level before
+    // the end is reached. To avoid mixing up side effects in that case, we store them
+    // at the branch level instead of globally.
+
+    if (controlNode instanceof BranchBeginNode || controlNode instanceof StartNode) {
+      branchStack.push(new HashSet<>());
+    }
+    if (controlNode instanceof AbstractEndNode endNode) {
+      // if we reached an abstract end node,
+      // we must collect and add all saved side effects from inner loops
+      // and add them to the side effects of this node.
+      var sideEffects = branchStack.pop();
+      sideEffects.forEach(endNode::addSideEffect);
+    }
 
     if (controlNode instanceof ForallNode forallNode) {
       forallStack.push(forallNode);
@@ -81,26 +98,20 @@ public class LoopUnroller implements CfgTraverser {
     if (controlNode instanceof ForallEndNode forallEndNode) {
       var forallNode = forallStack.pop();
       var forallEndNext = forallEndNode.next();
-      unrollLoop(forallNode, forallEndNode);
+      // collect unrolled side effects into list of the surrounding branch
+      var surroundingBranch = branchStack.peek();
+      unrollLoop(forallNode, forallEndNode, surroundingBranch);
       // we want to continue after the replacement of the forallEnd.
       // therefore, we tell the traverser the new continuation, which is the
       // forallEnd replacement node.
       return (ControlNode) requireNonNull(forallEndNext.predecessor());
     }
 
-    if (controlNode instanceof AbstractEndNode endNode) {
-      // if we reached an abstract end node that is not a forall node,
-      // we must collect and add all saved side effects from inner loops
-      // and add them to the side effects of this node.
-      unrolledSideEffects.forEach(endNode::addSideEffect);
-      // reset all unrolled side effects
-      unrolledSideEffects.clear();
-    }
-
     return controlNode;
   }
 
-  private void unrollLoop(ForallNode start, ForallEndNode end) {
+  private void unrollLoop(ForallNode start, ForallEndNode end,
+                          Collection<SideEffectNode> sideEffectCollector) {
     // 1. we collect all nodes we want to duplicate
     // (e.i. all control nodes between the start and end node).
     // 2. we create a shallow copy of all the collected nodes and store the relation
@@ -139,7 +150,7 @@ public class LoopUnroller implements CfgTraverser {
 
       // we must cache all unrolled side effects of this loop iteration, so it can
       // be added to the outer scoped abstract end node.
-      saveUnrolledSideEffects(end.endNode(), cache);
+      saveUnrolledSideEffects(end.endNode(), cache, sideEffectCollector);
 
       // we link the forall node's predecessor to the iteration's forall node successor
       var firstNode = cache.get(firstInLoop);
@@ -186,13 +197,14 @@ public class LoopUnroller implements CfgTraverser {
     return cache;
   }
 
-  private void saveUnrolledSideEffects(AbstractEndNode endNode, Map<Node, Node> copiedCache) {
+  private void saveUnrolledSideEffects(AbstractEndNode endNode, Map<Node, Node> copiedCache,
+                                       Collection<SideEffectNode> sideEffectCollector) {
     for (var sideEffect : endNode.sideEffects()) {
       var cachedSideEffect = copiedCache.get(sideEffect);
       if (cachedSideEffect != null) {
-        unrolledSideEffects.add((SideEffectNode) cachedSideEffect);
+        sideEffectCollector.add((SideEffectNode) cachedSideEffect);
       } else {
-        unrolledSideEffects.add(sideEffect);
+        sideEffectCollector.add(sideEffect);
       }
     }
   }

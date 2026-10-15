@@ -35,7 +35,7 @@ instruction set architecture ISA = {
 //       ╭── test/resources/frontend-snapshots/typechecker/invalidForallThenCompareIndexWithBits.vadl:27:41
 //       │
 //    27 │   [assert : forall i in {OpA, OpB} then i = 0b01]
-//       │                                         ^^^^^^^^ Expected an intersection format here but the right side was an `Const<1>`
+//       │                                         ^^^^^^^^ Expected an operation but the right side was an `Const<1>`
 //       │
 //
 //

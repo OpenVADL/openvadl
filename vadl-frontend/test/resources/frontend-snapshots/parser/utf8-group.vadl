@@ -30,20 +30,21 @@ instruction set architecture ISA = {
   operation OpC = {}
   operation OpAll = {OpA,OpB}
 
-  [assert : VLIW(0) ∈ OpC]
+  [assert : VLIW(0) ∈ OpC && VLIW(0).y = 0b00]
   group VLIW = OpA.OpB.OpAll
 }
 
 
 //  Reported Diagnostics:
 //
-//  warning: This expression is always false
-//       ╭── test/resources/frontend-snapshots/parser/utf8-group.vadl:33:13
+//  error: Unknown format field `y`
+//       ╭── test/resources/frontend-snapshots/parser/utf8-group.vadl:33:30
 //       │
-//    33 │   [assert : VLIW(0) ∈ OpC]
-//       │             ^^^^^^^^^^^^^
+//    33 │   [assert : VLIW(0) ∈ OpC && VLIW(0).y = 0b00]
+//       │                              ^^^^^^^^^
 //       │
-//       None of the possible concrete instructions matched by the left side are part of operation `OpC`.
+//       Operation `Operation<a: Bits<20>, b: Bits<5>>` doesn't have any field with this name
+//       help: Did you maybe mean one of: a, b
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

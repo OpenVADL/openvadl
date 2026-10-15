@@ -1,0 +1,157 @@
+instruction set architecture Test = {
+
+  register R : Bits<5> -> Bits<32>
+  alias program counter PC : Bits<32> = R(15)
+
+  format INSTR_F : Bits<32> = { I : Bits<16>, a : Bits<8>, b : Bits<8> }
+
+  model Instr (id: Int, lol: Stat): IsaDefs = {
+    instruction AsId("Instr", $id) : INSTR_F = $lol
+    encoding AsId("Instr", $id) = { I = $id }
+    assembly AsId("Instr", $id) = mnemonic
+  }
+
+  $Instr (0 ; {
+    // check basic side effect ordering
+    R(15) := 0     // PC
+    R(0) := 1      // SE
+    MEM<4>(2) := 3 // MEM
+  })
+
+  $Instr (1 ; {
+    // check if-block ordering
+    if a = 0 then R(15) := 0     // PC
+    if a = 1 then R(0) := 1      // SE
+    if a = 2 then MEM<4>(2) := 3 // MEM
+  })
+
+  $Instr (2 ; {
+    // check forall-block ordering
+    forall i: Bits<8> in 0..10 do R(15) := i as Bits<32>     // PC
+    forall i: Bits<8> in 1..10 do R(0) := i as Bits<32>      // SE
+    forall i: Bits<8> in 2..10 do MEM<4>(2) := i as Bits<32> // MEM
+  })
+
+  $Instr (3 ; {
+    // check mixed block ordering
+    forall i: Bits<8> in 0..10 do R(15) := i as Bits<32>     // PC
+    if a = 1 then R(0) := 1                                  // SE
+    forall i: Bits<8> in 1..10 do MEM<4>(2) := i as Bits<32> // MEM
+    if a = 1 then R(1) := 1                                  // SE
+  })
+
+  $Instr (4 ; {
+    // check nested block ordering
+    if a = 0 then {
+      forall i: Bits<8> in 0..10 do {
+        if i = 0 then R(15) := 0     // PC
+        if i = 1 then R(0) := 1      // SE
+        if i = 2 then MEM<4>(2) := 3 // MEM
+      }
+    }
+  })
+
+  $Instr (5 ; {
+    // check if-block ordering with multiple side effects per block
+    if a = 0 then { // PC + SE
+      R(0) := 1
+      R(15) := 2
+    }
+    if a = 2 then { // SE
+      R(1) := 7
+    }
+    if a = 1 then { // SE + MEM
+      R(15) := 2
+      MEM<4>(8) := 3
+    }
+    if a = 3 then { // MEM
+      MEM<4>(12) := 12
+    }
+  })
+
+  $Instr (6 ; {
+    // check if-block ordering with multiple side effects per block
+    // + side effect outside interval
+    if a = 0 then { // PC + SE + MEM
+      R(0) := 1
+      R(15) := 2
+      MEM<4>(8) := 3
+    }
+    if a = 2 then { // MEM
+      MEM<4>(12) := 12
+    }
+  })
+
+  $Instr (7 ; {
+    // check if-block ordering with multiple side effects per block
+    // + side effect inside interval
+    if a = 0 then { // PC + SE + MEM
+      R(0) := 1
+      R(15) := 2
+      MEM<4>(8) := 3
+    }
+    if a = 2 then { // SE
+      R(1) := 10
+    }
+  })
+
+  $Instr (8 ; {
+    // check if-block ordering with multiple side effects per block
+    // + side effect inside interval
+    if a = 0 then { // PC + MEM
+      R(15) := 2
+      MEM<4>(8) := 3
+    }
+    if a = 2 then { // SE
+      R(1) := 10
+    }
+  })
+
+  $Instr (9 ; {
+    // check if-block ordering with multiple side effects per block
+    // + side effect inside interval, which is not in a block
+    if a = 0 then { // PC + SE + MEM
+      R(0) := 1
+      R(15) := 2
+      MEM<4>(8) := 3
+    }
+    R(1) := 10
+  })
+
+  $Instr (10 ; {
+    // check if-block extraction
+    if b = 0 then {
+      if a = 0 then { // SE + MEM
+        R(0) := 1
+        MEM<4>(0) := 1
+      }
+      if a = 1 then { // SE + MEM
+        R(1) := 2
+        MEM<4>(1) := 2
+      }
+    }
+  })
+
+  $Instr (11 ; {
+    // check forall-block extraction
+    if b = 0 then {
+      forall i: Bits<8> in 0..10 do { // SE + MEM
+        R(i as Bits<5>) := i as Bits<32>
+        MEM<4>(i as Bits<32>) := i as Bits<32>
+      }
+    }
+  })
+
+  memory MEM : Bits<32> -> Bits<8>
+}
+
+[ htif ]
+processor TestProc implements Test = {
+  reset = {
+    R(15) := 0x0
+  }
+
+  [ firmware ]
+  [ base : 0x0 ]
+  memory region [RAM] DRAM in MEM
+}

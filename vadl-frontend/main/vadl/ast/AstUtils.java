@@ -16,7 +16,11 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,19 +30,26 @@ import javax.annotation.Nullable;
 import vadl.ast.nodes.AsIdExpr;
 import vadl.ast.nodes.AsStrExpr;
 import vadl.ast.nodes.CallIndexExpr;
+import vadl.ast.nodes.DerivedFormatField;
 import vadl.ast.nodes.Expr;
+import vadl.ast.nodes.FormatDefinition;
 import vadl.ast.nodes.ModelDefinition;
 import vadl.ast.nodes.Node;
+import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Operator;
 import vadl.ast.nodes.PlaceholderDefinition;
 import vadl.ast.nodes.PlaceholderExpr;
 import vadl.ast.nodes.PlaceholderNode;
 import vadl.ast.nodes.PlaceholderStatement;
+import vadl.ast.nodes.RangeFormatField;
+import vadl.ast.nodes.TypedFormatField;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.OperationType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.utils.Pair;
 
 class AstUtils {
 
@@ -50,8 +61,8 @@ class AstUtils {
       Map.of("VADL::div", List.of("VADL::sdiv", "VADL::udiv"), "VADL::mod",
           List.of("VADL::smod", "VADL::umod"));
 
-  private static Map<String, BuiltInTable.BuiltIn> nameLookupTable =
-      BuiltInTable.builtIns().collect(Collectors.toMap(BuiltInTable.BuiltIn::name, b -> b));
+  private static Map<String, List<BuiltInTable.BuiltIn>> nameLookupTable = BuiltInTable.builtIns()
+      .collect(Collectors.groupingBy(BuiltInTable.BuiltIn::name));
 
   private static Map<String, String> operatorRewrites = Map.of(
       "&&", "&",
@@ -75,7 +86,39 @@ class AstUtils {
       name = "sdec";
     }
 
-    return nameLookupTable.get(name);
+    final var candidates = nameLookupTable.get(name);
+
+    if (candidates == null) {
+      return null;
+    }
+
+    // FIXME: This assumes that there is only one definition of each Builtin
+    //        per argument count. Currently, this is in fact fine.
+    for (var candidate : candidates) {
+      if (candidate.argTypeClasses().size() == argTypes.size()) {
+        return candidate;
+      }
+    }
+
+    return candidates.getFirst();
+  }
+
+  static @Nullable List<Integer> getBuiltInArgCounts(String name) {
+    final var builtins = nameLookupTable.get(name);
+
+    if (builtins == null) {
+      return null;
+    }
+
+    final var argCounts = new HashSet<Integer>();
+
+    for (var builtin : builtins) {
+      final var argCount = builtin.signature().argTypeClasses().size();
+
+      argCounts.add(argCount);
+    }
+
+    return argCounts.stream().sorted().toList();
   }
 
   static BuiltInTable.BuiltIn getOperatorBuiltIn(Operator operator, List<Type> argTypes) {
@@ -102,7 +145,7 @@ class AstUtils {
 
 
         final var firstArgType = argTypes.getFirst().getClass();
-        if (firstArgType == PseudoFormatType.class) {
+        if (firstArgType == OperationType.class) {
           // For opequ/opneq, we select the overload only upon exact match
           builtIns = builtIns.stream()
               .filter(b -> b.signature().argTypeClasses().getFirst() == OperationType.class)
@@ -192,5 +235,31 @@ class AstUtils {
     });
     return areChildrenExpanded.get();
 
+  }
+
+  public static Collection<Map<String, Type>> pseudoFields(
+      Collection<OperationDefinition> operations
+  ) {
+    final var fields = new ArrayList<Map<String, Type>>();
+
+    for (var operation : operations) {
+      for (var instruction : operation.instructions) {
+        fields.add(AstUtils.formatToPseudoFields(requireNonNull(instruction.formatNode)));
+      }
+    }
+
+    return fields;
+  }
+
+  private static Map<String, Type> formatToPseudoFields(FormatDefinition format) {
+    return format.fieldsWithoutEncodingPredicate().map(f -> {
+      final DataType fieldType = switch (f) {
+        case DerivedFormatField field -> field.expr.type().asDataType();
+        case RangeFormatField field -> requireNonNull(field.type).asDataType();
+        case TypedFormatField field -> field.typeLiteral.type().asDataType();
+        default -> throw new IllegalStateException();
+      };
+      return Pair.of(f.identifier().name, fieldType);
+    }).collect(Collectors.toMap(Pair::left, Pair::right));
   }
 }

@@ -27,6 +27,7 @@ import static vadl.types.BuiltInTable.OP_NOT_IN;
 import com.google.common.collect.Streams;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -183,6 +184,8 @@ import vadl.types.FloatType;
 import vadl.types.GroupType;
 import vadl.types.InstructionType;
 import vadl.types.MicroArchitectureType;
+import vadl.types.OperationType;
+import vadl.types.RelationType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
 import vadl.types.StringType;
@@ -1027,14 +1030,12 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   private BuiltInCheckResult unCachedCheckBuiltin(BuiltInTable.BuiltIn builtIn,
                                                   List<Type> typeParams, List<Expr> args,
                                                   WithLocation location) {
-    int minArgCount = builtIn.argTypeClasses().size();
-    if (!(args.size() == minArgCount
-        || (builtIn.signature().hasVarArgs() && args.size() >= minArgCount))) {
-      throw addErrorAndStopChecking(
-          error("Type Mismatch", location)
-              .locationDescription(location,
-                  "Expected %d arguments but got %d.", minArgCount, args.size())
-              .build());
+    final var expectedArgCount = builtIn.argTypeClasses().size();
+    if (args.size() != expectedArgCount
+        && !(builtIn.signature().hasVarArgs() && args.size() >= expectedArgCount)) {
+      throw addErrorAndStopChecking(wrongArgCountError(
+          location, args.size(), List.of(expectedArgCount)
+      ));
     }
 
     if (args.size() == 1) {
@@ -1063,19 +1064,19 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       final Expr l = args.getFirst();
       final Expr r = args.getLast();
 
-      if (!(l.type() instanceof PseudoFormatType)) {
+      if (!(l.type() instanceof OperationType)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
-            .locationDescription(location, "Expected an intersection format here but the left side "
-                + "was an `%s`", l.type())
-            .build());
+            .locationDescription(
+                location,
+                "Expected an operation here but the left side was an `%s`", l.type()
+          ).build());
 
-      } else if (!(r.type() instanceof PseudoFormatType)) {
+      } else if (!(r.type() instanceof OperationType)) {
 
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location,
-                "Expected an intersection format here but the right side "
-                    + "was an `%s`", r.type())
+                "Expected an operation but the right side was an `%s`", r.type())
             .build());
 
       } else {
@@ -1086,35 +1087,18 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     if (args.size() == 2 && BuiltInTable.OP_ELEMENT_OF_PREDICATES.contains(builtIn)) {
 
-      if (!(args.getFirst().type() instanceof PseudoFormatType l)) {
+      if (!(args.getFirst().type() instanceof OperationType l)) {
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location, "Expected the left side to be an operation, but"
                 + "was an `%s`", args.getFirst().type())
             .build());
       }
 
-      if (!(args.getLast().type() instanceof PseudoFormatType r)) {
+      if (!(args.getLast().type() instanceof OperationType r)) {
         throw addErrorAndStopChecking(error("Type Mismatch", location)
             .locationDescription(location, "Expected the right side to be an operation, but"
                 + "was an `%s`", args.getFirst().type())
             .build());
-      }
-
-      // Static checks for operation element predicates
-      final Set<InstructionDefinition> commonInsns = new LinkedHashSet<>(l.instructions());
-      commonInsns.retainAll(r.instructions());
-
-      if (commonInsns.isEmpty()) {
-        // If there is no static overlap, we can emit some diagnostics. For ∈ and `in`, the expr is
-        // always false, and for ∉ and `!in` it's always true.
-        final boolean constVal = builtIn == OP_NOT_ELEM_OF || builtIn == OP_NOT_IN;
-        final var op = Objects.requireNonNull(r.operations().stream().findFirst().orElse(null));
-        DeferredDiagnosticStore.add(
-            warning("This expression is always %s".formatted(constVal), location)
-                .description(
-                    "None of the possible concrete instructions matched by the left side "
-                        + "are part of operation `%s`.", op.identifier().name)
-                .build());
       }
 
       return new BuiltInCheckResult(List.of(l, r), Type.bool());
@@ -3460,7 +3444,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         addErrorAndContinueChecking(diagnostic.build());
       }
 
-      final var elemType = PseudoFormatType.of(group.operations());
+      final var elemType = OperationType.of(AstUtils.pseudoFields(group.operations()));
 
       final int maxLength = maxLength(constantEvaluator, group.expr());
       final var lengthType = UIntType.minimalTypeFor(maxLength);
@@ -3480,16 +3464,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     if (origin instanceof OperationDefinition op) {
       check(op);
 
-      var def = getCurrentlyVisitingDefinition();
-      if (!(def instanceof AnnotationDefinition annotation)
-          || !(annotation.target instanceof GroupDefinition)) {
-        final var diagnostic = error("Invalid Reference", expr)
-            .description("Reference to an `operation` definition is only allowed within "
-                + "`group` annotations.");
-        addErrorAndContinueChecking(diagnostic.build());
-      }
-
-      expr.type = PseudoFormatType.of(List.of(op));
+      expr.type = OperationType.of(AstUtils.pseudoFields(List.of(op)));
       return;
     }
 
@@ -3508,20 +3483,25 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     // It's also possible to call functions without parenthesis if the function doesn't take any
     // arguments.
-    var matchingBuiltins = BuiltInTable.builtIns()
-        .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().equals(innerName))
-        .toList();
+    final var builtin = AstUtils.getBuiltIn(innerName, List.of());
 
-    if (matchingBuiltins.size() == 1) {
-      expr.type = matchingBuiltins.get(0).returns(List.of());
+    if (builtin == null) {
+      throw new IllegalStateException(
+          "Cannot find symbol `%s` found at: %s (The name resolver should already have caught that)"
+              .formatted(isId.pathToString(), expr.location().toConciseString())
+      );
+    }
+
+    if (builtin.signature().argTypeClasses().isEmpty()) {
+      expr.type = builtin.returns(Collections.emptyList());
       return;
     }
 
-    var fullName = isId.pathToString();
-    throw new IllegalStateException(
-        "Cannot find symbol `%s` found at: %s (The name resolver should already have caught that)"
-            .formatted(fullName, expr.location().toConciseString()));
+    final var expectedBuiltinArgCounts = requireNonNull(AstUtils.getBuiltInArgCounts(innerName));
+
+    throw addErrorAndStopChecking(wrongArgCountError(
+        expr, 0, expectedBuiltinArgCounts
+    ));
   }
 
   @Override
@@ -4296,22 +4276,22 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         subCall.formatFieldType = fieldType;
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
-      } else if (type instanceof PseudoFormatType pseudoFormatType) {
-        if (!pseudoFormatType.contains(fieldName)) {
-          var formatFieldNames = pseudoFormatType.fieldNames();
+      } else if (type instanceof OperationType operationType) {
+        if (!operationType.contains(fieldName)) {
+          var formatFieldNames = operationType.fieldNames();
           var suggestions = Levenshtein.suggestions(fieldName, formatFieldNames);
           if (suggestions.isEmpty()) {
             suggestions = formatFieldNames.stream().limit(3).toList();
           }
 
           addErrorAndStopChecking(error("Unknown format field `%s`".formatted(fieldName), expr)
-              .description("Intersection format `%s` doesn't have any field with this name",
-                  pseudoFormatType.name())
+              .description("Operation `%s` doesn't have any field with this name",
+                  operationType.name())
               .suggestions(suggestions)
               .build());
         }
 
-        subCall.formatFieldType = pseudoFormatType.get(fieldName);
+        subCall.formatFieldType = operationType.get(fieldName);
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
       } else if (type instanceof StatusType) {
@@ -4977,7 +4957,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     }
 
     if (identifier != null) {
-      identifier.type = PseudoFormatType.of(ops.values());
+      identifier.type = OperationType.of(AstUtils.pseudoFields(ops.values()));
     }
   }
 
@@ -5388,5 +5368,60 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     check(statement.body);
     return null;
+  }
+
+
+  private static Diagnostic wrongArgCountError(
+      WithLocation location,
+      int actualArgCount,
+      Collection<Integer> expectedArgCounts
+  ) {
+    final var err = error("Type Mismatch", location);
+
+    final var expectedArgCountString = new StringBuilder();
+
+    final boolean isPlural;
+
+    if (expectedArgCounts.isEmpty()) {
+      throw new IllegalArgumentException("Expected at least one expected argument count");
+    } else if (expectedArgCounts.size() == 1) {
+      final int expectedArgCount = expectedArgCounts.iterator().next();
+
+      isPlural = expectedArgCount != 1;
+      expectedArgCountString.append(expectedArgCount);
+    } else {
+      final var sortedArgCounts = expectedArgCounts.stream().sorted().distinct().toList();
+
+      final int minExpectedArgCount = sortedArgCounts.getFirst();
+      final int maxExpectedArgCount = sortedArgCounts.getLast();
+
+      if (sortedArgCounts.size() == maxExpectedArgCount - minExpectedArgCount + 1) {
+        // Special case a continuous range of expected argument counts by only
+        // printing the lower and upper bounds.
+        isPlural = true;
+        expectedArgCountString
+            .append(minExpectedArgCount)
+            .append(" to ")
+            .append(maxExpectedArgCount);
+      } else {
+        isPlural = true;
+        for (int i = 0; i != sortedArgCounts.size(); ++i) {
+          if (i == sortedArgCounts.size() - 1) {
+            expectedArgCountString.append(" or ");
+          } else if (i != 0) {
+            expectedArgCountString.append(", ");
+          }
+
+          expectedArgCountString.append(sortedArgCounts.get(i));
+        }
+      }
+    }
+    return err.locationDescription(
+        location,
+        "Expected %s argument%s but got %d.",
+        expectedArgCountString,
+        isPlural ? "s" : "",
+        actualArgCount
+    ).build();
   }
 }

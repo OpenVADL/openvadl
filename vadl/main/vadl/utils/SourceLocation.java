@@ -140,9 +140,11 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
       return this;
     }
 
+    /*
     if (!Objects.equals(this.path(), other.path())) {
       throw new IllegalArgumentException("Cannot join source locations from different files");
     }
+     */
 
     // Shortcut for direct locations
     if (this instanceof DirectLocation && other instanceof DirectLocation) {
@@ -177,9 +179,11 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
         var secondLocation = otherStack.get(i);
         var expandedFrom = thisStack.subList(0, i).reversed();
 
+        /*
         if (!Objects.equals(firstLocation.path(), secondLocation.path())) {
           throw new IllegalArgumentException("Cannot join source locations from different files.");
         }
+         */
 
         var begin =
             firstLocation.begin().compareTo(secondLocation.begin()) < 0 ? firstLocation.begin() :

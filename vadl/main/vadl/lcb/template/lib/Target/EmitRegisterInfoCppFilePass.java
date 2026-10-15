@@ -33,6 +33,7 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.RegisterTypesCtx;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
@@ -131,6 +132,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
         specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+            .filter(registerFile -> registerFile.expectExtension(RegisterTypesCtx.class).used())
             .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
             .toList());
   }

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
@@ -54,7 +53,7 @@ public class InferAvailableAddressingModesPass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     // TODO it would be better, if instructions were classified as loads (MachineInstructionLabel)
     // and simply fetching and iterating over these instructions.
-    // Currently, we do not support multiple labels, which prevents us from implementing it that way.
+    // Currently, we do not support multiple labels, which prevents us from implementing it that way
 
     var instructions = viam.isa().stream()
         .flatMap(isa -> isa.ownInstructions().stream())

@@ -107,8 +107,7 @@ public class SideEffectConditionResolver {
           return handleEndNode(endNode, branchCondition);
         }
         case IfNode ifNode -> current = handleIf(ifNode, branchCondition);
-        // forall as no special handling required, as it doesn't influence the condition
-        case ForallNode forallNode -> current = forallNode.beginNode();
+        case ForallNode forallNode -> current = handleForallNode(forallNode, branchCondition);
         // handle normal singled directed node by just skipping it and continue
         case DirectionalNode directionalNode -> current = directionalNode.next();
         // there should not be an other control node that was not handled yet
@@ -180,5 +179,12 @@ public class SideEffectConditionResolver {
     return trueMergeNode;
   }
 
+  private MergeNode handleForallNode(ForallNode forallNode, ExpressionNode branchCondition) {
+    // forall nodes must be handled in its own resolveBranch call to ensure
+    // it is correctly stepped out of
+    var mergeNode = resolveBranch(forallNode.beginNode(), branchCondition);
+    forallNode.ensure(mergeNode != null, "Couldn't find merge node for forall branch");
+    return mergeNode;
+  }
 
 }
