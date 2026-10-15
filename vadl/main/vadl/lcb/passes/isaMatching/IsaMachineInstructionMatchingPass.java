@@ -379,7 +379,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         // then we need the XORI instruction. Therefore, we put it extra.
         labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.XORI, ty));
       }
-      if (findRR_Mul(behavior, List.of(MUL, MULS, SMULL, SMULLS))) {
+      // MUL must be exclusive to MULHU and MULHS
+      if (labelList.stream().noneMatch(node -> node.label() == MachineInstructionLabel.MULHS
+          || node.label() == MachineInstructionLabel.MULHU)
+          && findRR_Mul(behavior, List.of(MUL, MULS, SMULL, SMULLS))) {
         labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.MUL, ty));
       }
       if (findRR(behavior, List.of(LSL, LSLS))) {
@@ -513,7 +516,11 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       if (findJalr(behavior, pc)) {
         labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.JALR, ty));
       }
-      if (findJal(behavior, pc)) {
+      // JAL has to be exclusive to JALR and BLR
+      if (labelList.stream().noneMatch(
+          node -> node.label() == MachineInstructionLabel.JALR
+              || node.label() == MachineInstructionLabel.BLR)
+          && findJal(behavior, pc)) {
         labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.JAL, ty));
       }
       if (findJ(behavior, pc)) {
