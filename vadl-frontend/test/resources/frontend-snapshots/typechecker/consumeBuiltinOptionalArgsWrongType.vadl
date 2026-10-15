@@ -1,0 +1,34 @@
+instruction set architecture ISA = {}
+
+micro architecture MiA implements ISA = {
+
+  stage DECODE -> (ir: Instruction) = {
+    ir := decode(fetchNext)
+  }
+
+  [size : 8]
+  [source : DECODE.ir]
+  logic [reservation station] RS
+
+  operation Op = {}
+
+  stage Consumer -> (ir: Instruction) = {
+    let instr = consume(RS, 1) in {
+      ir := instr
+    }
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/consumeBuiltinOptionalArgsWrongType.vadl:16:17
+//       │
+//    16 │     let instr = consume(RS, 1) in {
+//       │                 ^^^^^^^^^^^^^^ The builtin has the signature `(ReservationStationType, OperationType) -> InstructionType` but got `logic [reservation station], Const<1>`.
+//       │                                help: Try casting some of the constant arguments to explicit types.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

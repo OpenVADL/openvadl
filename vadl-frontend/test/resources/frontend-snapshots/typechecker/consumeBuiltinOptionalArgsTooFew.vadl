@@ -1,0 +1,20 @@
+instruction set architecture ISA = {}
+
+micro architecture MiA implements ISA = {
+
+  stage DECODE -> (ir: Instruction) = {
+    ir := decode(fetchNext)
+  }
+
+  [size : 8]
+  [source : DECODE.ir]
+  logic [reservation station] RS
+
+  operation Op = {}
+
+  stage Consumer -> (ir: Instruction) = {
+    let instr = consume in {
+      ir := instr
+    }
+  }
+}
