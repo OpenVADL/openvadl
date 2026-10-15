@@ -20,50 +20,49 @@ micro architecture FiveStageMul implements $Isa = {
   operation AluOps = {AddOps, ImmOps, MemOps, BraOps}
   operation MulDivOps = {MulOps, DivOps}
 
-  stage FETCH -> ( fr : FetchResult ) = {
-    fr := fetchNext                      // fetch next packet from memory (or cache)
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext                      // fetch next packet from memory (or cache)
   }
 
-  stage DECODE -> ( ir : Instruction, mulir : Instruction ) = {
+  stage DECODE -> Instruction = {
     let instr = decode( FETCH. fr ) in { // decode the fetch packet, gives an Instruction
       if ( instr.unknown ) then
         raise invalidInstruction         // raise an invalid instruction exception
       instr.address( @X )                // output computed address (X + offset ) to memory
       instr.read( @X )                   // read from the X register file
       instr.read( @PC )                  // read from the PC
-      ir    := filter(instr, @AluOps)    // ir are common instructions
-      mulir := filter(instr, @MulDivOps) // mulir are multiplication / division instructions
+      DECODE := instr
     }
   }
 
-  stage EXECUTE -> ( ir : Instruction ) = {
-    let instr = DECODE.ir in {
+  stage EXECUTE -> Instruction = {
+    let instr = filter(DECODE, AluOps) in {
       instr.compute                      // evaluate all expressions
       instr.verify                       // check and flush pipeline if branch misprediction
       instr.write( @PC )                 // write PC
-      ir := instr
+      EXECUTE := instr
     }
   }
 
   [restart : 1]
   [latency : 3]
-  stage MUL -> ( ir : Instruction ) = {
-    let instr = DECODE.mulir in {
+  stage MUL -> Instruction = {
+    let instr = filter(DECODE, MulDivOps) in {
       instr.compute                      // evaluate mul expressions
-      ir := instr
+      MUL := instr
     }
   }
 
-  stage MEMORY -> ( ir : Instruction ) = {
-    let instr = EXECUTE.ir in {
+  stage MEMORY -> Instruction = {
+    let instr = EXECUTE in {
       instr.write( @MEM )                // write to memory
       instr.read( @MEM )                 // receive data from memory read
-      ir := instr
+      MEMORY := instr
     }
   }
 
   stage WRITE_BACK = {
-    let instr = MEMORY.ir | MUL.ir in    // combine memory and mul pipeline
-      instr.write( @X )                  // write back to register file X
+    let instr = MEMORY | MUL in    // combine memory and mul pipeline
+      instr.write( @X )            // write back to register file X
     }
 }
