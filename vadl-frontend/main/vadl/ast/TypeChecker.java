@@ -5375,17 +5375,17 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     } else {
       final var sortedArgCounts = expectedArgCounts.stream().sorted().distinct().toList();
 
-      final int minExpectedArgCount = sortedArgCounts.getFirst();
-      final int maxExpectedArgCount = sortedArgCounts.getLast();
+      final int minExpected = sortedArgCounts.getFirst();
+      final int maxExpected = sortedArgCounts.getLast();
 
-      if (sortedArgCounts.size() == maxExpectedArgCount - minExpectedArgCount + 1 && sortedArgCounts.size() > 2) {
+      if (sortedArgCounts.size() == maxExpected - minExpected + 1 && sortedArgCounts.size() > 2) {
         // Special case a continuous range of expected argument counts by only
         // printing the lower and upper bounds.
         isPlural = true;
         expectedArgCountString
-            .append(minExpectedArgCount)
+            .append(minExpected)
             .append(" to ")
-            .append(maxExpectedArgCount);
+            .append(maxExpected);
       } else {
         isPlural = true;
         for (int i = 0; i != sortedArgCounts.size(); ++i) {
