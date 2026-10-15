@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -77,24 +79,28 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
   private List<InstructionSize> instructionSizes(Specification specification) {
     return specification.isa().stream()
         .flatMap(isa -> isa.ownInstructions().stream())
+        .filter(inst -> {
+          int bits = inst.format().type().bitWidth();
+          if (bits % 8 != 0 || bits > 64) {
+            DeferredDiagnosticStore.add(Diagnostic.warning(
+                "Instruction " + inst.simpleName() + " has a non-byte-aligned or too large size of "
+                    + bits + " bits. It will be ignored in the disassembler.", inst.location()));
+            return false;
+          }
+          return true;
+        })
         .map(i -> i.format().type().bitWidth())
         .distinct()
         .sorted()
-        .map(bits -> {
-          if (bits % 8 != 0 || bits > 64) {
-            throw new IllegalStateException("Unsupported instruction width: " + bits);
-          }
-          return new InstructionSize(bits, bits / 8);
-        })
+        .map(bits -> new InstructionSize(bits, bits / 8))
         .toList();
   }
 
-  record DecodeImmediate(long size, String decodeFunction, String decodeWrapper)
+  record DecodeImmediate(String decodeFunction, String decodeWrapper)
       implements Renderable {
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
-          "size", size,
           "decodeFunction", decodeFunction,
           "decodeWrapper", decodeWrapper
       );
@@ -107,13 +113,12 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
     return immediatesPassResult.decodings().entrySet().stream()
         .map(entry -> {
-          var size = (long) Math.pow(2, entry.getKey().rawType().bitWidth()) - 1;
           var decodeFunction = entry.getValue().header().functionName().lower();
           var decodeWrapper = requireNonNull(
               immediatesPassResult.decodingWrappers().get(entry.getKey())
           ).functionName().lower();
 
-          return new DecodeImmediate(size, decodeFunction, decodeWrapper);
+          return new DecodeImmediate(decodeFunction, decodeWrapper);
         })
         .toList();
   }
