@@ -18,9 +18,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
-import vadl.viam.StageOutput;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -42,44 +40,30 @@ import vadl.viam.graph.Node;
  */
 public class WriteStageOutputNode extends SideEffectNode {
 
-  @DataValue
-  @Nullable
-  protected StageOutput stageOutput;
-
   @Input
   protected ExpressionNode value;
 
   /**
    * Construct a new WriteStageOutputNode.
    *
-   * @param stageOutput stage output that is written
    * @param value value to be written
    */
 
-  public WriteStageOutputNode(@Nullable StageOutput stageOutput, ExpressionNode value) {
+  public WriteStageOutputNode(ExpressionNode value) {
     super(null);
-    this.stageOutput = stageOutput;
     this.value = value;
   }
 
   /**
    * Construct a new WriteStageOutputNode.
    *
-   * @param stageOutput stage output that is written
    * @param value value to be written
    * @param condition write enable condition
    */
-  public WriteStageOutputNode(@Nullable StageOutput stageOutput, ExpressionNode value,
-                              @Nullable ExpressionNode condition) {
+  public WriteStageOutputNode(ExpressionNode value, @Nullable ExpressionNode condition) {
     super(condition);
-    this.stageOutput = stageOutput;
     this.value = value;
     this.condition = condition;
-  }
-
-  @Nullable
-  public StageOutput stageOutput() {
-    return stageOutput;
   }
 
   public ExpressionNode value() {
@@ -89,7 +73,6 @@ public class WriteStageOutputNode extends SideEffectNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(stageOutput);
   }
 
   @Override
@@ -106,14 +89,15 @@ public class WriteStageOutputNode extends SideEffectNode {
 
   @Override
   public Node copy() {
-    return new WriteStageOutputNode(stageOutput,
+    return new WriteStageOutputNode(
         value.copy(),
-        (condition != null ? condition.copy() : null));
+        (condition != null ? condition.copy() : null)
+    );
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteStageOutputNode(stageOutput, value, condition);
+    return new WriteStageOutputNode(value, condition);
   }
 
   @Override

@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.types.Type;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
@@ -45,7 +46,7 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   private Graph behavior;
 
-  private final List<StageOutput> outputs;
+  private @Nullable Type outputType;
 
   private final List<Signal> signals;
 
@@ -62,26 +63,14 @@ public class Stage extends Definition implements DefProp.WithBehavior {
    *
    * @param identifier stage identifier
    * @param behavior   behavior graph
-   * @param outputs    list of stage outputs
    */
-  public Stage(Identifier identifier, Graph behavior, List<StageOutput> outputs) {
+  public Stage(Identifier identifier, Graph behavior, @Nullable Type outputType) {
     super(identifier);
     this.behavior = behavior;
-    this.outputs = new ArrayList<>(outputs);
+    this.outputType = outputType;
     this.signals = new ArrayList<>();
     this.registers = new ArrayList<>();
     this.localNames = new HashSet<>();
-
-    // TODO this should be handled by the frontend (only add stage outputs from definition)
-    // currently the passed stage output list is always empty, it could contain the list of
-    // outputs give in the spec
-    this.behavior.getNodes(WriteStageOutputNode.class)
-        .map(WriteStageOutputNode::stageOutput).forEach(output -> {
-          if (output != null && !this.outputs.contains(output)) {
-            this.outputs.add(output);
-            output.setStage(this);
-          }
-        });
 
     this.behavior.setParentDefinition(this);
   }
@@ -100,6 +89,14 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   public void setBehavior(Graph behavior) {
     this.behavior = behavior;
+  }
+
+  public @Nullable Type outputType() {
+    return outputType;
+  }
+
+  public void setOutputType(@Nullable Type outputType) {
+    this.outputType = outputType;
   }
 
   /**
@@ -122,20 +119,6 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     return behavior.getNodes(WriteResourceNode.class)
         .map(WriteResourceNode::resourceDefinition)
         .toList();
-  }
-
-  public List<StageOutput> outputs() {
-    return outputs;
-  }
-
-  public void addOutput(StageOutput output) {
-    outputs.add(output);
-    localNames.add(output.simpleName());
-  }
-
-  public void removeOutput(StageOutput output) {
-    outputs.remove(output);
-    localNames.remove(output.simpleName());
   }
 
   public List<Signal> signals() {
@@ -208,12 +191,12 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     super.verify();
     behavior.verify();
 
-    var outputWrites = behavior.getNodes(WriteStageOutputNode.class)
-        .map(WriteStageOutputNode::stageOutput)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
-    outputs.forEach(output -> ensure(outputWrites.contains(output),
-        "Output %s is not written to", output.simpleName()));
+    final var hasOutputWrite = behavior.getNodes(WriteStageOutputNode.class).findAny().isPresent();
+
+    ensure(
+        hasOutputWrite == (outputType != null),
+        "Stage Output writes must exist if and only if a stage output exists"
+    );
 
     var signalWrites = behavior.getNodes(WriteSignalNode.class)
         .map(WriteSignalNode::signal)

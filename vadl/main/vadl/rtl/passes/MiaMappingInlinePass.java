@@ -151,7 +151,7 @@ public class MiaMappingInlinePass extends Pass {
       // the mia stage outputs were replaced by stage registers
       // this also removes all mapping nodes that were replaced by the inlined nodes
       stage.behavior().getNodes(StartNode.class).forEach(Node::safeDelete);
-      stage.outputs().removeIf(out -> out.type() instanceof MicroArchitectureType);
+      stage.setOutputType(null);
 
       // verify stage
       stage.verify();

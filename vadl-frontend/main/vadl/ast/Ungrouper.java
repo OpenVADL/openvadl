@@ -117,7 +117,6 @@ import vadl.ast.nodes.SignalDefinition;
 import vadl.ast.nodes.SourceDefinition;
 import vadl.ast.nodes.SpecialPurposeRegisterDefinition;
 import vadl.ast.nodes.StageDefinition;
-import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.StatementList;
 import vadl.ast.nodes.StatementVisitor;
 import vadl.ast.nodes.StringLiteral;
@@ -596,11 +595,6 @@ public class Ungrouper
 
   @Override
   public Void visit(Parameter definition) {
-    return null;
-  }
-
-  @Override
-  public Void visit(StageOutputDefinition definition) {
     return null;
   }
 

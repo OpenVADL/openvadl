@@ -2,11 +2,11 @@ micro architecture MiA implements ISA = {
 
   // Incorrect: Multiple values in `source` annotation.
   [size : 1]
-  [source : Decode.ir, Decode.ir]
+  [source : Decode, Decode]
   logic [reservation station] RS7
 
-  stage Decode -> (ir : Instruction) = {
-    ir := decode(fetchNext)
+  stage Decode -> Instruction = {
+    Decode := decode(fetchNext)
   }
 }
 
@@ -18,8 +18,8 @@ instruction set architecture ISA = {}
 //  error: Invalid annotation arguments
 //       ╭── test/resources/frontend-snapshots/annotation/reservationStationSourceTooManyValues.vadl:5:3
 //       │
-//     5 │   [source : Decode.ir, Decode.ir]
-//       │   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected 1 arguments but got 2
+//     5 │   [source : Decode, Decode]
+//       │   ^^^^^^^^^^^^^^^^^^^^^^^^^ Expected 1 arguments but got 2
 //       │
 //
 //

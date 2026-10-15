@@ -383,7 +383,7 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
     @Override
     public void visit(Stage stage) {
       lineAt(atIndent,
-          "Outputs: %s".formatted(stage.outputs().stream().map(StageOutput::simpleName).toList()));
+          "OutputType: %s".formatted(stage.outputType() != null ? stage.outputType().name() : "-"));
       lineAt(atIndent,
           "Signals: %s".formatted(stage.signals().stream().map(Signal::simpleName).toList()));
       lineAt(atIndent, "Registers: %s".formatted(
@@ -393,11 +393,6 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
       lineAt(atIndent, "Next: %s".formatted(
           stage.next() != null ? stage.next().stream().map(Stage::simpleName).toList() :
               List.of()));
-    }
-
-    @Override
-    public void visit(StageOutput stageOutput) {
-      lineAt(atIndent, "Type: %s".formatted(compactType(stageOutput.type())));
     }
 
     @Override
@@ -833,12 +828,12 @@ public class ViamSnapshotDumper extends DefinitionVisitor.Empty {
 
     @Handler
     void handle(NodeAttrContext ctx, ReadStageOutputNode node) {
-      ctx.put("stageOutput", node.stageOutput().simpleName());
+      ctx.put("stage", node.stage().simpleName());
     }
 
     @Handler
     void handle(NodeAttrContext ctx, WriteStageOutputNode node) {
-      ctx.put("stageOutput", node.stageOutput() != null ? node.stageOutput().simpleName() : "-");
+      // nothing to add
     }
 
     @Handler

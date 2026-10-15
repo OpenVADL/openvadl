@@ -2,12 +2,12 @@ micro architecture MiA implements ISA = {
 
   // Incorrect: Wrong value type for `filter` annotation.
   [size : 1]
-  [source : Decode.ir]
+  [source : Decode]
   [filter : 1]
   logic [reservation station] RS1
 
-  stage Decode -> (ir : Instruction) = {
-    ir := decode(fetchNext)
+  stage Decode -> Instruction = {
+    Decode := decode(fetchNext)
   }
 
   operation Ops = {}

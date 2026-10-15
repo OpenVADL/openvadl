@@ -5,8 +5,8 @@ micro architecture MiA implements ISA = {
   [source: 500]
   logic [reservation station] RS1
 
-  stage Decode -> (ir : Instruction) = {
-    ir := decode(fetchNext)
+  stage Decode -> Instruction = {
+    Decode := decode(fetchNext)
   }
 }
 
@@ -15,11 +15,11 @@ instruction set architecture ISA = {}
 
 //  Reported Diagnostics:
 //
-//  error: Invalid annotation expression
+//  error: Invalid Annotation Argument
 //       ╭── test/resources/frontend-snapshots/annotation/reservationStationSourceWrongValue.vadl:5:12
 //       │
 //     5 │   [source: 500]
-//       │            ^^^ Expression must be a Instruction
+//       │            ^^^ Expected an identifier but got integer literal
 //       │
 //
 //

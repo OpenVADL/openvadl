@@ -16,26 +16,30 @@
 
 package vadl.ast.nodes;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class StageDefinition extends Definition implements IdentifiableNode {
   public IdentifierOrPlaceholder id;
-  public List<StageOutputDefinition> outputs;
+  public @Nullable TypeLiteral outputType;
   public Statement statement;
   public SourceLocation loc;
+  public boolean hasOutputAssignment;
 
-  public StageDefinition(IdentifierOrPlaceholder id,
-                  List<StageOutputDefinition> outputs,
-                  Statement statement,
-                  SourceLocation loc) {
+  public StageDefinition(
+      IdentifierOrPlaceholder id,
+      @Nullable TypeLiteral outputType,
+      Statement statement,
+      SourceLocation loc
+  ) {
     this.id = id;
-    this.outputs = outputs;
+    this.outputType = outputType;
     this.statement = statement;
     this.loc = loc;
+    this.hasOutputAssignment = false;
   }
 
   @Override
@@ -59,10 +63,9 @@ public class StageDefinition extends Definition implements IdentifiableNode {
     builder.append(prettyIndentString(indent));
     builder.append("stage ");
     id.prettyPrint(0, builder);
-    if (!outputs.isEmpty()) {
-      builder.append(" -> (");
-      prettyPrintJoin(", ", outputs, indent, builder);
-      builder.append(")");
+    if (outputType != null) {
+      builder.append(" -> ");
+      outputType.prettyPrint(0, builder);
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
@@ -72,7 +75,9 @@ public class StageDefinition extends Definition implements IdentifiableNode {
   public void forEachChild(Consumer<Node> action) {
     super.forEachChild(action);
 
-    outputs.forEach(action);
+    if (outputType != null) {
+      action.accept(outputType);
+    }
     action.accept(statement);
   }
 
@@ -85,13 +90,14 @@ public class StageDefinition extends Definition implements IdentifiableNode {
       return false;
     }
     StageDefinition that = (StageDefinition) o;
-    return Objects.equals(id, that.id) && Objects.equals(outputs, that.outputs)
+    return Objects.equals(id, that.id)
+        && Objects.equals(outputType, that.outputType)
         && Objects.equals(statement, that.statement);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, outputs, statement);
+    return Objects.hash(id, outputType, statement);
   }
 
   @Override

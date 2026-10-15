@@ -61,7 +61,6 @@ import vadl.ast.nodes.ProcessorDefinition;
 import vadl.ast.nodes.RegisterDefinition;
 import vadl.ast.nodes.RelocationDefinition;
 import vadl.ast.nodes.StageDefinition;
-import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.StringLiteral;
 import vadl.ast.nodes.TypedNode;
 import vadl.error.DeferredDiagnosticStore;
@@ -73,7 +72,6 @@ import vadl.gcb.annotations.SkipPruningAnnotation;
 import vadl.gcb.annotations.StatusRegisterAnnotation;
 import vadl.types.BitsType;
 import vadl.types.FloatEncoding;
-import vadl.types.MicroArchitectureType;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.utils.functionInterfaces.QuadConsumer;
@@ -96,7 +94,7 @@ import vadl.viam.Operation;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
-import vadl.viam.StageOutput;
+import vadl.viam.Stage;
 import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.annotations.AsmGenerateRulesAnno;
 import vadl.viam.annotations.AsmParserCaseSensitive;
@@ -538,74 +536,21 @@ public class AnnotationTable {
       ((Logic.ReservationStation) def).setFilter(operation);
     }).build();
 
-    annotationOn(LogicDefinition.class, "source", ExprAnnotation::new)
-        .check((def, annotation, tc) -> {
-          annotation.verifyExprType(tc, MicroArchitectureType.instruction());
+    annotationOn(LogicDefinition.class, "source",
+        () -> IdentifersAnnotation.single(StageDefinition.class)
+    ).check((def, annotation, tc) -> {
+      if (def.logicType != LogicDefinition.LogicType.ReservationStation) {
+        throw error("Invalid Annotation", def)
+            .description("`source` annotation is only allowed on `logic [reservation station]`")
+            .build();
+      }
+    }).applyViam((def, annotation, lowering) -> {
+      final var stage = (StageDefinition) annotation.identifiers.getFirst().target();
 
-          if (def.logicType != LogicDefinition.LogicType.ReservationStation) {
-            throw error("Invalid Annotation", def)
-                .description("`source` annotation is only allowed on `logic [reservation station]`")
-                .build();
-          } else if (!(annotation.expr instanceof CallIndexExpr expr)
-              || !(expr.target instanceof Identifier stageId)
-              || expr.subCalls.size() != 1
-              || !(expr.subCalls.getFirst().id instanceof Identifier outputId)
-          ) {
-            throw error("Invalid source Annotation Value", annotation.expr)
-                .locationDescription(
-                    annotation.expr,
-                    "Value of the `source` definition must be of the form `Stage.output`."
-                ).build();
-          } else if (!(stageId.target instanceof StageDefinition stage)) {
-            throw error("Invalid source Annotation Value", annotation.expr)
-                .locationDescription(
-                    stageId,
-                    "First element of the value of the `source` annotation was `%s` must a `%s`.",
-                    requireNonNull(stageId.target).nodeName(),
-                    Node.nodeNameFor(StageDefinition.class)
-                ).locationDescription(
-                    stageId.target,
-                    "`%s` defined here.",
-                    stageId.name
-                ).build();
-          } else {
-            boolean referencesStageOutput = false;
+      final var viamStage = (Stage) lowering.fetch(requireNonNull(stage)).get();
 
-            for (var output : stage.outputs) {
-              if (output.identifier.equals(outputId)) {
-                referencesStageOutput = true;
-                break;
-              }
-            }
-
-            if (!referencesStageOutput) {
-              throw error("Invalid source Annotation Value", annotation.expr)
-                  .locationDescription(
-                      annotation.expr,
-                      "Value of the `source` definition must be of the form `Stage.output`."
-                  ).build();
-            }
-          }
-        }).applyViam((def, annotation, lowering) -> {
-          final var expr = (CallIndexExpr) annotation.expr;
-
-          final var stage = requireNonNull((StageDefinition) ((Identifier) expr.target).target);
-
-          final var outputId = expr.subCalls.getFirst().id;
-
-          StageOutputDefinition stageOutput = null;
-
-          for (var output : stage.outputs) {
-            if (output.identifier.equals(outputId)) {
-              stageOutput = output;
-              break;
-            }
-          }
-
-          final var viamOutput = (StageOutput) lowering.fetch(requireNonNull(stageOutput)).get();
-
-          ((Logic.ReservationStation) def).setSource(viamOutput);
-        }).build();
+      ((Logic.ReservationStation) def).setSource(viamStage);
+    }).build();
   }
 
   /**
@@ -1478,7 +1423,13 @@ class ConstantAnnotation extends Annotation {
     var valueExpr = definition.values.getFirst();
     typeChecker.check(valueExpr);
 
-    constant = typeChecker.constantEvaluator.eval(valueExpr);
+    try {
+      constant = typeChecker.constantEvaluator.eval(valueExpr);
+    } catch (EvaluationError e) {
+      throw error("Not a Constant Expression", valueExpr)
+          .locationDescription(valueExpr, "The surrounding annotation requires a constant value.")
+          .build();
+    }
   }
 
   /**

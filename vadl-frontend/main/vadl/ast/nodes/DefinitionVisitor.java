@@ -141,6 +141,4 @@ public interface DefinitionVisitor<R> {
   public R visit(AbiClangTypeDefinition abiClangTypeDefinition);
 
   public R visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition);
-
-  public R visit(StageOutputDefinition stageOutputDefinition);
 }
