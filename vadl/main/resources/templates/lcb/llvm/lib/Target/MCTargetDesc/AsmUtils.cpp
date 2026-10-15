@@ -405,7 +405,7 @@ std::string AsmUtils::getRegisterNameFrom[(${rg.registerFile.name})]ByIndex( uns
 }
 
 unsigned AsmUtils::getRegNoFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex ) {
-    if (RegIndex >= [(${rg.registers.size()})] - 1) {
+    if (RegIndex >= [(${rg.registers.size()})]) {
         return [(${namespace})]::NoRegister;
     }
 
