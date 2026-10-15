@@ -1025,7 +1025,9 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     if (args.size() != expectedArgCount
         && !(builtIn.signature().hasVarArgs() && args.size() >= expectedArgCount)) {
       throw addErrorAndStopChecking(wrongArgCountError(
-          location, args.size(), List.of(expectedArgCount)
+          location,
+          args.size(),
+          requireNonNull(AstUtils.getBuiltInArgCounts(builtIn.name()))
       ));
     }
 
@@ -5373,7 +5375,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       final int minExpectedArgCount = sortedArgCounts.getFirst();
       final int maxExpectedArgCount = sortedArgCounts.getLast();
 
-      if (sortedArgCounts.size() == maxExpectedArgCount - minExpectedArgCount + 1) {
+      if (sortedArgCounts.size() == maxExpectedArgCount - minExpectedArgCount + 1 && sortedArgCounts.size() > 2) {
         // Special case a continuous range of expected argument counts by only
         // printing the lower and upper bounds.
         isPlural = true;
