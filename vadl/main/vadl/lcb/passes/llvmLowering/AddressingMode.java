@@ -43,16 +43,30 @@ public record AddressingMode(Kind kind, int accessBytes, Scale scale, @Nullable 
    * Which multipliers LLVM's {@code AM.Scale} may take.
    */
   public sealed interface Scale {
-    // no scaled register: AM.Scale == 0
+    /**
+     * no scaled register: AM.Scale == 0
+     */
     record None() implements Scale {}
 
-    // rb << c or rb * c: AM.Scale == value
+    /**
+     * rb << c or rb * c: AM.Scale == value
+     *
+     * @param value fixed scale
+     */
     record Fixed(long value) implements Scale {}
 
-    // rb << imm: AM.Scale == 1 << k for k in shiftAmounts
+    /**
+     * rb << imm: AM.Scale == 1 << k for k in shiftAmounts
+     *
+     * @param shiftAmounts shift amount
+     */
     record EncodedShift(ValueRange shiftAmounts) implements Scale {}
 
-    // rb * imm: AM.Scale in factors
+    /**
+     * rb * imm: AM.Scale in factors
+     *
+     * @param factors scale factor
+     */
     record EncodedMul(ValueRange factors) implements Scale {}
   }
 
