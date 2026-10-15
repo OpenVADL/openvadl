@@ -167,6 +167,12 @@ public final class LcbPassOrder {
     order.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCMakeFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.AsmParser
         .EmitAsmRecursiveDescentParserCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.Disassembler
+        .EmitDisassemblerHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.Disassembler
+        .EmitDisassemblerCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.Disassembler
+        .EmitDisassemblerCMakeFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitDAGToDAGISelCppFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitAsmPrinterHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitCallingConvTableGenFilePass(configuration));
