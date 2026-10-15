@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -112,7 +112,7 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
       function.
 
       ```
-        static int64_t RV3264Base_ADDI_decode_wrapper(int param) {
+        static int64_t RV3264Base_ADDI_decode(int param) {
            return VADL_sextract(param, 12);
       ```
 
