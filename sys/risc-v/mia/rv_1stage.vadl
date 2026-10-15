@@ -18,7 +18,7 @@ model Isa() : Id = {RV32I}             // invoke vadl -m "Isa=RV64I" for 64 bit 
  */
 micro architecture SingleStage implements $Isa = {
 
-  stage ISS -> ( ) = {
+  stage ISS = {
     let instr = decode( fetchNext ) in    // fetch next instruction from memory and decode
       instr.write
   }

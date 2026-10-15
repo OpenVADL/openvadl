@@ -78,7 +78,6 @@ import vadl.ast.nodes.SignalDefinition;
 import vadl.ast.nodes.SourceDefinition;
 import vadl.ast.nodes.SpecialPurposeRegisterDefinition;
 import vadl.ast.nodes.StageDefinition;
-import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.TypedFormatField;
 import vadl.ast.nodes.UsingDefinition;
 
@@ -286,11 +285,6 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
 
   @Override
   public Definition visit(Parameter definition) {
-    return definition;
-  }
-
-  @Override
-  public Definition visit(StageOutputDefinition definition) {
     return definition;
   }
 

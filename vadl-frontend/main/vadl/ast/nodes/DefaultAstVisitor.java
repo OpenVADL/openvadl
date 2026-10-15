@@ -347,11 +347,6 @@ public abstract class DefaultAstVisitor<T> implements AstVisitor<T> {
   }
 
   @Override
-  public T visit(StageOutputDefinition definition) {
-    return visitDefinition(definition);
-  }
-
-  @Override
   public T visit(AbiSpecialPurposeInstructionDefinition definition) {
     return visitDefinition(definition);
   }

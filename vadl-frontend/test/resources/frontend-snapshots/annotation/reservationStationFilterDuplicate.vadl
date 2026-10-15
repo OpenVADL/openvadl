@@ -2,13 +2,13 @@ micro architecture MiA implements ISA = {
 
   // Incorrect: Duplicate `filter` annotation.
   [size : 1]
-  [source : Decode.ir]
+  [source : Decode]
   [filter : Ops]
   [filter : OtherOps]
   logic [reservation station] RS2
 
-  stage Decode -> (ir : Instruction) = {
-    ir := decode(fetchNext)
+  stage Decode -> Instruction = {
+    Decode := decode(fetchNext)
   }
 
   operation Ops = {}

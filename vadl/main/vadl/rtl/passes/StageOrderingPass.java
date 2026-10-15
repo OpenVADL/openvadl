@@ -73,8 +73,8 @@ public class StageOrderingPass extends Pass {
     // input/output dependencies
     var dep = new HashSet<Pair<Stage, Stage>>(); // stage read from -> stage reading
     for (var instructionFlow : mia.allInstructionFlows()) {
-      if (instructionFlow instanceof MiaInstructionFlow.StageOutputToStage(var src, var dst)) {
-        dep.add(new Pair<>(src.stage(), dst));
+      if (instructionFlow instanceof MiaInstructionFlow.StageToStage(var src, var dst)) {
+        dep.add(new Pair<>(src, dst));
       } else {
         throw error("Unexpected Dependency", instructionFlow.destination())
             .description("Stage ordering currently only handles reads from stage outputs.")

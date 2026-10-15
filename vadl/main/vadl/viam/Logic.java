@@ -277,7 +277,7 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
 
     /** See {@link #source()}. */
     @Nullable
-    private StageOutput source = null;
+    private Stage source = null;
 
     /**
      * Create a reservation station logic element.
@@ -314,13 +314,13 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
     }
 
     /**
-     * The `StageOutput` that gets routed into this reservation station.
-     * Set via the required `[source: STAGE.OUTPUT]` annotation.
+     * The `Stage` that gets routed into this reservation station.
+     * Set via the required `[source: STAGE]` annotation.
      *
-     * @return The `StageOutput` from which this reservation station gets its
+     * @return The `Stage` from which this reservation station gets its
      *         instructions.
      */
-    public StageOutput source() {
+    public Stage source() {
       return requireNonNull(source);
     }
 
@@ -355,12 +355,12 @@ public abstract class Logic extends Definition implements DefProp.WithBehavior {
      * Sets the source for this reservation station. Called exactly once during
      * lowering to the VIAM.
      *
-     * @param source The source `StageOutput` that will be associated with this
+     * @param source The source `Stage` that will be associated with this
      *               reservation station.
      *
      * @see #source()
      */
-    public void setSource(StageOutput source) {
+    public void setSource(Stage source) {
       this.source = source;
     }
   }

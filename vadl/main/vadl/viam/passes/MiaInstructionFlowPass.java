@@ -68,11 +68,11 @@ public class MiaInstructionFlowPass extends Pass {
       stage
           .behavior()
           .getNodes(ReadStageOutputNode.class)
-          .map(ReadStageOutputNode::stageOutput)
+          .map(ReadStageOutputNode::stage)
           .filter(Objects::nonNull)
           .distinct()
-          .forEach(read -> allInstructionFlows.add(new MiaInstructionFlow.StageOutputToStage(
-              read,
+          .forEach(source -> allInstructionFlows.add(new MiaInstructionFlow.StageToStage(
+              source,
               stage
           )));
     }
