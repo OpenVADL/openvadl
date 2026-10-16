@@ -20,11 +20,11 @@ import static vadl.utils.GraphUtils.not;
 import static vadl.utils.GraphUtils.select;
 import static vadl.utils.GraphUtils.testSignBit;
 
+import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.ViamError;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -33,10 +33,14 @@ import vadl.viam.graph.dependency.SelectNode;
  * Contains the {@link Inliner}s for the saturated arithmetic built-ins
  * (e.g. {@link BuiltInTable#SSATADDS} or {@link BuiltInTable#USATSUBB}).
  *
- * <p>A saturated operation is implemented on top of the {@link Inliner} of the corresponding
+ * <p>The status flags are computed using the {@link Inliner} of the corresponding
  * wrapping operation (e.g. {@link ArithmeticInliner.AddC} for {@link BuiltInTable#SSATADDC}).
- * If the wrapping operation over- or underflows, the result is clamped to the
- * maximum/minimum value of the operand type.
+ * If there is a non-status saturated built-in for the operation
+ * (e.g. {@link BuiltInTable#SSATADD} for {@link BuiltInTable#SSATADDS}), it is used for the
+ * result, so each backend can lower the saturation on its own.
+ * Otherwise (operations with carry/borrow input), the result is the wrapping result,
+ * clamped to the maximum/minimum value of the operand type if the wrapping operation
+ * over- or underflows.
  * Only operations of the operand bit width are used, so the lowering also works for
  * operands that already have the size of the target.</p>
  *
@@ -50,91 +54,73 @@ import vadl.viam.graph.dependency.SelectNode;
  *   <li>{@code zero} and {@code negative} are computed on the saturated result.</li>
  * </ul>
  */
-public abstract class SaturatedArithmeticInliner extends Inliner {
+abstract class SaturatedArithmeticInliner extends Inliner {
 
   /**
    * The inliner of the wrapping (non-saturated) operation.
    */
   final Inliner wrapping;
 
-  SaturatedArithmeticInliner(BuiltInCall builtInCall, Inliner wrapping) {
+  /**
+   * The non-status saturated built-in that computes the result,
+   * or null if there is no such built-in.
+   */
+  @Nullable
+  final BuiltInTable.BuiltIn equivalent;
+
+  SaturatedArithmeticInliner(BuiltInCall builtInCall, Inliner wrapping,
+                             @Nullable BuiltInTable.BuiltIn equivalent) {
     super(builtInCall);
     this.wrapping = wrapping;
-  }
-
-  /**
-   * Replaces a non-status saturated built-in call ({@link BuiltInTable#SSATADD},
-   * {@link BuiltInTable#USATADD}, {@link BuiltInTable#SSATSUB}, {@link BuiltInTable#USATSUB})
-   * by an equivalent expression that only uses non-saturated operations.
-   *
-   * @param call the saturated built-in call to replace
-   * @return the replacement of the call
-   */
-  public static ExpressionNode lower(BuiltInCall call) {
-    var builtIn = call.builtIn();
-    SaturatedArithmeticInliner inliner;
-    if (builtIn == BuiltInTable.SSATADD) {
-      inliner = ssatAdds(call);
-    } else if (builtIn == BuiltInTable.USATADD) {
-      inliner = usatAdds(call);
-    } else if (builtIn == BuiltInTable.SSATSUB) {
-      inliner = ssatSubs(call);
-    } else if (builtIn == BuiltInTable.USATSUB) {
-      inliner = usatSubs(call);
-    } else {
-      throw new ViamError("Built-in %s is not a non-status saturated built-in."
-          .formatted(builtIn.name()));
-    }
-    return inliner.replaceByResult();
+    this.equivalent = equivalent;
   }
 
   /**
    * Replaces the built-in call by its saturated result, ignoring all status flags.
-   * This is used if the call is directly used as value (non-status saturated built-ins)
-   * or if the status of the call is unused.
+   * This is used if the status of the call is unused.
    */
   ExpressionNode replaceByResult() {
     return builtInCall.replaceAndDelete(getResult());
   }
 
   static SaturatedArithmeticInliner ssatAdds(BuiltInCall call) {
-    return new Signed(call, new ArithmeticInliner.AddS(call));
+    return new Signed(call, new ArithmeticInliner.AddS(call), BuiltInTable.SSATADD);
   }
 
   static SaturatedArithmeticInliner ssatAddc(BuiltInCall call) {
-    return new Signed(call, new ArithmeticInliner.AddC(call));
+    return new Signed(call, new ArithmeticInliner.AddC(call), null);
   }
 
   static SaturatedArithmeticInliner ssatSubs(BuiltInCall call) {
-    return new Signed(call, new ArithmeticInliner.SubSC(call));
+    return new Signed(call, new ArithmeticInliner.SubSC(call), BuiltInTable.SSATSUB);
   }
 
   static SaturatedArithmeticInliner ssatSubc(BuiltInCall call) {
-    return new Signed(call, new ArithmeticInliner.SubC(call));
+    return new Signed(call, new ArithmeticInliner.SubC(call), null);
   }
 
   static SaturatedArithmeticInliner ssatSubb(BuiltInCall call) {
-    return new Signed(call, new ArithmeticInliner.SubB(call));
+    return new Signed(call, new ArithmeticInliner.SubB(call), null);
   }
 
   static SaturatedArithmeticInliner usatAdds(BuiltInCall call) {
-    return new UnsignedAdd(call, new ArithmeticInliner.AddS(call));
+    return new UnsignedAdd(call, new ArithmeticInliner.AddS(call), BuiltInTable.USATADD);
   }
 
   static SaturatedArithmeticInliner usatAddc(BuiltInCall call) {
-    return new UnsignedAdd(call, new ArithmeticInliner.AddC(call));
+    return new UnsignedAdd(call, new ArithmeticInliner.AddC(call), null);
   }
 
   static SaturatedArithmeticInliner usatSubs(BuiltInCall call) {
-    return new UnsignedSub(call, new ArithmeticInliner.SubSC(call), true);
+    return new UnsignedSub(call, new ArithmeticInliner.SubSC(call), BuiltInTable.USATSUB, true);
   }
 
   static SaturatedArithmeticInliner usatSubc(BuiltInCall call) {
-    return new UnsignedSub(call, new ArithmeticInliner.SubC(call), true);
+    return new UnsignedSub(call, new ArithmeticInliner.SubC(call), null, true);
   }
 
   static SaturatedArithmeticInliner usatSubb(BuiltInCall call) {
-    return new UnsignedSub(call, new ArithmeticInliner.SubB(call), false);
+    return new UnsignedSub(call, new ArithmeticInliner.SubB(call), null, false);
   }
 
   /**
@@ -149,6 +135,9 @@ public abstract class SaturatedArithmeticInliner extends Inliner {
 
   @Override
   ExpressionNode createResult() {
+    if (equivalent != null) {
+      return binaryOf(equivalent);
+    }
     // the wrapping result is of type Bits<N>, but the saturated one is of type SInt/UInt
     return new SelectNode(resultType(), getOverflow(), saturationValue(), wrapping.getResult());
   }
@@ -184,8 +173,9 @@ public abstract class SaturatedArithmeticInliner extends Inliner {
    */
   static class Signed extends SaturatedArithmeticInliner {
 
-    Signed(BuiltInCall builtInCall, Inliner wrapping) {
-      super(builtInCall, wrapping);
+    Signed(BuiltInCall builtInCall, Inliner wrapping,
+           @Nullable BuiltInTable.BuiltIn equivalent) {
+      super(builtInCall, wrapping, equivalent);
     }
 
     @Override
@@ -215,8 +205,9 @@ public abstract class SaturatedArithmeticInliner extends Inliner {
    */
   static class UnsignedAdd extends SaturatedArithmeticInliner {
 
-    UnsignedAdd(BuiltInCall builtInCall, Inliner wrapping) {
-      super(builtInCall, wrapping);
+    UnsignedAdd(BuiltInCall builtInCall, Inliner wrapping,
+                @Nullable BuiltInTable.BuiltIn equivalent) {
+      super(builtInCall, wrapping, equivalent);
     }
 
     @Override
@@ -247,8 +238,9 @@ public abstract class SaturatedArithmeticInliner extends Inliner {
      */
     private final boolean carryConvention;
 
-    UnsignedSub(BuiltInCall builtInCall, Inliner wrapping, boolean carryConvention) {
-      super(builtInCall, wrapping);
+    UnsignedSub(BuiltInCall builtInCall, Inliner wrapping,
+                @Nullable BuiltInTable.BuiltIn equivalent, boolean carryConvention) {
+      super(builtInCall, wrapping, equivalent);
       this.carryConvention = carryConvention;
     }
 
