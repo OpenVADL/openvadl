@@ -403,4 +403,19 @@ std::string AsmUtils::getRegisterNameFrom[(${rg.registerFile.name})]ByIndex( uns
     unsigned regNo = registers[ RegIndex ];
     return AsmUtils::getRegisterName( regNo );
 }
+
+int64_t AsmUtils::getRegNoFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex ) {
+    if (RegIndex >= [(${rg.registers.size()})] - 1) {
+        return -1; // Invalid index
+    }
+
+    const int registers[] =
+    {
+        [# th:each="reg, iterStat : ${rg.registers}" ]
+        [(${namespace})]::[(${reg.name})][#th:block th:if="${!iterStat.last}"],[/th:block]
+      [/]
+    };
+
+    return registers[ RegIndex ];
+}
 [/]
