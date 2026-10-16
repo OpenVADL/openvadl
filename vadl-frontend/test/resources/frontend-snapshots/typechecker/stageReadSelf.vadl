@@ -19,7 +19,7 @@ instruction set architecture ISA = {}
 //     4 │>       Stage := decode(fetchNext)
 //     5 │>     }
 //     6 │>   }
-//       │
+//       │    
 //       │
 //       This stage definition `Stage` is defined by itself.
 //

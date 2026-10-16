@@ -7,8 +7,8 @@
 instruction set architecture ISA = {}
 
 micro architecture MiA implements ISA = {
-  stage DECODE -> (ir : Instruction) = {
-    ir := decode
+  stage DECODE -> Instruction = {
+    DECODE := decode
   }
 }
 
@@ -16,10 +16,10 @@ micro architecture MiA implements ISA = {
 //  Reported Diagnostics:
 //
 //  error: Type Mismatch
-//       ╭── test/resources/frontend-snapshots/typechecker/zeroArgBuiltinCallExpectingArgs.vadl:11:11
+//       ╭── test/resources/frontend-snapshots/typechecker/zeroArgBuiltinCallExpectingArgs.vadl:11:15
 //       │
-//    11 │     ir := decode
-//       │           ^^^^^^ Expected 1 argument but got 0.
+//    11 │     DECODE := decode
+//       │               ^^^^^^ Expected 1 argument but got 0.
 //       │
 //
 //
