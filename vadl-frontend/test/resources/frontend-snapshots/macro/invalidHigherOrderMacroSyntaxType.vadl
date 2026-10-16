@@ -1,0 +1,28 @@
+// Previously this used to crash as the expander got confused.
+// https://github.com/OpenVADL/openvadl/issues/920
+
+model-type exType = ()-> Ex
+
+record wrap (funct: exType)
+
+model exId () : Ex = {add}  // correct with type Id, is instantiated to an identifier but we do not have macro type casts
+
+model genConstant (w : wrap) : Defs = {
+  constant test = VADL::$w.funct() (3, 4)
+}
+
+$genConstant ((exId))
+
+
+//  Reported Diagnostics:
+//
+//  error: SyntaxType Mismatch
+//       ╭── test/resources/frontend-snapshots/macro/invalidHigherOrderMacroSyntaxType.vadl:11:25
+//       │
+//    11 │   constant test = VADL::$w.funct() (3, 4)
+//       │                         ^^^^^^^^^^
+//       │
+//       Expected node of type `Id` but received `Ex`
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -721,7 +721,7 @@ instruction set architecture AArch64Base = {
   model ShiftRegInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ShiftRegFormat =
       $WXReg($size)(rd) :=  VADL::$i.funct ($WXReg($size)(rn), $WXReg($size)(rm))
-    encoding $i.id = { op = 0b0011'0101'1000'10, sf = SF::$size, shift = ShiftType::$i.opcode }
+    encoding $i.id = { op = 0b0011'0101'1000'10, sf = SF::$size, shift = $i.opcode }
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
     }
 
@@ -1502,10 +1502,10 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
   $InstrWXRegShift     (LogicRegNegInstr      ; (EON    ; "eon"   ; 0b1001'0101           ; xors       ))
   $InstrWXRegShift     (LogicRegNegInstr      ; (ORN    ; "orn"   ; 0b0101'0101           ; ors        ))
 
-  $InstrWX             (ShiftRegInstr         ; (ASR    ; "asrv"  ; ASR                   ; asr        ))
-  $InstrWX             (ShiftRegInstr         ; (LSL    ; "lslv"  ; LSL                   ; lsl        ))
-  $InstrWX             (ShiftRegInstr         ; (LSR    ; "lsrv"  ; LSR                   ; lsr        ))
-  $InstrWX             (ShiftRegInstr         ; (ROR    ; "rorv"  ; ROR                   ; ror        ))
+  $InstrWX             (ShiftRegInstr         ; (ASR    ; "asrv"  ; ShiftType::ASR                   ; asr        ))
+  $InstrWX             (ShiftRegInstr         ; (LSL    ; "lslv"  ; ShiftType::LSL                   ; lsl        ))
+  $InstrWX             (ShiftRegInstr         ; (LSR    ; "lsrv"  ; ShiftType::LSR                   ; lsr        ))
+  $InstrWX             (ShiftRegInstr         ; (ROR    ; "rorv"  ; ShiftType::ROR                   ; ror        ))
 
   $InstrWX             (MovKInstr             ; (MOVK   ; "movk"  ; 0b1110'0101           ; unused     ))
   $InstrWX             (MovNZInstr            ; (MOVN   ; "movn"  ; 0b0010'0101           ; not        ))

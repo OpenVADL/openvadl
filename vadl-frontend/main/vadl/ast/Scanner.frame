@@ -441,4 +441,19 @@ public class Scanner {
 	// make sure that peeking starts at current scan position
 	public void ResetPeek () { pt = tokens; }
 
+	// get the next nth token and reset afterward
+	public Token PeekNWithReset(int n) {
+	  var token = t;
+	  for (; n > 0; n--) {
+	   token = Peek();
+	  }
+	  ResetPeek();
+	  return token;
+	}
+
+  public Token PeekWithReset() {
+    return PeekNWithReset(1);
+  }
+
+
 } // end Scanner

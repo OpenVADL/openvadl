@@ -2,6 +2,10 @@
 // SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
+// This is disabled until we know if we want to keep this.
+// https://github.com/OpenVADL/openvadl/issues/1170
+
+/*
 instruction set architecture MacroProducingMacros = {
 
   record BinOpParams (left: Ex, op: BinOp, right: Ex)
@@ -28,6 +32,7 @@ instruction set architecture MacroProducingMacros = {
 
   $LUTInvoker()
 }
+*/
 
 
 //  Reported Diagnostics:
@@ -36,16 +41,6 @@ instruction set architecture MacroProducingMacros = {
 //
 //
 //  Pretty Print:
-//
-//  instruction set architecture MacroProducingMacros = {
-//    constant a =
-//      match (5 + 2) as Bits<64> with
-//        { 7 => 1
-//        , 8 => 0
-//        , _ => (9 * 4) * 4
-//        }
-//
-//  }
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

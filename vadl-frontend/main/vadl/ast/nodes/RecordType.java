@@ -58,6 +58,11 @@ public class RecordType implements SyntaxType {
   }
 
   @Override
+  public boolean isValid() {
+    return true;
+  }
+
+  @Override
   public String print() {
     return name;
   }

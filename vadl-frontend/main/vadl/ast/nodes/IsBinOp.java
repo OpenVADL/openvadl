@@ -17,6 +17,6 @@
 package vadl.ast.nodes;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsBinOp permits BinOp, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
+public sealed interface IsBinOp permits BinOp, MacroCall.Node, MacroMatchNode {
   public void prettyPrint(int indent, StringBuilder builder);
 }

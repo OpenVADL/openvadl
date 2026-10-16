@@ -11,15 +11,12 @@ model FoldStat (): Stat = {
 //  Reported Diagnostics:
 //
 //  error: SyntaxType Mismatch
-//       ╭── test/resources/frontend-snapshots/parser/invalidForallFoldModelSyntaxTypeForOperator.vadl:4:24
+//       ╭── test/resources/frontend-snapshots/parser/invalidForallFoldModelSyntaxTypeForOperator.vadl:7:43
 //       │
-//     4 │ model TestOP (): Ex = {42}
-//       │                        ^^
+//     7 │   Reg := forall i: Bits<4> in 0 .. 3 fold $TestOP() with Reg(i)
+//       │                                           ^^^^^^^^^
 //       │
-//       ├─ From this model invocation (outermost call first):
-//       │       test/resources/frontend-snapshots/parser/invalidForallFoldModelSyntaxTypeForOperator.vadl:7:43
-//       │
-//       Expected node of type BinOp or Id, received Ex - GroupedExpr
+//       Expected node of type `BinOp` or `Id` but received `Ex`
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests
