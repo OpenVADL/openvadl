@@ -115,7 +115,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     var refTarget = refTargetString.isEmpty() ? "" : "," + refTargetString;
 
     return new DockerImage()
-        .withDockerfile(new StringSubstitutor(Map.of("qemu", TestConstants.TEST_BASE_IMAGE,
+        .withDockerfile(new StringSubstitutor(Map.of("qemu", IssTestConstants.TEST_BASE_IMAGE,
             "soft", softmmuTarget + refTarget,
             "qemu-bin", qemuBin)).replace("""
             FROM ${qemu}
