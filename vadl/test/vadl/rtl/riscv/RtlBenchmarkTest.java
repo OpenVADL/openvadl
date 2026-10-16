@@ -16,8 +16,6 @@
 
 package vadl.rtl.riscv;
 
-import static vadl.rtl.passes.EmitRtlDevcontainerDockerComposePass.RTL_BASE_IMAGE;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -25,8 +23,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -34,18 +30,10 @@ import java.util.function.Function;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Assertions;
-import org.testcontainers.utility.MountableFile;
-import vadl.DockerExecutionTest;
 import vadl.configuration.RtlConfiguration;
-import vadl.pass.PassManager;
-import vadl.pass.PassOrders;
-import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.rtl.ipg.nodes.RtlDecodeTreeNode;
-import vadl.rtl.passes.RtlConfigurationPass;
 import vadl.utils.Pair;
-import vadl.viam.Stage;
 
-public abstract class RtlBenchmarkTest extends DockerExecutionTest {
+public abstract class RtlBenchmarkTest extends RtlDockerTest {
 
   public static final int MAX_CLOCK_NS = 25;
 
@@ -67,11 +55,11 @@ public abstract class RtlBenchmarkTest extends DockerExecutionTest {
   /**
    * Execute the benchmark script and append the result CSV with the result metrics.
    *
-   * @param spec   The VADL specification to run.
+   * @param specPath   The VADL specification to run.
    * @param tag    The tag of the version that is tested.
    * @param config The run config.
    */
-  void benchmark(String spec, String tag, RtlConfiguration config, String isa) {
+  void benchmark(String specPath, String tag, RtlConfiguration config, String isa) {
 
     var macroOverrides = Map.of("Isa", isa);
 
@@ -81,10 +69,10 @@ public abstract class RtlBenchmarkTest extends DockerExecutionTest {
         Pair.of("/rtl/core_iter.log", log.toString())
     );
 
-    var topModule = getTopModuleName(spec, macroOverrides);
-    var decodeModule = getDecodeStageName(spec, macroOverrides, config);
+    var topModule = getTopModuleName(specPath, macroOverrides);
+    var decodeModule = getDecodeStageName(specPath, macroOverrides, config);
 
-    runBenchmarkWithSpec(spec, macroOverrides, config, resultMappings,
+    runContainerWithSpec(specPath, macroOverrides, config, resultMappings,
         "/bin/bash", "-c",
         "/scripts/bench/bench_core_iter.sh " + topModule + " 0 " + MAX_CLOCK_NS
             + "  | tee /rtl/core_iter.log");
@@ -121,7 +109,7 @@ public abstract class RtlBenchmarkTest extends DockerExecutionTest {
         println(writer, "spec,tag,decode area,chip area,clock period,timing delta");
       }
 
-      print(writer, spec + ",");
+      print(writer, specPath + ",");
       print(writer, tag + ",");
       print(writer, decodeArea.toPlainString() + ",");
       print(writer, areaAndDelta.left().toPlainString() + ",");
@@ -144,44 +132,6 @@ public abstract class RtlBenchmarkTest extends DockerExecutionTest {
     System.out.println(line);
   }
 
-  private void runBenchmarkWithSpec(String spec, Map<String, String> macroOverrides,
-                                    RtlConfiguration config,
-                                    List<Pair<String, String>> resultMappings,
-                                    String... cmd) {
-    // Generate RTL core
-    try {
-      setupPassManagerAndRunSpec(spec, PassOrders.rtl(config), macroOverrides);
-    } catch (IOException | DuplicatedPassKeyException e) {
-      throw new RuntimeException(e);
-    }
-
-    // Input files
-    var outputPath = Path.of(config.outputPath() + "/rtl").toAbsolutePath();
-    if (!outputPath.toFile().exists()) {
-      throw new IllegalStateException("RTL output path was not found (not generated?)");
-    }
-
-    runContainer(
-        RTL_BASE_IMAGE,
-        c -> {
-          c.setCommand(cmd);
-          c.withCopyToContainer(MountableFile.forClasspathResource("/scripts/rtl"), "/scripts");
-          c.withCopyToContainer(MountableFile.forHostPath(outputPath.toString()), "/rtl");
-          return c;
-        },
-        c -> {
-          for (var mapping : resultMappings) {
-            try {
-              Files.createDirectories(new File(mapping.right()).getParentFile().toPath());
-            } catch (IOException e) {
-              Assertions.fail(e);
-            }
-            c.copyFileFromContainer(mapping.left(), mapping.right());
-          }
-        }
-    );
-  }
-
   private <T> T getMetric(File input, Pattern pattern, Function<MatchResult, T> extractor) {
 
     try (Scanner s = new Scanner(input)) {
@@ -191,38 +141,6 @@ public abstract class RtlBenchmarkTest extends DockerExecutionTest {
       Assertions.fail(e);
     }
     return null;
-  }
-
-  private String getTopModuleName(String specPath, Map<String, String> macroOverrides) {
-
-    final var spec = runAndGetViamSpecification(specPath, macroOverrides);
-
-    return RtlConfigurationPass.getTopModuleName(spec);
-  }
-
-  private String getDecodeStageName(String specPath, Map<String, String> macroOverrides,
-                                    RtlConfiguration config) {
-
-    final var spec = runAndGetViamSpecification(specPath, macroOverrides);
-
-    final var passManager = new PassManager();
-    try {
-      passManager.add(PassOrders.rtl(config));
-      passManager.run(spec);
-    } catch (DuplicatedPassKeyException | IOException e) {
-      Assertions.fail(e);
-    }
-
-    final var mia = spec.mia().orElse(null);
-    Assertions.assertNotNull(mia);
-
-    final Stage decodeStage = mia.stages().stream()
-        .filter(s -> s.behavior().getNodes(RtlDecodeTreeNode.class).findAny().isPresent())
-        .findAny().orElse(null);
-
-    Assertions.assertNotNull(decodeStage);
-
-    return decodeStage.simpleName();
   }
 
 }
