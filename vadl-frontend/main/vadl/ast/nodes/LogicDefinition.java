@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -75,14 +77,14 @@ public class LogicDefinition extends Definition implements IdentifiableNode {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("logic [ ");
     for (var logicTypeId : logicTypeIdentifiers) {
       var name = ((Identifier) logicTypeId).name;
       builder.append(name).append(" ");
     }
     builder.append("] ");
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     builder.append("\n");
   }
 

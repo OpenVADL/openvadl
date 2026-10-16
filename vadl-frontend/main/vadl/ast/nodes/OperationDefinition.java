@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -57,7 +59,7 @@ public class OperationDefinition extends Definition implements IdentifiableNode 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("operation ");
     name.prettyPrint(indent, builder);
     builder.append(" =");
@@ -67,13 +69,13 @@ public class OperationDefinition extends Definition implements IdentifiableNode 
       builder.append("\n");
       var isFirst = true;
       for (IsId resource : resources) {
-        builder.append(prettyIndentString(indent));
+        builder.append(indentString(indent));
         builder.append(isFirst ? "{ " : ", ");
         isFirst = false;
-        resource.prettyPrint(0, builder);
+        resource.prettyPrint(indent, builder);
         builder.append("\n");
       }
-      builder.append(prettyIndentString(indent)).append("}\n");
+      builder.append(indentString(indent)).append("}\n");
     }
   }
 

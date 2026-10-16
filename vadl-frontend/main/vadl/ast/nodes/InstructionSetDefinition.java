@@ -17,6 +17,8 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintDefinitions;
 
 import java.util.List;
 import java.util.Objects;
@@ -80,7 +82,7 @@ public class InstructionSetDefinition extends Definition implements Identifiable
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("instruction set architecture ").append(identifier().name);
     if (!extending.isEmpty()) {
       var extStr = extending.stream().map(IsId::pathToString).collect(Collectors.joining(", "));

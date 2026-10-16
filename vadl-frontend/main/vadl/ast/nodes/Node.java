@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -71,29 +70,6 @@ public abstract class Node implements WithLocation {
   public String nodeName() {
     return nodeNameFor(getClass());
   }
-
-  public static String prettyIndentString(int indent) {
-    var indentBy = 2;
-    return " ".repeat(indentBy * indent);
-  }
-
-  /// Print multiple nodes seperated by the seperator to the proivded builder
-  public static <T extends Node> void prettyPrintJoin(String separator, List<T> nodes, int indent,
-                                               StringBuilder builder) {
-    for (int i = 0; i < nodes.size(); i++) {
-      var node = nodes.get(i);
-      if (i > 0) {
-        builder.append(separator);
-      }
-      node.prettyPrint(indent, builder);
-    }
-  }
-
-  public static boolean isBlockLayout(Node n) {
-    return n instanceof LetExpr || n instanceof IfExpr || n instanceof MatchExpr
-        || n instanceof Statement || n instanceof Definition;
-  }
-
 
   public abstract SyntaxType syntaxType();
 

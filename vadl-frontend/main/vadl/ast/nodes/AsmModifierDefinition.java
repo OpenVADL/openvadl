@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
@@ -57,12 +59,12 @@ public class AsmModifierDefinition extends Definition {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
-    stringLiteral.prettyPrint(0, builder);
+    builder.append(indentString(indent));
+    stringLiteral.prettyPrint(indent, builder);
     builder.append(" -> ");
-    isa.prettyPrint(0, builder);
+    isa.prettyPrint(indent, builder);
     builder.append("::");
-    relocation.prettyPrint(0, builder);
+    relocation.prettyPrint(indent, builder);
   }
 
   @Override

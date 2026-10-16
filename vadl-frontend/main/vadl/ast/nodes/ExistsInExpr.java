@@ -55,7 +55,7 @@ public class ExistsInExpr extends Expr {
         builder.append(", ");
       }
       isFirst = false;
-      operation.prettyPrint(0, builder);
+      operation.prettyPrint(indent, builder);
     }
     builder.append("}");
   }

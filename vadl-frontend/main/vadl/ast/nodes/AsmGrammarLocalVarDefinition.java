@@ -66,9 +66,9 @@ public class AsmGrammarLocalVarDefinition extends Definition implements Identifi
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("var ");
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     builder.append(" = ");
-    asmLiteral.prettyPrint(0, builder);
+    asmLiteral.prettyPrint(indent, builder);
   }
 
   @Override

@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import vadl.utils.SourceLocation;
@@ -50,7 +52,7 @@ public class AbiSequenceDefinition extends InstructionSequenceDefinition {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append(kind.keyword);
     builder.append(" sequence ");
     Parameter.prettyPrintMultiple(indent, params, builder);
@@ -58,7 +60,7 @@ public class AbiSequenceDefinition extends InstructionSequenceDefinition {
     for (Statement statement : statements) {
       statement.prettyPrint(indent + 1, builder);
     }
-    builder.append(prettyIndentString(indent)).append("}\n");
+    builder.append(indentString(indent)).append("}\n");
   }
 
   @Override

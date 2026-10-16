@@ -39,7 +39,6 @@ public final class CallStatement extends Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
     expr.prettyPrint(indent, builder);
   }
 

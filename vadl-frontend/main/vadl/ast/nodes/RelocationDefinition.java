@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
 
 import java.util.List;
 import java.util.Objects;
@@ -64,21 +65,16 @@ public class RelocationDefinition extends Definition implements IdentifiableNode
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("relocation ");
     identifier.prettyPrint(indent, builder);
     builder.append(" ");
     Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" -> ");
-    resultTypeLiteral.prettyPrint(0, builder);
-    if (isBlockLayout(expr)) {
-      builder.append(" =\n");
-      expr.prettyPrint(indent + 1, builder);
-    } else {
-      builder.append(" = ");
-      expr.prettyPrint(0, builder);
-      builder.append("\n");
-    }
+    resultTypeLiteral.prettyPrint(indent, builder);
+    builder.append(" = ");
+    expr.prettyPrint(indent, builder);
+    builder.append("\n");
   }
 
   @Override

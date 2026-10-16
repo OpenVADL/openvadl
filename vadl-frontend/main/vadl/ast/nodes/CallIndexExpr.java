@@ -207,7 +207,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
     printArgsIndices(argsIndices, builder);
     for (var subCall : subCalls) {
       builder.append(".");
-      subCall.id.prettyPrint(0, builder);
+      subCall.id.prettyPrint(indent, builder);
       printArgsIndices(subCall.argsIndices, builder);
     }
   }

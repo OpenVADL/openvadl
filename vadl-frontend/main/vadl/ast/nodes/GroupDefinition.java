@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -57,7 +59,7 @@ public class GroupDefinition extends Definition implements IdentifiableNode {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("group ");
     name.prettyPrint(indent, builder);
     if (type != null) {

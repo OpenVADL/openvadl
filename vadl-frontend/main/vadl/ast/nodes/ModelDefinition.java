@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -99,8 +101,8 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("model ");
-    id.prettyPrint(0, builder);
+    builder.append(indentString(indent)).append("model ");
+    id.prettyPrint(indent, builder);
     builder.append("(");
     var isFirst = true;
     for (var param : params) {
@@ -108,14 +110,14 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
         builder.append(", ");
       }
       isFirst = false;
-      param.name().prettyPrint(0, builder);
+      param.name().prettyPrint(indent, builder);
       builder.append(" : ").append(param.type().print());
     }
     builder.append(") : ");
     builder.append(returnType.print());
     builder.append(" = {\n");
     body.prettyPrint(indent + 1, builder);
-    builder.append(prettyIndentString(indent)).append("}\n");
+    builder.append(indentString(indent)).append("}\n");
   }
 
   @Override

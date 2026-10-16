@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintJoin;
+
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;

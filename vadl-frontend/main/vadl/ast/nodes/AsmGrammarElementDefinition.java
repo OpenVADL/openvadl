@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -117,14 +119,14 @@ public class AsmGrammarElementDefinition extends Definition {
     if (alternatives != null) {
       builder.append(blockStartSymbol).append("\n");
       alternatives.prettyPrint(++indent, builder);
-      builder.append(prettyIndentString(--indent));
-      builder.append("\n").append(prettyIndentString(indent)).append(blockEndSymbol);
+      builder.append(indentString(--indent));
+      builder.append("\n").append(indentString(indent)).append(blockEndSymbol);
     }
   }
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
 
     if (localVar != null) {
       localVar.prettyPrint(indent, builder);
@@ -134,7 +136,7 @@ public class AsmGrammarElementDefinition extends Definition {
       builder.append(" ").append(symbol()).append(" ");
     }
     if (asmLiteral != null) {
-      asmLiteral.prettyPrint(0, builder);
+      asmLiteral.prettyPrint(indent, builder);
     }
 
     prettyPrintAlternatives(indent, builder, groupAlternatives, '(', ')');
@@ -143,11 +145,11 @@ public class AsmGrammarElementDefinition extends Definition {
 
     if (semanticPredicate != null) {
       builder.append("?( ");
-      semanticPredicate.prettyPrint(0, builder);
+      semanticPredicate.prettyPrint(indent, builder);
       builder.append(" )");
     }
     if (groupAsmTypeDefinition != null) {
-      groupAsmTypeDefinition.prettyPrint(0, builder);
+      groupAsmTypeDefinition.prettyPrint(indent, builder);
     }
   }
 

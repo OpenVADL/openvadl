@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -86,7 +87,7 @@ public class CpuMemoryRegionDefinition extends Definition implements Identifiabl
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("memory region [").append(kind.keyword()).append("] ");
     id.prettyPrint(indent, builder);
     builder.append(" in ");

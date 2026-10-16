@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -98,7 +100,6 @@ public final class LetStatement extends Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
     builder.append("let ");
     var isFirst = true;
     for (var identifier : identifiers) {
@@ -110,7 +111,7 @@ public final class LetStatement extends Statement {
     }
     builder.append(" = ");
     valueExpr.prettyPrint(indent + 1, builder);
-    builder.append(" in\n");
+    builder.append(" in").append(indentedNewline(indent + 1));
     body.prettyPrint(indent + 1, builder);
   }
 

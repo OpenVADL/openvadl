@@ -17,6 +17,8 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.printWithLinePreference;
 
 import java.util.List;
 import java.util.Objects;
@@ -63,18 +65,14 @@ public class FunctionDefinition extends Definition implements IdentifiableNode, 
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("function ");
     name.prettyPrint(indent, builder);
     Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" -> ");
-    retType.prettyPrint(0, builder);
-    if (!isBlockLayout(expr)) {
-      builder.append(" = ");
-    } else {
-      builder.append(" =\n");
-    }
-    expr.prettyPrint(indent + 1, builder);
+    retType.prettyPrint(indent, builder);
+    builder.append(" =");
+    printWithLinePreference(indent, expr, builder);
     builder.append("\n");
   }
 

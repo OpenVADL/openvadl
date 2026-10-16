@@ -67,9 +67,9 @@ public class ImportDefinition extends Definition {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("import ");
     if (fileId != null) {
-      fileId.prettyPrint(0, builder);
+      fileId.prettyPrint(indent, builder);
     } else if (filePath != null) {
-      filePath.prettyPrint(0, builder);
+      filePath.prettyPrint(indent, builder);
     }
     if (!importedSymbols.isEmpty()) {
       builder.append("::{");
@@ -85,7 +85,7 @@ public class ImportDefinition extends Definition {
             builder.append("::");
           }
           isFirstSegment = false;
-          segment.prettyPrint(0, builder);
+          segment.prettyPrint(indent, builder);
         }
       }
       builder.append("}");
@@ -98,7 +98,7 @@ public class ImportDefinition extends Definition {
           builder.append(", ");
         }
         isFirst = false;
-        arg.prettyPrint(0, builder);
+        arg.prettyPrint(indent, builder);
       }
       builder.append(")");
     }

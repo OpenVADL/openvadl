@@ -42,7 +42,7 @@ public final class MacroMatchStatement extends Statement implements IsMacroMatch
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    macroMatch.prettyPrint(indent, builder);
+    macroMatch.prettyPrintContent(indent, builder);
   }
 
   @Override

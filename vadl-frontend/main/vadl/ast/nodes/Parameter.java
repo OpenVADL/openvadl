@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintJoin;
+
 import java.util.List;
 import java.util.function.Consumer;
 import vadl.types.Type;

@@ -16,6 +16,9 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintDefinitions;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -60,13 +63,13 @@ public class ApplicationBinaryInterfaceDefinition extends Definition implements 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent)).append("application binary interface ");
+    builder.append(indentString(indent)).append("application binary interface ");
     id.prettyPrint(indent, builder);
     builder.append(" for ");
     isa.prettyPrint(indent, builder);
     builder.append(" = {\n");
     prettyPrintDefinitions(indent + 1, builder, definitions);
-    builder.append(prettyIndentString(indent)).append("}\n");
+    builder.append(indentString(indent)).append("}\n");
   }
 
   @Override

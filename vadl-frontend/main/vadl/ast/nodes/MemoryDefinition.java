@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
 
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -59,7 +60,7 @@ public class MemoryDefinition extends Definition implements IdentifiableNode, Ty
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("memory ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");

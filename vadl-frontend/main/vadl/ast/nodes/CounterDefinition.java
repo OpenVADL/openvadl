@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Locale;
 import java.util.function.Consumer;
 import vadl.types.Type;
@@ -65,7 +67,7 @@ public class CounterDefinition extends Definition implements IdentifiableNode, T
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("%s counter ".formatted(kind.toString().toLowerCase(Locale.ENGLISH)));
     identifier.prettyPrint(indent, builder);
     builder.append(": ");

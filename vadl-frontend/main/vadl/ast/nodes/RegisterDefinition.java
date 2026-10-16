@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
 
 import java.util.List;
 import java.util.Objects;
@@ -58,7 +59,7 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("register ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
@@ -163,7 +164,7 @@ public class RegisterDefinition extends Definition implements IdentifiableNode, 
           builder.append(" * ");
         }
         isFirst = false;
-        argType.prettyPrint(0, builder);
+        argType.prettyPrint(indent, builder);
       }
       if (!argTypes.isEmpty()) {
         builder.append(" -> ");

@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -73,7 +74,7 @@ public class FloatTypeDefinition extends Definition implements IdentifiableNode,
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("float-type %s".formatted(identifier().name));
     builder.append("\n");
   }

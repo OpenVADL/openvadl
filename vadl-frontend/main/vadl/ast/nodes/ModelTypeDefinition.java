@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
@@ -52,9 +54,9 @@ public final class ModelTypeDefinition extends Definition implements Identifiabl
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("model-type ");
-    name.prettyPrint(0, builder);
+    name.prettyPrint(indent, builder);
     builder.append(" = ");
     builder.append(projectionType.print());
     builder.append("\n");

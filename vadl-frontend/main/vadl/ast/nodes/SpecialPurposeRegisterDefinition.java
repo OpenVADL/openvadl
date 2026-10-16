@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,7 +58,7 @@ public class SpecialPurposeRegisterDefinition extends Definition {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append(purpose.keyword);
     builder.append(" = [");
     var joiner = new StringJoiner(", ");
