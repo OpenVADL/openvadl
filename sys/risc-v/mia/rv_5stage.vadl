@@ -10,6 +10,7 @@ import "../rv64i"::RV64I
 import "../rv64im"::RV64IM
 
 import "../rv32iCustom"::{
+    RV32ICustomCrc0, RV32ICustomCrc1, RV32ICustomCrc2, RV32ICustomCrc3,
     RV32ICustomCrc_0_1, RV32ICustomCrc_0_2, RV32ICustomCrc_1_2, RV32ICustomCrc, RV32ICustomCrc_0_1_2_3
 }
 

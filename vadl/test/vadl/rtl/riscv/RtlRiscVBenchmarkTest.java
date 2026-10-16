@@ -76,8 +76,8 @@ public class RtlRiscVBenchmarkTest extends RtlBenchmarkTest {
   @ParameterizedTest
   @Tag("BenchmarkTest")
   @MethodSource("benchmarkTestSource")
-  void benchmark(String spec, String tag, RtlConfiguration config, String isa) {
-    super.benchmark(spec, tag, config, isa);
+  void benchmark(String specPath, String tag, RtlConfiguration config, String isa) {
+    super.benchmark(specPath, tag, config, isa);
   }
 
 }
