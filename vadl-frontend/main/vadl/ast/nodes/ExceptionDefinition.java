@@ -61,8 +61,12 @@ public final class ExceptionDefinition extends Definition implements Identifiabl
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("exception ");
-    id.prettyPrint(0, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("exception ");
+    id.prettyPrint(indent, builder);
+    builder.append("(");
+    prettyPrintJoin(", ", params, indent, builder);
+    builder.append(")");
     builder.append(" = ");
     statement.prettyPrint(indent + 1, builder);
     builder.append("\n");

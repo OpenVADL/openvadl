@@ -76,7 +76,7 @@ public class PredicateFormatField extends FormatField {
 
   @Override
   public final boolean equals(Object o) {
-    if (!(o instanceof EncodingFormatField that)) {
+    if (!(o instanceof PredicateFormatField that)) {
       return false;
     }
 

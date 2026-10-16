@@ -52,18 +52,20 @@ public class IfExpr extends Expr {
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent));
-    builder.append("if ");
-    condition.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
-    builder.append(" then\n");
-    if (!isBlockLayout(thenExpr)) {
-      builder.append(prettyIndentString(indent + 1));
-    }
-    thenExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
-    builder.append("\n").append(prettyIndentString(indent)).append("else\n");
-    if (!isBlockLayout(elseExpr)) {
-      builder.append(prettyIndentString(indent + 1));
-    }
-    elseExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
+    wrapInGroup(parentPrec, builder, true, () -> {
+      builder.append("if ");
+      condition.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
+      builder.append(" then\n");
+      if (!isBlockLayout(thenExpr)) {
+        builder.append(prettyIndentString(indent + 1));
+      }
+      thenExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
+      builder.append("\n").append(prettyIndentString(indent)).append("else\n");
+      if (!isBlockLayout(elseExpr)) {
+        builder.append(prettyIndentString(indent + 1));
+      }
+      elseExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
+    });
   }
 
   @Override
