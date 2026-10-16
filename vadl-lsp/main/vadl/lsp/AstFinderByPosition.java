@@ -24,7 +24,7 @@ import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.Identifier;
 import vadl.ast.nodes.IdentifierPath;
-import vadl.ast.nodes.IsId;
+import vadl.ast.nodes.IdentifierPathOrMacro;
 import vadl.ast.nodes.Node;
 import vadl.ast.nodes.RecursiveAstVisitor;
 import vadl.ast.nodes.Statement;
@@ -61,7 +61,7 @@ public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVi
    * @param position The position to search for (within the file identified by {@code path})
    * @return Null if no Identifier or IdentifierPath found at {@code position}
    */
-  static @Nullable <T extends Node & IsId> IsId findIdentifier(
+  static @Nullable <T extends Node & IdentifierPathOrMacro> IdentifierPathOrMacro findIdentifier(
       Ast ast, Path path, SourceLocation.Position position) {
     var visitor = new AstFinderByPosition.BeforeTravel<T>(ast, path, position,
         (n) -> n instanceof IdentifierPath || n instanceof Identifier);

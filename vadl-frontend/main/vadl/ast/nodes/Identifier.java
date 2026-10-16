@@ -25,7 +25,7 @@ import vadl.utils.SourceLocation;
  * referenced {@link Node}.
  */
 @SuppressWarnings("MissingJavadocMethod")
-public final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
+public final class Identifier extends Expr implements IdentifierPathOrMacro, IdentifierOrMacro {
   public String name;
   public SourceLocation loc;
 

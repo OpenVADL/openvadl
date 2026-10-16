@@ -24,7 +24,7 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class PseudoInstructionDefinition extends InstructionSequenceDefinition
     implements IdentifiableNode {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
   public PseudoInstrKind kind;
 
   /**
@@ -34,7 +34,7 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
   @Nullable
   public AssemblyDefinition assemblyDefinition;
 
-  public PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
+  public PseudoInstructionDefinition(IdentifierOrMacro identifier, PseudoInstrKind kind,
                                      List<Parameter> params,
                                      List<Statement> statements,
                                      SourceLocation loc) {

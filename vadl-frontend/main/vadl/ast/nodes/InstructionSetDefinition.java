@@ -27,14 +27,14 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class InstructionSetDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder identifier;
-  public List<IsId> extending;
+  public IdentifierOrMacro identifier;
+  public List<IdentifierPathOrMacro> extending;
   public List<Definition> definitions;
   public SourceLocation loc;
 
-  public InstructionSetDefinition(IdentifierOrPlaceholder identifier,
-                           List<IsId> extending,
-                           List<Definition> statements, SourceLocation location) {
+  public InstructionSetDefinition(IdentifierOrMacro identifier,
+                                  List<IdentifierPathOrMacro> extending,
+                                  List<Definition> statements, SourceLocation location) {
     this.identifier = identifier;
     this.extending = extending;
     this.definitions = statements;
@@ -83,7 +83,8 @@ public class InstructionSetDefinition extends Definition implements Identifiable
     builder.append(prettyIndentString(indent));
     builder.append("instruction set architecture ").append(identifier().name);
     if (!extending.isEmpty()) {
-      var extStr = extending.stream().map(IsId::pathToString).collect(Collectors.joining(", "));
+      var extStr = extending.stream().map(IdentifierPathOrMacro::pathToString)
+          .collect(Collectors.joining(", "));
       builder.append(" extending ").append(extStr);
     }
     builder.append(" = {\n");

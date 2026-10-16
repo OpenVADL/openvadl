@@ -25,12 +25,13 @@ public class PatchDefinition extends Definition {
   public Identifier generator;
   public Identifier handle;
   @Nullable
-  public IsId reference;
+  public IdentifierPathOrMacro reference;
   @Nullable
   public String source;
   public SourceLocation loc;
 
-  public PatchDefinition(Identifier generator, Identifier handle, @Nullable IsId reference,
+  public PatchDefinition(Identifier generator, Identifier handle, @Nullable
+                         IdentifierPathOrMacro reference,
                   @Nullable String source, SourceLocation loc) {
     this.generator = generator;
     this.handle = handle;

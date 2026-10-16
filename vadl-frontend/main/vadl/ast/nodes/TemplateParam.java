@@ -22,13 +22,13 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class TemplateParam extends Node implements IdentifiableNode {
-  public IdentifierOrPlaceholder name;
+  public IdentifierOrMacro name;
   public TypeLiteral type;
 
   @Nullable
   public Expr value;
 
-  public TemplateParam(IdentifierOrPlaceholder name, TypeLiteral type, @Nullable Expr value) {
+  public TemplateParam(IdentifierOrMacro name, TypeLiteral type, @Nullable Expr value) {
     this.name = name;
     this.type = type;
     this.value = value;

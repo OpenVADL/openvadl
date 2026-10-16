@@ -26,22 +26,22 @@ import vadl.utils.SourceLocation;
  * These terms always have at least one argument in the pointy brackets.
  */
 @SuppressWarnings("MissingJavadocMethod")
-public final class SymbolExpr extends Expr implements IsSymExpr {
-  public IsId path;
+public final class SymbolExpr extends Expr implements SymExprOrMacro {
+  public IdentifierPathOrMacro path;
   /**
    * The list of arguments in the pointy brackets. Always contains at least one element.
    */
   public List<Expr> symbolArgs;
   public SourceLocation location;
 
-  public SymbolExpr(IsId path, List<Expr> symbolArgs, SourceLocation location) {
+  public SymbolExpr(IdentifierPathOrMacro path, List<Expr> symbolArgs, SourceLocation location) {
     this.path = path;
     this.symbolArgs = symbolArgs;
     this.location = location;
   }
 
   @Override
-  public IsId path() {
+  public IdentifierPathOrMacro path() {
     return path;
   }
 

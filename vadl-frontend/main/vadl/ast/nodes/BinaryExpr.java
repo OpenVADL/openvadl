@@ -27,11 +27,11 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public class BinaryExpr extends Expr {
   public Expr left;
-  public IsBinOp operator;
+  public BinOpOrMacro operator;
   public Expr right;
   public boolean hasBeenReordered = false;
 
-  public BinaryExpr(Expr left, IsBinOp operator, Expr right) {
+  public BinaryExpr(Expr left, BinOpOrMacro operator, Expr right) {
     this.left = left;
     this.operator = operator;
     this.right = right;

@@ -24,18 +24,18 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ApplicationBinaryInterfaceDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder id;
-  public IsId isa;
+  public IdentifierOrMacro id;
+  public IdentifierPathOrMacro isa;
   public List<Definition> definitions;
   public SourceLocation loc;
 
   @Nullable
   public InstructionSetDefinition isaNode;
 
-  public ApplicationBinaryInterfaceDefinition(IdentifierOrPlaceholder id,
-                                       IsId isa,
-                                       List<Definition> definitions,
-                                       SourceLocation loc) {
+  public ApplicationBinaryInterfaceDefinition(IdentifierOrMacro id,
+                                              IdentifierPathOrMacro isa,
+                                              List<Definition> definitions,
+                                              SourceLocation loc) {
     this.id = id;
     this.isa = isa;
     this.definitions = definitions;

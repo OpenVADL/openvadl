@@ -25,11 +25,11 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public final class MacroMatchExpr extends Expr
-    implements IsMacroMatch, IdentifierOrPlaceholder, IsId {
-  public MacroMatch macroMatch;
+    implements MacroMatch, IdentifierOrMacro, IdentifierPathOrMacro {
+  public MacroMatchContent macroMatchContent;
 
-  public MacroMatchExpr(MacroMatch macroMatch) {
-    this.macroMatch = macroMatch;
+  public MacroMatchExpr(MacroMatchContent macroMatchContent) {
+    this.macroMatchContent = macroMatchContent;
   }
 
   @Override
@@ -39,17 +39,17 @@ public final class MacroMatchExpr extends Expr
 
   @Override
   public SourceLocation location() {
-    return macroMatch.sourceLocation();
+    return macroMatchContent.sourceLocation();
   }
 
   @Override
   public SyntaxType syntaxType() {
-    return macroMatch.resultType();
+    return macroMatchContent.resultType();
   }
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    macroMatch.prettyPrint(indent, builder);
+    macroMatchContent.prettyPrint(indent, builder);
   }
 
   @Override
@@ -62,12 +62,12 @@ public final class MacroMatchExpr extends Expr
     }
 
     MacroMatchExpr that = (MacroMatchExpr) o;
-    return macroMatch.equals(that.macroMatch);
+    return macroMatchContent.equals(that.macroMatchContent);
   }
 
   @Override
   public int hashCode() {
-    return macroMatch.hashCode();
+    return macroMatchContent.hashCode();
   }
 
   @Override

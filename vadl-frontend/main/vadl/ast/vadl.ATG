@@ -426,18 +426,18 @@ The #commonDefinitionList production rule lists (beside macro definitions) all c
 
   instructionsetDefinition<out InstructionSetDefinition isaDef> (. macroTable = macroTable.createChild(); var startLocation = nextTokenLoc();.)
   = INSTRUCTION SET ARCHITECTURE
-    identifierOrPlaceholder<out var identifier>                 (. var extending = new ArrayList<IsId>(); .)
+    identifierOrMacro<out var identifier>                 (. var extending = new ArrayList<IdentifierPathOrMacro>(); .)
     [
       EXTENDING
-      identifierOrPlaceholder<out var isa>                      (. extending.add(isa); .)
+      identifierOrMacro<out var isa>                      (. extending.add(isa); .)
       {
         SYM_COMMA
-        identifierOrPlaceholder<out isa>                        (. extending.add(isa); .)
+        identifierOrMacro<out isa>                        (. extending.add(isa); .)
       }
     ]                                                           (. extending.forEach(e -> {
-                                                                      var extendingIsa = macroTable.requireAs(e, InstructionSetDefinition.class);
-                                                                      if (extendingIsa != null)
-                                                                          defineGeneratedMacroSymbols(macroTable, extendingIsa);
+                                                                      var extendingaOrMacro = macroTable.requireAs(e, InstructionSetDefinition.class);
+                                                                      if (extendingaOrMacro != null)
+                                                                          defineGeneratedMacroSymbols(macroTable, extendingaOrMacro);
                                                                     }); .)
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out LinkedList<Definition> definitions.>       (. macroTable = macroTable.pop(); .)
@@ -470,11 +470,11 @@ elements. A single annotation is described in the #annotation production rule.
   }                                                       (. annotations = new ArrayList<AnnotationDefinition>(list); .)
   .
 
-  annotation<out AnnotationDefinition annotation> (. var startLocation = nextTokenLoc(); var keywords = new ArrayList<IdentifierOrPlaceholder>(); var values = new ArrayList<Expr>(); .)
+  annotation<out AnnotationDefinition annotation> (. var startLocation = nextTokenLoc(); var keywords = new ArrayList<IdentifierOrMacro>(); var values = new ArrayList<Expr>(); .)
   = SYM_BRACK_OPEN
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>   (. keywords.add(id); .)
+    identifierOrMacro<out IdentifierOrMacro id>   (. keywords.add(id); .)
     {
-      identifierOrPlaceholder<out IdentifierOrPlaceholder id2> (. keywords.add(id2); .)
+      identifierOrMacro<out IdentifierOrMacro id2> (. keywords.add(id2); .)
     }
     [
       SYM_COLON
@@ -507,7 +507,7 @@ elements. A single annotation is described in the #annotation production rule.
 
   constantDefinition<out ConstantDefinition def> (. TypeLiteral type = null; var startLocation = nextTokenLoc(); .)
   = CONSTANT
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     [ SYM_COLON typeLiteral<out type> ]
     SYM_EQ
     expression<out Expr expr, BIN_OPS>           (. def = new ConstantDefinition(id, type, expr, startLocation.join(lastTokenLoc())); .)
@@ -515,12 +515,12 @@ elements. A single annotation is described in the #annotation production rule.
 
   floatTypeDefinition<out FloatTypeDefinition def>          (. var startLocation = nextTokenLoc(); .)
   = FLOAT_TYPE
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. def = new FloatTypeDefinition(id, startLocation.join(lastTokenLoc())); .)
+    identifierOrMacro<out IdentifierOrMacro id> (. def = new FloatTypeDefinition(id, startLocation.join(lastTokenLoc())); .)
   .
 
   formatDefinition<out FormatDefinition def>                                      (. var startLoc = nextTokenLoc(); var fields = new ArrayList<FormatField>(); .)
   = FORMAT
-  identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+  identifierOrMacro<out IdentifierOrMacro id>
   SYM_COLON typeLiteral<out TypeLiteral type>
   [
     SYM_EQ
@@ -535,7 +535,7 @@ elements. A single annotation is described in the #annotation production rule.
   .
 
   formatField<out FormatField field>                            (. field = null; .)
-  = identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+  = identifierOrMacro<out IdentifierOrMacro id>
     ( formatFieldRange<out field, id>
     | formatFieldType<out field, id>
     | formatFieldDerived<out field, id>
@@ -544,7 +544,7 @@ elements. A single annotation is described in the #annotation production rule.
     )
   .
 
-  formatFieldRange<out FormatField field, IdentifierOrPlaceholder id>
+  formatFieldRange<out FormatField field, IdentifierOrMacro id>
   = SYM_BRACK_OPEN                                              (. List<Expr> ranges = new ArrayList<>();.)
     rangeExpression<out Expr e1>                                (. ranges.add(e1); .)
     {
@@ -558,22 +558,22 @@ elements. A single annotation is described in the #annotation production rule.
     ]                                                           (. field = new RangeFormatField(id, ranges, type); .)
   .
 
-  formatFieldType<out FormatField field, IdentifierOrPlaceholder id>
+  formatFieldType<out FormatField field, IdentifierOrMacro id>
   = SYM_COLON
     typeLiteral<out TypeLiteral type>                           (. field = new TypedFormatField(id, type); .)
   .
 
-  formatFieldDerived<out FormatField field, IdentifierOrPlaceholder id>
+  formatFieldDerived<out FormatField field, IdentifierOrMacro id>
   = SYM_EQ
     expression<out Expr expr, BIN_OPS>                          (. field = new DerivedFormatField(id, expr); .)
   .
 
-  formatFieldEncoding<out FormatField field, IdentifierOrPlaceholder id>
+  formatFieldEncoding<out FormatField field, IdentifierOrMacro id>
   = SYM_ASSIGN
     expression<out Expr expr, BIN_OPS>                          (. field = new EncodingFormatField(id, expr); .)
   .
 
-  formatFieldPredicate<out FormatField field, IdentifierOrPlaceholder id>
+  formatFieldPredicate<out FormatField field, IdentifierOrMacro id>
   = SYM_PREDICATE
     expression<out Expr expr, BIN_OPS>                          (. field = new PredicateFormatField(id, expr); .)
   .
@@ -584,13 +584,13 @@ elements. A single annotation is described in the #annotation production rule.
     | GROUP                                     (. kind = GROUP; .)
     )
     COUNTER
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     SYM_COLON typeLiteral<out TypeLiteral type> (. def = new CounterDefinition(kind, id, type, startLocation.join(lastTokenLoc())); .)
   .
 
   instructionDefinition<out InstructionDefinition def>                      (. var startLocation = nextTokenLoc(); .)
-  = INSTRUCTION identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_COLON identifierOrPlaceholder<out IdentifierOrPlaceholder formatId>
+  = INSTRUCTION identifierOrMacro<out IdentifierOrMacro id>
+    SYM_COLON identifierOrMacro<out IdentifierOrMacro formatId>
     SYM_EQ statement<out Statement behavior>                                (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(lastTokenLoc())); .)
   .
 
@@ -599,12 +599,12 @@ elements. A single annotation is described in the #annotation production rule.
     | COMPILER_KW                                            (. kind = PseudoInstructionDefinition.PseudoInstrKind.COMPILER; .)
     )
     INSTRUCTION
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>  (. List<Parameter> params = new ArrayList<>(); .)
+    identifierOrMacro<out IdentifierOrMacro id>  (. List<Parameter> params = new ArrayList<>(); .)
     [ parameters<out params> ]
     SYM_EQ
     SYM_BRACE_OPEN                                                          (. var stmts = new ArrayList<Statement>(); .)
     {                                                                       (. var newLabelLoc = nextTokenLoc(); .)
-      NEWLABEL identifierOrPlaceholder<out IdentifierOrPlaceholder labelId> (. stmts.add(new NewLabelStatement(labelId, newLabelLoc.join(lastTokenLoc()))); .)
+      NEWLABEL identifierOrMacro<out IdentifierOrMacro labelId> (. stmts.add(new NewLabelStatement(labelId, newLabelLoc.join(lastTokenLoc()))); .)
       | instructionCallStmt<out InstructionCallStatement stmt>              (. stmts.add(stmt); .)
 
     }
@@ -613,7 +613,7 @@ elements. A single annotation is described in the #annotation production rule.
 
   relocationDefinition<out Definition def>    (. var startLocation = nextTokenLoc(); .)
   = RELOCATION
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     parameters<.out List<Parameter> params.>
     SYM_ARROW
     typeLiteral<out TypeLiteral resultType>
@@ -621,21 +621,21 @@ elements. A single annotation is described in the #annotation production rule.
     expression<out Expr expr, BIN_OPS>        (. def = new RelocationDefinition(id, params, resultType, expr, startLocation.join(lastTokenLoc())); .)
   .
 
-  identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
+  identifierOrMacro<out IdentifierOrMacro id> (. id = null; .)
   = identifier<out id>
-  | macroReplacement<out Node node, BasicSyntaxType.ID>                 (. id = (IdentifierOrPlaceholder) node; .)
+  | macroReplacement<out Node node, BasicSyntaxType.ID>                 (. id = (IdentifierOrMacro) node; .)
   .
 
   encodingDefinition<out EncodingDefinition def>                        (. var startLocation = nextTokenLoc(); .)
   = ENCODING
-    identifierOrPlaceholder<out IdentifierOrPlaceholder instrId>
+    identifierOrMacro<out IdentifierOrMacro instrId>
     SYM_EQ SYM_BRACE_OPEN
     encodingDefinitionList<out EncodingDefinition.EncsNode encodings>
     SYM_BRACE_CLOSE                                                     (. def = new EncodingDefinition(instrId, encodings, startLocation.join(lastTokenLoc())); .)
   .
 
-  encodingDefinitionList<out EncodingDefinition.EncsNode encs> (. var start = nextTokenLoc(); var entries = new ArrayList<IsEncs>(); .)
-  = encodingEntry<out IsEncs enc>                              (. addEncs(entries, enc); .)
+  encodingDefinitionList<out EncodingDefinition.EncsNode encs> (. var start = nextTokenLoc(); var entries = new ArrayList<EncsOrMacro>(); .)
+  = encodingEntry<out EncsOrMacro enc>                              (. addEncs(entries, enc); .)
     {
       // In a macro match, commas are used for separating multiple pattern alternatives
       // In the unlikely event that someone uses macro match with Encs literals,
@@ -647,21 +647,21 @@ elements. A single annotation is described in the #annotation production rule.
     }                                                          (. encs = new EncodingDefinition.EncsNode(entries, start.join(lastTokenLoc())); .)
   .
 
-  encodingEntry<out IsEncs enc>        (. enc = null; .)
+  encodingEntry<out EncsOrMacro enc>        (. enc = null; .)
   = IF (la.kind == _NONE)
     NONE
-  | macroReplacement<out Node node, BasicSyntaxType.ENCS>    (. enc = (IsEncs)node; .)
-  | identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+  | macroReplacement<out Node node, BasicSyntaxType.ENCS>    (. enc = (EncsOrMacro)node; .)
+  | identifierOrMacro<out IdentifierOrMacro id>
     SYM_EQ
     expression<out Expr expr, BIN_OPS> (. enc = new EncodingDefinition.EncodingField(id, expr); .)
   .
 
-  assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var startLocation = nextTokenLoc(); .)
+  assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrMacro> ids = new ArrayList<>(); var startLocation = nextTokenLoc(); .)
   = ASSEMBLY
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>             (. ids.add(id); .)
+    identifierOrMacro<out IdentifierOrMacro id>             (. ids.add(id); .)
     {
       SYM_COMMA
-      identifierOrPlaceholder<out IdentifierOrPlaceholder additionalId> (. ids.add(additionalId); .)
+      identifierOrMacro<out IdentifierOrMacro additionalId> (. ids.add(additionalId); .)
     }
     SYM_EQ
     expression<out Expr expr, BIN_OPS>                                  (. def = new AssemblyDefinition(ids, expr, startLocation.join(lastTokenLoc())); .)
@@ -673,14 +673,14 @@ elements. A single annotation is described in the #annotation production rule.
 
   memoryDefinition<out MemoryDefinition def>                (. var startLocation = nextTokenLoc(); .)
   = MEMORY
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     SYM_COLON typeLiteral<out TypeLiteral t1>
     SYM_ARROW typeLiteral<out TypeLiteral t2>               (. def = new MemoryDefinition(id, t1, t2, startLocation.join(lastTokenLoc())); .)
   .
 
   registerDefinition<out RegisterDefinition def>            (. var startLocation = nextTokenLoc(); .)
   = REGISTER
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     SYM_COLON
     relationType<out RegisterDefinition.RelationTypeLiteral type> (. def = new RegisterDefinition(id, type, startLocation.join(lastTokenLoc())); .)
   .
@@ -698,12 +698,12 @@ elements. A single annotation is described in the #annotation production rule.
 
   aliasDefinition<out Definition def>                 (. var startLocation = nextTokenLoc(); AliasDefinition.AliasKind kind = null;
                                                          TypeLiteral aliasType = null; TypeLiteral targetType = null;
-                                                         IdentifierOrPlaceholder id = null;
+                                                         IdentifierOrMacro id = null;
                                                       .)
   = ALIAS
     (
       REGISTER                                        (. kind = AliasDefinition.AliasKind.REGISTER; .)
-      identifierOrPlaceholder<out id>
+      identifierOrMacro<out id>
       // FIXME: This should probably use the same relationType as the register definition
       [
         SYM_COLON
@@ -714,7 +714,7 @@ elements. A single annotation is described in the #annotation production rule.
         ]
       ]
     | PROGRAM COUNTER                                 (. kind = AliasDefinition.AliasKind.PROGRAM_COUNTER; .)
-      identifierOrPlaceholder<out id>
+      identifierOrMacro<out id>
       [
         SYM_COLON
         typeLiteral<out aliasType>
@@ -726,14 +726,14 @@ elements. A single annotation is described in the #annotation production rule.
 
   usingDefinition<out Definition def>                         (. var start = nextTokenLoc(); .)
   = USING
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     SYM_EQ
     typeLiteral<out TypeLiteral type>                         (. def = new UsingDefinition(id, type, start.join(lastTokenLoc())); .)
   .
 
   functionDefinition<out Definition def> (. var start = nextTokenLoc(); List<Parameter> params = new ArrayList<>(); .)
   = FUNCTION
-    identifierOrPlaceholder<out IdentifierOrPlaceholder name>
+    identifierOrMacro<out IdentifierOrMacro name>
     [ parameters<out params> ]
     SYM_ARROW
     typeLiteral<out TypeLiteral retType>
@@ -754,25 +754,25 @@ elements. A single annotation is described in the #annotation production rule.
   .
 
   parameter<out Parameter param>
-  = identifierOrPlaceholder<out IdentifierOrPlaceholder name>
+  = identifierOrMacro<out IdentifierOrMacro name>
     SYM_COLON
     typeLiteral<out TypeLiteral type> (. param = new Parameter(name, type); .)
   .
 
   enumerationDefinition<out Definition def> (. var start = nextTokenLoc(); TypeLiteral enumType = null; .)
   = ENUMERATION
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     [ SYM_COLON typeLiteral<out enumType> ]
     SYM_EQ                                  (. var entries = new ArrayList<EnumerationDefinition.Entry>(); .)
     SYM_BRACE_OPEN                          (. Expr value = null; .)
-    identifierOrPlaceholder<out IdentifierOrPlaceholder name>
+    identifierOrMacro<out IdentifierOrMacro name>
     [
       SYM_EQ
       expression<out value, BIN_OPS>
     ]                                       (. entries.add(new EnumerationDefinition.Entry(name, value)); .)
     {                                       (. value = null; .)
       SYM_COMMA
-      identifierOrPlaceholder<out name>
+      identifierOrMacro<out name>
       [
         SYM_EQ
         expression<out value, BIN_OPS>
@@ -783,7 +783,7 @@ elements. A single annotation is described in the #annotation production rule.
 
   exceptionDefinition<out Definition def> (. var start = nextTokenLoc(); List<Parameter> params = new ArrayList<>(); .)
   = EXCEPTION
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     [ parameters<out params> ]
     SYM_EQ
     statement<out Statement statement> (. def = new ExceptionDefinition(id, params, statement, start.join(lastTokenLoc())); .)
@@ -814,7 +814,7 @@ elements. A single annotation is described in the #annotation production rule.
                                                macroTable.defineSymbol(def); .)
   .
 
-  importDefinition<out Definition def>          (. var start = nextTokenLoc(); var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)
+  importDefinition<out Definition def>          (. var start = nextTokenLoc(); var importPaths = new ArrayList<IdentifierPathOrMacro>(); Identifier fileId = null; StringLiteral filePath = null; .)
   = IMPORT
     ( identifier<out fileId>
     | stringLiteral<out filePath>
@@ -863,7 +863,7 @@ elements. A single annotation is described in the #annotation production rule.
                                              List<Parameter> inputs = new ArrayList<>();
                                              List<Parameter> outputs = new ArrayList<>(); .)
     = PROCESS
-    identifierOrPlaceholder<out IdentifierOrPlaceholder name>
+    identifierOrMacro<out IdentifierOrMacro name>
     [ processTemplateParameters<.out templateParams.> ]
     [ parameters<.out inputs.> ]
     [ SYM_ARROW parameters<.out outputs.> ]
@@ -873,7 +873,7 @@ elements. A single annotation is described in the #annotation production rule.
 
   processTemplateParameters<.out List<TemplateParam> templateParams.>
   = SYM_LT                            (. templateParams = new ArrayList<>(); .)
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     SYM_COLON
     typeLiteral<out TypeLiteral type> (. Expr value = null; .)
     [
@@ -894,11 +894,11 @@ elements. A single annotation is described in the #annotation production rule.
 
   operationDefinition<out Definition def>  (. var start = nextTokenLoc(); .)
   = OPERATION
-    identifierOrPlaceholder<out IdentifierOrPlaceholder name>
+    identifierOrMacro<out IdentifierOrMacro name>
     SYM_EQ
-    SYM_BRACE_OPEN                  (. var resources = new ArrayList<IsId>(); .)
+    SYM_BRACE_OPEN                  (. var resources = new ArrayList<IdentifierPathOrMacro>(); .)
     [
-      identifierPath<out IsId path> (. resources.add(path); .)
+      identifierPath<out IdentifierPathOrMacro path> (. resources.add(path); .)
       {
         SYM_COMMA
         identifierPath<out path>    (. resources.add(path); .)
@@ -909,7 +909,7 @@ elements. A single annotation is described in the #annotation production rule.
 
   groupDefinition<out Definition def>     (.  var start = nextTokenLoc(); TypeLiteral type = null; .)
   = GROUP
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     [
       SYM_COLON
       typeLiteral<out type>
@@ -933,7 +933,7 @@ elements. A single annotation is described in the #annotation production rule.
   .
 
   groupLiteral<out Group group>                         (. var start = nextTokenLoc(); Expr size = null; .)
-  = identifierPath<out IsId path>
+  = identifierPath<out IdentifierPathOrMacro path>
     [
       SYM_LT
       expression<out size, BIN_OPS_EXCEPT_GT>
@@ -969,9 +969,9 @@ elements. A single annotation is described in the #annotation production rule.
 
   applicationBinaryInterfaceDefinition<out Definition def> (. var start = nextTokenLoc(); var elements = new ArrayList<Definition>(); .)
   = APPLICATION  BINARY INTERFACE
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     FOR
-    identifierPath<out IsId isaPath>
+    identifierPath<out IdentifierPathOrMacro isaPath>
     SYM_EQ
     SYM_BRACE_OPEN
     {
@@ -1084,14 +1084,14 @@ elements. A single annotation is described in the #annotation production rule.
 
 
   // -- CPU DEFINITIONS-----------------------------------------------------------------------------------------------
-  processorDefinition<out Definition def> (. var start = nextTokenLoc(); IsId abi = null; var definitions = new ArrayList<Definition>(); .)
+  processorDefinition<out Definition def> (. var start = nextTokenLoc(); IdentifierPathOrMacro abi = null; var definitions = new ArrayList<Definition>(); .)
   = PROCESSOR
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     IMPLEMENTS
-    identifierPath<out IsId isa>
+    identifierPath<out IdentifierPathOrMacro isa>
     [
       WITH
-      identifierPath<out IsId abiId>       (. abi = abiId; .)
+      identifierPath<out IdentifierPathOrMacro abiId>       (. abi = abiId; .)
     ]
     SYM_EQ
     SYM_BRACE_OPEN
@@ -1127,8 +1127,8 @@ elements. A single annotation is described in the #annotation production rule.
     | ROM                                     (. kind = CpuMemoryRegionDefinition.MemKind.ROM; .)
     )
     SYM_BRACK_CLOSE
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_IN identifierPath<out IsId mem>
+    identifierOrMacro<out IdentifierOrMacro id>
+    SYM_IN identifierPath<out IdentifierPathOrMacro mem>
     [ SYM_EQ statement<out stmt> ]         (. def = new CpuMemoryRegionDefinition(id, kind, mem, stmt, start.join(lastTokenLoc())); .)
   .
 
@@ -1136,7 +1136,7 @@ elements. A single annotation is described in the #annotation production rule.
   = PATCH
     identifier<out Identifier generator>
     identifier<out Identifier handle>
-    SYM_EQ                                (. IsId reference = null; String source = null; .)
+    SYM_EQ                                (. IdentifierPathOrMacro reference = null; String source = null; .)
     ( identifierPath<out reference>
     | sourceLiteral<out source> )         (. def = new PatchDefinition(generator, handle, reference, source, start.join(lastTokenLoc())); .)
   .
@@ -1153,7 +1153,7 @@ elements. A single annotation is described in the #annotation production rule.
   .
 
   cpuFunctionDefinition<out Definition def> (. var start = nextTokenLoc(); Identifier ident = null;.)
-  =                                         (. CpuFunctionDefinition.BehaviorKind kind = null; IsId stopWithRef = null; .)
+  =                                         (. CpuFunctionDefinition.BehaviorKind kind = null; IdentifierPathOrMacro stopWithRef = null; .)
   ( STOP                                    (. ident = new Identifier(t.val, lastTokenLoc()); kind = CpuFunctionDefinition.BehaviorKind.STOP; .)
     [ WITH referenceLiteral<out stopWithRef> ]
     /* TODO Verify if "redirect" is needed - "redirect is unstable and must not be used"
@@ -1186,9 +1186,9 @@ The #microArchitectureDefinition production rule starts the micro architecture s
 */
   microArchitectureDefinition<out Definition def> (. var start = nextTokenLoc(); List<StageOutputDefinition> outputs = List.of(); var definitions = new ArrayList<Definition>(); .)
   = MICRO ARCHITECTURE
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     IMPLEMENTS
-    identifierPath<out IsId processor>
+    identifierPath<out IdentifierPathOrMacro processor>
     SYM_EQ
     SYM_BRACE_OPEN
     {
@@ -1273,14 +1273,14 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   pipelineDefinition<out Definition def>                      (. var start = nextTokenLoc(); .)
   = PIPELINE
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>   (. List<Parameter> outputs = List.of(); .)
+    identifierOrMacro<out IdentifierOrMacro id>   (. List<Parameter> outputs = List.of(); .)
     [ SYM_ARROW parameters<out outputs> ]
     SYM_EQ
     statement<out Statement stmt>                             (. def = new PipelineDefinition(id, outputs, stmt, start.join(lastTokenLoc())); .)
   .
 
   stageoutput<out StageOutputDefinition output>
-  = identifierOrPlaceholder<out IdentifierOrPlaceholder name>
+  = identifierOrMacro<out IdentifierOrMacro name>
     SYM_COLON
     typeLiteral<out TypeLiteral type>                         (. output = new StageOutputDefinition(name, type); .)
   .
@@ -1299,7 +1299,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   stageDefinition<out Definition def>         (. var start = nextTokenLoc(); List<StageOutputDefinition> outputs = List.of(); .)
   = STAGE
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     [ SYM_ARROW stageoutputs<out outputs> ]
     SYM_EQ
     statement<out Statement stmt>             (. def = new StageDefinition(id, outputs, stmt, start.join(lastTokenLoc())); .)
@@ -1307,28 +1307,28 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   cacheDefinition<out Definition def>       (. var start = nextTokenLoc(); .)
   = CACHE
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     SYM_COLON
     typeLiteral<out TypeLiteral sourceType>
     SYM_ARROW
     typeLiteral<out TypeLiteral targetType> (. def = new CacheDefinition(id, sourceType, targetType, start.join(lastTokenLoc())); .)
   .
 
-  logicDefinition<out Definition def>                               (. var start = nextTokenLoc(); var logicTypeIdentifiers = new ArrayList<IdentifierOrPlaceholder>(); .)
+  logicDefinition<out Definition def>                               (. var start = nextTokenLoc(); var logicTypeIdentifiers = new ArrayList<IdentifierOrMacro>(); .)
   = LOGIC
     SYM_BRACK_OPEN
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>         (. logicTypeIdentifiers.add(id); .)
+    identifierOrMacro<out IdentifierOrMacro id>         (. logicTypeIdentifiers.add(id); .)
     {
-      identifierOrPlaceholder<out id>                               (. logicTypeIdentifiers.add(id); .)
+      identifierOrMacro<out id>                               (. logicTypeIdentifiers.add(id); .)
     }
     SYM_BRACK_CLOSE
-    identifierOrPlaceholder<out id>                                 (. def = new LogicDefinition(id, logicTypeIdentifiers, start.join(lastTokenLoc())); .)
+    identifierOrMacro<out id>                                 (. def = new LogicDefinition(id, logicTypeIdentifiers, start.join(lastTokenLoc())); .)
   .
 
   resourceReference<out ResourceReferenceExression expr>   (. var start = nextTokenLoc(); .)
   =
   SYM_AT
-  identifierOrPlaceholder<out var id>                      (. expr = new ResourceReferenceExression(id, start.join(lastTokenLoc())); .)
+  identifierOrMacro<out var id>                      (. expr = new ResourceReferenceExression(id, start.join(lastTokenLoc())); .)
   .
 
 /*
@@ -1358,7 +1358,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | HIT                                      (. kind = PortBehaviorDefinition.PortKind.HIT; .)
   | MISS                                     (. kind = PortBehaviorDefinition.PortKind.MISS; .)
   )
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     parameters<.out List<Parameter> inputs.>
     SYM_ARROW
     parameters<.out List<Parameter> outputs.>
@@ -1371,7 +1371,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 // planned extensions to describe single signal lines.
   signalDefinition<out Definition def>  (. var start = nextTokenLoc(); .)
   = SIGNAL
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     SYM_COLON
     typeLiteral<out TypeLiteral type>   (. def = new SignalDefinition(id, type, start.join(lastTokenLoc())); .)
   .
@@ -1579,15 +1579,15 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   .
 
   instructionCallStmt<out InstructionCallStatement statement> (. var start = nextTokenLoc(); var namedArguments = new ArrayList<InstructionCallStatement.NamedArgument>(); .)
-  = identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+  = identifierOrMacro<out IdentifierOrMacro id>
     [
       SYM_BRACE_OPEN
-      identifierOrPlaceholder<out IdentifierOrPlaceholder argName>
+      identifierOrMacro<out IdentifierOrMacro argName>
       SYM_EQ
       expression<out Expr argExpr, BIN_OPS>                   (. namedArguments.add(new InstructionCallStatement.NamedArgument(argName, argExpr)); .)
       {
         SYM_COMMA
-        identifierOrPlaceholder<out argName>
+        identifierOrMacro<out argName>
         SYM_EQ
         expression<out argExpr, BIN_OPS>                      (. namedArguments.add(new InstructionCallStatement.NamedArgument(argName, argExpr)); .)
       }
@@ -1604,12 +1604,12 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     ]                                                         (. statement = new InstructionCallStatement(id, namedArguments, unnamedArguments, start.join(lastTokenLoc())); .)
   .
 
-  letStatement<out Statement letStatement>        (. var start = nextTokenLoc(); var identifiers = new ArrayList<IsId>(); .)
+  letStatement<out Statement letStatement>        (. var start = nextTokenLoc(); var identifiers = new ArrayList<IdentifierPathOrMacro>(); .)
   = LET
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>          (. identifiers.add(id); .)
+    identifierOrMacro<out IdentifierOrMacro id>          (. identifiers.add(id); .)
     {
       SYM_COMMA
-      identifierOrPlaceholder<out IdentifierOrPlaceholder nextId>    (. identifiers.add(nextId); .)
+      identifierOrMacro<out IdentifierOrMacro nextId>    (. identifiers.add(nextId); .)
     }
     SYM_EQ                                        (. Expr valueExpr = null; .)
     ( IF (la.kind == _IF_KW)
@@ -1692,7 +1692,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   forallStatement<out Statement forall> (. var start = nextTokenLoc(); var indices = new ArrayList<ForallIndex>(); TypeLiteral typeLiteral = null; .)
    = FORALL
-    identifierOrPlaceholder<out IdentifierOrPlaceholder indexName>
+    identifierOrMacro<out IdentifierOrMacro indexName>
     [
     SYM_COLON
     typeLiteral<out  typeLiteral>
@@ -1701,7 +1701,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     rangeExpression<out Expr domain>    (. indices.add(new ForallIndex(indexName, typeLiteral, domain)); .)
     {
       SYM_COMMA
-      identifierOrPlaceholder<out indexName>         (. typeLiteral = null; .)
+      identifierOrMacro<out indexName>         (. typeLiteral = null; .)
       [
         SYM_COLON
         typeLiteral<out typeLiteral>
@@ -1723,9 +1723,9 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
         binaryOperator<out Operator op>           (. var operator = new BinOp(op, lastTokenLoc()); .)
         term<out Expr right, allowedOps>          (. expr = new BinaryExpr(expr, operator, right); .)
       | macroReplacement<out Node node, BasicSyntaxType.BIN_OP>
-        term<out Expr right, allowedOps>          (. expr = new BinaryExpr(expr, (IsBinOp)node, right); .)
+        term<out Expr right, allowedOps>          (. expr = new BinaryExpr(expr, (BinOpOrMacro)node, right); .)
       | SYM_AS                                    (. var typeStart = nextTokenLoc(); .)
-        identifierPath<out IsId path>             (. TypeLiteral castTarget = new TypeLiteral(path, new ArrayList<>(), typeStart.join(lastTokenLoc()));
+        identifierPath<out IdentifierPathOrMacro path>             (. TypeLiteral castTarget = new TypeLiteral(path, new ArrayList<>(), typeStart.join(lastTokenLoc()));
                                                      expr = new CastExpr(expr, castTarget); .)
         { IF (expr instanceof CastExpr && la.kind == _SYM_LT)
           SYM_LT                                  (. var lessLoc = lastTokenLoc(); .)
@@ -1749,18 +1749,18 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     {
       // Check if we received a symbol expression -> collect arguments
       // Otherwise, just return the collected binary expression
-      IF (la.kind == _SYM_PAREN_OPEN && expr instanceof IsSymExpr)
+      IF (la.kind == _SYM_PAREN_OPEN && expr instanceof SymExprOrMacro)
       arguments<out CallIndexExpr.Arguments args, allowWildcardArgs>         (. argsIndices.add(args); .)
     }                                                           (. List<CallIndexExpr.SubCall> subCalls = new ArrayList<>(); .)
     {
-      IF (la.kind == _SYM_DOT && expr instanceof IsSymExpr)
+      IF (la.kind == _SYM_DOT && expr instanceof SymExprOrMacro)
       SYM_DOT                                                   (. var subCallArgsIndices = new ArrayList<CallIndexExpr.Arguments>(); .)
-      identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+      identifierOrMacro<out IdentifierOrMacro id>
       {
         IF (la.kind == _SYM_PAREN_OPEN)
         arguments<out CallIndexExpr.Arguments args, false>      (. subCallArgsIndices.add(args); .)
       }                                                         (. subCalls.add(new CallIndexExpr.SubCall(id, subCallArgsIndices)); .)
-    }                                                           (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
+    }                                                           (. if (expr instanceof SymExprOrMacro symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
                                                                      expr = new CallIndexExpr(symExpr, argsIndices, subCalls, startLocation.join(lastTokenLoc()));
                                                                 .)
   | macroReplacement<out Node node, BasicSyntaxType.EX>         (. expr = (Expr)node; .)
@@ -1796,7 +1796,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   // Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = null; boolean isLtOp = false; var terms = new ArrayList<Expr>(); SourceLocation ltLoc = null; SourceLocation gtLoc = null; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.ID))
-    identifierPath<out IsId path>
+    identifierPath<out IdentifierPathOrMacro path>
     {
       IF (!isLtOp && la.kind == _SYM_LT)                     (. isLtOp = true; .)
       SYM_LT                                                 (. ltLoc = lastTokenLoc(); .)
@@ -1841,7 +1841,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   .
 
   unary<out Expr expr, boolean[] allowedOps>
-  = unaryOperator<out IsUnOp op>
+  = unaryOperator<out UnOpOrMacro op>
     term<out Expr operand, allowedOps> (. if (operand instanceof BinaryExpr binExpr) {
                                 expr = new BinaryExpr(new UnaryExpr(op, binExpr.left), binExpr.operator, binExpr.right);
                               } else {
@@ -1850,12 +1850,12 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                            .)
   .
 
-  unaryOperator<out IsUnOp op>   (. op = null; .)
+  unaryOperator<out UnOpOrMacro op>   (. op = null; .)
   = SYM_MINUS                    (. op = new UnOp(UnaryOperator.NEGATIVE, lastTokenLoc()); .)
   | SYM_EXCL                     (. op = new UnOp(UnaryOperator.LOG_NOT, lastTokenLoc()); .)
   | SYM_TILDE                    (. op = new UnOp(UnaryOperator.COMPLEMENT, lastTokenLoc()); .)
   // When adding a new operator here, it must also be added to the "UN_OPS" list in java !!!
-  | macroReplacement<out Node n,  BasicSyntaxType.UN_OP> (. op = (IsUnOp) n; .)
+  | macroReplacement<out Node n,  BasicSyntaxType.UN_OP> (. op = (UnOpOrMacro) n; .)
   .
 
   term<out Expr expr, boolean[] allowedOps>            (. expr = null; .)
@@ -1909,16 +1909,16 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | FALSE                    (. expr = new BoolLiteral(false, lastTokenLoc()); .)
   .
 
-  referenceLiteral<out IsId reference>
+  referenceLiteral<out IdentifierPathOrMacro reference>
   = SYM_AT
     identifierPath<out reference>
   .
 
-  identifierPath<out IsId path>                                 (. List<IdentifierOrPlaceholder> segments = new ArrayList<>(); .)
-  = identifierOrPlaceholder<out IdentifierOrPlaceholder id>     (. segments.add(id); .)
+  identifierPath<out IdentifierPathOrMacro path>                                 (. List<IdentifierOrMacro> segments = new ArrayList<>(); .)
+  = identifierOrMacro<out IdentifierOrMacro id>     (. segments.add(id); .)
     {
       SYM_NAMESPACE
-      identifierOrPlaceholder<out IdentifierOrPlaceholder next> (. segments.add(next); .)
+      identifierOrMacro<out IdentifierOrMacro next> (. segments.add(next); .)
     }                                                           (. if (segments.size() == 1) path = id;
                                                                    else path = new IdentifierPath(segments); .)
   .
@@ -1928,12 +1928,12 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     [ SYM_RANGE expression<out Expr to, BIN_OPS> (. expr = new RangeExpr(expr, to); .) ]
   .
 
-  letExpression<out Expr expr, boolean[] allowedOps>          (. var start = nextTokenLoc(); var identifiers = new ArrayList<IdentifierOrPlaceholder>(); .)
+  letExpression<out Expr expr, boolean[] allowedOps>          (. var start = nextTokenLoc(); var identifiers = new ArrayList<IdentifierOrMacro>(); .)
   = LET
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>                      (. identifiers.add(id); .)
+    identifierOrMacro<out IdentifierOrMacro id>                      (. identifiers.add(id); .)
     {
       SYM_COMMA
-      identifierOrPlaceholder<out IdentifierOrPlaceholder nextId>                (. identifiers.add(nextId); .)
+      identifierOrMacro<out IdentifierOrMacro nextId>                (. identifiers.add(nextId); .)
     }
     SYM_EQ                                                    (. Expr valueExpr = null; .)
     ( IF (la.kind == _IF_KW)
@@ -1986,13 +1986,13 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = EXISTS
     ( IF (la.kind == _SYM_IN)
       SYM_IN
-      operationsList<.out List<IsId> operations.>   (. expr = new ExistsInExpr(operations, start.join(lastTokenLoc())); .)
-    | identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+      operationsList<.out List<IdentifierPathOrMacro> operations.>   (. expr = new ExistsInExpr(operations, start.join(lastTokenLoc())); .)
+    | identifierOrMacro<out IdentifierOrMacro id>
       SYM_IN                                        (. var indices = new ArrayList<ExistsInThenExpr.Index>(); .)
-      operationsList<.out List<IsId> operations.>   (. indices.add(new ExistsInThenExpr.Index(id, operations)); .)
+      operationsList<.out List<IdentifierPathOrMacro> operations.>   (. indices.add(new ExistsInThenExpr.Index(id, operations)); .)
       {
         SYM_COMMA
-        identifierOrPlaceholder<out id>
+        identifierOrMacro<out id>
         SYM_IN
         operationsList<out operations>              (. indices.add(new ExistsInThenExpr.Index(id, operations)); .)
       }
@@ -2001,9 +2001,9 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     )
   .
 
-  operationsList<.out List<IsId> operations.>
+  operationsList<.out List<IdentifierPathOrMacro> operations.>
   = SYM_BRACE_OPEN                (. operations = new ArrayList<>(); .)
-    identifierPath<out IsId path> (. operations.add(path); .)
+    identifierPath<out IdentifierPathOrMacro path> (. operations.add(path); .)
     {
       SYM_COMMA
       identifierPath<out path>    (. operations.add(path); .)
@@ -2013,17 +2013,17 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = null; var start = nextTokenLoc(); TypeLiteral typeLiteral = null; .)
   = FORALL
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
    [
     SYM_COLON
     typeLiteral<out typeLiteral>
     ]
     SYM_IN
     (                                                         (. var indices = new ArrayList<ForallThenExpr.Index>(); .)
-      operationsList<.out List<IsId> operations.>             (. indices.add(new ForallThenExpr.Index(id, operations)); .)
+      operationsList<.out List<IdentifierPathOrMacro> operations.>             (. indices.add(new ForallThenExpr.Index(id, operations)); .)
       {
         SYM_COMMA
-        identifierOrPlaceholder<out id>
+        identifierOrMacro<out id>
         SYM_IN
         operationsList<out operations>                        (. indices.add(new ForallThenExpr.Index(id, operations)); .)
       }
@@ -2033,7 +2033,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
       rangeExpression<out Expr domain>                        (. indices.add(new ForallIndex(id, typeLiteral, domain)); .)
       {
         SYM_COMMA
-        identifierOrPlaceholder<out id>                       (. typeLiteral = null; .)
+        identifierOrMacro<out id>                       (. typeLiteral = null; .)
         [
           SYM_COLON
           typeLiteral<out typeLiteral>
@@ -2062,11 +2062,11 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                                                         (. // TODO, is there a solution instead of null?
                                                                         .)
     | macroReplacement<out Node replacement, null>                      (. node = castBinOpOrId(this, replacement); .)
-    )                                                                   (. var parts = new ArrayList<IdentifierOrPlaceholder>(); .)
-    { IF ((la.kind == _SYM_NAMESPACE && isIdType(node.syntaxType()) ))  (. if (parts.isEmpty()) {parts.add((IdentifierOrPlaceholder)node);}.)
+    )                                                                   (. var parts = new ArrayList<IdentifierOrMacro>(); .)
+    { IF ((la.kind == _SYM_NAMESPACE && isIdType(node.syntaxType()) ))  (. if (parts.isEmpty()) {parts.add((IdentifierOrMacro)node);}.)
        SYM_NAMESPACE
        ( identifier<out Identifier id2>                                 (. parts.add(id2); .)
-       | macroReplacement<out Node replacement, BasicSyntaxType.ID>     (. parts.add((IdentifierOrPlaceholder)replacement); .)
+       | macroReplacement<out Node replacement, BasicSyntaxType.ID>     (. parts.add((IdentifierOrMacro)replacement); .)
        )
     }                                                                   (. if (parts.size() > 1)  { node = new IdentifierPath(parts); } .)
   )
@@ -2075,7 +2075,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
   typeLiteral<out TypeLiteral type>                      (. var startLocation = nextTokenLoc(); .)
-  = identifierPath<out IsId path>                        (. List<Expr> sizeIndices = new ArrayList<>(); .)
+  = identifierPath<out IdentifierPathOrMacro path>                        (. List<Expr> sizeIndices = new ArrayList<>(); .)
     {
       SYM_LT
       expression<out Expr sizeExpr, BIN_OPS_EXCEPT_GT>   (. sizeIndices.add(sizeExpr); .)
@@ -2168,7 +2168,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   sequenceCallExpr<out SequenceCallExpr call>     (. var start = nextTokenLoc();
                                                      Expr range = null;
                                                      call = null;
-                                                     IsCallExpr ident = null;
+                                                     CallIndexExprOrMacro ident = null;
                                                   .)
   =
   identifier<out Identifier id1> (. ident = id1; .)
@@ -2196,7 +2196,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                       if (body != null && !isInsideModel(this) && !(requiredType instanceof ProjectionType) ) {
                                         if (body instanceof MacroCall macroCall) {
                                           body = expandTopLevelMacroCall(this, macroCall);
-                                        } else if (body instanceof IsMacroMatch) {
+                                        } else if (body instanceof MacroMatch) {
                                           // Is that allowed?
                                           throw new RuntimeException();
                                         } else if (body instanceof AsIdExpr asId) {
@@ -2222,31 +2222,31 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   = MATCH
     SYM_COLON
     basicSyntaxType<out SyntaxType type>
-    SYM_PAREN_OPEN                                    (. var choices = new ArrayList<MacroMatch.Choice>(); .)
-    macroReplacement<out Node candidate, null>        (. var patterns = new ArrayList<MacroMatch.Pattern>(); .)
-    (SYM_EQ | SYM_NEQ )                               (. var comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
-    macroBody<out Node match, candidate.syntaxType()> (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
+    SYM_PAREN_OPEN                                    (. var choices = new ArrayList<MacroMatchContent.Choice>(); .)
+    macroReplacement<out Node candidate, null>        (. var patterns = new ArrayList<MacroMatchContent.Pattern>(); .)
+    (SYM_EQ | SYM_NEQ )                               (. var comparison = t.kind == _SYM_EQ ? MacroMatchContent.Comparison.EQUAL : MacroMatchContent.Comparison.NOT_EQUAL; .)
+    macroBody<out Node match, candidate.syntaxType()> (. patterns.add(new MacroMatchContent.Pattern(candidate, comparison, match)); .)
     {
       SYM_COMMA
       macroReplacement<out candidate, null>
-      (SYM_EQ | SYM_NEQ )                             (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
-      macroBody<out match, candidate.syntaxType()>    (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
+      (SYM_EQ | SYM_NEQ )                             (. comparison = t.kind == _SYM_EQ ? MacroMatchContent.Comparison.EQUAL : MacroMatchContent.Comparison.NOT_EQUAL; .)
+      macroBody<out match, candidate.syntaxType()>    (. patterns.add(new MacroMatchContent.Pattern(candidate, comparison, match)); .)
     }
     SYM_BIGARROW
-    macroBody<out Node result, type>                  (. choices.add(new MacroMatch.Choice(patterns, result)); .)
+    macroBody<out Node result, type>                  (. choices.add(new MacroMatchContent.Choice(patterns, result)); .)
     SYM_SEMICOLON
-    {                                                 (. patterns = new ArrayList<MacroMatch.Pattern>(); .)
+    {                                                 (. patterns = new ArrayList<MacroMatchContent.Pattern>(); .)
       macroReplacement<out candidate, null>
-      (SYM_EQ | SYM_NEQ )                             (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
-      macroBody<out match, candidate.syntaxType()>    (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
+      (SYM_EQ | SYM_NEQ )                             (. comparison = t.kind == _SYM_EQ ? MacroMatchContent.Comparison.EQUAL : MacroMatchContent.Comparison.NOT_EQUAL; .)
+      macroBody<out match, candidate.syntaxType()>    (. patterns.add(new MacroMatchContent.Pattern(candidate, comparison, match)); .)
       {
         SYM_COMMA
         macroReplacement<out candidate, null>
-        (SYM_EQ | SYM_NEQ )                           (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
-        macroBody<out match, candidate.syntaxType()>  (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
+        (SYM_EQ | SYM_NEQ )                           (. comparison = t.kind == _SYM_EQ ? MacroMatchContent.Comparison.EQUAL : MacroMatchContent.Comparison.NOT_EQUAL; .)
+        macroBody<out match, candidate.syntaxType()>  (. patterns.add(new MacroMatchContent.Pattern(candidate, comparison, match)); .)
       }
       SYM_BIGARROW
-      macroBody<out result, type>                     (. choices.add(new MacroMatch.Choice(patterns, result)); .)
+      macroBody<out result, type>                     (. choices.add(new MacroMatchContent.Choice(patterns, result)); .)
       SYM_SEMICOLON
     }
     SYM_UNDERSCORE
@@ -2326,7 +2326,7 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
 
   macroDefinition<out ModelDefinition def>  (. var startLoc = nextTokenLoc(); var errorCntBefore = totalErrorSnapshot(this); .)
   = MODEL
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    identifierOrMacro<out IdentifierOrMacro id>
     SYM_PAREN_OPEN                          (. var params = new ArrayList<MacroParam>(); .)
     [
       identifier<out Identifier paramId1>
@@ -2403,13 +2403,13 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | IF (type == BasicSyntaxType.SYM_EX)
     symbolOrBinaryExpression<out body, false>
   | IF (type == BasicSyntaxType.ID)
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
+    identifierOrMacro<out IdentifierOrMacro id> (. body = (Node) id; .)
   | IF (type == BasicSyntaxType.BIN_OP)
     ( binaryOperator<out Operator op>                       (. body = new BinOp(op, lastTokenLoc()); .)
     | macroReplacement<out body, BasicSyntaxType.BIN_OP>
     )
   | IF (type == BasicSyntaxType.UN_OP)
-    unaryOperator<out IsUnOp op>                            (. body = (Node) op; .)
+    unaryOperator<out UnOpOrMacro op>                            (. body = (Node) op; .)
   | IF (type instanceof RecordType recordType)
     ( SYM_PAREN_OPEN                                        (. var entries = new ArrayList<Node>(recordType.entries.size());
                                                                var syntaxTypeIterator = recordType.entries.iterator();

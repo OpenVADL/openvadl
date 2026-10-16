@@ -27,7 +27,7 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class AnnotationDefinition extends Definition {
-  public List<IdentifierOrPlaceholder> keywords;
+  public List<IdentifierOrMacro> keywords;
   public List<Expr> values;
 
   /**
@@ -45,7 +45,7 @@ public final class AnnotationDefinition extends Definition {
 
   public SourceLocation loc;
 
-  public AnnotationDefinition(List<IdentifierOrPlaceholder> keywords, List<Expr> values,
+  public AnnotationDefinition(List<IdentifierOrMacro> keywords, List<Expr> values,
                               SourceLocation loc) {
     this.keywords = keywords;
     this.values = values;

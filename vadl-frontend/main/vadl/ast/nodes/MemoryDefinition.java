@@ -25,7 +25,7 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
   public TypeLiteral addressTypeLiteral;
   public TypeLiteral dataTypeLiteral;
   public SourceLocation loc;
@@ -33,7 +33,7 @@ public class MemoryDefinition extends Definition implements IdentifiableNode, Ty
   @Nullable
   public ConcreteRelationType type;
 
-  public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressTypeLiteral,
+  public MemoryDefinition(IdentifierOrMacro identifier, TypeLiteral addressTypeLiteral,
                           TypeLiteral dataTypeLiteral, SourceLocation loc) {
     this.identifier = identifier;
     this.addressTypeLiteral = addressTypeLiteral;

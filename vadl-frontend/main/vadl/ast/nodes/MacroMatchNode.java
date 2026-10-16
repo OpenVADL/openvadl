@@ -19,26 +19,27 @@ package vadl.ast.nodes;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs, IsBinOp, IsUnOp {
-  public MacroMatch macroMatch;
+public final class MacroMatchNode extends Node implements MacroMatch, EncsOrMacro, BinOpOrMacro,
+    UnOpOrMacro {
+  public MacroMatchContent macroMatchContent;
 
-  public MacroMatchNode(MacroMatch macroMatch) {
-    this.macroMatch = macroMatch;
+  public MacroMatchNode(MacroMatchContent macroMatchContent) {
+    this.macroMatchContent = macroMatchContent;
   }
 
   @Override
   public SourceLocation location() {
-    return macroMatch.sourceLocation();
+    return macroMatchContent.sourceLocation();
   }
 
   @Override
   public SyntaxType syntaxType() {
-    return macroMatch.resultType();
+    return macroMatchContent.resultType();
   }
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    macroMatch.prettyPrint(indent, builder);
+    macroMatchContent.prettyPrint(indent, builder);
   }
 
   @Override
@@ -51,11 +52,11 @@ public final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs, 
     }
 
     MacroMatchNode that = (MacroMatchNode) o;
-    return macroMatch.equals(that.macroMatch);
+    return macroMatchContent.equals(that.macroMatchContent);
   }
 
   @Override
   public int hashCode() {
-    return macroMatch.hashCode();
+    return macroMatchContent.hashCode();
   }
 }

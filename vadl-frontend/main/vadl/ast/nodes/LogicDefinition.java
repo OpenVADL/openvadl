@@ -23,17 +23,17 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class LogicDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   public SourceLocation loc;
-  public List<IdentifierOrPlaceholder> logicTypeIdentifiers;
+  public List<IdentifierOrMacro> logicTypeIdentifiers;
 
   /// Set by the typechecker and inferred from the logicType identifiers.
   /// This cannot be directly set by the parser because of possible macro expansion.
   @Nullable
   public LogicType logicType;
 
-  public LogicDefinition(IdentifierOrPlaceholder id,
-                         List<IdentifierOrPlaceholder> logicTypeIdentifiers,
+  public LogicDefinition(IdentifierOrMacro id,
+                         List<IdentifierOrMacro> logicTypeIdentifiers,
                          SourceLocation loc) {
     this.id = id;
     this.logicTypeIdentifiers = logicTypeIdentifiers;

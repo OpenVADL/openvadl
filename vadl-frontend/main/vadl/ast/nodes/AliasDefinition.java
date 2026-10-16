@@ -28,7 +28,7 @@ import vadl.viam.Constant;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class AliasDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   public AliasKind kind;
   @Nullable
   public TypeLiteral aliasType;
@@ -54,9 +54,10 @@ public class AliasDefinition extends Definition implements IdentifiableNode, Typ
   @Nullable
   public Constant.BitSlice slice;
 
-  public AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
-                  @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,
-                  SourceLocation location) {
+  public AliasDefinition(IdentifierOrMacro id, AliasKind kind,
+                         @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType,
+                         Expr value,
+                         SourceLocation location) {
     this.id = id;
     this.kind = kind;
     this.aliasType = aliasType;

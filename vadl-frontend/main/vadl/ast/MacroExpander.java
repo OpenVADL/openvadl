@@ -45,6 +45,7 @@ import vadl.ast.nodes.AssemblyDefinition;
 import vadl.ast.nodes.AssignmentStatement;
 import vadl.ast.nodes.BasicSyntaxType;
 import vadl.ast.nodes.BinOp;
+import vadl.ast.nodes.BinOpOrMacro;
 import vadl.ast.nodes.BinaryExpr;
 import vadl.ast.nodes.BinaryLiteral;
 import vadl.ast.nodes.BlockStatement;
@@ -64,6 +65,7 @@ import vadl.ast.nodes.DefinitionVisitor;
 import vadl.ast.nodes.DerivedFormatField;
 import vadl.ast.nodes.EncodingDefinition;
 import vadl.ast.nodes.EncodingFormatField;
+import vadl.ast.nodes.EncsOrMacro;
 import vadl.ast.nodes.EnumerationDefinition;
 import vadl.ast.nodes.ExceptionDefinition;
 import vadl.ast.nodes.ExistsInExpr;
@@ -83,8 +85,9 @@ import vadl.ast.nodes.FunctionDefinition;
 import vadl.ast.nodes.GroupDefinition;
 import vadl.ast.nodes.GroupedExpr;
 import vadl.ast.nodes.Identifier;
-import vadl.ast.nodes.IdentifierOrPlaceholder;
+import vadl.ast.nodes.IdentifierOrMacro;
 import vadl.ast.nodes.IdentifierPath;
+import vadl.ast.nodes.IdentifierPathOrMacro;
 import vadl.ast.nodes.IfExpr;
 import vadl.ast.nodes.IfStatement;
 import vadl.ast.nodes.ImportDefinition;
@@ -92,16 +95,12 @@ import vadl.ast.nodes.InstructionCallStatement;
 import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.InstructionSetDefinition;
 import vadl.ast.nodes.IntegerLiteral;
-import vadl.ast.nodes.IsBinOp;
-import vadl.ast.nodes.IsEncs;
-import vadl.ast.nodes.IsId;
-import vadl.ast.nodes.IsUnOp;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
 import vadl.ast.nodes.LogicDefinition;
 import vadl.ast.nodes.MacroCall;
-import vadl.ast.nodes.MacroMatch;
+import vadl.ast.nodes.MacroMatchContent;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MacroMatchNode;
@@ -148,6 +147,7 @@ import vadl.ast.nodes.TemplateParam;
 import vadl.ast.nodes.TypeLiteral;
 import vadl.ast.nodes.TypedFormatField;
 import vadl.ast.nodes.UnOp;
+import vadl.ast.nodes.UnOpOrMacro;
 import vadl.ast.nodes.UnaryExpr;
 import vadl.ast.nodes.UsingDefinition;
 import vadl.ast.nodes.WildcardLiteral;
@@ -307,9 +307,6 @@ class MacroExpander
    */
   private Expr expandExprRaw(Expr expr) {
     var result = expr.accept(this);
-    //if (!errors.isEmpty()) {
-    // throw new DiagnosticList(errors);
-    //}
     if (result instanceof BinaryExpr binaryExpr && !binaryExpr.hasBeenReordered) {
       return ParserUtils.reorderBinaryExpr(binaryExpr);
     }
@@ -323,8 +320,8 @@ class MacroExpander
 
   private <T> List<T> expandExprs(List<T> expressions) {
     var result = new ArrayList<T>(expressions.size());
-    for (var i = 0; i < expressions.size(); i++) {
-      result.add(expandExpr(expressions.get(i)));
+    for (T expression : expressions) {
+      result.add(expandExpr(expression));
     }
     return result;
   }
@@ -536,7 +533,7 @@ class MacroExpander
   public Expr visit(BinaryExpr expr) {
     var expanded = new BinaryExpr(
         expandExpr(expr.left),
-        (IsBinOp) expandNode((Node) expr.operator),
+        (BinOpOrMacro) expandNode((Node) expr.operator),
         expandExpr(expr.right)
     );
 
@@ -599,7 +596,7 @@ class MacroExpander
 
   @Override
   public Expr visit(UnaryExpr expr) {
-    return new UnaryExpr((IsUnOp) expandNode((Node) expr.operator), expandExpr(expr.operand));
+    return new UnaryExpr((UnOpOrMacro) expandNode((Node) expr.operator), expandExpr(expr.operand));
   }
 
   @Override
@@ -663,7 +660,7 @@ class MacroExpander
 
   @Override
   public Expr visit(MacroMatchExpr expr) {
-    var macroMatch = expandMacroMatch(expr.macroMatch);
+    var macroMatch = expandMacroMatch(expr.macroMatchContent);
     return (Expr) resolveMacroMatch(macroMatch);
   }
 
@@ -684,21 +681,19 @@ class MacroExpander
   private String concatStringifyExpressions(Expr origin, List<Expr> expressions) {
     var nameBuilder = new StringBuilder(expressions.size());
     for (var inner : expressions) {
-      if (inner instanceof Identifier id) {
-        nameBuilder.append(id.name);
-      } else if (inner instanceof StringLiteral string) {
-        nameBuilder.append(string.value);
-      } else if (inner instanceof IntegerLiteral integerLiteral) {
-        nameBuilder.append(integerLiteral.token);
-      } else if (inner instanceof BinaryLiteral binaryLiteral) {
-        nameBuilder.append(binaryLiteral.token);
-      } else if (inner instanceof BoolLiteral bool) {
-        nameBuilder.append(bool.value);
-      } else {
-        errors.add(
-            error("Unsupported `%s` parameter `%s`".formatted(origin.nodeName(), inner.nodeName()),
-                inner.location()).build());
-        nameBuilder.append(inner);
+      switch (inner) {
+        case Identifier id -> nameBuilder.append(id.name);
+        case StringLiteral string -> nameBuilder.append(string.value);
+        case IntegerLiteral integerLiteral -> nameBuilder.append(integerLiteral.token);
+        case BinaryLiteral binaryLiteral -> nameBuilder.append(binaryLiteral.token);
+        case BoolLiteral bool -> nameBuilder.append(bool.value);
+        default -> {
+          errors.add(
+              error(
+                  "Unsupported `%s` parameter `%s`".formatted(origin.nodeName(), inner.nodeName()),
+                  inner.location()).build());
+          nameBuilder.append(inner);
+        }
       }
     }
 
@@ -747,7 +742,7 @@ class MacroExpander
     var indices = new ArrayList<>(expr.indices);
     indices.replaceAll(index -> {
       var operations = new ArrayList<>(index.operations);
-      operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
+      operations.replaceAll(id -> (IdentifierPathOrMacro) expandExpr((Expr) id));
       return new ExistsInThenExpr.Index(expandExpr(index.identifier()), operations);
     });
     return new ExistsInThenExpr(indices, expandExpr(expr.thenExpr), copyLoc(expr.loc));
@@ -758,7 +753,7 @@ class MacroExpander
     var indices = new ArrayList<>(expr.indices);
     indices.replaceAll(index -> {
       var operations = new ArrayList<>(index.operations);
-      operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
+      operations.replaceAll(id -> (IdentifierPathOrMacro) expandExpr((Expr) id));
       return new ForallThenExpr.Index(expandExpr(index.identifier()), operations);
     });
     return new ForallThenExpr(indices, expandExpr(expr.thenExpr), copyLoc(expr.loc));
@@ -1056,7 +1051,7 @@ class MacroExpander
 
   @Override
   public Definition visit(AnnotationDefinition definition) {
-    var keywords = new ArrayList<IdentifierOrPlaceholder>(definition.keywords.size());
+    var keywords = new ArrayList<IdentifierOrMacro>(definition.keywords.size());
     for (var keyword : definition.keywords) {
       keywords.add(expandExpr(keyword));
     }
@@ -1099,7 +1094,7 @@ class MacroExpander
 
   @Override
   public Definition visit(MacroMatchDefinition definition) {
-    var macroMatch = expandMacroMatch(definition.macroMatch);
+    var macroMatch = expandMacroMatch(definition.macroMatchContent);
     return (Definition) resolveMacroMatch(macroMatch);
   }
 
@@ -1514,7 +1509,7 @@ class MacroExpander
 
   @Override
   public Statement visit(MacroMatchStatement macroMatchStatement) {
-    var macroMatch = expandMacroMatch(macroMatchStatement.macroMatch);
+    var macroMatch = expandMacroMatch(macroMatchStatement.macroMatchContent);
     return (Statement) resolveMacroMatch(macroMatch);
   }
 
@@ -1595,20 +1590,20 @@ class MacroExpander
   }
 
   private EncodingDefinition.EncsNode expandEncs(EncodingDefinition.EncsNode encs) {
-    var encodings = new ArrayList<IsEncs>(encs.items.size());
+    var encodings = new ArrayList<EncsOrMacro>(encs.items.size());
     for (var enc : encs.items) {
       encodings.addAll(expandEnc(enc));
     }
     return new EncodingDefinition.EncsNode(encodings, copyLoc(encs.loc));
   }
 
-  private List<IsEncs> expandEnc(IsEncs encoding) {
+  private List<EncsOrMacro> expandEnc(EncsOrMacro encoding) {
     if (encoding instanceof EncodingDefinition.EncodingField encodingField) {
       return List.of(new EncodingDefinition.EncodingField(expandExpr(encodingField.field),
           expandExpr(encodingField.value)));
     } else if (encoding instanceof EncodingDefinition.EncsNode encodings) {
-      var encs = new ArrayList<IsEncs>(encodings.items.size());
-      for (IsEncs enc : encodings.items) {
+      var encs = new ArrayList<EncsOrMacro>(encodings.items.size());
+      for (EncsOrMacro enc : encodings.items) {
         encs.addAll(expandEnc(enc));
       }
       return encs;
@@ -1617,39 +1612,39 @@ class MacroExpander
       if (expanded instanceof EncodingDefinition.EncsNode encs) {
         return encs.items;
       } else {
-        return List.of((IsEncs) expanded);
+        return List.of((EncsOrMacro) expanded);
       }
     } else if (encoding instanceof MacroCall.Node macroCallNode) {
       var expanded = expand(macroCallNode);
       if (expanded instanceof EncodingDefinition.EncsNode encs) {
         return encs.items;
       } else {
-        return List.of((IsEncs) expanded);
+        return List.of((EncsOrMacro) expanded);
       }
     }
     return List.of(encoding);
   }
 
-  private MacroMatch expandMacroMatch(MacroMatch macroMatch) {
+  private MacroMatchContent expandMacroMatch(MacroMatchContent macroMatch) {
     var choices = new ArrayList<>(macroMatch.choices());
     choices.replaceAll(choice -> {
       var patterns = new ArrayList<>(choice.patterns());
-      patterns.replaceAll(pattern -> new MacroMatch.Pattern(
+      patterns.replaceAll(pattern -> new MacroMatchContent.Pattern(
           expandNode(pattern.candidate()), pattern.comparison(), expandNode(pattern.match()))
       );
-      return new MacroMatch.Choice(patterns, expandNode(choice.result()));
+      return new MacroMatchContent.Choice(patterns, expandNode(choice.result()));
     });
     var defChoice = expandNode(macroMatch.defaultChoice());
-    return new MacroMatch(macroMatch.resultType(), choices, defChoice,
+    return new MacroMatchContent(macroMatch.resultType(), choices, defChoice,
         copyLoc(macroMatch.sourceLocation()));
   }
 
-  private Node resolveMacroMatch(MacroMatch macroMatch) {
+  private Node resolveMacroMatch(MacroMatchContent macroMatch) {
     for (var choice : macroMatch.choices()) {
       for (var pattern : choice.patterns()) {
         var candidate = expandNode(pattern.candidate());
         var equals = candidate.equals(pattern.match());
-        var shouldEqual = pattern.comparison() == MacroMatch.Comparison.EQUAL;
+        var shouldEqual = pattern.comparison() == MacroMatchContent.Comparison.EQUAL;
         if (equals == shouldEqual) {
           return expandNode(choice.result());
         }
@@ -1663,7 +1658,7 @@ class MacroExpander
   }
 
   private Node expand(MacroMatchNode node) {
-    var macroMatch = expandMacroMatch(node.macroMatch);
+    var macroMatch = expandMacroMatch(node.macroMatchContent);
     return resolveMacroMatch(macroMatch);
   }
 

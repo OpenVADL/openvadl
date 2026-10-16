@@ -33,13 +33,13 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class LetExpr extends Expr {
-  public List<IdentifierOrPlaceholder> identifiers;
+  public List<IdentifierOrMacro> identifiers;
   public Expr valueExpr;
   public Expr body;
   public SourceLocation location;
 
-  public LetExpr(List<IdentifierOrPlaceholder> identifiers, Expr valueExpr, Expr body,
-          SourceLocation location) {
+  public LetExpr(List<IdentifierOrMacro> identifiers, Expr valueExpr, Expr body,
+                 SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;

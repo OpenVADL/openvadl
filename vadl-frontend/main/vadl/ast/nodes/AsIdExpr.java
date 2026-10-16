@@ -35,7 +35,7 @@ import vadl.utils.SourceLocation;
  * <p>This node should never leave the parser.
  */
 @SuppressWarnings("MissingJavadocMethod")
-public final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
+public final class AsIdExpr extends Expr implements IdentifierOrMacro, IdentifierPathOrMacro {
   public List<Expr> exprs;
   public SourceLocation loc;
 

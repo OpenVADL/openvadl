@@ -31,7 +31,7 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
   /**
    * Either a concrete identifier for this model or, if it is a model-in-model, a placeholder ID.
    */
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
 
   /**
    * The list of formal parameters for the represented macro.
@@ -67,9 +67,9 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
   //public Map<String, Node> boundArguments = new HashMap<>();
   public SourceLocation loc;
 
-  public ModelDefinition(IdentifierOrPlaceholder id, List<MacroParam> params, Node body,
+  public ModelDefinition(IdentifierOrMacro id, List<MacroParam> params, Node body,
                          SyntaxType returnType, SymbolTable macroTable,
-                         Map<String, Identifier> macroOverrides,  SourceLocation loc) {
+                         Map<String, Identifier> macroOverrides, SourceLocation loc) {
     this.id = id;
     this.params = params;
     this.body = body;

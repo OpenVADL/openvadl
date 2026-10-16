@@ -43,8 +43,8 @@ import vadl.viam.Constant;
  * - Accessing a Register File and slicing: X(0)(3..7)
  */
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public final class CallIndexExpr extends Expr implements IsCallExpr {
-  public IsSymExpr target;
+public final class CallIndexExpr extends Expr implements CallIndexExprOrMacro {
+  public SymExprOrMacro target;
 
   /**
    * A list of function arguments or register/memory indices.
@@ -69,7 +69,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
   @Nullable
   public Type typeBeforeSlice;
 
-  public CallIndexExpr(IsSymExpr target, List<Arguments> argsIndices, List<SubCall> subCalls,
+  public CallIndexExpr(SymExprOrMacro target, List<Arguments> argsIndices, List<SubCall> subCalls,
                        SourceLocation location) {
     this.target = target;
     this.argsIndices = argsIndices;
@@ -181,7 +181,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
 
 
   @Override
-  public IsId path() {
+  public IdentifierPathOrMacro path() {
     return target.path();
   }
 
@@ -318,7 +318,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   public static final class SubCall extends Node {
-    public IdentifierOrPlaceholder id;
+    public IdentifierOrMacro id;
     public List<Arguments> argsIndices;
 
     /**
@@ -335,7 +335,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
     @Nullable
     public Constant.BitSlice computedBitSlice;
 
-    public SubCall(IdentifierOrPlaceholder id, List<Arguments> argsIndices) {
+    public SubCall(IdentifierOrMacro id, List<Arguments> argsIndices) {
       this.id = id;
       this.argsIndices = argsIndices;
     }

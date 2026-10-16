@@ -25,8 +25,8 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class OperationDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder name;
-  public List<IsId> resources;
+  public IdentifierOrMacro name;
+  public List<IdentifierPathOrMacro> resources;
 
   /**
    * This is the actual set of instructions this operation set contains.
@@ -37,7 +37,7 @@ public class OperationDefinition extends Definition implements IdentifiableNode 
 
   public SourceLocation loc;
 
-  public OperationDefinition(IdentifierOrPlaceholder name, List<IsId> resources,
+  public OperationDefinition(IdentifierOrMacro name, List<IdentifierPathOrMacro> resources,
                              SourceLocation loc) {
     this.name = name;
     this.resources = resources;
@@ -66,7 +66,7 @@ public class OperationDefinition extends Definition implements IdentifiableNode 
     } else {
       builder.append("\n");
       var isFirst = true;
-      for (IsId resource : resources) {
+      for (IdentifierPathOrMacro resource : resources) {
         builder.append(prettyIndentString(indent));
         builder.append(isFirst ? "{ " : ", ");
         isFirst = false;

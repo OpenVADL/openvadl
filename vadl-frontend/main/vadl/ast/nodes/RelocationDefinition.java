@@ -27,7 +27,7 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RelocationDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
   public List<Parameter> params;
   public TypeLiteral resultTypeLiteral;
   public Expr expr;
@@ -36,9 +36,9 @@ public class RelocationDefinition extends Definition implements IdentifiableNode
   @Nullable
   public ConcreteRelationType type;
 
-  public RelocationDefinition(IdentifierOrPlaceholder identifier, List<Parameter> params,
-                       TypeLiteral resultTypeLiteral,
-                       Expr expr, SourceLocation loc) {
+  public RelocationDefinition(IdentifierOrMacro identifier, List<Parameter> params,
+                              TypeLiteral resultTypeLiteral,
+                              Expr expr, SourceLocation loc) {
     this.identifier = identifier;
     this.params = params;
     this.resultTypeLiteral = resultTypeLiteral;

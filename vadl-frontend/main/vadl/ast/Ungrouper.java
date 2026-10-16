@@ -80,7 +80,6 @@ import vadl.ast.nodes.InstructionCallStatement;
 import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.InstructionSetDefinition;
 import vadl.ast.nodes.IntegerLiteral;
-import vadl.ast.nodes.IsSymExpr;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
@@ -121,6 +120,7 @@ import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.StatementList;
 import vadl.ast.nodes.StatementVisitor;
 import vadl.ast.nodes.StringLiteral;
+import vadl.ast.nodes.SymExprOrMacro;
 import vadl.ast.nodes.SymbolExpr;
 import vadl.ast.nodes.TypeLiteral;
 import vadl.ast.nodes.TypedFormatField;
@@ -236,7 +236,7 @@ public class Ungrouper
 
   @Override
   public Expr visit(CallIndexExpr expr) {
-    expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
+    expr.target = (SymExprOrMacro) ((Expr) expr.target).accept(this);
     for (int i = 0; i < expr.argsIndices.size(); i++) {
       var entry = expr.argsIndices.get(i);
       entry.values.replaceAll(e -> e.accept(this));

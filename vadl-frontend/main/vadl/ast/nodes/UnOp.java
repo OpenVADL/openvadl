@@ -20,7 +20,7 @@ import java.util.Objects;
 import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public final class UnOp extends Node implements IsUnOp {
+public final class UnOp extends Node implements UnOpOrMacro {
 
   public UnaryOperator operator;
   public SourceLocation location;

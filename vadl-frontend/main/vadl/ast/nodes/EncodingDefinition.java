@@ -24,15 +24,15 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class EncodingDefinition extends Definition {
-  public IdentifierOrPlaceholder instrIdentifier;
+  public IdentifierOrMacro instrIdentifier;
   public EncsNode encodings;
   public SourceLocation loc;
 
   @Nullable
   public FormatDefinition formatNode;
 
-  public EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, EncsNode encodings,
-                     SourceLocation location) {
+  public EncodingDefinition(IdentifierOrMacro instrIdentifier, EncsNode encodings,
+                            SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
     this.encodings = encodings;
     this.loc = location;
@@ -101,11 +101,11 @@ public class EncodingDefinition extends Definition {
     return result;
   }
 
-  public static final class EncsNode extends Node implements IsEncs {
-    public List<IsEncs> items;
+  public static final class EncsNode extends Node implements EncsOrMacro {
+    public List<EncsOrMacro> items;
     public SourceLocation loc;
 
-    public EncsNode(List<IsEncs> items, SourceLocation loc) {
+    public EncsNode(List<EncsOrMacro> items, SourceLocation loc) {
       this.items = items;
       this.loc = loc;
     }
@@ -159,11 +159,11 @@ public class EncodingDefinition extends Definition {
     }
   }
 
-  public static final class EncodingField extends Node implements IsEncs {
-    public final IdentifierOrPlaceholder field;
+  public static final class EncodingField extends Node implements EncsOrMacro {
+    public final IdentifierOrMacro field;
     public Expr value;
 
-    public EncodingField(IdentifierOrPlaceholder field, Expr value) {
+    public EncodingField(IdentifierOrMacro field, Expr value) {
       this.field = field;
       this.value = value;
     }

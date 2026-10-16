@@ -29,9 +29,9 @@ import vadl.utils.SourceLocation;
 @SuppressWarnings("MissingJavadocMethod")
 public class ExistsInExpr extends Expr {
   public SourceLocation loc;
-  public List<IsId> operations;
+  public List<IdentifierPathOrMacro> operations;
 
-  public ExistsInExpr(List<IsId> operations, SourceLocation loc) {
+  public ExistsInExpr(List<IdentifierPathOrMacro> operations, SourceLocation loc) {
     this.operations = operations;
     this.loc = loc;
   }
@@ -50,7 +50,7 @@ public class ExistsInExpr extends Expr {
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("exists in {");
     var isFirst = true;
-    for (IsId operation : operations) {
+    for (IdentifierPathOrMacro operation : operations) {
       if (!isFirst) {
         builder.append(", ");
       }

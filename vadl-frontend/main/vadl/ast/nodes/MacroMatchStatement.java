@@ -23,26 +23,26 @@ import vadl.utils.SourceLocation;
  * This node should never leave the parser.
  */
 @SuppressWarnings("MissingJavadocMethod")
-public final class MacroMatchStatement extends Statement implements IsMacroMatch {
-  public MacroMatch macroMatch;
+public final class MacroMatchStatement extends Statement implements MacroMatch {
+  public MacroMatchContent macroMatchContent;
 
-  public MacroMatchStatement(MacroMatch macroMatch) {
-    this.macroMatch = macroMatch;
+  public MacroMatchStatement(MacroMatchContent macroMatchContent) {
+    this.macroMatchContent = macroMatchContent;
   }
 
   @Override
   public SourceLocation location() {
-    return macroMatch.sourceLocation();
+    return macroMatchContent.sourceLocation();
   }
 
   @Override
   public SyntaxType syntaxType() {
-    return macroMatch.resultType();
+    return macroMatchContent.resultType();
   }
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    macroMatch.prettyPrint(indent, builder);
+    macroMatchContent.prettyPrint(indent, builder);
   }
 
   @Override
@@ -55,12 +55,12 @@ public final class MacroMatchStatement extends Statement implements IsMacroMatch
     }
 
     MacroMatchStatement that = (MacroMatchStatement) o;
-    return macroMatch.equals(that.macroMatch);
+    return macroMatchContent.equals(that.macroMatchContent);
   }
 
   @Override
   public int hashCode() {
-    return macroMatch.hashCode();
+    return macroMatchContent.hashCode();
   }
 
   @Override

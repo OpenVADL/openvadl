@@ -24,10 +24,10 @@ import vadl.utils.SourceLocation;
  * A statement that defines a new label in an instruction sequence.
  */
 public class NewLabelStatement extends Statement {
-  public IdentifierOrPlaceholder labelId;
+  public IdentifierOrMacro labelId;
   public SourceLocation loc;
 
-  public NewLabelStatement(IdentifierOrPlaceholder labelId, SourceLocation loc) {
+  public NewLabelStatement(IdentifierOrMacro labelId, SourceLocation loc) {
     this.labelId = labelId;
     this.loc = loc;
   }

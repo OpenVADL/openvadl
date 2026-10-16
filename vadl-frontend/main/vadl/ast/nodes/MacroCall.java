@@ -218,7 +218,8 @@ public sealed interface MacroCall extends WithLocation
    * The expression backing variant of the MacroCall.
    * This node should never leave the parser!
    */
-  final class Expr extends vadl.ast.nodes.Expr implements MacroCall, IdentifierOrPlaceholder, IsId {
+  final class Expr extends vadl.ast.nodes.Expr implements MacroCall, IdentifierOrMacro,
+      IdentifierPathOrMacro {
     Identifier name;
     List<String> subcalls;
     List<vadl.ast.nodes.Node> arguments;
@@ -289,7 +290,8 @@ public sealed interface MacroCall extends WithLocation
    * The definition backing variant of the MacroCall.
    * This node should never leave the parser!
    */
-  final class Node extends vadl.ast.nodes.Node implements MacroCall, IsBinOp, IsUnOp, IsEncs {
+  final class Node extends vadl.ast.nodes.Node implements MacroCall, BinOpOrMacro, UnOpOrMacro,
+      EncsOrMacro {
 
     Identifier name;
     List<String> subcalls;

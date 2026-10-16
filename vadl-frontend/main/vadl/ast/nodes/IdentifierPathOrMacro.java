@@ -16,11 +16,31 @@
 
 package vadl.ast.nodes;
 
-import vadl.utils.SourceLocation;
+import java.util.List;
+import javax.annotation.Nullable;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsUnOp permits UnOp, MacroCall.Node, MacroMatchNode {
-  public void prettyPrint(int indent, StringBuilder builder);
+public sealed interface IdentifierPathOrMacro extends SymExprOrMacro
+    permits Identifier, IdentifierOrMacro, IdentifierPath, AsIdExpr, MacroCall.Expr,
+    MacroMatchExpr {
+  @Override
+  public default IdentifierPathOrMacro path() {
+    return this;
+  }
 
-  public SourceLocation location();
+  @Override
+  @Nullable
+  public default List<Expr> symbolArgs() {
+    return null;
+  }
+
+  public String pathToString();
+
+  /**
+   * The target this id refers to. It is resolved during name resolving and
+   * is only valid for {@link Identifier} and {@link IdentifierPath}, which
+   * are the only two {@link IdentifierPathOrMacro} subtypes that survive the {@link MacroExpander}.
+   */
+  @Nullable
+  public Node target();
 }

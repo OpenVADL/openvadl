@@ -16,12 +16,18 @@
 
 package vadl.ast.nodes;
 
-import vadl.utils.SourceLocation;
-
-@SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsEncs permits MacroCall.Node, EncodingDefinition.EncsNode,
-    EncodingDefinition.EncodingField, MacroMatchNode {
-  public SourceLocation location();
-
-  public void prettyPrint(int indent, StringBuilder builder);
+/**
+ * Represents an {@link Identifier} or one of the placeholder sub types.
+ * A placeholder is some macro expr that cannot be directly expanded to an {@link Identifier}, as
+ * itself is part of a macro definition.
+ *
+ * <p>For instance in the following {@code $constId} is such a placeholder:
+ * <pre>{@code
+ * model Test (constId: Id) : Defs = {
+ *   constant $constId = 4
+ * }
+ * }</pre></p>
+ */
+public sealed interface IdentifierOrMacro extends IdentifierPathOrMacro
+    permits Identifier, MacroCall.Expr, MacroMatchExpr, AsIdExpr {
 }

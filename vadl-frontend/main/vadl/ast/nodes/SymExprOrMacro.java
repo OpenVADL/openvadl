@@ -16,7 +16,16 @@
 
 package vadl.ast.nodes;
 
+import java.util.List;
+import javax.annotation.Nullable;
+
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
-public sealed interface IsMacroMatch
-    permits MacroMatchNode, MacroMatchExpr, MacroMatchStatement, MacroMatchDefinition {
+public sealed interface SymExprOrMacro extends CallIndexExprOrMacro
+    permits SymbolExpr, IdentifierPathOrMacro {
+  @Override
+  public IdentifierPathOrMacro path();
+
+  @Override
+  @Nullable
+  public List<Expr> symbolArgs();
 }

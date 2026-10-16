@@ -29,7 +29,7 @@ import vadl.utils.SourceLocation;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public class UnaryExpr extends Expr {
-  public IsUnOp operator;
+  public UnOpOrMacro operator;
   public Expr operand;
 
   /**
@@ -39,7 +39,7 @@ public class UnaryExpr extends Expr {
   @Nullable
   public BuiltInTable.BuiltIn computedTarget;
 
-  public UnaryExpr(IsUnOp operator, Expr operand) {
+  public UnaryExpr(UnOpOrMacro operator, Expr operand) {
     this.operator = operator;
     this.operand = operand;
   }

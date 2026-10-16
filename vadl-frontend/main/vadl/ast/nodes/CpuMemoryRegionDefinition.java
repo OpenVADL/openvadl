@@ -47,16 +47,17 @@ public class CpuMemoryRegionDefinition extends Definition implements Identifiabl
     }
   }
 
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   public MemKind kind;
-  public IsId memoryRef;
+  public IdentifierPathOrMacro memoryRef;
   @Nullable
   public Statement stmt;
   public SourceLocation loc;
 
-  public CpuMemoryRegionDefinition(IdentifierOrPlaceholder id, MemKind kind, IsId memoryRef,
-                            @Nullable Statement stmt,
-                            SourceLocation loc) {
+  public CpuMemoryRegionDefinition(IdentifierOrMacro id, MemKind kind,
+                                   IdentifierPathOrMacro memoryRef,
+                                   @Nullable Statement stmt,
+                                   SourceLocation loc) {
     this.id = id;
     this.kind = kind;
     this.memoryRef = memoryRef;

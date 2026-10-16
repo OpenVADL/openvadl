@@ -18,13 +18,13 @@ package vadl.ast.nodes;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public abstract class FormatField extends Definition {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
 
   public Identifier identifier() {
     return (Identifier) identifier;
   }
 
-  public FormatField(IdentifierOrPlaceholder identifier) {
+  public FormatField(IdentifierOrMacro identifier) {
     this.identifier = identifier;
   }
 }

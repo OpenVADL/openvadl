@@ -27,13 +27,13 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class RegisterDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
   public RelationTypeLiteral typeLiteral;
   public SourceLocation loc;
   @Nullable
   public Type type;
 
-  public RegisterDefinition(IdentifierOrPlaceholder identifier, RelationTypeLiteral typeLiteral,
+  public RegisterDefinition(IdentifierOrMacro identifier, RelationTypeLiteral typeLiteral,
                             SourceLocation location) {
     this.identifier = identifier;
     this.typeLiteral = typeLiteral;

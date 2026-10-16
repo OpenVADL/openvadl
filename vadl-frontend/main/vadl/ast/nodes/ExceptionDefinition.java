@@ -27,7 +27,7 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public final class ExceptionDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder id;
+  public IdentifierOrMacro id;
   public Statement statement;
   public List<Parameter> params;
   public SourceLocation loc;
@@ -35,9 +35,9 @@ public final class ExceptionDefinition extends Definition implements Identifiabl
   @Nullable
   public ConcreteRelationType type;
 
-  public ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params,
-                      Statement statement,
-                      SourceLocation location) {
+  public ExceptionDefinition(IdentifierOrMacro id, List<Parameter> params,
+                             Statement statement,
+                             SourceLocation location) {
     this.id = id;
     this.params = params;
     this.statement = statement;

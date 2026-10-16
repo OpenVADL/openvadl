@@ -48,7 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.ast.Frontend;
 import vadl.ast.nodes.IdentifiableNode;
-import vadl.ast.nodes.IsId;
+import vadl.ast.nodes.IdentifierPathOrMacro;
 import vadl.lsp.document.Document;
 import vadl.lsp.document.DocumentStore;
 import vadl.utils.SourceLocation;
@@ -124,7 +124,7 @@ public class VadlTextDocumentService implements TextDocumentService {
 
       var position = compilation.documentSnapshot()
           .calculateUtf8Position(params.getPosition(), false);
-      IsId identifier = AstFinderByPosition.findIdentifier(
+      IdentifierPathOrMacro identifier = AstFinderByPosition.findIdentifier(
           compilation.result().ast(),
           compilation.documentSnapshot().path,
           position

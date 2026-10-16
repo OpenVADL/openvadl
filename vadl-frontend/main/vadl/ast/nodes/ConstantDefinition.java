@@ -24,7 +24,7 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ConstantDefinition extends Definition implements IdentifiableNode, TypedNode {
-  public IdentifierOrPlaceholder identifier;
+  public IdentifierOrMacro identifier;
 
   @Nullable
   public TypeLiteral typeLiteral;
@@ -38,9 +38,9 @@ public class ConstantDefinition extends Definition implements IdentifiableNode, 
   @Nullable
   public Object evaluatedValue;
 
-  public ConstantDefinition(IdentifierOrPlaceholder identifier, @Nullable TypeLiteral typeLiteral,
-                     Expr value,
-                     SourceLocation location) {
+  public ConstantDefinition(IdentifierOrMacro identifier, @Nullable TypeLiteral typeLiteral,
+                            Expr value,
+                            SourceLocation location) {
     this.identifier = identifier;
     this.typeLiteral = typeLiteral;
     this.value = value;

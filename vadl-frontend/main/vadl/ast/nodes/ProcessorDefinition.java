@@ -27,15 +27,16 @@ import vadl.utils.SourceLocation;
 
 @SuppressWarnings({"MissingJavadocType", "MissingJavadocMethod"})
 public class ProcessorDefinition extends Definition implements IdentifiableNode {
-  public IdentifierOrPlaceholder id;
-  public IsId implementedIsa;
+  public IdentifierOrMacro id;
+  public IdentifierPathOrMacro implementedIsa;
   @Nullable
-  public IsId abi;
+  public IdentifierPathOrMacro abi;
   public List<Definition> definitions;
   public SourceLocation loc;
 
-  public ProcessorDefinition(IdentifierOrPlaceholder id, IsId implementedIsa, @Nullable IsId abi,
-                      List<Definition> definitions, SourceLocation loc) {
+  public ProcessorDefinition(IdentifierOrMacro id, IdentifierPathOrMacro implementedIsa, @Nullable
+                             IdentifierPathOrMacro abi,
+                             List<Definition> definitions, SourceLocation loc) {
     this.id = id;
     this.implementedIsa = implementedIsa;
     this.abi = abi;
