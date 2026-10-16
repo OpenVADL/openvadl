@@ -9,6 +9,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Intrinsics[(${namespace})].h"
 #include <iostream>
@@ -1036,30 +1037,66 @@ bool [(${namespace})]TargetLowering::isLegalAddImmediate(int64_t Imm) const {
   return Imm >= [(${addImmediateInstruction.minValue})] && Imm <= [(${addImmediateInstruction.maxValue})];
 }
 
+static bool isLegalLoadAddressingMode(const TargetLowering::AddrMode &AM, uint64_t NumBytes) {
+  [# th:each="check : ${loadAddressingModeChecks}" ]
+  if ([(${check.condition})])
+    return true;
+  [/]
+  return false;
+}
+
+static bool isLegalStoreAddressingMode(const TargetLowering::AddrMode &AM, uint64_t NumBytes) {
+  [# th:each="check : ${storeAddressingModeChecks}" ]
+  if ([(${check.condition})])
+    return true;
+  [/]
+  return false;
+}
+
 bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
-                                                const AddrMode &AM, Type *Ty,
+                                                const AddrMode &AMode, Type *Ty,
                                                 unsigned AS,
                                                 Instruction *I) const {
   // No global is ever allowed as a base.
-  if (AM.BaseGV)
+  if (AMode.BaseGV)
     return false;
 
-  if(I != nullptr) {
-    auto withInRange = false;
-    switch(I->getOpcode()) {
-    [# th:each="mem : ${memoryInstructions}" ]
-      case [(${namespace})]::[(${mem.instructionName})]:
-        withInRange = AM.BaseOffs >= [(${mem.minValue})] && AM.BaseOffs <= [(${mem.maxValue})];
-        break;
-    [/]
-      default:
-        // because not affected
-        return true;
-    }
-    // Only return when false
-    if(!withInRange)
+  // Scalable offsets are not supported.
+  if (AMode.ScalableOffset)
+    return false;
+
+  // Canonicalise `1*ScaledReg + imm` into `BaseReg + imm` and
+  // `2*ScaledReg` into `BaseReg + ScaledReg` (if applicable)
+  AddrMode AM = AMode;
+  if (AM.Scale && !AM.HasBaseReg) {
+    if (AM.Scale == 1) {
+      AM.HasBaseReg = true;
+      AM.Scale = 0;
+    }[# th:if="${hasRegRegAddressingMode}"] else if (AM.Scale == 2) {
+       AM.HasBaseReg = true;
+       AM.Scale = 1;
+    } [/] else {
       return false;
+    }
   }
 
-  return true;
+  // Every inferred addressing mode requires a base register.
+  if (!AM.HasBaseReg)
+    return false;
+
+  uint64_t NumBytes = 0;
+  if (Ty->isSized() && !Ty->isScalableTy())
+    NumBytes = DL.getTypeStoreSize(Ty).getFixedValue();
+
+  // Without an instruction, the addressing mode must be legal for loads and stores.
+  if (!I)
+    return isLegalLoadAddressingMode(AM, NumBytes) && isLegalStoreAddressingMode(AM, NumBytes);
+
+  if (isa<LoadInst>(I))
+    return isLegalLoadAddressingMode(AM, NumBytes);
+
+  if (isa<StoreInst>(I))
+    return isLegalStoreAddressingMode(AM, NumBytes);
+
+  return false;
 }
