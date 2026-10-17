@@ -1,0 +1,21 @@
+micro architecture MiA implements ISA = {
+  stage Stage = {
+    Stage := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Assignment
+//       ╭── test/resources/frontend-snapshots/typechecker/stageWriteWithoutOutput.vadl:3:5
+//       │
+//     3 │     Stage := decode(fetchNext)
+//       │     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+//       │
+//       Cannot assign to a `stage` that has no output.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

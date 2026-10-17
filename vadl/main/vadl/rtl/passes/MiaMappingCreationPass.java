@@ -42,7 +42,6 @@ import vadl.utils.Pair;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
-import vadl.viam.StageOutput;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
@@ -94,7 +93,7 @@ public class MiaMappingCreationPass extends Pass {
 
     // done map: mia node -> set of ipg nodes already mapped at this position
     final var done = new HashMap<Node, Set<Node>>();
-    final var writeContext = new HashMap<StageOutput, MiaMapping.NodeContext>();
+    final var writeContext = new HashMap<Stage, MiaMapping.NodeContext>();
     final var ipgNodes = ipg.getNodes().collect(Collectors.toCollection(LinkedHashSet::new));
     final var mapping = new MiaMapping(optMia.get(), ipg);
 
@@ -135,7 +134,7 @@ public class MiaMappingCreationPass extends Pass {
       // load source done sets via stage output reference
       for (Node source : sources) {
         if (source instanceof ReadStageOutputNode read) {
-          var prevContext = writeContext.get(read.stageOutput());
+          var prevContext = writeContext.get(read.stage());
           if (prevContext == null || !done.containsKey(prevContext.node())) {
             throw new PassError("Could not load instruction progress at %s in stage %s",
                 read, stage);
@@ -213,10 +212,7 @@ public class MiaMappingCreationPass extends Pass {
                 write, stage);
           }
           setSideEffect(valueContexts.getFirst(), write); // set side effect reference to all inputs
-          var output = write.stageOutput();
-          if (output != null) {
-            writeContext.put(write.stageOutput(), valueContexts.getFirst());
-          }
+          writeContext.put(stage, valueContexts.getFirst());
         }
       }
     }
@@ -235,7 +231,7 @@ public class MiaMappingCreationPass extends Pass {
   private List<MiaMapping.NodeContext> getInputContexts(
       List<Node> mapNodeInputs,
       MiaMapping mapping,
-      Map<StageOutput, MiaMapping.NodeContext> writeContext
+      Map<Stage, MiaMapping.NodeContext> writeContext
   ) {
     return mapNodeInputs.stream()
         .map(input -> {
@@ -243,7 +239,7 @@ public class MiaMappingCreationPass extends Pass {
             return mapping.contexts().get(input);
           }
           if (input instanceof ReadStageOutputNode read) {
-            return writeContext.get(read.stageOutput());
+            return writeContext.get(read.stage());
           }
           return null;
         })

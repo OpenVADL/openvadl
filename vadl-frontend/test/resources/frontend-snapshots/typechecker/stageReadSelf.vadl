@@ -1,0 +1,27 @@
+micro architecture MiA implements ISA = {
+  stage Stage -> Instruction = {
+    let bad = Stage in {
+      Stage := decode(fetchNext)
+    }
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Infinite Recursion
+//       ╭── test/resources/frontend-snapshots/typechecker/stageReadSelf.vadl:2:3
+//       │
+//     2 │>   stage Stage -> Instruction = {
+//     3 │>     let bad = Stage in {
+//     4 │>       Stage := decode(fetchNext)
+//     5 │>     }
+//     6 │>   }
+//       │    
+//       │
+//       This stage definition `Stage` is defined by itself.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

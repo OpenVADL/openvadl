@@ -7,11 +7,11 @@ micro architecture MiA implements ISA = {
 
   // Correct `source` annotation.
   [size : 1]
-  [source : Decode.ir]
+  [source : Decode]
   logic [reservation station] RS0
 
-  stage Decode -> (ir : Instruction) = {
-    ir := decode(fetchNext)
+  stage Decode -> Instruction = {
+    Decode := decode(fetchNext)
   }
 }
 

@@ -16,9 +16,11 @@
 
 package vadl.viam.graph.dependency;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.viam.StageOutput;
+import vadl.viam.Stage;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
@@ -28,26 +30,33 @@ import vadl.viam.graph.Node;
 public class ReadStageOutputNode extends ExpressionNode {
 
   @DataValue
-  protected StageOutput stageOutput;
+  protected Stage stage;
 
-  public ReadStageOutputNode(StageOutput stageOutput) {
-    super(stageOutput.type());
-    this.stageOutput = stageOutput;
+  /**
+   * Creates a new `ReadStageOutputNode`.
+   *
+   * @param stage The {@link Stage} being read from.
+   */
+  public ReadStageOutputNode(Stage stage) {
+    // We can assume here that the read stage's output type is non-null, since
+    // otherwise we would have run into an error in the typechecker already.
+    super(requireNonNull(stage.outputType()));
+    this.stage = stage;
   }
 
-  public StageOutput stageOutput() {
-    return stageOutput;
+  public Stage stage() {
+    return stage;
   }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(stageOutput);
+    collection.add(stage);
   }
 
   @Override
   public ExpressionNode copy() {
-    return new ReadStageOutputNode(stageOutput);
+    return new ReadStageOutputNode(stage);
   }
 
   @Override

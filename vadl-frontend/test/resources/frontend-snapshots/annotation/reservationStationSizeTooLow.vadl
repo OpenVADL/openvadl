@@ -2,12 +2,13 @@ micro architecture MiA implements ISA = {
 
   // Incorrect: Non-positive `size` annotation.
   [size : 0]
-  [source : Decode.ir]
+  [source : Decode]
   logic [reservation station] RS2
 
-  stage Decode -> (ir : Instruction) = {
-    ir := decode(fetchNext)
+  stage Decode -> Instruction = {
+    Decode := decode(fetchNext)
   }
+
 }
 
 instruction set architecture ISA = {}
