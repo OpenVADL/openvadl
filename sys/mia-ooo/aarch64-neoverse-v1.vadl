@@ -77,6 +77,8 @@ micro architecture NeoverseV1 = {
 
   operation StoreOps = {}
 
+  operation MemOps = { LoadOps, StoreOps }
+
   operation FP0Ops = {}
 
   operation FP1Ops = {}
@@ -136,14 +138,14 @@ micro architecture NeoverseV1 = {
   }
 
   stage UnitL0 -> Instruction = {
-    let insn = consume(Sched, LoadOps + StoreOps) in {
+    let insn = consume(Sched, MemOps) in {
       // TODO: Your behaviour here :)
       UnitL0 := insn
     }
   }
 
   stage UnitL1 -> Instruction = {
-    let insn = consume(Sched, LoadOps + StoreOps) in {
+    let insn = consume(Sched, MemOps) in {
       // TODO: Your behaviour here :)
       UnitL1 := insn
     }

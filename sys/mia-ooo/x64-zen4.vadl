@@ -43,21 +43,39 @@ micro architecture Zen4 implements x86_64 = {
   //                         Integer Execution Engine                        //
   //-------------------------------------------------------------------------//
 
-  operation GeneralALU = {}
+  operation GeneralAluOps = {}
 
-  operation GeneralAGU = {}
+  operation AguOps = {}
 
-  operation ControlFlow = {}
+  operation ControlFlowOps = {}
 
-  operation Conditionals = {}
+  operation ConditionalOps = {}
 
-  operation ComplexBitwise = {}
+  operation ComplexBitwiseOps = {}
 
-  operation GeneralBitwise = {}
+  operation GeneralBitwiseOps = {}
 
-  operation IntDiv = {}
+  operation IntDivOps = {}
 
-  operation IntMul = {}
+  operation IntMulOps = {}
+
+
+
+  operation Alu0Ops = { GeneralAluOps, ControlFlowOps, ConditionalOps, IntDivOps }
+
+  operation Alu1Ops = { GeneralAluOps, ComplexBitwiseOps, GeneralBitwiseOps, IntMulOps }
+
+  operation Alu2Ops = { GeneralAluOps, GeneralBitwiseOps }
+
+  operation Alu3Ops = { GeneralAluOps, ConditionalOps }
+
+  operation IntSched0Ops = { Alu0Ops, AguOps }
+
+  operation IntSched1Ops = { Alu1Ops, AguOps }
+
+  operation IntSched2Ops = { Alu2Ops, AguOps }
+
+  operation IntSched3Ops = { Alu3Ops, ControlFlowOps }
 
 
 
@@ -73,77 +91,77 @@ micro architecture Zen4 implements x86_64 = {
 
   // ALU0, AGU0
   [size : 24]
-  [consume : ROB, GeneralALU + GeneralAGU + ControlFlow + Conditionals + IntDiv]
+  [consume : ROB, IntSched0Ops]
   logic [reservation station] IntSched0
 
   // ALU1, AGU1
   [size : 24]
-  [consume : ROB, GeneralALU + GeneralAGU + GeneralBitwise + ComplexBitwise + IntMul]
+  [consume : ROB, IntSched1Ops]
   logic [reservation station] IntSched1
 
   // ALU2, AGU2
   [size : 24]
-  [consume : ROB, GeneralALU + GeneralAGU + GeneralBitwise]
+  [consume : ROB, IntSched2Ops]
   logic [reservation station] IntSched2
 
   // ALU3, BRU1
   [size : 24]
-  [consume : ROB, GeneralALU + ControlFlow + Conditionals]
+  [consume : ROB, IntSched3Ops]
   logic [reservation station] IntSched3
 
 
 
   stage ALU0 -> Instruction = {
-    let insn = consume(IntSched0, GeneralALU + ControlFlow + Conditionals + IntDiv) in {
+    let insn = consume(IntSched0, Alu0Ops) in {
       // TODO: Your behaviour here :)
       ALU0 := insn
     }
   }
 
   stage AGU0 -> Instruction = {
-    let insn = consume(IntSched0, GeneralAGU) in {
+    let insn = consume(IntSched0, AguOps) in {
       // TODO: Your behaviour here :)
       AGU0 := insn
     }
   }
 
   stage ALU1 -> Instruction = {
-    let insn = consume(IntSched1, GeneralALU + ComplexBitwise + GeneralBitwise + IntMul) in {
+    let insn = consume(IntSched1, Alu1Ops) in {
       // TODO: Your behaviour here :)
       ALU1 := insn
     }
   }
 
   stage AGU1 -> Instruction = {
-    let insn = consume(IntSched1, GeneralAGU) in {
+    let insn = consume(IntSched1, AguOps) in {
       // TODO: Your behaviour here :)
       AGU1 := insn
     }
   }
 
   stage ALU2 -> Instruction = {
-    let insn = consume(IntSched2, GeneralALU + GeneralBitwise) in {
+    let insn = consume(IntSched2, Alu2Ops) in {
       // TODO: Your behaviour here :)
       ALU2 := insn
     }
   }
 
   stage AGU2 -> Instruction = {
-    let insn = consume(IntSched2, GeneralAGU) in {
+    let insn = consume(IntSched2, AguOps) in {
       // TODO: Your behaviour here :)
       AGU2 := insn
     }
   }
 
   stage ALU3 -> Instruction = {
-    let insn = consume(IntSched3, GeneralALU + Conditionals) in {
+    let insn = consume(IntSched3, Alu3Ops) in {
       // TODO: Your behaviour here :)
       ALU3 := insn
     }
   }
 
   stage BRU1 -> Instruction = {
-    let insn = consume(IntSched3, ControlFlow) in {
+    let insn = consume(IntSched3, ControlFlowOps) in {
       // TODO: Your behaviour here :)
       BRU1 := insn
     }
@@ -199,9 +217,27 @@ micro architecture Zen4 implements x86_64 = {
   //        > Note that FP stores are supported on two pipelines,
   //        > but throughput is limited to one per cycle.
   //        This cannot currently be modelled in OpenVADL.
-  operation VStore = {}
+  operation VStoreOps = {}
 
-  operation VFMovToGPR = {}
+  operation VFMovToGPROps = {}
+
+
+
+  operation Fpu0Ops = { VFMulOps, VFMAOps, VFCompareOps, VFBlendOps, VMovOps, VLogicalOps, VIAddSubOps, VICompareOps, VIMulOps, VISADOps, VIBlendOps, VAESOps, VCLMOps }
+
+  operation Fpu1Ops = { VFMulOps, VFMAOps, VFCompareOps, VFBlendOps, FDivOps, VMovOps, VLogicalOps, VIAddSubOps, VICompareOps, VShuffleOps, VBitShiftOps, VAESOps, VCLMOps }
+
+  operation Fpu2Ops = { VFAddOps, VMovOps, VLogicalOps, VIAddSubOps, VICompareOps, VShuffleOps, VComplexShuffleOps, VBitShiftOps}
+
+  operation Fpu3Ops = { VFAddOps, VMovOps, VLogicalOps, VIAddSubOps, VICompareOps, VIMulOps, VISADOps, VIBlendOps }
+
+  operation Fpu4Or5Ops = { VStoreOps, VFMovToGPROps }
+
+  operation VectorSched0Ops = { Fpu0Ops, Fpu2Ops, Fpu4Or5Ops }
+
+  operation VectorSched1Ops = { Fpu1Ops, Fpu3Ops, Fpu4Or5Ops }
+
+  operation VectorAllOps = { VectorSched0Ops, VectorSched1Ops }
 
 
 
@@ -214,82 +250,56 @@ micro architecture Zen4 implements x86_64 = {
   logic [physical register file] MaskPRF
 
   [size : 64]
-  [consume : ROB, TODO]
+  [consume : ROB, VectorAllOps]
   logic [non scheduling queue] VectorQueue
 
   [size : 32]
-  [consume : VectorQueue,
-             VFMulOps + VFMAOps + VFCompareOps + VFBlendOps + VMovOps
-           + VLogicalOps + VIAddSubOps + VICompareOps + VIMulOps + VISADOps
-           + VIBlendOps + VAESOps + VCLMOps + VFAddOps + VShuffleOps
-           + VComplexShuffleOps + VBitShiftOps + VStore + VFMovToGPR]
+  [consume : VectorQueue, VectorSched0Ops]
   logic [reservation station] VectorSched0
 
   [size : 32]
-  [consume : VectorQueue,
-             VFMulOps + VFMAOps + VFCompareOps + VFBlendOps + FDivOps + VMovOps
-           + VLogicalOps + VIAddSubOps + VICompareOps + VShuffleOps
-           + VBitShiftOps + VAESOps + VCLMOps + VFAddOps + VIMulOps + VISADOps
-           + VIBlendOps + VStore + VFMovToGPR]
+  [consume : VectorQueue, VectorSched1Ops]
   logic [reservation station] VectorSched1
 
 
 
   stage FPU0 -> Instruction = {
-    let insn = consume(
-        VectorSched0,
-        VFMulOps + VFMAOps + VFCompareOps + VFBlendOps + VMovOps + VLogicalOps
-      + VIAddSubOps + VICompareOps + VIMulOps + VISADOps + VIBlendOps + VAESOps
-      + VCLMOps
-    ) in {
+    let insn = consume(VectorSched0, Fpu0Ops) in {
       // TODO: Your behaviour here :)
       FPU0 := insn
     }
   }
 
   stage FPU1 -> Instruction = {
-    let insn = consume(
-        VectorSched1,
-        VFMulOps + VFMAOps + VFCompareOps + VFBlendOps + FDivOps + VMovOps
-      + VLogicalOps + VIAddSubOps + VICompareOps + VShuffleOps + VBitShiftOps
-      + VAESOps + VCLMOps
-    ) in {
+    let insn = consume(VectorSched1, Fpu1Ops) in {
       // TODO: Your behaviour here :)
       FPU1 := insn
     }
   }
 
   stage FPU2 -> Instruction = {
-    let insn = consume(
-        VectorSched0,
-        VFAddOps + VMovOps + VLogicalOps + VIAddSubOps + VICompareOps
-      + VShuffleOps + VComplexShuffleOps + VBitShiftOps
-    ) in {
+    let insn = consume(VectorSched0, Fpu2Ops) in {
       // TODO: Your behaviour here :)
       FPU2 := insn
     }
   }
 
   stage FPU3 -> Instruction = {
-    let insn = consume(
-        VectorSched1,
-        VFAddOps + VMovOps + VLogicalOps + VIAddSubOps + VICompareOps
-      + VIMulOps + VISADOps + VIBlendOps
-    ) in {
+    let insn = consume(VectorSched1, Fpu3Ops) in {
       // TODO: Your behaviour here :)
       FPU3 := insn
     }
   }
 
   stage FPU4 -> Instruction = {
-    let insn = consume(VectorSched0, VStore + VFMovToGPR) in {
+    let insn = consume(VectorSched0, Fpu4Or5Ops) in {
       // TODO: Your behaviour here :)
       FPU4 := insn
     }
   }
 
   stage FPU5 -> Instruction = {
-    let insn = consume(VectorSched1, VStore + VFMovToGPR) in {
+    let insn = consume(VectorSched1, Fpu4Or5Ops) in {
       // TODO: Your behaviour here :)
       FPU5 := insn
     }
