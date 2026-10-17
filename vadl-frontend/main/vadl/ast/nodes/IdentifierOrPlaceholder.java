@@ -30,5 +30,5 @@ package vadl.ast.nodes;
  */
 @SuppressWarnings("MissingJavadocMethod")
 public sealed interface IdentifierOrPlaceholder extends IsId
-    permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, AsIdExpr {
+    permits Identifier, MacroCall.Expr, MacroMatchExpr, AsIdExpr {
 }

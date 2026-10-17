@@ -8,7 +8,7 @@ constant n = 3 * $example(3)
 //  Reported Diagnostics:
 //
 //  error: Unknown syntax type: `DoesntExist`
-//       ╭── test/resources/frontend-snapshots/macro/invalidInvalidSyntaxTypeReturn.vadl:1:26
+//       ╭── test/resources/frontend-snapshots/macro/invalidSyntaxTypeReturn.vadl:1:26
 //       │
 //     1 │ model example(arg: Ex) : DoesntExist =  {
 //       │                          ^^^^^^^^^^^ No syntax type with this name exists.

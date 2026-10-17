@@ -10,15 +10,12 @@ $instr()
 //  Reported Diagnostics:
 //
 //  error: SyntaxType Mismatch
-//       ╭── test/resources/frontend-snapshots/macro/invalidTopLevelMacroProducesIsaDef.vadl:4:3
+//       ╭── test/resources/frontend-snapshots/macro/invalidTopLevelMacroProducesIsaDef.vadl:7:1
 //       │
-//     4 │   instruction ABC: X = { }
-//       │   ^^^^^^^^^^^^^^^^^^^^^^^^
+//     7 │ $instr()
+//       │ ^^^^^^^^
 //       │
-//       ├─ From this model invocation (outermost call first):
-//       │       test/resources/frontend-snapshots/macro/invalidTopLevelMacroProducesIsaDef.vadl:7:1
-//       │
-//       Expected node of type Defs, received IsaDefs
+//       Expected node of type `Defs` but received `IsaDefs`
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

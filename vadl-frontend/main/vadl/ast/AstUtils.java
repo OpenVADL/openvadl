@@ -23,24 +23,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import vadl.ast.nodes.AsIdExpr;
-import vadl.ast.nodes.AsStrExpr;
 import vadl.ast.nodes.CallIndexExpr;
 import vadl.ast.nodes.DerivedFormatField;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.FormatDefinition;
-import vadl.ast.nodes.ModelDefinition;
-import vadl.ast.nodes.Node;
 import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Operator;
-import vadl.ast.nodes.PlaceholderDefinition;
-import vadl.ast.nodes.PlaceholderExpr;
-import vadl.ast.nodes.PlaceholderNode;
-import vadl.ast.nodes.PlaceholderStatement;
 import vadl.ast.nodes.RangeFormatField;
 import vadl.ast.nodes.TypedFormatField;
 import vadl.types.BuiltInTable;
@@ -214,27 +205,6 @@ class AstUtils {
       cnt += args.values.size();
     }
     return cnt;
-  }
-
-  static boolean isFullyExpanded(Node node) {
-    if (node instanceof ModelDefinition
-        || node instanceof PlaceholderNode
-        || node instanceof PlaceholderDefinition
-        || node instanceof PlaceholderStatement
-        || node instanceof PlaceholderExpr
-        || node instanceof AsIdExpr
-        || node instanceof AsStrExpr) {
-      return false;
-    }
-
-    AtomicBoolean areChildrenExpanded = new AtomicBoolean(true);
-    node.forEachChild(child -> {
-      if (!isFullyExpanded(child)) {
-        areChildrenExpanded.set(false);
-      }
-    });
-    return areChildrenExpanded.get();
-
   }
 
   public static Collection<Map<String, Type>> pseudoFields(
