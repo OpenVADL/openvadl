@@ -87,6 +87,18 @@ micro architecture SandyBridge = {
 
 
 
+  operation Port0Ops = { ALUOps, LEAOps, ShiftOps, IMulOps, FMulOps, VecOps, VecBlendOps }
+
+  operation Port1Ops = { ALUOps, LEAOps, IMulOps, FAddOps, VecOps, VecShuffleOps }
+
+  operation Port2Or3Ops = { LoadOps, StoreOps }
+
+  operation Port4Ops = {}
+
+  operation Port5Ops = { ALUOps, ShiftOps, BranchOps, VecOps, VecShuffleOps, VecBlendOps }
+
+
+
   //-------------------------------------------------------------------------//
   //                 Execution Units ("Ports" in intel speak)                //
   //-------------------------------------------------------------------------//
@@ -96,28 +108,28 @@ micro architecture SandyBridge = {
   // that OpenVADL's forwarding mechanism will need to be instruction-aware.
 
   stage PORT0 -> Instruction = {
-    let insn = consume(SCHEDULER, ALUOps + LEAOps + ShiftOps + IMulOps + FMulOps + VecOps + VecBlendOps) in {
+    let insn = consume(SCHEDULER, Port0Ops) in {
       // TODO: Your behaviour here :)
       PORT0 := insn
     }
   }
 
   stage PORT1 -> Instruction = {
-    let insn = consume(SCHEDULER, ALUOps + LEAOps + IMulOps + FAddOps + VecOps + VecShuffleOps) in {
+    let insn = consume(SCHEDULER, Port1Ops) in {
       // TODO: Your behaviour here :)
       PORT1 := insn
     }
   }
 
   stage PORT5 -> Instruction = {
-    let insn = consume(SCHEDULER, ALUOps + ShiftOps + BranchOps + VecOps + VecShuffleOps + VecBlendOps) in {
+    let insn = consume(SCHEDULER, Port5Ops) in {
       // TODO: Your behaviour here :)
       PORT5 := insn
     }
   }
 
   stage PORT2 -> Instruction = {
-    let insn = consume(SCHEDULER, LoadOps + StoreOps) in {
+    let insn = consume(SCHEDULER, Port2Or3Ops) in {
       insn.compute
       insn.write(LoadBuffer)
       insn.write(StoreBuffer)
@@ -126,7 +138,7 @@ micro architecture SandyBridge = {
   }
 
   stage PORT3 -> Instruction = {
-    let insn = consume(SCHEDULER, LoadOps + StoreOps) in {
+    let insn = consume(SCHEDULER, Port2Or3Ops) in {
       insn.compute
       insn.write(LoadBuffer)
       insn.write(StoreBuffer)
@@ -144,7 +156,7 @@ micro architecture SandyBridge = {
   //        the introduction of micro operations. For now, PORT4 simply remains
   //        unused.
   stage PORT4 -> Instruction = {
-    let insn = consume(SCHEDULER, {}) in {
+    let insn = consume(SCHEDULER, Port4Ops) in {
       insn.write(StoreBuffer)
       PORT4 := insn
     }

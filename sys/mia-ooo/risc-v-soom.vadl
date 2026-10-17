@@ -35,20 +35,20 @@ micro architecture SoomRV = {
   logic [physical register file] INT_PRF
 
   [size : 8]
-  [consume : ROB, ALUOps + BranchOps + CSROps]
-  logic [reservation station] ALU_ISSUE_QUEUE_0
+  [consume : ROB, ALU0Ops]
+  logic [reservation station] ALU0_ISSUE_QUEUE
 
   [size : 8]
-  [consume : ROB, ALUOps + BranchOps]
-  logic [reservation station] ALU_ISSUE_QUEUE_1
+  [consume : ROB, ALU1Ops]
+  logic [reservation station] ALU1_ISSUE_QUEUE
 
   [size : 8]
-  [consume : ROB, LoadOps + StoreOps]
-  logic [reservation station] AGU_ISSUE_QUEUE_0
+  [consume : ROB, MemOps]
+  logic [reservation station] AGU0_ISSUE_QUEUE
 
   [size : 8]
-  [consume : ROB, LoadOps + StoreOps]
-  logic [reservation station] AGU_ISSUE_QUEUE_1
+  [consume : ROB, MemOps]
+  logic [reservation station] AGU1_ISSUE_QUEUE
 
   // FIXME: Every store is split into an address generation and a store data
   //        uop. The address generation is dispatched to one of the
@@ -57,11 +57,11 @@ micro architecture SoomRV = {
   //        modelled in OpenVADL.
   [size : 8]
   [consume : ROB, StoreOps]
-  logic [reservation station] STORE_DATA_ISSUE_QUEUE_0
+  logic [reservation station] STU0_ISSUE_QUEUE
 
   [size : 8]
   [consume : ROB, StoreOps]
-  logic [reservation station] STORE_DATA_ISSUE_QUEUE_1
+  logic [reservation station] STU1_ISSUE_QUEUE
 
   [size : 16]
   logic [load buffer] LOAD_QUEUE
@@ -85,6 +85,12 @@ micro architecture SoomRV = {
 
   operation StoreOps = {}
 
+  operation ALU0Ops = { ALUOps, BranchOps, CSROps }
+
+  operation ALU1Ops = { ALUOps, BranchOps }
+
+  operation MemOps = { LoadOps, StoreOps }
+
 
 
   //-------------------------------------------------------------------------//
@@ -92,14 +98,14 @@ micro architecture SoomRV = {
   //-------------------------------------------------------------------------//
 
   stage ALU0 -> Instruction = {
-    let insn = consume(ALU_ISSUE_QUEUE_0, ALUOps) in {
+    let insn = consume(ALU0_ISSUE_QUEUE) in {
       // TODO: Your behaviour here :)
       ALU0 := insn
     }
   }
 
   stage ALU1 -> Instruction = {
-    let insn = consume(ALU_ISSUE_QUEUE_1, ALUOps) in {
+    let insn = consume(ALU1_ISSUE_QUEUE) in {
       // TODO: Your behaviour here :)
       ALU1 := insn
     }
@@ -108,14 +114,14 @@ micro architecture SoomRV = {
 
 
   stage AGU0 -> Instruction = {
-    let insn = consume(AGU_ISSUE_QUEUE_0) in {
+    let insn = consume(AGU0_ISSUE_QUEUE) in {
       // TODO: Your behaviour here :)
       AGU0 := insn
     }
   }
 
   stage AGU1 -> Instruction = {
-    let insn = consume(AGU_ISSUE_QUEUE_1) in {
+    let insn = consume(AGU1_ISSUE_QUEUE) in {
       // TODO: Your behaviour here :)
       AGU1 := insn
     }
@@ -124,14 +130,14 @@ micro architecture SoomRV = {
 
 
   stage STU0 -> Instruction = {
-    let insn = consume(STORE_DATA_ISSUE_QUEUE_0) in {
+    let insn = consume(STU0_ISSUE_QUEUE) in {
       // TODO: Your behaviour here :)
       STU0 := insn
     }
   }
 
   stage STU1 -> Instruction = {
-    let insn = consume(STORE_DATA_ISSUE_QUEUE_1) in {
+    let insn = consume(STU1_ISSUE_QUEUE) in {
       // TODO: Your behaviour here :)
       STU1 := insn
     }

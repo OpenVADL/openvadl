@@ -43,7 +43,7 @@ micro architecture R10000 = {
   logic [physical register file] FPR
 
   [size : 20]
-  [consume : ROB, ALUOps + MemOps + ShiftOps + BranchOps + MulOps + MVIOps + BitOps]
+  [consume : ROB, ALUAllOps]
   logic [reservation station] INTEGER_QUEUE
 
   [size : 15]
@@ -62,7 +62,7 @@ micro architecture R10000 = {
   //                     Instruction Classes for Dispatch                    //
   //-------------------------------------------------------------------------//
 
-  operation ALUOps = {}
+  operation ALUSimpleOps = {}
 
   operation MemOps = {}
 
@@ -86,33 +86,47 @@ micro architecture R10000 = {
 
 
 
+  operation ALU1Ops = { ALUSimpleOps, ShiftOps, BranchOps, MVIOps, BitOps }
+
+  operation ALU2Or4Ops = { ALUSimpleOps, MemOps }
+
+  operation ALU3Ops = { ALUSimpleOps, ShiftOps, BranchOps, MulOps }
+
+  operation ALUAllOps = { ALU1Ops, ALU2Or4Ops, ALU3Ops }
+
+  operation FPUMulOps = { FMulOps }
+
+  operation FPUAddOps = { FAddOps, FDivOps, FSqrtOps }
+
+
+
   //-------------------------------------------------------------------------//
   //                           Execution Pipelines                           //
   //-------------------------------------------------------------------------//
 
   stage ALU1 -> Instruction = {
-    let insn = consume(INTEGER_QUEUE, ALUOps + ShiftOps + BranchOps + MVIOps + BitOps) in {
+    let insn = consume(INTEGER_QUEUE, ALU1Ops) in {
       // TODO: Your behaviour here :)
       ALU1 := insn
     }
   }
 
   stage ALU2 -> Instruction = {
-    let insn = consume(INTEGER_QUEUE, ALUOps + MemOps) in {
+    let insn = consume(INTEGER_QUEUE, ALU2Or4Ops) in {
       // TODO: Your behaviour here :)
       ALU2 := insn
     }
   }
 
   stage ALU3 -> Instruction = {
-    let insn = consume(INTEGER_QUEUE, ALUOps + ShiftOps + BranchOps + MulOps) in {
+    let insn = consume(INTEGER_QUEUE, ALU3Ops) in {
       // TODO: Your behaviour here :)
       ALU3 := insn
     }
   }
 
   stage ALU4 -> Instruction = {
-    let insn = consume(INTEGER_QUEUE, ALUOps + MemOps) in {
+    let insn = consume(INTEGER_QUEUE, ALU2Or4Ops) in {
       // TODO: Your behaviour here :)
       ALU4 := insn
     }
@@ -120,17 +134,17 @@ micro architecture R10000 = {
 
 
 
-  stage FP_ADD -> Instruction = {
-    let insn = consume(FP_QUEUE, FMulOps) in {
+  stage FPU_MUL -> Instruction = {
+    let insn = consume(FP_QUEUE, FPUMulOps) in {
       // TODO: Your behaviour here :)
-      FP_ADD := insn
+      FPU_MUL := insn
     }
   }
 
-  stage FP_MUL -> Instruction = {
-    let insn = consume(FP_QUEUE, FAddOps + FDivOps + FSqrtOps) in {
+  stage FPU_ADD -> Instruction = {
+    let insn = consume(FP_QUEUE, FPUAddOps) in {
       // TODO: Your behaviour here :)
-      FP_MUL := insn
+      FPU_ADD := insn
     }
   }
 }

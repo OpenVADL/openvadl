@@ -40,7 +40,7 @@ micro architecture Boom = {
   logic [physical register file] FP_PRF
 
   [size : 32]
-  [consume : ROB, ALUOps + Int2FPOps + IMulOps + IDivOps + BranchOps]
+  [consume : ROB, ALUAllOps]
   logic [reservation station] INT_ISSUE_QUEUE
 
   [size : 32]
@@ -63,7 +63,7 @@ micro architecture Boom = {
   //                     Instruction Classes for Dispatch                    //
   //-------------------------------------------------------------------------//
 
-  operation ALUOps = {}
+  operation ALUSimpleOps = {}
 
   operation Int2FPOps = {}
 
@@ -79,33 +79,41 @@ micro architecture Boom = {
 
 
 
+  operation ALU0Or1Ops = { ALUSimpleOps }
+
+  operation ALU2Or3Ops = { ALUSimpleOps, Int2FPOps, IMulOps, IDivOps, BranchOps }
+
+  operation ALUAllOps = { ALU0Or1Ops, ALU2Or3Ops }
+
+
+
   //-------------------------------------------------------------------------//
   //                           Execution Pipelines                           //
   //-------------------------------------------------------------------------//
 
   stage ALU0 -> Instruction = {
-    let insn = consume(INT_ISSUE_QUEUE, ALUOps) in {
+    let insn = consume(INT_ISSUE_QUEUE, ALU0Or1Ops) in {
       // TODO: Your behaviour here :)
       ALU0 := insn
     }
   }
 
   stage ALU1 -> Instruction = {
-    let insn = consume(INT_ISSUE_QUEUE, ALUOps) in {
+    let insn = consume(INT_ISSUE_QUEUE, ALU0Or1Ops) in {
       // TODO: Your behaviour here :)
       ALU1 := insn
     }
   }
 
   stage ALU2 -> Instruction = {
-    let insn = consume(INT_ISSUE_QUEUE, ALUOps + Int2FPOps + IMulOps + IDivOps + BranchOps) in {
+    let insn = consume(INT_ISSUE_QUEUE, ALU2Or3Ops) in {
       // TODO: Your behaviour here :)
       ALU2 := insn
     }
   }
 
   stage ALU3 -> Instruction = {
-    let insn = consume(INT_ISSUE_QUEUE, ALUOps + Int2FPOps + IMulOps + IDivOps + BranchOps) in {
+    let insn = consume(INT_ISSUE_QUEUE, ALU2Or3Ops) in {
       // TODO: Your behaviour here :)
       ALU3 := insn
     }

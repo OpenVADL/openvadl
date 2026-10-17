@@ -40,11 +40,11 @@ micro architecture Bulldozer = {
   logic [physical register file] FP_PRF
 
   [size : 40]
-  [consume : ROB, ALUOps + IDIVOps + CountOps + IMULOps + BranchOps + AGUOps]
+  [consume : ROB, GPOps]
   logic [reservation station] GP_SCHEDULER
 
   [size : 60]
-  [consume : ROB, VecOps + FMACOps + IMACOps + XBAROps + MMXOps + FSTOOps]
+  [consume : ROB, FPUAllOps]
   logic [reservation station] FP_SCHEDULER
 
   [size : 40]
@@ -69,8 +69,6 @@ micro architecture Bulldozer = {
 
   operation BranchOps = {}
 
-  operation AGUOps = {}
-
   operation VecOps = {}
 
   operation FMACOps = {}
@@ -83,49 +81,69 @@ micro architecture Bulldozer = {
 
   operation FSTOOps = {}
 
+  operation AGUOps = {}
+
+
+
+  operation FPU0Ops = { VecOps, FMACOps, IMACOps }
+
+  operation FPU1Ops = { VecOps, FMACOps, XBAROps }
+
+  operation FPU2Ops = { VecOps, MMXOps }
+
+  operation FPU3Ops = { VecOps, MMXOps, FSTOOps }
+
+  operation FPUAllOps = { FPU0Ops, FPU1Ops, FPU2Ops, FPU3Ops }
+
+  operation ALU0Ops = { ALUOps, IDIVOps, CountOps }
+
+  operation ALU1Ops = { ALUOps, IMULOps, BranchOps }
+
+  operation GPOps = { ALU0Ops, ALU1Ops, AGUOps }
+
 
 
   //-------------------------------------------------------------------------//
   //                           Execution Pipelines                           //
   //-------------------------------------------------------------------------//
 
-  stage FP_0 -> Instruction = {
-    let insn = consume(FP_SCHEDULER, VecOps + FMACOps + IMACOps) in {
+  stage FPU_0 -> Instruction = {
+    let insn = consume(FP_SCHEDULER, FPU0Ops) in {
       // TODO: Your behaviour here :)
       FPU_0 := insn
     }
   }
 
-  stage FP_1 -> Instruction = {
-    let insn = consume(FP_SCHEDULER, VecOps + FMACOps + XBAROps) in {
+  stage FPU_1 -> Instruction = {
+    let insn = consume(FP_SCHEDULER, FPU1Ops) in {
       // TODO: Your behaviour here :)
       FPU_1 := insn
     }
   }
 
-  stage FP_2 -> Instruction = {
-    let insn = consume(FP_SCHEDULER, VecOps + MMXOps) in {
+  stage FPU_2 -> Instruction = {
+    let insn = consume(FP_SCHEDULER, FPU2Ops) in {
       // TODO: Your behaviour here :)
       FPU_2 := insn
     }
   }
 
   stage FPU_3 -> Instruction = {
-    let insn = consume(FP_SCHEDULER, VecOps + MMXOps + FSTOOps) in {
+    let insn = consume(FP_SCHEDULER, FPU3Ops) in {
       // TODO: Your behaviour here :)
       FPU_3 := insn
     }
   }
 
   stage ALU_0 -> Instruction = {
-    let insn = consume(GP_SCHEDULER, ALUOps + IDIVOps + CountOps) in {
+    let insn = consume(GP_SCHEDULER, ALU0Ops) in {
       // TODO: Your behaviour here :)
       ALU_0 := insn
     }
   }
 
   stage ALU_1 -> Instruction = {
-    let insn = consume(GP_SCHEDULER, ALUOps + IMULOps + BranchOps) in {
+    let insn = consume(GP_SCHEDULER, ALU1Ops) in {
       // TODO: Your behaviour here :)
       ALU_1 := insn
     }
