@@ -71,6 +71,7 @@ import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.LogicRef;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
@@ -708,6 +709,11 @@ class PseudoNodeOperandCollector {
 
   @Handler
   protected void handle(OperationRef node) {
+    throw Diagnostic.error("not supported", node.location()).build();
+  }
+
+  @Handler
+  protected void handle(LogicRef node) {
     throw Diagnostic.error("not supported", node.location()).build();
   }
 
