@@ -110,7 +110,7 @@ public class BinaryExpr extends Expr {
     wrapInGroup(parentPrec, builder, false, () -> {
       left.prettyPrintExpr(indent, builder, precedence());
       builder.append(" ");
-      operator.prettyPrint(0, builder);
+      operator.prettyPrint(indent, builder);
       builder.append(" ");
       right.prettyPrintExpr(indent, builder, precedence());
     });

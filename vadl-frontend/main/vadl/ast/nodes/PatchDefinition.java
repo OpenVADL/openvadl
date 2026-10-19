@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
@@ -58,14 +60,14 @@ public class PatchDefinition extends Definition {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("patch ");
-    generator.prettyPrint(0, builder);
+    generator.prettyPrint(indent, builder);
     builder.append(" ");
-    handle.prettyPrint(0, builder);
+    handle.prettyPrint(indent, builder);
     builder.append(" = ");
     if (reference != null) {
-      reference.prettyPrint(0, builder);
+      reference.prettyPrint(indent, builder);
     }
     if (source != null) {
       builder.append("-<{").append(source).append("}>-");

@@ -41,7 +41,6 @@ public class NewLabelStatement extends Statement {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("newlabel ");
     labelId.prettyPrint(indent, builder);
-    builder.append("\n");
   }
 
   @Override

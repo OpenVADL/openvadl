@@ -16,6 +16,9 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.printWithLinePreference;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -68,13 +71,13 @@ public class InstructionDefinition extends Definition implements IdentifiableNod
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("instruction ");
     identifier.prettyPrint(indent, builder);
     builder.append(" : ");
     typeIdentifier.prettyPrint(indent, builder);
-    builder.append(" = ");
-    behavior.prettyPrint(indent, builder);
+    builder.append(" =");
+    printWithLinePreference(indent, behavior, builder);
     builder.append("\n");
   }
 

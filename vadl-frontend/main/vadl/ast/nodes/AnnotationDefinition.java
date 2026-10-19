@@ -16,6 +16,9 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintJoin;
+
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.Objects;
@@ -65,15 +68,15 @@ public final class AnnotationDefinition extends Definition {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(Node.prettyIndentString(indent));
-    builder.append("[ ");
+    builder.append(indentString(indent));
+    builder.append("[");
     prettyPrintJoin(" ", keywords.stream().map(k -> (Node) k).toList(), indent, builder);
 
     if (!values.isEmpty()) {
       builder.append(" : ");
       prettyPrintJoin(", ", values, indent, builder);
     }
-    builder.append(" ]\n");
+    builder.append("]\n");
   }
 
   @Override

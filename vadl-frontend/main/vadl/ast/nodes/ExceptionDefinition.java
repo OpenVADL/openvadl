@@ -17,6 +17,8 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintJoin;
 
 import java.util.List;
 import java.util.Objects;
@@ -61,8 +63,12 @@ public final class ExceptionDefinition extends Definition implements Identifiabl
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("exception ");
-    id.prettyPrint(0, builder);
+    builder.append(indentString(indent));
+    builder.append("exception ");
+    id.prettyPrint(indent, builder);
+    builder.append("(");
+    prettyPrintJoin(", ", params, indent, builder);
+    builder.append(")");
     builder.append(" = ");
     statement.prettyPrint(indent + 1, builder);
     builder.append("\n");

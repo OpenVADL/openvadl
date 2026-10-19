@@ -16,6 +16,9 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -135,7 +138,7 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("format ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
@@ -146,23 +149,19 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
       return;
     }
 
-    builder.append(" =\n");
+    builder.append(" =");
+    builder.append(indentedNewline(indent + 1));
 
-    builder.append(prettyIndentString(indent));
     builder.append("{ ");
-
-    fields.get(0).prettyPrint(indent, builder);
-    builder.append("\n");
+    fields.get(0).prettyPrint(indent + 1, builder);
 
     for (int i = 1; i < fields.size(); i++) {
-      builder.append(prettyIndentString(indent));
+      builder.append(indentedNewline(indent + 1));
       builder.append(", ");
       fields.get(i).prettyPrint(indent, builder);
-      builder.append("\n");
-
     }
 
-    builder.append(prettyIndentString(indent));
+    builder.append(indentedNewline(indent + 1));
     builder.append("}\n");
   }
 

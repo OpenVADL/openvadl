@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
@@ -72,28 +73,28 @@ public final class EnumerationDefinition extends Definition implements Identifia
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("enumeration ");
-    id.prettyPrint(0, builder);
+    builder.append(indentString(indent)).append("enumeration ");
+    id.prettyPrint(indent, builder);
     if (enumType != null) {
       builder.append(" : ");
-      enumType.prettyPrint(0, builder);
+      enumType.prettyPrint(indent, builder);
     }
     builder.append(" =\n");
-    builder.append(prettyIndentString(indent + 1)).append("{ ");
+    builder.append(indentString(indent + 1)).append("{ ");
     var isFirst = true;
     for (var entry : entries) {
       if (!isFirst) {
-        builder.append(prettyIndentString(indent + 1)).append(", ");
+        builder.append(indentString(indent + 1)).append(", ");
       }
       isFirst = false;
-      entry.name.prettyPrint(0, builder);
+      entry.name.prettyPrint(indent, builder);
       if (entry.value != null) {
         builder.append(" = ");
-        entry.value.prettyPrint(0, builder);
+        entry.value.prettyPrint(indent, builder);
       }
       builder.append("\n");
     }
-    builder.append(prettyIndentString(indent + 1)).append("}\n");
+    builder.append(indentString(indent + 1)).append("}\n");
   }
 
   @Override

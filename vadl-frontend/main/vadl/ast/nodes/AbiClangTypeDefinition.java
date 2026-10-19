@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
@@ -99,7 +101,7 @@ public class AbiClangTypeDefinition extends Definition {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append(typeName.keyword)
+    builder.append(indentString(indent)).append(typeName.keyword)
         .append(" = ").append(typeSize.keyword);
   }
 }

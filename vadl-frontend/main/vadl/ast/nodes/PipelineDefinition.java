@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -54,9 +56,9 @@ public class PipelineDefinition extends Definition implements IdentifiableNode {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("pipeline");
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     if (!outputs.isEmpty()) {
       builder.append(" -> ");
       Parameter.prettyPrintMultiple(indent, outputs, builder);

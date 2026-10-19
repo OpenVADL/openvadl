@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
@@ -53,13 +55,13 @@ public class CacheDefinition extends Definition implements IdentifiableNode {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("cache ");
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     builder.append(" : ");
-    sourceType.prettyPrint(0, builder);
+    sourceType.prettyPrint(indent, builder);
     builder.append(" -> ");
-    targetType.prettyPrint(0, builder);
+    targetType.prettyPrint(indent, builder);
     builder.append("\n");
   }
 

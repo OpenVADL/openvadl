@@ -384,6 +384,11 @@ public class Scanner {
 		while (ch == ' ' ||
 -->scan1
 		) NextCh();
+		while (ch == '/' && Comment0() || ch == '/' && Comment1()) {
+		  while (ch == ' ' || ch >= 9 && ch <= 10 || ch == 13) {
+		    NextCh();
+		  }
+		}
 -->scan2
 		int recKind = noSym;
 		int recEnd = pos;

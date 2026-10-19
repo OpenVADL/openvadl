@@ -16,6 +16,9 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+import static vadl.ast.nodes.PrettyPrintUtils.printWithLinePreference;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -47,19 +50,46 @@ public final class IfStatement extends Statement {
     return location;
   }
 
+
+  private void prettyPrintChain(int indent, StringBuilder builder) {
+    builder.append("if ");
+    condition.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
+
+    builder.append(" then ");
+    thenStmt.prettyPrint(indent + 1, builder);
+
+    builder.append(indentedNewline(indent));
+
+    if (elseStmt != null) {
+      builder.append("else ");
+
+      // Continue chain
+      if (elseStmt instanceof IfStatement elseIfExpr) {
+        elseIfExpr.prettyPrintChain(indent, builder);
+        return;
+      }
+
+      elseStmt.prettyPrint(indent + 1, builder);
+    }
+  }
+
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
+    // Special chainging rule
+    if (elseStmt instanceof IfStatement) {
+      this.prettyPrintChain(indent, builder);
+      return;
+    }
+
     builder.append("if ");
     condition.prettyPrint(indent + 1, builder);
-    builder.append(" then\n");
-    thenStmt.prettyPrint(indent + 1, builder);
-    builder.append("\n");
+    builder.append(" then");
+    printWithLinePreference(indent, thenStmt, builder);
+
     if (elseStmt != null) {
-      builder.append(prettyIndentString(indent));
-      builder.append("else\n");
-      elseStmt.prettyPrint(indent + 1, builder);
-      builder.append("\n");
+      builder.append(indentedNewline(indent));
+      builder.append("else");
+      printWithLinePreference(indent, elseStmt, builder);
     }
   }
 

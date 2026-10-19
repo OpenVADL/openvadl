@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -49,7 +51,6 @@ public final class ForallStatement extends Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
     builder.append("forall ");
     var isFirst = true;
     for (var index : indices) {
@@ -58,7 +59,7 @@ public final class ForallStatement extends Statement {
       }
       index.prettyPrint(indent, builder);
     }
-    builder.append(" do\n");
+    builder.append(" do").append(indentedNewline(indent + 1));
     body.prettyPrint(indent + 1, builder);
   }
 

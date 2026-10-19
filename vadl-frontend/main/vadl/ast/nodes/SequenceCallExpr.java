@@ -56,10 +56,10 @@ public class SequenceCallExpr extends Expr {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    target.prettyPrint(0, builder);
+    target.prettyPrint(indent, builder);
     if (range != null) {
       builder.append("{");
-      range.prettyPrint(0, builder);
+      range.prettyPrint(indent, builder);
       builder.append("}");
     }
   }

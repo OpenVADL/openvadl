@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -51,11 +53,13 @@ public final class BlockStatement extends Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
-    builder.append("{\n");
-    statements.forEach(statement -> statement.prettyPrint(indent + 1, builder));
-    builder.append(prettyIndentString(indent));
-    builder.append("}\n");
+    builder.append("{");
+    statements.forEach(statement -> {
+      builder.append(indentedNewline(indent + 1));
+      statement.prettyPrint(indent + 1, builder);
+    });
+    builder.append(indentedNewline(indent));
+    builder.append("}");
   }
 
   @Override

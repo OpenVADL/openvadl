@@ -58,19 +58,7 @@ public abstract class Definition extends Node {
         .map(annotationClass::cast).findFirst().orElse(null);
   }
 
-  public static void prettyPrintDefinitions(int indent, StringBuilder builder,
-                                     List<Definition> definitions) {
-    Definition previousDefinition = null;
-    for (Definition definition : definitions) {
-      if (previousDefinition != null
-          && (!definition.getClass().equals(previousDefinition.getClass())
-          || !definition.annotations.isEmpty())) {
-        builder.append("\n");
-      }
-      definition.prettyPrint(indent, builder);
-      previousDefinition = definition;
-    }
-  }
+
 
   @Override
   public void forEachChild(Consumer<Node> action) {

@@ -67,7 +67,7 @@ public class RecordInstance extends Node {
         builder.append(" ; ");
       }
       isFirst = false;
-      entry.prettyPrint(0, builder);
+      entry.prettyPrint(indent, builder);
     }
     builder.append(")");
   }

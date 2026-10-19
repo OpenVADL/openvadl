@@ -16,6 +16,8 @@
 
 package vadl.ast;
 
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintDefinitions;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +99,7 @@ public class Ast {
    */
   public CharSequence prettyPrint() {
     StringBuilder builder = new StringBuilder();
-    Definition.prettyPrintDefinitions(0, builder, definitions);
+    prettyPrintDefinitions(0, builder, definitions);
     return builder;
   }
 

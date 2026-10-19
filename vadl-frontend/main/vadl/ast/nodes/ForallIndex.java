@@ -66,13 +66,13 @@ public final class ForallIndex extends Node implements IdentifiableNode {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    name.prettyPrint(0, builder);
+    name.prettyPrint(indent, builder);
     if (typeLiteral != null) {
       builder.append(": ");
-      typeLiteral.prettyPrint(0, builder);
+      typeLiteral.prettyPrint(indent, builder);
     }
     builder.append(" in ");
-    domain.prettyPrint(0, builder);
+    domain.prettyPrint(indent, builder);
   }
 
   @Override

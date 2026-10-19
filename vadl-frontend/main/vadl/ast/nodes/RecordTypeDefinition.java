@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.utils.SourceLocation;
@@ -53,7 +55,7 @@ public final class RecordTypeDefinition extends Definition implements Identifiab
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("record ");
     builder.append(recordType.print());
     builder.append(recordType.entries.stream()

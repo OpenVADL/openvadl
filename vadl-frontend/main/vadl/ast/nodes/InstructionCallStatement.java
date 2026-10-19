@@ -62,7 +62,6 @@ public final class InstructionCallStatement extends Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
     id.prettyPrint(indent, builder);
     if (!namedArguments.isEmpty()) {
       builder.append("{");
@@ -88,7 +87,6 @@ public final class InstructionCallStatement extends Statement {
       }
       builder.append(")");
     }
-    builder.append("\n");
   }
 
   @Override
@@ -144,9 +142,9 @@ public final class InstructionCallStatement extends Statement {
 
     @Override
     public void prettyPrint(int indent, StringBuilder builder) {
-      name.prettyPrint(0, builder);
+      name.prettyPrint(indent, builder);
       builder.append(" = ");
-      value.prettyPrint(0, builder);
+      value.prettyPrint(indent, builder);
     }
 
     @Override

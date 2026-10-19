@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
@@ -46,10 +48,9 @@ public final class LockStatement extends Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
     builder.append("lock ");
-    expr.prettyPrint(0, builder);
-    builder.append(" in\n");
+    expr.prettyPrint(indent, builder);
+    builder.append(" in").append(indentedNewline(indent + 1));
     statement.prettyPrint(indent + 1, builder);
   }
 

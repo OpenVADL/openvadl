@@ -54,12 +54,12 @@ public class TemplateParam extends Node implements IdentifiableNode {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    name.prettyPrint(0, builder);
+    name.prettyPrint(indent, builder);
     builder.append(": ");
-    type.prettyPrint(0, builder);
+    type.prettyPrint(indent, builder);
     if (value != null) {
       builder.append(" = ");
-      value.prettyPrint(0, builder);
+      value.prettyPrint(indent, builder);
     }
   }
 

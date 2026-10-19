@@ -96,14 +96,9 @@ public class ForallExpr extends Expr {
       foldAction.prettyPrint(indent, builder);
       builder.append(" with");
     }
-    if (isBlockLayout(body)) {
-      builder.append("\n");
-      body.prettyPrint(indent + 1, builder);
-    } else {
-      builder.append(" ");
-      body.prettyPrint(0, builder);
-      builder.append("\n");
-    }
+    builder.append(" ");
+    body.prettyPrint(indent, builder);
+    builder.append("\n");
   }
 
   @Override

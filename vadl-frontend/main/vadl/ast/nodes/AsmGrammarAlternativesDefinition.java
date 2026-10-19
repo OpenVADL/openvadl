@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -74,7 +76,7 @@ public class AsmGrammarAlternativesDefinition extends Definition {
     for (int i = 0; i < alternatives.size(); i++) {
       var alternative = alternatives.get(i);
       if (i != 0) {
-        builder.append(prettyIndentString(indent));
+        builder.append(indentString(indent));
         builder.append("|\n");
       }
       for (int j = 0; j < alternative.size(); j++) {

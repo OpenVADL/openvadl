@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -55,13 +57,12 @@ public class EncodingDefinition extends Definition {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("encoding ");
-    instrIdentifier.prettyPrint(0, builder);
-    builder.append(" =\n");
-    builder.append(prettyIndentString(indent)).append("{ ");
+    instrIdentifier.prettyPrint(indent, builder);
+    builder.append(" = {");
     encodings.prettyPrint(indent, builder);
-    builder.append(prettyIndentString(indent)).append("}\n");
+    builder.append("}\n");
   }
 
   @Override
@@ -126,10 +127,9 @@ public class EncodingDefinition extends Definition {
       boolean first = true;
       for (var entry : items) {
         if (!first) {
-          builder.append(prettyIndentString(indent)).append(", ");
+          builder.append(", ");
         }
-        entry.prettyPrint(0, builder);
-        builder.append("\n");
+        entry.prettyPrint(indent, builder);
         first = false;
       }
     }
@@ -184,9 +184,9 @@ public class EncodingDefinition extends Definition {
 
     @Override
     public void prettyPrint(int indent, StringBuilder builder) {
-      field.prettyPrint(0, builder);
+      field.prettyPrint(indent, builder);
       builder.append(" = ");
-      value.prettyPrint(0, builder);
+      value.prettyPrint(indent, builder);
     }
 
     @Override

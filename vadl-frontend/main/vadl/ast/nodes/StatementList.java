@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.List;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
@@ -45,7 +47,12 @@ public final class StatementList extends Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    items.forEach(item -> item.prettyPrint(indent, builder));
+    for (int i = 0; i < items.size(); i++) {
+      if (i > 0) {
+        builder.append(indentedNewline(indent));
+      }
+      items.get(i).prettyPrint(indent, builder);
+    }
   }
 
   @Override

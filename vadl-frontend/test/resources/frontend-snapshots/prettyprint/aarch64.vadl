@@ -1,0 +1,4290 @@
+// INCLUDE-PRETTY-PRINT
+
+// A minified version of sys/aarch64.
+// This one disables repetitive macros such that we get a wide variant of definitions to be pretty printed.
+
+instruction set architecture AArch64Base = {
+
+  constant SizeW = 32                 // size of W registers is 32
+  constant SizeX = 64                 // size of X registers is 64
+
+  using Byte     = Bits< 8>           // 8 bit Byte
+  using Half     = Bits<16>           // 16 bit half word type
+  using Word     = Bits<32>           // 32 bit word type
+  using XWord    = Bits<64>           // 64 bit eXtendend (double) word type
+  using Bits1    = Bits< 1>           //  1 bit type
+  using Bits2    = Bits< 2>           //  2 bit type
+  using Bits3    = Bits< 3>           //  3 bit type
+  using Bits4    = Bits< 4>           //  4 bit type
+  using Bits5    = Bits< 5>           //  5 bit type
+  using Bits6    = Bits< 6>           //  6 bit type
+  using Bits7    = Bits< 7>           //  7 bit type
+  using Bits8    = Bits< 8>           //  8 bit type
+  using Bits9    = Bits< 9>           //  9 bit type
+  using Bits10   = Bits<10>           // 10 bit type
+  using Bits11   = Bits<11>           // 11 bit type
+  using Bits12   = Bits<12>           // 12 bit type
+  using Bits13   = Bits<13>           // 13 bit type
+  using Bits14   = Bits<14>           // 14 bit type
+  using Bits15   = Bits<15>           // 15 bit type
+  using Bits16   = Bits<16>           // 16 bit type
+  using Bits17   = Bits<17>           // 17 bit type
+  using Bits19   = Bits<19>           // 19 bit type
+  using Bits21   = Bits<21>           // 21 bit type
+  using Bits24   = Bits<24>           // 24 bit type
+  using Bits25   = Bits<25>           // 25 bit type
+  using Bits26   = Bits<26>           // 26 bit type
+  using Bits27   = Bits<27>           // 27 bit type
+  using Instr    = Word               // instruction are 32 bit wide
+  using BitsW    = Bits<SizeW>        // Bits W register type
+  using BitsX    = Bits<SizeX>        // Bits X register type
+  using SIntW    = SInt<SizeW>        //   signed integer W sized
+  using SIntX    = SInt<SizeX>        //   signed integer X sized
+  using UIntW    = UInt<SizeW>        // unsigned integer W sized
+  using UIntX    = UInt<SizeX>        // unsigned integer X sized
+  using Index    = Bits5              // 5 bit register index type for 32 registers
+  using Address  = BitsX              // address has X register type
+
+  program counter PC: Address         // program counter
+
+  memory        MEM : Address -> Byte // byte addressed memory
+
+  register        S : Index -> BitsX  // general purpose register file with stack pointer
+  [overwrite source: zero]            // S is overwritten on write by zero extending the written value
+  alias register  R = S(*)(31..0)     // lower half of general purpose register file with stack pointer
+  [zero : X(31)]                      // X(31) is the zero register
+  alias register  X = S               // general purpose register file with zero register
+  [zero : W(31)]                      // X(31) is the zero register
+  [overwrite source: zero]            // X is overwritten on write by zero extending the written value
+  alias register W  = X(*)(31..0)     // lower half of general purpose register file with zero register
+  alias register SP : Address = S(31) // stack pointer
+  alias register LR : Address = S(30) // link register (return address)
+
+  [negative status register]
+  register NZCV_N : Bits1             // Negative
+  [zero status register]
+  register NZCV_Z : Bits1             // Zero
+  [carry status register]
+  register NZCV_C : Bits1             // Carry
+  [overflow status register]
+  register NZCV_V : Bits1             // oVerflow
+
+  [syntax : ":{}:{}"]
+  relocation lo12( symbol : Bits<64> ) -> SInt<64> = (symbol as SInt<12>) as SInt<64>
+
+  enumeration CondCode : Bits<4> =    // condition code encodings, do not change order
+    { EQ                              // EQual                    Z == 1
+    , NE                              // Not Equal                Z == 0
+    , CS                              // Carry Set                C == 1    HS unsigned Higher or Same
+    , CC                              // Carry Clear              C == 0    LO unsigned LOwer
+    , MI                              // MInus                    N == 1
+    , PL                              // PLus                     N == 0
+    , VS                              // oVerflow Set             V == 1
+    , VC                              // oVerflow Clear           V == 0
+    , HI                              // unsigned HIgher          C == 1 and Z == 0
+    , LS                              // unsigned Lower or Same   C == 0  or Z == 1
+    , GE                              // signed Greater or Equal  N == V
+    , LT                              // signed Less Than         N != V
+    , GT                              // signed Greater Than      N == V and Z == 0
+    , LE                              // signed Less or Equal     N != V  or Z == 1
+    , AL                              // ALways true
+    , NV                              // NeVer, Not aVailable, reserved, gives true
+    }
+
+  function conditionHolds (cond: Bits<4>) -> Bool = // evaluate condition code
+    match cond with
+      { CondCode::EQ => NZCV_Z  = 1
+      , CondCode::NE => NZCV_Z  = 0
+      , CondCode::CS => NZCV_C  = 1
+      , CondCode::CC => NZCV_C  = 0
+      , CondCode::MI => NZCV_N  = 1
+      , CondCode::PL => NZCV_N  = 0
+      , CondCode::VS => NZCV_V  = 1
+      , CondCode::VC => NZCV_V  = 0
+      , CondCode::HI => NZCV_C  = 1 && NZCV_Z = 0
+      , CondCode::LS => NZCV_C  = 0 || NZCV_Z = 1
+      , CondCode::GE => NZCV_N  = NZCV_V
+      , CondCode::LT => NZCV_N != NZCV_V
+      , CondCode::GT => NZCV_N  = NZCV_V && NZCV_Z = 0
+      , CondCode::LE => NZCV_N != NZCV_V || NZCV_Z = 1
+      , _            => true
+      }
+
+  enumeration SF: Bits1 =             // size field values and assembly function name, do not rename elements or change order
+    { WSize                           // 32 bit operation or W register names
+    , XSize                           // 64 bit operation or X register names
+    }
+
+  enumeration Size =                  // bit size values for operation size, do not rename elements
+    { WSize = SizeW                   // 32 is size for WSize operations
+    , XSize = SizeX                   // 64 is size for XSize operations
+    }
+
+  enumeration ShiftSize =             // shift size values for operation size, do not rename elements
+    { WSize = 5                       // 5 is size for WSize shift immediate values
+    , XSize = 6                       // 6 is size for XSize shift immediate values
+    }
+
+  enumeration FF: Bits1 =             // flag field values, do not change order
+    { OffFlags                        // flag setting is off
+    , SetFlags                        // operation sets flags
+    }
+
+  enumeration ShiftType : Bits2 =     // register operand shift type, do not change order
+    { LSL                             // Logical Shift Left
+    , LSR                             // Logical Shift Right
+    , ASR                             // Arithmetic Shift Right
+    , ROR                             // ROtate Right
+    }
+
+  enumeration ExtendType : Bits3 =    // register operand extend type, do not change order
+    { UXTB                            // Unsigned eXTend Byte
+    , UXTH                            // Unsigned eXTend Half
+    , UXTW                            // Unsigned eXTend Word
+    , UXTX                            // Unsigned eXTend Xword
+    , SXTB                            // Signed   eXTend Byte
+    , SXTH                            // Signed   eXTend Half
+    , SXTW                            // Signed   eXTend Word
+    , SXTX                            // Signed   eXTend Xword
+    }
+
+
+// assembly string functions ***************************************************
+
+  // assembly W register names or zero
+  function WSize (idx: Index) -> String =   // do not rename
+    if idx = 31 then "wzr" else "w" + udec( idx )
+
+  // assembly X register names or zero
+  function XSize (idx: Index) -> String =   // do not rename
+    if idx = 31 then "xzr"  else "x" + udec( idx )
+
+  // assembly W register names or sp
+  function WSizeSP (idx: Index) -> String = // do not rename
+    if idx = 31 then "wsp" else "w" + udec( idx )
+
+  // assembly X register names or sp
+  function XSizeSP (idx: Index) -> String = // do not rename
+    if idx = 31 then "sp"  else "x" + udec( idx )
+
+  function Imm7decimal  (imm: SIntX)  -> String =
+    if imm = 0 then "" else (", #", sdec( imm ))
+
+  function Imm9decimal  (imm: Bits9)  -> String =
+    if imm = 0 then "" else (", #", sdec( imm ))
+
+  function Imm12decimal (imm: Bits12) -> String =
+    if imm = 0 then "" else (", #", udec( imm ))
+
+// syntax records and model types **********************************************
+
+  // instruction id, mnemonic, opcode as literal or enum
+  record InstrNoFunct (id: Id, mnemo: Str, opcode: Ex)
+
+  // instruction id, mnemonic, opcode as literal or enum, function or type name
+  record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
+
+  // condition code id, mnemonic extension, condition expression
+  record Cond (cc: Id, mext: Str, ex: Ex)
+
+  // register shift expression, encoding elements, assembly string expression
+  record RegShift (ex: Ex, enc: Encs, asm: Ex)
+
+  // register size (WSize, XSize), access size (Byte, Half, Word, XWord),
+  // mnemonic extension ("b", "sb", "h", "sh", "sw"), opc, memory statement
+  record Memory  (regsize: Id, accsize: Id, mext: Str, opc: Lit, stmt: Stat)
+
+  // higher order model for simple flag setting models
+  model-type NoSetFlags = () -> Stats
+
+  // higher order model for flag setting models
+  model-type SetResultFlags = (CallEx, Ex) -> Stats
+
+  // result model, OffFlags or SetFlags, mnemonic extension ("" or "s")
+  record Flags  (resModel: SetResultFlags, ff: Id, mext: Str)
+
+  // higher order model enriched with size: [WX]Size, flags
+  model-type InstrWithFunctSizeFlags = (InstrWithFunct, Id, Flags) -> IsaDefs
+
+  // higher order model enriched with size: [WX]Size, shifted register
+  model-type InstrWithFunctSizeRegShift = (InstrWithFunct, Id, RegShift) -> IsaDefs
+
+  // higher order model enriched with operation size
+  model-type InstrWithFunctSize = (InstrWithFunct, Id) -> IsaDefs
+
+  // higher order model enriched with condition
+  model-type InstrWithCond = (InstrWithFunct, Cond) -> IsaDefs
+
+  // higher order model enriched with memory
+  model-type MemoryModel = (InstrNoFunct, Memory) -> IsaDefs
+
+
+// models for selecting W or X register ****************************************
+
+  model WXReg (size: Id): Id = {
+    match: Id ($size = WSize => W ; _ => X)
+  }
+
+  model RSReg (size: Id): Id = {
+    match: Id ($size = WSize => R ; _ => S)
+  }
+
+// models for setting flags ****************************************************
+
+  // set no flags
+  model NoFlags (): Stats = {}
+
+  // set all flags
+  model SetFlags (): Stats = {
+    NZCV_N := flags.negative
+    NZCV_Z := flags.zero
+    NZCV_C := flags.carry
+    NZCV_V := flags.overflow
+    }
+
+  // set NZ flags, clear CV flags
+  model SetNZClearCVFlags (): Stats = {
+    NZCV_N := flags.negative
+    NZCV_Z := flags.zero
+    NZCV_C := false
+    NZCV_V := false
+    }
+
+  // assigns zero extended word result to destination expression
+  model WResult (dest: CallEx, result: Ex): Stats = {
+    $dest := $result
+    }
+
+  // assigns result to destination expression
+  model XResult (dest: CallEx, result: Ex): Stats = {
+    $dest := $result
+    }
+
+  // assigns zero extended word result to destination expression and set flags
+  model WResFlags (dest: CallEx, result: Ex): Stats = {
+    $dest := $result
+    $SetFlags ()
+    }
+
+  // assigns result to destination expression and set flags
+  model XResFlags (dest: CallEx, result: Ex): Stats = {
+    $dest := $result
+    $SetFlags ()
+    }
+
+
+// add / sub extend models *****************************************************
+
+  format AddSubExtFormat: Instr =     // add/sub extended register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..21]            // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , option   [15..13]               // ExtendType depending on option value
+    , imm3     [12..10] : Bits3       // immediate shift amount, if (imm3 > 4) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register (SP)
+    , rd       [4..0]   : Index       // destination register (SP if ff = 0)
+    }
+
+  model AddSubExtInstrBase (i: InstrWithFunct, extId: Id, size: Id, f: Flags, extEx: Ex, optId: Id, enc: Encs, asm: Ex): IsaDefs = {
+    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+    instruction AsId ($i.id, $extId): AddSubExtFormat =
+      let result, flags = VADL::$i.funct ($RSReg($size)(rn), ($extEx) as Bits<Size::$size>) in {
+        $f.resModel (match: Id ($f.ff = OffFlags => $RSReg($size) ; _ => $WXReg($size))(rd) ; result )
+        }
+    encoding AsId ($i.id, $extId) = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, option = ExtendType::$optId, $enc }
+    assembly AsId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', AsId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
+                       ', ', AsId($size, "SP")(rn), ', ', $asm )
+    }
+
+  model AddSubExtInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
+    $AddSubExtInstrBase ($i; UXTB; $size; $f; X(rm)( 7..0) as UIntX; UXTB; imm3 = 0; (WSize(rm), ", uxtb"))
+    $AddSubExtInstrBase ($i; UXTH; $size; $f; X(rm)(15..0) as UIntX; UXTH; imm3 = 0; (WSize(rm), ", uxth"))
+    $AddSubExtInstrBase ($i; UXTW; $size; $f; X(rm)(31..0) as UIntX; UXTW; imm3 = 0; (WSize(rm), ", uxtw"))
+    $AddSubExtInstrBase ($i; UXTX; $size; $f; X(rm)(63..0) as UIntX; UXTX; imm3 = 0; ($size(rm), ", uxtx"))
+    $AddSubExtInstrBase ($i; SXTB; $size; $f; X(rm)( 7..0) as SIntX; SXTB; imm3 = 0; (WSize(rm), ", sxtb"))
+    $AddSubExtInstrBase ($i; SXTH; $size; $f; X(rm)(15..0) as SIntX; SXTH; imm3 = 0; (WSize(rm), ", sxth"))
+    $AddSubExtInstrBase ($i; SXTW; $size; $f; X(rm)(31..0) as SIntX; SXTW; imm3 = 0; (WSize(rm), ", sxtw"))
+    $AddSubExtInstrBase ($i; SXTX; $size; $f; X(rm)(63..0) as SIntX; SXTX; imm3 = 0; ($size(rm), ", sxtx"))
+
+    $AddSubExtInstrBase ($i; UXSB; $size; $f; X(rm)( 7..0) as UIntX << imm3; UXTB; none; (WSize(rm), ", uxtb #", udec(imm3)))
+    $AddSubExtInstrBase ($i; UXSH; $size; $f; X(rm)(15..0) as UIntX << imm3; UXTH; none; (WSize(rm), ", uxth #", udec(imm3)))
+    $AddSubExtInstrBase ($i; UXSW; $size; $f; X(rm)(31..0) as UIntX << imm3; UXTW; none; (WSize(rm), ", uxtw #", udec(imm3)))
+    $AddSubExtInstrBase ($i; UXSX; $size; $f; X(rm)(63..0) as UIntX << imm3; UXTX; none; ($size(rm), ", uxtx #", udec(imm3)))
+    $AddSubExtInstrBase ($i; SXSB; $size; $f; X(rm)( 7..0) as SIntX << imm3; SXTB; none; (WSize(rm), ", sxtb #", udec(imm3)))
+    $AddSubExtInstrBase ($i; SXSH; $size; $f; X(rm)(15..0) as SIntX << imm3; SXTH; none; (WSize(rm), ", sxth #", udec(imm3)))
+    $AddSubExtInstrBase ($i; SXSW; $size; $f; X(rm)(31..0) as SIntX << imm3; SXTW; none; (WSize(rm), ", sxtw #", udec(imm3)))
+    $AddSubExtInstrBase ($i; SXSX; $size; $f; X(rm)(63..0) as SIntX << imm3; SXTX; none; ($size(rm), ", sxtx #", udec(imm3)))
+    }
+
+
+// add / sub immediate models **************************************************
+
+  format AddSubImmFormat: Instr =     // add/sub immediate format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..23]            // opcode
+    , sh       [22]                   // if (sh = 1) imm12 << 12
+    , imm12    [21..10] : Bits12      // immediate operand eventually shifted
+    , rn       [9..5]   : Index       // source register (SP)
+    , rd       [4..0]   : Index       // destination register (SP if ff = 0)
+    , imm12X   = imm12 as BitsX       // zero extended immediate operand
+    , imm12S   = imm12 as BitsX << 12 // zero extended shifted immediate operand
+    }
+
+  model AddSubImmInstrShft (i: InstrWithFunct, size: Id, f: Flags, immEx: Ex, sh: Lit, asm: Str): IsaDefs = {
+    instruction $i.id: AddSubImmFormat =
+      let result, flags = VADL::$i.funct ($RSReg($size)(rn), ($immEx) as Bits<Size::$size>) in {
+        $f.resModel (match: Id ($f.ff = OffFlags => $RSReg($size) ; _ => $WXReg($size))(rd) ; result )
+        }
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, sh = $sh }
+    assembly $i.id = ( $i.mnemo, $f.mext, ' ', AsId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
+                       ', ', AsId($size, "SP")(rn), ', ', "#", udec($immEx), $asm )
+    }
+
+  model ExtInstrStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+    (AsId ($i.id, $ext); $i.mnemo; $i.opcode; $i.funct)
+    }
+
+  model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
+    $AddSubImmInstrShft ($ExtInstrStr ($i; "I"  ); $size; $f; imm12X; 0 ; "") //  udec(imm12)
+    $AddSubImmInstrShft ($ExtInstrStr ($i; "I12"); $size; $f; imm12S; 1 ; "") // (udec(imm12), ", lsl #12")
+    }
+
+
+// add / sub shift models ******************************************************
+
+  format AddSubSftFormat: Instr =     // add/sub shifted register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..24,21]         // opcode
+    , shift    [23,22]                // ShiftType, if (shift = ROR) raise Undefined
+    , rm       [20..16] : Index       // 2nd source register (eventually shifted)
+    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  model AddSubSftInstrBase (i: InstrWithFunct, size: Id, f: Flags, sftex: Ex, enc: Encs, asm: Ex): IsaDefs = {
+    // shift is set explicitely, therefore no undefined check for a shift of 0b11 is required
+    [undefined when : sf = 0 && imm6(5) = 1]
+    instruction $i.id: AddSubSftFormat =
+      let result, flags = VADL::$i.funct ($WXReg($size)(rn), ($sftex)) in {
+        $f.resModel ($WXReg($size)(rd) ; result )
+      }
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, $enc }
+    assembly $i.id = ( $i.mnemo, $f.mext, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), $asm )
+    }
+
+  model AddSubSftInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
+    $AddSubSftInstrBase ($i; $size; $f; $WXReg($size)(rm); imm6 = 0, shift = ShiftType::LSL; "") // TODO pseudo instruction
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSL"); $size; $f; $WXReg($size)(rm) as Bits << imm6; shift = ShiftType::LSL; (", lsl #", udec(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSR"); $size; $f; $WXReg($size)(rm) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", udec(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "ASR"); $size; $f; $WXReg($size)(rm) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", udec(imm6)))
+    }
+
+
+// encoding / assembly model for 3 register operand instructions ***************
+
+  format ThreeRegOpFormat: Instr =    // three register operand format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15..10]        // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  model ThreeRegOpEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
+    }
+
+
+// add / sub carry models ******************************************************
+
+  model AddSubCarryInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result, flags = VADL::$i.funct($WXReg($size)(rn), $WXReg($size)(rm), NZCV_C) in
+        $WXReg($size)(rd) := result
+    $ThreeRegOpEncAsm ($i; $size)
+    }
+
+  model AddSubCarryFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result, flags = VADL::$i.funct($WXReg($size)(rn), $WXReg($size)(rm), NZCV_C) in {
+        $WXReg($size)(rd) := result
+        $SetFlags()
+        }
+    $ThreeRegOpEncAsm ($i; $size)
+    }
+
+
+// PC relative address models **************************************************
+
+  format RelAddressFormat: Instr =    // PC relative address format
+    { op       [31,28..24]            // opcode
+    , imm21    [23..5,30,29]          // PC relative offset
+    , rd       [4..0]   : Index       // destination register
+    , offset   = imm21 as SIntX       // sign extended offset
+    }
+
+  model AddressBaseInstr (i: InstrNoFunct, ex: Ex): IsaDefs = {
+    instruction $i.id: RelAddressFormat =
+      X(rd) := $ex
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', ' ', sdec(imm21))
+    }
+
+  model AddressRelInstr (i: InstrNoFunct): IsaDefs = {
+    $AddressBaseInstr ($i; PC + offset)
+    }
+
+  model AddressPageInstr (i: InstrNoFunct): IsaDefs = {
+    $AddressBaseInstr ($i; ((PC >> 12) + offset) << 12)
+    }
+
+
+// multiply add / sub (long)  models *******************************************
+
+  format MulAddSubFormat: Instr =     // multiply add / sub format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15]            // opcode
+    , rm       [20..16] : Index       // 2nd source  register
+    , ra       [14..10] : Index       // accumulator register
+    , rn       [9..5]   : Index       // 1st source  register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  model MulAddSubInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: MulAddSubFormat =
+      let result = VADL::$i.funct ($WXReg($size)(ra), $WXReg($size)(rn) * $WXReg($size)(rm)) in
+        $WXReg($size)(rd) := result
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', ', $size(ra))
+    }
+
+  model MulAddSubLongInstr (i: InstrWithFunct, type: Id): IsaDefs = {
+    instruction $i.id: MulAddSubFormat =
+      X(rd) := VADL::$i.funct (X(ra), $WXReg(WSize)(rn) as $type *# $WXReg(WSize)(rm) as $type)
+    encoding $i.id = { op = $i.opcode, sf = SF::XSize }
+    assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', WSize(rn), ', ', WSize(rm), ', ', XSize(ra))
+    }
+
+  model SMulAddSubLongInstr (i: InstrWithFunct): IsaDefs = { $MulAddSubLongInstr ($i; SInt) }
+  model UMulAddSubLongInstr (i: InstrWithFunct): IsaDefs = { $MulAddSubLongInstr ($i; UInt) }
+
+// multiply high model *********************************************************
+
+  model MulHighInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result = X(rn) as $i.funct *# X(rm) as $i.funct in
+        X(rd) := result(127..SizeX)
+    $ThreeRegOpEncAsm ($i; XSize)
+    }
+
+
+// divide model ****************************************************************
+
+  model DivInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let dividend = $WXReg($size)(rn) as $i.funct in
+      let divisor  = $WXReg($size)(rm) as $i.funct in
+        let result =
+          if divisor = 0
+            then 0
+            else match : Ex ($i.funct = SInt =>     // if SInt check for overflow
+              let MinInt = 1 as SInt<Size::$size> << Size::$size - 1 in
+                if dividend = MinInt && divisor = -1
+                  then MinInt
+                  else dividend / divisor
+              ; _ =>   dividend / divisor
+              ) in
+        $WXReg($size)(rd) := result
+    $ThreeRegOpEncAsm ($i; $size)
+    }
+
+
+// logic immediate models ******************************************************
+
+  // Additional information on immediate operand de/encoding is available at
+  // https://dinfuehr.github.io/blog/encoding-of-immediate-values-on-aarch64/
+  // https://kddnewton.com/2022/08/11/aarch64-bitmask-immediates.html
+
+  // pattern replication functions
+
+  function rep2  (pattern: Bits< 2>) -> Bits< 4> = (pattern, pattern)
+  function rep4  (pattern: Bits< 4>) -> Bits< 8> = (pattern, pattern)
+  function rep8  (pattern: Bits< 8>) -> Bits<16> = (pattern, pattern)
+  function rep16 (pattern: Bits<16>) -> Bits<32> = (pattern, pattern)
+  function rep32 (pattern: Bits<32>) -> Bits<64> = (pattern, pattern)
+
+  // replicate replicates the size0 sized pattern in pat0 until 64 bit are
+  // filled, size0 must be a power of 2 > 1, the bits above the pattern in
+  // pat0 must be zero
+
+  function replicate (pat0: BitsX, size0: Bits6) -> BitsX =
+    if size0 = 0 then pat0 else let pat1 = pat0 << size0 | pat0 in let size1 = size0 << 1 in
+    if size1 = 0 then pat1 else let pat2 = pat1 << size1 | pat1 in let size2 = size1 << 1 in
+    if size2 = 0 then pat2 else let pat3 = pat2 << size2 | pat2 in let size3 = size2 << 1 in
+    if size3 = 0 then pat3 else let pat4 = pat3 << size3 | pat3 in let size4 = size3 << 1 in
+    if size4 = 0 then pat4 else            pat4 << size4 | pat4
+
+  // imm13Decode takes the N, imms and immr fields as a combined 13 bit value
+  // and returns the replicated and rotated 64 bit immediate value for defined
+  // N, imms and immr values. 0 is returned for undefined values of imms, either
+  // explicitely for an invalid level or implicitely for an invalid length of
+  // all ones by shifting 1 zero times and subtracting 1 which also results in
+  // 0. The unused high bits of immr have no effect as rotating the identical
+  // pattern more positions than required gives the same result.
+
+  function imm13DecAlt (imm13: Bits13) -> BitsX =
+    (    if imm13(12  ) = 0b1     then                                 (1 as Bits<64> << imm13(5..0) + 1) - 1
+    else if imm13(5   ) = 0b0     then rep32 (                         (1 as Bits<32> << imm13(4..0) + 1) - 1)
+    else if imm13(5..4) = 0b10    then rep32 (rep16(                   (1 as Bits<16> << imm13(3..0) + 1) - 1))
+    else if imm13(5..3) = 0b110   then rep32 (rep16 (rep8(             (1 as Bits< 8> << imm13(2..0) + 1) - 1)))
+    else if imm13(5..2) = 0b1110  then rep32 (rep16 (rep8 (rep4(       (1 as Bits< 4> << imm13(1..0) + 1) - 1))))
+    else if imm13(5..1) = 0b11110 then rep32 (rep16 (rep8 (rep4 (rep2 ((1 as Bits< 2> << imm13(   0) + 1) - 1)))))
+    else 0  ) <>> imm13(11..6)
+
+  function imm13Decode (imm13: Bits13) -> BitsX =
+    (    if imm13(12  ) = 0b1     then            (1 as BitsX << imm13(5..0) + 1) - 1
+    else if imm13(5   ) = 0b0     then replicate ((1 as BitsX << imm13(4..0) + 1) - 1, 32)
+    else if imm13(5..4) = 0b10    then replicate ((1 as BitsX << imm13(3..0) + 1) - 1, 16)
+    else if imm13(5..3) = 0b110   then replicate ((1 as BitsX << imm13(2..0) + 1) - 1,  8)
+    else if imm13(5..2) = 0b1110  then replicate ((1 as BitsX << imm13(1..0) + 1) - 1,  4)
+    else if imm13(5..1) = 0b11110 then replicate ((1 as BitsX << imm13(   0) + 1) - 1,  2)
+    else 0  ) <>> imm13(11..6)
+
+  // patternSize determines the size of a repeating pattern.
+  // Zero and all ones are invalid patterns for the immediate operands of
+  // logical instructions. The function returns the valid pattern sizes
+  // (2,4,8,16,32,64) or 0 for an invalid pattern size.
+
+  function patternSize (val: BitsX) -> SIntW =
+         if val =  0    || val = -1   then  0
+    else if val(63..32) != val(31..0) then 64
+    else if val(31..16) != val(15..0) then 32
+    else if val(15.. 8) != val( 7..0) then 16
+    else if val( 7.. 4) != val( 3..0) then  8
+    else if val( 3.. 2) != val( 1..0) then  4
+    else 2
+
+  // nImmrImms returns the concatenated values for N, immr and imms
+
+  function nImmrImms (patSize: SIntW, leftRotations: SIntW, trailingOnes: SIntW) -> Bits13 =
+    // immr is the number of right rotations of the pattern
+    // imms is a bitwise or of the pattern size and the number of ones - 1
+    let immr = (patSize - leftRotations &  patSize - 1) as Bits6 in
+    let imms = (~(patSize - 1) << 1 | trailingOnes - 1) as Bits6 in
+      (patSize = 64,immr,imms)
+
+// The function isOnesZeros returns true if the argument onesZeros is a
+// sequence of one or more ones followed by one or more zeroes.
+
+  function isOnesZeros(onesZeros: BitsX) -> Bool =
+    let mask = ((onesZeros - 1) | onesZeros) in
+      (mask + 1 & mask) = 0
+
+// imm13Encode encodes an unsigned 64 bit integer into the 13 bit N|immr|imms
+// representation for a valid pattern, otherwise it returns 0 as Bits13
+
+  function imm13EncodeXSize (val: BitsX) -> Bits13 =
+    let size = patternSize (val) in
+    if size = 0 then 0 else
+    let mask = ~(0 as BitsX) >> (64 - size) in
+    let imm = val & mask in
+    if isOnesZeros(imm) then
+      let leftRotations = VADL::ctz(imm) as SIntW in
+        nImmrImms(size, leftRotations, VADL::cto(imm >> leftRotations) as SIntW)
+    else let immNmask = imm | ~mask in
+      if isOnesZeros(~immNmask) then
+        let leadingOnes = VADL::clo(immNmask) as SIntW in
+          nImmrImms(size, 64 - leadingOnes, (leadingOnes + VADL::cto(immNmask) as SIntW) - (64 - size))
+      else 0 as Bits13
+
+  function imm13EncodeWSize (val: BitsW) -> Bits13 =
+    imm13EncodeXSize ((val, val))
+
+  format LogicImmFormat: Instr =               // logic immediate format
+    { sf       :  Bits1                        // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       :  Bits8                        // opcode
+    , imm13    :  Bits13                       // N, imms and immr fields
+    , rn       :  Index                        // source register
+    , rd       :  Index                        // destination register
+    , immWSize =  imm13Decode (imm13) as BitsW // decoded BitsW immediate value
+    , immXSize =  imm13Decode (imm13)          // decoded BitsX immediate value
+    , imm13    := imm13EncodeWSize(immWSize)
+    , imm13    := imm13EncodeXSize(immXSize)
+    , immWSize :- imm13EncodeWSize(immWSize) != 0
+    , immXSize :- imm13EncodeXSize(immXSize) != 0
+    }
+
+  model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', udec(AsId(imm, $size)))
+    }
+
+  model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    [undefined when : imm13Decode (imm13) = 0 || sf = 0 && imm13(12) = 1]
+    instruction $i.id: LogicImmFormat =
+      let result, flags = VADL::$i.funct ($WXReg($size)(rn), AsId(imm, $size)) in {
+        $WXReg($size)(rd) := result
+        $SetNZClearCVFlags ()
+        }
+    $LogicImmEncAsm ($i; $size; "")
+    }
+
+  model LogicImmInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    [undefined when : imm13Decode (imm13) = 0 || sf = 0 && imm13(12) = 1]
+    instruction $i.id: LogicImmFormat =
+      let result = VADL::$i.funct ($WXReg($size)(rn), AsId(imm, $size)) in
+        $RSReg($size)(rd) := result
+    $LogicImmEncAsm ($i; $size; "SP")
+    }
+
+
+// logic shifted register models ***********************************************
+
+  format LogicRegShiftFormat: Instr = // logic shifted register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..24,21]            // opcode
+    , shift    [23,22]                // shift type (enum ShiftType, ROR is allowed)
+    , rm       [20..16] : Index       // 2nd source register eventually shifted
+    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  model LogicRegGeneralInstr (i: InstrWithFunct, size: Id, s: RegShift, f: NoSetFlags): IsaDefs = {
+    [undefined when : sf = 0 && imm6(5) = 1]
+    instruction $i.id: LogicRegShiftFormat =
+      let result, flags = VADL::$i.funct ($WXReg($size)(rn), $s.ex) in {
+        $WXReg($size)(rd) := result
+        $f ()
+        }
+    encoding $i.id = { op = $i.opcode,  sf = SF::$size, $s.enc }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $s.asm)
+    }
+
+  model LogicRegBasicInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; $s; NoFlags)
+    }
+
+  model LogicRegFlagInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; $s; SetNZClearCVFlags)
+    }
+
+  model LogicRegNegInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); NoFlags)
+    }
+
+  model LogicRegNegFlagInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); SetNZClearCVFlags)
+    }
+
+  model LogicRegShiftExtInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, ext: Str, size: Id, s: RegShift): IsaDefs = {
+    $modelid ((AsId ($i.id, $ext); $i.mnemo; $i.opcode; $i.funct); $size; $s)
+    }
+
+  model LogicRegShiftInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, size: Id): IsaDefs = {
+    $LogicRegShiftExtInstr ($modelid; $i; ""   ; $size; ($WXReg($size)(rm) as Bits; imm6 = 0, shift = ShiftType::LSL;  $size(rm))) // TODO pseudo instruction
+    $LogicRegShiftExtInstr ($modelid; $i; "LSL"; $size; ($WXReg($size)(rm) as Bits  << imm6;  shift = ShiftType::LSL; ($size(rm), ", lsl #", udec(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "LSR"; $size; ($WXReg($size)(rm) as UInt  >> imm6;  shift = ShiftType::LSR; ($size(rm), ", lsr #", udec(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "ASR"; $size; ($WXReg($size)(rm) as SInt  >> imm6;  shift = ShiftType::ASR; ($size(rm), ", asr #", udec(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "ROR"; $size; ($WXReg($size)(rm) as Bits <>> imm6;  shift = ShiftType::ROR; ($size(rm), ", ror #", udec(imm6))))
+    }
+
+
+// register shift models *******************************************************
+
+  format ShiftRegFormat: Instr =      // variable shift register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15..12]        // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , shift    [11..10]               // shift type (enum ShiftType, ROR is allowed)
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  model ShiftRegInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ShiftRegFormat =
+      $WXReg($size)(rd) :=  VADL::$i.funct ($WXReg($size)(rn), $WXReg($size)(rm))
+    encoding $i.id = { op = 0b0011'0101'1000'10, sf = SF::$size, shift = $i.opcode }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
+    }
+
+
+// movk, movn, movz models *****************************************************
+
+  enumeration Position: Bits2 =       // position in destination register, do not reorder
+    { Pos00                           // 15..0
+    , Pos16                           // 31..16
+    , Pos32                           // 47..32
+    , Pos48                           // 63..48
+    }
+
+  format MovFormat: Instr =           // movk, movn, movz format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..23]               // opcode
+    , pos      [22,21]                // position of imm16 in destination (enum Position)
+    , imm16    [20..5]  : Bits16      // immediate value shifted by (pos << 4)
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  model notOrIdent (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
+
+/* correct spec which does not work with TableGen
+
+  model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
+    // pos is set explicitely, therefore no undefined check for sf = 0 && pos(1) = 1 is required
+    instruction AsId ($i.id, $pos): MovFormat =
+      $WXReg($size)(rd) := $posex
+    encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
+    assembly AsId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', udec(imm16),
+      match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
+    }
+
+  model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    match: IsaDefs ( $size = WSize
+         => $MovInstr ($i; $size; Pos00; let xrd = W(rd) in (xrd(31..16), imm16) as BitsW)
+            $MovInstr ($i; $size; Pos16; let xrd = W(rd) in (imm16, xrd(15..0 )) as BitsW)
+      ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
+            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
+            $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
+            $MovInstr ($i; $size; Pos48; let xrd = X(rd) in (             imm16, xrd(47..0)))
+      )
+    }
+
+  model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    match: IsaDefs ( $size = WSize
+         => $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsW      ))
+            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsW << 16))
+      ; _=> $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
+            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
+            $MovInstr ($i; $size; Pos32; $notOrIdent($i.funct; imm16 as BitsX << 32))
+            $MovInstr ($i; $size; Pos48; $notOrIdent($i.funct; imm16 as BitsX << 48))
+      )
+    }
+
+    */
+
+// begin wrong spec to work with TableGen
+
+model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
+  // pos is set explicitely, therefore no undefined check for sf = 0 && pos(1) = 1 is required
+  instruction AsId ($i.id, $pos): MovFormat =
+    X(rd) := $posex
+  encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
+  assembly AsId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', udec(imm16),
+    match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
+  }
+
+model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+  match: IsaDefs ( $size = WSize
+       => $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(31..16), imm16) as BitsX)
+          $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (imm16, xrd(15..0 )) as BitsX)
+    ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
+          $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
+          $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
+          $MovInstr ($i; $size; Pos48; let xrd = X(rd) in (             imm16, xrd(47..0)))
+    )
+  }
+
+model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+  match: IsaDefs ( $size = WSize
+       => $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
+          $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
+    ; _=> $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; imm16 as BitsX      ))
+          $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; imm16 as BitsX << 16))
+          $MovInstr ($i; $size; Pos32; $notOrIdent($i.funct; imm16 as BitsX << 32))
+          $MovInstr ($i; $size; Pos48; $notOrIdent($i.funct; imm16 as BitsX << 48))
+    )
+  }
+
+// begin wrong spec to work with TableGen
+
+
+// bitfield extract model ******************************************************
+
+  format ExtractRegFormat: Instr =    // bit field extract register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..23,21]            // opcode
+    , N        [22]                   // must be equal to sf, otherwise undefined
+    , rm       [20..16]               // 2nd source register
+    , imms     [15..10]               // right shift amount (bit field position)
+    , rn       [9..5]                 // 1st source register
+    , rd       [4..0]                 // destination register
+    , shiftWSize  = imms(4..0)
+    , shiftXSize  = imms
+    , imms        := shiftWSize as Bits<6>
+    , imms        := shiftXSize
+    , shiftWSize  :- shiftWSize <= 31
+    , shiftXSize  :- shiftXSize <= 63
+    }
+
+  model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    // N is set explicitely, therefore no undefined check for sf != N is required
+    [undefined when : sf = 0 && imms(5)]
+    instruction $i.id: ExtractRegFormat =
+      let pair = ($WXReg($size)(rn), $WXReg($size)(rm)) in
+        $WXReg($size)(rd) := (pair >> AsId (shift, $size)) as Bits<Size::$size>
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', #', udec(imms))
+    }
+
+
+// bitfield move model *********************************************************
+
+// There exist different versions of a BFM, SBFM, UBFM (BitField Move)
+// instruction. Bitfield move commons are:
+//
+// If <imms> is greater than or equal to <immr>, this copies a bitfield of
+// (<imms>-<immr>+1) bits starting from bit position <immr> in the source
+// register to the least significant bits of the destination register.
+//
+// If <imms> is less than <immr>, *BFM copies a bitfield of (<imms>+1) bits from
+// the least significant bits of the source register to bit position
+// (regsize-<immr>) of the destination register, where regsize is the
+// destination register size of 32 or 64 bits (but regsize becomes 0 in Bit5 or
+// Bit6 sized positions computations).
+//
+// BFM:  In both cases, the other bits of the destination register remain
+// unchanged.
+// SBFM: In both cases, the destination bits below the bitfield are set to zero,
+// and the bits above the bitfield are set to a copy of the most significant bit
+// of the bitfield.
+// UBFM: In both cases, the destination bits below and above the bitfield are
+// set to zero.
+//
+// For SBFM and UBFM there exist pseudo instructions for shifts and sign/zero
+// extension. Therefore, *BFM instructions are specified using a shift left
+// followed by a shift right.
+
+  format BitFieldMoveFormat: Instr =  // bit field move format
+    { sf         :  Bits1             // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op         :  Bits8             // opcode
+    , N          :  Bits1             // must be equal to sf, otherwise undefined
+    , immr       :  Bits6             // rotate right count (bit field low position)
+    , imms       :  Bits6             // bit field length -1 or high position
+    , rn         :  Index             // source register
+    , rd         :  Index             // destination register
+    , leftWSize  =  -1 as Bits5 - imms as Bits5
+    , leftXSize  =  -1 as Bits6 - imms
+    , rightWSize =  immr as Bits5 - imms as Bits5 - 1
+    , rightXSize =  immr - imms - 1
+    , imms       := (-1 as Bits5 - leftWSize) as Bits6
+    , imms       :=  -1 as Bits6 - leftXSize
+    , immr       := (rightWSize  - leftWSize) as Bits6
+    , immr       :=  rightXSize  - leftXSize
+    , leftWSize  :- leftWSize <= 31
+    , leftXSize  :- leftXSize <= 63
+    , rightWSize :- rightWSize <= 31
+    , rightXSize :- rightXSize <= 63
+    }
+
+  model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    // if (sf = 0) specification ignores imms(5) and immr(5)
+    // N is set explicitely, therefore no undefined check for sf != N is required
+    [undefined when : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
+    instruction $i.id: BitFieldMoveFormat =
+      let left = AsId (left, $size) in
+        let right = AsId (right, $size) in
+          let xrn = $WXReg($size)(rn) as $i.funct << left >> right in
+            let result = match: Ex ($i.mnemo = "bfm" =>
+              let mask = ~(~(0 as Bits<Size::$size>) << left >> right) in
+                $WXReg($size)(rd) & mask | xrn
+              ; _ =>
+              xrn) in
+            $WXReg($size)(rd) := result
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', #', udec(immr), ', #', udec(imms))
+    }
+
+
+// bit count models ************************************************************
+
+  format TwoRegOpFormat: Instr =      // two register operand format
+    { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits21               // opcode
+    , rn       : Index                // source register
+    , rd       : Index                // destination register
+    }
+
+  model TwoRegOpEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn))
+    }
+
+  model CountBitsInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat =
+      let result = VADL::$i.funct ($WXReg($size)(rn)) in
+        $WXReg($size)(rd) := result
+    $TwoRegOpEncAsm ($i; $size)
+    }
+
+
+// reverse bits / bytes model **************************************************
+
+  function revBitsWSize (bits: BitsW) -> BitsW = bits
+    ( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
+     16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)
+
+  function revBitsXSize (bits: BitsX) -> BitsX = bits
+    ( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
+     16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+     32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,
+     48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63)
+
+  model ReverseBitsInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat =
+      let result = AsId(revBits, $size) ($WXReg($size)(rn)) in
+        $WXReg($size)(rd) := result
+    $TwoRegOpEncAsm ($i; $size)
+    }
+
+  model RevBytesHInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
+    instruction $i.id: TwoRegOpFormat = {
+      let xrn = (X(rn)) in
+        let result = (xrn(55..48),xrn(63..56),xrn(39..32),xrn(47..40),xrn(23..16),xrn(31..24),xrn(7..0),xrn(15..8)) in
+          $WXReg($size)(rd) := result as Bits<Size::$size>
+      }
+    $TwoRegOpEncAsm ($i; $size)
+    }
+
+  model RevBytesWInstr (i: InstrWithFunct): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
+    instruction $i.id: TwoRegOpFormat =
+      let xrn = (X(rn)) in
+        let result = (xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56),xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24)) in
+          $WXReg($i.funct)(rd) := result as Bits<Size::$i.funct>
+    $TwoRegOpEncAsm ($i; $i.funct)
+    }
+
+  model RevBytesXInstr (i: InstrWithFunct): IsaDefs = {
+    // sf and opc are set explicitely, therefore no undefined check for sf = 0 and opc = 0b11 is required
+    instruction $i.id: TwoRegOpFormat =
+      let xrn = (X(rn)) in
+        let result = (xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24),xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56)) in
+          $WXReg($i.funct)(rd) := result as Bits<Size::$i.funct>
+    $TwoRegOpEncAsm ($i; $i.funct)
+    }
+
+// conditional compare models **************************************************
+
+  format CondCompareFormat: Instr =   // conditional compare format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,11,10,4]       // opcode
+    , rm       [20..16] : Index       // 2nd source register or unsigned 5 bit immediate value
+    , cc       [15..12] : Bits4       // condition code (enum CondCode)
+    , rn       [9..5]   : Index       // source register
+    , nzcv     [3..0]   : Bits4       // new condition flags
+    , immX     = rm as BitsX          // rm zero extended to 64 bits
+    }
+
+  model CondCompareBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex, asm: Ex): IsaDefs = {
+    instruction $i.id: CondCompareFormat =
+      if $c.ex
+        then let result, flags = VADL::$i.funct($WXReg($size)(rn), $ex) in {
+          $SetFlags()
+          }
+        else {
+          NZCV_N := nzcv(3)
+          NZCV_Z := nzcv(2)
+          NZCV_C := nzcv(1)
+          NZCV_V := nzcv(0)
+          }
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, cc = CondCode::$c.cc }
+    assembly $i.id = ( $i.mnemo, ' ', $size(rn), $asm, ', #', udec(nzcv), ', ', $c.mext )
+    }
+
+  model CondCompareImmInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; immX as BitsW; (', #', udec(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; immX         ; (', #', udec(rm)))
+    }
+
+  model CondCompareRegInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; W(rm)         ; (', ', WSize(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; X(rm)         ; (', ', XSize(rm)))
+    }
+
+
+// conditional select models ***************************************************
+
+  format CondSelectFormat: Instr =    // conditional select format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,11,10]         // opcode
+    , rm       [20..16]               // 2nd source register
+    , cc       [15..12]               // condition code (enum CondCode)
+    , rn       [9..5]                 // source register
+    , rd       [4..0]                 // destination register
+    }
+
+  model CondSelectBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex): IsaDefs = {
+    instruction $i.id: CondSelectFormat =
+      let result = if $c.ex then X(rn) else $ex in
+        $WXReg($size)(rd) := result as Bits<Size::$size>
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, cc = CondCode::$c.cc }
+    assembly $i.id = ( $i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', ', $c.mext)
+    }
+
+  model CondSelectWX (i: InstrWithFunct, c: Cond, ex: Ex): IsaDefs = {
+    $CondSelectBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; $ex)
+    $CondSelectBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; $ex)
+    }
+
+  model CondSelectInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    match: IsaDefs (
+      $i.funct = inc => $CondSelectWX ($i; $c;  X(rm) + 1);
+      $i.funct = neg => $CondSelectWX ($i; $c; -X(rm)    );
+      $i.funct = not => $CondSelectWX ($i; $c; ~X(rm)    );
+      _              => $CondSelectWX ($i; $c;  X(rm)    ))
+    }
+
+
+// branch models ***************************************************************
+
+  format BranchFormat: Instr =        // unconditional branch immediate format
+    { op       : Bits6                // opcode
+    , imm26    : Bits26               // branch offset, needs to be sign extended and shifted
+    , offset   = imm26 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  model BranchEncAsm (i: InstrNoFunct): IsaDefs = {
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', sdec(offset))
+    }
+
+  model BranchInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchFormat =
+      PC := PC + offset
+    $BranchEncAsm ($i)
+    }
+
+  model BranchLinkInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchFormat = {
+      LR := PC.next
+      PC := PC + offset
+      }
+    $BranchEncAsm ($i)
+    }
+
+  model BranchRegEncAsm (i: InstrNoFunct): IsaDefs = {
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', XSize(rn))
+    }
+
+  format BranchRegFormat: Instr =     // branch register format
+    { op       [31..10,4..0]          // opcode
+    , rn       [9..5]   : Index       // branch target register
+    }
+
+  model BranchRegInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchRegFormat =
+      PC := X(rn)
+    $BranchRegEncAsm ($i)
+    }
+
+  model BranchRegLinkInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchRegFormat =
+      let target = X(rn) in {
+        LR := PC.next
+        PC := target
+        }
+    $BranchRegEncAsm ($i)
+    }
+
+  format CondBranchFormat: Instr =    // conditional branch conditional immediate format
+    { op       [31..24,4]             // opcode
+    , imm19    [23..5]  : Bits19      // branch offset, needs to be sign extended and shifted
+    , cc       [3..0]                 // condition code (enum CondCode)
+    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  model CondBranchInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    instruction $i.id: CondBranchFormat =
+      if $c.ex then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode, cc = CondCode::$c.cc }
+    assembly $i.id = ($i.mnemo, $c.mext, ' ', sdec(offset))
+    }
+
+  model ExtendCondInstr (modelid: InstrWithCond, i: InstrWithFunct, c: Cond): IsaDefs = {
+    $modelid ((AsId($i.id, $c.cc); $i.mnemo; $i.opcode; $i.funct); $c)
+    }
+
+  model CondInstr (modelid: InstrWithCond, i: InstrWithFunct): IsaDefs = {
+    $ExtendCondInstr ($modelid; $i; (EQ ; "eq" ; NZCV_Z  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (NE ; "ne" ; NZCV_Z  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (CS ; "cs" ; NZCV_C  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (CC ; "cc" ; NZCV_C  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (MI ; "mi" ; NZCV_N  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (PL ; "pl" ; NZCV_N  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (VS ; "vs" ; NZCV_V  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (VC ; "vc" ; NZCV_V  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (HI ; "hi" ; NZCV_C  = 1 && NZCV_Z = 0      ))
+    $ExtendCondInstr ($modelid; $i; (LS ; "ls" ; NZCV_C  = 0 || NZCV_Z = 1      ))
+    $ExtendCondInstr ($modelid; $i; (GE ; "ge" ; NZCV_N  = NZCV_V               ))
+    $ExtendCondInstr ($modelid; $i; (LT ; "lt" ; NZCV_N != NZCV_V               ))
+    $ExtendCondInstr ($modelid; $i; (GT ; "gt" ; NZCV_N  = NZCV_V && NZCV_Z = 0 ))
+    $ExtendCondInstr ($modelid; $i; (LE ; "le" ; NZCV_N != NZCV_V || NZCV_Z = 1 ))
+    $ExtendCondInstr ($modelid; $i; (AL ; "al" ; true                           ))
+    $ExtendCondInstr ($modelid; $i; (NV ; "nv" ; true                           ))
+    }
+
+  format CompareBranchFormat: Instr = // compare and branch immediate format
+    { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits7                // opcode
+    , imm19    : Bits19               // branch offset, needs to be sign extended and shifted
+    , rt       : Index                // source register
+    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  model CompareBranchInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: CompareBranchFormat =
+      if VADL::$i.funct ($WXReg($size)(rt), 0) then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rt), ', ', sdec(offset))
+    }
+
+  format TestBitBranchFormat: Instr = // test bit and branch immediate format
+    { op       [30..24]    : Bits7    // opcode
+    , imm6     [31,23..19] : Bits6    // bit identifier
+    , imm14    [18..5]     : Bits14   // branch offset, needs to be sign extended and shifted
+    , rt       [4..0]      : Index    // source register
+    , offset   = imm14 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  model TestBitBranchInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: TestBitBranchFormat =
+      if VADL::$i.funct ((X(rt) >> imm6) as Bits1, 0) then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', XSize(rt), ', #', udec(imm6), ', ', sdec(offset))
+    }
+
+// load / store register models ************************************************
+
+  enumeration AccSize: Bits2 =        // memory operations access size, do not change order
+    { Byte                            // 1 byte  access
+    , Half                            // 2 bytes access
+    , Word                            // 4 bytes access
+    , XWord                           // 8 bytes access
+    }
+
+  format MemoryImmFormat: Instr =     // unscaled immediate load / store format
+    { size     [31..30]    : Bits2    // size of memory operation (enum AccSize)
+    , op       [29..24,21,11..10]     // opcode
+    , opc      [23..22]    : Bits2    // function code for access kind
+    , imm9     [20..12]    : Bits9    // signed offset
+    , rn       [9..5]      : Index    // base register (SP)
+    , rt       [4..0]      : Index    // source or target register
+    , offset   = imm9 as SIntX        // sign extended offset
+    }
+
+  format MemoryOffFormat: Instr =     // unsigned offset load / store format
+    { size     : Bits2                // size of memory operation (enum AccSize)
+    , op       : Bits6                // opcode
+    , opc      : Bits2                // function code for access kind
+    , imm12    : Bits12               // unsigned scaled offset
+    , rn       : Index                // base register (SP)
+    , rt       : Index                // source or target register
+    , offset   = imm12 as UIntX       // zero extended shifted offset
+    }
+
+  model MemoryEncAsm (i: InstrNoFunct, m: Memory, asm: Ex): IsaDefs = {
+    encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize }
+    assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), $asm )
+  }
+
+  model MemoryPreIndexInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    [undefined when : opc != 0 && rn = rt && rt != 31]
+    instruction $i.id: MemoryImmFormat =
+      let addr = S(rn) + offset in {
+        $m.stmt
+        S(rn) := addr
+        }
+    $MemoryEncAsm ($i; $m; (Imm9decimal(imm9), ']!') )
+    }
+
+  model MemoryPostIndexInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    [undefined when : opc != 0 && rn = rt && rt != 31]
+    instruction $i.id: MemoryImmFormat =
+      let addr = S(rn) in {
+        $m.stmt
+        S(rn) := addr + offset
+        }
+    $MemoryEncAsm ($i; $m; (']', Imm9decimal(imm9)) )
+    }
+
+  model MemoryOffsetInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    instruction $i.id: MemoryOffFormat =
+      let addr = S(rn) + (offset << AccSize::$m.accsize) in $m.stmt
+    $MemoryEncAsm ($i; $m; (Imm12decimal(imm12), ']') )
+    }
+
+  model MemoryUnscaledInstr(i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    instruction $i.id: MemoryImmFormat =
+      let addr = S(rn) + offset in $m.stmt
+    $MemoryEncAsm ($i; $m; (Imm9decimal(imm9), ']') )
+    }
+
+// load / store scaled register models *****************************************
+
+  enumeration Scaled: Bits1 =         // scaled index register
+    { Un                              // index register unscaled
+    , Is                              // index register is scaled
+    }
+
+  format MemoryRegFormat: Instr =     // load store (scaled) register format
+    { size     [31..30]    : Bits2    // size of memory operation (enum AccSize)
+    , op       [29..24,21,11,10]      // opcode
+    , opc      [23,22]     : Bits2    // function code for access kind
+    , rm       [20..16]    : Index    // (scaled) index register
+    , option   [15..13]    : Bits3    // option type (enum ExtendType)
+    , scaled   [12]        : Bits1    // set if index register is scaled (enum Scaled)
+    , rn       [9..5]      : Index    // base register (SP)
+    , rt       [4..0]      : Index    // source or target register
+    }
+
+  model MemoryRegisterBase (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
+    // TODO check SP alignment
+    // options are enumrated explicitely, therefore no undefined check option(1) = 0 is required
+    instruction $i.id: MemoryRegFormat =
+      let addr = S(rn) + ($addr) in $m.stmt
+    encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize, option = ExtendType::$option, scaled = Scaled::$scaled }
+    assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), ', ', $asm, ']' )
+    }
+
+  model MemoryRegisterXtd (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
+  	$MemoryRegisterBase ((AsId ($i.id, $option, $scaled); $i.mnemo; $i.opcode); $m; $option; $scaled; $asm; $addr)
+    }
+
+  model MemoryRegisterInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    $MemoryRegisterXtd ($i; $m; UXTW; Un; (WSize(rm), ", uxtw"   );                           X(rm) as UIntW as BitsX)
+    $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #", udec(AccSize::$m.accsize)); X(rm) as UIntW as BitsX << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; UXTX; Un; (XSize(rm)             );                           X(rm))
+    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #",  udec(AccSize::$m.accsize)); X(rm) << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; SXTW; Un; (WSize(rm), ", sxtw"   );                           X(rm) as SIntW as BitsX)
+    $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #", udec(AccSize::$m.accsize)); X(rm) as SIntW as BitsX << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; SXTX; Un; (XSize(rm), ", sxtx"   );                           X(rm))
+    $MemoryRegisterXtd ($i; $m; SXTX; Is; (XSize(rm), ", sxtx #", udec(AccSize::$m.accsize)); X(rm) << AccSize::$m.accsize)
+    }
+
+// memory literal model ********************************************************
+
+  format MemoryLitFormat: Instr =     // literal load format
+    { opc      : Bits2                // opcode / size of memory operation
+    , op       : Bits6                // opcode
+    , imm19    : Bits19               // PC relative offset
+    , rt       : Index                // target register
+    , offset   = imm19 as SIntX << 2
+    }
+
+  model MemoryLiteralInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    instruction $i.id: MemoryLitFormat =
+      let addr = PC + offset in $m.stmt
+    encoding $i.id = { op = $i.opcode, opc = $m.opc }
+    assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', ', sdec(imm19))
+    }
+
+// memory enriching models *****************************************************
+
+  model MemoryInstr (memmodel: MemoryModel, i: InstrNoFunct, xtdId: Str, m: Memory): IsaDefs = {
+  	$memmodel ((AsId ($i.id, $xtdId); $i.mnemo; $i.opcode); $m)
+    }
+
+  model StoreInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b00; MEM<1> (addr) := W(rt) as Byte))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b00; MEM<2> (addr) := W(rt) as Half))
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b00; MEM<4> (addr) := W(rt) as Word))
+    $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b00; MEM<8> (addr) := X(rt)        ))
+    }
+
+  model LoadInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b01; W(rt) := MEM<1> (addr) as UIntW))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b01; W(rt) := MEM<2> (addr) as UIntW))
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b01; W(rt) := MEM<4> (addr) as UIntW))
+    $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b01; X(rt) := MEM<8> (addr)         ))
+    $MemoryInstr ($memmodel; $i; "SBX"; (XSize; Byte ; "sb"; 0b10; X(rt) := MEM<1> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SHX"; (XSize; Half ; "sh"; 0b10; X(rt) := MEM<2> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SWX"; (XSize; Word ; "sw"; 0b10; X(rt) := MEM<4> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SBW"; (WSize; Byte ; "sb"; 0b11; X(rt) := MEM<1> (addr) as SIntW as BitsW as BitsX))
+    $MemoryInstr ($memmodel; $i; "SHW"; (WSize; Half ; "sh"; 0b11; X(rt) := MEM<2> (addr) as SIntW as BitsW as BitsX))
+    }
+
+  model LoadLitInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ; ""  ; 0b00; X(rt) := MEM<4> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord; ""  ; 0b01; X(rt) := MEM<8> (addr)         ))
+    $MemoryInstr ($memmodel; $i; "SWX"; (XSize; Word ; "sw"; 0b10; X(rt) := MEM<4> (addr) as SIntX))
+    }
+
+
+// memory register pair models *************************************************
+
+  format MemoryPairFormat: Instr =    // load / store register pairs format
+    { opc      [31..30,26,22]         // opcode kind memory operation
+    , op       [29..27,25..23]        // opcode and addressing mode
+    , imm7     [21..15]    : Bits7    // signed offset
+    , rt2      [14..10]    : Index    // 2nd source or target register
+    , rn       [9..5]      : Index    // base register (SP)
+    , rt       [4..0]      : Index    // source or target register
+    , offWSize = imm7 as SIntX << 2   // sign extended and shifted offset W
+    , offXSize = imm7 as SIntX << 3   // sign extended and shifted offset X
+    }
+
+  model MemoryRegPairEncAsm (i: InstrWithFunct, extId: Str, size: Id, isLoad: Bool, op: Bin, asm: Ex): IsaDefs = {
+    encoding AsId ($i.id, $extId) = { opc = $i.opcode, op = $op }
+    assembly AsId ($i.id, $extId) = ($i.mnemo, ' ', $size(rt), ', ', $size(rt2), $asm)
+    }
+
+  model MemoryRegPairInstr (i: InstrWithFunct, size: Id, isLoad: Bool, memstmts: Stats): IsaDefs = {
+    // TODO check SP alignment
+    // TODO add BigEndian variant
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rt ; _=> false)]
+    instruction $i.id: MemoryPairFormat =
+      let addr = S(rn) + AsId (off, $size) in { $memstmts }
+    $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(AsId (off, $size)), "]"))
+    // TODO check SP alignment
+    // TODO add BigEndian variant
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rt || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
+    instruction AsId ($i.id, "Pre"): MemoryPairFormat =
+      let addr = S(rn) + AsId (off, $size) in {
+          $memstmts
+          S(rn) := addr
+        }
+    $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(AsId (off, $size)), "]!"))
+    // TODO check SP alignment
+    // TODO add BigEndian variant
+    [undefined when : match: Ex ( $isLoad = true => rt2 = rt || rn != 31 && (rt = rn || rt2 = rn); _=> false)]
+    instruction AsId ( $i.id, "Pst"): MemoryPairFormat =
+      let addr = S(rn) in {
+          $memstmts
+          S(rn) := addr + AsId (off, $size)
+        }
+    $MemoryRegPairEncAsm ($i; "Pst"; $size; $isLoad; 0b101'001; ("[", XSizeSP(rn), "]", Imm7decimal(AsId (off, $size))))
+    }
+
+  model LoadPairInstrW (i: InstrWithFunct): IsaDefs = {
+    $MemoryRegPairInstr ($i; WSize; true; X(rt) := MEM<4> (addr) as $i.funct   X(rt2) := MEM<4> (addr + 4) as $i.funct)
+    }
+
+  model LoadPairInstrX (i: InstrWithFunct): IsaDefs = {
+    $MemoryRegPairInstr ($i; XSize; true; X(rt) := MEM<8> (addr)               X(rt2) := MEM<8> (addr + 8))
+    }
+
+  model StorePairInstrW (i: InstrWithFunct): IsaDefs = {
+    $MemoryRegPairInstr ($i; WSize; false; MEM<4> (addr) := X(rt) as BitsW     MEM<4> (addr + 4) := X(rt2) as BitsW)
+    }
+
+  model StorePairInstrX (i: InstrWithFunct): IsaDefs = {
+    $MemoryRegPairInstr ($i; XSize; false; MEM<8> (addr) := X(rt)              MEM<8> (addr + 8) := X(rt2))
+    }
+
+
+// pseudo instruction models ***************************************************
+
+  model PseudoMulInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, rm: Index) = {
+      $i.funct {rd = rd, rn = rn, rm = rm, ra = $i.opcode}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", ", $size(rm))
+    }
+
+  model Pseudo3OpInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, rm: Index) = {
+      $i.funct {rd = rd, rn = rn, rm = rm}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", ", $size(rm))
+    }
+
+  model PseudoShiftRightInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, shift: Bits6) = {
+      $i.funct {rd = rd, rn = rn, immr = shift as Bits<ShiftSize::$size> as Bits6, imms = Size::$size - 1}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", udec(shift))
+    }
+
+  model PseudoShiftLeftInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    pseudo instruction $i.id (rd: Index, rn: Index, shift: Bits6) = {
+      $i.funct{rd = rd, rn = rn, immr = - shift as Bits<ShiftSize::$size> as Bits6,
+                 imms = Size::$size - 1 - shift as Bits<ShiftSize::$size> as Bits6}
+      }
+    assembly $i.id = ($i.mnemo, " ", $size(rd), ", ", $size(rn), ", #", udec(shift))
+    }
+
+
+// instruction enriching models ************************************************
+
+  model InstrWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i;  "W"); WSize)
+    $modelid ($ExtInstrStr ($i;  "X"); XSize)
+    }
+
+  model InstrWXFlags (modelid: InstrWithFunctSizeFlags, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtInstrStr ($i;  "W"); WSize; (WResult  ; OffFlags;  ""))
+    $modelid ($ExtInstrStr ($i;  "X"); XSize; (XResult  ; OffFlags;  ""))
+    $modelid ($ExtInstrStr ($i; "WS"); WSize; (WResFlags; SetFlags; "s"))
+    $modelid ($ExtInstrStr ($i; "XS"); XSize; (XResFlags; SetFlags; "s"))
+    }
+
+  model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
+    $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "W"); WSize)
+    $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "X"); XSize)
+    }
+
+  model ExtPseudoStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+    (AsId ($i.id, $ext); $i.mnemo; $i.opcode; AsId ($i.funct, $ext))
+    }
+
+  model PseudoWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
+    $modelid ($ExtPseudoStr ($i;  "W"); WSize)
+    $modelid ($ExtPseudoStr ($i;  "X"); XSize)
+    }
+
+
+// base instructions ***********************************************************
+
+  $InstrWXFlags        (AddSubExtInstr        ; (ADD    ; "add"   ; 0b0'0101'1001         ; adds       ))
+  //$InstrWXFlags        (AddSubImmInstr        ; (ADD    ; "add"   ; 0b0'1000'10           ; adds       ))
+  //$InstrWXFlags        (AddSubSftInstr        ; (ADD    ; "add"   ; 0b0'0101'10           ; adds       ))
+  //$InstrWXFlags        (AddSubExtInstr        ; (SUB    ; "sub"   ; 0b1'0101'1001         ; subsc      ))
+  //$InstrWXFlags        (AddSubImmInstr        ; (SUB    ; "sub"   ; 0b1'1000'10           ; subsc      ))
+  //$InstrWXFlags        (AddSubSftInstr        ; (SUB    ; "sub"   ; 0b1'0101'10           ; subsc      ))
+  $InstrWX             (AddSubCarryInstr      ; (ADC    ; "adc"   ; 0b0011'0100'0000'0000 ; addc       ))
+  //$InstrWX             (AddSubCarryFlagInstr  ; (ADCS   ; "adcs"  ; 0b0111'0100'0000'0000 ; addc       ))
+  //$InstrWX             (AddSubCarryInstr      ; (SBC    ; "sbc"   ; 0b1011'0100'0000'0000 ; subc       ))
+  //$InstrWX             (AddSubCarryFlagInstr  ; (SBCS   ; "sbcs"  ; 0b1111'0100'0000'0000 ; subc       ))
+
+  $AddressRelInstr     (                        (ADR    ; "adr"   ; 0b01'0000                          ))
+  $AddressPageInstr    (                        (ADRP   ; "adrp"  ; 0b11'0000                          ))
+
+  $InstrWX             (MulAddSubInstr        ; (MADD   ; "madd"  ; 0b0011'0110'000       ; add        ))
+  //$InstrWX             (MulAddSubInstr        ; (MSUB   ; "msub"  ; 0b0011'0110'001       ; sub        ))
+  $SMulAddSubLongInstr (                        (SMADDL ; "smaddl"; 0b0011'0110'010       ; add        ))
+  //$SMulAddSubLongInstr (                        (SMSUBL ; "smsubl"; 0b0011'0110'011       ; sub        ))
+  $UMulAddSubLongInstr (                        (UMADDL ; "umaddl"; 0b0011'0111'010       ; add        ))
+  //$UMulAddSubLongInstr (                        (UMSUBL ; "umsubl"; 0b0011'0111'011       ; sub        ))
+  $MulHighInstr        (                        (SMULH  ; "smulh" ; 0b0011'0110'1001'1111 ; SInt       ))
+  //$MulHighInstr        (                        (UMULH  ; "umulh" ; 0b0011'0111'1001'1111 ; UInt       ))
+
+  $InstrWX             (DivInstr              ; (SDIV   ; "sdiv"  ; 0b0011'0101'1000'0011 ; SInt       ))
+  //$InstrWX             (DivInstr              ; (UDIV   ; "udiv"  ; 0b0011'0101'1000'0010 ; UInt       ))
+
+  $InstrWX             (LogicImmInstr         ; (ANDI   ; "and"   ; 0b0010'0100           ; and        ))
+  //$InstrWX             (LogicImmFlagInstr     ; (ANDSI  ; "ands"  ; 0b1110'0100           ; ands       ))
+  //$InstrWX             (LogicImmInstr         ; (EORI   ; "eor"   ; 0b1010'0100           ; xor        ))
+  //$InstrWX             (LogicImmInstr         ; (ORRI   ; "orr"   ; 0b0110'0100           ; or         ))
+
+  $InstrWXRegShift     (LogicRegBasicInstr    ; (AND    ; "and"   ; 0b0001'0100           ; ands       ))
+  //$InstrWXRegShift     (LogicRegFlagInstr     ; (ANDS   ; "ands"  ; 0b1101'0100           ; ands       ))
+  //$InstrWXRegShift     (LogicRegBasicInstr    ; (EOR    ; "eor"   ; 0b1001'0100           ; xors       ))
+  //$InstrWXRegShift     (LogicRegBasicInstr    ; (ORR    ; "orr"   ; 0b0101'0100           ; ors        ))
+  //$InstrWXRegShift     (LogicRegNegInstr      ; (BIC    ; "bic"   ; 0b0001'0101           ; ands       ))
+  //$InstrWXRegShift     (LogicRegNegFlagInstr  ; (BICS   ; "bics"  ; 0b1101'0101           ; ands       ))
+  //$InstrWXRegShift     (LogicRegNegInstr      ; (EON    ; "eon"   ; 0b1001'0101           ; xors       ))
+  //$InstrWXRegShift     (LogicRegNegInstr      ; (ORN    ; "orn"   ; 0b0101'0101           ; ors        ))
+
+  $InstrWX             (ShiftRegInstr         ; (ASR    ; "asrv"  ; ShiftType::ASR                   ; asr        ))
+  //$InstrWX             (ShiftRegInstr         ; (LSL    ; "lslv"  ; ShiftType::LSL                   ; lsl        ))
+  //$InstrWX             (ShiftRegInstr         ; (LSR    ; "lsrv"  ; ShiftType::LSR                   ; lsr        ))
+  //$InstrWX             (ShiftRegInstr         ; (ROR    ; "rorv"  ; ShiftType::ROR                   ; ror        ))
+
+  //$InstrWX             (MovKInstr             ; (MOVK   ; "movk"  ; 0b1110'0101           ; unused     ))
+  //$InstrWX             (MovNZInstr            ; (MOVN   ; "movn"  ; 0b0010'0101           ; not        ))
+  //$InstrWX             (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101           ; ident      ))
+
+  //$InstrWX             (ExtractRegPairInstr   ; (EXTR   ; "extr"  ; 0b0'0100'1110         ; Bits       ))
+  //$InstrWX             (BitfieldMoveInstr     ; (BFM    ; "bfm"   ; 0b0110'0110           ; Bits       ))
+  //$InstrWX             (BitfieldMoveInstr     ; (SBFM   ; "sbfm"  ; 0b0010'0110           ; SInt       ))
+  //$InstrWX             (BitfieldMoveInstr     ; (UBFM   ; "ubfm"  ; 0b1010'0110           ; UInt       ))
+
+  //$InstrWX             (CountBitsInstr        ; (CLS    ; "cls"   ; 0b1'0110'1011'0000'0000'0101; cls  ))
+  //$InstrWX             (CountBitsInstr        ; (CLZ    ; "clz"   ; 0b1'0110'1011'0000'0000'0100; clz  ))
+  //$InstrWX             (ReverseBitsInstr      ; (RBIT   ; "rbit"  ; 0b1'0110'1011'0000'0000'0000; rvb  ))
+  //$InstrWX             (RevBytesHInstr        ; (REV16  ; "rev16" ; 0b1'0110'1011'0000'0000'0001; half ))
+  $RevBytesWInstr      (                        (REV32  ; "rev32" ; 0b1'0110'1011'0000'0000'0010; XSize))
+  //$RevBytesWInstr      (                        (REVW   ; "rev"   ; 0b1'0110'1011'0000'0000'0010; WSize))
+  //$RevBytesXInstr      (                        (REVX   ; "rev"   ; 0b1'0110'1011'0000'0000'0011; XSize))
+
+  $CondInstr           (CondCompareImmInstr   ; (CCMNI  ; "ccmn"  ; 0b0111'0100'1010'0    ; adds       ))
+  //$CondInstr           (CondCompareImmInstr   ; (CCMPI  ; "ccmp"  ; 0b1111'0100'1010'0    ; subsc      ))
+  //$CondInstr           (CondCompareRegInstr   ; (CCMN   ; "ccmn"  ; 0b0111'0100'1000'0    ; adds       ))
+  //$CondInstr           (CondCompareRegInstr   ; (CCMP   ; "ccmp"  ; 0b1111'0100'1000'0    ; subsc      ))
+
+  //$CondInstr           (CondSelectInstr       ; (CSEL   ; "csel"  ; 0b0011'0101'0000      ; equ        ))
+  //$CondInstr           (CondSelectInstr       ; (CSINC  ; "csinc" ; 0b0011'0101'0001      ; inc        ))
+  //$CondInstr           (CondSelectInstr       ; (CSINV  ; "csinv" ; 0b1011'0101'0000      ; not        ))
+  //$CondInstr           (CondSelectInstr       ; (CSNEG  ; "csneg" ; 0b1011'0101'0001      ; neg        ))
+
+  $BranchInstr         (                        (B      ; "b"     ; 0b0001'01                          ))
+  $BranchLinkInstr     (                        (BL     ; "bl"    ; 0b1001'01                          ))
+  $BranchRegInstr      (                        (BR     ; "br"    ; 0b1101'0110'0001'1111'0000'0000'000))
+  //$BranchRegInstr      (                        (RET    ; "ret"   ; 0b1101'0110'0101'1111'0000'0000'000))
+  //$BranchRegLinkInstr  (                        (BLR    ; "blr"   ; 0b1101'0110'0011'1111'0000'0000'000))
+  //$CondInstr           (CondBranchInstr       ; (B_     ; "b."    ; 0b0101'0100'0         ; unused     ))
+  //$InstrWX             (CompareBranchInstr    ; (CBZ    ; "cbz"   ; 0b0110'100            ; equ        ))
+  //$InstrWX             (CompareBranchInstr    ; (CBNZ   ; "cbnz"  ; 0b0110'101            ; neq        ))
+  $TestBitBranchInstr  (                        (TBZ    ; "tbz"   ; 0b0110'110            ; equ        ))
+  //$TestBitBranchInstr  (                        (TBNZ   ; "tbnz"  ; 0b0110'111            ; neq        ))
+
+  $LoadInstr           (MemoryPreIndexInstr   ; (LDRPre ; "ldr"   ; 0b111'000'011                      ))
+  $StoreInstr          (MemoryPreIndexInstr   ; (STRPre ; "str"   ; 0b111'000'011                      ))
+  //$LoadInstr           (MemoryPostIndexInstr  ; (LDRPst ; "ldr"   ; 0b111'000'001                      ))
+  //$StoreInstr          (MemoryPostIndexInstr  ; (STRPst ; "str"   ; 0b111'000'001                      ))
+  //$LoadInstr           (MemoryOffsetInstr     ; (LDR    ; "ldr"   ; 0b111'001                          ))
+  //$StoreInstr          (MemoryOffsetInstr     ; (STR    ; "str"   ; 0b111'001                          ))
+  //$LoadInstr           (MemoryRegisterInstr   ; (LDRReg ; "ldr"   ; 0b111'000'110                      ))
+  //$StoreInstr          (MemoryRegisterInstr   ; (STRReg ; "str"   ; 0b111'000'110                      ))
+  //$LoadInstr           (MemoryUnscaledInstr   ; (LDUR   ; "ldur"  ; 0b111'000'000                      ))
+  //$StoreInstr          (MemoryUnscaledInstr   ; (STUR   ; "stur"  ; 0b111'000'000                      ))
+  //$LoadLitInstr        (MemoryLiteralInstr    ; (LDRLit ; "ldr"   ; 0b011'000                          ))
+
+  $LoadPairInstrW      (                        (LDPW   ; "ldp"   ; 0b0001                ; UIntX      ))
+  //$LoadPairInstrW      (                        (LDPS   ; "ldpsw" ; 0b0101                ; SIntX      ))
+  $LoadPairInstrX      (                        (LDPX   ; "ldp"   ; 0b1001                ; BitsX      ))
+  //$StorePairInstrW     (                        (STPW   ; "stp"   ; 0b0000                ; BitsX      ))
+  //$StorePairInstrX     (                        (STPX   ; "stp"   ; 0b1000                ; BitsX      ))
+
+  $PseudoWX            (PseudoMulInstr        ; (MUL    ; "mul"   ; 0b1'1111              ; MADD       ))
+  //$PseudoWX            (Pseudo3OpInstr        ; (ASRV   ; "asr"   ; 0                     ; ASR        ))
+  //$PseudoWX            (Pseudo3OpInstr        ; (LSRV   ; "lsr"   ; 0                     ; LSR        ))
+  //$PseudoWX            (Pseudo3OpInstr        ; (LSLV   ; "lsl"   ; 0                     ; LSL        ))
+  //$PseudoWX            (PseudoShiftRightInstr ; (ASRI   ; "asr"   ; 0b11'1111             ; SBFM       ))
+  //$PseudoWX            (PseudoShiftRightInstr ; (LSRI   ; "lsr"   ; 0b11'1111             ; UBFM       ))
+  //$PseudoWX            (PseudoShiftLeftInstr  ; (LSLI   ; "lsl"   ; 0b11'1111             ; UBFM       ))
+
+//}
+//
+//instruction set architecture AArch64Sys extending AArch64Base = {
+
+  enumeration ExceptionClass: Bits6 =        // exception class (of exception syndrome register)
+    {Uncategorized           = 0x00          //  0 Uncategorized or unknown reason (e.g. undefined instruction)
+    ,WFxAccessTrap           = 0x01          //  1 Trapped WFI or WFE instruction
+    ,AdvSIMDFPAccessTrap     = 0x07          //  7 HCPTR-trapped access to SIMD or FP
+    ,UncoveredException      = 0x0A          // 10 Trapped execution of any instruction not covered by other EC values
+    ,BranchTarget            = 0x0D          // 13 Branch Target Exception
+    ,IllegalState            = 0x0E          // 14 Illegal Execution state
+    ,SupervisorCall          = 0x15          // 21 Supervisor Call
+    ,InstructionAbortLowerEL = 0x20          // 32 Instruction Abort from a lower Exception level
+    ,InstructionAbortSameEL  = 0x21          // 33 Instruction Abort taken without a change in Exception level
+    ,PCAlignment             = 0x22          // 34 PC alignment fault
+    ,DataAbortLowerEL        = 0x24          // 36 Data Abort exception from a lower Exception level
+    ,DataAbortSameEL         = 0x25          // 37 Data Abort exception taken without a change in Exception level
+    ,SPAlignment             = 0x26          // 38 SP alignment fault
+    ,MemoryOperation         = 0x27          // 38 Memory Operation Exception
+    ,FPTrappedException      = 0x2C          // 44 IEEE trapped FP exception
+    ,SError                  = 0x2F          // 47 SError interrupt
+    ,BreakpointLowerEL       = 0x30          // 48 Breakpoint exception from a lower Exception level
+    ,BreakpointSameEL        = 0x31          // 49 Breakpoint exception taken without a change in Exception level
+    ,SoftwareStepLowerEL     = 0x32          // 50 Software Step exception from a lower Exception level
+    ,SoftwareStepSameEL      = 0x33          // 51 Software Step exception taken without a change in Exception level
+    ,WatchpointLowerEL       = 0x34          // 52 Watchpoint exception from a lower Exception level
+    ,WatchpointSameEL        = 0x35          // 53 Watchpoint exception taken without a change in Exception level
+    ,SoftwareBreakpoint      = 0x3C          // 60 BRK instruction execution
+    ,ProfilingException      = 0x3D          // 61 Profiling Exception
+    }
+
+  format ExceptionSyndromeFormat: BitsX =    // exception syndrome register format
+    { Res0    : Bits8                        // [63..56] reserved
+    , ISS2    : Bits24                       // [55..32] instruction specific syndrome extension
+    , EC      : Bits6                        // [31..26] exception class
+    , IL      : Bits1                        // [25]     instruction length
+    , ISS     : Bits25                       // [24..0]  instruction specific syndrome
+    }
+
+  format SavedProgramStateFormat: BitsX =    // saved program state register format
+    { Res0    [63..37]                       // reserved
+    , UINJ    [36]                           // INJect Undefined instruction exception
+    , PACM    [35]                           // PACM
+    , EXLOCK  [34]                           // Exception return state lock
+    , PPEND   [33]                           // PMU Profiling exception pending bit
+    , PM      [32]                           // Profiling exception mask bit
+    , NZCV    [31..28]                       // condition flags (negative, zero, carry, overflow)
+    , Res1    [27..26]                       // reserved
+    , TCO     [25]                           // tag check override
+    , DIT     [24]                           // data independent timing
+    , UAO     [23]                           // user access override
+    , PAN     [22]                           // privileged access never
+    , SS      [21]                           // software step
+    , IL      [20]                           // illegal execution state
+    , Res2    [19..14]                       // reserved
+    , ALLINT  [13]                           // All IRQ or FIQ interrupts mask
+    , SSBS    [12]                           // speculative store bypass
+    , BTYPE   [11..10]                       // branch type indicator
+    , D       [9]                            // debug  exception mask
+    , A       [8]                            // SError interrupt mask
+    , I       [7]                            // IRQ    interrupt mask
+    , F       [6]                            // FIQ    interrupt mask
+    , Res3    [5]                            // reserved
+    , M4      [4]                            // execution state (0b0 AArch64 execution state)
+    , M       [3..0]                         // exception level and selected stack pointer
+    }
+
+  format CPACRFormat: BitsX =                // CPACR (Architectural Feature Access Control Register) format
+    { Res0    [63..29,27..22,19..18,15..0]   // reserved
+    , tta     [28]                           // trap access to trace registers, not trapped = 0, trapped = 1
+    , fpen    [21..20]                       // floating point enable, no instruction trapped when 0b11
+    , zen     [17..16]                       // Z (SVE) enable, no instruction trapped when 0b11
+    }
+
+  enumeration SysRegEncode: Bits16 =         // system register encoding
+    { NZCV      = 0b11'011'0100'0010'000     // condition flag register
+    , CurrentEL = 0b11'000'0100'0010'010     // current exception level register
+    , SPSel     = 0b11'000'0100'0010'000     // stack pointer select register
+    , SP_EL0    = 0b11'000'0100'0001'000     // stack pointer register exception level 0
+    , SP_EL1    = 0b11'100'0100'0001'000     // stack pointer register exception level 1
+    , ELR_EL1   = 0b11'000'0100'0000'001     // exception link register exception level 1
+    , VBAR_EL1  = 0b11'000'1100'0000'000     // vector base address register exception level 1
+    , ESR_EL1   = 0b11'000'0101'0010'000     // exception syndrome register exception level 1
+    , SPSR_EL1  = 0b11'000'0100'0000'000     // saved program state register exception level 1
+    , CPACR_EL1 = 0b11'000'0001'0000'010     // architectural feature access control register exception level 1
+    , ZCR_EL1   = 0b11'000'0001'0010'000     // SVE control register exception level 1
+    }
+
+  constant SysRegNZCV15 = SysRegEncode::NZCV as Bits15
+
+  register CurrentEL:Bits2                   // exception level register
+  register SPSel:    Bits1                   // stack pointer select register
+  register SP_EL0:   Address                 // stack pointer exception level level 0
+  register SP_EL1:   Address                 // stack pointer exception level level 1
+  register ELR_EL1:  Address                 // exception link register exception level level 1
+  register VBAR_EL1: Address                 // vector base address register exception level 1
+  register ESR_EL1:  ExceptionSyndromeFormat // exception syndrome register exception level level 1
+  register SPSR_EL1: SavedProgramStateFormat // saved program state register exception level level 1
+  register CPACR_EL1:CPACRFormat             // architectural feature access control register exception level 1
+  register ZCR_EL1:  BitsX                   // SVE control register exception level 1
+
+  model SaveProgramState (): Stats = {
+    SPSR_EL1 := (SPSR_EL1(63..32), NZCV_N, NZCV_Z, NZCV_C, NZCV_V, SPSR_EL1(27..4), SPSel as Bits4 | 0b0100)
+    }
+
+  model RestoreProgramState (): Stats = {
+    NZCV_N := SPSR_EL1.NZCV(3)
+    NZCV_Z := SPSR_EL1.NZCV(2)
+    NZCV_C := SPSR_EL1.NZCV(1)
+    NZCV_V := SPSR_EL1.NZCV(0)
+    }
+
+  exception GeneralException (exClass: Bits6, syndrome: Bits25, continuation: Address, exOffset: Address) = {
+    if CurrentEL = 0 then {
+      $SaveProgramState ()
+      if SPSel != 0 then {
+        SP_EL0 := SP
+        SP := SP_EL1
+      }
+      ESR_EL1.EC  := exClass
+      ESR_EL1.IL  := 0b1
+      ESR_EL1.ISS := syndrome
+      CurrentEL   := 1
+      ELR_EL1     := continuation
+      PC          := VBAR_EL1 + exOffset
+      }
+    }
+
+  model UndefinedException (): Stat = {
+    GeneralException (ExceptionClass::Uncategorized, 0, PC, 0)
+    }
+
+  model ReturnFromException (): Stats = {
+    if CurrentEL = 0
+      then raise $UndefinedException ()
+      else {
+        $RestoreProgramState ()
+        if SPSel != 0 then {
+          SP_EL1 := SP
+          SP := SP_EL0
+          }
+        CurrentEL := 0
+        PC := ELR_EL1
+        }
+    }
+
+  format MoveSystemRegFormat: Instr =        // move system register format
+    { op        : Bits12                     // [31..20] opcode
+    , rs        : Bits15                     // [19..5]  system register code without leading one
+    , rt        : Index                      // [4..0]   source/target register
+    , sysreg    = (true, rs)
+    , rs        := sysreg(14..0)
+    , sysreg    :- false                     // don't match this instruction
+    }
+
+  format MoveImmSystemRegFormat: Instr =     // move immediate to system register (PState) format
+    { op       [31..19,15..12] : Bits17      // opcode
+    , op12     [18..16,7..5]   : Bits6       // opcode op1 and op2
+    , crm      [11..8]         : Bits4       // crm field encodes PState
+    , rt       [4..0]          : Index       // all ones (target register)
+    }
+
+  format SuperVisorCallFormat: Instr =       // supervisor call format
+    { op       [31..21,4..0] : Bits16        // opcode
+    , imm16    [20..5]       : Bits16        // system call number
+    }
+
+  format UndefinedInstrFormat: Instr =       // undefined instruction format
+    { op       : Bits16                      // [31..16] opcode
+    , imm16    : Bits16                      // [15..0]  ignored
+    }
+
+  format BTIFormat: Instr =                  // Branch target identification format
+    { op       [31..16]      : Bits16        // opcode part one
+    , opc      [15..8,5..0]  : Bits14        // opcode part two
+    , bti      [7..6]        : Bits2         // BTI target, PSTATE.BTYPE compatibility
+  }
+
+  function SysRegName (sysreg: Bits16) -> String =
+    match sysreg with
+      { SysRegEncode::NZCV      => "nzcv"
+      , SysRegEncode::CurrentEL => "currentel"
+      , SysRegEncode::SPSel     => "spsel"
+      , SysRegEncode::SP_EL0    => "sp_el0"
+      , SysRegEncode::SP_EL1    => "sp_el1"
+      , SysRegEncode::ELR_EL1   => "elr_el1"
+      , SysRegEncode::ESR_EL1   => "esr_el1"
+      , SysRegEncode::SPSR_EL1  => "spsr_el1"
+      , SysRegEncode::VBAR_EL1  => "vbar_el1"
+      , SysRegEncode::CPACR_EL1 => "cpacr_el1"
+      , SysRegEncode::ZCR_EL1   => "zcr_el1"
+      , _ => ("S", udec(sysreg(15..14)), "_",
+                   udec(sysreg(13..11)), "_",
+                   udec(sysreg(10.. 7)), "_",
+                   udec(sysreg( 6.. 3)), "_",
+                   udec(sysreg( 2.. 0)))
+      }
+
+  model MrsNZCVInstr (i: InstrNoFunct): IsaDefs = {
+    instruction AsId($i.id, NZCV): MoveSystemRegFormat =
+      X(rt) := (NZCV_N, NZCV_Z, NZCV_C, NZCV_V) as BitsX << 28
+    encoding AsId($i.id, NZCV) = {op = $i.opcode, rs = SysRegNZCV15}
+    assembly AsId($i.id, NZCV) = ($i.mnemo, ' ', XSize(rt), ', nzcv')
+    }
+
+  model MrsRegBase (i: InstrNoFunct): IsaDefs = {
+    [skip pruning]
+    instruction $i.id: MoveSystemRegFormat =
+      if CurrentEL = 0
+        then raise $UndefinedException ()
+        else match sysreg with
+          { SysRegEncode::CurrentEL => X(rt) := CurrentEL as BitsX << 2
+          , SysRegEncode::SPSel     => X(rt) := SPSel as BitsX
+          , SysRegEncode::ESR_EL1   => X(rt) := ESR_EL1
+          , SysRegEncode::SPSR_EL1  => X(rt) := SPSR_EL1
+          , SysRegEncode::SP_EL0    => if SPSel = 0
+                                       then raise $UndefinedException ()
+                                       else X(rt) := SP_EL0
+          , SysRegEncode::SP_EL1    => if SPSel = 0
+                                       then raise $UndefinedException ()
+                                       else let sp = SP in {
+                                         SP_EL1 := sp
+                                         X(rt) := sp
+                                         }
+          , SysRegEncode::ELR_EL1   => X(rt) := ELR_EL1
+          , SysRegEncode::VBAR_EL1  => X(rt) := VBAR_EL1
+          , SysRegEncode::ZCR_EL1   => X(rt) := ZCR_EL1
+          , _                       => raise $UndefinedException ()
+          }
+    [select when : rs != SysRegNZCV15]
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' ', XSize(rt), ', ', SysRegName(sysreg))
+    }
+
+  model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
+    $MrsNZCVInstr ($i)
+    $MrsRegBase ($i)
+    }
+
+  model MsrRegInstr (i: InstrNoFunct): IsaDefs = {
+    [skip pruning]
+    instruction $i.id: MoveSystemRegFormat =
+      if sysreg = SysRegEncode::NZCV
+        then {
+          NZCV_N := X(rt)(31)
+          NZCV_Z := X(rt)(30)
+          NZCV_C := X(rt)(29)
+          NZCV_V := X(rt)(28)
+          }
+        else if CurrentEL = 0
+        then raise $UndefinedException ()
+        else match sysreg with
+          { SysRegEncode::CurrentEL => raise $UndefinedException ()
+          , SysRegEncode::SPSR_EL1  => SPSR_EL1 := X(rt)
+          , SysRegEncode::ESR_EL1   => ESR_EL1 := X(rt)
+          , SysRegEncode::SPSel     => SPSel := X(rt)(0)
+          , SysRegEncode::SP_EL0    => SP_EL0 := X(rt)
+          , SysRegEncode::SP_EL1    => if SPSel = 0
+                                       then raise $UndefinedException ()
+                                       else let sp = X(rt) in {
+                                         SP_EL1 := sp
+                                         SP := sp
+                                         }
+          , SysRegEncode::ELR_EL1   => ELR_EL1 := X(rt)
+          , SysRegEncode::VBAR_EL1  => VBAR_EL1 := X(rt)
+          , SysRegEncode::CPACR_EL1 => CPACR_EL1 := X(rt)
+          , SysRegEncode::ZCR_EL1   => ZCR_EL1 := X(rt)
+          , _                       => raise $UndefinedException ()
+          }
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' ', SysRegName(sysreg), ', ', XSize(rt))
+    }
+
+  model ExceptionCallEncAsm (i: InstrNoFunct): IsaDefs = {
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' #', udec(imm16))
+    }
+
+  model ExceptionCallInstr (i: InstrWithFunct): IsaDefs = {
+    [add operands : imm16]
+    instruction $i.id: SuperVisorCallFormat = {
+      raise GeneralException (ExceptionClass::$i.funct, 0, PC.next, 0)
+      }
+    $ExceptionCallEncAsm (($i.id; $i.mnemo; $i.opcode))
+    }
+
+
+
+  model HaltInstr (i: InstrNoFunct): IsaDefs = {
+    [add operands : imm16]
+    instruction $i.id: SuperVisorCallFormat = {}
+    $ExceptionCallEncAsm ($i)
+    }
+
+  model ExceptionReturnInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: UndefinedInstrFormat = {
+      $ReturnFromException()
+      }
+    encoding $i.id = {op = $i.opcode, imm16 = 0b0000'0011'1110'0000}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  model NopInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: UndefinedInstrFormat = {}
+    encoding $i.id = {op = 0b1101'0101'0000'0011, imm16 = $i.opcode}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  function btiOp2(bti: Bits2) -> String = match bti with
+    { 0b01 => "c"
+    , 0b10 => "j"
+    , 0b11 => "jc"
+    , _    => ""
+    }
+
+  model BTIInstr (i: InstrNoFunct): IsaDefs = {
+    [add operands : bti]
+    instruction $i.id: BTIFormat = {}
+    encoding $i.id = {op = 0b1101'0101'0000'0011, opc = $i.opcode}
+    assembly $i.id = ($i.mnemo, btiOp2(bti))
+    }
+
+  model UndefinedInstr (i: InstrNoFunct): IsaDefs = {
+    [add operands : imm16]
+    instruction $i.id: UndefinedInstrFormat =
+      raise $UndefinedException ()
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'0001                             ))
+  //$MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'0011                             ))
+  $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
+  //$ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
+  $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
+  $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
+  $NopInstr              ((NOP    ; "nop"   ; 0b0010'0000'0001'1111                        ))
+  //$NopInstr              ((YIELD  ; "yield" ; 0b0010'0000'0011'1111                        ))
+  $BTIInstr              ((BTI    ; "bti"   ; 0b0010'0100'''01'1111                        ))
+  $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
+
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+//  Pretty Print:
+//
+//  instruction set architecture AArch64Base = {
+//    constant SizeW = 32
+//    constant SizeX = 64
+//
+//    using Byte = Bits<8>
+//    using Half = Bits<16>
+//    using Word = Bits<32>
+//    using XWord = Bits<64>
+//    using Bits1 = Bits<1>
+//    using Bits2 = Bits<2>
+//    using Bits3 = Bits<3>
+//    using Bits4 = Bits<4>
+//    using Bits5 = Bits<5>
+//    using Bits6 = Bits<6>
+//    using Bits7 = Bits<7>
+//    using Bits8 = Bits<8>
+//    using Bits9 = Bits<9>
+//    using Bits10 = Bits<10>
+//    using Bits11 = Bits<11>
+//    using Bits12 = Bits<12>
+//    using Bits13 = Bits<13>
+//    using Bits14 = Bits<14>
+//    using Bits15 = Bits<15>
+//    using Bits16 = Bits<16>
+//    using Bits17 = Bits<17>
+//    using Bits19 = Bits<19>
+//    using Bits21 = Bits<21>
+//    using Bits24 = Bits<24>
+//    using Bits25 = Bits<25>
+//    using Bits26 = Bits<26>
+//    using Bits27 = Bits<27>
+//    using Instr = Word
+//    using BitsW = Bits<SizeW>
+//    using BitsX = Bits<SizeX>
+//    using SIntW = SInt<SizeW>
+//    using SIntX = SInt<SizeX>
+//    using UIntW = UInt<SizeW>
+//    using UIntX = UInt<SizeX>
+//    using Index = Bits5
+//    using Address = BitsX
+//
+//    program counter PC: Address
+//
+//    memory MEM: Address -> Byte
+//
+//    register S: Index -> BitsX
+//
+//    [overwrite source : zero]
+//    alias register R = S(*)(31..0)
+//
+//    [zero : X(31)]
+//    alias register X = S
+//
+//    [zero : W(31)]
+//    [overwrite source : zero]
+//    alias register W = X(*)(31..0)
+//    alias register SP : Address = S(31)
+//    alias register LR : Address = S(30)
+//
+//    [negative status register]
+//    register NZCV_N: Bits1
+//
+//    [zero status register]
+//    register NZCV_Z: Bits1
+//
+//    [carry status register]
+//    register NZCV_C: Bits1
+//
+//    [overflow status register]
+//    register NZCV_V: Bits1
+//
+//    [syntax : ":{}:{}"]
+//    relocation lo12 (symbol : Bits<64>) -> SInt<64> = symbol as SInt<12> as SInt<64>
+//
+//    enumeration CondCode : Bits<4> =
+//      { EQ
+//      , NE
+//      , CS
+//      , CC
+//      , MI
+//      , PL
+//      , VS
+//      , VC
+//      , HI
+//      , LS
+//      , GE
+//      , LT
+//      , GT
+//      , LE
+//      , AL
+//      , NV
+//      }
+//
+//    function conditionHolds(cond : Bits<4>) -> Bool =
+//      match cond with
+//        { CondCode::EQ => NZCV_Z = 1
+//        , CondCode::NE => NZCV_Z = 0
+//        , CondCode::CS => NZCV_C = 1
+//        , CondCode::CC => NZCV_C = 0
+//        , CondCode::MI => NZCV_N = 1
+//        , CondCode::PL => NZCV_N = 0
+//        , CondCode::VS => NZCV_V = 1
+//        , CondCode::VC => NZCV_V = 0
+//        , CondCode::HI => NZCV_C = 1 && NZCV_Z = 0
+//        , CondCode::LS => NZCV_C = 0 || NZCV_Z = 1
+//        , CondCode::GE => NZCV_N = NZCV_V
+//        , CondCode::LT => NZCV_N != NZCV_V
+//        , CondCode::GT => NZCV_N = NZCV_V && NZCV_Z = 0
+//        , CondCode::LE => NZCV_N != NZCV_V || NZCV_Z = 1
+//        , _ => true
+//        }
+//
+//    enumeration SF : Bits1 =
+//      { WSize
+//      , XSize
+//      }
+//
+//    enumeration Size =
+//      { WSize = SizeW
+//      , XSize = SizeX
+//      }
+//
+//    enumeration ShiftSize =
+//      { WSize = 5
+//      , XSize = 6
+//      }
+//
+//    enumeration FF : Bits1 =
+//      { OffFlags
+//      , SetFlags
+//      }
+//
+//    enumeration ShiftType : Bits2 =
+//      { LSL
+//      , LSR
+//      , ASR
+//      , ROR
+//      }
+//
+//    enumeration ExtendType : Bits3 =
+//      { UXTB
+//      , UXTH
+//      , UXTW
+//      , UXTX
+//      , SXTB
+//      , SXTH
+//      , SXTW
+//      , SXTX
+//      }
+//
+//    function WSize(idx : Index) -> String =
+//      if idx = 31
+//      then "wzr"
+//      else "w" + udec(idx)
+//
+//    function XSize(idx : Index) -> String =
+//      if idx = 31
+//      then "xzr"
+//      else "x" + udec(idx)
+//
+//    function WSizeSP(idx : Index) -> String =
+//      if idx = 31
+//      then "wsp"
+//      else "w" + udec(idx)
+//
+//    function XSizeSP(idx : Index) -> String =
+//      if idx = 31
+//      then "sp"
+//      else "x" + udec(idx)
+//
+//    function Imm7decimal(imm : SIntX) -> String =
+//      if imm = 0
+//      then ""
+//      else (", #", sdec(imm))
+//
+//    function Imm9decimal(imm : Bits9) -> String =
+//      if imm = 0
+//      then ""
+//      else (", #", sdec(imm))
+//
+//    function Imm12decimal(imm : Bits12) -> String =
+//      if imm = 0
+//      then ""
+//      else (", #", udec(imm))
+//
+//    format AddSubExtFormat: Instr =
+//      { sf	 [31]
+//      , ff	 [29]
+//      , op	 [30, 28..21]
+//      , rm	 [20..16] : Index
+//      , option	 [15..13]
+//      , imm3	 [12..10] : Bits3
+//      , rn	 [9..5] : Index
+//      , rd	 [4..0] : Index
+//      }
+//
+//    format AddSubImmFormat: Instr =
+//      { sf	 [31]
+//      , ff	 [29]
+//      , op	 [30, 28..23]
+//      , sh	 [22]
+//      , imm12	 [21..10] : Bits12
+//      , rn	 [9..5] : Index
+//      , rd	 [4..0] : Index
+//      , imm12X = imm12 as BitsX
+//      , imm12S = imm12 as BitsX << 12
+//      }
+//
+//    format AddSubSftFormat: Instr =
+//      { sf	 [31]
+//      , ff	 [29]
+//      , op	 [30, 28..24, 21]
+//      , shift	 [23, 22]
+//      , rm	 [20..16] : Index
+//      , imm6	 [15..10] : Bits6
+//      , rn	 [9..5] : Index
+//      , rd	 [4..0] : Index
+//      }
+//
+//    format ThreeRegOpFormat: Instr =
+//      { sf	 [31]
+//      , op	 [30..21, 15..10]
+//      , rm	 [20..16] : Index
+//      , rn	 [9..5] : Index
+//      , rd	 [4..0] : Index
+//      }
+//
+//    format RelAddressFormat: Instr =
+//      { op	 [31, 28..24]
+//      , imm21	 [23..5, 30, 29]
+//      , rd	 [4..0] : Index
+//      , offset = imm21 as SIntX
+//      }
+//
+//    format MulAddSubFormat: Instr =
+//      { sf	 [31]
+//      , op	 [30..21, 15]
+//      , rm	 [20..16] : Index
+//      , ra	 [14..10] : Index
+//      , rn	 [9..5] : Index
+//      , rd	 [4..0] : Index
+//      }
+//
+//    function rep2(pattern : Bits<2>) -> Bits<4> =
+//      (pattern, pattern)
+//
+//    function rep4(pattern : Bits<4>) -> Bits<8> =
+//      (pattern, pattern)
+//
+//    function rep8(pattern : Bits<8>) -> Bits<16> =
+//      (pattern, pattern)
+//
+//    function rep16(pattern : Bits<16>) -> Bits<32> =
+//      (pattern, pattern)
+//
+//    function rep32(pattern : Bits<32>) -> Bits<64> =
+//      (pattern, pattern)
+//
+//    function replicate(pat0 : BitsX, size0 : Bits6) -> BitsX =
+//      if size0 = 0
+//      then pat0
+//      else (let pat1 = pat0 << size0 | pat0 in
+//          (let size1 = size0 << 1 in
+//            if size1 = 0
+//            then pat1
+//            else (let pat2 = pat1 << size1 | pat1 in
+//                (let size2 = size1 << 1 in
+//                  if size2 = 0
+//                  then pat2
+//                  else (let pat3 = pat2 << size2 | pat2 in
+//                      (let size3 = size2 << 1 in
+//                        if size3 = 0
+//                        then pat3
+//                        else (let pat4 = pat3 << size3 | pat3 in
+//                            (let size4 = size3 << 1 in
+//                              if size4 = 0
+//                              then pat4
+//                              else pat4 << size4 | pat4))))))))
+//
+//    function imm13DecAlt(imm13 : Bits13) -> BitsX =
+//      (if imm13(12) = 0b1 then (1 as Bits<64> << imm13(5..0) + 1) - 1
+//      else if imm13(5) = 0b0 then rep32((1 as Bits<32> << imm13(4..0) + 1) - 1)
+//      else if imm13(5..4) = 0b10 then rep32(rep16((1 as Bits<16> << imm13(3..0) + 1) - 1))
+//      else if imm13(5..3) = 0b110 then rep32(rep16(rep8((1 as Bits<8> << imm13(2..0) + 1) - 1)))
+//      else if imm13(5..2) = 0b1110 then rep32(rep16(rep8(rep4((1 as Bits<4> << imm13(1..0) + 1) - 1))))
+//      else if imm13(5..1) = 0b11110 then rep32(rep16(rep8(rep4(rep2((1 as Bits<2> << imm13(0) + 1) - 1)))))
+//      else 0) <>> imm13(11..6)
+//
+//    function imm13Decode(imm13 : Bits13) -> BitsX =
+//      (if imm13(12) = 0b1 then (1 as BitsX << imm13(5..0) + 1) - 1
+//      else if imm13(5) = 0b0 then replicate((1 as BitsX << imm13(4..0) + 1) - 1, 32)
+//      else if imm13(5..4) = 0b10 then replicate((1 as BitsX << imm13(3..0) + 1) - 1, 16)
+//      else if imm13(5..3) = 0b110 then replicate((1 as BitsX << imm13(2..0) + 1) - 1, 8)
+//      else if imm13(5..2) = 0b1110 then replicate((1 as BitsX << imm13(1..0) + 1) - 1, 4)
+//      else if imm13(5..1) = 0b11110 then replicate((1 as BitsX << imm13(0) + 1) - 1, 2)
+//      else 0) <>> imm13(11..6)
+//
+//    function patternSize(val : BitsX) -> SIntW =
+//      if val = 0 || val = -1 then 0
+//      else if val(63..32) != val(31..0) then 64
+//      else if val(31..16) != val(15..0) then 32
+//      else if val(15..8) != val(7..0) then 16
+//      else if val(7..4) != val(3..0) then 8
+//      else if val(3..2) != val(1..0) then 4
+//      else 2
+//
+//    function nImmrImms(patSize : SIntW, leftRotations : SIntW, trailingOnes : SIntW) -> Bits13 =
+//      (let immr = (patSize - leftRotations & patSize - 1) as Bits6 in
+//        (let imms = (~(patSize - 1) << 1 | trailingOnes - 1) as Bits6 in
+//          (patSize = 64, immr, imms)))
+//
+//    function isOnesZeros(onesZeros : BitsX) -> Bool =
+//      (let mask = onesZeros - 1 | onesZeros in
+//        (mask + 1 & mask) = 0)
+//
+//    function imm13EncodeXSize(val : BitsX) -> Bits13 =
+//      (let size = patternSize(val) in
+//        if size = 0
+//        then 0
+//        else (let mask = ~(0 as BitsX) >> 64 - size in
+//            (let imm = val & mask in
+//              if isOnesZeros(imm)
+//              then (let leftRotations = VADL::ctz(imm) as SIntW in
+//                  nImmrImms(size, leftRotations, VADL::cto(imm >> leftRotations) as SIntW))
+//              else (let immNmask = imm | ~mask in
+//                  if isOnesZeros(~immNmask)
+//                  then (let leadingOnes = VADL::clo(immNmask) as SIntW in
+//                      nImmrImms(size, 64 - leadingOnes, (leadingOnes + VADL::cto(immNmask) as SIntW) - (64 - size)))
+//                  else 0 as Bits13))))
+//
+//    function imm13EncodeWSize(val : BitsW) -> Bits13 =
+//      imm13EncodeXSize((val, val))
+//
+//    format LogicImmFormat: Instr =
+//      { sf : Bits1
+//      , op : Bits8
+//      , imm13 : Bits13
+//      , rn : Index
+//      , rd : Index
+//      , immWSize = imm13Decode(imm13) as BitsW
+//      , immXSize = imm13Decode(imm13)
+//      , imm13 := imm13EncodeWSize(immWSize)
+//      , imm13 := imm13EncodeXSize(immXSize)
+//      , immWSize :- imm13EncodeWSize(immWSize) != 0
+//      , immXSize :- imm13EncodeXSize(immXSize) != 0
+//      }
+//
+//    format LogicRegShiftFormat: Instr =
+//      { sf	 [31]
+//      , op	 [30..24, 21]
+//      , shift	 [23, 22]
+//      , rm	 [20..16] : Index
+//      , imm6	 [15..10] : Bits6
+//      , rn	 [9..5] : Index
+//      , rd	 [4..0] : Index
+//      }
+//
+//    format ShiftRegFormat: Instr =
+//      { sf	 [31]
+//      , op	 [30..21, 15..12]
+//      , rm	 [20..16] : Index
+//      , shift	 [11..10]
+//      , rn	 [9..5] : Index
+//      , rd	 [4..0] : Index
+//      }
+//
+//    enumeration Position : Bits2 =
+//      { Pos00
+//      , Pos16
+//      , Pos32
+//      , Pos48
+//      }
+//
+//    format MovFormat: Instr =
+//      { sf	 [31]
+//      , op	 [30..23]
+//      , pos	 [22, 21]
+//      , imm16	 [20..5] : Bits16
+//      , rd	 [4..0] : Index
+//      }
+//
+//    format ExtractRegFormat: Instr =
+//      { sf	 [31]
+//      , op	 [30..23, 21]
+//      , N	 [22]
+//      , rm	 [20..16]
+//      , imms	 [15..10]
+//      , rn	 [9..5]
+//      , rd	 [4..0]
+//      , shiftWSize = imms(4..0)
+//      , shiftXSize = imms
+//      , imms := shiftWSize as Bits<6>
+//      , imms := shiftXSize
+//      , shiftWSize :- shiftWSize <= 31
+//      , shiftXSize :- shiftXSize <= 63
+//      }
+//
+//    format BitFieldMoveFormat: Instr =
+//      { sf : Bits1
+//      , op : Bits8
+//      , N : Bits1
+//      , immr : Bits6
+//      , imms : Bits6
+//      , rn : Index
+//      , rd : Index
+//      , leftWSize = -1 as Bits5 - imms as Bits5
+//      , leftXSize = -1 as Bits6 - imms
+//      , rightWSize = (immr as Bits5 - imms as Bits5) - 1
+//      , rightXSize = (immr - imms) - 1
+//      , imms := (-1 as Bits5 - leftWSize) as Bits6
+//      , imms := -1 as Bits6 - leftXSize
+//      , immr := (rightWSize - leftWSize) as Bits6
+//      , immr := rightXSize - leftXSize
+//      , leftWSize :- leftWSize <= 31
+//      , leftXSize :- leftXSize <= 63
+//      , rightWSize :- rightWSize <= 31
+//      , rightXSize :- rightXSize <= 63
+//      }
+//
+//    format TwoRegOpFormat: Instr =
+//      { sf : Bits1
+//      , op : Bits21
+//      , rn : Index
+//      , rd : Index
+//      }
+//
+//    function revBitsWSize(bits : BitsW) -> BitsW =
+//      bits(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31)
+//
+//    function revBitsXSize(bits : BitsX) -> BitsX =
+//      bits(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63)
+//
+//    format CondCompareFormat: Instr =
+//      { sf	 [31]
+//      , op	 [30..21, 11, 10, 4]
+//      , rm	 [20..16] : Index
+//      , cc	 [15..12] : Bits4
+//      , rn	 [9..5] : Index
+//      , nzcv	 [3..0] : Bits4
+//      , immX = rm as BitsX
+//      }
+//
+//    format CondSelectFormat: Instr =
+//      { sf	 [31]
+//      , op	 [30..21, 11, 10]
+//      , rm	 [20..16]
+//      , cc	 [15..12]
+//      , rn	 [9..5]
+//      , rd	 [4..0]
+//      }
+//
+//    format BranchFormat: Instr =
+//      { op : Bits6
+//      , imm26 : Bits26
+//      , offset = imm26 as SIntX << 2
+//      }
+//
+//    format BranchRegFormat: Instr =
+//      { op	 [31..10, 4..0]
+//      , rn	 [9..5] : Index
+//      }
+//
+//    format CondBranchFormat: Instr =
+//      { op	 [31..24, 4]
+//      , imm19	 [23..5] : Bits19
+//      , cc	 [3..0]
+//      , offset = imm19 as SIntX << 2
+//      }
+//
+//    format CompareBranchFormat: Instr =
+//      { sf : Bits1
+//      , op : Bits7
+//      , imm19 : Bits19
+//      , rt : Index
+//      , offset = imm19 as SIntX << 2
+//      }
+//
+//    format TestBitBranchFormat: Instr =
+//      { op	 [30..24] : Bits7
+//      , imm6	 [31, 23..19] : Bits6
+//      , imm14	 [18..5] : Bits14
+//      , rt	 [4..0] : Index
+//      , offset = imm14 as SIntX << 2
+//      }
+//
+//    enumeration AccSize : Bits2 =
+//      { Byte
+//      , Half
+//      , Word
+//      , XWord
+//      }
+//
+//    format MemoryImmFormat: Instr =
+//      { size	 [31..30] : Bits2
+//      , op	 [29..24, 21, 11..10]
+//      , opc	 [23..22] : Bits2
+//      , imm9	 [20..12] : Bits9
+//      , rn	 [9..5] : Index
+//      , rt	 [4..0] : Index
+//      , offset = imm9 as SIntX
+//      }
+//
+//    format MemoryOffFormat: Instr =
+//      { size : Bits2
+//      , op : Bits6
+//      , opc : Bits2
+//      , imm12 : Bits12
+//      , rn : Index
+//      , rt : Index
+//      , offset = imm12 as UIntX
+//      }
+//
+//    enumeration Scaled : Bits1 =
+//      { Un
+//      , Is
+//      }
+//
+//    format MemoryRegFormat: Instr =
+//      { size	 [31..30] : Bits2
+//      , op	 [29..24, 21, 11, 10]
+//      , opc	 [23, 22] : Bits2
+//      , rm	 [20..16] : Index
+//      , option	 [15..13] : Bits3
+//      , scaled	 [12] : Bits1
+//      , rn	 [9..5] : Index
+//      , rt	 [4..0] : Index
+//      }
+//
+//    format MemoryLitFormat: Instr =
+//      { opc : Bits2
+//      , op : Bits6
+//      , imm19 : Bits19
+//      , rt : Index
+//      , offset = imm19 as SIntX << 2
+//      }
+//
+//    format MemoryPairFormat: Instr =
+//      { opc	 [31..30, 26, 22]
+//      , op	 [29..27, 25..23]
+//      , imm7	 [21..15] : Bits7
+//      , rt2	 [14..10] : Index
+//      , rn	 [9..5] : Index
+//      , rt	 [4..0] : Index
+//      , offWSize = imm7 as SIntX << 2
+//      , offXSize = imm7 as SIntX << 3
+//      }
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWUXTB : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(7..0) as UIntX as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWUXTB = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::UXTB, imm3 = 0}
+//    assembly ADDWUXTB = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtb"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWUXTH : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(15..0) as UIntX as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWUXTH = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::UXTH, imm3 = 0}
+//    assembly ADDWUXTH = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxth"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWUXTW : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(31..0) as UIntX as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWUXTW = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::UXTW, imm3 = 0}
+//    assembly ADDWUXTW = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtw"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWUXTX : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(63..0) as UIntX as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWUXTX = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::UXTX, imm3 = 0}
+//    assembly ADDWUXTX = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtx"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSXTB : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(7..0) as SIntX as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWSXTB = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::SXTB, imm3 = 0}
+//    assembly ADDWSXTB = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtb"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSXTH : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(15..0) as SIntX as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWSXTH = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::SXTH, imm3 = 0}
+//    assembly ADDWSXTH = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxth"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSXTW : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(31..0) as SIntX as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWSXTW = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::SXTW, imm3 = 0}
+//    assembly ADDWSXTW = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtw"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSXTX : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(63..0) as SIntX as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWSXTX = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::SXTX, imm3 = 0}
+//    assembly ADDWSXTX = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtx"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWUXSB : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(7..0) as UIntX << imm3) as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWUXSB = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::UXTB}
+//    assembly ADDWUXSB = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtb #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWUXSH : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(15..0) as UIntX << imm3) as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWUXSH = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::UXTH}
+//    assembly ADDWUXSH = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxth #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWUXSW : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(31..0) as UIntX << imm3) as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWUXSW = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::UXTW}
+//    assembly ADDWUXSW = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtw #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWUXSX : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(63..0) as UIntX << imm3) as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWUXSX = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::UXTX}
+//    assembly ADDWUXSX = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtx #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSXSB : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(7..0) as SIntX << imm3) as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWSXSB = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::SXTB}
+//    assembly ADDWSXSB = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtb #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSXSH : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(15..0) as SIntX << imm3) as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWSXSH = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::SXTH}
+//    assembly ADDWSXSH = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxth #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSXSW : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(31..0) as SIntX << imm3) as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWSXSW = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::SXTW}
+//    assembly ADDWSXSW = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtw #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSXSX : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(63..0) as SIntX << imm3) as Bits<Size::WSize>) in {
+//        R(rd) := result
+//      }
+//    encoding ADDWSXSX = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::OffFlags, option = ExtendType::SXTX}
+//    assembly ADDWSXSX = ("add", "", ' ', WSizeSP(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtx #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXUXTB : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(7..0) as UIntX as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXUXTB = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::UXTB, imm3 = 0}
+//    assembly ADDXUXTB = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxtb"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXUXTH : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(15..0) as UIntX as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXUXTH = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::UXTH, imm3 = 0}
+//    assembly ADDXUXTH = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxth"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXUXTW : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(31..0) as UIntX as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXUXTW = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::UXTW, imm3 = 0}
+//    assembly ADDXUXTW = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxtw"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXUXTX : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(63..0) as UIntX as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXUXTX = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::UXTX, imm3 = 0}
+//    assembly ADDXUXTX = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (XSize(rm), ", uxtx"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSXTB : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(7..0) as SIntX as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXSXTB = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::SXTB, imm3 = 0}
+//    assembly ADDXSXTB = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxtb"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSXTH : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(15..0) as SIntX as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXSXTH = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::SXTH, imm3 = 0}
+//    assembly ADDXSXTH = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxth"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSXTW : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(31..0) as SIntX as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXSXTW = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::SXTW, imm3 = 0}
+//    assembly ADDXSXTW = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxtw"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSXTX : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(63..0) as SIntX as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXSXTX = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::SXTX, imm3 = 0}
+//    assembly ADDXSXTX = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (XSize(rm), ", sxtx"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXUXSB : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(7..0) as UIntX << imm3) as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXUXSB = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::UXTB}
+//    assembly ADDXUXSB = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxtb #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXUXSH : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(15..0) as UIntX << imm3) as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXUXSH = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::UXTH}
+//    assembly ADDXUXSH = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxth #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXUXSW : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(31..0) as UIntX << imm3) as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXUXSW = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::UXTW}
+//    assembly ADDXUXSW = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxtw #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXUXSX : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(63..0) as UIntX << imm3) as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXUXSX = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::UXTX}
+//    assembly ADDXUXSX = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (XSize(rm), ", uxtx #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSXSB : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(7..0) as SIntX << imm3) as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXSXSB = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::SXTB}
+//    assembly ADDXSXSB = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxtb #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSXSH : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(15..0) as SIntX << imm3) as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXSXSH = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::SXTH}
+//    assembly ADDXSXSH = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxth #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSXSW : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(31..0) as SIntX << imm3) as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXSXSW = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::SXTW}
+//    assembly ADDXSXSW = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxtw #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSXSX : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(63..0) as SIntX << imm3) as Bits<Size::XSize>) in {
+//        S(rd) := result
+//      }
+//    encoding ADDXSXSX = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::OffFlags, option = ExtendType::SXTX}
+//    assembly ADDXSXSX = ("add", "", ' ', XSizeSP(rd), ', ', XSizeSP(rn), ', ', (XSize(rm), ", sxtx #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSUXTB : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(7..0) as UIntX as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSUXTB = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::UXTB, imm3 = 0}
+//    assembly ADDWSUXTB = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtb"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSUXTH : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(15..0) as UIntX as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSUXTH = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::UXTH, imm3 = 0}
+//    assembly ADDWSUXTH = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxth"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSUXTW : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(31..0) as UIntX as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSUXTW = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::UXTW, imm3 = 0}
+//    assembly ADDWSUXTW = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtw"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSUXTX : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(63..0) as UIntX as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSUXTX = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::UXTX, imm3 = 0}
+//    assembly ADDWSUXTX = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtx"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSSXTB : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(7..0) as SIntX as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSSXTB = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::SXTB, imm3 = 0}
+//    assembly ADDWSSXTB = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtb"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSSXTH : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(15..0) as SIntX as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSSXTH = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::SXTH, imm3 = 0}
+//    assembly ADDWSSXTH = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxth"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSSXTW : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(31..0) as SIntX as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSSXTW = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::SXTW, imm3 = 0}
+//    assembly ADDWSSXTW = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtw"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSSXTX : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), X(rm)(63..0) as SIntX as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSSXTX = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::SXTX, imm3 = 0}
+//    assembly ADDWSSXTX = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtx"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSUXSB : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(7..0) as UIntX << imm3) as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSUXSB = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::UXTB}
+//    assembly ADDWSUXSB = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtb #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSUXSH : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(15..0) as UIntX << imm3) as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSUXSH = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::UXTH}
+//    assembly ADDWSUXSH = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxth #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSUXSW : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(31..0) as UIntX << imm3) as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSUXSW = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::UXTW}
+//    assembly ADDWSUXSW = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtw #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSUXSX : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(63..0) as UIntX << imm3) as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSUXSX = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::UXTX}
+//    assembly ADDWSUXSX = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", uxtx #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSSXSB : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(7..0) as SIntX << imm3) as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSSXSB = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::SXTB}
+//    assembly ADDWSSXSB = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtb #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSSXSH : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(15..0) as SIntX << imm3) as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSSXSH = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::SXTH}
+//    assembly ADDWSSXSH = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxth #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSSXSW : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(31..0) as SIntX << imm3) as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSSXSW = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::SXTW}
+//    assembly ADDWSSXSW = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtw #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDWSSXSX : AddSubExtFormat =
+//      let result, flags = VADL::adds(R(rn), (X(rm)(63..0) as SIntX << imm3) as Bits<Size::WSize>) in {
+//        W(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDWSSXSX = {op = 0b0'0101'1001, sf = SF::WSize, ff = FF::SetFlags, option = ExtendType::SXTX}
+//    assembly ADDWSSXSX = ("add", "s", ' ', WSize(rd), ', ', WSizeSP(rn), ', ', (WSize(rm), ", sxtx #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSUXTB : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(7..0) as UIntX as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSUXTB = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::UXTB, imm3 = 0}
+//    assembly ADDXSUXTB = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxtb"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSUXTH : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(15..0) as UIntX as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSUXTH = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::UXTH, imm3 = 0}
+//    assembly ADDXSUXTH = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxth"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSUXTW : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(31..0) as UIntX as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSUXTW = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::UXTW, imm3 = 0}
+//    assembly ADDXSUXTW = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxtw"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSUXTX : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(63..0) as UIntX as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSUXTX = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::UXTX, imm3 = 0}
+//    assembly ADDXSUXTX = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (XSize(rm), ", uxtx"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSSXTB : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(7..0) as SIntX as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSSXTB = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::SXTB, imm3 = 0}
+//    assembly ADDXSSXTB = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxtb"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSSXTH : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(15..0) as SIntX as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSSXTH = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::SXTH, imm3 = 0}
+//    assembly ADDXSSXTH = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxth"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSSXTW : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(31..0) as SIntX as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSSXTW = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::SXTW, imm3 = 0}
+//    assembly ADDXSSXTW = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxtw"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSSXTX : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), X(rm)(63..0) as SIntX as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSSXTX = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::SXTX, imm3 = 0}
+//    assembly ADDXSSXTX = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (XSize(rm), ", sxtx"))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSUXSB : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(7..0) as UIntX << imm3) as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSUXSB = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::UXTB}
+//    assembly ADDXSUXSB = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxtb #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSUXSH : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(15..0) as UIntX << imm3) as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSUXSH = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::UXTH}
+//    assembly ADDXSUXSH = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxth #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSUXSW : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(31..0) as UIntX << imm3) as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSUXSW = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::UXTW}
+//    assembly ADDXSUXSW = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", uxtw #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSUXSX : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(63..0) as UIntX << imm3) as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSUXSX = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::UXTX}
+//    assembly ADDXSUXSX = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (XSize(rm), ", uxtx #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSSXSB : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(7..0) as SIntX << imm3) as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSSXSB = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::SXTB}
+//    assembly ADDXSSXSB = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxtb #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSSXSH : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(15..0) as SIntX << imm3) as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSSXSH = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::SXTH}
+//    assembly ADDXSSXSH = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxth #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSSXSW : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(31..0) as SIntX << imm3) as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSSXSW = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::SXTW}
+//    assembly ADDXSSXSW = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (WSize(rm), ", sxtw #", udec(imm3)))
+//
+//    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
+//    instruction ADDXSSXSX : AddSubExtFormat =
+//      let result, flags = VADL::adds(S(rn), (X(rm)(63..0) as SIntX << imm3) as Bits<Size::XSize>) in {
+//        X(rd) := result
+//        NZCV_N := flags.negative
+//        NZCV_Z := flags.zero
+//        NZCV_C := flags.carry
+//        NZCV_V := flags.overflow
+//      }
+//    encoding ADDXSSXSX = {op = 0b0'0101'1001, sf = SF::XSize, ff = FF::SetFlags, option = ExtendType::SXTX}
+//    assembly ADDXSSXSX = ("add", "s", ' ', XSize(rd), ', ', XSizeSP(rn), ', ', (XSize(rm), ", sxtx #", udec(imm3)))
+//
+//    instruction ADCW : ThreeRegOpFormat =
+//      let result, flags = VADL::addc(W(rn), W(rm), NZCV_C) in
+//        W(rd) := result
+//    encoding ADCW = {op = 0b0011'0100'0000'0000, sf = SF::WSize}
+//    assembly ADCW = ("adc", ' ', WSize(rd), ', ', WSize(rn), ', ', WSize(rm))
+//
+//    instruction ADCX : ThreeRegOpFormat =
+//      let result, flags = VADL::addc(X(rn), X(rm), NZCV_C) in
+//        X(rd) := result
+//    encoding ADCX = {op = 0b0011'0100'0000'0000, sf = SF::XSize}
+//    assembly ADCX = ("adc", ' ', XSize(rd), ', ', XSize(rn), ', ', XSize(rm))
+//
+//    instruction ADR : RelAddressFormat =
+//      X(rd) := PC + offset
+//    encoding ADR = {op = 0b01'0000}
+//    assembly ADR = ("adr", ' ', XSize(rd), ', ', ' ', sdec(imm21))
+//
+//    instruction ADRP : RelAddressFormat =
+//      X(rd) := (PC >> 12) + offset << 12
+//    encoding ADRP = {op = 0b11'0000}
+//    assembly ADRP = ("adrp", ' ', XSize(rd), ', ', ' ', sdec(imm21))
+//
+//    instruction MADDW : MulAddSubFormat =
+//      let result = VADL::add(W(ra), W(rn) * W(rm)) in
+//        W(rd) := result
+//    encoding MADDW = {op = 0b0011'0110'000, sf = SF::WSize}
+//    assembly MADDW = ("madd", ' ', WSize(rd), ', ', WSize(rn), ', ', WSize(rm), ', ', WSize(ra))
+//
+//    instruction MADDX : MulAddSubFormat =
+//      let result = VADL::add(X(ra), X(rn) * X(rm)) in
+//        X(rd) := result
+//    encoding MADDX = {op = 0b0011'0110'000, sf = SF::XSize}
+//    assembly MADDX = ("madd", ' ', XSize(rd), ', ', XSize(rn), ', ', XSize(rm), ', ', XSize(ra))
+//
+//    instruction SMADDL : MulAddSubFormat =
+//      X(rd) := VADL::add(X(ra), W(rn) as SInt *# W(rm) as SInt)
+//    encoding SMADDL = {op = 0b0011'0110'010, sf = SF::XSize}
+//    assembly SMADDL = ("smaddl", ' ', XSize(rd), ', ', WSize(rn), ', ', WSize(rm), ', ', XSize(ra))
+//
+//    instruction UMADDL : MulAddSubFormat =
+//      X(rd) := VADL::add(X(ra), W(rn) as UInt *# W(rm) as UInt)
+//    encoding UMADDL = {op = 0b0011'0111'010, sf = SF::XSize}
+//    assembly UMADDL = ("umaddl", ' ', XSize(rd), ', ', WSize(rn), ', ', WSize(rm), ', ', XSize(ra))
+//
+//    instruction SMULH : ThreeRegOpFormat =
+//      let result = X(rn) as SInt *# X(rm) as SInt in
+//        X(rd) := result(127..SizeX)
+//    encoding SMULH = {op = 0b0011'0110'1001'1111, sf = SF::XSize}
+//    assembly SMULH = ("smulh", ' ', XSize(rd), ', ', XSize(rn), ', ', XSize(rm))
+//
+//    instruction SDIVW : ThreeRegOpFormat =
+//      let dividend = W(rn) as SInt in
+//        let divisor = W(rm) as SInt in
+//          let result = if divisor = 0
+//            then 0
+//            else (let MinInt = 1 as SInt<Size::WSize> << Size::WSize - 1 in
+//                if dividend = MinInt && divisor = -1
+//                then MinInt
+//                else dividend / divisor) in
+//            W(rd) := result
+//    encoding SDIVW = {op = 0b0011'0101'1000'0011, sf = SF::WSize}
+//    assembly SDIVW = ("sdiv", ' ', WSize(rd), ', ', WSize(rn), ', ', WSize(rm))
+//
+//    instruction SDIVX : ThreeRegOpFormat =
+//      let dividend = X(rn) as SInt in
+//        let divisor = X(rm) as SInt in
+//          let result = if divisor = 0
+//            then 0
+//            else (let MinInt = 1 as SInt<Size::XSize> << Size::XSize - 1 in
+//                if dividend = MinInt && divisor = -1
+//                then MinInt
+//                else dividend / divisor) in
+//            X(rd) := result
+//    encoding SDIVX = {op = 0b0011'0101'1000'0011, sf = SF::XSize}
+//    assembly SDIVX = ("sdiv", ' ', XSize(rd), ', ', XSize(rn), ', ', XSize(rm))
+//
+//    [undefined when : imm13Decode(imm13) = 0 || sf = 0 && imm13(12) = 1]
+//    instruction ANDIW : LogicImmFormat =
+//      let result = VADL::and(W(rn), immWSize) in
+//        R(rd) := result
+//    encoding ANDIW = {op = 0b0010'0100, sf = SF::WSize}
+//    assembly ANDIW = ("and", ' ', WSizeSP(rd), ', ', WSize(rn), ', #', udec(immWSize))
+//
+//    [undefined when : imm13Decode(imm13) = 0 || sf = 0 && imm13(12) = 1]
+//    instruction ANDIX : LogicImmFormat =
+//      let result = VADL::and(X(rn), immXSize) in
+//        S(rd) := result
+//    encoding ANDIX = {op = 0b0010'0100, sf = SF::XSize}
+//    assembly ANDIX = ("and", ' ', XSizeSP(rd), ', ', XSize(rn), ', #', udec(immXSize))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDW : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(W(rn), W(rm) as Bits) in {
+//        W(rd) := result
+//      }
+//    encoding ANDW = {op = 0b0001'0100, sf = SF::WSize, imm6 = 0, shift = ShiftType::LSL}
+//    assembly ANDW = ("and", ' ', WSize(rd), ', ', WSize(rn), ', ', WSize(rm))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDWLSL : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(W(rn), W(rm) as Bits << imm6) in {
+//        W(rd) := result
+//      }
+//    encoding ANDWLSL = {op = 0b0001'0100, sf = SF::WSize, shift = ShiftType::LSL}
+//    assembly ANDWLSL = ("and", ' ', WSize(rd), ', ', WSize(rn), ', ', (WSize(rm), ", lsl #", udec(imm6)))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDWLSR : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(W(rn), W(rm) as UInt >> imm6) in {
+//        W(rd) := result
+//      }
+//    encoding ANDWLSR = {op = 0b0001'0100, sf = SF::WSize, shift = ShiftType::LSR}
+//    assembly ANDWLSR = ("and", ' ', WSize(rd), ', ', WSize(rn), ', ', (WSize(rm), ", lsr #", udec(imm6)))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDWASR : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(W(rn), W(rm) as SInt >> imm6) in {
+//        W(rd) := result
+//      }
+//    encoding ANDWASR = {op = 0b0001'0100, sf = SF::WSize, shift = ShiftType::ASR}
+//    assembly ANDWASR = ("and", ' ', WSize(rd), ', ', WSize(rn), ', ', (WSize(rm), ", asr #", udec(imm6)))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDWROR : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(W(rn), W(rm) as Bits <>> imm6) in {
+//        W(rd) := result
+//      }
+//    encoding ANDWROR = {op = 0b0001'0100, sf = SF::WSize, shift = ShiftType::ROR}
+//    assembly ANDWROR = ("and", ' ', WSize(rd), ', ', WSize(rn), ', ', (WSize(rm), ", ror #", udec(imm6)))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDX : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(X(rn), X(rm) as Bits) in {
+//        X(rd) := result
+//      }
+//    encoding ANDX = {op = 0b0001'0100, sf = SF::XSize, imm6 = 0, shift = ShiftType::LSL}
+//    assembly ANDX = ("and", ' ', XSize(rd), ', ', XSize(rn), ', ', XSize(rm))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDXLSL : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(X(rn), X(rm) as Bits << imm6) in {
+//        X(rd) := result
+//      }
+//    encoding ANDXLSL = {op = 0b0001'0100, sf = SF::XSize, shift = ShiftType::LSL}
+//    assembly ANDXLSL = ("and", ' ', XSize(rd), ', ', XSize(rn), ', ', (XSize(rm), ", lsl #", udec(imm6)))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDXLSR : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(X(rn), X(rm) as UInt >> imm6) in {
+//        X(rd) := result
+//      }
+//    encoding ANDXLSR = {op = 0b0001'0100, sf = SF::XSize, shift = ShiftType::LSR}
+//    assembly ANDXLSR = ("and", ' ', XSize(rd), ', ', XSize(rn), ', ', (XSize(rm), ", lsr #", udec(imm6)))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDXASR : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(X(rn), X(rm) as SInt >> imm6) in {
+//        X(rd) := result
+//      }
+//    encoding ANDXASR = {op = 0b0001'0100, sf = SF::XSize, shift = ShiftType::ASR}
+//    assembly ANDXASR = ("and", ' ', XSize(rd), ', ', XSize(rn), ', ', (XSize(rm), ", asr #", udec(imm6)))
+//
+//    [undefined when : sf = 0 && imm6(5) = 1]
+//    instruction ANDXROR : LogicRegShiftFormat =
+//      let result, flags = VADL::ands(X(rn), X(rm) as Bits <>> imm6) in {
+//        X(rd) := result
+//      }
+//    encoding ANDXROR = {op = 0b0001'0100, sf = SF::XSize, shift = ShiftType::ROR}
+//    assembly ANDXROR = ("and", ' ', XSize(rd), ', ', XSize(rn), ', ', (XSize(rm), ", ror #", udec(imm6)))
+//
+//    instruction ASRW : ShiftRegFormat =
+//      W(rd) := VADL::asr(W(rn), W(rm))
+//    encoding ASRW = {op = 0b0011'0101'1000'10, sf = SF::WSize, shift = ShiftType::ASR}
+//    assembly ASRW = ("asrv", ' ', WSize(rd), ', ', WSize(rn), ', ', WSize(rm))
+//
+//    instruction ASRX : ShiftRegFormat =
+//      X(rd) := VADL::asr(X(rn), X(rm))
+//    encoding ASRX = {op = 0b0011'0101'1000'10, sf = SF::XSize, shift = ShiftType::ASR}
+//    assembly ASRX = ("asrv", ' ', XSize(rd), ', ', XSize(rn), ', ', XSize(rm))
+//
+//    instruction REV32 : TwoRegOpFormat =
+//      let xrn = X(rn) in
+//        let result = (xrn(39..32), xrn(47..40), xrn(55..48), xrn(63..56), xrn(7..0), xrn(15..8), xrn(23..16), xrn(31..24)) in
+//          X(rd) := result as Bits<Size::XSize>
+//    encoding REV32 = {op = 0b1'0110'1011'0000'0000'0010, sf = SF::XSize}
+//    assembly REV32 = ("rev32", ' ', XSize(rd), ', ', XSize(rn))
+//
+//    instruction CCMNIEQW : CondCompareFormat =
+//      if NZCV_Z = 1 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIEQW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::EQ}
+//    assembly CCMNIEQW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "eq")
+//
+//    instruction CCMNIEQX : CondCompareFormat =
+//      if NZCV_Z = 1 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIEQX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::EQ}
+//    assembly CCMNIEQX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "eq")
+//
+//    instruction CCMNINEW : CondCompareFormat =
+//      if NZCV_Z = 0 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNINEW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::NE}
+//    assembly CCMNINEW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "ne")
+//
+//    instruction CCMNINEX : CondCompareFormat =
+//      if NZCV_Z = 0 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNINEX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::NE}
+//    assembly CCMNINEX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "ne")
+//
+//    instruction CCMNICSW : CondCompareFormat =
+//      if NZCV_C = 1 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNICSW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::CS}
+//    assembly CCMNICSW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "cs")
+//
+//    instruction CCMNICSX : CondCompareFormat =
+//      if NZCV_C = 1 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNICSX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::CS}
+//    assembly CCMNICSX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "cs")
+//
+//    instruction CCMNICCW : CondCompareFormat =
+//      if NZCV_C = 0 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNICCW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::CC}
+//    assembly CCMNICCW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "cc")
+//
+//    instruction CCMNICCX : CondCompareFormat =
+//      if NZCV_C = 0 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNICCX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::CC}
+//    assembly CCMNICCX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "cc")
+//
+//    instruction CCMNIMIW : CondCompareFormat =
+//      if NZCV_N = 1 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIMIW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::MI}
+//    assembly CCMNIMIW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "mi")
+//
+//    instruction CCMNIMIX : CondCompareFormat =
+//      if NZCV_N = 1 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIMIX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::MI}
+//    assembly CCMNIMIX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "mi")
+//
+//    instruction CCMNIPLW : CondCompareFormat =
+//      if NZCV_N = 0 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIPLW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::PL}
+//    assembly CCMNIPLW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "pl")
+//
+//    instruction CCMNIPLX : CondCompareFormat =
+//      if NZCV_N = 0 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIPLX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::PL}
+//    assembly CCMNIPLX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "pl")
+//
+//    instruction CCMNIVSW : CondCompareFormat =
+//      if NZCV_V = 1 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIVSW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::VS}
+//    assembly CCMNIVSW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "vs")
+//
+//    instruction CCMNIVSX : CondCompareFormat =
+//      if NZCV_V = 1 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIVSX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::VS}
+//    assembly CCMNIVSX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "vs")
+//
+//    instruction CCMNIVCW : CondCompareFormat =
+//      if NZCV_V = 0 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIVCW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::VC}
+//    assembly CCMNIVCW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "vc")
+//
+//    instruction CCMNIVCX : CondCompareFormat =
+//      if NZCV_V = 0 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIVCX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::VC}
+//    assembly CCMNIVCX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "vc")
+//
+//    instruction CCMNIHIW : CondCompareFormat =
+//      if NZCV_C = 1 && NZCV_Z = 0 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIHIW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::HI}
+//    assembly CCMNIHIW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "hi")
+//
+//    instruction CCMNIHIX : CondCompareFormat =
+//      if NZCV_C = 1 && NZCV_Z = 0 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIHIX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::HI}
+//    assembly CCMNIHIX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "hi")
+//
+//    instruction CCMNILSW : CondCompareFormat =
+//      if NZCV_C = 0 || NZCV_Z = 1 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNILSW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::LS}
+//    assembly CCMNILSW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "ls")
+//
+//    instruction CCMNILSX : CondCompareFormat =
+//      if NZCV_C = 0 || NZCV_Z = 1 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNILSX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::LS}
+//    assembly CCMNILSX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "ls")
+//
+//    instruction CCMNIGEW : CondCompareFormat =
+//      if NZCV_N = NZCV_V then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIGEW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::GE}
+//    assembly CCMNIGEW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "ge")
+//
+//    instruction CCMNIGEX : CondCompareFormat =
+//      if NZCV_N = NZCV_V then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIGEX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::GE}
+//    assembly CCMNIGEX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "ge")
+//
+//    instruction CCMNILTW : CondCompareFormat =
+//      if NZCV_N != NZCV_V then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNILTW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::LT}
+//    assembly CCMNILTW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "lt")
+//
+//    instruction CCMNILTX : CondCompareFormat =
+//      if NZCV_N != NZCV_V then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNILTX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::LT}
+//    assembly CCMNILTX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "lt")
+//
+//    instruction CCMNIGTW : CondCompareFormat =
+//      if NZCV_N = NZCV_V && NZCV_Z = 0 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIGTW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::GT}
+//    assembly CCMNIGTW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "gt")
+//
+//    instruction CCMNIGTX : CondCompareFormat =
+//      if NZCV_N = NZCV_V && NZCV_Z = 0 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIGTX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::GT}
+//    assembly CCMNIGTX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "gt")
+//
+//    instruction CCMNILEW : CondCompareFormat =
+//      if NZCV_N != NZCV_V || NZCV_Z = 1 then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNILEW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::LE}
+//    assembly CCMNILEW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "le")
+//
+//    instruction CCMNILEX : CondCompareFormat =
+//      if NZCV_N != NZCV_V || NZCV_Z = 1 then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNILEX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::LE}
+//    assembly CCMNILEX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "le")
+//
+//    instruction CCMNIALW : CondCompareFormat =
+//      if true then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIALW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::AL}
+//    assembly CCMNIALW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "al")
+//
+//    instruction CCMNIALX : CondCompareFormat =
+//      if true then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNIALX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::AL}
+//    assembly CCMNIALX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "al")
+//
+//    instruction CCMNINVW : CondCompareFormat =
+//      if true then
+//        let result, flags = VADL::adds(W(rn), immX as BitsW) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNINVW = {op = 0b0111'0100'1010'0, sf = SF::WSize, cc = CondCode::NV}
+//    assembly CCMNINVW = ("ccmn", ' ', WSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "nv")
+//
+//    instruction CCMNINVX : CondCompareFormat =
+//      if true then
+//        let result, flags = VADL::adds(X(rn), immX) in {
+//          NZCV_N := flags.negative
+//          NZCV_Z := flags.zero
+//          NZCV_C := flags.carry
+//          NZCV_V := flags.overflow
+//        }
+//      else {
+//        NZCV_N := nzcv(3)
+//        NZCV_Z := nzcv(2)
+//        NZCV_C := nzcv(1)
+//        NZCV_V := nzcv(0)
+//      }
+//    encoding CCMNINVX = {op = 0b0111'0100'1010'0, sf = SF::XSize, cc = CondCode::NV}
+//    assembly CCMNINVX = ("ccmn", ' ', XSize(rn), (', #', udec(rm)), ', #', udec(nzcv), ', ', "nv")
+//
+//    instruction B : BranchFormat =
+//      PC := PC + offset
+//    encoding B = {op = 0b0001'01}
+//    assembly B = ("b", ' ', sdec(offset))
+//
+//    instruction BL : BranchFormat = {
+//      LR := PC.next
+//      PC := PC + offset
+//    }
+//    encoding BL = {op = 0b1001'01}
+//    assembly BL = ("bl", ' ', sdec(offset))
+//
+//    instruction BR : BranchRegFormat =
+//      PC := X(rn)
+//    encoding BR = {op = 0b1101'0110'0001'1111'0000'0000'000}
+//    assembly BR = ("br", ' ', XSize(rn))
+//
+//    instruction TBZ : TestBitBranchFormat =
+//      if VADL::equ((X(rt) >> imm6) as Bits1, 0) then
+//        PC := PC + offset
+//    encoding TBZ = {op = 0b0110'110}
+//    assembly TBZ = ("tbz", ' ', XSize(rt), ', #', udec(imm6), ', ', sdec(offset))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreB : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        W(rt) := MEM< 1 >(addr) as UIntW
+//        S(rn) := addr
+//      }
+//    encoding LDRPreB = {op = 0b111'000'011, opc = 0b01, size = AccSize::Byte}
+//    assembly LDRPreB = ("ldr", "b", ' ', WSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreH : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        W(rt) := MEM< 2 >(addr) as UIntW
+//        S(rn) := addr
+//      }
+//    encoding LDRPreH = {op = 0b111'000'011, opc = 0b01, size = AccSize::Half}
+//    assembly LDRPreH = ("ldr", "h", ' ', WSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreW : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        W(rt) := MEM< 4 >(addr) as UIntW
+//        S(rn) := addr
+//      }
+//    encoding LDRPreW = {op = 0b111'000'011, opc = 0b01, size = AccSize::Word}
+//    assembly LDRPreW = ("ldr", "", ' ', WSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreX : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        X(rt) := MEM< 8 >(addr)
+//        S(rn) := addr
+//      }
+//    encoding LDRPreX = {op = 0b111'000'011, opc = 0b01, size = AccSize::XWord}
+//    assembly LDRPreX = ("ldr", "", ' ', XSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreSBX : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        X(rt) := MEM< 1 >(addr) as SIntX
+//        S(rn) := addr
+//      }
+//    encoding LDRPreSBX = {op = 0b111'000'011, opc = 0b10, size = AccSize::Byte}
+//    assembly LDRPreSBX = ("ldr", "sb", ' ', XSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreSHX : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        X(rt) := MEM< 2 >(addr) as SIntX
+//        S(rn) := addr
+//      }
+//    encoding LDRPreSHX = {op = 0b111'000'011, opc = 0b10, size = AccSize::Half}
+//    assembly LDRPreSHX = ("ldr", "sh", ' ', XSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreSWX : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        X(rt) := MEM< 4 >(addr) as SIntX
+//        S(rn) := addr
+//      }
+//    encoding LDRPreSWX = {op = 0b111'000'011, opc = 0b10, size = AccSize::Word}
+//    assembly LDRPreSWX = ("ldr", "sw", ' ', XSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreSBW : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        X(rt) := MEM< 1 >(addr) as SIntW as BitsW as BitsX
+//        S(rn) := addr
+//      }
+//    encoding LDRPreSBW = {op = 0b111'000'011, opc = 0b11, size = AccSize::Byte}
+//    assembly LDRPreSBW = ("ldr", "sb", ' ', WSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction LDRPreSHW : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        X(rt) := MEM< 2 >(addr) as SIntW as BitsW as BitsX
+//        S(rn) := addr
+//      }
+//    encoding LDRPreSHW = {op = 0b111'000'011, opc = 0b11, size = AccSize::Half}
+//    assembly LDRPreSHW = ("ldr", "sh", ' ', WSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction STRPreB : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        MEM< 1 >(addr) := W(rt) as Byte
+//        S(rn) := addr
+//      }
+//    encoding STRPreB = {op = 0b111'000'011, opc = 0b00, size = AccSize::Byte}
+//    assembly STRPreB = ("str", "b", ' ', WSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction STRPreH : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        MEM< 2 >(addr) := W(rt) as Half
+//        S(rn) := addr
+//      }
+//    encoding STRPreH = {op = 0b111'000'011, opc = 0b00, size = AccSize::Half}
+//    assembly STRPreH = ("str", "h", ' ', WSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction STRPreW : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        MEM< 4 >(addr) := W(rt) as Word
+//        S(rn) := addr
+//      }
+//    encoding STRPreW = {op = 0b111'000'011, opc = 0b00, size = AccSize::Word}
+//    assembly STRPreW = ("str", "", ' ', WSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : (opc != 0 && rn = rt) && rt != 31]
+//    instruction STRPreX : MemoryImmFormat =
+//      let addr = S(rn) + offset in {
+//        MEM< 8 >(addr) := X(rt)
+//        S(rn) := addr
+//      }
+//    encoding STRPreX = {op = 0b111'000'011, opc = 0b00, size = AccSize::XWord}
+//    assembly STRPreX = ("str", "", ' ', XSize(rt), ', [', XSizeSP(rn), (Imm9decimal(imm9), ']!'))
+//
+//    [undefined when : rt2 = rt]
+//    instruction LDPW : MemoryPairFormat =
+//      let addr = S(rn) + offWSize in {
+//        X(rt) := MEM< 4 >(addr) as UIntX
+//        X(rt2) := MEM< 4 >(addr + 4) as UIntX
+//      }
+//    encoding LDPW = {opc = 0b0001, op = 0b101'010}
+//    assembly LDPW = ("ldp", ' ', WSize(rt), ', ', WSize(rt2), ("[", XSizeSP(rn), Imm7decimal(offWSize), "]"))
+//
+//    [undefined when : rt2 = rt || rn != 31 && (rt = rn || rt2 = rn)]
+//    instruction LDPWPre : MemoryPairFormat =
+//      let addr = S(rn) + offWSize in {
+//        X(rt) := MEM< 4 >(addr) as UIntX
+//        X(rt2) := MEM< 4 >(addr + 4) as UIntX
+//        S(rn) := addr
+//      }
+//    encoding LDPWPre = {opc = 0b0001, op = 0b101'011}
+//    assembly LDPWPre = ("ldp", ' ', WSize(rt), ', ', WSize(rt2), ("[", XSizeSP(rn), Imm7decimal(offWSize), "]!"))
+//
+//    [undefined when : rt2 = rt || rn != 31 && (rt = rn || rt2 = rn)]
+//    instruction LDPWPst : MemoryPairFormat =
+//      let addr = S(rn) in {
+//        X(rt) := MEM< 4 >(addr) as UIntX
+//        X(rt2) := MEM< 4 >(addr + 4) as UIntX
+//        S(rn) := addr + offWSize
+//      }
+//    encoding LDPWPst = {opc = 0b0001, op = 0b101'001}
+//    assembly LDPWPst = ("ldp", ' ', WSize(rt), ', ', WSize(rt2), ("[", XSizeSP(rn), "]", Imm7decimal(offWSize)))
+//
+//    [undefined when : rt2 = rt]
+//    instruction LDPX : MemoryPairFormat =
+//      let addr = S(rn) + offXSize in {
+//        X(rt) := MEM< 8 >(addr)
+//        X(rt2) := MEM< 8 >(addr + 8)
+//      }
+//    encoding LDPX = {opc = 0b1001, op = 0b101'010}
+//    assembly LDPX = ("ldp", ' ', XSize(rt), ', ', XSize(rt2), ("[", XSizeSP(rn), Imm7decimal(offXSize), "]"))
+//
+//    [undefined when : rt2 = rt || rn != 31 && (rt = rn || rt2 = rn)]
+//    instruction LDPXPre : MemoryPairFormat =
+//      let addr = S(rn) + offXSize in {
+//        X(rt) := MEM< 8 >(addr)
+//        X(rt2) := MEM< 8 >(addr + 8)
+//        S(rn) := addr
+//      }
+//    encoding LDPXPre = {opc = 0b1001, op = 0b101'011}
+//    assembly LDPXPre = ("ldp", ' ', XSize(rt), ', ', XSize(rt2), ("[", XSizeSP(rn), Imm7decimal(offXSize), "]!"))
+//
+//    [undefined when : rt2 = rt || rn != 31 && (rt = rn || rt2 = rn)]
+//    instruction LDPXPst : MemoryPairFormat =
+//      let addr = S(rn) in {
+//        X(rt) := MEM< 8 >(addr)
+//        X(rt2) := MEM< 8 >(addr + 8)
+//        S(rn) := addr + offXSize
+//      }
+//    encoding LDPXPst = {opc = 0b1001, op = 0b101'001}
+//    assembly LDPXPst = ("ldp", ' ', XSize(rt), ', ', XSize(rt2), ("[", XSizeSP(rn), "]", Imm7decimal(offXSize)))
+//
+//    pseudo instruction MULW(rd : Index, rn : Index, rm : Index) = {
+//  MADDW{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}  }
+//
+//    assembly MULW = ("mul", " ", WSize(rd), ", ", WSize(rn), ", ", WSize(rm))
+//
+//    pseudo instruction MULX(rd : Index, rn : Index, rm : Index) = {
+//  MADDX{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}  }
+//
+//    assembly MULX = ("mul", " ", XSize(rd), ", ", XSize(rn), ", ", XSize(rm))
+//
+//    enumeration ExceptionClass : Bits6 =
+//      { Uncategorized = 0x00
+//      , WFxAccessTrap = 0x01
+//      , AdvSIMDFPAccessTrap = 0x07
+//      , UncoveredException = 0x0A
+//      , BranchTarget = 0x0D
+//      , IllegalState = 0x0E
+//      , SupervisorCall = 0x15
+//      , InstructionAbortLowerEL = 0x20
+//      , InstructionAbortSameEL = 0x21
+//      , PCAlignment = 0x22
+//      , DataAbortLowerEL = 0x24
+//      , DataAbortSameEL = 0x25
+//      , SPAlignment = 0x26
+//      , MemoryOperation = 0x27
+//      , FPTrappedException = 0x2C
+//      , SError = 0x2F
+//      , BreakpointLowerEL = 0x30
+//      , BreakpointSameEL = 0x31
+//      , SoftwareStepLowerEL = 0x32
+//      , SoftwareStepSameEL = 0x33
+//      , WatchpointLowerEL = 0x34
+//      , WatchpointSameEL = 0x35
+//      , SoftwareBreakpoint = 0x3C
+//      , ProfilingException = 0x3D
+//      }
+//
+//    format ExceptionSyndromeFormat: BitsX =
+//      { Res0 : Bits8
+//      , ISS2 : Bits24
+//      , EC : Bits6
+//      , IL : Bits1
+//      , ISS : Bits25
+//      }
+//
+//    format SavedProgramStateFormat: BitsX =
+//      { Res0	 [63..37]
+//      , UINJ	 [36]
+//      , PACM	 [35]
+//      , EXLOCK	 [34]
+//      , PPEND	 [33]
+//      , PM	 [32]
+//      , NZCV	 [31..28]
+//      , Res1	 [27..26]
+//      , TCO	 [25]
+//      , DIT	 [24]
+//      , UAO	 [23]
+//      , PAN	 [22]
+//      , SS	 [21]
+//      , IL	 [20]
+//      , Res2	 [19..14]
+//      , ALLINT	 [13]
+//      , SSBS	 [12]
+//      , BTYPE	 [11..10]
+//      , D	 [9]
+//      , A	 [8]
+//      , I	 [7]
+//      , F	 [6]
+//      , Res3	 [5]
+//      , M4	 [4]
+//      , M	 [3..0]
+//      }
+//
+//    format CPACRFormat: BitsX =
+//      { Res0	 [63..29, 27..22, 19..18, 15..0]
+//      , tta	 [28]
+//      , fpen	 [21..20]
+//      , zen	 [17..16]
+//      }
+//
+//    enumeration SysRegEncode : Bits16 =
+//      { NZCV = 0b11'011'0100'0010'000
+//      , CurrentEL = 0b11'000'0100'0010'010
+//      , SPSel = 0b11'000'0100'0010'000
+//      , SP_EL0 = 0b11'000'0100'0001'000
+//      , SP_EL1 = 0b11'100'0100'0001'000
+//      , ELR_EL1 = 0b11'000'0100'0000'001
+//      , VBAR_EL1 = 0b11'000'1100'0000'000
+//      , ESR_EL1 = 0b11'000'0101'0010'000
+//      , SPSR_EL1 = 0b11'000'0100'0000'000
+//      , CPACR_EL1 = 0b11'000'0001'0000'010
+//      , ZCR_EL1 = 0b11'000'0001'0010'000
+//      }
+//
+//    constant SysRegNZCV15 = SysRegEncode::NZCV as Bits15
+//
+//    register CurrentEL: Bits2
+//    register SPSel: Bits1
+//    register SP_EL0: Address
+//    register SP_EL1: Address
+//    register ELR_EL1: Address
+//    register VBAR_EL1: Address
+//    register ESR_EL1: ExceptionSyndromeFormat
+//    register SPSR_EL1: SavedProgramStateFormat
+//    register CPACR_EL1: CPACRFormat
+//    register ZCR_EL1: BitsX
+//
+//    exception GeneralException(exClass : Bits6, syndrome : Bits25, continuation : Address, exOffset : Address) = {
+//        if CurrentEL = 0 then {
+//          SPSR_EL1 := (SPSR_EL1(63..32), NZCV_N, NZCV_Z, NZCV_C, NZCV_V, SPSR_EL1(27..4), SPSel as Bits4 | 0b0100)
+//          if SPSel != 0 then {
+//            SP_EL0 := SP
+//            SP := SP_EL1
+//          }
+//          ESR_EL1.EC := exClass
+//          ESR_EL1.IL := 0b1
+//          ESR_EL1.ISS := syndrome
+//          CurrentEL := 1
+//          ELR_EL1 := continuation
+//          PC := VBAR_EL1 + exOffset
+//        }
+//      }
+//
+//    format MoveSystemRegFormat: Instr =
+//      { op : Bits12
+//      , rs : Bits15
+//      , rt : Index
+//      , sysreg = (true, rs)
+//      , rs := sysreg(14..0)
+//      , sysreg :- false
+//      }
+//
+//    format MoveImmSystemRegFormat: Instr =
+//      { op	 [31..19, 15..12] : Bits17
+//      , op12	 [18..16, 7..5] : Bits6
+//      , crm	 [11..8] : Bits4
+//      , rt	 [4..0] : Index
+//      }
+//
+//    format SuperVisorCallFormat: Instr =
+//      { op	 [31..21, 4..0] : Bits16
+//      , imm16	 [20..5] : Bits16
+//      }
+//
+//    format UndefinedInstrFormat: Instr =
+//      { op : Bits16
+//      , imm16 : Bits16
+//      }
+//
+//    format BTIFormat: Instr =
+//      { op	 [31..16] : Bits16
+//      , opc	 [15..8, 5..0] : Bits14
+//      , bti	 [7..6] : Bits2
+//      }
+//
+//    function SysRegName(sysreg : Bits16) -> String =
+//      match sysreg with
+//        { SysRegEncode::NZCV => "nzcv"
+//        , SysRegEncode::CurrentEL => "currentel"
+//        , SysRegEncode::SPSel => "spsel"
+//        , SysRegEncode::SP_EL0 => "sp_el0"
+//        , SysRegEncode::SP_EL1 => "sp_el1"
+//        , SysRegEncode::ELR_EL1 => "elr_el1"
+//        , SysRegEncode::ESR_EL1 => "esr_el1"
+//        , SysRegEncode::SPSR_EL1 => "spsr_el1"
+//        , SysRegEncode::VBAR_EL1 => "vbar_el1"
+//        , SysRegEncode::CPACR_EL1 => "cpacr_el1"
+//        , SysRegEncode::ZCR_EL1 => "zcr_el1"
+//        , _ => ("S", udec(sysreg(15..14)), "_", udec(sysreg(13..11)), "_", udec(sysreg(10..7)), "_", udec(sysreg(6..3)), "_", udec(sysreg(2..0)))
+//        }
+//
+//    function btiOp2(bti : Bits2) -> String =
+//      match bti with
+//        { 0b01 => "c"
+//        , 0b10 => "j"
+//        , 0b11 => "jc"
+//        , _ => ""
+//        }
+//
+//    [skip pruning]
+//    instruction MSR : MoveSystemRegFormat =
+//      if sysreg = SysRegEncode::NZCV then {
+//          NZCV_N := X(rt)(31)
+//          NZCV_Z := X(rt)(30)
+//          NZCV_C := X(rt)(29)
+//          NZCV_V := X(rt)(28)
+//        }
+//      else if CurrentEL = 0 then raise GeneralException(ExceptionClass::Uncategorized, 0, PC, 0)
+//      else match sysreg with
+//          { SysRegEncode::CurrentEL => raise GeneralException(ExceptionClass::Uncategorized, 0, PC, 0)
+//          , SysRegEncode::SPSR_EL1 => SPSR_EL1 := X(rt)
+//          , SysRegEncode::ESR_EL1 => ESR_EL1 := X(rt)
+//          , SysRegEncode::SPSel => SPSel := X(rt)(0)
+//          , SysRegEncode::SP_EL0 => SP_EL0 := X(rt)
+//          , SysRegEncode::SP_EL1 => if SPSel = 0 then
+//              raise GeneralException(ExceptionClass::Uncategorized, 0, PC, 0)
+//            else
+//              let sp = X(rt) in {
+//                SP_EL1 := sp
+//                SP := sp
+//              }
+//          , SysRegEncode::ELR_EL1 => ELR_EL1 := X(rt)
+//          , SysRegEncode::VBAR_EL1 => VBAR_EL1 := X(rt)
+//          , SysRegEncode::CPACR_EL1 => CPACR_EL1 := X(rt)
+//          , SysRegEncode::ZCR_EL1 => ZCR_EL1 := X(rt)
+//          , _ => raise GeneralException(ExceptionClass::Uncategorized, 0, PC, 0)
+//          }
+//    encoding MSR = {op = 0b1101'0101'0001}
+//    assembly MSR = ("msr", ' ', SysRegName(sysreg), ', ', XSize(rt))
+//
+//    [add operands : imm16]
+//    instruction BRK : SuperVisorCallFormat = {
+//      raise GeneralException(ExceptionClass::SoftwareBreakpoint, 0, PC.next, 0)
+//    }
+//    encoding BRK = {op = 0b1101'0100'0010'0000}
+//    assembly BRK = ("brk", ' #', udec(imm16))
+//
+//    instruction ERET : UndefinedInstrFormat = {
+//      if CurrentEL = 0 then
+//        raise GeneralException(ExceptionClass::Uncategorized, 0, PC, 0)
+//      else {
+//        NZCV_N := SPSR_EL1.NZCV(3)
+//        NZCV_Z := SPSR_EL1.NZCV(2)
+//        NZCV_C := SPSR_EL1.NZCV(1)
+//        NZCV_V := SPSR_EL1.NZCV(0)
+//        if SPSel != 0 then {
+//          SP_EL1 := SP
+//          SP := SP_EL0
+//        }
+//        CurrentEL := 0
+//        PC := ELR_EL1
+//      }
+//    }
+//    encoding ERET = {op = 0b1101'0110'1001'1111, imm16 = 0b0000'0011'1110'0000}
+//    assembly ERET = ("eret")
+//
+//    [add operands : imm16]
+//    instruction HLT : SuperVisorCallFormat = {
+//    }
+//    encoding HLT = {op = 0b1101'0100'0100'0000}
+//    assembly HLT = ("hlt", ' #', udec(imm16))
+//
+//    instruction NOP : UndefinedInstrFormat = {
+//    }
+//    encoding NOP = {op = 0b1101'0101'0000'0011, imm16 = 0b0010'0000'0001'1111}
+//    assembly NOP = ("nop")
+//
+//    [add operands : bti]
+//    instruction BTI : BTIFormat = {
+//    }
+//    encoding BTI = {op = 0b1101'0101'0000'0011, opc = 0b0010'0100'''01'1111}
+//    assembly BTI = ("bti", btiOp2(bti))
+//
+//    [add operands : imm16]
+//    instruction UDF : UndefinedInstrFormat =
+//      raise GeneralException(ExceptionClass::Uncategorized, 0, PC, 0)
+//    encoding UDF = {op = 0b0000'0000'0000'0000}
+//    assembly UDF = ("udf")
+//  }
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -72,7 +72,7 @@ public class RangeFormatField extends FormatField implements IdentifiableNode {
     builder.append("]");
     if (typeLiteral != null) {
       builder.append(" : ");
-      typeLiteral.prettyPrint(0, builder);
+      typeLiteral.prettyPrint(indent, builder);
     }
   }
 
