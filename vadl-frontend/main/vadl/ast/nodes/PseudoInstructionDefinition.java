@@ -70,7 +70,7 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
     Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" = {");
     for (Statement statement : statements) {
-      builder.append(indentedNewline(indent+1));
+      builder.append(indentedNewline(indent + 1));
       statement.prettyPrint(indent + 1, builder);
     }
     builder.append(indentedNewline(indent)).append("}\n");
