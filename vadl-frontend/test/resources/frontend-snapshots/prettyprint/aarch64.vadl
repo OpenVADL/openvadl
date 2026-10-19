@@ -4027,12 +4027,14 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
 //    assembly LDPXPst = ("ldp", ' ', XSize(rt), ', ', XSize(rt2), ("[", XSizeSP(rn), "]", Imm7decimal(offXSize)))
 //
 //    pseudo instruction MULW(rd : Index, rn : Index, rm : Index) = {
-//  MADDW{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}  }
+//      MADDW{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}
+//    }
 //
 //    assembly MULW = ("mul", " ", WSize(rd), ", ", WSize(rn), ", ", WSize(rm))
 //
 //    pseudo instruction MULX(rd : Index, rn : Index, rm : Index) = {
-//  MADDX{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}  }
+//      MADDX{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}
+//    }
 //
 //    assembly MULX = ("mul", " ", XSize(rd), ", ", XSize(rn), ", ", XSize(rm))
 //

@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
 
 import java.util.List;
 import java.util.Objects;
@@ -67,11 +68,12 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
     builder.append(kindStr).append(" instruction ");
     identifier.prettyPrint(indent, builder);
     Parameter.prettyPrintMultiple(indent, params, builder);
-    builder.append(" = {\n");
+    builder.append(" = {");
     for (Statement statement : statements) {
+      builder.append(indentedNewline(indent+1));
       statement.prettyPrint(indent + 1, builder);
     }
-    builder.append(indentString(indent)).append("}\n");
+    builder.append(indentedNewline(indent)).append("}\n");
   }
 
   @Override
