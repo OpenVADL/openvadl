@@ -122,7 +122,10 @@ public class IsaMachineInstructionMatchingAarch64PassTest extends AbstractLcbTes
             Optional.empty()),
         Arguments.of(List.of("ADDX", "ADDXSXTX", "ADDXUXTX"),
             MachineInstructionLabel.ADD_64,
-            Optional.empty())
+            Optional.empty()),
+        Arguments.of(List.of("ADDXI", "ADDXI12"),
+            MachineInstructionLabel.ADDI_64,
+            Optional.of(DataType.bits(64)))
     );
   }
 
