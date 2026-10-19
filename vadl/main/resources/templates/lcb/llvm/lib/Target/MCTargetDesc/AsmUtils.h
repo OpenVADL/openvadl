@@ -42,7 +42,7 @@ namespace llvm
 
             [# th:each="rg : ${registerClasses}" ]
             static std::string getRegisterNameFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex );
-            static unsigned getRegNoFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex );
+            static MCRegister getRegNoFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex );
             [/]
 
             static std::string unwrapToIntegralStr(std::string reg)

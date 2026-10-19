@@ -66,6 +66,7 @@ DecodeStatus [(${namespace})]Disassembler::getInstruction
     , raw_ostream &CS
     ) const
 {
+    // Try decoding in ascending order of instruction sizes.
     [# th:each="size : ${instructionSizes}"]
     if (Bytes.size() >= [(${size.bytes})]) {
         uint64_t Instr = readInstruction(Bytes, [(${size.bytes})], IsBigEndian);
@@ -78,7 +79,7 @@ DecodeStatus [(${namespace})]Disassembler::getInstruction
     }
     [/]
 
-    // Nothing matched: let tools skip the smallest unit.
+    // Nothing matched, skip smallest known instruction size.
     MI.clear();
     Size = Bytes.size() < [(${minInstructionSizeInBytes})] ? 0 : [(${minInstructionSizeInBytes})];
     return MCDisassembler::Fail;

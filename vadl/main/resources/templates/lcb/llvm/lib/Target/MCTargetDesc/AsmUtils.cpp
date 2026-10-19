@@ -2,10 +2,10 @@
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCRegister.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/MC/MCSymbol.h"
 #include "[(${namespace})]MCExpr.h"
 #include <string>
 #include <iostream>
@@ -404,7 +404,7 @@ std::string AsmUtils::getRegisterNameFrom[(${rg.registerFile.name})]ByIndex( uns
     return AsmUtils::getRegisterName( regNo );
 }
 
-unsigned AsmUtils::getRegNoFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex ) {
+MCRegister AsmUtils::getRegNoFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex ) {
     if (RegIndex >= [(${rg.registers.size()})]) {
         return [(${namespace})]::NoRegister;
     }
