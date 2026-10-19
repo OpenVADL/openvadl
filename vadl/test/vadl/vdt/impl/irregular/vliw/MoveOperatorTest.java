@@ -22,6 +22,7 @@ import static vadl.vdt.impl.irregular.vliw.utils.parser.PointedExpressionParser.
 import static vadl.vdt.impl.vliw.PointedRegExpBroadcastOperator.broadcast;
 import static vadl.vdt.impl.vliw.PointedRegExpMoveOperator.move;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import vadl.TestUtils;
 import vadl.vdt.impl.irregular.vliw.utils.LiteralsCollector;
 import vadl.vdt.impl.vliw.model.Counter;
+import vadl.vdt.impl.vliw.model.PointedExpression;
 import vadl.vdt.impl.vliw.model.Transition;
 import vadl.viam.Group;
 
@@ -112,6 +114,60 @@ public class MoveOperatorTest {
         .next()
           .hasState("<(P.Q)[0]<1..2>, true>")
           .hasActions("[0]++")
+        .done().noOthers();
+    // @formatter:on
+  }
+
+  @Test
+  void testMoveRep2() {
+
+    /* GIVEN */
+    final var literals = getLiterals();
+
+    final String e1 = "<(O|O.O).(O)<1..2>, false>";
+    final var pre1 = parse(e1, literals.values());
+
+    /* WHEN */
+
+    // Check that it was parsed truthfully
+    assertThat(pre1)
+        .hasItem("(O|O.O).(O)[0]<1..2>")
+        .notTrailing();
+
+    // Broadcast inside the alternative
+    final var pre2 = broadcast(pre1);
+    assertThat(pre2)
+        .hasItem("(*O|*O.O).(O)[0]<1..2>")
+        .notTrailing();
+
+    // One point remains in the alternative, one is moved in front of the repetition
+    final var t3 = move(pre2, literals.get("O"));
+
+    // @formatter:off
+    assertThat(t3)
+        .transition()
+        .hasState("<(O|O.*O).*(O)[0]<1..2>, false>")
+        .noActions()
+        .done().noOthers();
+    // @formatter:on
+
+    // One point remains in the alternative, one is moved in front of the repetition
+    final var t4 = move(new ArrayList<>(t3).getFirst().nextState(), literals.get("O"));
+
+    // @formatter:off
+    assertThat(t4)
+        .transition()
+          .hasState("<(O|O.O).*(O)[0]<1..2>, false>")
+          .hasActions("[0]++")
+          .hasConditions("[0]<1")
+        .next()
+          .hasState("<(O|O.O).*(O)[0]<1..2>, true>")
+          .hasActions("[0]++")
+          .hasConditions("[0]>=1", "[0]<2")
+        .next()
+          .hasState("<(O|O.O).(O)[0]<1..2>, true>")
+          .hasActions("[0]++")
+          .hasConditions("[0]>=2")
         .done().noOthers();
     // @formatter:on
   }

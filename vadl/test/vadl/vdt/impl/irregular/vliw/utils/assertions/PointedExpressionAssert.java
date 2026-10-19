@@ -40,6 +40,11 @@ public class PointedExpressionAssert {
     return this;
   }
 
+  public PointedExpressionAssert hasItem(String expected, boolean withCounter) {
+    Assertions.assertEquals(expected, actual.item().toString(withCounter));
+    return this;
+  }
+
   public PointedExpressionAssert hasTrailing(boolean expected) {
     Assertions.assertEquals(expected, actual.trailing());
     return this;

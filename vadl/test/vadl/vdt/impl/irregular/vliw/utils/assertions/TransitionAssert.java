@@ -33,7 +33,7 @@ public class TransitionAssert {
 
   private String expectedState;
   private Set<String> expectedActions;
-  private String expectedConditions;
+  private Set<String> expectedConditions;
 
   TransitionAssert(TransitionSetAssert parent, Set<Transition> transition) {
     this.parent = parent;
@@ -126,7 +126,23 @@ public class TransitionAssert {
   }
 
   public TransitionAssert hasConditions(String... expected) {
-    // TODO: Implement
+    if (expectedConditions != null) {
+      Assertions.fail("Cannot assert multiple target conditions (multiple calls to #hasConditions) "
+          + "on a transition");
+    }
+    expectedConditions = new LinkedHashSet<>(Stream.of(expected).toList());
+
+    matching = matching.stream()
+        .filter(t -> expectedConditions
+            .equals(t.conditions().stream()
+                .map(Object::toString)
+                .collect(Collectors.toSet())))
+        .collect(Collectors.toSet());
+
+    if (matching.isEmpty()) {
+      Assertions.fail(getErrorMessage());
+    }
+
     return this;
   }
 

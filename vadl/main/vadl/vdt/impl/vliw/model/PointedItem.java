@@ -56,7 +56,19 @@ public sealed interface PointedItem {
     @Override
     public String toString(boolean withCounter) {
       return elements.stream()
-          .map(i -> i.toString(withCounter))
+          .map(i -> {
+            var sb = new StringBuilder();
+            boolean withPar = false;
+            if (i instanceof Alternation) {
+              sb.append("(");
+              withPar = true;
+            }
+            sb.append(i.toString(withCounter));
+            if (withPar) {
+              sb.append(")");
+            }
+            return sb.toString();
+          })
           .collect(Collectors.joining("."));
     }
   }

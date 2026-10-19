@@ -55,7 +55,7 @@ import vadl.viam.Group;
  *   &lt;item> ::= &lt;seq> ("|" &lt;seq>)*
  *   &lt;seq> ::= &lt;pointed> ("." &lt;pointed>)*
  *   &lt;pointed> ::= "*"? (&lt;rep> | &lt;perm> | &lt;lit>)
- *   &lt;rep> ::= "(" &lt;item> ")" ("[" [0-9]+ "]")? "<" [0-9]+ ".." [0-9]+ ">"
+ *   &lt;rep> ::= "(" &lt;item> ")" (("[" [0-9]+ "]")? "<" [0-9]+ ".." [0-9]+ ">")?
  *   &lt;perm> ::= ("[" [0-9]+ "]")? "{" &lt;item> ("," &lt;item>)+ "}"
  *   &lt;lit> ::= [A-Z]
  *   &lt;trailing> ::= "true" | "false"
@@ -148,10 +148,14 @@ public class PointedExpressionParser {
 
     final PointedItem expr;
     if (peek("(")) {
-      var rep = parseRep();
-      expr = new Repetition(
-          rep.expr(), rep.from(), rep.to(), rep.counter(), hasPoint
-      );
+      var e = parseRep();
+      if (e instanceof Repetition rep) {
+        expr = new Repetition(
+            rep.expr(), rep.from(), rep.to(), rep.counter(), hasPoint
+        );
+      } else {
+        expr = e;
+      }
     } else if (peek("[") || peek("{")) {
       var perm = parsePerm();
       expr = new Permutation(
@@ -166,12 +170,16 @@ public class PointedExpressionParser {
   }
 
   /**
-   * <rep> ::= "(" <item> ")" ("[" [0-9]+ "]")? "<" [0-9]+ "-" [0-9]+ ">"
+   * <rep> ::= "(" <item> ")" (("[" [0-9]+ "]")? "<" [0-9]+ "-" [0-9]+ ">")?
    */
-  private Repetition parseRep() {
+  private PointedItem parseRep() {
     consume("(");
     var e = parseItem();
     consume(")");
+
+    if (!peek("[") && !peek("<")) {
+      return e;
+    }
 
     BigInteger counterId = null;
     if (peek("[")) {

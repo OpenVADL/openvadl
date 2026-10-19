@@ -18,24 +18,51 @@ package vadl.vdt.impl.vliw.model;
 
 import java.math.BigInteger;
 import java.util.Set;
+import java.util.stream.Collectors;
 import vadl.vdt.impl.vliw.model.Counter.BitCounter;
 import vadl.vdt.impl.vliw.model.Counter.IntCounter;
 
 public sealed interface Condition {
 
   record GreaterOrEq(IntCounter c, BigInteger value) implements Condition {
+    @Override
+    public String toString() {
+      return "[" + c.id() + "]>=" + value;
+    }
   }
 
   record Less(IntCounter c, BigInteger value) implements Condition {
+    @Override
+    public String toString() {
+      return "[" + c.id() + "]<" + value;
+    }
   }
 
   record BitCleared(BitCounter c, BigInteger idx) implements Condition {
+    @Override
+    public String toString() {
+      return "![" + c.id() + ", " + c.width() + "](" + idx + ")";
+    }
   }
 
   record BitRestFull(BitCounter c, Set<Long> exceptions) implements Condition {
+    @Override
+    public String toString() {
+      var except = exceptions.stream()
+          .map(Object::toString)
+          .collect(Collectors.joining(","));
+      return "[" + c.id() + ", " + c.width() + "](" + except + ")^";
+    }
   }
 
   record BitRestRemains(BitCounter c, Set<Long> exceptions) implements Condition {
+    @Override
+    public String toString() {
+      var except = exceptions.stream()
+          .map(Object::toString)
+          .collect(Collectors.joining(","));
+      return "[" + c.id() + ", " + c.width() + "](" + except + ")?";
+    }
   }
 
 }

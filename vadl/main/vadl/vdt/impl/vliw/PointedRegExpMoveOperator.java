@@ -166,6 +166,7 @@ public class PointedRegExpMoveOperator {
       if (!s.trailing()) {
 
         // Points are still moving inside the expression
+        // TODO: .. or not at all, since the sub-expression of a repetition is atomic in VADL
         result.add(new Transition(
             new PointedExpression(
                 new Repetition(s.item(), repetition.from(), repetition.to(), repetition.counter(),
@@ -208,6 +209,8 @@ public class PointedRegExpMoveOperator {
           ),
           a2, c2
       ));
+
+      // TODO: Add a case for a <= c < b (we need to move the point in front as well over)
     }
 
     return result;
