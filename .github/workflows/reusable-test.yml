@@ -30,7 +30,6 @@ jobs:
         run: ./gradlew ${{ inputs.test-task }}
         env:
           isCI: true
-          JAVA_TOOL_OPTIONS: "-Xss2m"
       - name: Test Report
         uses: dorny/test-reporter@v2
         if: success() || failure()
