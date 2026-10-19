@@ -203,6 +203,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       // the instruction selection will figure out the types anyway.
       // The raw cases where we need the type are typed like addition.
       var labelList = new ArrayList<TypedMachineInstructionLabel>();
+      // The order of the list is relevant! the first item is seen as the primary label
       if (findLui(behavior)) {
         labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.LUI, ty));
       }
