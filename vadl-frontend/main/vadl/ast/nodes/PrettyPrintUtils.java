@@ -120,6 +120,6 @@ public class PrettyPrintUtils {
     } else {
       builder.append(" ");
     }
-    node.prettyPrint(indent + (onSameLine ? 1 : 2), builder);
+    node.prettyPrint(indent + (onSameLine ? 1 : 1), builder);
   }
 }
