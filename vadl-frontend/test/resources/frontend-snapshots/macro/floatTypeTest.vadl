@@ -14,10 +14,10 @@ float-type $FloatTypeId()
 //
 //  Pretty Print:
 //
-//  [ IEEE : 32 ]
+//  [IEEE : 32]
 //  float-type IEEE32
 //
-//  [ IEEE : 64 ]
+//  [IEEE : 64]
 //  float-type IEEE64
 //
 //

@@ -113,13 +113,16 @@ public class PrettyPrintUtils {
     return node instanceof BlockStatement;
   }
 
-  static void printWithLinePreference(int indent, Node node, StringBuilder builder ) {
+  static void printWithLinePreference(int indent, Node node, StringBuilder builder) {
     var onSameLine = doesPreferSameline(node);
     if (!onSameLine) {
       builder.append(indentedNewline(indent + 1));
     } else {
       builder.append(" ");
     }
-    node.prettyPrint(indent + (onSameLine ? 1 : 1), builder);
+
+    // Note: zero indentation is a bit weird but it works for now as the only same-line node is the
+    // blockstatement.
+    node.prettyPrint(indent + (onSameLine ? 0 : 1), builder);
   }
 }

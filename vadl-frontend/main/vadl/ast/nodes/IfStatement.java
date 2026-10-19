@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+import static vadl.ast.nodes.PrettyPrintUtils.printWithLinePreference;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -58,15 +59,16 @@ public final class IfStatement extends Statement {
     thenStmt.prettyPrint(indent + 1, builder);
 
     builder.append(indentedNewline(indent));
-    builder.append("else ");
-
-    // Continue chain
-    if (elseStmt instanceof IfStatement elseIfExpr) {
-      elseIfExpr.prettyPrintChain(indent, builder);
-      return;
-    }
 
     if (elseStmt != null) {
+      builder.append("else ");
+
+      // Continue chain
+      if (elseStmt instanceof IfStatement elseIfExpr) {
+        elseIfExpr.prettyPrintChain(indent, builder);
+        return;
+      }
+
       elseStmt.prettyPrint(indent + 1, builder);
     }
   }
@@ -81,12 +83,13 @@ public final class IfStatement extends Statement {
 
     builder.append("if ");
     condition.prettyPrint(indent + 1, builder);
-    builder.append(" then").append(indentedNewline(indent + 1));
-    thenStmt.prettyPrint(indent + 1, builder);
+    builder.append(" then");
+    printWithLinePreference(indent, thenStmt, builder);
+
     if (elseStmt != null) {
       builder.append(indentedNewline(indent));
-      builder.append("else").append(indentedNewline(indent + 1));
-      elseStmt.prettyPrint(indent + 1, builder);
+      builder.append("else");
+      printWithLinePreference(indent, elseStmt, builder);
     }
   }
 

@@ -55,7 +55,7 @@ public class GroupedExpr extends Expr {
         builder.append(", ");
       }
       isFirst = false;
-      expr.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
+      expr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
     }
     builder.append(")");
   }

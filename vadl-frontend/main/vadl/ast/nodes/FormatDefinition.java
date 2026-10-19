@@ -153,7 +153,7 @@ public class FormatDefinition extends Definition implements IdentifiableNode, Ty
     builder.append(indentedNewline(indent + 1));
 
     builder.append("{ ");
-    fields.get(0).prettyPrint(indent+1, builder);
+    fields.get(0).prettyPrint(indent + 1, builder);
 
     for (int i = 1; i < fields.size(); i++) {
       builder.append(indentedNewline(indent + 1));

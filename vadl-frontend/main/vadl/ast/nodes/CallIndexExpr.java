@@ -204,15 +204,15 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     target.prettyPrint(indent, builder);
-    printArgsIndices(argsIndices, builder);
+    printArgsIndices(indent, argsIndices, builder);
     for (var subCall : subCalls) {
       builder.append(".");
       subCall.id.prettyPrint(indent, builder);
-      printArgsIndices(subCall.argsIndices, builder);
+      printArgsIndices(indent, subCall.argsIndices, builder);
     }
   }
 
-  private void printArgsIndices(List<Arguments> argsIndices, StringBuilder builder) {
+  private void printArgsIndices(int indent, List<Arguments> argsIndices, StringBuilder builder) {
     for (var args : argsIndices) {
       builder.append("(");
       boolean first = true;
@@ -220,7 +220,7 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
         if (!first) {
           builder.append(", ");
         }
-        arg.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
+        arg.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
         first = false;
       }
       builder.append(")");
