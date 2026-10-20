@@ -45,6 +45,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   private final Set<SourceLocation> seenUnexpandedLocations = new HashSet<>();
   private int files = 0;
   private int linesOfCode = 0;
+  private int linesOfCodeExpanded = 0;
   private int functionDefinitions = 0;
   private int formatDefinitions = 0;
   private int instructionDefinition = 0;
@@ -74,7 +75,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
    */
   public static List<SpecStat> run(Ast ast, VirtualFileSystem fileSystem) {
     var analyser = new SpecStatAnalyser(fileSystem);
-    ast.definitions.forEach(definition -> definition.accept(analyser));
+    analyser.handleAst(ast);
     analyser.addModelNodes(ast.rootSymbolTable());
 
     ast.allReadFiles().forEach(analyser::handlePath);
@@ -82,6 +83,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
     return List.of(
         new SpecStat("Files", analyser.files),
         new SpecStat("Lines of code", analyser.linesOfCode),
+        new SpecStat("Lines of code Expanded", analyser.linesOfCodeExpanded),
         new SpecStat("Model Definitions", analyser.modelDefinitions),
         new SpecStat("Record Definitions", analyser.recordDefinitions),
         new SpecStat("Model-Type Definitions", analyser.modelTypeDefinitions),
@@ -105,6 +107,11 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   private void handlePath(Path path) {
     files++;
     fileSystem.readLines(path).forEach(unused -> linesOfCode++);
+  }
+
+  private void handleAst(Ast ast) {
+    linesOfCodeExpanded += Math.toIntExact(ast.prettyPrintToString().lines().count());
+    ast.definitions.forEach(definition -> definition.accept(this));
   }
 
   /**
@@ -200,7 +207,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   @Override
   public Void visit(ImportDefinition definition) {
     beforeTravel(definition);
-    definition.moduleAst.definitions.forEach(def -> def.accept(this));
+    handleAst(definition.moduleAst);
     afterTravel(definition);
     return null;
   }
