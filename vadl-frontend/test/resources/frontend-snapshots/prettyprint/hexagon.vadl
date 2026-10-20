@@ -1888,8 +1888,7 @@ processor CPU implements QDSP6 with ABI =
 //    assembly OrImm = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",#", decimal(imm)), ")")
 //
 //    [operation : ALU32]
-//    instruction Nop : StandardFormat = {
-//    }
+//    instruction Nop : StandardFormat = { }
 //    encoding Nop = {iclass = 0b0111, majop = 0b1111}
 //    assembly Nop = ("nop")
 //
@@ -1937,88 +1936,77 @@ processor CPU implements QDSP6 with ABI =
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpImmEq : CmpImmFormat = {
-//      let val = toPValue(R(s5) = extendS(immS)) in {
-//      }
+//      let val = toPValue(R(s5) = extendS(immS)) in { }
 //    }
 //    encoding CmpImmEq = {op = 0b00, iclass = 0b0111, rs = 0, majop = 0b101, minop = 0b00, neg = 0b0}
 //    assembly CmpImmEq = (AsmP(d2), "=", ("cmp.eq(", AsmR(s5), ",#", decimal(immS), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpImmNeq : CmpImmFormat = {
-//      let val = toPValue(!(R(s5) = extendS(immS))) in {
-//      }
+//      let val = toPValue(!(R(s5) = extendS(immS))) in { }
 //    }
 //    encoding CmpImmNeq = {op = 0b00, iclass = 0b0111, rs = 0, majop = 0b101, minop = 0b00, neg = 0b1}
 //    assembly CmpImmNeq = (AsmP(d2), "=", ("!cmp.eq(", AsmR(s5), ",#", decimal(immS), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpImmGt : CmpImmFormat = {
-//      let val = toPValue(R(s5) as SInt > extendS(immS)) in {
-//      }
+//      let val = toPValue(R(s5) as SInt > extendS(immS)) in { }
 //    }
 //    encoding CmpImmGt = {op = 0b00, iclass = 0b0111, rs = 0, majop = 0b101, minop = 0b01, neg = 0b0}
 //    assembly CmpImmGt = (AsmP(d2), "=", ("cmp.gt(", AsmR(s5), ",#", decimal(immS), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpImmGtu : CmpImmUFormat = {
-//      let val = toPValue(R(s5) as UInt > extendU(immU)) in {
-//      }
+//      let val = toPValue(R(s5) as UInt > extendU(immU)) in { }
 //    }
 //    encoding CmpImmGtu = {op = 0b00, iclass = 0b0111, rs = 0, majop = 0b101, minop = 0b100, neg = 0b0}
 //    assembly CmpImmGtu = (AsmP(d2), "=", ("cmp.gtu(", AsmR(s5), ",#", decimal(immU), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpImmLteu : CmpImmUFormat = {
-//      let val = toPValue(R(s5) as UInt > extendU(immU)) in {
-//      }
+//      let val = toPValue(R(s5) as UInt > extendU(immU)) in { }
 //    }
 //    encoding CmpImmLteu = {op = 0b00, iclass = 0b0111, rs = 0, majop = 0b101, minop = 0b100, neg = 0b1}
 //    assembly CmpImmLteu = (AsmP(d2), "=", ("!cmp.gtu(", AsmR(s5), ",#", decimal(immU), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpRegEq : CmpRegFormat = {
-//      let val = toPValue(R(s5) = R(t5)) in {
-//      }
+//      let val = toPValue(R(s5) = R(t5)) in { }
 //    }
 //    encoding CmpRegEq = {op = 0b00, iclass = 0b1111, p = 0, majop = 0b010, minop = 0b00, neg = 0b0}
 //    assembly CmpRegEq = (AsmP(d2), "=", ("cmp.eq(", AsmR(s5), ",", AsmR(t5), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpRegNeq : CmpRegFormat = {
-//      let val = toPValue(!(R(s5) = R(t5))) in {
-//      }
+//      let val = toPValue(!(R(s5) = R(t5))) in { }
 //    }
 //    encoding CmpRegNeq = {op = 0b00, iclass = 0b1111, p = 0, majop = 0b010, minop = 0b00, neg = 0b1}
 //    assembly CmpRegNeq = (AsmP(d2), "=", ("!cmp.eq(", AsmR(s5), ",", AsmR(t5), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpRegGt : CmpRegFormat = {
-//      let val = toPValue(R(s5) as SInt > R(t5) as SInt) in {
-//      }
+//      let val = toPValue(R(s5) as SInt > R(t5) as SInt) in { }
 //    }
 //    encoding CmpRegGt = {op = 0b00, iclass = 0b1111, p = 0, majop = 0b010, minop = 0b10, neg = 0b0}
 //    assembly CmpRegGt = (AsmP(d2), "=", ("cmp.gt(", AsmR(s5), ",", AsmR(t5), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpRegLte : CmpRegFormat = {
-//      let val = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in {
-//      }
+//      let val = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in { }
 //    }
 //    encoding CmpRegLte = {op = 0b00, iclass = 0b1111, p = 0, majop = 0b010, minop = 0b10, neg = 0b1}
 //    assembly CmpRegLte = (AsmP(d2), "=", ("!cmp.gt(", AsmR(s5), ",", AsmR(t5), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpRegGtu : CmpRegFormat = {
-//      let val = toPValue(R(s5) as UInt > R(t5) as UInt) in {
-//      }
+//      let val = toPValue(R(s5) as UInt > R(t5) as UInt) in { }
 //    }
 //    encoding CmpRegGtu = {op = 0b00, iclass = 0b1111, p = 0, majop = 0b010, minop = 0b11, neg = 0b0}
 //    assembly CmpRegGtu = (AsmP(d2), "=", ("cmp.gtu(", AsmR(s5), ",", AsmR(t5), ")"))
 //
 //    [operation : ALU32_PRED_WRITING]
 //    instruction CmpRegLteu : CmpRegFormat = {
-//      let val = toPValue(!(R(s5) as UInt > R(t5) as UInt)) in {
-//      }
+//      let val = toPValue(!(R(s5) as UInt > R(t5) as UInt)) in { }
 //    }
 //    encoding CmpRegLteu = {op = 0b00, iclass = 0b1111, p = 0, majop = 0b010, minop = 0b11, neg = 0b1}
 //    assembly CmpRegLteu = (AsmP(d2), "=", ("!cmp.gtu(", AsmR(s5), ",", AsmR(t5), ")"))
@@ -2299,86 +2287,72 @@ processor CPU implements QDSP6 with ABI =
 //      }
 //
 //    [operation : CR23]
-//    instruction LogicalPredAnd : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredAnd : LogicalPredFormat = { }
 //    encoding LogicalPredAnd = {iclass = 0b0110, opc = 0b10110, op = 0b0000}
 //    assembly LogicalPredAnd = (AsmP(d2), "=", ("and(", AsmP(t2), ",", AsmP(s2), ")"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredAndAnd : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredAndAnd : LogicalPredFormat = { }
 //    encoding LogicalPredAndAnd = {iclass = 0b0110, opc = 0b10110, op = 0b0001}
 //    assembly LogicalPredAndAnd = (AsmP(d2), "=", ("and(", AsmP(s2), ",and(", AsmP(t2), ",", AsmP(u2), "))"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredOr : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredOr : LogicalPredFormat = { }
 //    encoding LogicalPredOr = {iclass = 0b0110, opc = 0b10110, op = 0b0010}
 //    assembly LogicalPredOr = (AsmP(d2), "=", ("or(", AsmP(t2), ",", AsmP(s2), ")"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredAndOr : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredAndOr : LogicalPredFormat = { }
 //    encoding LogicalPredAndOr = {iclass = 0b0110, opc = 0b10110, op = 0b0011}
 //    assembly LogicalPredAndOr = (AsmP(d2), "=", ("and(", AsmP(s2), ",or(", AsmP(t2), ",", AsmP(u2), "))"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredXor : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredXor : LogicalPredFormat = { }
 //    encoding LogicalPredXor = {iclass = 0b0110, opc = 0b10110, op = 0b0100}
 //    assembly LogicalPredXor = (AsmP(d2), "=", ("xor(", AsmP(s2), ",", AsmP(t2), ")"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredOrAnd : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredOrAnd : LogicalPredFormat = { }
 //    encoding LogicalPredOrAnd = {iclass = 0b0110, opc = 0b10110, op = 0b0101}
 //    assembly LogicalPredOrAnd = (AsmP(d2), "=", ("or(", AsmP(s2), ",and(", AsmP(t2), ",", AsmP(u2), "))"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredAndNot : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredAndNot : LogicalPredFormat = { }
 //    encoding LogicalPredAndNot = {iclass = 0b0110, opc = 0b10110, op = 0b0110}
 //    assembly LogicalPredAndNot = (AsmP(d2), "=", ("and(", AsmP(t2), ",!", AsmP(s2), ")"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredOrOr : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredOrOr : LogicalPredFormat = { }
 //    encoding LogicalPredOrOr = {iclass = 0b0110, opc = 0b10110, op = 0b0111}
 //    assembly LogicalPredOrOr = (AsmP(d2), "=", ("or(", AsmP(s2), ",or(", AsmP(t2), ",", AsmP(u2), "))"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredAndAndNot : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredAndAndNot : LogicalPredFormat = { }
 //    encoding LogicalPredAndAndNot = {iclass = 0b0110, opc = 0b10110, op = 0b1001}
 //    assembly LogicalPredAndAndNot = (AsmP(d2), "=", ("and(", AsmP(s2), ",and(", AsmP(t2), ",!", AsmP(u2), "))"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredAndOrNot : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredAndOrNot : LogicalPredFormat = { }
 //    encoding LogicalPredAndOrNot = {iclass = 0b0110, opc = 0b10110, op = 0b1011}
 //    assembly LogicalPredAndOrNot = (AsmP(d2), "=", ("and(", AsmP(s2), ",or(", AsmP(t2), ",!", AsmP(u2), "))"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredNot : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredNot : LogicalPredFormat = { }
 //    encoding LogicalPredNot = {iclass = 0b0110, opc = 0b10110, op = 0b1100}
 //    assembly LogicalPredNot = (AsmP(d2), "=", ("not(", AsmP(s2), ")"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredOrAndNot : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredOrAndNot : LogicalPredFormat = { }
 //    encoding LogicalPredOrAndNot = {iclass = 0b0110, opc = 0b10110, op = 0b1101}
 //    assembly LogicalPredOrAndNot = (AsmP(d2), "=", ("or(", AsmP(s2), ",and(", AsmP(t2), ",!", AsmP(u2), "))"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredOrNot : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredOrNot : LogicalPredFormat = { }
 //    encoding LogicalPredOrNot = {iclass = 0b0110, opc = 0b10110, op = 0b1110}
 //    assembly LogicalPredOrNot = (AsmP(d2), "=", ("or(", AsmP(t2), ",!", AsmP(s2), ")"))
 //
 //    [operation : CR23]
-//    instruction LogicalPredOrOrNot : LogicalPredFormat = {
-//    }
+//    instruction LogicalPredOrOrNot : LogicalPredFormat = { }
 //    encoding LogicalPredOrOrNot = {iclass = 0b0110, opc = 0b10110, op = 0b1111}
 //    assembly LogicalPredOrOrNot = (AsmP(d2), "=", ("or(", AsmP(s2), ",or(", AsmP(t2), ",!", AsmP(u2), "))"))
 //
@@ -4098,8 +4072,7 @@ processor CPU implements QDSP6 with ABI =
 //      }
 //
 //    [operation : XTYPE]
-//    instruction TransferPR : TransferPRFormat = {
-//    }
+//    instruction TransferPR : TransferPRFormat = { }
 //    encoding TransferPR = {iclass = 0b1000, regtype = 0b0101, majop = 0b010}
 //    assembly TransferPR = (AsmP(d2), " = ", AsmR(s5))
 //

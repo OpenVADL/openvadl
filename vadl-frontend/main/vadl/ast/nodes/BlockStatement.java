@@ -54,6 +54,12 @@ public final class BlockStatement extends Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("{");
+
+    if (statements.isEmpty()) {
+      builder.append(" }");
+      return;
+    }
+
     statements.forEach(statement -> {
       builder.append(indentedNewline(indent + 1));
       statement.prettyPrint(indent + 1, builder);

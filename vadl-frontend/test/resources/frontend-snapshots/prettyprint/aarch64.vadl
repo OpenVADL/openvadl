@@ -4027,12 +4027,14 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
 //    assembly LDPXPst = ("ldp", ' ', XSize(rt), ', ', XSize(rt2), ("[", XSizeSP(rn), "]", Imm7decimal(offXSize)))
 //
 //    pseudo instruction MULW(rd : Index, rn : Index, rm : Index) = {
-//  MADDW{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}  }
+//      MADDW{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}
+//    }
 //
 //    assembly MULW = ("mul", " ", WSize(rd), ", ", WSize(rn), ", ", WSize(rm))
 //
 //    pseudo instruction MULX(rd : Index, rn : Index, rm : Index) = {
-//  MADDX{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}  }
+//      MADDX{rd = rd, rn = rn, rm = rm, ra = 0b1'1111}
+//    }
 //
 //    assembly MULX = ("mul", " ", XSize(rd), ", ", XSize(rn), ", ", XSize(rm))
 //
@@ -4263,19 +4265,16 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
 //    assembly ERET = ("eret")
 //
 //    [add operands : imm16]
-//    instruction HLT : SuperVisorCallFormat = {
-//    }
+//    instruction HLT : SuperVisorCallFormat = { }
 //    encoding HLT = {op = 0b1101'0100'0100'0000}
 //    assembly HLT = ("hlt", ' #', udec(imm16))
 //
-//    instruction NOP : UndefinedInstrFormat = {
-//    }
+//    instruction NOP : UndefinedInstrFormat = { }
 //    encoding NOP = {op = 0b1101'0101'0000'0011, imm16 = 0b0010'0000'0001'1111}
 //    assembly NOP = ("nop")
 //
 //    [add operands : bti]
-//    instruction BTI : BTIFormat = {
-//    }
+//    instruction BTI : BTIFormat = { }
 //    encoding BTI = {op = 0b1101'0101'0000'0011, opc = 0b0010'0100'''01'1111}
 //    assembly BTI = ("bti", btiOp2(bti))
 //

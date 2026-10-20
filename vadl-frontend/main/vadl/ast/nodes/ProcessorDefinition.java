@@ -114,8 +114,8 @@ public class ProcessorDefinition extends Definition implements IdentifiableNode 
     id.prettyPrint(indent, builder);
     builder.append(" implements ");
     implementedIsa.prettyPrint(indent, builder);
-    builder.append(" with ");
     if (abi != null) {
+      builder.append(" with ");
       abi.prettyPrint(indent, builder);
     }
     builder.append(" = {\n");
