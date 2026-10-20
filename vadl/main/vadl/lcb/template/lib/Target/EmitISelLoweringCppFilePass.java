@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +48,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.InferAvailableAddressingModesPass;
+import vadl.lcb.passes.llvmLowering.RegisterTypesCtx;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
@@ -54,8 +56,6 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
-import vadl.viam.RegisterResource;
-import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -76,24 +76,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   protected String getOutputPath() {
     var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName + "ISelLowering.cpp";
-  }
-
-  static class LlvmRegisterFile extends RegisterTensor {
-
-    /**
-     * Constructs a new RegisterFile object.
-     **/
-    public LlvmRegisterFile(RegisterResource registerFile) {
-      super(registerFile.identifier(),
-          registerFile.dimensions());
-      for (var c : registerFile.constraints()) {
-        addConstraint(c);
-      }
-    }
-
-    public String llvmResultType() {
-      return ValueType.from(type()).get().getLlvmType();
-    }
   }
 
   /**
@@ -176,11 +158,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("framePointer", framePointer);
     map.put("stackPointer", stackPointer);
     map.put("stackPointerByteSize", abi.stackPointer().registerFile().resultType().bitWidth() / 8);
-    map.put("argumentRegisterClasses",
-        abi.argumentRegisters().stream().map(Abi.AbiRegister::registerFile).distinct()
-            .map(LlvmRegisterFile::new).map(this::mapLlvmRegisterClass).toList());
-    map.put("argumentRegisters",
-        abi.argumentRegisters().stream().map(this::renderRegister).toList());
+    map.put("argumentRegisters", argumentRegisters(abi.argumentRegisters()));
     map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
     map.put("stackPointerType", stackPointerType.getLlvmType());
     map.put("absoluteAddressLoadInstruction",
@@ -479,11 +457,23 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private Map<String, Object> mapLlvmRegisterClass(LlvmRegisterFile registerFile) {
-    return Map.of(
-        "name", registerFile.simpleName(),
-        "resultWidth", registerFile.resultType().bitWidth(),
-        "llvmResultType", registerFile.llvmResultType()
-    );
+  private List<Map<String, Object>> argumentRegisters(List<List<Abi.AbiRegister>> definitions) {
+    Map<ValueType, List<Abi.AbiRegister>> regsByType = new LinkedHashMap<>();
+
+    for (var def : definitions) {
+      for (var reg : def) {
+        var ty = reg.registerFile().expectExtension(RegisterTypesCtx.class).valueTypes().getFirst();
+        regsByType.computeIfAbsent(ty, ignored -> new ArrayList<>()).add(reg);
+      }
+    }
+
+    return regsByType.entrySet().stream()
+        .map(entry -> Map.of(
+            "name", entry.getValue().getFirst().registerFile().simpleName(),
+            "resultWidth", entry.getKey().getBitwidth(),
+            "llvmResultType", entry.getKey().getLlvmType(),
+            "registers", entry.getValue().stream().map(this::renderRegister).toList()
+        ))
+        .toList();
   }
 }

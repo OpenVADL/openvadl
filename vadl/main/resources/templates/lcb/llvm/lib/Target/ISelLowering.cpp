@@ -423,17 +423,16 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         MachineRegisterInfo &RegInfo = MF.getRegInfo();
         [(${namespace})]MachineFunctionInfo *RVFI = MF.getInfo<[(${namespace})]MachineFunctionInfo>();
 
-        [#th:block th:each="cl : ${argumentRegisterClasses}" ]
+        [#th:block th:each="cl : ${argumentRegisters}" ]
         const MCPhysReg Arg[(${cl.name})]s[] =
         {
-          // We only support currently one register class for all the argument registers.
-          [#th:block th:each="rg, iterStat : ${argumentRegisters}" ]
+          [#th:block th:each="rg, iterStat : ${cl.registers}" ]
             [(${namespace})]::[(${rg})][#th:block th:if="${!iterStat.last}"],[/th:block]
           [/th:block]
         };
         [/th:block]
 
-        [#th:block th:each="cl : ${argumentRegisterClasses}" ]
+        [#th:block th:each="cl : ${argumentRegisters}" ]
           unsigned [(${cl.name})]LenInBytes = [(${cl.resultWidth / 8})];
           MVT [(${cl.name})]LenVT = MVT::[(${cl.llvmResultType})];
           ArrayRef<MCPhysReg> [(${cl.name})]ArgRegs = ArrayRef(Arg[(${cl.name})]s);
@@ -450,7 +449,7 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         // If all registers are allocated, then all varargs must be passed on the
         // stack and we don't need to save any argregs.
         if (
-          [#th:block th:each="cl, iterStat : ${argumentRegisterClasses}" ]
+          [#th:block th:each="cl, iterStat : ${argumentRegisters}" ]
           [(${cl.name})]ArgRegs.size() == [(${cl.name})]Idx [#th:block th:if="${!iterStat.last}"]&&[/th:block]
           [/th:block]
         )
@@ -461,7 +460,7 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         else
         {
             VarArgsSaveSize = 0;
-            [#th:block th:each="cl : ${argumentRegisterClasses}" ]
+            [#th:block th:each="cl : ${argumentRegisters}" ]
               VarArgsSaveSize += [(${cl.name})]LenInBytes * ( [(${cl.name})]ArgRegs.size() - [(${cl.name})]Idx);
             [/th:block]
             VaArgOffset = -VarArgsSaveSize; // TODO: @chochrainer check if CCInfo.getStackSize() is needed
@@ -476,7 +475,7 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
 
         // TODO: @chochrainer add a stack alignment ( adapt VarArgsSaveSize )
 
-        [#th:block th:each="cl : ${argumentRegisterClasses}" ]
+        [#th:block th:each="cl : ${argumentRegisters}" ]
         ////
         // save call for arguments of register class "«emitName( entry.getKey )»"
         //

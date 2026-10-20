@@ -455,7 +455,6 @@ void processornamevalueTargetLowering::WriteToVarArgs(std::vector<SDValue> &OutC
         
         const MCPhysReg ArgXs[] =
         {
-          // We only support currently one register class for all the argument registers.
           
             processornamevalue::X0,
             processornamevalue::X1,

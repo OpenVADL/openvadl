@@ -9,11 +9,13 @@ def CSR_[(${namespace})] : CalleeSavedRegs<(add
 )>;
 
 def CC_[(${namespace})] : CallingConv<[
+    [#th:block th:each="r, iterStat : ${functionRegisters}" ]
     CCIfType
     <
-    [ [(${functionRegisters.type})] ],
-    CCAssignToReg< [ [(${functionRegisters.registerRefs})] ] >
+    [ [(${r.type})] ],
+    CCAssignToReg< [ [(${r.registerRefs})] ] >
     >,
+    [/th:block]
 
     // Otherwise the values are assigned to the stack in specific aligned units.
     // the first parameter indicates the size of the slot, and
