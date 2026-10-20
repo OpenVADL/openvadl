@@ -214,7 +214,7 @@ class MacroExpander
     var expander = new MacroExpander(
         macroTable,
         model.macroOverrides,
-        RopeList.of(call.location().fullExpandedFromStack()));
+        call.location().fullExpandedRope());
 
     // Models can be overwritten in the CLI/import
     var overriddenBody = model.macroOverrides.get(model.identifier().name);
@@ -307,9 +307,6 @@ class MacroExpander
    */
   private Expr expandExprRaw(Expr expr) {
     var result = expr.accept(this);
-    //if (!errors.isEmpty()) {
-    // throw new DiagnosticList(errors);
-    //}
     if (result instanceof BinaryExpr binaryExpr && !binaryExpr.hasBeenReordered) {
       return ParserUtils.reorderBinaryExpr(binaryExpr);
     }
