@@ -86,7 +86,6 @@ public class FrontendSnapshotTests {
 
       ast = VadlParser.parse(path, new DiskVirtualFileSystem());
       SymbolTable.collectAndResolveNames(ast);
-      ModelRemover.removeModels(ast);
       Ungrouper.ungroup(ast);
 
       verifyPrettifiedAst(ast, new DiskVirtualFileSystem());

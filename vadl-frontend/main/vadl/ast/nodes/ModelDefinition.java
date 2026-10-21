@@ -16,8 +16,6 @@
 
 package vadl.ast.nodes;
 
-import static vadl.ast.nodes.PrettyPrintUtils.indentString;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -101,23 +99,9 @@ public final class ModelDefinition extends Definition implements IdentifiableNod
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(indentString(indent)).append("model ");
-    id.prettyPrint(indent, builder);
-    builder.append("(");
-    var isFirst = true;
-    for (var param : params) {
-      if (!isFirst) {
-        builder.append(", ");
-      }
-      isFirst = false;
-      param.name().prettyPrint(indent, builder);
-      builder.append(" : ").append(param.type().print());
-    }
-    builder.append(") : ");
-    builder.append(returnType.print());
-    builder.append(" = {\n");
-    body.prettyPrint(indent + 1, builder);
-    builder.append(indentString(indent)).append("}\n");
+    // Intentionally left empty.
+    // Since in the prettyPrint all the macros are expanded by the parser it doesn't make
+    // much sense to include the model definitions.
   }
 
   @Override

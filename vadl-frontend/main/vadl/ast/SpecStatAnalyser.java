@@ -77,7 +77,6 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   public static List<SpecStat> run(Ast ast, VirtualFileSystem fileSystem) {
     var analyser = new SpecStatAnalyser(fileSystem);
     analyser.handleAst(ast);
-    analyser.addModelNodes(ast.rootSymbolTable());
 
     ast.allReadFiles().forEach(analyser::handlePath);
 
@@ -148,25 +147,31 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
    * AST. However, since models are scoped, they get entered into the symbolTables and never removed
    * from them. So we can traverse all symbol tables of all definitions and count the models.
    *
-   * @param table of a definition to import all the macros from.
+   * @param def to add.
    */
-  private void addModelNodes(SymbolTable table) {
-    table.macroSymbols.values().forEach(symbol -> {
-      var node = symbol;
-      ifNewUnexpanded(node, () -> {
-        if (node instanceof ModelDefinition) {
-          modelDefinitions++;
-        } else if (node instanceof RecordTypeDefinition) {
-          recordDefinitions++;
-        } else if (node instanceof ModelTypeDefinition) {
-          modelTypeDefinitions++;
+  private void addModelNode(Definition def) {
+    ifNewUnexpanded(def, () -> {
+      switch (def) {
+        case ModelDefinition model -> modelDefinitions++;
+        case RecordTypeDefinition record -> recordDefinitions++;
+        case ModelTypeDefinition type -> modelTypeDefinitions++;
+        default -> {
         }
-      });
+      }
     });
   }
 
   @Override
   public void beforeTravel(Definition definition) {
+    // Special handling for model nodes
+    // They don't count as normal nodes
+    if (definition instanceof ModelDefinition
+        || definition instanceof RecordTypeDefinition
+        || definition instanceof ModelTypeDefinition) {
+      addModelNode(definition);
+      return;
+    }
+
     totalDefinitions++;
     var isNew = ifNewUnexpanded(definition, () -> totalDefinitionsUnexpanded++);
     if (definition instanceof FunctionDefinition) {
@@ -186,10 +191,6 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
       if (isNew) {
         instructionDefinitionUnexpanded++;
       }
-    }
-
-    if (definition.symbolTable != null) {
-      addModelNodes(definition.symbolTable());
     }
   }
 

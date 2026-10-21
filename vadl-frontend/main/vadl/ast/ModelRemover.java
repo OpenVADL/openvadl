@@ -84,9 +84,10 @@ import vadl.ast.nodes.UsingDefinition;
 
 /**
  * Removes all model definitions in the AST.
- * Model definitions are needed in the AST for ISA inheritance and across module imports, but can be
- * removed after macro expansion. This is especially useful for testing, where two AST trees are
- * often tested for semantic equality and thus stripped of models before comparison.
+ * Model definitions are kept in the AST under normal compilation.
+ * However, many tests want to compare two parsed programs where one is the expanded versions of
+ * the other and in that case both ASTs should be equal except for the model definitions, so they
+ * can use this pass to remove them.
  */
 public class ModelRemover implements DefinitionVisitor<Definition> {
 
