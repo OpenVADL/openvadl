@@ -75,8 +75,7 @@ instruction set architecture Test = {
 //    . : ' | CastExpr type: Bits<4>
 //    . : ' | . IntegerLiteral literal: 0 (0) type: Const<0>
 //    . AssemblyDefinition
-//    . : GroupedExpr type: String
-//    . : ' StringLiteral literal: "load" ("load") type: String
+//    . : StringLiteral literal: "load" ("load") type: String
 //
 //
 // Part of the class vadl.ast.FrontendSnapshotTests

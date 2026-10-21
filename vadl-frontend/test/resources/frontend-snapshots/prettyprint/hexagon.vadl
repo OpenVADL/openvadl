@@ -1890,7 +1890,7 @@ processor CPU implements QDSP6 with ABI =
 //    [operation : ALU32]
 //    instruction Nop : StandardFormat = { }
 //    encoding Nop = {iclass = 0b0111, majop = 0b1111}
-//    assembly Nop = ("nop")
+//    assembly Nop = "nop"
 //
 //    format CmpImmFormat: Word =
 //      { iclass	 [31..28]
@@ -3720,7 +3720,7 @@ processor CPU implements QDSP6 with ABI =
 //        }
 //    }
 //    encoding DeallocFrame = {iclass = 0b1001, amode = 0b000, type = 0b000, unsigned = 0b0, opc = 0b11110, neg = 0, d5 = 0b11110}
-//    assembly DeallocFrame = ("deallocframe")
+//    assembly DeallocFrame = "deallocframe"
 //
 //    [operation : LD]
 //    instruction DecallocReturn : DeallocFrameFormat = {
@@ -3962,7 +3962,7 @@ processor CPU implements QDSP6 with ABI =
 //      PC := 0xeeeeeeee
 //    }
 //    encoding Brkpt = {iclass = 0b0110, opc = 0b1100001000}
-//    assembly Brkpt = ("brkpt")
+//    assembly Brkpt = "brkpt"
 //
 //    format AddImmShiftedFormat: Word =
 //      { iclass	 [31..28]

@@ -1875,14 +1875,24 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | macroReplacement<out Node n,  BasicSyntaxType.EX> (. expr = (Expr) n; .)
   .
 
-  groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), nextTokenLoc()); .)
+  groupedExpression<out Expr expr> (. var startLoc = nextTokenLoc(); ArrayList<Expr> items = new ArrayList<>(); .)
   = SYM_PAREN_OPEN
-    expression<out Expr inner, BIN_OPS>   (. expr.expressions.add(inner); .)
+    expression<out Expr inner, BIN_OPS>   (. items.add(inner); .)
     {
       SYM_COMMA
-      expression<out Expr next, BIN_OPS>  (. expr.expressions.add(next); .)
+      expression<out Expr next, BIN_OPS>  (. items.add(next); .)
     }
-    SYM_PAREN_CLOSE                       (. expr.loc = expr.loc.join(lastTokenLoc()); .)
+    SYM_PAREN_CLOSE                       (.
+                                              if (items.size() == 1 && !(items.getFirst() instanceof BinaryExpr)) {
+                                                // Optimization
+                                                // No need to allocate a group if they were only written to indicate
+                                                // parsing preference. For binary expr we need to preserve it because
+                                                // they might be reordered later.
+                                                expr = items.getFirst();
+                                              } else {
+                                                expr = new GroupedExpr(items, startLoc.join(lastTokenLoc()));
+                                              }
+                                          .)
   .
 
   literal<out Expr expr> (. expr = null; .)
@@ -2208,14 +2218,26 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                   .)
   .
 
-  AsId<out Node body>                   (. var start = nextTokenLoc(); .)
+  AsId<out Node body>                     (. var start = nextTokenLoc(); ArrayList<Expr> items = new ArrayList<>(); .)
   = AS_ID
-    groupedExpression<out GroupedExpr expr> (. body = new AsIdExpr(expr != null ? expr.expressions : null, start.join(lastTokenLoc())); .)
+    SYM_PAREN_OPEN
+    expression<out Expr inner, BIN_OPS>   (. items.add(inner); .)
+    {
+      SYM_COMMA
+      expression<out Expr next, BIN_OPS>  (. items.add(next); .)
+    }
+    SYM_PAREN_CLOSE                       (. body = new AsIdExpr(items, start.join(lastTokenLoc())); .)
   .
 
-  AsStr<out Node body> (. var start = nextTokenLoc(); .)
+  AsStr<out Node body>                    (. var start = nextTokenLoc();  ArrayList<Expr> items = new ArrayList<>(); .)
   = AS_STR
-    groupedExpression<out GroupedExpr expr> (. body = new AsStrExpr(expr != null ? expr.expressions : null, start.join(lastTokenLoc())); .)
+    SYM_PAREN_OPEN
+    expression<out Expr inner, BIN_OPS>   (. items.add(inner); .)
+    {
+      SYM_COMMA
+      expression<out Expr next, BIN_OPS>  (. items.add(next); .)
+    }
+    SYM_PAREN_CLOSE                       (. body = new AsStrExpr(items, start.join(lastTokenLoc())); .)
   .
 
   macroMatch<out Node node, SyntaxType requiredType>  (. var start = nextTokenLoc();  node=null; .)

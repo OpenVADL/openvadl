@@ -130,8 +130,9 @@ import vadl.ast.nodes.WildcardLiteral;
 
 /**
  * Removes all group expressions recursively.
+ * Ungrouping isn't part of normal compilation, as only the necessary groups are generated.
  * Groups are needed in the AST during parsing until all binary expressions are reordered, but can
- * then be removed. This is especially useful for testing, where two AST trees are often tested
+ * then be removed. This is useful for testing, where two AST trees are often tested
  * for semantic equality and thus ungrouped before comparison.
  *
  * <p>NOTE: Do not replace any AST nodes here!
