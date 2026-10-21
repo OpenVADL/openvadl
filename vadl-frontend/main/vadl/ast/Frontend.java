@@ -91,7 +91,6 @@ public class Frontend {
   public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) {
     var ast = VadlParser.parse(path, fileSystem);
     SymbolTable.collectAndResolveNames(ast);
-    Ungrouper.ungroup(ast);
     TypeChecker.verify(ast);
     return ast;
   }
@@ -115,9 +114,8 @@ public class Frontend {
     PARSED(1),
     PARTIALLY_NAMES_RESOLVED(2),
     NAMES_RESOLVED(3),
-    UNGROUPED(4),
-    PARTIALLY_TYPE_CHECKED(5),
-    TYPE_CHECKED(6);
+    PARTIALLY_TYPE_CHECKED(4),
+    TYPE_CHECKED(5);
 
     private final int ordinal;
 
@@ -161,10 +159,6 @@ public class Frontend {
       // Even if there are errors, name resolution has been run as best as possible
       return new BestEffortCompilation(ast, AstPass.PARTIALLY_NAMES_RESOLVED, diagnostics);
     }
-    throwIfInterrupted();
-
-    // The next pass doesn't throw diagnostics
-    Ungrouper.ungroup(ast);
     throwIfInterrupted();
 
     try {

@@ -45,7 +45,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: modelInvocation
   ```vadl
   instruction ONE : Simple = { }
   encoding ONE = {b = 0b1 as Bits<1>}
-  assembly ONE = (mnemonic)
+  assembly ONE = mnemonic
   ```
 
 - ... and this range:
