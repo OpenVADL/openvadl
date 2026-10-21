@@ -2225,17 +2225,20 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
   @Override
   public Void visit(ModelDefinition definition) {
-    throw foreignNodeException(definition);
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return null;
   }
 
   @Override
   public Void visit(RecordTypeDefinition definition) {
-    throw foreignNodeException(definition);
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return null;
   }
 
   @Override
   public Void visit(ModelTypeDefinition definition) {
-    throw foreignNodeException(definition);
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return null;
   }
 
   @Override
