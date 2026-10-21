@@ -10,6 +10,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "Utils/ImmediateUtils.h"
 #include "llvm/MC/MCRegister.h"
+#include "llvm/Support/MathExtras.h"
 #include "vadl-builtins.hpp"
 
 
@@ -100,6 +101,8 @@ bool [(${namespace})]AsmParser::parse_[(${instruction.name})](MCInst &Inst, Oper
               Parser.Error(Op.getStartLoc(), error);
               return true;
             }
+            // Normalize to the raw field bits (same as the disassembler sees them).
+            opImm64 &= maskTrailingOnes<uint64_t>([(${operand.fieldBitWidth})]);
             opImm64 = [(${operand.decodeMethod})]([(${operand.params})]);
             [/]
 

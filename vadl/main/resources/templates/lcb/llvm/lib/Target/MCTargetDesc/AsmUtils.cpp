@@ -2,10 +2,10 @@
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCRegister.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/MC/MCSymbol.h"
 #include "[(${namespace})]MCExpr.h"
 #include <string>
 #include <iostream>
@@ -402,5 +402,20 @@ std::string AsmUtils::getRegisterNameFrom[(${rg.registerFile.name})]ByIndex( uns
 
     unsigned regNo = registers[ RegIndex ];
     return AsmUtils::getRegisterName( regNo );
+}
+
+MCRegister AsmUtils::getRegNoFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex ) {
+    if (RegIndex >= [(${rg.registers.size()})]) {
+        return [(${namespace})]::NoRegister;
+    }
+
+    const int registers[] =
+    {
+        [# th:each="reg, iterStat : ${rg.registers}" ]
+        [(${namespace})]::[(${reg.name})][#th:block th:if="${!iterStat.last}"],[/th:block]
+      [/]
+    };
+
+    return registers[ RegIndex ];
 }
 [/]

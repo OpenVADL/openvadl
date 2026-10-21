@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@ import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
-import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Specification;
 
@@ -52,8 +52,8 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var registers = EmitAsmUtilsCppFilePass.registers(specification, abi);
-    var registerClasses = EmitAsmUtilsCppFilePass.registerClasses(specification, abi);
+    var registers = RegisterUtils.registers(specification, abi);
+    var registerClasses = RegisterUtils.registerClasses(specification, abi);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "registers", registers,
