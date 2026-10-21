@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.FormatDefinition;
@@ -106,11 +107,12 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
 
   private void handlePath(Path path) {
     files++;
-    fileSystem.readLines(path).forEach(unused -> linesOfCode++);
+    linesOfCode +=
+        new LineOfCodeCounter(fileSystem.readLines(path).collect(Collectors.joining("\n"))).count();
   }
 
   private void handleAst(Ast ast) {
-    linesOfCodeExpanded += Math.toIntExact(ast.prettyPrintToString().lines().count());
+    linesOfCodeExpanded += new LineOfCodeCounter(ast.prettyPrintToString()).count();
     ast.definitions.forEach(definition -> definition.accept(this));
   }
 
@@ -218,4 +220,132 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   public record SpecStat(String name, int count) {
   }
 
+  /**
+   * A mini parser to count the lines of code that respect nested block comments.
+   */
+  private static class LineOfCodeCounter {
+
+    final String program;
+    boolean isLineEmpty = true;
+    int index = 0;
+    int lines = 0;
+    int emptyLines = 0;
+
+    static final List<Character> nonLineWhitespace = List.of(' ', '\t', '\r');
+    static final char EOF = (char) -1;
+
+    private LineOfCodeCounter(String program) {
+      this.program = program;
+    }
+
+    int count() {
+      index = 0;
+      top();
+
+      if (lines + emptyLines != program.lines().count()) {
+        throw new IllegalStateException(
+            "Counting calculated a wrong number "
+                + "(coutnedLines + emptyCountedLines != actualTotalLines): %d + %d != %d".formatted(
+                lines, emptyLines, program.lines().count()));
+      }
+
+      return lines;
+    }
+
+    void top() {
+      while (index < program.length()) {
+        var c = consume();
+
+        if (nonLineWhitespace.contains(c)) {
+          continue;
+        }
+
+        if (c == '/') {
+          if (peek() == '/') {
+            consume();
+            linecomment();
+            continue;
+          }
+          if (peek() == '*') {
+            consume();
+            blockcomment();
+            continue;
+          }
+        }
+
+        if (c == '\n') {
+          newline();
+          continue;
+        }
+
+        // Must be a code character
+        isLineEmpty = false;
+      }
+      if (!program.isEmpty() && program.charAt(program.length() - 1) != '\n') {
+        newline();
+      }
+    }
+
+    void linecomment() {
+      char c;
+      while ((c = consume()) != EOF && c != '\n') {
+        // Do nothing we just wanna skip em
+      }
+      if (c == '\n') {
+        newline();
+      }
+    }
+
+    void blockcomment() {
+      // Block comments can be nested
+      int depth = 1;
+      while (index < program.length()) {
+        var c = consume();
+        if (c == '*' && peek() == '/') {
+          consume();
+          depth--;
+          if (depth == 0) {
+            break;
+          }
+          continue;
+        }
+
+        if (c == '/' && peek() == '*') {
+          consume();
+          depth++;
+          continue;
+        }
+
+        if (c == '\n') {
+          newline();
+        }
+      }
+    }
+
+    void newline() {
+      if (!isLineEmpty) {
+        lines++;
+      } else {
+        emptyLines++;
+      }
+
+      isLineEmpty = true;
+    }
+
+    char peek() {
+      if (index >= program.length()) {
+        return EOF;
+      }
+      return program.charAt(index);
+    }
+
+    char consume() {
+      if (index >= program.length()) {
+        return EOF;
+      }
+      var result = program.charAt(index);
+      index++;
+      return result;
+    }
+  }
 }
