@@ -1997,8 +1997,7 @@ ImportDefinition
 . : ' | . : Identifier name: "imm" type: null
 . : ' | . : IntegerLiteral literal: 0 (0) type: null
 . : ' AssemblyDefinition
-. : ' | GroupedExpr type: null
-. : ' | . Identifier name: "mnemonic" type: null
+. : ' | Identifier name: "mnemonic" type: null
 . : ' InstructionDefinition name: "EBREAK"
 . : ' | Identifier name: "Itype" type: null
 . : ' | BlockStatement
@@ -2021,8 +2020,7 @@ ImportDefinition
 . : ' | . : Identifier name: "imm" type: null
 . : ' | . : IntegerLiteral literal: 1 (1) type: null
 . : ' AssemblyDefinition
-. : ' | GroupedExpr type: null
-. : ' | . Identifier name: "mnemonic" type: null
+. : ' | Identifier name: "mnemonic" type: null
 . : ' FormatDefinition name: "Ftype"
 . : ' | TypeLiteral type: null
 . : ' | . Identifier name: "Inst" type: null

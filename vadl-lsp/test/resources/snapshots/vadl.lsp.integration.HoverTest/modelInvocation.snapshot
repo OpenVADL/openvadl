@@ -25,7 +25,7 @@ Test method: vadl.lsp.integration.HoverTest.mainTest, Test case: modelInvocation
       left = null
       right = MarkupContent [
       kind = "markdown"
-      value = "This model invocation expands to:  \n```vadl\ninstruction ONE : Simple = { }\nencoding ONE = {b = 0b1 as Bits<1>}\nassembly ONE = (mnemonic)\n```"
+      value = "This model invocation expands to:  \n```vadl\ninstruction ONE : Simple = { }\nencoding ONE = {b = 0b1 as Bits<1>}\nassembly ONE = mnemonic\n```"
     ]
     ]
     range = Range [
