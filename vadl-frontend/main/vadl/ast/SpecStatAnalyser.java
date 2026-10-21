@@ -89,19 +89,18 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
         new SpecStat("Record Definitions", analyser.recordDefinitions),
         new SpecStat("Model-Type Definitions", analyser.modelTypeDefinitions),
         new SpecStat("Function Definitions Unexpanded", analyser.functionDefinitionsUnexpanded),
+        new SpecStat("Function Definitions", analyser.functionDefinitions),
         new SpecStat("Format Definitions Unexpanded", analyser.formatDefinitionsUnexpanded),
+        new SpecStat("Format Definitions", analyser.formatDefinitions),
         new SpecStat("Instruction Definitions Unexpanded",
             analyser.instructionDefinitionUnexpanded),
-        new SpecStat("Total Definitions Unexpanded", analyser.totalDefinitionsUnexpanded),
-        new SpecStat("Total Statements Unexpanded", analyser.totalStatementsUnexpanded),
-        new SpecStat("Total Expressions Unexpanded", analyser.totalExpressionsUnexpanded),
-        new SpecStat("Function Definitions", analyser.functionDefinitions),
-        new SpecStat("Format Definitions", analyser.formatDefinitions),
         new SpecStat("Instruction Definitions", analyser.instructionDefinition),
+        new SpecStat("Total Definitions Unexpanded", analyser.totalDefinitionsUnexpanded),
         new SpecStat("Total Definitions", analyser.totalDefinitions),
+        new SpecStat("Total Statements Unexpanded", analyser.totalStatementsUnexpanded),
         new SpecStat("Total Statements", analyser.totalStatements),
+        new SpecStat("Total Expressions Unexpanded", analyser.totalExpressionsUnexpanded),
         new SpecStat("Total Expressions", analyser.totalExpressions)
-
     );
   }
 
@@ -232,7 +231,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
     int emptyLines = 0;
 
     static final List<Character> nonLineWhitespace = List.of(' ', '\t', '\r');
-    static final char EOF = (char) -1;
+    static final char EOF = '\0';
 
     private LineOfCodeCounter(String program) {
       this.program = program;
