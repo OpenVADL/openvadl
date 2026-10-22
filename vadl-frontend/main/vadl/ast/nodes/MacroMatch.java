@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.List;
 import vadl.utils.SourceLocation;
 
@@ -24,9 +26,15 @@ public record MacroMatch(SyntaxType resultType, List<Choice> choices, Node defau
                   SourceLocation sourceLocation) {
 
   public void prettyPrint(int indent, StringBuilder sb) {
-    sb.append("  ".repeat(indent)).append("match : ").append(resultType.print()).append("(");
+    sb.append("  ".repeat(indent));
+    prettyPrintContent(indent, sb);
+    sb.append("\n");
+  }
+
+  void prettyPrintContent(int indent, StringBuilder sb) {
+    sb.append("match : ").append(resultType.print()).append("(");
     for (Choice choice : choices) {
-      sb.append("\n").append("  ".repeat(indent + 1));
+      sb.append(indentedNewline(indent + 1));
       var isFirst = true;
       for (Pattern pattern : choice.patterns) {
         if (!isFirst) {
@@ -48,7 +56,7 @@ public record MacroMatch(SyntaxType resultType, List<Choice> choices, Node defau
     sb.append("\n").append(" ".repeat(indent + 1));
     sb.append("_ => ");
     defaultChoice.prettyPrint(indent + 1, sb);
-    sb.append("\n").append(" ".repeat(indent)).append(")\n");
+    sb.append("\n").append(" ".repeat(indent)).append(")");
   }
 
   public enum Comparison { EQUAL, NOT_EQUAL }

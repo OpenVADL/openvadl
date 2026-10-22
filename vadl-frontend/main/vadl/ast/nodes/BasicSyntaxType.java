@@ -84,6 +84,11 @@ public enum BasicSyntaxType implements SyntaxType {
   }
 
   @Override
+  public boolean isValid() {
+    return this != BasicSyntaxType.INVALID;
+  }
+
+  @Override
   public String print() {
     return name;
   }

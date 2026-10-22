@@ -52,7 +52,7 @@ public class AsmGrammarTypeDefinition extends Definition {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(" @");
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
   }
 
   @Override

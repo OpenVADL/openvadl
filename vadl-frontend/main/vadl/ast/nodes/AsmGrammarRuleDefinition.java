@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -83,7 +85,7 @@ public class AsmGrammarRuleDefinition extends Definition implements Identifiable
     alternatives.prettyPrint(indent, builder);
     indent--;
 
-    builder.append("\n").append(prettyIndentString(indent)).append(";\n\n");
+    builder.append("\n").append(indentString(indent)).append(";\n\n");
   }
 
   @Override

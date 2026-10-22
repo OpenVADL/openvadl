@@ -17,6 +17,8 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintDefinitions;
 
 import java.util.List;
 import java.util.Objects;
@@ -108,17 +110,17 @@ public class ProcessorDefinition extends Definition implements IdentifiableNode 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent)).append("processor ");
-    id.prettyPrint(0, builder);
+    builder.append(indentString(indent)).append("processor ");
+    id.prettyPrint(indent, builder);
     builder.append(" implements ");
-    implementedIsa.prettyPrint(0, builder);
-    builder.append(" with ");
+    implementedIsa.prettyPrint(indent, builder);
     if (abi != null) {
-      abi.prettyPrint(0, builder);
+      builder.append(" with ");
+      abi.prettyPrint(indent, builder);
     }
     builder.append(" = {\n");
     prettyPrintDefinitions(indent + 1, builder, definitions);
-    builder.append(prettyIndentString(indent)).append("}\n");
+    builder.append(indentString(indent)).append("}\n");
   }
 
   @Override

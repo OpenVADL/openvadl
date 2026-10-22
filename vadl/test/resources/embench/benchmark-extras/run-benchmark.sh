@@ -19,7 +19,7 @@ mkdir -p "results/$name"
 cd ..
 
 for i in $(seq 1 2); do
-    $runner "$@" > "benchmark-extras/results/$name/$i.json"
+	$runner "$@" > "benchmark-extras/results/$name/$i.json"
 done
 
 cd "benchmark-extras"

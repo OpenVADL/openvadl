@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.FormatDefinition;
@@ -45,6 +46,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   private final Set<SourceLocation> seenUnexpandedLocations = new HashSet<>();
   private int files = 0;
   private int linesOfCode = 0;
+  private int linesOfCodeExpanded = 0;
   private int functionDefinitions = 0;
   private int formatDefinitions = 0;
   private int instructionDefinition = 0;
@@ -74,37 +76,42 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
    */
   public static List<SpecStat> run(Ast ast, VirtualFileSystem fileSystem) {
     var analyser = new SpecStatAnalyser(fileSystem);
-    ast.definitions.forEach(definition -> definition.accept(analyser));
-    analyser.addModelNodes(ast.rootSymbolTable());
+    analyser.handleAst(ast);
 
     ast.allReadFiles().forEach(analyser::handlePath);
 
     return List.of(
         new SpecStat("Files", analyser.files),
         new SpecStat("Lines of code", analyser.linesOfCode),
+        new SpecStat("Lines of code Expanded", analyser.linesOfCodeExpanded),
         new SpecStat("Model Definitions", analyser.modelDefinitions),
         new SpecStat("Record Definitions", analyser.recordDefinitions),
         new SpecStat("Model-Type Definitions", analyser.modelTypeDefinitions),
         new SpecStat("Function Definitions Unexpanded", analyser.functionDefinitionsUnexpanded),
+        new SpecStat("Function Definitions", analyser.functionDefinitions),
         new SpecStat("Format Definitions Unexpanded", analyser.formatDefinitionsUnexpanded),
+        new SpecStat("Format Definitions", analyser.formatDefinitions),
         new SpecStat("Instruction Definitions Unexpanded",
             analyser.instructionDefinitionUnexpanded),
-        new SpecStat("Total Definitions Unexpanded", analyser.totalDefinitionsUnexpanded),
-        new SpecStat("Total Statements Unexpanded", analyser.totalStatementsUnexpanded),
-        new SpecStat("Total Expressions Unexpanded", analyser.totalExpressionsUnexpanded),
-        new SpecStat("Function Definitions", analyser.functionDefinitions),
-        new SpecStat("Format Definitions", analyser.formatDefinitions),
         new SpecStat("Instruction Definitions", analyser.instructionDefinition),
+        new SpecStat("Total Definitions Unexpanded", analyser.totalDefinitionsUnexpanded),
         new SpecStat("Total Definitions", analyser.totalDefinitions),
+        new SpecStat("Total Statements Unexpanded", analyser.totalStatementsUnexpanded),
         new SpecStat("Total Statements", analyser.totalStatements),
+        new SpecStat("Total Expressions Unexpanded", analyser.totalExpressionsUnexpanded),
         new SpecStat("Total Expressions", analyser.totalExpressions)
-
     );
   }
 
   private void handlePath(Path path) {
     files++;
-    fileSystem.readLines(path).forEach(unused -> linesOfCode++);
+    linesOfCode +=
+        new LineOfCodeCounter(fileSystem.readLines(path).collect(Collectors.joining("\n"))).count();
+  }
+
+  private void handleAst(Ast ast) {
+    linesOfCodeExpanded += new LineOfCodeCounter(ast.prettyPrintToString()).count();
+    ast.definitions.forEach(definition -> definition.accept(this));
   }
 
   /**
@@ -140,25 +147,31 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
    * AST. However, since models are scoped, they get entered into the symbolTables and never removed
    * from them. So we can traverse all symbol tables of all definitions and count the models.
    *
-   * @param table of a definition to import all the macros from.
+   * @param def to add.
    */
-  private void addModelNodes(SymbolTable table) {
-    table.macroSymbols.values().forEach(symbol -> {
-      var node = symbol;
-      ifNewUnexpanded(node, () -> {
-        if (node instanceof ModelDefinition) {
-          modelDefinitions++;
-        } else if (node instanceof RecordTypeDefinition) {
-          recordDefinitions++;
-        } else if (node instanceof ModelTypeDefinition) {
-          modelTypeDefinitions++;
+  private void addModelNode(Definition def) {
+    ifNewUnexpanded(def, () -> {
+      switch (def) {
+        case ModelDefinition model -> modelDefinitions++;
+        case RecordTypeDefinition record -> recordDefinitions++;
+        case ModelTypeDefinition type -> modelTypeDefinitions++;
+        default -> {
         }
-      });
+      }
     });
   }
 
   @Override
   public void beforeTravel(Definition definition) {
+    // Special handling for model nodes
+    // They don't count as normal nodes
+    if (definition instanceof ModelDefinition
+        || definition instanceof RecordTypeDefinition
+        || definition instanceof ModelTypeDefinition) {
+      addModelNode(definition);
+      return;
+    }
+
     totalDefinitions++;
     var isNew = ifNewUnexpanded(definition, () -> totalDefinitionsUnexpanded++);
     if (definition instanceof FunctionDefinition) {
@@ -179,10 +192,6 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
         instructionDefinitionUnexpanded++;
       }
     }
-
-    if (definition.symbolTable != null) {
-      addModelNodes(definition.symbolTable());
-    }
   }
 
   @Override
@@ -200,7 +209,7 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   @Override
   public Void visit(ImportDefinition definition) {
     beforeTravel(definition);
-    definition.moduleAst.definitions.forEach(def -> def.accept(this));
+    handleAst(definition.moduleAst);
     afterTravel(definition);
     return null;
   }
@@ -211,4 +220,132 @@ public class SpecStatAnalyser extends RecursiveAstVisitor {
   public record SpecStat(String name, int count) {
   }
 
+  /**
+   * A mini parser to count the lines of code that respect nested block comments.
+   */
+  private static class LineOfCodeCounter {
+
+    final String program;
+    boolean isLineEmpty = true;
+    int index = 0;
+    int lines = 0;
+    int emptyLines = 0;
+
+    static final List<Character> nonLineWhitespace = List.of(' ', '\t', '\r');
+    static final char EOF = '\0';
+
+    private LineOfCodeCounter(String program) {
+      this.program = program;
+    }
+
+    int count() {
+      index = 0;
+      top();
+
+      if (lines + emptyLines != program.lines().count()) {
+        throw new IllegalStateException(
+            "Counting calculated a wrong number "
+                + "(coutnedLines + emptyCountedLines != actualTotalLines): %d + %d != %d".formatted(
+                lines, emptyLines, program.lines().count()));
+      }
+
+      return lines;
+    }
+
+    void top() {
+      while (index < program.length()) {
+        var c = consume();
+
+        if (nonLineWhitespace.contains(c)) {
+          continue;
+        }
+
+        if (c == '/') {
+          if (peek() == '/') {
+            consume();
+            linecomment();
+            continue;
+          }
+          if (peek() == '*') {
+            consume();
+            blockcomment();
+            continue;
+          }
+        }
+
+        if (c == '\n') {
+          newline();
+          continue;
+        }
+
+        // Must be a code character
+        isLineEmpty = false;
+      }
+      if (!program.isEmpty() && program.charAt(program.length() - 1) != '\n') {
+        newline();
+      }
+    }
+
+    void linecomment() {
+      char c;
+      while ((c = consume()) != EOF && c != '\n') {
+        // Do nothing we just wanna skip em
+      }
+      if (c == '\n') {
+        newline();
+      }
+    }
+
+    void blockcomment() {
+      // Block comments can be nested
+      int depth = 1;
+      while (index < program.length()) {
+        var c = consume();
+        if (c == '*' && peek() == '/') {
+          consume();
+          depth--;
+          if (depth == 0) {
+            break;
+          }
+          continue;
+        }
+
+        if (c == '/' && peek() == '*') {
+          consume();
+          depth++;
+          continue;
+        }
+
+        if (c == '\n') {
+          newline();
+        }
+      }
+    }
+
+    void newline() {
+      if (!isLineEmpty) {
+        lines++;
+      } else {
+        emptyLines++;
+      }
+
+      isLineEmpty = true;
+    }
+
+    char peek() {
+      if (index >= program.length()) {
+        return EOF;
+      }
+      return program.charAt(index);
+    }
+
+    char consume() {
+      if (index >= program.length()) {
+        return EOF;
+      }
+      var result = program.charAt(index);
+      index++;
+      return result;
+    }
+  }
 }

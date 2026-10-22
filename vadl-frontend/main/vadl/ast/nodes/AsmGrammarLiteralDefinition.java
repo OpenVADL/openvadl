@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -81,9 +83,9 @@ public class AsmGrammarLiteralDefinition extends Definition {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     if (id != null) {
-      id.prettyPrint(0, builder);
+      id.prettyPrint(indent, builder);
       if (!parameters.isEmpty()) {
         builder.append('<');
         for (int i = 0; i < parameters.size(); i++) {
@@ -96,10 +98,10 @@ public class AsmGrammarLiteralDefinition extends Definition {
       }
     }
     if (stringLiteral != null) {
-      stringLiteral.prettyPrint(0, builder);
+      stringLiteral.prettyPrint(indent, builder);
     }
     if (asmTypeDefinition != null) {
-      asmTypeDefinition.prettyPrint(0, builder);
+      asmTypeDefinition.prettyPrint(indent, builder);
     }
   }
 

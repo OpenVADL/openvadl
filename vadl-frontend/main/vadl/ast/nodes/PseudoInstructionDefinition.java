@@ -16,6 +16,9 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -57,7 +60,7 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     var kindStr = switch (kind) {
       case PSEUDO -> "pseudo";
       case COMPILER -> "compiler";
@@ -65,11 +68,12 @@ public class PseudoInstructionDefinition extends InstructionSequenceDefinition
     builder.append(kindStr).append(" instruction ");
     identifier.prettyPrint(indent, builder);
     Parameter.prettyPrintMultiple(indent, params, builder);
-    builder.append(" = {\n");
+    builder.append(" = {");
     for (Statement statement : statements) {
+      builder.append(indentedNewline(indent + 1));
       statement.prettyPrint(indent + 1, builder);
     }
-    builder.append(prettyIndentString(indent)).append("}\n");
+    builder.append(indentedNewline(indent)).append("}\n");
   }
 
   @Override

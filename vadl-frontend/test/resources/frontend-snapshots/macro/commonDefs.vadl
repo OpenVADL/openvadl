@@ -25,7 +25,8 @@ instruction set architecture ISA = {
 //  using SInt64 = SInt<64>
 //
 //  instruction set architecture ISA = {
-//    function add1632(left : SInt16, right : SInt16) -> SInt32 = VADL::add(left, right) as SInt32
+//    function add1632(left : SInt16, right : SInt16) -> SInt32 =
+//      VADL::add(left, right) as SInt32
 //  }
 //
 //

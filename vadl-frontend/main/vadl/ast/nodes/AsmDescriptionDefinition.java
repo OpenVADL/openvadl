@@ -16,6 +16,9 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.prettyPrintDefinitions;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -73,7 +76,7 @@ public class AsmDescriptionDefinition extends Definition implements Identifiable
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
 
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("assembly description ");
     id.prettyPrint(indent, builder);
     builder.append(" for ");
@@ -86,7 +89,7 @@ public class AsmDescriptionDefinition extends Definition implements Identifiable
     }
 
     if (!modifiers.isEmpty()) {
-      builder.append(prettyIndentString(indent)).append("modifiers = {\n");
+      builder.append(indentString(indent)).append("modifiers = {\n");
       indent++;
       for (var mod : modifiers) {
         mod.prettyPrint(indent, builder);
@@ -95,11 +98,11 @@ public class AsmDescriptionDefinition extends Definition implements Identifiable
         }
         builder.append("\n");
       }
-      builder.append(prettyIndentString(--indent)).append("}\n\n");
+      builder.append(indentString(--indent)).append("}\n\n");
     }
 
     if (!directives.isEmpty()) {
-      builder.append(prettyIndentString(indent)).append("directives = {\n\n");
+      builder.append(indentString(indent)).append("directives = {\n\n");
       indent++;
       for (var dir : directives) {
         dir.prettyPrint(indent, builder);
@@ -108,19 +111,19 @@ public class AsmDescriptionDefinition extends Definition implements Identifiable
         }
         builder.append("\n");
       }
-      builder.append(prettyIndentString(--indent)).append("}\n");
+      builder.append(indentString(--indent)).append("}\n");
     }
 
-    builder.append(prettyIndentString(indent)).append("grammar = {\n");
+    builder.append(indentString(indent)).append("grammar = {\n");
     indent++;
     var printableRules = rules.stream().filter(r -> !r.isBuiltinRule && !r.isTerminalRule).toList();
     for (var rule : printableRules) {
-      builder.append(prettyIndentString(indent));
+      builder.append(indentString(indent));
       rule.prettyPrint(indent, builder);
     }
-    builder.append(prettyIndentString(--indent)).append("}\n");
+    builder.append(indentString(--indent)).append("}\n");
 
-    builder.append(prettyIndentString(--indent)).append("}\n");
+    builder.append(indentString(--indent)).append("}\n");
   }
 
   @Override

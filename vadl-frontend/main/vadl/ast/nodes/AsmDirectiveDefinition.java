@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
@@ -55,10 +57,10 @@ public class AsmDirectiveDefinition extends Definition {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
-    stringLiteral.prettyPrint(0, builder);
+    builder.append(indentString(indent));
+    stringLiteral.prettyPrint(indent, builder);
     builder.append(" -> ");
-    builtinDirective.prettyPrint(0, builder);
+    builtinDirective.prettyPrint(indent, builder);
   }
 
   @Override

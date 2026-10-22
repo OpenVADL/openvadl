@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
 
 import java.util.List;
 import java.util.Objects;
@@ -39,7 +40,7 @@ public class LetExpr extends Expr {
   public SourceLocation location;
 
   public LetExpr(List<IdentifierOrPlaceholder> identifiers, Expr valueExpr, Expr body,
-          SourceLocation location) {
+                 SourceLocation location) {
     this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;
@@ -107,7 +108,7 @@ public class LetExpr extends Expr {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append(prettyIndentString(indent));
+    //builder.append(indentString(indent));
     builder.append("(let ");
     var isFirst = true;
     for (var identifier : identifiers) {
@@ -120,9 +121,7 @@ public class LetExpr extends Expr {
     builder.append(" = ");
     valueExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
     builder.append(" in\n");
-    if (!isBlockLayout(body)) {
-      builder.append(prettyIndentString(indent + 1));
-    }
+    builder.append(indentString(indent + 1));
     body.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
     builder.append(")");
   }

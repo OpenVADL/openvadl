@@ -16,6 +16,9 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -58,17 +61,16 @@ public final class MatchStatement extends Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("match ");
-    candidate.prettyPrint(0, builder);
-    builder.append(" with\n");
-    builder.append(prettyIndentString(indent + 1)).append("{ ");
+    candidate.prettyPrint(indent, builder);
+    builder.append(" with").append(indentedNewline(indent + 1)).append("{ ");
     var isFirst = true;
     for (var matchCase : cases) {
       if (!isFirst) {
-        builder.append(prettyIndentString(indent + 1)).append(", ");
+        builder.append(indentString(indent + 1)).append(", ");
       }
       isFirst = false;
       if (matchCase.patterns.size() == 1) {
-        matchCase.patterns.get(0).prettyPrint(0, builder);
+        matchCase.patterns.get(0).prettyPrint(indent + 1, builder);
       } else {
         builder.append("{");
         var isFirstPattern = true;
@@ -77,20 +79,20 @@ public final class MatchStatement extends Statement {
             builder.append(", ");
           }
           isFirstPattern = false;
-          pattern.prettyPrint(0, builder);
+          pattern.prettyPrint(indent + 1, builder);
         }
         builder.append("}");
       }
       builder.append(" => ");
-      matchCase.result.prettyPrint(0, builder);
+      matchCase.result.prettyPrint(indent + 2, builder);
       builder.append("\n");
     }
     if (defaultResult != null) {
-      builder.append(prettyIndentString(indent + 1)).append(", _ => ");
-      defaultResult.prettyPrint(0, builder);
+      builder.append(indentString(indent + 1)).append(", _ => ");
+      defaultResult.prettyPrint(indent + 2, builder);
       builder.append("\n");
     }
-    builder.append(prettyIndentString(indent + 1)).append("}\n");
+    builder.append(indentString(indent + 1)).append("}");
   }
 
   @Override

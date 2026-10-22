@@ -43,7 +43,7 @@ addi r1, r2, -1024
 # CHECK: <MCInst #{{[0-9]+}} ADDI
 # CHECK-NEXT: <MCOperand Reg:3>
 # CHECK-NEXT: <MCOperand Reg:4>
-# CHECK-NEXT: <MCOperand Imm:64512>>
+# CHECK-NEXT: <MCOperand Imm:1024>>
 
 addi r1, r2, 1024
 # CHECK: <MCInst #{{[0-9]+}} ADDI_L

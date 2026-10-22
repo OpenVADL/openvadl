@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -59,9 +61,9 @@ public class PortBehaviorDefinition extends Definition implements IdentifiableNo
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append(kind.keyword);
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     Parameter.prettyPrintMultiple(indent, inputs, builder);
     builder.append(" -> ");
     Parameter.prettyPrintMultiple(indent, outputs, builder);

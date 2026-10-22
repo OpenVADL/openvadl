@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import vadl.utils.SourceLocation;
 
@@ -53,9 +55,9 @@ public class SourceDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("source ");
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     builder.append(" = ");
     builder.append("-<{").append(source).append("}>-\n");
   }

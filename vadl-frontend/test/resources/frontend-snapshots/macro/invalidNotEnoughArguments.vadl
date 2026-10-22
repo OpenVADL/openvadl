@@ -1,0 +1,18 @@
+model example(arg: Ex) : Ex =  {
+   1 + 2
+}
+
+constant n = 3 * $example()
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Model Invocation
+//       ╭── test/resources/frontend-snapshots/macro/invalidNotEnoughArguments.vadl:5:18
+//       │
+//     5 │ constant n = 3 * $example()
+//       │                  ^^^^^^^^^^ The model expected 1 arguments but, 0 were provided.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

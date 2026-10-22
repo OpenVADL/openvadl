@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -53,18 +55,18 @@ public class MatchExpr extends Expr {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append(prettyIndentString(indent)).append("match ");
-    candidate.prettyPrint(0, builder);
+    builder.append("match ");
+    candidate.prettyPrint(indent, builder);
     builder.append(" with\n");
-    builder.append(prettyIndentString(indent + 1)).append("{ ");
+    builder.append(indentString(indent + 1)).append("{ ");
     var isFirst = true;
     for (var matchCase : cases) {
       if (!isFirst) {
-        builder.append(prettyIndentString(indent + 1)).append(", ");
+        builder.append(indentString(indent + 1)).append(", ");
       }
       isFirst = false;
       if (matchCase.patterns.size() == 1) {
-        matchCase.patterns.get(0).prettyPrint(0, builder);
+        matchCase.patterns.get(0).prettyPrint(indent, builder);
       } else {
         builder.append("{");
         var isFirstPattern = true;
@@ -73,17 +75,17 @@ public class MatchExpr extends Expr {
             builder.append(", ");
           }
           isFirstPattern = false;
-          pattern.prettyPrint(0, builder);
+          pattern.prettyPrint(indent, builder);
         }
         builder.append("}");
       }
       builder.append(" => ");
-      matchCase.result.prettyPrint(0, builder);
+      matchCase.result.prettyPrint(indent, builder);
       builder.append("\n");
     }
-    builder.append(prettyIndentString(indent + 1)).append(", _ => ");
-    defaultResult.prettyPrint(0, builder);
-    builder.append("\n").append(prettyIndentString(indent + 1)).append("}\n");
+    builder.append(indentString(indent + 1)).append(", _ => ");
+    defaultResult.prettyPrint(indent, builder);
+    builder.append("\n").append(indentString(indent + 1)).append("}");
   }
 
   @Override

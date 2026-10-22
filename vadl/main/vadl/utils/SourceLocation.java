@@ -95,6 +95,19 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
     return list;
   }
 
+  /**
+   * Similar to {@link fullExpandedFromStack} but returns a rope instead.
+   *
+   * @return the full rope.
+   */
+  default RopeList<DirectLocation> fullExpandedRope() {
+    return switch (this) {
+      case DirectLocation direct -> RopeList.of(direct);
+      case ExpandedLocation expanded ->
+          RopeList.of(expanded.primaryLocation).concat(expanded.expandedFrom);
+    };
+  }
+
   default boolean isValid() {
     return path() != null;
   }

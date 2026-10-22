@@ -1,0 +1,18 @@
+model example(arg: Bool) : Ex =  {
+   1 + 2
+}
+
+constant n = 3 * $example(5)
+
+
+//  Reported Diagnostics:
+//
+//  error: Parsing Error
+//       ╭── test/resources/frontend-snapshots/macro/invalidProvidedArgumentTypeMismatch.vadl:5:27
+//       │
+//     5 │ constant n = 3 * $example(5)
+//       │                           ^ invalid macroBody
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

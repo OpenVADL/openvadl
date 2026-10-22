@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
@@ -50,11 +52,11 @@ public class SignalDefinition extends Definition implements IdentifiableNode {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
+    builder.append(indentString(indent));
     builder.append("signal ");
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     builder.append(" : ");
-    type.prettyPrint(0, builder);
+    type.prettyPrint(indent, builder);
     builder.append("\n");
   }
 

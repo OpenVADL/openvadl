@@ -55,7 +55,7 @@ public sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasD
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    target.prettyPrint(0, builder);
+    target.prettyPrint(indent, builder);
   }
 
   @Override

@@ -665,8 +665,8 @@ instruction set architecture PPC64SFS = {
   // instructions: addi, addic, addic., addis, subfic
   model DFormAddSubInstr (x : AsmOpOpcdId, a : TwoArgs, rc : Bool, ce : Bool) : IsaDefs = {
     instruction $x.id : DFormA =
-      let result32, flags32 = VADL::$x.op($a.arg1 as Word, $a.arg2 as Word) in
-        let result, flags64 = VADL::$x.op($a.arg1        , $a.arg2        ) in {
+      let result32, flags32 = $x.op($a.arg1 as Word, $a.arg2 as Word) in
+        let result, flags64 = $x.op($a.arg1        , $a.arg2        ) in {
           X(rs) := result
           $SetFlags(false; $ce; $rc; false; false)
         }
@@ -677,7 +677,7 @@ instruction set architecture PPC64SFS = {
   // instructions: andi., andis., ori, oris, xori, xoris
   model DFormLogicalInstr (x : AsmOpOpcd, arg2 : Id, rc : Bool) : IsaDefs = {
     instruction AsId($x.asm, $rId($rc)) : DFormA =
-      let result = VADL::$x.op(X(rs), $arg2) in {
+      let result = $x.op(X(rs), $arg2) in {
         X(ra) := result
         $SetCR0($rc; XER_SO)
       }
@@ -922,7 +922,7 @@ instruction set architecture PPC64SFS = {
 
   model XFormLogicalShiftInstrExt (x : AsmOpExt, rc : Bool) : IsaDefs = {
     instruction AsId($x.asm, $rId($rc)) : XFormA =
-      let result = if X(rb)(5) = 0 then VADL::$x.op(XW(rs), X(rb)(4..0)) as DWord else 0 in {
+      let result = if X(rb)(5) = 0 then $x.op(XW(rs), X(rb)(4..0)) as DWord else 0 in {
         X(ra) := result
         $SetCR0($rc; XER_SO)
       }
@@ -942,7 +942,7 @@ instruction set architecture PPC64SFS = {
   model XFormModInstr (x : AsmOpExt, ctype : Id) : IsaDefs = {
     instruction AsId($x.asm) : XFormA =
       X(rs) := if XW(rb) != 0
-               then VADL::$x.op(XW(ra), XW(rb)) as $ctype
+               then $x.op(XW(ra), XW(rb)) as $ctype
                else 0
     encoding AsId($x.asm) = {opcd = 0b011111, extopcd = $x.ext, rc = 0b0}
     assembly AsId($x.asm) = ($x.asm, " ", udec(rs), ",", udec(ra), ",", udec(rb))
@@ -1220,8 +1220,8 @@ instruction set architecture PPC64SFS = {
 
   model XOFormAddSubInstrExt (r : XOFormAddSubInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction AsId($r.x.asm, $orId($oe; $rc)) : XOForm =
-      let result32, flags32 = VADL::$r.x.op($r.a.arg1 as Word, $r.a.arg2 as Word, $r.ca) in
-        let result, flags64 = VADL::$r.x.op($r.a.arg1        , $r.a.arg2        , $r.ca) in {
+      let result32, flags32 = $r.x.op($r.a.arg1 as Word, $r.a.arg2 as Word, $r.ca) in
+        let result, flags64 = $r.x.op($r.a.arg1        , $r.a.arg2        , $r.ca) in {
           X(rs) := result
           $SetFlags($oe; $r.ce; $rc; flags32.overflow;
             (flags64.overflow && MSR.sf) || (flags32.overflow && ~MSR.sf))
@@ -1250,7 +1250,7 @@ instruction set architecture PPC64SFS = {
              X(rs) := result
              $SetFlags($oe; false; $rc; true; true)
            }
-           else let res, flags = VADL::$r.x.op($r.a.arg1, $r.a.arg2) in
+           else let res, flags = $r.x.op($r.a.arg1, $r.a.arg2) in
              let udf2 = $r.udf2 in
                let result = if udf2 then $r.ures else res as Word as $r.ctype in {
                  X(rs) := result
@@ -1278,7 +1278,7 @@ instruction set architecture PPC64SFS = {
 
   model XOFormMulInstrExt (r : XOFormMulInstrRec, oe : Bool, rc : Bool) : IsaDefs = {
     instruction AsId($r.x.asm, $rId($rc)) : XOForm =
-      let prod = VADL::$r.x.op(XW(ra), XW(rb)) in
+      let prod = $r.x.op(XW(ra), XW(rb)) in
         let result = $r.res as DWord in {
           X(rs) := result
           $SetFlags($oe; false; $rc; ov; prod != (prod as SWord) as SDWord)
@@ -1333,22 +1333,22 @@ instruction set architecture PPC64SFS = {
   //------------------------Arithmetic-------------------------
   $DXFormAddInstr("ADDPCIS")
 
-  $XOFormAddSubInstr((("ADD"   ; addc; 0b1000'01010); (X(ra)  ; X(rb)  ); none         ; false ; false; (",", udec(rb))))
-  $XOFormAddSubInstr((("ADDC"  ; addc; 0b0000'01010); (X(ra)  ; X(rb)  ); none         ; false ; true ; (",", udec(rb))))
-  $XOFormAddSubInstr((("ADDE"  ; addc; 0b0100'01010); (X(ra)  ; X(rb)  ); none         ; XER_CA; true ; (",", udec(rb))))
-  $XOFormAddSubInstr((("SUBF"  ; subc; 0b0001'01000); (X(rb)  ; X(ra)  ); none         ; true  ; false; (",", udec(rb))))
-  $XOFormAddSubInstr((("SUBFC" ; subc; 0b0000'01000); (X(rb)  ; X(ra)  ); none         ; true  ; true ; (",", udec(rb))))
-  $XOFormAddSubInstr((("SUBFE" ; subc; 0b0100'01000); (X(rb)  ; X(ra)  ); none         ; XER_CA; true ; (",", udec(rb))))
-  $XOFormAddSubInstr((("ADDME" ; addc; 0b0111'01010); (X(ra)  ; maxU64 ); rb = 0b00000 ; XER_CA; true ; ""             ))
-  $XOFormAddSubInstr((("ADDZE" ; addc; 0b0110'01010); (X(ra)  ; zeroU64); rb = 0b00000 ; XER_CA; true ; ""             ))
-  $XOFormAddSubInstr((("SUBFME"; subc; 0b0111'01000); (maxU64 ; X(ra)  ); rb = 0b00000 ; XER_CA; true ; ""             ))
-  $XOFormAddSubInstr((("SUBFZE"; subc; 0b0110'01000); (zeroU64; X(ra)  ); rb = 0b00000 ; XER_CA; true ; ""             ))
+  $XOFormAddSubInstr((("ADD"   ; VADL::addc; 0b1000'01010); (X(ra)  ; X(rb)  ); none         ; false ; false; (",", udec(rb))))
+  $XOFormAddSubInstr((("ADDC"  ; VADL::addc; 0b0000'01010); (X(ra)  ; X(rb)  ); none         ; false ; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("ADDE"  ; VADL::addc; 0b0100'01010); (X(ra)  ; X(rb)  ); none         ; XER_CA; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("SUBF"  ; VADL::subc; 0b0001'01000); (X(rb)  ; X(ra)  ); none         ; true  ; false; (",", udec(rb))))
+  $XOFormAddSubInstr((("SUBFC" ; VADL::subc; 0b0000'01000); (X(rb)  ; X(ra)  ); none         ; true  ; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("SUBFE" ; VADL::subc; 0b0100'01000); (X(rb)  ; X(ra)  ); none         ; XER_CA; true ; (",", udec(rb))))
+  $XOFormAddSubInstr((("ADDME" ; VADL::addc; 0b0111'01010); (X(ra)  ; maxU64 ); rb = 0b00000 ; XER_CA; true ; ""             ))
+  $XOFormAddSubInstr((("ADDZE" ; VADL::addc; 0b0110'01010); (X(ra)  ; zeroU64); rb = 0b00000 ; XER_CA; true ; ""             ))
+  $XOFormAddSubInstr((("SUBFME"; VADL::subc; 0b0111'01000); (maxU64 ; X(ra)  ); rb = 0b00000 ; XER_CA; true ; ""             ))
+  $XOFormAddSubInstr((("SUBFZE"; VADL::subc; 0b0110'01000); (zeroU64; X(ra)  ); rb = 0b00000 ; XER_CA; true ; ""             ))
 
-  $DFormAddSubInstr(("ADDI"  ; adds ; 0b001110; ADDI  ); (XZ(ra); immS  ); false; false)
-  $DFormAddSubInstr(("ADDIC" ; adds ; 0b001100; ADDIC ); (X(ra) ; immS  ); false; true )
-  $DFormAddSubInstr(("ADDIC" ; adds ; 0b001101; ADDIC_); (X(ra) ; immS  ); true ; true )
-  $DFormAddSubInstr(("ADDIS" ; adds ; 0b001111; ADDIS ); (XZ(ra); shImmS); false; false)
-  $DFormAddSubInstr(("SUBFIC"; subsc; 0b001000; SUBFIC); (immS  ; X(ra) ); false; true )
+  $DFormAddSubInstr(("ADDI"  ; VADL::adds ; 0b001110; ADDI  ); (XZ(ra); immS  ); false; false)
+  $DFormAddSubInstr(("ADDIC" ; VADL::adds ; 0b001100; ADDIC ); (X(ra) ; immS  ); false; true )
+  $DFormAddSubInstr(("ADDIC" ; VADL::adds ; 0b001101; ADDIC_); (X(ra) ; immS  ); true ; true )
+  $DFormAddSubInstr(("ADDIS" ; VADL::adds ; 0b001111; ADDIS ); (XZ(ra); shImmS); false; false)
+  $DFormAddSubInstr(("SUBFIC"; VADL::subsc; 0b001000; SUBFIC); (immS  ; X(ra) ); false; true )
 
   $XOFormAddGen6Instr("ADDG6S")
 
@@ -1356,28 +1356,28 @@ instruction set architecture PPC64SFS = {
 
   $DFormMulInstr("MULLI")
 
-  $XOFormMulInstr((("MULLW" ; smull; 0b0111'01011); prod        ); false)
-  $XOFormMulInstr((("MULLWO"; smull; 0b0111'01011); prod        ); true )
-  $XOFormMulInstr((("MULHW" ; smull; 0b0010'01011); prod(63..32)); false)
-  $XOFormMulInstr((("MULHWU"; umull; 0b0000'01011); prod(63..32)); false)
+  $XOFormMulInstr((("MULLW" ; VADL::smull; 0b0111'01011); prod        ); false)
+  $XOFormMulInstr((("MULLWO"; VADL::smull; 0b0111'01011); prod        ); true )
+  $XOFormMulInstr((("MULHW" ; VADL::smull; 0b0010'01011); prod(63..32)); false)
+  $XOFormMulInstr((("MULHWU"; VADL::umull; 0b0000'01011); prod(63..32)); false)
 
-  $XOFormDivInstr((("DIVW"  ; sdivs; 0b1111'01011); (XW(ra)                ; XW(rb)          );  DWord;
+  $XOFormDivInstr((("DIVW"  ; VADL::sdivs; 0b1111'01011); (XW(ra)                ; XW(rb)          );  DWord;
                   XW(ra) = 0x8000'0000 & XW(rb) = maxU32; false                          ;
                   XW(ra) as DWord; XW(ra)))
-  $XOFormDivInstr((("DIVWU" ; udivs; 0b1110'01011); (XW(ra)                ; XW(rb)          );  DWord;
+  $XOFormDivInstr((("DIVWU" ; VADL::udivs; 0b1110'01011); (XW(ra)                ; XW(rb)          );  DWord;
                   false                                 ; false                          ;
                   XW(ra) as DWord; XW(ra)))
-  $XOFormDivInstr((("DIVWE" ; sdivs; 0b1101'01011); (XW(ra) as SDWord << 32; XW(rb) as SDWord); SDWord;
+  $XOFormDivInstr((("DIVWE" ; VADL::sdivs; 0b1101'01011); (XW(ra) as SDWord << 32; XW(rb) as SDWord); SDWord;
                   XW(ra) = 0x8000'0000 & XW(rb) = maxU32; res != (res as SWord) as SDWord;
                   0              ; 0     )) //
-  $XOFormDivInstr((("DIVWEU"; udivs; 0b1100'01011); (XW(ra) as  DWord << 32; XW(rb) as  DWord);  DWord;
+  $XOFormDivInstr((("DIVWEU"; VADL::udivs; 0b1100'01011); (XW(ra) as  DWord << 32; XW(rb) as  DWord);  DWord;
                   XW(ra) >= XW(rb)                      ; false                          ;
                   0              ; 0     ))
 
   $XOFormNegateInstr("NEG")
 
-  $XFormModInstr(("MODSW"; smod; 0b11000'01011); SDWord)
-  $XFormModInstr(("MODUW"; umod; 0b01000'01011); UDWord)
+  $XFormModInstr(("MODSW"; VADL::smod; 0b11000'01011); SDWord)
+  $XFormModInstr(("MODUW"; VADL::umod; 0b01000'01011); UDWord)
 
   //------------------------Logical----------------------------
   $XFormLogicalInstr((("AND" ; VADL::and; 0b00000'11100);  X(rb)))
@@ -1398,12 +1398,12 @@ instruction set architecture PPC64SFS = {
   $XLFormLogicalInstr(("CRORC" ; VADL::or ; 0b01101'00001); ~$ReadCRB(crbs2))
   $XLFormLogicalInstr(("CRXOR" ; VADL::xor; 0b00110'00001);  $ReadCRB(crbs2))
 
-  $DFormLogicalInstr(("ANDI" ; and; 0b011100); immU  ; true )
-  $DFormLogicalInstr(("ANDIS"; and; 0b011101); shImmU; true )
-  $DFormLogicalInstr(("ORI"  ; or ; 0b011000); immU  ; false)
-  $DFormLogicalInstr(("ORIS" ; or ; 0b011001); shImmU; false)
-  $DFormLogicalInstr(("XORI" ; xor; 0b011010); immU  ; false)
-  $DFormLogicalInstr(("XORIS"; xor; 0b011011); shImmU; false)
+  $DFormLogicalInstr(("ANDI" ; VADL::and; 0b011100); immU  ; true )
+  $DFormLogicalInstr(("ANDIS"; VADL::and; 0b011101); shImmU; true )
+  $DFormLogicalInstr(("ORI"  ; VADL::or ; 0b011000); immU  ; false)
+  $DFormLogicalInstr(("ORIS" ; VADL::or ; 0b011001); shImmU; false)
+  $DFormLogicalInstr(("XORI" ; VADL::xor; 0b011010); immU  ; false)
+  $DFormLogicalInstr(("XORIS"; VADL::xor; 0b011011); shImmU; false)
 
   $XFormBoolInstr("SETB")
 
@@ -1417,8 +1417,8 @@ instruction set architecture PPC64SFS = {
   $MFormRotateInstr((("RLWINM"; 0b010101); sh         ; r & m                 ))
   $MFormRotateInstr((("RLWNM" ; 0b010111); X(sh)(4..0); r & m                 ))
 
-  $XFormLogicalShiftInstr(("SLW"; lsl; 0b00000'11000))
-  $XFormLogicalShiftInstr(("SRW"; lsr; 0b10000'11000))
+  $XFormLogicalShiftInstr(("SLW"; VADL::lsl; 0b00000'11000))
+  $XFormLogicalShiftInstr(("SRW"; VADL::lsr; 0b10000'11000))
 
   $XFormArithmeticShiftInstr((("SRAW" ; 0b11000'11000); X(rb)(5..0);
                              if X(rb)(5) = 0 then r(63..32) as SDWord else X(rs)(31) as SDWord))

@@ -59,14 +59,9 @@ public class ExistsInThenExpr extends Expr {
       isFirst = false;
       index.prettyPrint(indent, builder);
     }
-    if (isBlockLayout(thenExpr)) {
-      builder.append(" then\n");
-      thenExpr.prettyPrint(indent + 1, builder);
-    } else {
-      builder.append(" then ");
-      thenExpr.prettyPrint(0, builder);
-      builder.append("\n");
-    }
+    builder.append(" then ");
+    thenExpr.prettyPrint(indent, builder);
+    builder.append("\n");
   }
 
   @Override
@@ -130,7 +125,7 @@ public class ExistsInThenExpr extends Expr {
 
     @Override
     public void prettyPrint(int indent, StringBuilder builder) {
-      id.prettyPrint(0, builder);
+      id.prettyPrint(indent, builder);
       builder.append(" in {");
       var isFirstOp = true;
       for (IsId operation : operations) {
@@ -138,7 +133,7 @@ public class ExistsInThenExpr extends Expr {
           builder.append(", ");
         }
         isFirstOp = false;
-        operation.prettyPrint(0, builder);
+        operation.prettyPrint(indent, builder);
       }
       builder.append("}");
     }

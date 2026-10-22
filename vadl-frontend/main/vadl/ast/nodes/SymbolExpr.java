@@ -68,7 +68,7 @@ public final class SymbolExpr extends Expr implements IsSymExpr {
       if (arg instanceof BinaryExpr) {
         builder.append("(");
       }
-      arg.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
+      arg.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
       if (arg instanceof BinaryExpr) {
         builder.append(")");
       }

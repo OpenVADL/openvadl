@@ -17,6 +17,7 @@
 package vadl.ast.nodes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.ast.nodes.PrettyPrintUtils.indentString;
 
 import java.util.List;
 import java.util.Objects;
@@ -89,24 +90,24 @@ public class AliasDefinition extends Definition implements IdentifiableNode, Typ
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent)).append("alias ");
+    builder.append(indentString(indent)).append("alias ");
     switch (kind) {
       case REGISTER -> builder.append("register ");
       case PROGRAM_COUNTER -> builder.append("program counter ");
       default -> {
       }
     }
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     if (aliasType != null) {
       builder.append(" : ");
-      aliasType.prettyPrint(0, builder);
+      aliasType.prettyPrint(indent, builder);
       if (targetType != null) {
         builder.append(" -> ");
-        targetType.prettyPrint(0, builder);
+        targetType.prettyPrint(indent, builder);
       }
     }
     builder.append(" = ");
-    value.prettyPrint(0, builder);
+    value.prettyPrint(indent, builder);
     builder.append("\n");
   }
 

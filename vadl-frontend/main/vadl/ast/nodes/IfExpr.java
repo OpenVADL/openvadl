@@ -16,6 +16,8 @@
 
 package vadl.ast.nodes;
 
+import static vadl.ast.nodes.PrettyPrintUtils.indentedNewline;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import vadl.utils.SourceLocation;
@@ -49,21 +51,44 @@ public class IfExpr extends Expr {
     return BasicSyntaxType.EX;
   }
 
-  @Override
-  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append(prettyIndentString(indent));
+  private void prettyPrintChain(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("if ");
     condition.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
-    builder.append(" then\n");
-    if (!isBlockLayout(thenExpr)) {
-      builder.append(prettyIndentString(indent + 1));
-    }
+    builder.append(" then ");
     thenExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
-    builder.append("\n").append(prettyIndentString(indent)).append("else\n");
-    if (!isBlockLayout(elseExpr)) {
-      builder.append(prettyIndentString(indent + 1));
+
+    builder.append(indentedNewline(indent));
+    builder.append("else ");
+
+    // Continue chain
+    if (elseExpr instanceof IfExpr elseIfExpr) {
+      elseIfExpr.prettyPrintChain(indent, builder, parentPrec);
+      return;
     }
+
     elseExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
+  }
+
+  @Override
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    wrapInGroup(parentPrec, builder, true, () -> {
+      var isChain = elseExpr instanceof IfExpr;
+      if (isChain) {
+        prettyPrintChain(indent, builder, parentPrec);
+        return;
+      }
+
+      builder.append("if ");
+      condition.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
+
+      builder.append(indentedNewline(indent));
+      builder.append("then ");
+      thenExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
+
+      builder.append(indentedNewline(indent));
+      builder.append("else ");
+      elseExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
+    });
   }
 
   @Override

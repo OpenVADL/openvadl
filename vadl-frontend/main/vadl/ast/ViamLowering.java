@@ -90,8 +90,7 @@ import vadl.ast.nodes.ImportDefinition;
 import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.InstructionSetDefinition;
 import vadl.ast.nodes.LogicDefinition;
-import vadl.ast.nodes.MacroInstanceDefinition;
-import vadl.ast.nodes.MacroInstructionDefinition;
+import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatchDefinition;
 import vadl.ast.nodes.MemoryDefinition;
 import vadl.ast.nodes.MicroArchitectureDefinition;
@@ -101,7 +100,6 @@ import vadl.ast.nodes.OperationDefinition;
 import vadl.ast.nodes.Parameter;
 import vadl.ast.nodes.PatchDefinition;
 import vadl.ast.nodes.PipelineDefinition;
-import vadl.ast.nodes.PlaceholderDefinition;
 import vadl.ast.nodes.PortBehaviorDefinition;
 import vadl.ast.nodes.PredicateFormatField;
 import vadl.ast.nodes.ProcessDefinition;
@@ -129,7 +127,6 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.FloatType;
 import vadl.types.GroupType;
-import vadl.types.OperationType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
@@ -1749,13 +1746,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
-  public Optional<vadl.viam.Definition> visit(MacroInstanceDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(MacroInstructionDefinition definition) {
+  public Optional<vadl.viam.Definition> visit(MacroCall.Definition definition) {
     throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
         definition.getClass().getSimpleName()));
   }
@@ -1865,14 +1856,20 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ModelDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(RecordTypeDefinition definition) {
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return Optional.empty();
   }
 
   @Override
   public Optional<vadl.viam.Definition> visit(ModelTypeDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return Optional.empty();
   }
 
   @Override
@@ -1903,12 +1900,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(PipelineDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(PlaceholderDefinition definition) {
     throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
         definition.getClass().getSimpleName()));
   }
@@ -1957,12 +1948,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       parameters.add(viamParam);
     }
     return parameters.toArray(vadl.viam.Parameter[]::new);
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(RecordTypeDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
   }
 
   private RegisterTensor.Dimension dimFromMappingType(int index, DataType dataType) {
