@@ -414,23 +414,20 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmOption element) {
-    var tempVar = symbolTable.getNextVariable();
-    var type = element.alternatives().asmType();
     var condition = getGuardCondition(element.semanticPredicate(), element.firstTokens());
 
-    ctx.ln("ParsedValue<%s> %s;", type, tempVar);
     ctx.ln("if (%s) {", condition);
     ctx.spacedIn();
     ctx.gen(element.alternatives());
-    ctx.ln("%s = %s;", tempVar, varName(element.alternatives()));
     ctx.spaceOut();
     ctx.ln("}");
-    ctx.ln("%s = %s;", varName(element), tempVar);
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmRepetition element) {
-    ctx.ln("while (%s) {", getGuardCondition(element.semanticPredicate(), element.firstTokens()));
+    var condition = getGuardCondition(element.semanticPredicate(), element.firstTokens());
+
+    ctx.ln("while (%s) {", condition);
     ctx.spacedIn();
     ctx.gen(element.alternatives());
     ctx.spaceOut();
