@@ -155,14 +155,18 @@ public final class CallIndexExpr extends Expr implements IsCallExpr {
 
     acceptNullable(action, (Node) target);
 
-    for (var args : argsIndices) {
-      for (var value : args.values) {
+    for (int i = 0; i < argsIndices.size(); i++) {
+      var args = argsIndices.get(i);
+      for (int j = 0; j < args.values.size(); j++) {
+        var value =  args.values.get(j);
         acceptNullable(action, value);
       }
     }
 
-    for (var subCall : subCalls) {
-      for (var a : subCall.argsIndices) {
+    for (int i = 0; i < subCalls.size(); i++) {
+      var subCall = subCalls.get(i);
+      for (int j = 0; j < subCall.argsIndices.size(); j++) {
+        var a = subCall.argsIndices.get(j);
         for (var value : a.values) {
           acceptNullable(action, value);
         }

@@ -811,6 +811,15 @@ public class SymbolTable {
     }
 
     @Override
+    public Void visit(ModelDefinition definition) {
+      // Skip Model Definitions at all.
+      // They are already expanded and just the contents isn't complete.
+      // And might still have placeholders.
+      currentSymbols().defineSymbol(definition.identifier().name, definition);
+      return null;
+    }
+
+    @Override
     public Void visit(AsmDescriptionDefinition definition) {
       // More complex tasks like this require custom handling.
       beforeTravel(definition);
@@ -1128,7 +1137,8 @@ public class SymbolTable {
     @Override
     public Void visit(ModelDefinition expr) {
       // Skip Model Definitions at all.
-      // They will be resolved once they are expanded.
+      // They are already expanded and just the contents isn't complete.
+      // And might still have placeholders.
       return null;
     }
 

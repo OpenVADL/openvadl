@@ -497,7 +497,8 @@ class MacroExpander
     }
 
     // Resolve subcalls of records
-    for (var subcall : macroCall.subcalls()) {
+    for (int i = 0; i < macroCall.subcalls().size(); i++) {
+      var subcall = macroCall.subcalls().get(i);
       if (!(value instanceof RecordInstance record)) {
         throw new IllegalStateException("Macro " + macroCall.name().name + " not found");
       }
