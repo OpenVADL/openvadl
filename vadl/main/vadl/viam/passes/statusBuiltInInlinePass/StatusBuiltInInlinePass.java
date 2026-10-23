@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -99,22 +99,22 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleSSATADDS(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.ssatAdds(input).inline();
   }
 
   @Override
   public void handleUSATADDS(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.usatAdds(input).inline();
   }
 
   @Override
   public void handleSSATADDC(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.ssatAddc(input).inline();
   }
 
   @Override
   public void handleUSATADDC(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.usatAddc(input).inline();
   }
 
   @Override
@@ -139,32 +139,32 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleSSATSUBS(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.ssatSubs(input).inline();
   }
 
   @Override
   public void handleUSATSUBS(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.usatSubs(input).inline();
   }
 
   @Override
   public void handleSSATSUBC(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.ssatSubc(input).inline();
   }
 
   @Override
   public void handleUSATSUBC(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.usatSubc(input).inline();
   }
 
   @Override
   public void handleSSATSUBB(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.ssatSubb(input).inline();
   }
 
   @Override
   public void handleUSATSUBB(BuiltInCall input) {
-    throwNotImplemented(input);
+    SaturatedArithmeticInliner.usatSubb(input).inline();
   }
 
   @Override
