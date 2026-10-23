@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -3219,7 +3220,10 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     check(definition.statement);
 
-    if (definition.outputType != null && !definition.hasOutputAssignment) {
+    if (definition.outputType != null
+        && !definition.hasOutputAssignment
+        && !recursivelyContainsErroredStatement(definition)
+    ) {
       throw addErrorAndStopChecking(error("Missing Output", definition)
           .description("Stages that have an output must assign to it.")
           .build()
@@ -5439,5 +5443,32 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         isPlural ? "s" : "",
         actualArgCount
     ).build();
+  }
+
+  private boolean recursivelyContainsErroredStatement(Node root) {
+    var containsErroredStatement = new boolean[1];
+
+    // Use a proper class instead of a lambda to allow recursion.
+    final var consumer = new Consumer<Node>() {
+      @Override
+      public void accept(Node node) {
+        if (node instanceof Statement statement) {
+          if (erroredStatements.contains(statement)) {
+            containsErroredStatement[0] = true;
+          }
+        } else if (node instanceof Definition definition) {
+          if (erroredDefinitions.contains(definition)) {
+            containsErroredStatement[0] = true;
+          }
+        }
+        if (!containsErroredStatement[0]) {
+          node.forEachChild(this);
+        }
+      }
+    };
+
+    root.forEachChild(consumer);
+
+    return containsErroredStatement[0];
   }
 }
