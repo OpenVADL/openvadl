@@ -195,22 +195,6 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
     ) as $size.fTy
   }
 
-  // workaround for bug in #1153
-  model CheckBox_ (iSize : FSizeRec, val : Ex) : Ex = {
-    let valBits = $val as Bits<FLEN> in
-      let upperBits = (1 << (FLEN - $iSize.size)) - 1 in
-        if valBits(FLEN-1..$iSize.size) = upperBits then $val as $iSize.fTy else $iSize.cNaN
-  }
-  model Cast_ (iSize : FSizeRec, val : Ex) : Ex = {
-    match : Ex (
-      $iSize.fTy = IEEE16 => match : Ex ($FSize = FSize16 => $val; _ => $CheckBox_($iSize ; $val));
-      $iSize.fTy = IEEE32 => match : Ex ($FSize = FSize32 => $val; _ => $CheckBox_($iSize ; $val));
-      $iSize.fTy = IEEE64 => match : Ex ($FSize = FSize64 => $val; _ => $CheckBox_($iSize ; $val));
-      _                  => $val
-    ) as $iSize.fTy
-  }
-  // end of workaround
-
   model-type BoolModelId  = (Id,  Id)  -> Id
   model-type BoolModelStr = (Str, Str) -> Str
   model UnsignedId  (u : Id,  s : Id)  : Id =  { $u }
@@ -317,7 +301,7 @@ instruction set architecture RV64IMFD extending RV64IMZicsr = {
       AsId($name, $size.suffix, $iSize.suffix, $FrmName($rm)) ;
       AsStr($name, ".", $size.suffix, ".", $iSize.suffix) ;
       $rm ; $size.fmt ; 0b0'1000 ;
-      F(rd) := $NaNBox($size ; VADL::fcvt<$size.fTy>($Cast_($iSize ; F(rs1)), frm($rm))) as FRegs
+      F(rd) := $NaNBox($size ; VADL::fcvt<$size.fTy>($Cast($iSize ; F(rs1)), frm($rm))) as FRegs
     ) ; $rs2 )
   }
 

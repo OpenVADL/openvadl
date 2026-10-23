@@ -153,6 +153,7 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
       return this;
     }
 
+    // FIXME: temporarily disabled, see Issue https://github.com/OpenVADL/openvadl/issues/1151
     /*
     if (!Objects.equals(this.path(), other.path())) {
       throw new IllegalArgumentException("Cannot join source locations from different files");
@@ -192,6 +193,7 @@ public sealed interface SourceLocation extends WithLocation, Comparable<SourceLo
         var secondLocation = otherStack.get(i);
         var expandedFrom = thisStack.subList(0, i).reversed();
 
+        // FIXME: temporarily disabled, see Issue https://github.com/OpenVADL/openvadl/issues/1151
         /*
         if (!Objects.equals(firstLocation.path(), secondLocation.path())) {
           throw new IllegalArgumentException("Cannot join source locations from different files.");
