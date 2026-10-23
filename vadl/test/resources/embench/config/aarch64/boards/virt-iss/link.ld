@@ -4,7 +4,7 @@ ENTRY(_start)
 SECTIONS
 {
   . = 0x40000000; /* RAM start */
-  .text.init : { *(.text.init) }
+  .text.start : { *(.text.start) }
   . = ALIGN(0x1000);
   .tohost : { *(.tohost) }
   . = ALIGN(0x1000);

@@ -245,6 +245,7 @@ instruction set architecture AArch32v6 = {
   model SubSC()  : Ex = {VADL::subsc(R(rn),  operand2)}
   model SubC()   : Ex = {VADL::subc (R(rn),  operand2, APSR_C)}
   model SubR()   : Ex = {VADL::subsc(operand2,  R(rn))}
+  model SubRC()  : Ex = {VADL::subc (operand2,  R(rn), APSR_C)}
   model AndS()   : Ex = {VADL::ands (R(rn),  operand2)}
   model OrS()    : Ex = {VADL::ors  (R(rn),  operand2)}
   model XOrS()   : Ex = {VADL::xors (R(rn),  operand2)}
@@ -1240,6 +1241,7 @@ instruction set architecture AArch32v6 = {
   $CondInstr4Flags      (ArithmeticSftInstr   ; (SUB     ; "sub"     ; SubSC   ; 0b000'0010 ))
   $CondInstr4Flags      (ArithmeticSftInstr   ; (SBC     ; "sbc"     ; SubC    ; 0b000'0110 ))
   $CondInstr4Flags      (ArithmeticSftInstr   ; (RSB     ; "rsb"     ; SubR    ; 0b000'0011 ))
+  $CondInstr4Flags      (ArithmeticSftInstr   ; (RSC     ; "rsc"     ; SubRC   ; 0b000'0111 ))
   $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (AND     ; "and"     ; AndS    ; 0b000'0000 ))
   $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (ORR     ; "orr"     ; OrS     ; 0b000'1100 ))
   $CondInstr3FlagsExCar (ArithSftCarryInstr   ; (EOR     ; "eor"     ; XOrS    ; 0b000'0001 ))
@@ -1252,6 +1254,7 @@ instruction set architecture AArch32v6 = {
   $CondInstr4Flags      (ArithmeticImmInstr   ; (SUBI    ; "sub"     ; SubSC   ; 0b001'0010 ))
   $CondInstr4Flags      (ArithmeticImmInstr   ; (SBCI    ; "sbc"     ; SubC    ; 0b001'0110 ))
   $CondInstr4Flags      (ArithmeticImmInstr   ; (RSBI    ; "rsb"     ; SubR    ; 0b001'0011 ))
+  $CondInstr4Flags      (ArithmeticImmInstr   ; (RSCI    ; "rsc"     ; SubRC   ; 0b001'0111 ))
   $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (ANDI    ; "and"     ; AndS    ; 0b001'0000 ))
   $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (ORRI    ; "orr"     ; OrS     ; 0b001'1100 ))
   $CondInstr3FlagsCarry (ArithCarryImmInstr   ; (EORI    ; "eor"     ; XOrS    ; 0b001'0001 ))
