@@ -1,4 +1,4 @@
-.section .text.init
+.section .text.start
 .align  4
 
 .extern  main
