@@ -41,7 +41,7 @@ micro architecture SingleStage implements ISA = {
 //    . : ' Next: []
 //    . : ' Behavior Graph:
 //    . : ' | n0 BuiltInCall      in: ()      succ: ()     type: FetchResult   builtin: fetchNext
-//    . : ' | n1 BuiltInCall      in: (n0)    succ: ()     type: Instruction   builtin: decode
+//    . : ' | n1 MiaBuiltInCall   in: (n0)    succ: ()     type: Instruction   resources: []    logic: []
 //    . : ' | n2 Let              in: (n1)    succ: ()     type: Instruction   name: instr
 //    . : ' | n3 MiaBuiltInCall   in: (n2)    succ: ()     type: Instruction   resources: [X]   logic: []
 //    . : ' | n4 StageEffect      in: (n3)    succ: ()     cond: -

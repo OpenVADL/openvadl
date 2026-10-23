@@ -1025,7 +1025,9 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     if (args.size() != expectedArgCount
         && !(builtIn.signature().hasVarArgs() && args.size() >= expectedArgCount)) {
       throw addErrorAndStopChecking(wrongArgCountError(
-          location, args.size(), List.of(expectedArgCount)
+          location,
+          args.size(),
+          requireNonNull(AstUtils.getBuiltInArgCounts(builtIn.name()))
       ));
     }
 
@@ -3452,6 +3454,13 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       return;
     }
 
+    if (origin instanceof LogicDefinition logic
+        && logic.logicType == LogicDefinition.LogicType.ReservationStation
+    ) {
+      expr.type = MicroArchitectureType.reservationStation();
+      return;
+    }
+
     if (origin != null) {
       // It's not a builtin but we don't handle it yet.
       // We might be here from a call expr and it might be necessary to handle the call for another
@@ -5366,17 +5375,17 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     } else {
       final var sortedArgCounts = expectedArgCounts.stream().sorted().distinct().toList();
 
-      final int minExpectedArgCount = sortedArgCounts.getFirst();
-      final int maxExpectedArgCount = sortedArgCounts.getLast();
+      final int minExpected = sortedArgCounts.getFirst();
+      final int maxExpected = sortedArgCounts.getLast();
 
-      if (sortedArgCounts.size() == maxExpectedArgCount - minExpectedArgCount + 1) {
+      if (sortedArgCounts.size() == maxExpected - minExpected + 1 && sortedArgCounts.size() > 2) {
         // Special case a continuous range of expected argument counts by only
         // printing the lower and upper bounds.
         isPlural = true;
         expectedArgCountString
-            .append(minExpectedArgCount)
+            .append(minExpected)
             .append(" to ")
-            .append(maxExpectedArgCount);
+            .append(maxExpected);
       } else {
         isPlural = true;
         for (int i = 0; i != sortedArgCounts.size(); ++i) {
