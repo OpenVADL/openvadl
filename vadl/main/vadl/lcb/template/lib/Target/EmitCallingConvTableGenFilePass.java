@@ -16,14 +16,11 @@
 
 package vadl.lcb.template.lib.Target;
 
-import static vadl.viam.ViamError.ensure;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.llvmLowering.RegisterTypesCtx;
@@ -54,18 +51,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
         + "CallingConv.td";
   }
 
-  record AssignToReg(String type, String registerRefs) implements Renderable {
-
-    @Override
-    public Map<String, Object> renderObj() {
-      return Map.of(
-          "type", type,
-          "registerRefs", registerRefs
-      );
-    }
-  }
-
-  record ReturnCCIfType(ValueType type, List<String> registerRefs) implements Renderable {
+  record CCIfType(ValueType type, List<String> registerRefs) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
@@ -81,34 +67,24 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "calleeRegisters", abi.calleeSaved().stream().map(this::renderRegister).toList(),
-        "functionRegisterType", getFuncArgsAssignToReg(abi).type,
-        "functionRegisters", getFuncArgsAssignToReg(abi),
-        "returnIfTypes", returnIfTypes(abi));
+        "functionRegisters", ifTypesFromRegisters(abi.argumentRegisters()),
+        "returnIfTypes", ifTypesFromRegisters(abi.returnRegisters()));
   }
 
-  private List<ReturnCCIfType> returnIfTypes(Abi abi) {
-    List<ReturnCCIfType> result = new ArrayList<>();
+  private List<CCIfType> ifTypesFromRegisters(List<List<Abi.AbiRegister>> definitions) {
+    Map<ValueType, List<String>> regsByType = new LinkedHashMap<>();
 
-    for (var def : abi.returnRegisters()) {
-      var ty =
-          def.get(0).registerFile().expectExtension(RegisterTypesCtx.class).valueTypes().get(0);
-      var regs = def.stream().map(this::renderRegister).toList();
-      var obj = new ReturnCCIfType(ty, regs);
-      result.add(obj);
+    for (var def : definitions) {
+      for (var reg : def) {
+        var ty =
+            reg.registerFile().expectExtension(RegisterTypesCtx.class).valueTypes().getFirst();
+        regsByType.computeIfAbsent(ty, ignored -> new ArrayList<>())
+            .add(renderRegister(reg));
+      }
     }
 
-    return result;
-  }
-
-  @Nonnull
-  private AssignToReg getFuncArgsAssignToReg(Abi abi) {
-    ensure(abi.argumentRegisters().stream().map(x -> x.registerFile().resultType()).collect(
-            Collectors.toSet()).size() == 1,
-        "All function argument registers must have the same type and at least one must exist");
-    return new AssignToReg(
-        ValueType.from(abi.argumentRegisters().get(0).registerFile().resultType()).get()
-            .getLlvmType(),
-        abi.argumentRegisters().stream().map(this::renderRegister)
-            .collect(Collectors.joining(", ")));
+    return regsByType.entrySet().stream()
+        .map(entry -> new CCIfType(entry.getKey(), entry.getValue()))
+        .toList();
   }
 }

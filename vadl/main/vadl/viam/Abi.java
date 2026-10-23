@@ -243,7 +243,7 @@ public class Abi extends Definition {
   private final Map<Pair<RegisterResource, Integer>, List<RegisterAlias>> aliases;
   private final List<AbiRegister> callerSaved;
   private final List<AbiRegister> calleeSaved;
-  private final List<AbiRegister> argumentRegisters;
+  private final List<List<AbiRegister>> argumentRegisters;
   private final List<List<AbiRegister>> returnRegisters;
   private final PrintableInstruction returnSequence;
   private final PrintableInstruction callSequence;
@@ -276,7 +276,7 @@ public class Abi extends Definition {
              Map<Pair<RegisterResource, Integer>, List<RegisterAlias>> aliases,
              List<AbiRegister> callerSaved,
              List<AbiRegister> calleeSaved,
-             List<AbiRegister> argumentRegisters,
+             List<List<AbiRegister>> argumentRegisters,
              List<List<AbiRegister>> returnRegisters,
              PrintableInstruction returnSequence,
              PrintableInstruction callSequence,
@@ -352,7 +352,7 @@ public class Abi extends Definition {
     return calleeSaved;
   }
 
-  public List<AbiRegister> argumentRegisters() {
+  public List<List<AbiRegister>> argumentRegisters() {
     return argumentRegisters;
   }
 

@@ -694,7 +694,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // Calling Convention
     var returnValueDefs = getSpecialPurposeRegisterDefinitions(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE);
-    var functionArgumentDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+    var functionArgumentDefs = getSpecialPurposeRegisterDefinitions(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT);
     var callerSavedDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED);
@@ -702,7 +702,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED);
 
     var returnValues = mapSpecialPurposeRegistersDefs(aliasLookup, returnValueDefs);
-    var functionArguments = mapSpecialPurposeRegistersDef(aliasLookup, functionArgumentDef);
+    var functionArguments = mapSpecialPurposeRegistersDefs(aliasLookup, functionArgumentDefs);
     var callerSaved = mapSpecialPurposeRegistersDef(aliasLookup, callerSavedDef);
     var calleeSaved = mapSpecialPurposeRegistersDef(aliasLookup, calleeSavedDef);
 
