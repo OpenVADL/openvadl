@@ -124,18 +124,18 @@ assembly description ASM for ABI = {
     ;
 
     JalrInstruction @instruction:
-      var rdTmp  = x1_string @register     // default for jalr rs
+      var rdTmp  = x1_string @register        // default for jalr rs
       var rsTmp  = null @register
-      var immTmp = zero_const @operand     // default for jalr rs / jalr rd, rs
+      var immTmp = zero_const @operand        // default for jalr rs / jalr rd, rs
 
       mnemonic = "JALR" @operand
       rsTmp = Register
-      [ "," rdTmp = rsTmp                  // first register was actually rd
+      [ "," rdTmp = rsTmp                     // first register was actually rd
         ( ?(LaIdEq(1, "(") )
-            immTmp = ImmediateOperand  // jalr rd, imm(rs)
+            immTmp = ImmediateOperand         // jalr rd, imm(rs)
             "(" rsTmp = Register ")"
           |
-            rsTmp = Register                      // jalr rd, rs
+            rsTmp = Register                  // jalr rd, rs
             [ "," immTmp = ImmediateOperand]  // jalr rd, rs, imm
         )
       ]
