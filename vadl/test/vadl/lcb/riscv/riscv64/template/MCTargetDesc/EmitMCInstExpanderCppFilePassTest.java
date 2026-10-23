@@ -1220,9 +1220,9 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            result.push_back(a);
            callback(a);
            MCInst b = MCInst();
-           b.setOpcode(processorNameValue::ADDI);
+           b.setOpcode(processorNameValue::ADDIW);
            {
-              // ADDI
+              // ADDIW
               auto rd = 0;
               auto rs1 = 0;
               auto imm = 0;
@@ -1239,10 +1239,10 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               if(instruction.getOperand(1).isImm()) {
                  imm = instruction.getOperand(1).getImm();
                  imm = processorNameValueBaseInfo::RV3264Base_lo(imm);
-                 b.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(imm)));
+                 b.addOperand(MCOperand::createImm(RV3264Base_ADDIW_immS_decode(imm)));
               }
               else {
-                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx))); // imm
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDIW_immS, Ctx))); // imm
               }
            }
            result.push_back(b);
@@ -1281,9 +1281,9 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            result.push_back(a);
            callback(a);
            MCInst b = MCInst();
-           b.setOpcode(processorNameValue::ADDI);
+           b.setOpcode(processorNameValue::ADDIW);
            {
-              // ADDI
+              // ADDIW
               auto rd = 0;
               auto rs1 = 0;
               auto imm = 0;
@@ -1300,14 +1300,52 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               if(instruction.getOperand(1).isImm()) {
                  imm = instruction.getOperand(1).getImm();
                  imm = processorNameValueBaseInfo::RV3264Base_lo(imm);
-                 b.addOperand(MCOperand::createImm(RV3264Base_ADDI_immS_decode(imm)));
+                 b.addOperand(MCOperand::createImm(RV3264Base_ADDIW_immS_decode(imm)));
               }
               else {
-                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDI_immS, Ctx))); // imm
+                 b.addOperand(MCOperand::createExpr(processorNameValueMCExpr::create(processorNameValueMCExpr::create(MCOperandToMCExpr(instruction.getOperand(1)), processorNameValueMCExpr::VariantKind::VK_ABS_RV3264Base_lo, Ctx), processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264Base_ADDIW_immS, Ctx))); // imm
               }
            }
            result.push_back(b);
            callback(b);
+           MCInst c = MCInst();
+           c.setOpcode(processorNameValue::SLLI);
+           {
+              // SLLI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto sft = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              sft = 32; // sft
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              c.addOperand(instruction.getOperand(0)); // rd
+              c.addOperand(instruction.getOperand(0)); // rs1
+              c.addOperand(MCOperand::createImm(sft));
+           }
+           result.push_back(c);
+           callback(c);
+           MCInst d = MCInst();
+           d.setOpcode(processorNameValue::SRLI);
+           {
+              // SRLI
+              auto rd = 0;
+              auto rs1 = 0;
+              auto sft = 0;
+              // GenerateRawFieldsHandler
+              rd = instruction.getOperand(0).getReg();
+              rs1 = instruction.getOperand(0).getReg();
+              sft = 32; // sft
+              // DecodeFieldAccessesHandler
+              // AddingOperands
+              d.addOperand(instruction.getOperand(0)); // rd
+              d.addOperand(instruction.getOperand(0)); // rs1
+              d.addOperand(MCOperand::createImm(sft));
+           }
+           result.push_back(d);
+           callback(d);
            return result;
         }
         
