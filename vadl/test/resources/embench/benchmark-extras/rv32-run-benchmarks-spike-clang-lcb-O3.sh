@@ -7,11 +7,9 @@ cd $(realpath $(dirname "$0"))
 ../build_spike-clang-O3_rv32.sh
 ./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
 
-# miscompile
-rm -r ../src/cubic
-
 #rm -r ../src/aha-mont64
 #rm -r ../src/crc32
+#rm -r ../src/cubic
 #rm -r ../src/edn
 #rm -r ../src/huffbench
 #rm -r ../src/md5sum
