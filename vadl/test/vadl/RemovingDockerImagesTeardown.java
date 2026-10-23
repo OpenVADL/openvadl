@@ -40,6 +40,10 @@ public class RemovingDockerImagesTeardown
   @Override
   public void close() throws Throwable {
     logger.info("All tests finished!");
+    if (Boolean.parseBoolean(System.getenv("VADL_KEEP_TEST_IMAGES"))) {
+      logger.info("Keeping test images because VADL_KEEP_TEST_IMAGES=true");
+      return;
+    }
 
     var cachedImages = DockerRiscvImageProvider.images;
     if (!DockerClientFactory.instance().isDockerAvailable()) {
