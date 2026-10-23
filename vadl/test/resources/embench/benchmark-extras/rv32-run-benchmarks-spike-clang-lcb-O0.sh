@@ -7,13 +7,11 @@ cd $(realpath $(dirname "$0"))
 ../build_spike-clang-O0_rv32.sh
 ./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
 
-# miscompile
-rm -r ../src/cubic
-# long jump problem
 #rm -r ../src/statemate
 
 #rm -r ../src/aha-mont64
 #rm -r ../src/crc32
+#rm -r ../src/cubic
 #rm -r ../src/edn
 #rm -r ../src/huffbench
 #rm -r ../src/md5sum
@@ -35,4 +33,3 @@ rm -r ../src/cubic
 
 ../build_spike-lcb-O0_rv32.sh
 ./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
-#cat /src/embench/benchmark-extras/results/rv32-spike/1.json

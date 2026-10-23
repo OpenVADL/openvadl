@@ -20,6 +20,51 @@ using namespace llvm;
 
 #include "[(${namespace})]GenCallingConv.inc"
 
+// A scalar wider than two machine words is passed by reference in the integer
+// calling convention. Legalization splits it into several arguments, including
+// for soft-float libcalls, so assign one pointer location to the whole group.
+template <typename ArgT>
+static void analyzeArguments(CCState &State, SmallVectorImpl<CCValAssign> &Locs,
+                             const SmallVectorImpl<ArgT> &Args)
+{
+    const MVT PtrVT = MVT::[(${stackPointerType})];
+    for (unsigned i = 0, e = Args.size(); i != e; ++i)
+    {
+        unsigned End = i;
+        if (!Args[i].ArgVT.isVector() && Args[i].VT.isScalarInteger()
+            && Args[i].Flags.isSplit())
+        {
+            while (!Args[End].Flags.isSplitEnd())
+            {
+                ++End;
+                assert(End < e && "Unterminated split argument");
+            }
+        }
+
+        if (End - i < 2)
+        {
+            if (CC_[(${namespace})](i, Args[i].VT, Args[i].VT,
+                                   CCValAssign::Full, Args[i].Flags, State))
+                report_fatal_error("Unsupported argument type");
+            continue;
+        }
+
+        if (CC_[(${namespace})](i, PtrVT, PtrVT, CCValAssign::Full,
+                               ISD::ArgFlagsTy(), State))
+            report_fatal_error("Unsupported indirect argument");
+        CCValAssign PtrLoc = Locs.pop_back_val();
+        for (unsigned Part = i; Part <= End; ++Part)
+        {
+            State.addLoc(PtrLoc.isRegLoc()
+                ? CCValAssign::getReg(Part, Args[Part].VT, PtrLoc.getLocReg(), PtrVT,
+                                      CCValAssign::Indirect)
+                : CCValAssign::getMem(Part, Args[Part].VT, PtrLoc.getLocMemOffset(), PtrVT,
+                                      CCValAssign::Indirect));
+        }
+        i = End;
+    }
+}
+
 void [(${namespace})]TargetLowering::anchor() {}
 
 [(${namespace})]TargetLowering::[(${namespace})]TargetLowering(const TargetMachine &TM, [(${namespace})]Subtarget &STI)
@@ -295,7 +340,7 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
     EVT LocVT = VA.getLocVT();
     EVT ValVT = VA.getValVT();
     EVT PtrVT = MVT::[(${stackPointerType})]; // TODO: @chochrainer --> MVT::getIntegerVT( DAG.getDataLayout().getPointerSizeInBits( 0 ) );
-    unsigned ObjectSize = ValVT.getSizeInBits() / 8;
+    unsigned ObjectSize = (VA.getLocInfo() == CCValAssign::Indirect ? LocVT : ValVT).getStoreSize();
     int FI = MFI.CreateFixedObject(ObjectSize, VA.getLocMemOffset(), /* Immutable= */ true);
     SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
     SDValue ArgIn;
@@ -305,6 +350,7 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
     {
     case CCValAssign::Full:
     case CCValAssign::BCvt:
+    case CCValAssign::Indirect:
     {
         ExtType = ISD::NON_EXTLOAD;
         break;
@@ -319,11 +365,6 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
         ExtType = ISD::ZEXTLOAD;
         break;
     }
-    case CCValAssign::Indirect:
-    {
-        // TODO: @chochrainer implement indirect load
-        llvm_unreachable("indirect assignment is not yet supported");
-    }
     default:
     {
         llvm_unreachable("Unexpected CCValAssign::LocInfo");
@@ -331,7 +372,8 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
     }
 
     auto MPI = MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI);
-    ArgIn = DAG.getExtLoad(ExtType, DL, LocVT, Chain, FIN, MPI, ValVT);
+    ArgIn = DAG.getExtLoad(ExtType, DL, LocVT, Chain, FIN, MPI,
+                          VA.getLocInfo() == CCValAssign::Indirect ? LocVT : ValVT);
     return ArgIn;
 }
 
@@ -352,13 +394,14 @@ SDValue [(${namespace})]TargetLowering::LowerFormalArguments(SDValue Chain, Call
 
     SmallVector<CCValAssign, 0> ArgLocs;
     CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs, *DAG.getContext());
-    CCInfo.AnalyzeFormalArguments(Ins, CC_[(${namespace})]);
+    analyzeArguments(CCInfo, ArgLocs, Ins);
 
     // Used with va_args to accumulate store chains.
     std::vector<SDValue> OutChains;
 
-    for (auto &VA : ArgLocs)
+    for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i)
     {
+        const CCValAssign &VA = ArgLocs[i];
         SDValue ArgValue;
 
         if (VA.isRegLoc())
@@ -376,8 +419,18 @@ SDValue [(${namespace})]TargetLowering::LowerFormalArguments(SDValue Chain, Call
             llvm_unreachable("arguments may only be passed via registers or stack!");
         }
 
-        // TODO: @chochrainer implement indirect loads
-        assert(VA.getLocInfo() != CCValAssign::Indirect && "indirect load of arguments is not yet supported!");
+        if (VA.getLocInfo() == CCValAssign::Indirect)
+        {
+            unsigned Start = i;
+            do
+            {
+                SDValue Offset = DAG.getIntPtrConstant(Ins[i].PartOffset - Ins[Start].PartOffset, dl);
+                SDValue Address = DAG.getNode(ISD::ADD, dl, ArgValue.getValueType(), ArgValue, Offset);
+                InVals.push_back(DAG.getLoad(Ins[i].VT, dl, Chain, Address, MachinePointerInfo()));
+            } while (!Ins[i++].Flags.isSplitEnd());
+            --i;
+            continue;
+        }
 
         InVals.push_back(ArgValue);
     }
@@ -520,7 +573,7 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     // Analyze operands of the call, assigning locations to each operand.
     SmallVector<CCValAssign, 0> ArgLocs;
     CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs, *DAG.getContext());
-    CCInfo.AnalyzeCallOperands(Outs, CC_[(${namespace})]);
+    analyzeArguments(CCInfo, ArgLocs, Outs);
 
     // Get the size of the outgoing arguments stack space requirement.
     const unsigned NextStackOffset = CCInfo.getStackSize();
@@ -536,8 +589,31 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
         CCValAssign &VA = ArgLocs[i];
         SDValue Arg = OutVals[i];
 
-        // We only handle fully promoted arguments.
-        assert(VA.getLocInfo() == CCValAssign::Full && "Unhandled loc info");
+        if (VA.getLocInfo() == CCValAssign::Indirect)
+        {
+            unsigned Start = i;
+            unsigned End = i;
+            while (!Outs[End].Flags.isSplitEnd())
+                ++End;
+            unsigned Size = Outs[End].PartOffset - Outs[Start].PartOffset
+                            + OutVals[End].getValueType().getStoreSize();
+            Align Alignment = DAG.getDataLayout().getPrefTypeAlign(
+                Outs[Start].ArgVT.getTypeForEVT(*DAG.getContext()));
+            SDValue Slot = DAG.CreateStackTemporary(TypeSize::getFixed(Size), Alignment);
+            int FI = cast<FrameIndexSDNode>(Slot)->getIndex();
+            for (unsigned Part = Start; Part <= End; ++Part)
+            {
+                unsigned Offset = Outs[Part].PartOffset - Outs[Start].PartOffset;
+                SDValue Address = DAG.getNode(ISD::ADD, dl, Slot.getValueType(), Slot,
+                                              DAG.getIntPtrConstant(Offset, dl));
+                MemOpChains.push_back(DAG.getStore(Chain, dl, OutVals[Part], Address,
+                    MachinePointerInfo::getFixedStack(MF, FI, Offset)));
+            }
+            i = End;
+            Arg = Slot;
+        }
+        else
+            assert(VA.getLocInfo() == CCValAssign::Full && "Unhandled loc info");
 
         // passing over registers
         if (VA.isRegLoc())
