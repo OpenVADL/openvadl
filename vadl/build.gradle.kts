@@ -131,7 +131,13 @@ for (gen in generators) {
 val benchmarkIssRiscv64 = registerBenchmarkTestTask(
     name = "benchmark-iss-riscv64",
     description = "Runs the ISS RISC-V 64 benchmark tests",
-    includePattern = "vadl.iss.riscv.IssRiscvEmbenchBenchmarkTest"
+    includePattern = "vadl.iss.riscv.IssRiscvEmbenchBenchmarkTest.rv64imdBenchmarkTest"
+)
+
+val benchmarkIssRiscv32 = registerBenchmarkTestTask(
+    name = "benchmark-iss-riscv32",
+    description = "Runs the ISS RISC-V 32 benchmark tests",
+    includePattern = "vadl.iss.riscv.IssRiscvEmbenchBenchmarkTest.rv32imBenchmarkTest"
 )
 
 val benchmarkIssAarch64 = registerBenchmarkTestTask(
