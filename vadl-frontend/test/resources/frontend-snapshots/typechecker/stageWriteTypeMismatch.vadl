@@ -1,0 +1,31 @@
+micro architecture MiA implements ISA = {
+  stage Stage0 -> Instruction = {
+    Stage0 := fetchNext
+  }
+
+  stage Stage1 -> FetchResult = {
+    Stage1 := decode(fetchNext)
+  }
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/stageWriteTypeMismatch.vadl:3:15
+//       │
+//     3 │     Stage0 := fetchNext
+//       │               ^^^^^^^^^ Expected `Instruction` but got `FetchResult`.
+//       │
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/stageWriteTypeMismatch.vadl:7:15
+//       │
+//     7 │     Stage1 := decode(fetchNext)
+//       │               ^^^^^^^^^^^^^^^^^ Expected `FetchResult` but got `Instruction`.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
