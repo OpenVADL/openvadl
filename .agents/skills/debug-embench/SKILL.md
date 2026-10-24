@@ -1,6 +1,6 @@
 ---
-name: debug-embench
-description: Reproduce and investigate OpenVADL Embench compiler regressions using retained Docker images, generated assembly, and upstream compiler comparisons.
+name: lcb-debug-embench
+description: Reproduce and investigate OpenVADL Embench compiler regressions for the lcb using retained Docker images, generated assembly, and upstream compiler comparisons.
 ---
 
 # Debug Embench regressions
@@ -82,10 +82,3 @@ from a requested diagnosis unless fixing the defect is authorized.
 Copy useful logs/assembly out with `docker cp` before removing the named
 container. Retained images consume disk; remove only debugging resources you
 created when they are no longer needed. Do not prune unrelated images.
-
-## Confirmed RV32 cubic example
-
-For a worked diagnosis of a quad-precision helper ABI mismatch and a tested
-minimal reproducer, read [the cubic investigation](references/cubic-rv32-o3.md).
-Use it when investigating wide soft-float calls; do not assume every Embench
-failure has this cause.
