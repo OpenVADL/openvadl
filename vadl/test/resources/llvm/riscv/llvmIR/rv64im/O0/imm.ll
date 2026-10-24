@@ -24,7 +24,7 @@ define signext i32 @neg_small() nounwind {
 define signext i32 @pos_i32() nounwind {
   ; CHECK-LABEL: pos_i32: # @pos_i32
   ; CHECK: LUI a0,0x67783
-  ; CHECK-NEXT: ADDI a0,a0,-1297
+  ; CHECK-NEXT: ADDIW a0,a0,-1297
   ; CHECK-NEXT: RET
   ret i32 1735928559
 }
@@ -32,7 +32,7 @@ define signext i32 @pos_i32() nounwind {
 define signext i32 @neg_i32() nounwind {
   ; CHECK-LABEL: neg_i32: # @neg_i32
   ; CHECK: LUI a0,0xdeadc
-  ; CHECK-NEXT: ADDI a0,a0,-273
+  ; CHECK-NEXT: ADDIW a0,a0,-273
   ; CHECK-NEXT: RET
   ret i32 -559038737
 }
@@ -40,7 +40,7 @@ define signext i32 @neg_i32() nounwind {
 define signext i32 @pos_i32_hi20_only() nounwind {
   ; CHECK-LABEL: pos_i32_hi20_only: # @pos_i32_hi20_only
   ; CHECK: LUI a0,0x10
-  ; CHECK-NEXT: ADDI a0,a0,0
+  ; CHECK-NEXT: ADDIW a0,a0,0
   ; CHECK-NEXT: RET
   ret i32 65536 ; 0x10000
 }
@@ -48,7 +48,7 @@ define signext i32 @pos_i32_hi20_only() nounwind {
 define signext i32 @neg_i32_hi20_only() nounwind {
   ; CHECK-LABEL: neg_i32_hi20_only: # @neg_i32_hi20_only
   ; CHECK: LUI a0,0xffff0
-  ; CHECK-NEXT: ADDI a0,a0,0
+  ; CHECK-NEXT: ADDIW a0,a0,0
   ; CHECK-NEXT: RET
   ret i32 -65536 ; -0x10000
 }
@@ -75,7 +75,7 @@ define void @imm_store_i8_neg1(ptr %p) nounwind {
 define void @imm_store_i16_neg1(ptr %p) nounwind {
   ; CHECK-LABEL: imm_store_i16_neg1: # @imm_store_i16_neg1
   ; CHECK: LUI a1,0x10
-  ; CHECK-NEXT: ADDI a1,a1,-1
+  ; CHECK-NEXT: ADDIW a1,a1,-1
   ; CHECK-NEXT: SH a1,0(a0)
   ; CHECK-NEXT: RET
   store i16 -1, ptr %p
