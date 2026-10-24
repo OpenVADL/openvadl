@@ -1,4 +1,5 @@
 #include "ABIInfoImpl.h"
+#include "CodeGenFunction.h"
 #include "TargetInfo.h"
 
 using namespace clang;
@@ -22,6 +23,8 @@ namespace
         ABIArgInfo classifyArgumentType(QualType Ty, bool IsFixed, int &ArgGPRsLeft,
                                         int &ArgFPRsLeft) const;
         ABIArgInfo classifyReturnType(QualType RetTy) const;
+        RValue EmitVAArg(CodeGenFunction &CGF, Address VAListAddr, QualType Ty,
+                        AggValueSlot Slot) const override;
     };
 }
 
@@ -45,6 +48,11 @@ ABIArgInfo [(${namespace})]ABIInfo::classifyArgumentType(QualType Ty, bool IsFix
     uint64_t Size = getContext().getTypeSize(Ty);
     if (!isAggregateTypeForABI(Ty) && !Ty->isVectorType())
     {
+        // Match the backend's indirect convention for scalars wider than two
+        // machine words, including quad precision on 32-bit targets.
+        if (Size > 2 * getContext().getTypeSize(getContext().VoidPtrTy))
+            return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
+
         // Treat an enum type as its underlying type.
         if (const EnumType *EnumTy = Ty->getAs<EnumType>())
             Ty = EnumTy->getDecl()->getIntegerType();
@@ -93,6 +101,20 @@ void [(${namespace})]ABIInfo::computeInfo(CGFunctionInfo &FI) const
         ArgInfo.info =
             classifyArgumentType(ArgInfo.type, IsFixed, ArgGPRsLeft, ArgFPRsLeft);
     }
+}
+
+RValue [(${namespace})]ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
+                                       QualType Ty, AggValueSlot Slot) const
+{
+    int ArgGPRsLeft = 0;
+    int ArgFPRsLeft = 0;
+    ABIArgInfo Info = classifyArgumentType(Ty, /*IsFixed=*/false,
+                                          ArgGPRsLeft, ArgFPRsLeft);
+    if (!Info.isIndirect() || isAggregateTypeForABI(Ty) || Ty->isVectorType())
+        return DefaultABIInfo::EmitVAArg(CGF, VAListAddr, Ty, Slot);
+
+    return CGF.EmitLoadOfAnyValue(
+        CGF.MakeAddrLValue(EmitVAArgInstr(CGF, VAListAddr, Ty, Info), Ty), Slot);
 }
 
 namespace
