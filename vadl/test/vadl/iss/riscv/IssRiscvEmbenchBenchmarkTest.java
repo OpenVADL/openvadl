@@ -39,4 +39,15 @@ public class IssRiscvEmbenchBenchmarkTest extends IssEmbenchBenchmark {
         "benchmark-extras/results-rv64imd-iss"
     ));
   }
+
+  @Tag("BenchmarkTest")
+  @Test
+  void rv32imBenchmarkTest() throws IOException {
+    runBenchmark(benchmarkSpec(
+        "rv32im",
+        "sys/risc-v/rv32im.vadl",
+        "benchmark-extras/run-benchmarks-rv32im.sh",
+        "benchmark-extras/results-rv32im-iss"
+    ));
+  }
 }
