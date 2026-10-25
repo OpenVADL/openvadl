@@ -11,10 +11,10 @@ define void @smalltest() {
 define void @middletest() {
 ; CHECK-LABEL: middletest: # @middletest
 ; CHECK: LUI a0,0xfffff
-; CHECK-NEXT: ADDI a0,a0,48
+; CHECK-NEXT: ADDIW a0,a0,48
 ; CHECK-NEXT: ADD sp,sp,a0
 ; CHECK-NEXT: LUI a0,0x1
-; CHECK-NEXT: ADDI a0,a0,-48
+; CHECK-NEXT: ADDIW a0,a0,-48
 ; CHECK-NEXT: ADD sp,sp,a0
   %tmp = alloca [ 4048 x i8 ] , align 4
   ret void
@@ -23,10 +23,10 @@ define void @middletest() {
 define void @test() {
 ; CHECK-LABEL: test: # @test
 ; CHECK: LUI a0,0xedcbb
-; CHECK-NEXT: ADDI a0,a0,-1664
+; CHECK-NEXT: ADDIW a0,a0,-1664
 ; CHECK-NEXT: ADD sp,sp,a0
 ; CHECK-NEXT: LUI a0,0x12345
-; CHECK-NEXT: ADDI a0,a0,1664
+; CHECK-NEXT: ADDIW a0,a0,1664
 ; CHECK-NEXT: ADD sp,sp,a0
   %tmp = alloca [ 305419896 x i8 ] , align 4
   ret void
@@ -38,15 +38,15 @@ define void @test() {
 define void @test_emergency_spill_slot(i32 %a) {
 ; CHECK-LABEL: test_emergency_spill_slot: # @test_emergency_spill_slot
 ; CHECK: LUI a1,0xfff9e
-; CHECK-NEXT: ADDI a1,a1,1408
+; CHECK-NEXT: ADDIW a1,a1,1408
 ; CHECK-NEXT: ADD sp,sp,a1
 ; CHECK-NEXT: LUI a1,0x4e
-; CHECK-NEXT: ADDI a1,a1,512
+; CHECK-NEXT: ADDIW a1,a1,512
 ; CHECK-NEXT: ADDI a2,sp,0
 ; CHECK-NEXT: ADD a1,a2,a1
 ; CHECK-NEXT: SW a0,0(a1)
 ; CHECK-NEXT: LUI a0,0x62
-; CHECK-NEXT: ADDI a0,a0,-1408
+; CHECK-NEXT: ADDIW a0,a0,-1408
 ; CHECK-NEXT: ADD sp,sp,a0
 ; CHECK-NEXT: RET
   %data = alloca [ 100000 x i32 ] , align 4

@@ -11,7 +11,7 @@ define i32 @and32_0x7ff(i32 %x) {
 define i32 @and32_0xfff(i32 %x) {
 ; CHECK-LABEL: and32_0xfff: # @and32_0xfff
 ; CHECK:       LUI a1,0x1
-; CHECK-NEXT:  ADDI a1,a1,-1
+; CHECK-NEXT:  ADDIW a1,a1,-1
 ; CHECK-NEXT:  AND a0,a0,a1
 ; CHECK-NEXT:  RET
   %a = and i32 %x, 4095
@@ -29,7 +29,7 @@ define i64 @and64_0x7ff(i64 %x) {
 define i64 @and64_0xfff(i64 %x) {
 ; CHECK-LABEL: and64_0xfff: # @and64_0xfff
 ; CHECK:       LUI a1,0x1
-; CHECK-NEXT:  ADDI a1,a1,-1
+; CHECK-NEXT:  ADDIW a1,a1,-1
 ; CHECK-NEXT:  AND a0,a0,a1
 ; CHECK-NEXT:  RET
   %a = and i64 %x, 4095

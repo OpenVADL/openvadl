@@ -19,12 +19,14 @@ namespace clang
                     SuitableAlign = 128; // TODO: FIXME: @chochrainer make this generic
                     WCharType = SignedInt;
                     WIntType = UnsignedInt;
-                    IntPtrType = SignedInt;
-                    PtrDiffType = SignedInt;
 
                     [# th:each="ty : ${clangTypes}" ]
                     [(${ty.name})] = [(${ty.value})];
                     [/]
+
+                    // Apply the ABI widths before choosing pointer-sized types.
+                    IntPtrType = getIntTypeByWidth(PointerWidth, /*IsSigned=*/true);
+                    PtrDiffType = IntPtrType;
 
                     LongDoubleWidth = 128;
                     LongDoubleAlign = 128;
