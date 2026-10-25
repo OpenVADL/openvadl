@@ -48,7 +48,7 @@ public class MicroArchitecture extends Definition {
   // Instruction Flow between MiA elements (stages and logic).
   private final List<MiaInstructionFlow> allInstructionFlows;
   private final HashMap<Definition, List<MiaInstructionFlow>> instructionFlowsBySource;
-  private final HashMap<Definition, List<MiaInstructionFlow>> instructionFlowsByDestination;
+  private final HashMap<Definition, MiaInstructionFlow> instructionFlowsByDestination;
   private final List<Definition> instructionFlowLeaves;
 
   private @LazyInit Stage rootStage;
@@ -148,7 +148,7 @@ public class MicroArchitecture extends Definition {
    * @see #allInstructionFlows()
    * @see #instructionFlowsBySource()
    */
-  public Map<Definition, List<MiaInstructionFlow>> instructionFlowsByDestination() {
+  public Map<Definition, MiaInstructionFlow> instructionFlowsByDestination() {
     return instructionFlowsByDestination;
   }
 

@@ -29,6 +29,8 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -156,6 +158,8 @@ public class MiaInstructionFlowPass extends Pass {
       }
     }
 
+    final var destinationCollisions = new HashMap<Definition, Set<Definition>>();
+
     // Construct indices over the instruction flows, both by source and by
     // destination. This facilitates quick access for traversals.
     // At the same time we also find the root stage by excluding all stages
@@ -182,14 +186,17 @@ public class MiaInstructionFlowPass extends Pass {
         return v;
       });
 
-      instructionFlowsByDestination.compute(destination, (unused, v) -> {
-        if (v == null) {
-          v = new ArrayList<>();
-        }
+      final var prev = instructionFlowsByDestination.put(destination, instructionFlow);
 
-        v.add(instructionFlow);
-        return v;
-      });
+      if (prev != null) {
+        destinationCollisions.compute(destination, (k, v) -> {
+          if (v == null) {
+            v = new HashSet<>();
+          }
+          v.add(prev.source());
+          return v;
+        });
+      }
     }
 
     if (!unusedReservationStations.isEmpty()) {
@@ -201,15 +208,36 @@ public class MiaInstructionFlowPass extends Pass {
       }
     }
 
+    final var errors = new ArrayList<Diagnostic>();
+
+    for (var collision : destinationCollisions.entrySet()) {
+      final var destination = collision.getKey();
+      final var potentialSources = collision.getValue();
+
+      final var err = error("Multiple Predecessors in Instruction Flow Graph", destination)
+          .description(
+              "There is more than one way for instructions to reach the `%s` `%s`.",
+              destination.getClass(), destination.simpleName()
+          );
+
+      for (var source : potentialSources) {
+        err.locationDescription(source, "Instructions can come from here.");
+      }
+
+      errors.add(err.build());
+    }
+
     if (rootStages.size() != 1) {
       if (stages.isEmpty()) {
-        throw error("Micro Architecture Does Not Contain Any Stages", mia)
+        errors.add(error("Micro Architecture Does Not Contain Any Stages", mia)
             .description("At least one initial stage is required.")
-            .build();
+            .build()
+        );
       } else if (rootStages.isEmpty()) {
-        throw error("No Initial Stage Found", mia)
+        errors.add(error("No Initial Stage Found", mia)
             .description("Could not find any stages that have no inputs.")
-            .build();
+            .build()
+        );
       } else {
         final var err = error("Multiple Initial Stages Found", mia)
             .description("Found more than one stage that have no inputs.");
@@ -218,8 +246,12 @@ public class MiaInstructionFlowPass extends Pass {
           err.locationDescription(root, "Could be this stage");
         }
 
-        throw err.build();
+        errors.add(err.build());
       }
+    }
+
+    if (!errors.isEmpty()) {
+      throw new DiagnosticList(errors);
     }
 
     if (leaves.isEmpty()) {
