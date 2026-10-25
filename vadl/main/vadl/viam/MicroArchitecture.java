@@ -49,6 +49,7 @@ public class MicroArchitecture extends Definition {
   private final List<MiaInstructionFlow> allInstructionFlows;
   private final HashMap<Definition, List<MiaInstructionFlow>> instructionFlowsBySource;
   private final HashMap<Definition, List<MiaInstructionFlow>> instructionFlowsByDestination;
+  private final List<Definition> instructionFlowLeaves;
 
   private @LazyInit Stage rootStage;
 
@@ -89,6 +90,7 @@ public class MicroArchitecture extends Definition {
     this.allInstructionFlows = new ArrayList<>();
     this.instructionFlowsBySource = new HashMap<>();
     this.instructionFlowsByDestination = new HashMap<>();
+    this.instructionFlowLeaves = new ArrayList<>();
 
     for (Stage stage : stages) {
       stage.setMia(this);
@@ -163,6 +165,24 @@ public class MicroArchitecture extends Definition {
    */
   public Stage rootStage() {
     return requireNonNull(rootStage);
+  }
+
+  /**
+   * All elements of the instruction flow graph from which instructions cannot
+   * flow onward, i.e., all {@link Definition Definitions} that are returned by
+   * {@link MiaInstructionFlow#destination()} but never by
+   * {@link MiaInstructionFlow#source()}.
+   *
+   * <p>There is guaranteed to be at least on leaf element. If there are none
+   * the instruction flow graph would need to be cyclic, which is prevented by
+   * the typechecker, or would need to be empty, which leads to an error during
+   * creation of the MiA.
+   *
+   *  @return A list of all leaf {@code Definitions} in the instruction flow
+   *          graph.
+   */
+  public List<Definition> instructionFlowLeaves() {
+    return instructionFlowLeaves;
   }
 
   /**

@@ -75,6 +75,8 @@ public class MiaInstructionFlowPass extends Pass {
     final var instructionFlowsBySource = mia.instructionFlowsBySource();
     final var instructionFlowsByDestination = mia.instructionFlowsByDestination();
 
+    final var leaves = new HashSet<Definition>();
+
     final var filters = new HashMap<MiaInstructionFlow, Set<Instruction>>();
 
     // Find all instruction flows from stages or reservation stations to
@@ -122,6 +124,8 @@ public class MiaInstructionFlowPass extends Pass {
             filters.put(flow, filter);
           }
 
+          leaves.add(flow.destination());
+
           allInstructionFlows.add(flow);
         }
       });
@@ -138,6 +142,8 @@ public class MiaInstructionFlowPass extends Pass {
         final var flow = new MiaInstructionFlow.StageToReservationStation(
             rs.source(), rs, new HashSet<>()
         );
+
+        leaves.add(rs);
 
         allInstructionFlows.add(flow);
 
@@ -165,6 +171,7 @@ public class MiaInstructionFlowPass extends Pass {
       if (source instanceof Logic.ReservationStation rs) {
         unusedReservationStations.remove(rs);
       }
+      leaves.remove(source);
 
       instructionFlowsBySource.compute(source, (unused, v) -> {
         if (v == null) {
@@ -194,32 +201,40 @@ public class MiaInstructionFlowPass extends Pass {
       }
     }
 
-    if (rootStages.size() == 1) {
-      mia.setRootStage(rootStages.iterator().next());
+    if (rootStages.size() != 1) {
+      if (stages.isEmpty()) {
+        throw error("Micro Architecture Does Not Contain Any Stages", mia)
+            .description("At least one initial stage is required.")
+            .build();
+      } else if (rootStages.isEmpty()) {
+        throw error("No Initial Stage Found", mia)
+            .description("Could not find any stages that have no inputs.")
+            .build();
+      } else {
+        final var err = error("Multiple Initial Stages Found", mia)
+            .description("Found more than one stage that have no inputs.");
 
-      final var allInstructions = new HashSet<>(mia.isa().ownInstructions());
+        for (var root : rootStages) {
+          err.locationDescription(root, "Could be this stage");
+        }
 
-      computeReachingInstructions(
-          mia, filters, allInstructions, rootStages.iterator().next()
-      );
-    } else if (stages.isEmpty()) {
-      throw error("Micro Architecture Does Not Contain Any Stages", mia)
-          .description("At least one initial stage is required.")
-          .build();
-    } else if (rootStages.isEmpty()) {
-      throw error("No Initial Stage Found", mia)
-          .description("Could not find any stages that have no inputs.")
-          .build();
-    } else {
-      final var err = error("Multiple Initial Stages Found", mia)
-          .description("Found more than one stage that have no inputs.");
-
-      for (var root : rootStages) {
-        err.locationDescription(root, "Could be this stage");
+        throw err.build();
       }
-
-      throw err.build();
     }
+
+    if (leaves.isEmpty()) {
+      throw new IllegalStateException("Somehow got cyclic instruction flow graph.");
+    }
+
+    mia.setRootStage(rootStages.iterator().next());
+
+    mia.instructionFlowLeaves().addAll(leaves);
+
+    final var allInstructions = new HashSet<>(mia.isa().ownInstructions());
+
+    computeReachingInstructions(
+        mia, filters, allInstructions, rootStages.iterator().next()
+    );
 
     return null;
   }
