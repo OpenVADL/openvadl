@@ -28,7 +28,7 @@ import vadl.template.Renderable;
  * @param usedResources The ProcResources that are being used. These are
  *                      expected as {@link ProcResourceUse} to allow enriching
  *                      them with cycle-exact acquire and release semantics.
- * @param latency
+ * @param latency The latency of this write.
  */
 public record TableGenWriteRes(
     TableGenSchedWrite write,
@@ -68,6 +68,18 @@ public record TableGenWriteRes(
     return true;
   }
 
+  /**
+   * Models the use of a {@code ProcResource} in a {@code WriteRes}.
+   *
+   * <p>This is not a concept that exists in this way in LLVM's scheduling
+   * model, but it simplifies tracking the {@code acquireAtCycles} and
+   * {@code releaseAtCycles} alongside their {@code procResource}, which is
+   * split into three parallel arrays in LLVM.
+   *
+   * @param procResource The {@code ProcResource} being used.
+   * @param acquireAtCycles The cycle at which the {@code ProcResource} is acquired.
+   * @param releaseAtCycles The cycle at which the {@code ProcResource} is released.
+   */
   public record ProcResourceUse(
       TableGenProcResource procResource,
       int acquireAtCycles,

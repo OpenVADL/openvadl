@@ -51,8 +51,10 @@ public class EmitInsnSchedulingTableGenPass extends LcbTemplateRenderingPass {
   }
 
   @Override
-  protected Map<String, Object> createVariables(PassResults passResults, Specification specification) {
-
+  protected Map<String, Object> createVariables(
+      PassResults passResults,
+      Specification specification
+  ) {
     final var llvmSchedLoweringPassResult = (LlvmSchedLoweringPass.Result) ensureNonNull(
         passResults.lastResultOf(LlvmSchedLoweringPass.class),
         "llvmSchedLowering must exist"

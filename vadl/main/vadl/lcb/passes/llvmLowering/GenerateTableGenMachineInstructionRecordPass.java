@@ -82,7 +82,10 @@ public class GenerateTableGenMachineInstructionRecordPass extends Pass {
                   result.info().defs(),
                   result.patterns(),
                   result.constraints(),
-                  ensureNonNull(llvmSchedLoweringPassResult.scheds().get(instruction), "LLVM Sched lowering must be present for all instructions")
+                  ensureNonNull(
+                      llvmSchedLoweringPassResult.scheds().get(instruction),
+                      "LLVM Sched lowering must be present for all instructions"
+                  )
               );
             })
             .toList();

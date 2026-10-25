@@ -27,7 +27,9 @@ import java.util.Set;
  * allowing for elegant switch statements/expressions.
  */
 public sealed interface MiaInstructionFlow permits
-    MiaInstructionFlow.StageToStage, MiaInstructionFlow.StageToReservationStation, MiaInstructionFlow.ReservationStationToStage {
+    MiaInstructionFlow.StageToStage,
+    MiaInstructionFlow.StageToReservationStation,
+    MiaInstructionFlow.ReservationStationToStage {
 
   /**
    * The source of this instruction flow. The exact type of this depends on the

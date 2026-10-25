@@ -69,18 +69,16 @@ public class LlvmSchedLoweringPass extends Pass {
 
       final var schedReads = new ArrayList<TableGenSchedRead>();
 
-      for (var ignoredRead : instruction.readResources())
-      {
+      for (var ignoredRead : instruction.readResources()) {
         // TODO: `SchedRead`s should eventually come with a `ReadAdvance` to
         //       represent MIA forwarding logic. Since this is not yet
         //       implemented, they are in effect all equivalent for now.
-        schedReads.add(state.deduplicatedSchedRead(instruction));
+        schedReads.add(state.dedupSchedRead(instruction));
       }
 
       final var writeRess = new ArrayList<TableGenWriteRes>();
 
-      for (var ignoredWrite : instruction.writtenResources())
-      {
+      for (var ignoredWrite : instruction.writtenResources()) {
         // TODO: This is just a dummy and should eventually come from the MIA.
         //       The most likely candidate for the exact source of this are
         //       extended MIA stage descriptions (or possibly even just the
@@ -90,7 +88,7 @@ public class LlvmSchedLoweringPass extends Pass {
             new ProcResourceUseKey(0, 1, new ProcResourceKey("ALU", 0))
         );
 
-        writeRess.add(state.deduplicatedWriteRes(instruction, 1, procResourceUseKeys));
+        writeRess.add(state.dedupWriteRes(instruction, 1, procResourceUseKeys));
       }
 
       state.scheds.put(instruction, new TableGenSched(
@@ -116,7 +114,8 @@ public class LlvmSchedLoweringPass extends Pass {
 
     private final HashMap<ProcResourceKey, TableGenProcResource> seenProcResources;
 
-    private final HashMap<ProcResourceUseKey, TableGenWriteRes.ProcResourceUse> seenProcResourcesUses;
+    private final HashMap<ProcResourceUseKey, TableGenWriteRes.ProcResourceUse>
+        seenProcResourcesUses;
 
     private final IdentityHashMap<Instruction, TableGenSched> scheds;
 
@@ -128,7 +127,7 @@ public class LlvmSchedLoweringPass extends Pass {
       this.scheds = new IdentityHashMap<>();
     }
 
-    public TableGenSchedRead deduplicatedSchedRead(Instruction instruction) {
+    public TableGenSchedRead dedupSchedRead(Instruction instruction) {
       return seenReads.compute(
           new ReadKey(instruction.simpleName()),
           (k, v) -> v == null
@@ -137,35 +136,45 @@ public class LlvmSchedLoweringPass extends Pass {
       );
     }
 
-    public TableGenWriteRes deduplicatedWriteRes(Instruction instruction, int latency, List<ProcResourceUseKey> usedResources) {
+    public TableGenWriteRes dedupWriteRes(
+        Instruction instruction,
+        int latency,
+        List<ProcResourceUseKey> usedResources
+    ) {
       return seenWrites.compute(
           new WriteKey(instruction.simpleName(), latency, usedResources),
           (k, v) -> {
-            if (v != null)
+            if (v != null) {
               return v;
+            }
 
-            final var usedProcResources = new ArrayList<TableGenWriteRes.ProcResourceUse>(k.usedResources().size());
+            final var usedProcResources = new ArrayList<TableGenWriteRes.ProcResourceUse>(
+                k.usedResources().size()
+            );
 
-            for (var usedResourceKey : k.usedResources())
-              usedProcResources.add(deduplicatedProcResourceUse(usedResourceKey));
+            for (var usedResourceKey : k.usedResources()) {
+              usedProcResources.add(dedupProcResourceUse(usedResourceKey));
+            }
 
-            final var schedWrite = new TableGenSchedWrite(schedWriteName(k.latency(), k.usedResources()));
+            final var schedWrite = new TableGenSchedWrite(
+                schedWriteName(k.latency(), k.usedResources())
+            );
 
             return new TableGenWriteRes(schedWrite, usedProcResources, k.latency());
           }
       );
     }
 
-    private TableGenWriteRes.ProcResourceUse deduplicatedProcResourceUse(ProcResourceUseKey key) {
+    private TableGenWriteRes.ProcResourceUse dedupProcResourceUse(ProcResourceUseKey key) {
       return seenProcResourcesUses.compute(
           key,
           (k, v) -> v == null
-              ? new TableGenWriteRes.ProcResourceUse(deduplicatedProcResource(k.procResource()), 0, 1)
+              ? new TableGenWriteRes.ProcResourceUse(dedupProcResource(k.procResource()), 0, 1)
               : v
       );
     }
 
-    private TableGenProcResource deduplicatedProcResource(ProcResourceKey key) {
+    private TableGenProcResource dedupProcResource(ProcResourceKey key) {
       return seenProcResources.compute(
           key,
           (k, v) -> v == null
@@ -193,6 +202,22 @@ public class LlvmSchedLoweringPass extends Pass {
     }
   }
 
+  /**
+   * The result of {@link LlvmSchedLoweringPass#execute}.
+   *
+   * <p>Contains all the scheduling machine model elements that were generated
+   * by lowering the {@link vadl.viam.MicroArchitecture MiA}.
+   *
+   * @param scheds        The lowered {@link TableGenSched Sched} instances.
+   * @param schedWrites   The lowered {@link TableGenSchedWrite SchedWrite}
+   *                      instances.
+   * @param schedReads    The lowered {@link TableGenSchedRead SchedRead}
+   *                      instances.
+   * @param writeRess     The lowered {@link TableGenWriteRes WriteRes}
+   *                      instances.
+   * @param procResources The lowered {@link TableGenProcResource ProcResource}
+   *                      instances.
+   */
   public record Result(
       Map<Instruction, TableGenSched> scheds,
       List<TableGenSchedWrite> schedWrites,
@@ -263,9 +288,9 @@ public class LlvmSchedLoweringPass extends Pass {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof ProcResourceUseKey(var otherAcquireAtCycles, var otherReleaseAtCycles, var otherProcResource)
-          && acquireAtCycles == otherAcquireAtCycles
-          && releaseAtCycles == otherReleaseAtCycles
+      return obj instanceof ProcResourceUseKey(var otherAcq, var otherRel, var otherProcResource)
+          && acquireAtCycles == otherAcq
+          && releaseAtCycles == otherRel
           && procResource.equals(otherProcResource);
     }
   }
