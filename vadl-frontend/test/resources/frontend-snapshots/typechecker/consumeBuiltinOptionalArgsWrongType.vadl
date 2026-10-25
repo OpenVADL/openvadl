@@ -26,7 +26,7 @@ micro architecture MiA implements ISA = {
 //       ╭── test/resources/frontend-snapshots/typechecker/consumeBuiltinOptionalArgsWrongType.vadl:16:17
 //       │
 //    16 │     let instr = consume(RS, 1) in {
-//       │                 ^^^^^^^^^^^^^^ The builtin has the signature `(ReservationStationType, OperationType) -> InstructionType` but got `logic [reservation station], Const<1>`.
+//       │                 ^^^^^^^^^^^^^^ The builtin has the signature `(ConsumableType, OperationType) -> MicroArchitectureType` but got `logic [reservation station], Const<1>`.
 //       │                                help: Try casting some of the constant arguments to explicit types.
 //       │
 //

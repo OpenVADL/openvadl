@@ -41,7 +41,7 @@ micro architecture MIA implements ISA = {
 //    . : FunctionCount: 0
 //    . : OperationCount: 1
 //    . : Stage name: "DUMMY"
-//    . : ' OutputType: -
+//    . : ' OutputType: void
 //    . : ' Signals: []
 //    . : ' Registers: []
 //    . : ' Prev: -

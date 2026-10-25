@@ -15,7 +15,7 @@ micro architecture SingleStage implements ISA = {
 
   stage ID -> Instruction =
   {
-    let instr = decode( IF ) in
+    let instr = decode(consume(IF)) in
     {
       instr.readOrForward( @X, @bypass )
       instr.read( @X )
@@ -25,7 +25,7 @@ micro architecture SingleStage implements ISA = {
 
   stage EX -> Instruction =
   {
-    let instr = ID in
+    let instr = consume(ID) in
     {
       instr.results( @X, @bypass )
       instr.read( @Mem )
@@ -72,16 +72,17 @@ micro architecture SingleStage implements ISA = {
 //    . : ' Prev: -
 //    . : ' Next: []
 //    . : ' Behavior Graph:
-//    . : ' | n0 ReadStageOutput  in: ()         succ: ()     type: FetchResult   stage: IF
-//    . : ' | n1 MiaBuiltInCall   in: (n0)       succ: ()     type: Instruction   resources: []    logic: []
-//    . : ' | n2 Let              in: (n1)       succ: ()     type: Instruction   name: instr
-//    . : ' | n3 MiaBuiltInCall   in: (n2)       succ: ()     type: Instruction   resources: [X]   logic: [bypass]
-//    . : ' | n4 StageEffect      in: (n3)       succ: ()     cond: -
-//    . : ' | n5 MiaBuiltInCall   in: (n2)       succ: ()     type: Instruction   resources: [X]   logic: []
-//    . : ' | n6 StageEffect      in: (n5)       succ: ()     cond: -
-//    . : ' | n7 WriteStageOutput in: (n2)       succ: ()
-//    . : ' | n8 InstrEnd         in: (n4 n6 n7) succ: ()     effects: 3
-//    . : ' | n9 Start            in: ()         succ: (n8)   next: set
+//    . : ' | n0  ReadStageOutput  in: ()         succ: ()     type: Stage<FetchResult>   stage: IF
+//    . : ' | n1  MiaBuiltInCall   in: (n0)       succ: ()     type: FetchResult          resources: []    logic: []
+//    . : ' | n2  MiaBuiltInCall   in: (n1)       succ: ()     type: Instruction          resources: []    logic: []
+//    . : ' | n3  Let              in: (n2)       succ: ()     type: Instruction          name: instr
+//    . : ' | n4  MiaBuiltInCall   in: (n3)       succ: ()     type: Instruction          resources: [X]   logic: [bypass]
+//    . : ' | n5  StageEffect      in: (n4)       succ: ()     cond: -
+//    . : ' | n6  MiaBuiltInCall   in: (n3)       succ: ()     type: Instruction          resources: [X]   logic: []
+//    . : ' | n7  StageEffect      in: (n6)       succ: ()     cond: -
+//    . : ' | n8  WriteStageOutput in: (n3)       succ: ()
+//    . : ' | n9  InstrEnd         in: (n5 n7 n8) succ: ()     effects: 3
+//    . : ' | n10 Start            in: ()         succ: (n9)   next: set
 //    . : Stage name: "EX"
 //    . : ' OutputType: Instruction
 //    . : ' Signals: []
@@ -89,17 +90,18 @@ micro architecture SingleStage implements ISA = {
 //    . : ' Prev: -
 //    . : ' Next: []
 //    . : ' Behavior Graph:
-//    . : ' | n0  ReadStageOutput  in: ()            succ: ()     type: Instruction   stage: ID
-//    . : ' | n1  Let              in: (n0)          succ: ()     type: Instruction   name: instr
-//    . : ' | n2  MiaBuiltInCall   in: (n1)          succ: ()     type: Instruction   resources: [X]     logic: [bypass]
-//    . : ' | n3  StageEffect      in: (n2)          succ: ()     cond: -
-//    . : ' | n4  MiaBuiltInCall   in: (n1)          succ: ()     type: Instruction   resources: [Mem]   logic: []
-//    . : ' | n5  StageEffect      in: (n4)          succ: ()     cond: -
-//    . : ' | n6  MiaBuiltInCall   in: (n1)          succ: ()     type: Instruction   resources: [X]     logic: []
-//    . : ' | n7  StageEffect      in: (n6)          succ: ()     cond: -
-//    . : ' | n8  WriteStageOutput in: (n1)          succ: ()
-//    . : ' | n9  InstrEnd         in: (n3 n5 n7 n8) succ: ()     effects: 4
-//    . : ' | n10 Start            in: ()            succ: (n9)   next: set
+//    . : ' | n0  ReadStageOutput  in: ()            succ: ()      type: Stage<Instruction>   stage: ID
+//    . : ' | n1  MiaBuiltInCall   in: (n0)          succ: ()      type: Instruction          resources: []      logic: []
+//    . : ' | n2  Let              in: (n1)          succ: ()      type: Instruction          name: instr
+//    . : ' | n3  MiaBuiltInCall   in: (n2)          succ: ()      type: Instruction          resources: [X]     logic: [bypass]
+//    . : ' | n4  StageEffect      in: (n3)          succ: ()      cond: -
+//    . : ' | n5  MiaBuiltInCall   in: (n2)          succ: ()      type: Instruction          resources: [Mem]   logic: []
+//    . : ' | n6  StageEffect      in: (n5)          succ: ()      cond: -
+//    . : ' | n7  MiaBuiltInCall   in: (n2)          succ: ()      type: Instruction          resources: [X]     logic: []
+//    . : ' | n8  StageEffect      in: (n7)          succ: ()      cond: -
+//    . : ' | n9  WriteStageOutput in: (n2)          succ: ()
+//    . : ' | n10 InstrEnd         in: (n4 n6 n8 n9) succ: ()      effects: 4
+//    . : ' | n11 Start            in: ()            succ: (n10)   next: set
 //    . : Forwarding name: "bypass"
 //    . : ' LogicClass: Forwarding
 //    . : ' Signals: []

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -94,16 +95,19 @@ public class MiaInstructionFlowPass extends Pass {
 
           final MiaInstructionFlow flow;
 
-          if (source instanceof LogicRef logic) {
-            if (logic.logic() instanceof Logic.ReservationStation rs) {
-              flow = new MiaInstructionFlow.ReservationStationToStage(
-                  rs, stage, new HashSet<>()
-              );
-            } else {
+          if (source instanceof LogicRef logicRef) {
+            if (!(logicRef.logic() instanceof Logic.ReservationStation rs)) {
               throw new IllegalStateException(
                   "Expected first argument of `consume` to be a `logic [reservation station]`."
               );
             }
+            flow = new MiaInstructionFlow.ReservationStationToStage(
+                rs, stage, new HashSet<>()
+            );
+          } else if (source instanceof ReadStageOutputNode stageRef) {
+            flow = new MiaInstructionFlow.StageToStage(
+                stageRef.stage(), stage, new HashSet<>()
+            );
           } else {
             throw new IllegalStateException(
                 "Expected first argument to `consume` to reference a logic element."
@@ -248,7 +252,7 @@ public class MiaInstructionFlowPass extends Pass {
    */
   private static void computeReachingInstructions(
       MicroArchitecture mia,
-      HashMap<MiaInstructionFlow, Set<Instruction>> filters,
+      Map<MiaInstructionFlow, Set<Instruction>> filters,
       Set<Instruction> reaching,
       Definition current
   ) {

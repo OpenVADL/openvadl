@@ -69,7 +69,7 @@ public class LlvmSchedLoweringPass extends Pass {
 
       final var schedReads = new ArrayList<TableGenSchedRead>();
 
-      for (var ignoredRead : instruction.readResources()) {
+      for (var unused : instruction.readResources()) {
         // TODO: `SchedRead`s should eventually come with a `ReadAdvance` to
         //       represent MIA forwarding logic. Since this is not yet
         //       implemented, they are in effect all equivalent for now.
@@ -78,7 +78,7 @@ public class LlvmSchedLoweringPass extends Pass {
 
       final var writeRess = new ArrayList<TableGenWriteRes>();
 
-      for (var ignoredWrite : instruction.writtenResources()) {
+      for (var unused : instruction.writtenResources()) {
         // TODO: This is just a dummy and should eventually come from the MIA.
         //       The most likely candidate for the exact source of this are
         //       extended MIA stage descriptions (or possibly even just the

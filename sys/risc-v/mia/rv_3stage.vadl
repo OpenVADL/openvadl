@@ -25,7 +25,7 @@ micro architecture ThreeStage implements $Isa = {
   }
 
   stage ID -> Instruction = {
-    let instr = decode( IF ) in {        // decode the fetch packet, gives an Instruction
+    let instr = decode(consume(IF)) in {        // decode the fetch packet, gives an Instruction
 //       if ( instr.unknown ) then
 //         raise invalidInstruction         // raise an invalid instruction exception
       instr.address( @X )                // compute addresses to access register file X
@@ -36,7 +36,7 @@ micro architecture ThreeStage implements $Isa = {
   }
 
   stage EX -> Instruction = {
-    let instr = ID in {
+    let instr = consume(ID) in {
       instr.write                        // write PC
       EX := instr
     }

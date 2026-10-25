@@ -129,6 +129,7 @@ import vadl.types.GroupType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
+import vadl.types.miaTypes.MicroArchitectureType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
@@ -2042,8 +2043,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     final var identifier = new vadl.viam.Identifier(definition.viamId, definition.identifier().loc);
     final var behavior = new BehaviorLowering(this).getStageGraph(definition.statement,
         String.join("::", append(definition.viamId, "behavior")));
-    final var outputType = definition.outputType == null ? null : definition.outputType.type();
-    return Optional.of(new Stage(identifier, behavior, outputType));
+    final var outputType = definition.outputType == null
+        ? Type.void_()
+        : definition.outputType.type();
+    return Optional.of(new Stage(identifier, behavior, MicroArchitectureType.stage(outputType)));
   }
 
   @Override

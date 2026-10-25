@@ -170,12 +170,9 @@ import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
-import vadl.types.miaTypes.FetchResultType;
 import vadl.types.FloatStatusType;
 import vadl.types.FloatType;
 import vadl.types.GroupType;
-import vadl.types.miaTypes.InstructionType;
-import vadl.types.miaTypes.MicroArchitectureType;
 import vadl.types.OperationType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
@@ -187,6 +184,9 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
+import vadl.types.miaTypes.FetchResultType;
+import vadl.types.miaTypes.InstructionType;
+import vadl.types.miaTypes.MicroArchitectureType;
 import vadl.utils.IdentityDeque;
 import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
@@ -3212,7 +3212,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       if (!(type instanceof InstructionType) && !(type instanceof FetchResultType)) {
         throw addErrorAndStopChecking(error("Type Mismatch", definition.outputType)
             .description(
-                "The type of a stage output must be an `InstructionType` or a `FetchResultType`."
+                "A `stage` must output an `Instruction`, a `FetchResult` or nothing."
             ).build()
         );
       }
@@ -3423,15 +3423,15 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
     if (origin instanceof StageDefinition stage) {
       check(stage);
+
+      final Type outputType;
       if (stage.outputType == null) {
-        throw addErrorAndStopChecking(error("Invalid Reference", expr)
-            .description(
-                "Cannot reference a stage that has no output."
-            ).build()
-        );
+        outputType = Type.void_();
       } else {
-        expr.type = stage.outputType.type();
+        outputType = stage.outputType.type();
       }
+
+      expr.type = MicroArchitectureType.stage(outputType);
       return;
     }
 
@@ -4351,8 +4351,8 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
           return;
         }
       } else if (expr.target instanceof Identifier id
-          && id.target() instanceof StageDefinition stageDef) {
-
+          && id.target() instanceof StageDefinition stageDef
+      ) {
         if (stageDef.outputType == null) {
           throw addErrorAndStopChecking(error("Invalid Reference", expr)
               .description(
@@ -4370,6 +4370,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         }
 
         expr.type = stageDef.outputType.type();
+        throw new RuntimeException("AAAAAAAAAA");
       } else if (type instanceof GroupType groupType) {
         if (!fieldName.equals("length") && !fieldName.equals("bitLength")) {
           throw addErrorAndStopChecking(
@@ -4403,12 +4404,6 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   @Override
   public Void visit(CallIndexExpr expr) {
     var target = expr.target.path().target();
-
-    // A hack for stage definitions since they don't fit into our typesystem
-    if (target instanceof StageDefinition stageDef) {
-      processStageCall(expr, stageDef);
-      return null;
-    }
 
     if (target != null) {
       processCallOfTarget(expr, target);
@@ -4480,41 +4475,6 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     }
     expr.typeBeforeSlice = checkResult.returnType;
     expr.argsIndices.get(0).type = checkResult.returnType;
-  }
-
-  private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
-    boolean hasError = false;
-
-    if (callTarget.outputType == null) {
-      addErrorAndContinueChecking(error("Invalid Reference", expr)
-          .description(
-              "Cannot reference a stage that has no output."
-          ).build()
-      );
-      hasError = true;
-    }
-
-    if (!expr.subCalls.isEmpty()) {
-      addErrorAndContinueChecking(error("Invalid Reference", expr)
-          .description("Stages do not support access via `.`.")
-          .build()
-      );
-      hasError = true;
-    }
-
-    if (!expr.slices().isEmpty()) {
-      addErrorAndContinueChecking(error("Invalid Reference", expr)
-          .description("Stages do not slicing.")
-          .build()
-      );
-      hasError = true;
-    }
-
-    if (hasError) {
-      throw new StopPartialCheckingSignal();
-    }
-
-    expr.type = check(requireNonNull(callTarget.outputType));
   }
 
   private void processCallOfTarget(CallIndexExpr expr, Node callTarget) {

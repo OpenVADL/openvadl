@@ -16,14 +16,22 @@
 
 package vadl.types.miaTypes;
 
+import vadl.types.Type;
+
 /**
  * Type of {@code logic [reservation station]} as found in the MiA.
  */
-public class ReservationStationType extends MicroArchitectureType {
+public class ReservationStationType extends ConsumableType {
+
   protected ReservationStationType() {}
 
   @Override
   public String name() {
     return "logic [reservation station]";
+  }
+
+  @Override
+  public Type consumedType() {
+    return MicroArchitectureType.instruction();
   }
 }

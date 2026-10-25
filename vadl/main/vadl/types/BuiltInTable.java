@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 import vadl.error.Diagnostic;
+import vadl.types.miaTypes.ConsumableType;
 import vadl.types.miaTypes.FetchResultType;
 import vadl.types.miaTypes.InstructionType;
 import vadl.types.miaTypes.MicroArchitectureType;
@@ -1566,20 +1567,20 @@ public class BuiltInTable {
 
   public static final BuiltIn CONSUME_ONE_ARG = proc("consume", null,
       Type.relation(
-          List.of(ReservationStationType.class),
-          InstructionType.class
-      )).takesDefault()
+          List.of(ConsumableType.class),
+          MicroArchitectureType.class
+      )).takes(args -> ((ConsumableType) args.getFirst()).consumedType() != Type.void_())
+      .returns(args -> ((ConsumableType) args.getFirst()).consumedType())
       .noCompute()
-      .returns(MicroArchitectureType.instruction())
       .build();
 
   public static final BuiltIn CONSUME_TWO_ARG = proc("consume", null,
       Type.relation(
-          List.of(ReservationStationType.class, OperationType.class),
-          InstructionType.class
-      )).takesDefault()
+          List.of(ConsumableType.class, OperationType.class),
+          MicroArchitectureType.class
+      )).takes(args -> ((ConsumableType) args.getFirst()).consumedType() != Type.void_())
+      .returns(args -> ((ConsumableType) args.getFirst()).consumedType())
       .noCompute()
-      .returns(MicroArchitectureType.instruction())
       .build();
 
   /**
@@ -2051,37 +2052,40 @@ public class BuiltInTable {
           && argsCompatible(typeParams, typeParamBounds());
     }
 
-    private boolean argsCompatible(List<Type> argTypes,
-                                   List<? extends Class<? extends Type>> argTypeClasses) {
+    private boolean argsCompatible(
+        List<Type> argTypes,
+        List<? extends Class<? extends Type>> argTypeClasses
+    ) {
       // we check certain properties that must match for ALL built-ins.
       // basically, if the argument type class is another type class then the
       // parameter's one, and there is no way to trivially cast the argument type
       // to a constructed type of the parameter type, we return false.
       // otherwise true.
-      // overrides should further constraint the properties of the given types.
+      // overrides should further constrain the properties of the given types.
       for (int i = 0; i < argTypes.size(); i++) {
-        var argType = argTypes.get(i);
-        var argTypeClass = argTypeClasses.get(i);
-        if (argType.getClass() == argTypeClass) {
-          // if the class is the same, we know that the argument type is correct
-          continue;
-        }
+
+        final var argType = argTypes.get(i);
+        final var argTypeClass = argTypeClasses.get(i);
+
         if (argType instanceof DataType argDataType) {
-          // if the concrete type is a data type we try to construct a data type
-          // with the same bit width from the built-ins argument type class.
-          // if this fails, we know that the type can't be correct.
-          var constructedType = constructDataType(argTypeClass, argDataType.bitWidth());
-          if (constructedType != null) {
-            // check that the argument type can be trivially cast to the constructed type
-            if (argDataType.isTrivialCastTo(constructedType)) {
-              continue;
-            }
+          // if the concrete type is a data type we try to construct a data
+          // type with the same bit width from the built-ins argument type
+          // class.
+          // Note that if this fails, we know that the type can't be correct.
+          // If the type cannot be trivially cast to the constructed type, it
+          // can also not be correct.
+          final var constructedType = constructDataType(argTypeClass, argDataType.bitWidth());
+          if (constructedType == null || !argDataType.isTrivialCastTo(constructedType)) {
+            return false;
           }
+        } else if (!argTypeClass.isInstance(argType)) {
+          // if the concrete type is not a data type, we know that the given
+          // type is wrong as there is no way of trivially casting the argument
+          // type to the parameter type.
+          return false;
         }
-        // if the concrete type is not a data type, we know that the given type is wrong
-        // as there is no way of trivially casting the argument type to the parameter type
-        return false;
       }
+
       return true;
     }
 
@@ -2248,15 +2252,23 @@ public class BuiltInTable {
       return this;
     }
 
-    public BuiltInBuilder takesData(
-        BiFunction<List<Type>, List<DataType>, Boolean> takesFunction) {
-      this.takesFunction = (typeParams, args) -> args.stream().allMatch(DataType.class::isInstance)
-          && takesFunction.apply(typeParams, args.stream().map(DataType.class::cast).toList());
+    public BuiltInBuilder takes(BiFunction<List<Type>, List<Type>, Boolean> function) {
+      this.takesFunction = function;
       return this;
     }
 
-    public BuiltInBuilder takesData(Function<List<DataType>, Boolean> takesFunction) {
-      return takesData((typeParams, args) -> takesFunction.apply(args));
+    public BuiltInBuilder takes(Function<List<Type>, Boolean> function) {
+      return takes((typeParams, args) -> function.apply(args));
+    }
+
+    public BuiltInBuilder takesData(BiFunction<List<Type>, List<DataType>, Boolean> function) {
+      return takes((typeParams, args) -> args.stream().allMatch(DataType.class::isInstance)
+          && function.apply(typeParams, args.stream().map(DataType.class::cast).toList())
+      );
+    }
+
+    public BuiltInBuilder takesData(Function<List<DataType>, Boolean> function) {
+      return takesData((typeParams, args) -> function.apply(args));
     }
 
     /**

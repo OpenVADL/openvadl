@@ -25,9 +25,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.Type;
+import vadl.types.miaTypes.MicroArchitectureType;
+import vadl.types.miaTypes.StageType;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadResourceNode;
-import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.WriteSignalNode;
@@ -46,7 +47,7 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   private Graph behavior;
 
-  private @Nullable Type outputType;
+  private StageType type;
 
   private final List<Signal> signals;
 
@@ -64,10 +65,10 @@ public class Stage extends Definition implements DefProp.WithBehavior {
    * @param identifier stage identifier
    * @param behavior   behavior graph
    */
-  public Stage(Identifier identifier, Graph behavior, @Nullable Type outputType) {
+  public Stage(Identifier identifier, Graph behavior, StageType type) {
     super(identifier);
     this.behavior = behavior;
-    this.outputType = outputType;
+    this.type = type;
     this.signals = new ArrayList<>();
     this.registers = new ArrayList<>();
     this.localNames = new HashSet<>();
@@ -91,12 +92,25 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     this.behavior = behavior;
   }
 
-  public @Nullable Type outputType() {
-    return outputType;
+  public StageType type() {
+    return type;
   }
 
+  public Type outputType() {
+    return type.consumedType();
+  }
+
+  /**
+   * Sets this stage's output type. If the provided type is {@code null}, the
+   * stage's output type is set to {@code void}.
+   *
+   * @param outputType The stage's new output type.
+   */
   public void setOutputType(@Nullable Type outputType) {
-    this.outputType = outputType;
+    if (outputType == null) {
+      outputType = Type.void_();
+    }
+    this.type = MicroArchitectureType.stage(outputType);
   }
 
   /**
@@ -194,7 +208,7 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     final var hasOutputWrite = behavior.getNodes(WriteStageOutputNode.class).findAny().isPresent();
 
     ensure(
-        hasOutputWrite == (outputType != null),
+        hasOutputWrite == (type.consumedType() != Type.void_()),
         "Stage Output writes must exist if and only if a stage output exists"
     );
 

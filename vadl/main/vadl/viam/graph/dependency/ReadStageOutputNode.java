@@ -40,7 +40,7 @@ public class ReadStageOutputNode extends ExpressionNode {
   public ReadStageOutputNode(Stage stage) {
     // We can assume here that the read stage's output type is non-null, since
     // otherwise we would have run into an error in the typechecker already.
-    super(requireNonNull(stage.outputType()));
+    super(requireNonNull(stage.type()));
     this.stage = stage;
   }
 

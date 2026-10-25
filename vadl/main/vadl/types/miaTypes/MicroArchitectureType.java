@@ -16,6 +16,7 @@
 
 package vadl.types.miaTypes;
 
+import java.util.HashMap;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 
@@ -64,5 +65,26 @@ public abstract class MicroArchitectureType extends Type {
       reservationStation = new ReservationStationType();
     }
     return reservationStation;
+  }
+
+  private static final HashMap<Type, StageType> stages = new HashMap<>();
+
+  /**
+   * Get the {@link StageType} for the given {code outputType}.
+   *
+   * @param outputType The output type of the stage. This will be returned by
+   *                   calls to {@link StageType#consumedType()} on the
+   *                   returned type.
+   *
+   * @return The matching {@link StageType} instance
+   */
+  public static StageType stage(Type outputType) {
+    return stages.compute(outputType, (k, v) -> {
+      if (v == null) {
+        v = new StageType(k);
+      }
+
+      return v;
+    });
   }
 }

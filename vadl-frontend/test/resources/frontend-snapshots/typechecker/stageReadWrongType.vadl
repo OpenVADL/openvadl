@@ -4,7 +4,7 @@ micro architecture MiA implements ISA = {
   }
 
   stage Stage1 -> Instruction = {
-    Stage1 := Stage0
+    Stage1 := consume(Stage0)
   }
 }
 
@@ -16,8 +16,8 @@ instruction set architecture ISA = {}
 //  error: Type Mismatch
 //       ╭── test/resources/frontend-snapshots/typechecker/stageReadWrongType.vadl:7:15
 //       │
-//     7 │     Stage1 := Stage0
-//       │               ^^^^^^ Expected `Instruction` but got `FetchResult`.
+//     7 │     Stage1 := consume(Stage0)
+//       │               ^^^^^^^^^^^^^^^ Expected `Instruction` but got `FetchResult`.
 //       │
 //
 //

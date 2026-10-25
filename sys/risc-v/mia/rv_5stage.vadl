@@ -18,7 +18,7 @@ micro architecture FiveStage implements $Isa = {
   }
 
   stage DECODE -> Instruction = {
-    let instr = decode( FETCH ) in { // decode the fetch packet, gives an Instruction
+    let instr = decode(consume(FETCH)) in { // decode the fetch packet, gives an Instruction
 //       if ( instr.unknown ) then
 //         raise invalidInstruction         // raise an invalid instruction exception
       instr.address( @X )                // compute addresses to access register file X
@@ -29,7 +29,7 @@ micro architecture FiveStage implements $Isa = {
   }
 
   stage EXECUTE -> Instruction = {
-    let instr = DECODE in {
+    let instr = consume(DECODE) in {
       instr.compute                      // evaluate all expressions
       instr.verify                       // check and flush pipeline if branch misprediction
       instr.write( @PC )                 // write PC
@@ -38,7 +38,7 @@ micro architecture FiveStage implements $Isa = {
   }
 
   stage MEMORY -> Instruction = {
-    let instr = EXECUTE in {
+    let instr = consume(EXECUTE) in {
       instr.write( @MEM )                // write to memory
       instr.read( @MEM )                 // receive data from memory read
       MEMORY := instr
@@ -46,7 +46,7 @@ micro architecture FiveStage implements $Isa = {
   }
 
   stage WRITE_BACK = {
-    let instr = MEMORY in
+    let instr = consume(MEMORY) in
       instr.write( @X )                  // write back to register file X
     }
 }
