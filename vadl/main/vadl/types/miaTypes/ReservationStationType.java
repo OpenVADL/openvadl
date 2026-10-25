@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,18 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.types;
+package vadl.types.miaTypes;
 
 /**
- * The FetchResult type used in the micro architecture description.
+ * Type of {@code logic [reservation station]} as found in the MiA.
  */
-public class FetchResultType extends MicroArchitectureType {
-
-  protected FetchResultType() {}
+public class ReservationStationType extends MicroArchitectureType {
+  protected ReservationStationType() {}
 
   @Override
   public String name() {
-    return "FetchResult";
+    return "logic [reservation station]";
   }
-
 }

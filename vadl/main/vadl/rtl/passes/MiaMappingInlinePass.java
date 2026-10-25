@@ -35,7 +35,6 @@ import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlWriteRegTensorNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.SubgraphUtils;
-import vadl.types.MicroArchitectureType;
 import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
 import vadl.viam.MicroArchitecture;

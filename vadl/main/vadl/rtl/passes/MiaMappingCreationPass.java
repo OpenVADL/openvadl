@@ -37,7 +37,7 @@ import vadl.pass.exception.PassError;
 import vadl.rtl.map.MiaBuiltInCallMatcher;
 import vadl.rtl.map.MiaMapping;
 import vadl.types.BuiltInTable;
-import vadl.types.MicroArchitectureType;
+import vadl.types.miaTypes.MicroArchitectureType;
 import vadl.utils.Pair;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Specification;
