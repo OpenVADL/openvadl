@@ -16,6 +16,7 @@
 
 package vadl.viam.graph.dependency;
 
+import vadl.types.OperationType;
 import vadl.types.Type;
 import vadl.viam.Operation;
 import vadl.viam.graph.Node;
@@ -25,18 +26,32 @@ import vadl.viam.graph.Node;
  */
 public class OperationRef extends ExpressionNode {
 
-  public OperationRef(Type type) {
+  private final Operation operation;
+
+  /**
+   * Creates a new {@link OperationRef} to the given {@link Operation}.
+   *
+   * @param type      The type of the given operation..
+   * @param operation The {@link Operation} to reference.
+   */
+  public OperationRef(OperationType type, Operation operation) {
     super(type);
+
+    this.operation = operation;
+  }
+
+  public Operation operation() {
+    return operation;
   }
 
   @Override
   public ExpressionNode copy() {
-    return new OperationRef(type());
+    return new OperationRef((OperationType) type(), operation);
   }
 
   @Override
   public Node shallowCopy() {
-    return new OperationRef(type());
+    return new OperationRef((OperationType) type(), operation);
   }
 
 }

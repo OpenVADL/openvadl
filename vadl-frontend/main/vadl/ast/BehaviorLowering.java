@@ -1066,8 +1066,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Reference to an Operation Definition
-    if (computedTarget instanceof OperationDefinition) {
-      return new OperationRef(getViamType(expr.type()));
+    if (computedTarget instanceof OperationDefinition operationDefinition) {
+      return new OperationRef(
+          (OperationType) getViamType(expr.type()),
+          (Operation) viamLowering.fetch(operationDefinition).get()
+      );
     }
 
     // Function call without arguments (and no parenthesis)
