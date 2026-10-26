@@ -333,9 +333,9 @@ instruction set architecture AArch32v6 = {
   model ArithMovShiftBehavior (iForm : Id, c : CondRec, i : InstrRec, f : FlagRec, sft : ShiftRec) : IsaDefs = {
     instruction AsId ($i.id, $f.flagExt, $sft.sftId, $c.condStr) : $iForm =
       if ($c.condEx) then
-        let res, flags = VADL::ors($sft.sftEx, 0 as Word) in
+        let res = $sft.sftEx in
         let explicitCarry = $sft.carry in
-        let result = $i.funct() in {
+        let result, flags = VADL::ors($i.funct(), 0 as Word) in {
           $f.flagStmt ()
           }
     }
