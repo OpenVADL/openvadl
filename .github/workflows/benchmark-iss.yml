@@ -40,7 +40,7 @@ jobs:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
     with:
       runner: self-hosted-x64
-      benchmark-command: ./gradlew :vadl:benchmark-iss-riscv64 -i
+      benchmark-command: ./gradlew :vadl:benchmark-iss-riscv64-float -i
       artifact-source: vadl/build/iss-benchmarks/rv64imd/normalized-results/rv64imd-open-vadl.csv
       destination-folder: data/iss/riscv64/embench/results
       commit-message: 'data: Pushed ISS riscv64 embench data'
