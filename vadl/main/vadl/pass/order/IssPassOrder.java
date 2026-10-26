@@ -237,7 +237,7 @@ public final class IssPassOrder {
           .add(new UmeTemplateRenderingPass(config, "cpu_loop.c"))
           .add(new UmeTemplateRenderingPass(config, "signal.c"))
           .add(issDefault("/linux-user/gen-arch/sockbits.h", config))
-          .add(issDefault("/linux-user/gen-arch/syscall.tbl", config))
+          .add(new UmeTemplateRenderingPass(config, "syscall.tbl"))
           .add(issDefault("/linux-user/gen-arch/syscallhdr.sh", true, config))
           .add(new UmeTemplateRenderingPass(config, "target_cpu.h"))
 
