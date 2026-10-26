@@ -4350,27 +4350,6 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
           }
           return;
         }
-      } else if (expr.target instanceof Identifier id
-          && id.target() instanceof StageDefinition stageDef
-      ) {
-        if (stageDef.outputType == null) {
-          throw addErrorAndStopChecking(error("Invalid Reference", expr)
-              .description(
-                  "Cannot reference a stage that has no output."
-              ).build()
-          );
-        }
-
-        if (!subCall.argsIndices.isEmpty()) {
-          addErrorAndStopChecking(
-              error("Wrong Argument Number",
-                  SourceLocation.join(subCall.argsIndices.stream().map(a -> a.location).toList()))
-                  .description("This subcall doesn't take any arguments.")
-                  .build());
-        }
-
-        expr.type = stageDef.outputType.type();
-        throw new RuntimeException("AAAAAAAAAA");
       } else if (type instanceof GroupType groupType) {
         if (!fieldName.equals("length") && !fieldName.equals("bitLength")) {
           throw addErrorAndStopChecking(
