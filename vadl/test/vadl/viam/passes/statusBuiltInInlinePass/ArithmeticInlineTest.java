@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.graph.GraphEvaluationTestSupport.GraphCase;
 
 public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
 
@@ -333,54 +334,54 @@ public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
     );
   }
 
-  private Stream<Test> adds(int size, long a, long b, long result, boolean negative, boolean zero,
+  private Stream<GraphCase> adds(int size, long a, long b, long result, boolean negative, boolean zero,
                             boolean carry, boolean overflow) {
     return binary(BuiltInTable.ADDS, size, a, b, result, negative, zero, carry, overflow);
   }
 
-  private Stream<Test> addc(int size, long a, long b, boolean c, long result, boolean negative,
+  private Stream<GraphCase> addc(int size, long a, long b, boolean c, long result, boolean negative,
                             boolean zero,
                             boolean carry, boolean overflow) {
     return ternary(BuiltInTable.ADDC, size, a, b, c, result, negative, zero, carry, overflow);
   }
 
-  private Stream<Test> subsc(int size, long a, long b, long result, boolean negative, boolean zero,
+  private Stream<GraphCase> subsc(int size, long a, long b, long result, boolean negative, boolean zero,
                              boolean carry, boolean overflow) {
     return binary(BuiltInTable.SUBSC, size, a, b, result, negative, zero, carry, overflow);
   }
 
-  private Stream<Test> subsb(int size, long a, long b, long result, boolean negative, boolean zero,
+  private Stream<GraphCase> subsb(int size, long a, long b, long result, boolean negative, boolean zero,
                              boolean carry, boolean overflow) {
     return binary(BuiltInTable.SUBSB, size, a, b, result, negative, zero, carry, overflow);
   }
 
-  private Stream<Test> subc(int size, long a, long b, boolean c, long result, boolean negative,
+  private Stream<GraphCase> subc(int size, long a, long b, boolean c, long result, boolean negative,
                             boolean zero,
                             boolean carry, boolean overflow) {
     return ternary(BuiltInTable.SUBC, size, a, b, c, result, negative, zero, carry, overflow);
   }
 
-  private Stream<Test> subb(int size, long a, long b, boolean c, long result, boolean negative,
+  private Stream<GraphCase> subb(int size, long a, long b, boolean c, long result, boolean negative,
                             boolean zero,
                             boolean carry, boolean overflow) {
     return ternary(BuiltInTable.SUBB, size, a, b, c, result, negative, zero, carry, overflow);
   }
 
-  private Stream<Test> sdivs(int size, long a, long b, long result,
+  private Stream<GraphCase> sdivs(int size, long a, long b, long result,
                              boolean negative, boolean zero,
                              boolean carry, boolean overflow) {
     return binary(BuiltInTable.SDIVS, size, a, b,
         result, negative, zero, carry, overflow);
   }
 
-  private Stream<Test> udivs(int size, long a, long b, long result,
+  private Stream<GraphCase> udivs(int size, long a, long b, long result,
                              boolean negative, boolean zero,
                              boolean carry, boolean overflow) {
     return binary(BuiltInTable.UDIVS, size, a, b,
         result, negative, zero, carry, overflow);
   }
 
-  private Stream<Test> binary(BuiltInTable.BuiltIn op, int size, long a, long b, long result,
+  private Stream<GraphCase> binary(BuiltInTable.BuiltIn op, int size, long a, long b, long result,
                               boolean negative, boolean zero,
                               boolean carry, boolean overflow) {
     return operation(op,
@@ -393,7 +394,7 @@ public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
     );
   }
 
-  private Stream<Test> ternary(BuiltInTable.BuiltIn op, int size, long a, long b, boolean c,
+  private Stream<GraphCase> ternary(BuiltInTable.BuiltIn op, int size, long a, long b, boolean c,
                                long result,
                                boolean negative,
                                boolean zero,
