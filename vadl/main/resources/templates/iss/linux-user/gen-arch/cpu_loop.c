@@ -54,7 +54,8 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
             if (ret == -QEMU_ERESTARTSYS) {
                 env->[(${pc_info.accessor})] -= [(${config.insn_width_bytes})];
             } else if (ret != -QEMU_ESIGRETURN) {
-                env->[(${config.retRegFile})][ [(${config.retReg})] ] = ret;                }
+                env->[(${config.retReg})] = ret;
+            }
             if (cs->singlestep_enabled) {
                 goto gdbstep;
             }
