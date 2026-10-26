@@ -95,7 +95,7 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
   private String accessor(RegisterRef ref) {
     var refName = ref.resource().simpleName().toLowerCase();
 
-    if(ref.indices().isEmpty()) {
+    if (ref.indices().isEmpty()) {
       return refName;
     }
 
