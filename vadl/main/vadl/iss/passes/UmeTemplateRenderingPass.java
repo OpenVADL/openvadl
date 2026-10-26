@@ -60,8 +60,6 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
-    var vars = super.createVariables(passResults, specification);
-
     UserModeEmulation ume = specification.userModeEmulation()
         .orElseThrow(() -> new IllegalStateException("No UserModeEmulation defined"));
 
@@ -87,6 +85,8 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
         .toList());
     config.put("syscallInstr", ume.syscallInstr().simpleName());
     config.put("insn_width_bytes", ume.syscallInstr().format().type().bitWidth() / 8);
+
+    var vars = super.createVariables(passResults, specification);
 
     vars.put("config", config);
     return vars;
