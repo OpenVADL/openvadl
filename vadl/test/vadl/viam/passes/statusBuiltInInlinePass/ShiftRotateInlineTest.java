@@ -23,6 +23,7 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.graph.GraphEvaluationTestSupport.GraphCase;
 
 public class ShiftRotateInlineTest extends StatusBuiltinInlineTest {
 
@@ -138,17 +139,17 @@ public class ShiftRotateInlineTest extends StatusBuiltinInlineTest {
     );
   }
 
-  private Stream<Test> lsls(long a, int sizeA, long b, int sizeB,
+  private Stream<GraphCase> lsls(long a, int sizeA, long b, int sizeB,
                             long result, boolean negative, boolean zero, boolean carry) {
     return binary(BuiltInTable.LSLS, a, sizeA, b, sizeB, result, negative, zero, carry);
   }
 
-  private Stream<Test> rors(long a, int sizeA, long b, int sizeB,
+  private Stream<GraphCase> rors(long a, int sizeA, long b, int sizeB,
                             long result, boolean negative, boolean zero, boolean carry) {
     return binary(BuiltInTable.RORS, a, sizeA, b, sizeB, result, negative, zero, carry);
   }
 
-  private Stream<Test> binary(BuiltInTable.BuiltIn op, long a, int sizeA, long b, int sizeB,
+  private Stream<GraphCase> binary(BuiltInTable.BuiltIn op, long a, int sizeA, long b, int sizeB,
                               long result, boolean negative, boolean zero, boolean carry) {
     return operation(op,
         List.of(

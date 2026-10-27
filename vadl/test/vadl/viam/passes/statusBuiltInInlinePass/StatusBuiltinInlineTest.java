@@ -16,49 +16,40 @@
 
 package vadl.viam.passes.statusBuiltInInlinePass;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static vadl.types.BuiltInTable.BUILTIN_RESULT;
 import static vadl.types.BuiltInTable.BUILTIN_STATUS;
 import static vadl.types.StatusType.CARRY;
 import static vadl.types.StatusType.NEGATIVE;
 import static vadl.types.StatusType.OVERFLOW;
 import static vadl.types.StatusType.ZERO;
-import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.DynamicTest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.types.BuiltInTable;
 import vadl.types.StructType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.control.ReturnNode;
-import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.GraphEvaluationTestSupport;
+import vadl.viam.graph.GraphEvaluationTestSupport.GraphCase;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.StructGetFieldNode;
-import vadl.viam.passes.canonicalization.Canonicalizer;
 
 
 abstract class StatusBuiltinInlineTest {
 
-  record Test(
-      Graph exercise,
-      Constant.Value expectedValue
-  ) {
-
+  /**
+   * Runs the status built-in inliner on the graph.
+   */
+  protected static void inline(Graph graph) {
+    new StatusBuiltInInliner(graph).run();
   }
 
-  private static final Logger log = LoggerFactory.getLogger(StatusBuiltinInlineTest.class);
-
-  protected Stream<Test> operation(BuiltInTable.BuiltIn builtIn, List<Constant.Value> args,
+  protected Stream<GraphCase> operation(BuiltInTable.BuiltIn builtIn, List<Constant.Value> args,
                                    Constant.Value result, boolean negative, boolean zero,
                                    boolean carry,
                                    boolean overflow) {
@@ -73,60 +64,36 @@ abstract class StatusBuiltinInlineTest {
     name = name.replaceFirst("VADL::", "");
 
     return Stream.of(
-        new Test(
-            buildFuncGraph(name + "__" + "result", builtInCall.copy(), null), result),
-        new Test(
-            buildFuncGraph(name + "__" + "negative", builtInCall.copy(), NEGATIVE),
-            boolToBit(negative)),
-        new Test(buildFuncGraph(name + "__" + "zero", builtInCall.copy(), ZERO), boolToBit(zero)),
-        new Test(buildFuncGraph(name + "__" + "carry", builtInCall.copy(), CARRY),
-            boolToBit(carry)),
-        new Test(buildFuncGraph(name + "__" + "overflow", builtInCall.copy(), OVERFLOW),
-            boolToBit(overflow))
+        graphCase(name, builtInCall, null, result),
+        graphCase(name, builtInCall, NEGATIVE, boolToBit(negative)),
+        graphCase(name, builtInCall, ZERO, boolToBit(zero)),
+        graphCase(name, builtInCall, CARRY, boolToBit(carry)),
+        graphCase(name, builtInCall, OVERFLOW, boolToBit(overflow))
     );
+  }
+
+  private GraphCase graphCase(String name, BuiltInCall builtInCall, @Nullable String statusField,
+                              Constant.Value expected) {
+    var caseName = name + "__" + (statusField == null ? "result" : statusField);
+    return new GraphCase(caseName,
+        () -> buildFuncGraph(caseName, builtInCall.copy(), statusField), expected);
   }
 
   private Constant.Value boolToBit(boolean b) {
     return Constant.Value.of(b ? 1 : 0, Type.bool());
   }
 
-  protected Stream<DynamicTest> runTests(Test... tests) {
+  protected Stream<DynamicTest> runTests(GraphCase... tests) {
     return runTests(Stream.of(tests));
   }
 
   @SafeVarargs
-  protected final Stream<DynamicTest> runTests(Stream<Test>... tests) {
+  protected final Stream<DynamicTest> runTests(Stream<GraphCase>... tests) {
     return runTests(Stream.of(tests).flatMap(s -> s));
   }
 
-  protected Stream<DynamicTest> runTests(Stream<Test> tests) {
-    return tests.map(t -> DynamicTest.dynamicTest(
-        t.exercise().name,
-        () -> runSingleTest(t))
-    );
-  }
-
-  private void runSingleTest(Test test) {
-
-    var graph = test.exercise();
-
-    // run the status built-in inliner
-    new StatusBuiltInInliner(graph).run();
-
-    log.info(graph.dotGraph());
-
-    var returnNode = getSingleNode(graph, ReturnNode.class);
-
-    // constant evaluate function
-    var result = Canonicalizer.canonicalizeSubGraph(returnNode.value());
-
-    assertInstanceOf(ConstantNode.class, result, "Result is not a constant value");
-
-    var resultVal = (Constant.Value) ((ConstantNode) result).constant();
-    assertEquals(test.expectedValue().hexadecimal(),
-        resultVal.hexadecimal(), "Result value does not match expected value");
-    assertEquals(test.expectedValue().type().bitWidth(), resultVal.type().bitWidth(),
-        "Result type size does not match expected size");
+  protected Stream<DynamicTest> runTests(Stream<GraphCase> tests) {
+    return GraphEvaluationTestSupport.tests(tests, StatusBuiltinInlineTest::inline);
   }
 
   private Graph buildFuncGraph(String name, ExpressionNode call, @Nullable String statusField) {
@@ -150,10 +117,7 @@ abstract class StatusBuiltinInlineTest {
       );
     }
 
-    var graph = new Graph(name);
-    var returnNode = graph.addWithInputs(new ReturnNode(getter));
-    graph.addWithInputs(new StartNode(returnNode));
-    return graph;
+    return GraphEvaluationTestSupport.returning(name, getter);
   }
 
 }
