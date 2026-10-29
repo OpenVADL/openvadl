@@ -21,12 +21,18 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.utility.MountableFile;
+import vadl.iss.IssDockerRuntime;
 import vadl.iss.QemuIssTest;
 import vadl.utils.VadlFileUtils;
 
 public class IssAarch32EmbenchTest extends QemuIssTest {
 
   private static final Logger log = LoggerFactory.getLogger(IssAarch32EmbenchTest.class);
+
+  @Override
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.AARCH32;
+  }
 
   @Test
   void a32EmbenchTest() throws IOException {

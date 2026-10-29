@@ -94,6 +94,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     });
   }
 
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.NONE;
+  }
+
   protected List<String> withUpstreamTargets() {
     return List.of();
   }
@@ -117,21 +121,26 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     return new DockerImage()
         .withDockerfile(new StringSubstitutor(Map.of("qemu", IssTestConstants.TEST_BASE_IMAGE,
             "soft", softmmuTarget + refTarget,
-            "qemu-bin", qemuBin)).replace("""
-            FROM ${qemu}
-            
-            # required for embench
-            RUN pip install pandas
-            
+            "qemu-bin", qemuBin,
+            "runtime", runtime().dockerfileStage())).replace("""
+            FROM ${qemu} AS build-base
+            FROM build-base AS builder
             COPY iss /qemu
             WORKDIR /qemu/build
             LABEL key=VADL_TEST_CONTAINER
-            RUN ../configure --cc='sccache gcc' --target-list=${soft}
+            RUN ../configure --prefix=/opt/qemu --cc='sccache gcc' --target-list=${soft}
             RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make -j$(nproc) && sccache -s
+            RUN make install DESTDIR=/qemu-install
             RUN ${qemu-bin} --version
+
+            ${runtime}
+            LABEL key=VADL_TEST_CONTAINER
+            COPY --from=builder /qemu-install/ /
+            COPY --from=builder /qemu/build/tests/tcg/plugins/libendstate.so /qemu/build/tests/tcg/plugins/libendstate.so
+            # Tests use the build-tree paths for QEMU executables.
+            RUN ln -s /opt/qemu/bin/qemu-system-* /qemu/build/
             WORKDIR /work
             COPY scripts /scripts
-            RUN ls /scripts
             CMD python3 /scripts/main.py test-suite.yaml
             """))
         .withFileFromPath("iss", generatedIssSources)

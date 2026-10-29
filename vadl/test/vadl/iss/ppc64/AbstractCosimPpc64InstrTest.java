@@ -21,8 +21,14 @@ import java.util.List;
 import java.util.function.Function;
 import vadl.iss.CosimInstrTest;
 import vadl.iss.CosimTestUtils;
+import vadl.iss.IssDockerRuntime;
 
 public class AbstractCosimPpc64InstrTest extends CosimInstrTest {
+
+  @Override
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.PPC64;
+  }
 
   public Ppc64TestBuilder getBuilder(String name, int id) {
     return new Ppc64TestBuilder(name, id);
