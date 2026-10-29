@@ -28,6 +28,14 @@ import java.util.List;
  */
 public class UserModeEmulation extends Definition {
 
+  /**
+   * Represents a custom architecture-specific system call.
+   *
+   * @param number the system call ID
+   * @param name   the system call name
+   */
+  public record CustomSyscall(int number, String name) {}
+
   private final InstructionSetArchitecture isa;
   private final Abi abi;
 
@@ -35,6 +43,7 @@ public class UserModeEmulation extends Definition {
   private final Instruction syscallInstr;
   private final RegisterRef syscallNumber;
   private final RegisterRef syscallReturn;
+  private final List<CustomSyscall> customSyscalls;
 
   /**
    * Constructs a UserModeEmulation configuration.
@@ -42,7 +51,8 @@ public class UserModeEmulation extends Definition {
   public UserModeEmulation(
       Identifier identifier, InstructionSetArchitecture isa, Abi abi,
       List<RegisterRef> args,
-      Instruction syscallInstr, RegisterRef syscallNumber, RegisterRef syscallReturn
+      Instruction syscallInstr, RegisterRef syscallNumber, RegisterRef syscallReturn,
+      List<CustomSyscall> customSyscalls
   ) {
 
     super(identifier);
@@ -52,6 +62,7 @@ public class UserModeEmulation extends Definition {
     this.syscallInstr = syscallInstr;
     this.syscallNumber = syscallNumber;
     this.syscallReturn = syscallReturn;
+    this.customSyscalls = customSyscalls;
   }
 
   public Instruction syscallInstr() {
@@ -78,6 +89,9 @@ public class UserModeEmulation extends Definition {
     return abi;
   }
 
+  public List<CustomSyscall> customSyscalls() {
+    return customSyscalls;
+  }
 
   @Override
   public void accept(DefinitionVisitor visitor) {
