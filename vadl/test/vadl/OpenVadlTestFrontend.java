@@ -19,6 +19,7 @@ package vadl;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 import vadl.ast.Frontend;
 import vadl.error.Diagnostic;
@@ -32,9 +33,9 @@ class OpenVadlTestFrontend implements TestFrontend {
   private String logs = "";
 
   @Override
-  public boolean runSpecification(Path vadlFile) {
+  public boolean runSpecification(Path vadlFile, Map<String, String> macroOverrides) {
     try {
-      specification = Frontend.compileToViam(vadlFile, new DiskVirtualFileSystem());
+      specification = Frontend.compileToViam(vadlFile, new DiskVirtualFileSystem(), macroOverrides);
       return true;
     } catch (Diagnostic e) {
       // FIXME: Proper print to string
