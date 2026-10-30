@@ -1,0 +1,30 @@
+instruction set architecture TEST = {
+  format Format: Bits<32> =
+  { imm [31, 7, 30..25, 11..8]
+  ,  rs2 [24..20]
+  ,  rs1 [24..15]
+  ,  funct3 [14..10]
+  ,  opcode [6..1]
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Invalid Format
+//       ╭── test/resources/frontend-snapshots/typechecker/invalidFormatUnusedAndDoubleUsedWithRange.vadl:2:3
+//       │
+//     2 │>   format Format: Bits<32> =
+//     3 │>   { imm [31, 7, 30..25, 11..8]
+//     4 │>   ,  rs2 [24..20]
+//     5 │>   ,  rs1 [24..15]
+//     6 │>   ,  funct3 [14..10]
+//     7 │>   ,  opcode [6..1]
+//     8 │>   }
+//       │
+//       │
+//       The following bits are unused: 0
+//       The following bits are used multiple times: 10-11, 20-24
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests
