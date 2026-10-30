@@ -144,7 +144,7 @@ public class SpecialPurposeRegisterDefinition extends Definition {
           Purpose.RETURN_VALUE, Occurrence.AT_LEAST_ONE,
           Purpose.CALLER_SAVED, Occurrence.ONE,
           Purpose.CALLEE_SAVED, Occurrence.ONE,
-          Purpose.FUNCTION_ARGUMENT, Occurrence.ONE);
+          Purpose.FUNCTION_ARGUMENT, Occurrence.AT_LEAST_ONE);
     }
   }
 }

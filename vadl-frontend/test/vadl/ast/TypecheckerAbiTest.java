@@ -431,7 +431,7 @@ public class TypecheckerAbiTest {
     Assertions.assertEquals(1, diagnostics.items.size());
     var diagnostic = diagnostics.items.getFirst();
     Assertions.assertEquals(Diagnostic.Level.ERROR, diagnostic.level);
-    Assertions.assertEquals("No FUNCTION_ARGUMENT registers were declared but one was expected",
+    Assertions.assertEquals("Zero FUNCTION_ARGUMENT registers were declared but at least one was expected",
         diagnostic.reason);
   }
 

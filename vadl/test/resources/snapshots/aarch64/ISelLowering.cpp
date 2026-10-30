@@ -508,7 +508,6 @@ void processornamevalueTargetLowering::WriteToVarArgs(std::vector<SDValue> &OutC
         
         const MCPhysReg ArgXs[] =
         {
-          // We only support currently one register class for all the argument registers.
           
             processornamevalue::X0,
             processornamevalue::X1,
@@ -523,8 +522,8 @@ void processornamevalueTargetLowering::WriteToVarArgs(std::vector<SDValue> &OutC
         
 
         
-          unsigned XLenInBytes = 4;
-          MVT XLenVT = MVT::i32;
+          unsigned XLenInBytes = 8;
+          MVT XLenVT = MVT::i64;
           ArrayRef<MCPhysReg> XArgRegs = ArrayRef(ArgXs);
           unsigned XIdx = CCInfo.getFirstUnallocated( XArgRegs);
           const TargetRegisterClass *XRC = &processornamevalue::XRegClass;
