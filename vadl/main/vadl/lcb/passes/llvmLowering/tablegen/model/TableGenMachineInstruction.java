@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.gcb.passes.RegisterRef;
+import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbInstructionOperand;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -64,7 +65,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.formatSize = instruction.encoding().format().type().bitWidth();
     this.size = instruction.encoding().format().type().bitWidth() / 8;
     this.codeSize = instruction.encoding().format().type().bitWidth() / 8;
-    this.bitBlocks = BitBlock.from(instruction.encoding(), inOperands);
+    this.bitBlocks = BitBlock.from(instruction.encoding(), inOperands, outOperands);
     this.fieldEncodings = FieldEncoding.from(instruction.encoding(), inOperands);
     this.instruction = instruction;
     this.llvmLoweringRecord = llvmLoweringRecord;
@@ -122,15 +123,24 @@ public class TableGenMachineInstruction extends TableGenInstruction {
      * Convert an encoding into a bitblock set for TableGen.
      */
     public static List<BitBlock> from(vadl.viam.Encoding encoding,
-                                      List<GcbInstructionOperand> inOperands) {
+                                      List<GcbInstructionOperand> inOperands,
+                                      List<GcbInstructionOperand> outOperands) {
       var encodedFields = Arrays.stream(encoding.fieldEncodings())
           .map(field -> new BitBlock(field.formatField().size(), field.simpleName(),
               Optional.of(BitSet.valueOf(new long[] {field.constant().longValue()}))));
       var nonEncodedFields = Arrays.stream(encoding.nonEncodedFormatFields())
           .map(field -> {
             var fieldAccess = getFieldAccessFromField(inOperands, field);
-            var name = fieldAccess.map(x -> x.identifier.simpleName()).orElse(field.simpleName());
-
+            var name = fieldAccess.map(x -> x.identifier.simpleName())
+                .orElse(field.simpleName());
+            var isReferenced = Stream.concat(inOperands.stream(), outOperands.stream())
+                .anyMatch(op -> op instanceof ReferencesFormatField ref
+                    && ref.referencesField(field));
+            if (!isReferenced) {
+              // No operand covers this field. TableGen requires every Inst bit to either be
+              // constant or bound to an operand. We satisfy this requirement by setting it to zero.
+              return new BitBlock(field.size(), name, Optional.of(new BitSet()));
+            }
             return new BitBlock(field.size(), name, Optional.empty());
           });
 
