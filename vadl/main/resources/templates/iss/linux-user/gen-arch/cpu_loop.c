@@ -46,15 +46,16 @@ void cpu_loop(CPU[(${gen_arch_upper})]State *env)
         case [(${gen_arch_upper})]_EXCP_UME_SYSCALL:
             env->[(${pc_info.accessor})] += [(${config.insn_width_bytes})];
                 ret = do_syscall(env,
-                      env->[(${config.sysRegFile})][ [(${config.sysReg})] ],
+                      env->[(${config.sysReg})],
                       [# th:each="arg : ${config.args}"]
-                      env->[(${arg.file})][ [(${arg.index})] ],
+                      env->[(${arg})],
                       [/]
                       0, 0);
             if (ret == -QEMU_ERESTARTSYS) {
                 env->[(${pc_info.accessor})] -= [(${config.insn_width_bytes})];
             } else if (ret != -QEMU_ESIGRETURN) {
-                env->[(${config.retRegFile})][ [(${config.retReg})] ] = ret;                }
+                env->[(${config.retReg})] = ret;
+            }
             if (cs->singlestep_enabled) {
                 goto gdbstep;
             }
@@ -79,7 +80,7 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     struct image_info *info = ts->info;
 
     env->[(${pc_info.accessor})] = regs->sepc;
-    env->[(${config.spRegFile})][ [(${config.spReg})] ] = regs->[(${config.spRegName})];
+    env->[(${config.spReg})] = regs->[(${config.spRegName})];
 
     ts->stack_base = info->start_stack;
 }
