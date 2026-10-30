@@ -7,12 +7,12 @@ micro architecture MiA implements ISA = {
 
   // Correct `filter` annotation.
   [size : 1]
-  [source : Decode.ir]
+  [source : Decode]
   [filter : Ops]
   logic [reservation station] RS0
 
-  stage Decode -> (ir : Instruction) = {
-    ir := decode(fetchNext)
+  stage Decode -> Instruction = {
+    Decode := decode(fetchNext)
   }
 
   operation Ops = {}

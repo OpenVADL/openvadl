@@ -82,6 +82,7 @@ import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
+import vadl.ast.nodes.LogicDefinition;
 import vadl.ast.nodes.MacroCall;
 import vadl.ast.nodes.MacroMatchExpr;
 import vadl.ast.nodes.MacroMatchStatement;
@@ -140,7 +141,7 @@ import vadl.viam.Operation;
 import vadl.viam.Procedure;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
-import vadl.viam.StageOutput;
+import vadl.viam.Stage;
 import vadl.viam.annotations.PcOffsetAnnotation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -173,6 +174,7 @@ import vadl.viam.graph.dependency.GroupRef;
 import vadl.viam.graph.dependency.InstructionWidthNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.LogicRef;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
@@ -1082,6 +1084,30 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return labelNode;
     }
 
+    if (computedTarget instanceof LogicDefinition logic) {
+      final var type = switch (requireNonNull(logic.logicType)) {
+        case Forwarding -> null;
+        case BranchPrediction -> null;
+        case Control -> null;
+        case ReservationStation -> MicroArchitectureType.reservationStation();
+      };
+
+      // If the logic has no associated type, it cannot (yet) be used in a
+      // behavior, and should result in an error. To achieve that, we simply
+      // let it pass on so that it can fail with the default diagnostic.
+      if (type != null) {
+        final var viamLogic = (Logic) viamLowering.fetch(logic).get();
+
+        return new LogicRef(type, viamLogic);
+      }
+    }
+
+    if (computedTarget instanceof StageDefinition stageDefinition) {
+      final var stage = (Stage) viamLowering.fetch(stageDefinition).orElseThrow();
+
+      return new ReadStageOutputNode(stage);
+    }
+
     // Builtin Call
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
@@ -1095,7 +1121,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     throw new RuntimeException(
-        "The behavior generator cannot resolve yet identifier '%s' which points to %s".formatted(
+        "The behavior generator cannot yet resolve identifier '%s' which points to %s".formatted(
             fullName,
             computedTarget == null ? "null" : computedTarget.getClass().getSimpleName()));
   }
@@ -1370,26 +1396,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return result;
   }
 
-  public ExpressionNode visitStageCall(CallIndexExpr expr, StageDefinition stageDef) {
-    var subcall = expr.subCalls.get(0);
-    var output = (StageOutput) viamLowering.fetch(
-        stageDef.outputs.stream()
-            .filter(o -> o.identifier().name.equals(subcall.identifier().name))
-            .findFirst()
-            .get()
-    ).get();
-    return new ReadStageOutputNode(output);
-  }
-
   @Override
   public ExpressionNode visit(CallIndexExpr expr) {
-
-    // Special handling for stage calls
-    if (expr.computedBuiltIn == null
-        && expr.computedTarget() instanceof StageDefinition stageDefinition) {
-      return visitStageCall(expr, stageDefinition);
-    }
-
     var symbolArgs = expr.symbolArgs();
 
     var argGroups = expr.args();
@@ -1408,6 +1416,30 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedBuiltIn != null) {
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, args, typeBeforeSlice);
+      } else if (BuiltInTable.MIA_BUILTINS.contains(expr.computedBuiltIn)) {
+        final var builtinCall = new MiaBuiltInCall(
+            expr.computedBuiltIn,
+            args,
+            typeBeforeSlice,
+            List.of(),
+            List.of()
+        );
+
+        args.forEach(arg -> {
+          final ExpressionNode directArg;
+
+          if (arg instanceof LetNode let) {
+            directArg = let.expression();
+          } else {
+            directArg = arg;
+          }
+
+          if (directArg instanceof LogicRef logic) {
+            builtinCall.add(logic.logic());
+          }
+        });
+
+        exprBeforeSlice = builtinCall;
       } else {
         // the symbolArgs are replaced by TypeLiterals whose .type is set to the type
         // they represent by the type checker
@@ -1773,57 +1805,65 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       throw new IllegalStateException("Unexpected target: " + statement);
     }
 
-
     var argExprs = new NodeList<ExpressionNode>(AstUtils.argumentCount(argGroups));
     AstUtils.forEachArgument(argGroups, arg -> argExprs.add(this.fetch(arg)));
-    var viamTargetDef = viamLowering.fetch(targetDef).orElseThrow();
 
-    var dynamicIndex = dynamicIndexExpr.get();
+    final List<? extends vadl.viam.graph.Node> writeNodes;
 
-    // No need to call getViamType here as the viam definitions should already have that.
-    var writeNodes = switch (viamTargetDef) {
-      case RegisterTensor regDef -> writeRegisterTensorDirect(
-          regDef, argExprs, value, staticSlices, dynamicIndex
-      );
+    if (targetDef instanceof StageDefinition) {
+      // Stages declare their output by assigning to themselves.
+      // This means that we cannot fetch the lowered `targetDef`, since it
+      // hasn't been fully lowered yet. However, we don't really need to, since
+      // this is just kind of like a `return` statement. As such, there is no
+      // need to include the surrounding stage in the created
+      // `WriteStageOutputNode`, and we can avoid the fetch.
+      writeNodes = List.of(new WriteStageOutputNode(value));
+    } else {
+      var viamTargetDef = viamLowering.fetch(targetDef).orElseThrow();
 
-      case ArtificialResource aliasDef -> writeAliasResourceDirect(
-          aliasDef, argExprs, value, staticSlices, dynamicIndex
-      );
+      var dynamicIndex = dynamicIndexExpr.get();
 
-      case Memory memDef -> {
-        var words = callSize != null ? callSize : 1;
-        // slice the written value before writing it
-        var resourceRead = new ReadMemNode(memDef, words, argExprs.getFirst(),
-            ((BitsType) memDef.resultType()).scaleBy(words));
-        var slicedValue = dynamicIndexWriteValue(staticSliceWriteValue(value,
-            resourceRead, staticSlices), resourceRead, dynamicIndex);
-        yield List.of((vadl.viam.graph.Node) new WriteMemNode(
-            memDef, callSize != null ? callSize : 1,
-            argExprs.getFirst(), slicedValue
-        ));
-      }
+      // No need to call getViamType here as the viam definitions should already have that.
+      writeNodes = switch (viamTargetDef) {
+        case RegisterTensor regDef -> writeRegisterTensorDirect(
+            regDef, argExprs, value, staticSlices, dynamicIndex
+        );
 
-      // FIXME: Adjust value based on counter position
-      case Counter counterDef -> {
-        var finalArgExprs = new NodeList<>(Stream.concat(
-            counterDef.indices().stream().map(ConstantNode::new),
-            argExprs.stream()
-        ).toList());
-        var resourceRead = new ReadRegTensorNode(counterDef.registerTensor(),
-            finalArgExprs, counterDef.registerTensor().resultType(), null);
-        yield List.of(new WriteRegTensorNode(counterDef.registerTensor(), finalArgExprs,
-            // slice the written value before writing it
-            dynamicIndexWriteValue(staticSliceWriteValue(value,
-                resourceRead, staticSlices), resourceRead, dynamicIndex),
-            null, null));
-      }
+        case ArtificialResource aliasDef -> writeAliasResourceDirect(
+            aliasDef, argExprs, value, staticSlices, dynamicIndex
+        );
 
-      case StageOutput output -> List.of(
-          new WriteStageOutputNode(output, value)
-      );
+        case Memory memDef -> {
+          var words = callSize != null ? callSize : 1;
+          // slice the written value before writing it
+          var resourceRead = new ReadMemNode(memDef, words, argExprs.getFirst(),
+              ((BitsType) memDef.resultType()).scaleBy(words));
+          var slicedValue = dynamicIndexWriteValue(staticSliceWriteValue(value,
+              resourceRead, staticSlices), resourceRead, dynamicIndex);
+          yield List.of((vadl.viam.graph.Node) new WriteMemNode(
+              memDef, callSize != null ? callSize : 1,
+              argExprs.getFirst(), slicedValue
+          ));
+        }
 
-      default -> throw new IllegalStateException("Unexpected target: " + viamTargetDef);
-    };
+        // FIXME: Adjust value based on counter position
+        case Counter counterDef -> {
+          var finalArgExprs = new NodeList<>(Stream.concat(
+              counterDef.indices().stream().map(ConstantNode::new),
+              argExprs.stream()
+          ).toList());
+          var resourceRead = new ReadRegTensorNode(counterDef.registerTensor(),
+              finalArgExprs, counterDef.registerTensor().resultType(), null);
+          yield List.of(new WriteRegTensorNode(counterDef.registerTensor(), finalArgExprs,
+              // slice the written value before writing it
+              dynamicIndexWriteValue(staticSliceWriteValue(value,
+                  resourceRead, staticSlices), resourceRead, dynamicIndex),
+              null, null));
+        }
+
+        default -> throw new IllegalStateException("Unexpected target: " + viamTargetDef);
+      };
+    }
 
     for (var writeNode : writeNodes) {
       writeNode.setSourceLocationIfNotSet(statement.target.location());

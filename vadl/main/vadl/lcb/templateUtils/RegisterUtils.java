@@ -25,12 +25,14 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import vadl.lcb.passes.llvmLowering.RegisterTypesCtx;
 import vadl.template.Renderable;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
 import vadl.viam.RegisterResource;
 import vadl.viam.RegisterTensor;
+import vadl.viam.Specification;
 
 /**
  * Utility class for registers.
@@ -124,5 +126,56 @@ public class RegisterUtils {
               var name = artificialResource.identifier.simpleName() + i;
               return new Register(i, name, Collections.emptyList());
             }).toList());
+  }
+
+  /**
+   * Generate registers classes from the specification.
+   */
+  public static List<RegisterUtils.RegisterClass> registerClasses(Specification specification,
+                                                                  Abi abi) {
+    var all = new ArrayList<RegisterUtils.RegisterClass>();
+    var real = specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+        .filter(registerFile -> registerFile.expectExtension(RegisterTypesCtx.class).used())
+        .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+        .toList();
+    var aliases = specification.artificialResources()
+        .filter(ArtificialResource::isRegisterFile)
+        .filter(registerFile ->
+            registerFile.expectExtension(RegisterTypesCtx.class).used()
+        )
+        .map(RegisterUtils::getRegisterClass)
+        .toList();
+
+    all.addAll(real);
+    all.addAll(aliases);
+
+    return all;
+  }
+
+  /**
+   * Generate registers from the specification.
+   */
+  public static List<RegisterUtils.Register> registers(Specification specification, Abi abi) {
+    var all = new ArrayList<RegisterUtils.Register>();
+    var real = specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+        .filter(registerFile ->
+            registerFile.expectExtension(RegisterTypesCtx.class).used()
+        )
+        .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+        .flatMap(x -> x.registers().stream())
+        .toList();
+    var aliases = specification.artificialResources()
+        .filter(ArtificialResource::isRegisterFile)
+        .filter(registerFile ->
+            registerFile.expectExtension(RegisterTypesCtx.class).used()
+        )
+        .map(RegisterUtils::getRegisterClass)
+        .flatMap(x -> x.registers().stream())
+        .toList();
+
+    all.addAll(real);
+    all.addAll(aliases);
+
+    return all;
   }
 }

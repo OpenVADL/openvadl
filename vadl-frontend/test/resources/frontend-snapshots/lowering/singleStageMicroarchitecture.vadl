@@ -5,11 +5,11 @@ instruction set architecture ISA = {
 }
 
 micro architecture SingleStage implements ISA = {
-    stage FETCH -> ( ir : Instruction ) = {
+    stage FETCH -> Instruction = {
       let instr = decode ( fetchNext ) in
       {
         instr.write ( @X )
-        ir := instr
+        FETCH := instr
       }
     }
 }
@@ -34,22 +34,20 @@ micro architecture SingleStage implements ISA = {
 //    . : FunctionCount: 0
 //    . : OperationCount: 0
 //    . : Stage name: "FETCH"
-//    . : ' Outputs: [ir]
+//    . : ' OutputType: Instruction
 //    . : ' Signals: []
 //    . : ' Registers: []
 //    . : ' Prev: -
 //    . : ' Next: []
 //    . : ' Behavior Graph:
 //    . : ' | n0 BuiltInCall      in: ()      succ: ()     type: FetchResult   builtin: fetchNext
-//    . : ' | n1 BuiltInCall      in: (n0)    succ: ()     type: Instruction   builtin: decode
+//    . : ' | n1 MiaBuiltInCall   in: (n0)    succ: ()     type: Instruction   resources: []    logic: []
 //    . : ' | n2 Let              in: (n1)    succ: ()     type: Instruction   name: instr
 //    . : ' | n3 MiaBuiltInCall   in: (n2)    succ: ()     type: Instruction   resources: [X]   logic: []
 //    . : ' | n4 StageEffect      in: (n3)    succ: ()     cond: -
-//    . : ' | n5 WriteStageOutput in: (n2)    succ: ()     stageOutput: ir
+//    . : ' | n5 WriteStageOutput in: (n2)    succ: ()
 //    . : ' | n6 InstrEnd         in: (n4 n5) succ: ()     effects: 2
 //    . : ' | n7 Start            in: ()      succ: (n6)   next: set
-//    . : ' StageOutput name: "ir"
-//    . : ' | Type: Instruction
 //    . : InstructionSetArchitecture name: "ISA"
 //    . : ' PC: -
 //    . : ' InstructionCount: 0

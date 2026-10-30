@@ -1,0 +1,19 @@
+micro architecture MiA implements ISA = {
+  stage Stage -> Instruction = {}
+}
+
+instruction set architecture ISA = {}
+
+
+//  Reported Diagnostics:
+//
+//  error: Missing Output
+//       ╭── test/resources/frontend-snapshots/typechecker/stageWriteMissing.vadl:2:3
+//       │
+//     2 │   stage Stage -> Instruction = {}
+//       │   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//       │
+//       Stages that have an output must assign to it.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

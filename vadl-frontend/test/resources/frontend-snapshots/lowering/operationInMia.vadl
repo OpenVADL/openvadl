@@ -18,7 +18,7 @@ micro architecture MIA implements ISA = {
   // Define the operation here and not in the ISA.
   operation BranchOp   = {Branch}                // empty branch set, elements added by annotation
 
-  stage DUMMY -> ( ) = {}
+  stage DUMMY = {}
 }
 
 
@@ -41,7 +41,7 @@ micro architecture MIA implements ISA = {
 //    . : FunctionCount: 0
 //    . : OperationCount: 1
 //    . : Stage name: "DUMMY"
-//    . : ' Outputs: []
+//    . : ' OutputType: -
 //    . : ' Signals: []
 //    . : ' Registers: []
 //    . : ' Prev: -

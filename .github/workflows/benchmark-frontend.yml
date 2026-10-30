@@ -7,7 +7,7 @@ on:
       - master
     paths:
       - 'sys/**'
-      - 'vadl/main/vadl/ast/**'
+      - 'vadl-frontend/**'
       - 'vadl/main/vadl/error/**'
       - 'vadl/main/vadl/types/**'
       - 'vadl/main/vadl/utils/**'

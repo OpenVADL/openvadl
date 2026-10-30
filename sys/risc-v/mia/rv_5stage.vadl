@@ -13,40 +13,40 @@ model Isa() : Id = {RV32I}               // invoke vadl -m "Isa=RV64I" for 64 bi
 
 micro architecture FiveStage implements $Isa = {
 
-  stage FETCH -> ( fr : FetchResult ) = {
-    fr := fetchNext                      // fetch next instruction from memory (or cache)
+  stage FETCH -> FetchResult = {
+    FETCH := fetchNext                      // fetch next instruction from memory (or cache)
   }
 
-  stage DECODE -> ( ir : Instruction ) = {
-    let instr = decode( FETCH. fr ) in { // decode the fetch packet, gives an Instruction
+  stage DECODE -> Instruction = {
+    let instr = decode( FETCH ) in { // decode the fetch packet, gives an Instruction
 //       if ( instr.unknown ) then
 //         raise invalidInstruction         // raise an invalid instruction exception
       instr.address( @X )                // compute addresses to access register file X
       instr.read( @X )                   // read from the X register file
       instr.read( @PC )                  // read from the PC
-      ir := instr                        // stage output is the Instruction ir
+      DECODE := instr                        // stage output is the Instruction ir
     }
   }
 
-  stage EXECUTE -> ( ir : Instruction ) = {
-    let instr = DECODE.ir in {
+  stage EXECUTE -> Instruction = {
+    let instr = DECODE in {
       instr.compute                      // evaluate all expressions
       instr.verify                       // check and flush pipeline if branch misprediction
       instr.write( @PC )                 // write PC
-      ir := instr
+      EXECUTE := instr
     }
   }
 
-  stage MEMORY -> ( ir : Instruction ) = {
-    let instr = EXECUTE.ir in {
+  stage MEMORY -> Instruction = {
+    let instr = EXECUTE in {
       instr.write( @MEM )                // write to memory
       instr.read( @MEM )                 // receive data from memory read
-      ir := instr
+      MEMORY := instr
     }
   }
 
   stage WRITE_BACK = {
-    let instr = MEMORY.ir in
+    let instr = MEMORY in
       instr.write( @X )                  // write back to register file X
     }
 }

@@ -138,7 +138,6 @@ import vadl.ast.nodes.SignalDefinition;
 import vadl.ast.nodes.SourceDefinition;
 import vadl.ast.nodes.SpecialPurposeRegisterDefinition;
 import vadl.ast.nodes.StageDefinition;
-import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.Statement;
 import vadl.ast.nodes.StatementList;
 import vadl.ast.nodes.StatementVisitor;
@@ -497,7 +496,8 @@ class MacroExpander
     }
 
     // Resolve subcalls of records
-    for (var subcall : macroCall.subcalls()) {
+    for (int i = 0; i < macroCall.subcalls().size(); i++) {
+      var subcall = macroCall.subcalls().get(i);
       if (!(value instanceof RecordInstance record)) {
         throw new IllegalStateException("Macro " + macroCall.name().name + " not found");
       }
@@ -1022,14 +1022,6 @@ class MacroExpander
   }
 
   @Override
-  public Definition visit(StageOutputDefinition definition) {
-    return new StageOutputDefinition(
-        expandExpr(definition.identifier),
-        expandExpr(definition.typeLiteral)
-    );
-  }
-
-  @Override
   public Definition visit(AbiSpecialPurposeInstructionDefinition definition) {
     return new AbiSpecialPurposeInstructionDefinition(
         definition.kind,
@@ -1325,7 +1317,7 @@ class MacroExpander
   public Definition visit(StageDefinition definition) {
     return new StageDefinition(
         expandExpr(definition.id),
-        expandStageOutputs(definition.outputs),
+        definition.outputType == null ? null : expandExpr(definition.outputType),
         expandStatement(definition.statement),
         copyLoc(definition.loc)
     );
@@ -1679,13 +1671,6 @@ class MacroExpander
     expandedParams.replaceAll(param ->
         new Parameter(expandExpr(param.identifier()), expandExpr(param.typeLiteral)));
     return expandedParams;
-  }
-
-  private List<StageOutputDefinition> expandStageOutputs(List<StageOutputDefinition> outputs) {
-    var expanded = new ArrayList<>(outputs);
-    expanded.replaceAll(param ->
-        new StageOutputDefinition(expandExpr(param.identifier()), expandExpr(param.typeLiteral)));
-    return expanded;
   }
 
   /**

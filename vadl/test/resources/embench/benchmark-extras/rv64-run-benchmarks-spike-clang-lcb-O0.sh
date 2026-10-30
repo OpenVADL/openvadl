@@ -24,12 +24,12 @@ rm -r ../src/cubic
 #rm -r ../src/primecount
 #rm -r ../src/qrduino
 #rm -r ../src/sglib-combined
-rm -r ../src/slre
+#rm -r ../src/slre
 #rm -r ../src/st
 #rm -r ../src/statemate
 #rm -r ../src/tarfind
 #rm -r ../src/ud
-rm -r ../src/wikisort
+#rm -r ../src/wikisort
 
 ../build_spike-lcb-O0_rv64.sh
 ./run-benchmark.sh "rv64-spike" ./benchmark_spike_rv64gc.sh

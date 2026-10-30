@@ -4262,7 +4262,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
 //      }
 //    }
 //    encoding ERET = {op = 0b1101'0110'1001'1111, imm16 = 0b0000'0011'1110'0000}
-//    assembly ERET = ("eret")
+//    assembly ERET = "eret"
 //
 //    [add operands : imm16]
 //    instruction HLT : SuperVisorCallFormat = { }
@@ -4271,7 +4271,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
 //
 //    instruction NOP : UndefinedInstrFormat = { }
 //    encoding NOP = {op = 0b1101'0101'0000'0011, imm16 = 0b0010'0000'0001'1111}
-//    assembly NOP = ("nop")
+//    assembly NOP = "nop"
 //
 //    [add operands : bti]
 //    instruction BTI : BTIFormat = { }
@@ -4282,7 +4282,7 @@ model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
 //    instruction UDF : UndefinedInstrFormat =
 //      raise GeneralException(ExceptionClass::Uncategorized, 0, PC, 0)
 //    encoding UDF = {op = 0b0000'0000'0000'0000}
-//    assembly UDF = ("udf")
+//    assembly UDF = "udf"
 //  }
 //
 //

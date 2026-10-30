@@ -124,26 +124,25 @@ assembly description ASM for ABI = {
     ;
 
     JalrInstruction @instruction:
-      var rdTmp = null @operand
-      var rs1Tmp = null @operand
-      var immTmp = null @operand
+      var rdTmp  = x1_string @register        // default for jalr rs
+      var rsTmp  = null @register
+      var immTmp = zero_const @operand        // default for jalr rs / jalr rd, rs
+
       mnemonic = "JALR" @operand
-      ( ?(LaIdEq(1, ","))
-          rdTmp = Register@operand ","
-          ( ?(LaIdEq(1, ","))                     // jalr rd, rs, imm
-              rs1Tmp = Register@operand ","
-              immTmp = ImmediateOperand
-            |
-              immTmp = ImmediateOperand           // jalr rd, imm(rs)
-              "(" rs1Tmp = Register@operand  ")"
-          )
-      | rdTmp = (x1_string @register) @operand    // jalr rs
-        rs1Tmp = Register@operand
-        immTmp = zero_const @operand
-      )
-      rd = rdTmp
-      rs1 = rs1Tmp
-      immS = immTmp
+      rsTmp = Register
+      [ "," rdTmp = rsTmp                     // first register was actually rd
+        ( ?(LaIdEq(1, "(") )
+            immTmp = ImmediateOperand         // jalr rd, imm(rs)
+            "(" rsTmp = Register ")"
+          |
+            rsTmp = Register                  // jalr rd, rs
+            [ "," immTmp = ImmediateOperand]  // jalr rd, rs, imm
+        )
+      ]
+
+      rd    = rdTmp @operand
+      rs1   = rsTmp @operand
+      immS  = immTmp
     ;
   }
 
@@ -165,5 +164,5 @@ processor Spike implements RV32IM with ABI = {
 micro architecture FiveStage implements RV32IM = {
 
   // Just a single dummy stage so we have a first stage as required by a MiA.
-  stage DUMMY -> ( ) = {}
+  stage DUMMY = {}
 }

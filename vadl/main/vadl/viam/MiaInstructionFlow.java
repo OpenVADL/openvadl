@@ -25,7 +25,7 @@ package vadl.viam;
  * allowing for elegant switch statements/expressions.
  */
 public sealed interface MiaInstructionFlow permits
-    MiaInstructionFlow.StageOutputToStage {
+    MiaInstructionFlow.StageToStage {
 
   /**
    * Gets the source of this instruction flow. The exact type of this depends
@@ -46,19 +46,19 @@ public sealed interface MiaInstructionFlow permits
   Definition destination();
 
   /**
-   * Models the flow of an {@link Instruction} from a {@link StageOutput} to a
-   * {@link Stage}.
+   * Models the flow of an {@link Instruction} from one {@link Stage} to
+   * another.
    *
-   * <p>Such instruction flows arise from reads of the source stage output from
-   * the destination stage's {@link Stage#behavior() behaviour}. Multiple reads
-   * of the same stage output inside the same stage are collapsed into a single
-   * instruction flow.
+   * <p>Such instruction flows arise from reads of the source stage from the
+   * destination stage's {@link Stage#behavior() behaviour}. Multiple reads
+   * from a given stage to another one are collapsed into a single instruction
+   * flow.
    *
-   * @param source The read {@code StageOutput}.
+   * @param source The read {@code Stage}.
    * @param destination The reading {@code Stage}.
    */
-  record StageOutputToStage(
-      StageOutput source,
+  record StageToStage(
+      Stage source,
       Stage destination
   ) implements MiaInstructionFlow {}
 }

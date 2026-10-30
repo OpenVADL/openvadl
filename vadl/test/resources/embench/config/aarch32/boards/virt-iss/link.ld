@@ -6,7 +6,7 @@ SECTIONS
   /* The AArch32 virt firmware jumps here, so place the image at the start of
      RAM instead of trying to own the firmware region at 0x0. */
   . = 0x40000000;
-  .text.init : { *(.text.init) }
+  .text.start : { *(.text.start) }
 
   /* Keep the HTIF mailbox on its own page so the device-facing symbol has a
      stable address and stays visually separate from ordinary program text. */

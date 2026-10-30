@@ -43,11 +43,9 @@ import picocli.CommandLine.Parameters;
 import vadl.ast.Ast;
 import vadl.ast.AstAdvancedDumper;
 import vadl.ast.AstDumper;
-import vadl.ast.ModelRemover;
 import vadl.ast.SpecStatAnalyser;
 import vadl.ast.SymbolTable;
 import vadl.ast.TypeChecker;
-import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
 import vadl.ast.ViamLowering;
 import vadl.configuration.DumpMode;
@@ -207,8 +205,6 @@ public abstract class BaseCommand implements Callable<Integer> {
     Ast ast = VadlParser.parse(input, new DiskVirtualFileSystem(),
         Objects.requireNonNullElseGet(modelOverrides, Map::of));
     SymbolTable.collectAndResolveNames(ast);
-    Ungrouper.ungroup(ast);
-    ModelRemover.removeModels(ast);
     return ast;
   }
 

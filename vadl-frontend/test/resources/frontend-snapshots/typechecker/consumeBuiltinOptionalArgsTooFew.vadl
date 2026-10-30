@@ -1,0 +1,33 @@
+instruction set architecture ISA = {}
+
+micro architecture MiA implements ISA = {
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(fetchNext)
+  }
+
+  [size : 8]
+  [source : DECODE]
+  logic [reservation station] RS
+
+  operation Op = {}
+
+  stage Consumer -> Instruction = {
+    let instr = consume in {
+      Consumer := instr
+    }
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  error: Type Mismatch
+//       ╭── test/resources/frontend-snapshots/typechecker/consumeBuiltinOptionalArgsTooFew.vadl:16:17
+//       │
+//    16 │     let instr = consume in {
+//       │                 ^^^^^^^ Expected 1 or 2 arguments but got 0.
+//       │
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

@@ -32,7 +32,6 @@ import vadl.viam.Specification;
  *    - Parsing
  *    - Macro Expansion
  *    - Name resolution
- * - Model removal
  * - Ungrouping
  * - Type checking
  * - Viam lowering
@@ -41,7 +40,7 @@ public class Frontend {
 
   /**
    * Parse a single program an valid AST with all names resolved.
-   * This does run name resolution but not ungrouping, model removing nor typechecking.
+   * This does run name resolution but not ungrouping nor typechecking.
    *
    * @param program to compile.
    * @return  the parsed and checked AST.
@@ -54,7 +53,7 @@ public class Frontend {
 
   /**
    * Parse a program from a provided path to an valid AST with all names resolved.
-   * This does run name resolution but not ungrouping, model removing nor typechecking.
+   * This does run name resolution but not ungrouping nor typechecking.
    *
    * @param path to compile.
    * @param fileSystem to load the files from.
@@ -92,8 +91,6 @@ public class Frontend {
   public static Ast compileToAst(Path path, VirtualFileSystem fileSystem) {
     var ast = VadlParser.parse(path, fileSystem);
     SymbolTable.collectAndResolveNames(ast);
-    ModelRemover.removeModels(ast);
-    Ungrouper.ungroup(ast);
     TypeChecker.verify(ast);
     return ast;
   }
@@ -117,10 +114,8 @@ public class Frontend {
     PARSED(1),
     PARTIALLY_NAMES_RESOLVED(2),
     NAMES_RESOLVED(3),
-    MODELS_REMOVED(4),
-    UNGROUPED(5),
-    PARTIALLY_TYPE_CHECKED(6),
-    TYPE_CHECKED(7);
+    PARTIALLY_TYPE_CHECKED(4),
+    TYPE_CHECKED(5);
 
     private final int ordinal;
 
@@ -164,12 +159,6 @@ public class Frontend {
       // Even if there are errors, name resolution has been run as best as possible
       return new BestEffortCompilation(ast, AstPass.PARTIALLY_NAMES_RESOLVED, diagnostics);
     }
-    throwIfInterrupted();
-
-    // The next two passes don't throw diagnostics
-    ModelRemover.removeModels(ast);
-    throwIfInterrupted();
-    Ungrouper.ungroup(ast);
     throwIfInterrupted();
 
     try {

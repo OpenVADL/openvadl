@@ -1560,6 +1560,24 @@ public class BuiltInTable {
    */
   public static final BuiltIn INSTRUCTION_VERIFY = instr("verify");
 
+  public static final BuiltIn CONSUME_ONE_ARG = proc("consume", null,
+      Type.relation(
+          List.of(ReservationStationType.class),
+          InstructionType.class
+      )).takesDefault()
+      .noCompute()
+      .returns(MicroArchitectureType.instruction())
+      .build();
+
+  public static final BuiltIn CONSUME_TWO_ARG = proc("consume", null,
+      Type.relation(
+          List.of(ReservationStationType.class, OperationType.class),
+          InstructionType.class
+      )).takesDefault()
+      .noCompute()
+      .returns(MicroArchitectureType.instruction())
+      .build();
+
   /**
    * Operation equality.
    *
@@ -1814,7 +1832,9 @@ public class BuiltInTable {
       INSTRUCTION_READ_OR_FORWARD,
       INSTRUCTION_RESULTS,
       INSTRUCTION_VERIFY,
-      INSTRUCTION_WRITE
+      INSTRUCTION_WRITE,
+      CONSUME_ONE_ARG,
+      CONSUME_TWO_ARG
   );
 
   public static final List<BuiltIn> FLOAT_BUILT_INS = Stream.of(
@@ -1920,6 +1940,8 @@ public class BuiltInTable {
     MIA_BUILTINS.add(INSTRUCTION_RESULTS);
     MIA_BUILTINS.add(INSTRUCTION_READ_OR_FORWARD);
     MIA_BUILTINS.add(INSTRUCTION_VERIFY);
+    MIA_BUILTINS.add(CONSUME_ONE_ARG);
+    MIA_BUILTINS.add(CONSUME_TWO_ARG);
   }
 
   public static Stream<BuiltIn> builtIns() {

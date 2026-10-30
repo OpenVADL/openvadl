@@ -114,7 +114,6 @@ import vadl.ast.nodes.SignalDefinition;
 import vadl.ast.nodes.SourceDefinition;
 import vadl.ast.nodes.SpecialPurposeRegisterDefinition;
 import vadl.ast.nodes.StageDefinition;
-import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.StringLiteral;
 import vadl.ast.nodes.TypedFormatField;
 import vadl.ast.nodes.UsingDefinition;
@@ -163,7 +162,6 @@ import vadl.viam.Relocation;
 import vadl.viam.Signal;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
-import vadl.viam.StageOutput;
 import vadl.viam.annotations.AlignmentAnnotation;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
@@ -1856,14 +1854,20 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ModelDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(RecordTypeDefinition definition) {
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return Optional.empty();
   }
 
   @Override
   public Optional<vadl.viam.Definition> visit(ModelTypeDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return Optional.empty();
   }
 
   @Override
@@ -1942,12 +1946,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       parameters.add(viamParam);
     }
     return parameters.toArray(vadl.viam.Parameter[]::new);
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(RecordTypeDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
   }
 
   private RegisterTensor.Dimension dimFromMappingType(int index, DataType dataType) {
@@ -2041,10 +2039,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(StageDefinition definition) {
-    var identifier = new vadl.viam.Identifier(definition.viamId, definition.identifier().loc);
-    var behaivor = new BehaviorLowering(this).getStageGraph(definition.statement,
+    final var identifier = new vadl.viam.Identifier(definition.viamId, definition.identifier().loc);
+    final var behavior = new BehaviorLowering(this).getStageGraph(definition.statement,
         String.join("::", append(definition.viamId, "behavior")));
-    return Optional.of(new Stage(identifier, behaivor, List.of()));
+    final var outputType = definition.outputType == null ? null : definition.outputType.type();
+    return Optional.of(new Stage(identifier, behavior, outputType));
   }
 
   @Override
@@ -2070,14 +2069,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var value = constantEvaluator.eval(definition.size).toViamConstant().intValue();
     return Optional.of(
         new Abi.AbstractClangType.NumericClangType(typeName, value, definition.location()));
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(StageOutputDefinition definition) {
-    var identifier = new vadl.viam.Identifier(definition.viamId, definition.identifier().loc);
-    var type = getViamType(definition.typeLiteral.type());
-    return Optional.of(
-        new StageOutput(identifier, type));
   }
 
   @Override

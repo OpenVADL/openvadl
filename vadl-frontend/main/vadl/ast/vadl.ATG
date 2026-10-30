@@ -1184,7 +1184,7 @@ The #microArchitectureDefinition production rule starts the micro architecture s
 
 #microArchitectureDefinition is referenced by \refFrom.
 */
-  microArchitectureDefinition<out Definition def> (. var start = nextTokenLoc(); List<StageOutputDefinition> outputs = List.of(); var definitions = new ArrayList<Definition>(); .)
+  microArchitectureDefinition<out Definition def> (. var start = nextTokenLoc(); var definitions = new ArrayList<Definition>(); .)
   = MICRO ARCHITECTURE
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     IMPLEMENTS
@@ -1279,30 +1279,12 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
     statement<out Statement stmt>                             (. def = new PipelineDefinition(id, outputs, stmt, start.join(lastTokenLoc())); .)
   .
 
-  stageoutput<out StageOutputDefinition output>
-  = identifierOrPlaceholder<out IdentifierOrPlaceholder name>
-    SYM_COLON
-    typeLiteral<out TypeLiteral type>                         (. output = new StageOutputDefinition(name, type); .)
-  .
-
-  stageoutputs<out List<StageOutputDefinition> outputs>   (. outputs = new ArrayList<>(); .)
-  =     SYM_PAREN_OPEN
-        [
-          stageoutput<out StageOutputDefinition output>   (. outputs.add(output); .)
-          {
-            SYM_COMMA
-            stageoutput<out StageOutputDefinition next>   (. outputs.add(next); .)
-          }
-        ]
-        SYM_PAREN_CLOSE
-  .
-
-  stageDefinition<out Definition def>         (. var start = nextTokenLoc(); List<StageOutputDefinition> outputs = List.of(); .)
+  stageDefinition<out Definition def>         (. var start = nextTokenLoc(); TypeLiteral outputType = null; .)
   = STAGE
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    [ SYM_ARROW stageoutputs<out outputs> ]
+    [ SYM_ARROW typeLiteral<out TypeLiteral type> (. outputType = type; .) ]
     SYM_EQ
-    statement<out Statement stmt>             (. def = new StageDefinition(id, outputs, stmt, start.join(lastTokenLoc())); .)
+    statement<out Statement stmt>             (. def = new StageDefinition(id, outputType, stmt, start.join(lastTokenLoc())); .)
   .
 
   cacheDefinition<out Definition def>       (. var start = nextTokenLoc(); .)
@@ -1875,14 +1857,24 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
   | macroReplacement<out Node n,  BasicSyntaxType.EX> (. expr = (Expr) n; .)
   .
 
-  groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), nextTokenLoc()); .)
+  groupedExpression<out Expr expr> (. var startLoc = nextTokenLoc(); ArrayList<Expr> items = new ArrayList<>(); .)
   = SYM_PAREN_OPEN
-    expression<out Expr inner, BIN_OPS>   (. expr.expressions.add(inner); .)
+    expression<out Expr inner, BIN_OPS>   (. items.add(inner); .)
     {
       SYM_COMMA
-      expression<out Expr next, BIN_OPS>  (. expr.expressions.add(next); .)
+      expression<out Expr next, BIN_OPS>  (. items.add(next); .)
     }
-    SYM_PAREN_CLOSE                       (. expr.loc = expr.loc.join(lastTokenLoc()); .)
+    SYM_PAREN_CLOSE                       (.
+                                              if (items.size() == 1 && !(items.getFirst() instanceof BinaryExpr)) {
+                                                // Optimization
+                                                // No need to allocate a group if they were only written to indicate
+                                                // parsing preference. For binary expr we need to preserve it because
+                                                // they might be reordered later.
+                                                expr = items.getFirst();
+                                              } else {
+                                                expr = new GroupedExpr(items, startLoc.join(lastTokenLoc()));
+                                              }
+                                          .)
   .
 
   literal<out Expr expr> (. expr = null; .)
@@ -2208,14 +2200,26 @@ A micro architecture definition (#microArchitectureDefinition) is shown in line 
                                   .)
   .
 
-  AsId<out Node body>                   (. var start = nextTokenLoc(); .)
+  AsId<out Node body>                     (. var start = nextTokenLoc(); ArrayList<Expr> items = new ArrayList<>(); .)
   = AS_ID
-    groupedExpression<out GroupedExpr expr> (. body = new AsIdExpr(expr != null ? expr.expressions : null, start.join(lastTokenLoc())); .)
+    SYM_PAREN_OPEN
+    expression<out Expr inner, BIN_OPS>   (. items.add(inner); .)
+    {
+      SYM_COMMA
+      expression<out Expr next, BIN_OPS>  (. items.add(next); .)
+    }
+    SYM_PAREN_CLOSE                       (. body = new AsIdExpr(items, start.join(lastTokenLoc())); .)
   .
 
-  AsStr<out Node body> (. var start = nextTokenLoc(); .)
+  AsStr<out Node body>                    (. var start = nextTokenLoc();  ArrayList<Expr> items = new ArrayList<>(); .)
   = AS_STR
-    groupedExpression<out GroupedExpr expr> (. body = new AsStrExpr(expr != null ? expr.expressions : null, start.join(lastTokenLoc())); .)
+    SYM_PAREN_OPEN
+    expression<out Expr inner, BIN_OPS>   (. items.add(inner); .)
+    {
+      SYM_COMMA
+      expression<out Expr next, BIN_OPS>  (. items.add(next); .)
+    }
+    SYM_PAREN_CLOSE                       (. body = new AsStrExpr(items, start.join(lastTokenLoc())); .)
   .
 
   macroMatch<out Node node, SyntaxType requiredType>  (. var start = nextTokenLoc();  node=null; .)

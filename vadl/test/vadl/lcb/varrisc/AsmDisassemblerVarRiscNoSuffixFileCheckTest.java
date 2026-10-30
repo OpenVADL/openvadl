@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss;
+package vadl.lcb.varrisc;
 
-class TestConstants {
+public class AsmDisassemblerVarRiscNoSuffixFileCheckTest extends AsmVarRiscNoSuffixFileCheckTest {
 
-  static final String TEST_BASE_IMAGE =
-      "ghcr.io/openvadl/iss-test-base@sha256:a97862a2c804c1b383731d177601d863abe1a81bab58429fa242aeaae3c8e991";
-
+  @Override
+  protected String getComponent() {
+    return "disasm_no_suffix";
+  }
 }

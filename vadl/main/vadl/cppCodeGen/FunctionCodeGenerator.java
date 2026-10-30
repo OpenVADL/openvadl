@@ -34,6 +34,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FoldNode;
 import vadl.viam.graph.dependency.GroupRef;
+import vadl.viam.graph.dependency.LogicRef;
 import vadl.viam.graph.dependency.OperationExistsNode;
 import vadl.viam.graph.dependency.OperationForAllNode;
 import vadl.viam.graph.dependency.OperationRef;
@@ -118,6 +119,11 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
   @Handler
   protected void handle(CGenContext<Node> ctx, OperationRef toHandle) {
     throwNotAllowed(toHandle, "operation reference expressions");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, LogicRef toHandle) {
+    throwNotAllowed(toHandle, "logic reference expressions");
   }
 
   public String genReturnExpression() {

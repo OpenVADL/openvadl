@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -151,7 +152,6 @@ import vadl.ast.nodes.SignalDefinition;
 import vadl.ast.nodes.SourceDefinition;
 import vadl.ast.nodes.SpecialPurposeRegisterDefinition;
 import vadl.ast.nodes.StageDefinition;
-import vadl.ast.nodes.StageOutputDefinition;
 import vadl.ast.nodes.Statement;
 import vadl.ast.nodes.StatementList;
 import vadl.ast.nodes.StringLiteral;
@@ -448,6 +448,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     }
 
     if (currentlyVisiting.contains(def)) {
+
       String message = "This %s is defined by itself.".formatted(def.nodeName());
       if (def instanceof IdentifiableNode identifiableNode) {
         message = "This %s `%s` is defined by itself.".formatted(
@@ -540,18 +541,23 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   }
 
   /**
-   * Access the innermost definition of the currently visiting nodes.
-   * You can use this to check if you are currenlty of a definition of a certain kind.
+   * Finds the innermost definition on the stack of currently visited nodes.
    *
-   * @return the innermost definition or null if none found.
+   * <p>The intended use for this is to retrieve a syntactically surrounding
+   * node. Since the currently visited nodes can also contain other nodes (but
+   * always below the syntactically surrounding ones), this method must only be
+   * called when it is known that we are currently inside a definition.
+   *
+   * @return The innermost definition.
    */
-  @Nullable
   private Definition getCurrentlyVisitingDefinition() {
     return getVisitingContext()
         .filter(Definition.class::isInstance)
         .map(Definition.class::cast)
         .findFirst()
-        .orElse(null);
+        .orElseThrow(() -> new IllegalStateException(
+            "Called getCurrentlyVisitingDefinition without any definitions on the stack."
+        ));
   }
 
   private Diagnostic unimplementedError(Node node) {
@@ -1025,7 +1031,9 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     if (args.size() != expectedArgCount
         && !(builtIn.signature().hasVarArgs() && args.size() >= expectedArgCount)) {
       throw addErrorAndStopChecking(wrongArgCountError(
-          location, args.size(), List.of(expectedArgCount)
+          location,
+          args.size(),
+          requireNonNull(AstUtils.getBuiltInArgCounts(builtIn.name()))
       ));
     }
 
@@ -1864,12 +1872,6 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   }
 
   @Override
-  public Void visit(StageOutputDefinition stageOutputDefinition) {
-    check(stageOutputDefinition.typeLiteral);
-    return null;
-  }
-
-  @Override
   public Void visit(AbiSpecialPurposeInstructionDefinition definition) {
     // Isn't type checked on purpose because there is nothing to type check.
     return null;
@@ -2225,17 +2227,20 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
   @Override
   public Void visit(ModelDefinition definition) {
-    throw foreignNodeException(definition);
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return null;
   }
 
   @Override
   public Void visit(RecordTypeDefinition definition) {
-    throw foreignNodeException(definition);
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return null;
   }
 
   @Override
   public Void visit(ModelTypeDefinition definition) {
-    throw foreignNodeException(definition);
+    // Intentionally left empty, we don't want to visit definitions from the macro system.
+    return null;
   }
 
   @Override
@@ -3201,20 +3206,29 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
   @Override
   public Void visit(StageDefinition definition) {
-    definition.outputs.forEach(this::check);
-    definition.outputs.forEach(output -> {
-      if (!(output.type() instanceof InstructionType)
-          && !(output.type() instanceof FetchResultType)) {
-        addErrorAndStopChecking(
-            error("Type Mismatch", output)
-                .description(
-                    "The type of a stage output must be an `InstructionType` "
-                        + "or a `FetchResultType`.")
-                .build());
+    if (definition.outputType != null) {
+      final var type = check(definition.outputType);
+
+      if (!(type instanceof InstructionType) && !(type instanceof FetchResultType)) {
+        throw addErrorAndStopChecking(error("Type Mismatch", definition.outputType)
+            .description(
+                "The type of a stage output must be an `InstructionType` or a `FetchResultType`."
+            ).build()
+        );
       }
-    });
+    }
 
     check(definition.statement);
+
+    if (definition.outputType != null
+        && !definition.hasOutputAssignment
+        && !recursivelyContainsErroredStatement(definition)
+    ) {
+      throw addErrorAndStopChecking(error("Missing Output", definition)
+          .description("Stages that have an output must assign to it.")
+          .build()
+      );
+    }
 
     return null;
   }
@@ -3407,22 +3421,31 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       return;
     }
 
-    if (origin instanceof StageOutputDefinition output) {
-      check(output);
-      expr.type = output.type();
+    if (origin instanceof StageDefinition stage) {
+      check(stage);
+      if (stage.outputType == null) {
+        throw addErrorAndStopChecking(error("Invalid Reference", expr)
+            .description(
+                "Cannot reference a stage that has no output."
+            ).build()
+        );
+      } else {
+        expr.type = stage.outputType.type();
+      }
       return;
     }
 
     if (origin instanceof GroupDefinition group) {
       check(group);
 
-      var def = getCurrentlyVisitingDefinition();
+      final var def = getCurrentlyVisitingDefinition();
       if (!(def instanceof AnnotationDefinition annotation)
           || !(annotation.target instanceof GroupDefinition)) {
-        final var diagnostic = error("Invalid Reference", expr)
+        addErrorAndContinueChecking(error("Invalid Reference", expr)
             .description(
-                "Reference to a `group` definition is only allowed within its annotations.");
-        addErrorAndContinueChecking(diagnostic.build());
+                "Reference to a `group` definition is only allowed within its annotations."
+            ).build()
+        );
       }
 
       final var elemType = OperationType.of(AstUtils.pseudoFields(group.operations()));
@@ -3446,6 +3469,13 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
       check(op);
 
       expr.type = OperationType.of(AstUtils.pseudoFields(List.of(op)));
+      return;
+    }
+
+    if (origin instanceof LogicDefinition logic
+        && logic.logicType == LogicDefinition.LogicType.ReservationStation
+    ) {
+      expr.type = MicroArchitectureType.reservationStation();
       return;
     }
 
@@ -4066,7 +4096,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
           expr.type = currType;
         }
       }
-      if (currType instanceof TensorType currTensoType) {
+      if (currType instanceof TensorType currTensorType) {
         if (slice.values.size() != 1) {
           var loc = slice.values.getFirst().location().join(slice.values.getLast().location());
           addErrorAndStopChecking(error("Invalid Tensor Indexing", loc)
@@ -4088,16 +4118,16 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
           staticIndex = constantEvaluator.eval(indexExpr).value().intValueExact();
         }
 
-        currType = currTensoType.pop();
+        currType = currTensorType.pop();
         expr.type = currType;
 
         // If a static type is declared, verify it's within the bounds and
         if (staticIndex != null) {
           if (staticIndex < 0
-              || staticIndex >= currTensoType.outerMostDimension()) {
+              || staticIndex >= currTensorType.outerMostDimension()) {
             addErrorAndStopChecking(error("Tensor Index out of bounds", indexExpr)
                 .locationDescription(indexExpr,
-                    "Invalid index `%d` for tensor `%s`", staticIndex, currTensoType)
+                    "Invalid index `%d` for tensor `%s`", staticIndex, currTensorType)
                 .build());
           }
 
@@ -4322,14 +4352,13 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         }
       } else if (expr.target instanceof Identifier id
           && id.target() instanceof StageDefinition stageDef) {
-        var output = stageDef.outputs.stream()
-            .filter(o -> o.identifier().name.equals(subCall.identifier().name))
-            .findFirst();
-        if (output.isEmpty()) {
-          var availableOutputs = stageDef.outputs.stream().map(o -> o.identifier().name).toList();
-          addErrorAndStopChecking(error("Unknown stage output", subCall.identifier())
-              .suggestions(Levenshtein.sortAll(subCall.identifier().name, availableOutputs))
-              .build());
+
+        if (stageDef.outputType == null) {
+          throw addErrorAndStopChecking(error("Invalid Reference", expr)
+              .description(
+                  "Cannot reference a stage that has no output."
+              ).build()
+          );
         }
 
         if (!subCall.argsIndices.isEmpty()) {
@@ -4340,7 +4369,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
                   .build());
         }
 
-        expr.type = output.get().type();
+        expr.type = stageDef.outputType.type();
       } else if (type instanceof GroupType groupType) {
         if (!fieldName.equals("length") && !fieldName.equals("bitLength")) {
           throw addErrorAndStopChecking(
@@ -4454,38 +4483,38 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   }
 
   private void processStageCall(CallIndexExpr expr, StageDefinition callTarget) {
-    check(callTarget);
+    boolean hasError = false;
 
-    var availableOutputs = callTarget.outputs.stream().map(o -> o.identifier().name).toList();
-    if (expr.subCalls.isEmpty()) {
-      addErrorAndStopChecking(error("Missing stage output", expr)
+    if (callTarget.outputType == null) {
+      addErrorAndContinueChecking(error("Invalid Reference", expr)
           .description(
-              "Stages describe outputs and you cannot just refer to a whole stage but to one of "
-                  + "the outputs.")
-          .suggestions(availableOutputs)
-          .build());
+              "Cannot reference a stage that has no output."
+          ).build()
+      );
+      hasError = true;
     }
 
-    if (expr.subCalls.size() > 1) {
-      addErrorAndStopChecking(error("Too many stage outputs", expr)
-          .description(
-              "You can only refer to one stage output at a time.")
-          .build());
+    if (!expr.subCalls.isEmpty()) {
+      addErrorAndContinueChecking(error("Invalid Reference", expr)
+          .description("Stages do not support access via `.`.")
+          .build()
+      );
+      hasError = true;
     }
 
-    var subCall = expr.subCalls.getFirst();
-    var subCallName = subCall.identifier().name;
-
-    var output = callTarget.outputs.stream().filter(o -> o.identifier().name.equals(subCallName))
-        .findFirst();
-
-    if (output.isEmpty()) {
-      addErrorAndStopChecking(error("Unknown stage output", subCall.identifier())
-          .suggestions(Levenshtein.sortAll(subCallName, availableOutputs))
-          .build());
+    if (!expr.slices().isEmpty()) {
+      addErrorAndContinueChecking(error("Invalid Reference", expr)
+          .description("Stages do not slicing.")
+          .build()
+      );
+      hasError = true;
     }
 
-    expr.type = output.get().type();
+    if (hasError) {
+      throw new StopPartialCheckingSignal();
+    }
+
+    expr.type = check(requireNonNull(callTarget.outputType));
   }
 
   private void processCallOfTarget(CallIndexExpr expr, Node callTarget) {
@@ -4846,9 +4875,8 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     expr.type = Type.bool();
     checkGroupQuantifier(null, expr.operations);
 
-    var visitingDef = getCurrentlyVisitingDefinition();
-    if (visitingDef == null
-        || !(visitingDef instanceof AnnotationDefinition annotation)
+    final var def = getCurrentlyVisitingDefinition();
+    if (!(def instanceof AnnotationDefinition annotation)
         || !(annotation.target instanceof GroupDefinition)) {
       final var diagnostic = error("Invalid `exists-in` expression", expr)
           .description("The exists-in expression is only permissible for annotations on "
@@ -4866,8 +4894,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     expr.type = Type.bool();
 
     var visitingDef = getCurrentlyVisitingDefinition();
-    if (visitingDef == null
-        || !(visitingDef instanceof AnnotationDefinition annotation)
+    if (!(visitingDef instanceof AnnotationDefinition annotation)
         || !(annotation.target instanceof GroupDefinition)) {
       final var diagnostic = error("Invalid `exists-then` expression", expr)
           .description("The exists-then expression is only permissible for annotations on "
@@ -4894,8 +4921,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     expr.type = Type.bool();
 
     var visitingDef = getCurrentlyVisitingDefinition();
-    if (visitingDef == null
-        || !(visitingDef instanceof AnnotationDefinition annotation)
+    if (!(visitingDef instanceof AnnotationDefinition annotation)
         || !(annotation.target instanceof GroupDefinition)) {
       final var diagnostic = error("Invalid `forall-then` expression", expr)
           .description("The forall-then expression is only permissible for annotations on "
@@ -5112,7 +5138,30 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
   @Override
   public Void visit(AssignmentStatement statement) {
-    var targetType = check(statement.target);
+    final Type targetType;
+
+    if (statement.target instanceof Identifier targetIdentifier
+        && targetIdentifier.target() instanceof StageDefinition stageDefinition) {
+      if (getCurrentlyVisitingDefinition() != stageDefinition) {
+        throw addErrorAndStopChecking(error("Invalid Assignment", statement)
+            .description("Cannot assign to a `stage` outside of its own body.")
+            .build()
+        );
+      }
+
+      if (stageDefinition.outputType == null) {
+        throw addErrorAndStopChecking(error("Invalid Assignment", statement)
+            .description("Cannot assign to a `stage` that has no output.")
+            .build()
+        );
+      }
+
+      targetType = check(stageDefinition.outputType);
+      stageDefinition.hasOutputAssignment = true;
+    } else {
+      targetType = check(statement.target);
+    }
+
     var valueType = checkWith(statement.valueExpression, targetType);
 
     if (!targetType.equals(valueType) && canImplicitCast(valueType, targetType)) {
@@ -5134,7 +5183,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     };
     var assignableDefinitions =
         List.of(RegisterDefinition.class, CounterDefinition.class, MemoryDefinition.class,
-            AliasDefinition.class, FormatField.class, StageOutputDefinition.class);
+            AliasDefinition.class, FormatField.class, StageDefinition.class);
     if (targetSource == null || !assignableDefinitions.stream()
         .anyMatch(klass -> klass.isInstance(targetSource))) {
       var message = "This is not writable";
@@ -5363,17 +5412,17 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
     } else {
       final var sortedArgCounts = expectedArgCounts.stream().sorted().distinct().toList();
 
-      final int minExpectedArgCount = sortedArgCounts.getFirst();
-      final int maxExpectedArgCount = sortedArgCounts.getLast();
+      final int minExpected = sortedArgCounts.getFirst();
+      final int maxExpected = sortedArgCounts.getLast();
 
-      if (sortedArgCounts.size() == maxExpectedArgCount - minExpectedArgCount + 1) {
+      if (sortedArgCounts.size() == maxExpected - minExpected + 1 && sortedArgCounts.size() > 2) {
         // Special case a continuous range of expected argument counts by only
         // printing the lower and upper bounds.
         isPlural = true;
         expectedArgCountString
-            .append(minExpectedArgCount)
+            .append(minExpected)
             .append(" to ")
-            .append(maxExpectedArgCount);
+            .append(maxExpected);
       } else {
         isPlural = true;
         for (int i = 0; i != sortedArgCounts.size(); ++i) {
@@ -5394,5 +5443,32 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         isPlural ? "s" : "",
         actualArgCount
     ).build();
+  }
+
+  private boolean recursivelyContainsErroredStatement(Node root) {
+    var containsErroredStatement = new boolean[1];
+
+    // Use a proper class instead of a lambda to allow recursion.
+    final var consumer = new Consumer<Node>() {
+      @Override
+      public void accept(Node node) {
+        if (node instanceof Statement statement) {
+          if (erroredStatements.contains(statement)) {
+            containsErroredStatement[0] = true;
+          }
+        } else if (node instanceof Definition definition) {
+          if (erroredDefinitions.contains(definition)) {
+            containsErroredStatement[0] = true;
+          }
+        }
+        if (!containsErroredStatement[0]) {
+          node.forEachChild(this);
+        }
+      }
+    };
+
+    root.forEachChild(consumer);
+
+    return containsErroredStatement[0];
   }
 }

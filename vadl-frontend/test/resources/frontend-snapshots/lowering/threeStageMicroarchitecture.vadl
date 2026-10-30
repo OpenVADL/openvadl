@@ -8,29 +8,29 @@ instruction set architecture ISA = {
 micro architecture SingleStage implements ISA = {
   logic [forwarding] bypass
 
-   stage IF -> ( fr : FetchResult ) =
+   stage IF -> FetchResult =
    {
-     fr := fetchNext
+     IF := fetchNext
    }
 
-  stage ID -> ( ir : Instruction ) =
+  stage ID -> Instruction =
   {
-    let instr = decode( IF.fr ) in
+    let instr = decode( IF ) in
     {
       instr.readOrForward( @X, @bypass )
       instr.read( @X )
-      ir := instr
+      ID := instr
     }
   }
 
-  stage EX -> ( ir : Instruction ) =
+  stage EX -> Instruction =
   {
-    let instr = ID.ir in
+    let instr = ID in
     {
       instr.results( @X, @bypass )
       instr.read( @Mem )
       instr.write ( @X )
-      ir := instr
+      EX := instr
     }
   }
 }
@@ -55,45 +55,41 @@ micro architecture SingleStage implements ISA = {
 //    . : FunctionCount: 0
 //    . : OperationCount: 0
 //    . : Stage name: "IF"
-//    . : ' Outputs: [fr]
+//    . : ' OutputType: FetchResult
 //    . : ' Signals: []
 //    . : ' Registers: []
 //    . : ' Prev: -
 //    . : ' Next: []
 //    . : ' Behavior Graph:
 //    . : ' | n0 BuiltInCall      in: ()   succ: ()     type: FetchResult   builtin: fetchNext
-//    . : ' | n1 WriteStageOutput in: (n0) succ: ()     stageOutput: fr
+//    . : ' | n1 WriteStageOutput in: (n0) succ: ()
 //    . : ' | n2 InstrEnd         in: (n1) succ: ()     effects: 1
 //    . : ' | n3 Start            in: ()   succ: (n2)   next: set
-//    . : ' StageOutput name: "fr"
-//    . : ' | Type: FetchResult
 //    . : Stage name: "ID"
-//    . : ' Outputs: [ir]
+//    . : ' OutputType: Instruction
 //    . : ' Signals: []
 //    . : ' Registers: []
 //    . : ' Prev: -
 //    . : ' Next: []
 //    . : ' Behavior Graph:
-//    . : ' | n0 ReadStageOutput  in: ()         succ: ()     type: FetchResult   stageOutput: fr
-//    . : ' | n1 BuiltInCall      in: (n0)       succ: ()     type: Instruction   builtin: decode
+//    . : ' | n0 ReadStageOutput  in: ()         succ: ()     type: FetchResult   stage: IF
+//    . : ' | n1 MiaBuiltInCall   in: (n0)       succ: ()     type: Instruction   resources: []    logic: []
 //    . : ' | n2 Let              in: (n1)       succ: ()     type: Instruction   name: instr
 //    . : ' | n3 MiaBuiltInCall   in: (n2)       succ: ()     type: Instruction   resources: [X]   logic: [bypass]
 //    . : ' | n4 StageEffect      in: (n3)       succ: ()     cond: -
 //    . : ' | n5 MiaBuiltInCall   in: (n2)       succ: ()     type: Instruction   resources: [X]   logic: []
 //    . : ' | n6 StageEffect      in: (n5)       succ: ()     cond: -
-//    . : ' | n7 WriteStageOutput in: (n2)       succ: ()     stageOutput: ir
+//    . : ' | n7 WriteStageOutput in: (n2)       succ: ()
 //    . : ' | n8 InstrEnd         in: (n4 n6 n7) succ: ()     effects: 3
 //    . : ' | n9 Start            in: ()         succ: (n8)   next: set
-//    . : ' StageOutput name: "ir"
-//    . : ' | Type: Instruction
 //    . : Stage name: "EX"
-//    . : ' Outputs: [ir]
+//    . : ' OutputType: Instruction
 //    . : ' Signals: []
 //    . : ' Registers: []
 //    . : ' Prev: -
 //    . : ' Next: []
 //    . : ' Behavior Graph:
-//    . : ' | n0  ReadStageOutput  in: ()            succ: ()     type: Instruction   stageOutput: ir
+//    . : ' | n0  ReadStageOutput  in: ()            succ: ()     type: Instruction   stage: ID
 //    . : ' | n1  Let              in: (n0)          succ: ()     type: Instruction   name: instr
 //    . : ' | n2  MiaBuiltInCall   in: (n1)          succ: ()     type: Instruction   resources: [X]     logic: [bypass]
 //    . : ' | n3  StageEffect      in: (n2)          succ: ()     cond: -
@@ -101,11 +97,9 @@ micro architecture SingleStage implements ISA = {
 //    . : ' | n5  StageEffect      in: (n4)          succ: ()     cond: -
 //    . : ' | n6  MiaBuiltInCall   in: (n1)          succ: ()     type: Instruction   resources: [X]     logic: []
 //    . : ' | n7  StageEffect      in: (n6)          succ: ()     cond: -
-//    . : ' | n8  WriteStageOutput in: (n1)          succ: ()     stageOutput: ir
+//    . : ' | n8  WriteStageOutput in: (n1)          succ: ()
 //    . : ' | n9  InstrEnd         in: (n3 n5 n7 n8) succ: ()     effects: 4
 //    . : ' | n10 Start            in: ()            succ: (n9)   next: set
-//    . : ' StageOutput name: "ir"
-//    . : ' | Type: Instruction
 //    . : Forwarding name: "bypass"
 //    . : ' LogicClass: Forwarding
 //    . : ' Signals: []

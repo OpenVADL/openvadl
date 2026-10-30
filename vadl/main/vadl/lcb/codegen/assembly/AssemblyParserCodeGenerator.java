@@ -375,9 +375,7 @@ public class AssemblyParserCodeGenerator {
     var resultVar = writeCastIfNecessary(ctx, element.alternatives().asmType(), element.asmType(),
         varName(element.alternatives()), false);
 
-    if (element.isEnclosingAlternativeOfAsmGroupType()) {
-      writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
-    }
+    writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
 
     writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
     ctx.ln("%s = %s;", tempVar, resultVar);
@@ -414,23 +412,20 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmOption element) {
-    var tempVar = symbolTable.getNextVariable();
-    var type = element.alternatives().asmType();
     var condition = getGuardCondition(element.semanticPredicate(), element.firstTokens());
 
-    ctx.ln("ParsedValue<%s> %s;", type, tempVar);
     ctx.ln("if (%s) {", condition);
     ctx.spacedIn();
     ctx.gen(element.alternatives());
-    ctx.ln("%s = %s;", tempVar, varName(element.alternatives()));
     ctx.spaceOut();
     ctx.ln("}");
-    ctx.ln("%s = %s;", varName(element), tempVar);
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmRepetition element) {
-    ctx.ln("while (%s) {", getGuardCondition(element.semanticPredicate(), element.firstTokens()));
+    var condition = getGuardCondition(element.semanticPredicate(), element.firstTokens());
+
+    ctx.ln("while (%s) {", condition);
     ctx.spacedIn();
     ctx.gen(element.alternatives());
     ctx.spaceOut();
@@ -658,7 +653,7 @@ public class AssemblyParserCodeGenerator {
 
       // to @register
       if (to == RegisterAsmType.instance()) {
-        ctx.ln("%s(%s.Value, %s);", destination, curValueVar, loc);
+        ctx.ln("%s(%s.Value, true, %s);", destination, curValueVar, loc);
         return tempVar;
       }
     }
@@ -711,9 +706,13 @@ public class AssemblyParserCodeGenerator {
     if (from == RegisterAsmType.instance()) {
       // to @operand
       if (to == OperandAsmType.instance()) {
-        ctx.ln("%s(%sParsedOperand::CreateReg("
-                + "%s.Value, %sParsedOperand::RegisterKind::rk_IntReg, %s));",
-            destination, namespace, curValueVar, namespace, loc);
+        ctx.ln(
+            "%sParsedOperand::RegisterKind %skind = %s.IsConstantToRegisterCast ? "
+                + "%sParsedOperand::RegisterKind::rk_ConstToReg "
+                + ": %sParsedOperand::RegisterKind::rk_IntReg;",
+            namespace, curValueVar, curValueVar, namespace, namespace);
+        ctx.ln("%s(%sParsedOperand::CreateReg(%s.Value, %skind, %s));", destination, namespace,
+            curValueVar, curValueVar, loc);
         return tempVar;
       }
     }

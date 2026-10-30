@@ -1,0 +1,34 @@
+instruction set architecture ISA = {}
+
+micro architecture MiA implements ISA = {
+
+  stage DECODE -> Instruction = {
+    DECODE := decode(fetchNext)
+  }
+
+  [size : 8]
+  [source : DECODE]
+  logic [reservation station] RS
+
+  operation Op = {}
+
+  stage FilteredConsumer -> Instruction = {
+    let instr = consume(RS, Op) in {
+      FilteredConsumer := instr
+    }
+  }
+
+  stage UnfilteredConsumer -> Instruction = {
+    let instr = consume(RS) in {
+      UnfilteredConsumer := instr
+    }
+  }
+}
+
+
+//  Reported Diagnostics:
+//
+//  No diagnostics were reported, the input was correctly parsed, typechecked and lowered.
+//
+//
+// Part of the class vadl.ast.FrontendSnapshotTests

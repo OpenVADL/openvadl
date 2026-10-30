@@ -269,5 +269,12 @@ assembly description AD for ABI = {
             rd = Register @operand ","
             symbol = Label @operand
         ;
+
+        add_test @instruction :
+            mnemonic = "ADD_TEST" @operand
+            rd = Register @operand ","
+            rs1 = Register @operand ","
+            rs2 = (Natural @register) @operand
+        ;
     }
 }
