@@ -262,16 +262,44 @@ public interface IsaMatchingUtils {
   }
 
   /**
-   * Create a map from the specification with {@link MachineInstructionLabel}.
+   * Create a map from the specification with {@link MachineInstructionCtx}.
+   * This map can be used to find every {@link Instruction} tagged
+   * with a specific {@link MachineInstructionLabel}.
    */
   default Map<MachineInstructionLabel, List<Instruction>> createLabelMap(
       Specification specification) {
     return specification.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
         .filter(instruction -> instruction.hasExtension(MachineInstructionCtx.class))
-        .collect(Collectors.groupingBy(entry -> {
-          var ext = ensureNonNull(entry.extension(MachineInstructionCtx.class), "must not be null");
-          return ext.label();
-        }));
+        .flatMap(instruction -> {
+          var ext = ensureNonNull(instruction.extension(MachineInstructionCtx.class),
+              "must not be null");
+          return ext.labels().stream().map(label -> Map.entry(label, instruction));
+        })
+        .collect(Collectors.groupingBy(Map.Entry::getKey,
+            Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
+  }
+
+
+  /**
+   * Create a map from the specification with {@link MachineInstructionCtx}.
+   * This map can be used to find the primary (first) {@link MachineInstructionLabel}
+   * for every {@link Instruction}.
+   */
+  default IdentityHashMap<Instruction, MachineInstructionLabel> createReversedLabelMap(
+      Specification specification
+  ) {
+    return specification.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
+        .filter(instruction -> instruction.hasExtension(MachineInstructionCtx.class))
+        .collect(Collectors.toMap(
+            instruction -> instruction,
+            instruction -> {
+              var ext = ensureNonNull(instruction.extension(MachineInstructionCtx.class),
+                  "must not be null");
+              return ext.label();
+            },
+            (first, second) -> first,
+            IdentityHashMap::new
+        ));
   }
 
   /**
@@ -288,13 +316,14 @@ public interface IsaMatchingUtils {
   }
 
   /**
-   * The {@link IsaMachineInstructionMatchingPass} computes a hashmap with the instruction label as
-   * a key and all the matched instructions as value. But we want to know whether a certain
-   * {@link Instruction} or {@link PseudoInstruction} has a label.
+   * The {@link IsaPseudoInstructionMatchingPass} computes a hashmap with
+   * {@link PseudoInstructionLabel} as a key and all the matched {@link PseudoInstruction} as value.
+   * But we want to know whether a certain {@link PseudoInstruction}
+   * has a specific {@link PseudoInstructionLabel}.
    */
-  default <K, V> IdentityHashMap<V, K> flipIsaMatching(
-      Map<K, List<V>> isaMatched) {
-    IdentityHashMap<V, K> inverse = new IdentityHashMap<>();
+  default IdentityHashMap<PseudoInstruction, PseudoInstructionLabel> flipPseudoIsaMatching(
+      Map<PseudoInstructionLabel, List<PseudoInstruction>> isaMatched) {
+    IdentityHashMap<PseudoInstruction, PseudoInstructionLabel> inverse = new IdentityHashMap<>();
 
     for (var entry : isaMatched.entrySet()) {
       for (var item : entry.getValue()) {
