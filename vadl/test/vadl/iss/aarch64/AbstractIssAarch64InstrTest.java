@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,12 +19,18 @@ package vadl.iss.aarch64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import vadl.iss.IssDockerRuntime;
 import vadl.iss.IssInstrTest;
 
 public abstract class AbstractIssAarch64InstrTest extends IssInstrTest {
 
   // set at the bottom of this file
   static final Map<String, String> GDB_REF_MAP = new HashMap<>();
+
+  @Override
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.AARCH64;
+  }
 
   @Override
   public Map<String, String> gdbRegMap() {

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,15 @@ package vadl.iss.riscv;
 
 import java.util.List;
 import java.util.Map;
+import vadl.iss.IssDockerRuntime;
 import vadl.iss.IssInstrTest;
 
 public abstract class AbstractIssRiscv32InstrTest extends IssInstrTest {
+
+  @Override
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.RISCV;
+  }
 
   @Override
   protected List<String> withUpstreamTargets() {
