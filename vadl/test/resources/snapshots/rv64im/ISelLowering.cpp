@@ -191,6 +191,9 @@ SDValue processornamevalueTargetLowering::LowerOperation(SDValue Op, SelectionDA
       SDValue Chain = Op.getOperand(0);
 
       
+        if (IntNo == Intrinsic::processorNameValue_FENCE) {
+          return SDValue(DAG.getMachineNode(processornamevalue::FENCE, DL, MVT::Other, Chain), 0);
+        }
         if (IntNo == Intrinsic::processorNameValue_ECALL) {
           return SDValue(DAG.getMachineNode(processornamevalue::ECALL, DL, MVT::Other, Chain), 0);
         }
