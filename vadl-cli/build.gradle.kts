@@ -58,6 +58,25 @@ graalvmNative {
             classpath.from(sourceSets["main"].runtimeClasspath)
             applyCommonConfig("epsilon")
         }
+        create("profile") {
+            // Build with `nativeProfileCompile`. Keep the normal optimizations and GC for representative profiles.
+            classpath.from(sourceSets["main"].runtimeClasspath)
+            applyCommonConfig("serial")
+            imageName.set("openvadl-profile")
+            // GraalVM 25 does not support native debug information (-g) on macOS. JFR works without it.
+            debug.set(providers.systemProperty("os.name").map { it == "Linux" })
+            buildArgs.addAll(
+                "-H:+UnlockExperimentalVMOptions",
+                // JFR recordings, process discovery, attach-time diagnostics, and memory profiling.
+                "--enable-monitoring=jfr,jvmstat,jcmd,heapdump,nmt",
+                // Preserve stack frames and method symbols for native profilers such as perf.
+                "-H:+PreserveFramePointer",
+                "-H:-DeleteLocalSymbols",
+                "-H:-UnlockExperimentalVMOptions",
+            )
+            // Record a run with:
+            // openvadl-profile -XX:StartFlightRecording=filename=profile.jfr,settings=profile,dumponexit=true <args>
+        }
     }
 }
 

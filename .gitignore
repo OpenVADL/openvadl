@@ -22,6 +22,7 @@ docs/obj
 *.iws
 *.iml
 *.ipr
+*.jfr
 out/
 !vadl/src/main/**/out/
 !vadl/src/test/**/out/
