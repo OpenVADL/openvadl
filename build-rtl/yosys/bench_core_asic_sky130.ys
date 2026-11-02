@@ -1,0 +1,33 @@
+# read design
+read_verilog -sv build/TOP_MODULE.sv
+
+# elaborate design hierarchy
+hierarchy -check -top TOP_MODULE
+
+# the high-level stuff
+proc; opt; fsm; opt; memory; opt
+
+# mapping to internal cell library
+techmap; opt
+
+# mapping flip-flops to sky130_fd_sc_hd__tt_025C_1v80.lib
+dfflibmap -liberty /opt/pdk/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# mapping logic to sky130_fd_sc_hd__tt_025C_1v80.lib
+abc -liberty /opt/pdk/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# print stats
+stat -liberty /opt/pdk/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# cleanup
+clean
+
+# write synthesized design
+write_verilog build/TOP_MODULE_netlist.v
+
+# write flattened design
+#>flatten
+# split bus-assignments into single bits
+#>splitnets -ports
+#>opt_clean
+#>write_verilog -noattr build/TOP_MODULE_flat_split.v
