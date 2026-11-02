@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Pair with -XX:FlightRecorderOptions=stackdepth=256 at runtime. -->
+<configuration version="2.0" label="OpenVADL CPU" provider="OpenVADL"
+               description="CPU sampling at 1 ms with GC pauses; allocation and leak sampling are disabled.">
+  <event name="jdk.ExecutionSample">
+    <setting name="enabled">true</setting>
+    <!-- GraalVM 25's JFR implementation clamps sub-millisecond periods to 1 ms. -->
+    <setting name="period">1 ms</setting>
+  </event>
+  <event name="jdk.GarbageCollection">
+    <setting name="enabled">true</setting>
+  </event>
+  <event name="jdk.GCPhasePause">
+    <setting name="enabled">true</setting>
+  </event>
+  <event name="jdk.ThreadCPULoad">
+    <setting name="enabled">true</setting>
+    <setting name="period">1 s</setting>
+  </event>
+</configuration>
