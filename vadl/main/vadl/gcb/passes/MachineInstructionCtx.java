@@ -16,6 +16,7 @@
 
 package vadl.gcb.passes;
 
+import java.util.List;
 import java.util.Optional;
 import vadl.types.BitsType;
 import vadl.viam.Definition;
@@ -23,19 +24,16 @@ import vadl.viam.DefinitionExtension;
 import vadl.viam.Instruction;
 
 /**
- * An extension for the {@link Instruction}. It will be used
- * label the instruction with a {@link MachineInstructionLabel}. The {@code type} indicates on
- * what type the instruction operates. It can be {@link Optional#empty()} when they are
- * multiple writes or reads with different sizes.
+ * An extension for the {@link Instruction}. It will be used to
+ * label the instruction with a list of {@link TypedMachineInstructionLabel}.
+ * The first label is seen as the primary label.
  */
 public class MachineInstructionCtx extends DefinitionExtension<Instruction> {
-  private final MachineInstructionLabel label;
-  private final Optional<BitsType> type;
+  private final List<TypedMachineInstructionLabel> labels;
 
-  public MachineInstructionCtx(MachineInstructionLabel label,
-                               Optional<BitsType> type) {
-    this.label = label;
-    this.type = type;
+  public MachineInstructionCtx(List<TypedMachineInstructionLabel> labels) {
+
+    this.labels = labels;
   }
 
   @Override
@@ -44,10 +42,17 @@ public class MachineInstructionCtx extends DefinitionExtension<Instruction> {
   }
 
   public MachineInstructionLabel label() {
-    return label;
+    return labels.getFirst().label();
   }
 
   public Optional<BitsType> type() {
-    return type;
+    return labels.getFirst().type();
+  }
+
+  /**
+   * Get all {@link MachineInstructionLabel} of the instruction in the order they were matched.
+   */
+  public List<MachineInstructionLabel> labels() {
+    return labels.stream().map(TypedMachineInstructionLabel::label).toList();
   }
 }
