@@ -17,10 +17,16 @@ COPY --from=riscv-toolchain /opt/riscv /opt/riscv
 COPY --from=riscv-toolchain /opt/qemu /opt/qemu
 COPY --from=riscv-toolchain /usr/local/bin/ /usr/local/bin
 
+ARG PICOLIBC_VERSION=1.8.10
+RUN apt-get update \
+    && apt-get install -y meson
+RUN git clone --depth 1 -b ${PICOLIBC_VERSION} https://github.com/picolibc/picolibc /opt/src/picolibc
+
 COPY --from=rust-builder /usr/src/elf_machine_updater/target/release/elf_machine_updater /work/elf_machine_updater
 
 WORKDIR /work
 COPY helper /helper
+COPY lcb-runtime /lcb-runtime
 COPY lcb_wrapper.sh .
 COPY llvm.sh .
 COPY compile.sh .
