@@ -19,13 +19,14 @@ package vadl.lsp.document;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentItem;
-import vadl.lsp.DiagnosticsPublisher;
-import vadl.lsp.VadlTextDocumentService;
+import vadl.lsp.features.PublishDiagnosticsFeature;
 import vadl.utils.DiskVirtualFileSystem;
 
 /**
@@ -35,14 +36,19 @@ import vadl.utils.DiskVirtualFileSystem;
  * <p>All methods are thread-safe.
  */
 public class DocumentStore {
-  public final VadlTextDocumentService documentService;
-  private final DiagnosticsPublisher diagnosticsPublisher = new DiagnosticsPublisher(this);
+  final ExecutorService executor;
+  @Nullable
+  private PublishDiagnosticsFeature publishDiagnosticsFeature;
 
   private final Map<Path, Document> openDocuments = new ConcurrentHashMap<>();
   private final DependencyMap<Path> documentDependencies = new DependencyMap<>();
 
-  public DocumentStore(VadlTextDocumentService documentService) {
-    this.documentService = documentService;
+  public DocumentStore(ExecutorService executor) {
+    this.executor = executor;
+  }
+
+  public void setPublishDiagnosticsFeature(PublishDiagnosticsFeature feature) {
+    this.publishDiagnosticsFeature = feature;
   }
 
   /**
@@ -55,7 +61,7 @@ public class DocumentStore {
     openDocuments.put(document.getPath(), document);
     clearDependentCompilations(document);
 
-    diagnosticsPublisher.publishDiagnostics(document);
+    publishDiagnostics(document);
     publishDiagnosticsForDependentDocuments(document);
   }
 
@@ -95,7 +101,7 @@ public class DocumentStore {
     document.clearCompilation();
     clearDependentCompilations(document);
 
-    diagnosticsPublisher.publishDiagnostics(document);
+    publishDiagnostics(document);
     publishDiagnosticsForDependentDocuments(document);
   }
 
@@ -123,12 +129,12 @@ public class DocumentStore {
   /**
    * Returns true if given snapshot is the current version of its associated document.
    */
-  public boolean documentVersionIsCurrent(DocumentSnapshot documentSnapshot) {
+  private boolean documentSnapshotIsCurrent(DocumentSnapshot documentSnapshot) {
     Document document = openDocuments.get(documentSnapshot.path);
     if (document == null) {
       return false;
     }
-    return documentSnapshot.version == document.getCurrentSnapshot().version;
+    return document.isCurrent(documentSnapshot);
   }
 
 
@@ -145,7 +151,7 @@ public class DocumentStore {
    * <p>Should be called by the Document when a compilation has finished.
    */
   synchronized void updateDependencies(Document.CompilationInputAndResult compilation) {
-    if (!documentVersionIsCurrent(compilation.documentSnapshot())) {
+    if (!documentSnapshotIsCurrent(compilation.documentSnapshot())) {
       return;
     }
     documentDependencies.setDependencies(compilation.documentSnapshot().path,
@@ -169,8 +175,17 @@ public class DocumentStore {
     for (Path path : documentDependencies.getDependents(document.getPath())) {
       var d = openDocuments.get(path);
       if (d != null) {
-        diagnosticsPublisher.publishDiagnostics(d);
+        publishDiagnostics(d);
       }
     }
+  }
+
+  private void publishDiagnostics(Document document) {
+    if (publishDiagnosticsFeature == null) {
+      return;
+    }
+    var unused = executor.submit(() -> {
+      Objects.requireNonNull(publishDiagnosticsFeature).publishDiagnostics(document);
+    });
   }
 }

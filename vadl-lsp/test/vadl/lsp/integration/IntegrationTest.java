@@ -32,6 +32,9 @@ import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsCapabilities;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.SemanticTokenModifiers;
+import org.eclipse.lsp4j.SemanticTokenTypes;
+import org.eclipse.lsp4j.SemanticTokensCapabilities;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentItem;
@@ -63,6 +66,12 @@ public abstract class IntegrationTest {
     textDocumentCapabilities.setHover(new HoverCapabilities(
         List.of(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT), false));
     textDocumentCapabilities.setPublishDiagnostics(new PublishDiagnosticsCapabilities());
+
+    var semanticTokens = new SemanticTokensCapabilities();
+    semanticTokens.setTokenTypes(List.of(SemanticTokenTypes.Type, SemanticTokenTypes.Variable));
+    semanticTokens.setTokenModifiers(List.of(SemanticTokenModifiers.Abstract,
+        SemanticTokenModifiers.Deprecated));
+    textDocumentCapabilities.setSemanticTokens(semanticTokens);
 
     var params = new InitializeParams();
     params.setCapabilities(new ClientCapabilities(null,
