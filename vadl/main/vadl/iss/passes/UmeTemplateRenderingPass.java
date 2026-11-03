@@ -16,6 +16,7 @@
 
 package vadl.iss.passes;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
@@ -65,6 +66,15 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
 
     Abi abi = ume.abi();
 
+    var templateSyscalls = ume.customSyscalls().stream()
+        .map(syscall -> {
+          var map = new HashMap<String, Object>();
+          map.put("number", syscall.number());
+          map.put("name", syscall.name());
+          return map;
+        })
+        .toList();
+
     vars.put("config", Map.ofEntries(
         Map.entry("sysReg", ume.getSyscallNumber().singleIndex()),
         Map.entry("sysRegFile", ume.getSyscallNumber().resource().simpleName().toLowerCase()),
@@ -92,6 +102,7 @@ public class UmeTemplateRenderingPass extends IssTemplateRenderingPass {
                 "file",  ref.resource().simpleName().toLowerCase()
             ))
             .toList()),
+        Map.entry("customSyscalls", templateSyscalls),
         Map.entry("syscallInstr", ume.syscallInstr().simpleName()),
         Map.entry("insn_width_bytes", ume.syscallInstr().format().type().bitWidth() / 8)
     ));

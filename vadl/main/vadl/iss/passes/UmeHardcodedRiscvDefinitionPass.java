@@ -101,12 +101,18 @@ public class UmeHardcodedRiscvDefinitionPass extends AbstractIssPass {
         SourceLocation.INVALID_SOURCE_LOCATION
     );
 
+    List<UserModeEmulation.CustomSyscall> customSyscalls = List.of(
+        new UserModeEmulation.CustomSyscall(258, "hwprobe"),
+        new UserModeEmulation.CustomSyscall(259, "flush_icache")
+    );
+
     return new UserModeEmulation(
         identifier,
         isa, abi, args,
         syscallInstr,
         syscallNrRef,
-        syscallReturnRef);
+        syscallReturnRef,
+        customSyscalls);
   }
 
 }
