@@ -26,6 +26,13 @@ sometimes makes sense to do a JVM profile to get a rough estimate first.
 Just be aware that some things that are slow on the JVM are instant on 
 the native image as they move to build-time, like class loading.
 
+We'll go into two profilers here. Async profiler is the best one for 
+our usecase. For JVM builds we only go into its setup. For Native images
+async is only really usable on linux as on macOS the names are mangeled and
+hard to reason which method is what. Therefore, we also go into the JFR profiler
+which is too corse for most cases as it only allows at the highest frequency
+a sample every 1ms.
+
 ## JVM profiler with IntelliJ IDEA 
 
 On the JVM we recommend setting up two profilers, one for cpu profiling
@@ -45,7 +52,11 @@ and one for memory profiling.
 6. Click "Profile <your-target> with <your-profiler>".
 
 
-## Native Image profiler
+## Native Image profiler with JFR
+
+JFR is not the right profiler for quick-lived applications like OpenVADL. If you are on Linux I strongly recommend to
+with Async Profiler. For macOS this works but the names in the profile will be mangled and hard to read/trace back.
+For Windows this straight up isn't an option.
 
 For native image you need to enable profiling support at compile time. This is already setup as the `native-profile`
 target. 
@@ -77,3 +88,53 @@ where all methods are marked `JIT compiled` with which IntelliJ can work again.
 
 In general the profiler included in native images lacks some features, provides less accuracy (no lower than 1ms 
 sampling intervals) and runs faster which means that even fewer samples are recorded.
+
+## Native Image with async profiler
+
+This workflow isn't available on Windows, and on macOS the method names in the profile are mangled. This means
+every method has a hash postfix and two methods with the same name in the same class have the same name only to be
+distinct by the hash but reasoning which method links to which Java method may be hard to impossible.
+
+For native image you need to enable profiling support at compile time. This is already setup as the `native-profile`
+target.
+
+```bash
+./gradlew :vadl-cli:nativeProfileCompile
+```
+
+### Install async-profiler
+
+You need to install the async profiler seperatly.
+
+On macOS, install the [Homebrew formula](https://formulae.brew.sh/formula/async-profiler):
+
+```bash
+brew install async-profiler
+export ASYNC_PROFILER_HOME="$(brew --prefix async-profiler)"
+```
+
+For Linux, download and extract the matching `linux-x64` or `linux-arm64` package
+from the same release, then set `ASYNC_PROFILER_HOME` to its extracted directory.
+The library must match the executable's architecture.
+
+### Record a profile
+
+On macOS:
+
+```bash
+DYLD_INSERT_LIBRARIES="$ASYNC_PROFILER_HOME/lib/libasyncProfiler.dylib" \
+ASPROF_COMMAND="start,event=cpu,interval=200us,cstack=fp,file=native-async.jfr" \
+  ./vadl-cli/build/native/nativeProfileCompile/openvadl-profile \
+  check sys/huge/huge.vadl --decoder skip=all
+```
+
+On Linux:
+
+```bash
+LD_PRELOAD="$ASYNC_PROFILER_HOME/lib/libasyncProfiler.so" \
+ASPROF_COMMAND="start,event=cpu,interval=200us,cstack=fp,file=native-async.jfr" \
+  ./vadl-cli/build/native/nativeProfileCompile/openvadl-profile \
+  check sys/huge/huge.vadl --decoder skip=all  # <-- Replace this with what you want to profile
+```
+
+Open **`native-async.jfr`** directly in IDEA or another JFR viewer.
