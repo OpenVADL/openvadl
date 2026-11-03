@@ -1,0 +1,25 @@
+# Meson cross file for building picolibc with the LCB rv32im toolchain.
+# build-runtime.sh also uses the c and ar entries to build compiler-rt.
+[binaries]
+c = ['python3', '/lcb-runtime/lcb-rv32im-cc']
+ar = '/src/llvm-final/build/bin/llvm-ar'
+nm = '/src/llvm-final/build/bin/llvm-nm'
+strip = '/src/llvm-final/build/bin/llvm-strip'
+
+[host_machine]
+system = 'none'
+# Custom family: picolibc builds only the machine sources from machine-rv32im/ (see
+# build-runtime.sh) instead of its RISC-V assembly, which the generated assembler cannot parse.
+cpu_family = 'rv32im'
+cpu = 'rv32im'
+endian = 'little'
+
+[properties]
+skip_sanity_check = true
+needs_exe_wrapper = true
+default_flash_addr = '0x80000000'
+default_flash_size = '0x00400000'
+default_ram_addr   = '0x80400000'
+default_ram_size   = '0x00200000'
+
+
