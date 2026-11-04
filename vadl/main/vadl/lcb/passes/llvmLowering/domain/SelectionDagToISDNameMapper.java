@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -22,11 +22,17 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBSwapSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotlSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulhSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSrlPartsSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulLoHiSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulhSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmURemSD;
 import vadl.utils.SourceLocation;
 
 /**
@@ -59,6 +65,18 @@ public class SelectionDagToISDNameMapper {
       return "MUL";
     } else if (nodeLowerable.isAssignableFrom(LlvmSMulSD.class)) {
       return "SMUL_LOHI";
+    } else if (nodeLowerable.isAssignableFrom(LlvmSMulhSD.class)) {
+      return "MULHS";
+    } else if (nodeLowerable.isAssignableFrom(LlvmUMulhSD.class)) {
+      return "MULHU";
+    } else if (nodeLowerable.isAssignableFrom(LlvmSDivSD.class)) {
+      return "SDIV";
+    } else if (nodeLowerable.isAssignableFrom(LlvmUDivSD.class)) {
+      return "UDIV";
+    } else if (nodeLowerable.isAssignableFrom(LlvmSRemSD.class)) {
+      return "SREM";
+    } else if (nodeLowerable.isAssignableFrom(LlvmURemSD.class)) {
+      return "UREM";
     }
 
     throw Diagnostic.error("Cannot map to class name", SourceLocation.INVALID_SOURCE_LOCATION)

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -34,11 +34,17 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBSwapSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotlSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulhSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSrlPartsSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulLoHiSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulhSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmURemSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.pass.Pass;
@@ -69,6 +75,12 @@ public class ISelLoweringOperationActionPass extends Pass {
     expandableSelectionDagNodes.add(LlvmUMulLoHiSD.class);
     expandableSelectionDagNodes.add(LlvmMulSD.class);
     expandableSelectionDagNodes.add(LlvmSMulSD.class);
+    expandableSelectionDagNodes.add(LlvmSMulhSD.class);
+    expandableSelectionDagNodes.add(LlvmUMulhSD.class);
+    expandableSelectionDagNodes.add(LlvmSDivSD.class);
+    expandableSelectionDagNodes.add(LlvmUDivSD.class);
+    expandableSelectionDagNodes.add(LlvmSRemSD.class);
+    expandableSelectionDagNodes.add(LlvmURemSD.class);
   }
 
   public ISelLoweringOperationActionPass(GeneralConfiguration configuration) {
