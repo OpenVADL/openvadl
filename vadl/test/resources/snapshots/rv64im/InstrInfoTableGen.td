@@ -94,6 +94,8 @@ def ADJCALLSTACKUP : Instruction
 def RET : Instruction
 {
     let Namespace = "processornamevalue";
+    let Size = 4;
+    let CodeSize = 4;
     let InOperandList = (ins);
     let OutOperandList = (outs);
     let Pattern =  [ (target_ret_flag) ];
@@ -119,6 +121,8 @@ def RET : Instruction
 def CALL : Instruction
 {
     let Namespace = "processornamevalue";
+    let Size = 8;
+    let CodeSize = 8;
     let InOperandList = (ins bare_symbol:$addr);
     let OutOperandList = (outs);
     let Pattern = [];
@@ -4112,6 +4116,9 @@ def BEQZ : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs  );
 let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
@@ -4140,6 +4147,9 @@ let Defs = [  ];
 def BGEZ : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs  );
 let InOperandList = ( ins X:$rs, bare_symbol:$offset );
@@ -4170,6 +4180,9 @@ def BGTZ : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs  );
 let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
@@ -4198,6 +4211,9 @@ let Defs = [  ];
 def BLEZ : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs  );
 let InOperandList = ( ins X:$rs, bare_symbol:$offset );
@@ -4228,6 +4244,9 @@ def BLTZ : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs  );
 let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
@@ -4257,6 +4276,9 @@ def BNEZ : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs  );
 let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
@@ -4285,6 +4307,9 @@ let Defs = [  ];
 def J : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs  );
 let InOperandList = ( ins RV3264Base_J_immSAsLabel:$offset );
@@ -4317,6 +4342,9 @@ def JR : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs  );
 let InOperandList = ( ins X:$rs );
 
@@ -4345,6 +4373,9 @@ let Defs = [  ];
 def LA : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 8;
+let CodeSize = 8;
 
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins bare_symbol:$symbol );
@@ -4375,6 +4406,9 @@ def LGA_32 : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 8;
+let CodeSize = 8;
+
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins bare_symbol:$symbol );
 
@@ -4403,6 +4437,9 @@ let Defs = [  ];
 def LGA_64 : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 8;
+let CodeSize = 8;
 
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins bare_symbol:$symbol );
@@ -4433,6 +4470,9 @@ def LI : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 8;
+let CodeSize = 8;
+
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins bare_symbol:$symbol );
 
@@ -4461,6 +4501,9 @@ let Defs = [  ];
 def LLA : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 8;
+let CodeSize = 8;
 
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins bare_symbol:$symbol );
@@ -4491,6 +4534,9 @@ def MV : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rs1 );
 
@@ -4519,6 +4565,9 @@ let Defs = [  ];
 def NEG : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rs1 );
@@ -4549,6 +4598,9 @@ def NOP : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs  );
 let InOperandList = ( ins  );
 
@@ -4577,6 +4629,9 @@ let Defs = [  ];
 def NOT : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rs1 );
@@ -4607,6 +4662,9 @@ def SGTZ : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rs1 );
 
@@ -4635,6 +4693,9 @@ let Defs = [  ];
 def SLTZ : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rs1 );
@@ -4665,6 +4726,9 @@ def SNEZ : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rs1 );
 
@@ -4693,6 +4757,9 @@ let Defs = [  ];
 def TAIL : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 8;
+let CodeSize = 8;
 
 let OutOperandList = ( outs  );
 let InOperandList = ( ins bare_symbol:$symbol );
@@ -4726,6 +4793,9 @@ def constMat0 : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 8;
+let CodeSize = 8;
+
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins bare_symbol:$val );
 
@@ -4754,6 +4824,9 @@ let Defs = [  ];
 def constMat1 : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 16;
+let CodeSize = 16;
 
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins bare_symbol:$val );
@@ -4784,6 +4857,9 @@ def constMat2 : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins bare_symbol:$imm );
 
@@ -4812,6 +4888,9 @@ let Defs = [  ];
 def registerAdjustment0 : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
 let InOperandList = ( ins X:$rs1, bare_symbol:$imm );
@@ -5427,3 +5506,5 @@ def : Pat<(int_processorNameValue_XOR X:$rs1, X:$rs2),
 
 def : Pat<(int_processorNameValue_XORI X:$rs1, RV3264Base_XORI_immSAsInt64:$immS),
         (XORI X:$rs1, RV3264Base_XORI_immSAsInt64:$immS)>;
+
+
