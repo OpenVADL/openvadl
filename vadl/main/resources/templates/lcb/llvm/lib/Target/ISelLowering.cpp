@@ -102,6 +102,19 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::[(${x.isdName})], MVT::[(${x.mvt.value})], Expand);
     [/]
 
+    // There are no selection patterns for bit counting operations, so they are always expanded.
+    // CTLZ/CTTZ expand into CTPOP, so it must be expanded as well.
+    for (auto VT : {MVT::i32, MVT::i64}) {
+        setOperationAction({ISD::CTLZ, ISD::CTTZ, ISD::CTPOP}, VT, Expand);
+    }
+
+    // Instructions have a single result, so there are no patterns for the combined division and
+    // remainder. Without this, the DAG combiner merges SDIV and SREM (or UDIV and UREM) of the same
+    // operands into a node which cannot be selected.
+    for (auto VT : {MVT::i32, MVT::i64}) {
+        setOperationAction({ISD::SDIVREM, ISD::UDIVREM}, VT, Expand);
+    }
+
     for (auto N : {ISD::EXTLOAD, ISD::SEXTLOAD, ISD::ZEXTLOAD}) {
         setLoadExtAction(N, MVT::[(${stackPointerType})], MVT::i1, Promote);
     }
@@ -122,6 +135,22 @@ void [(${namespace})]TargetLowering::anchor() {}
 
     // Compute derived properties from the register classes
     computeRegisterProperties(STI.getRegisterInfo());
+}
+
+// Maps the generic inline asm constraint 'r' (any general purpose register) to the main
+// register file.
+std::pair<unsigned, const TargetRegisterClass *>
+[(${namespace})]TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const
+{
+    if (Constraint.size() == 1 && Constraint[0] == 'r') {
+        const TargetRegisterClass *RC = &[(${namespace})]::[(${mainRegisterFile.registerFileRef.name})]RegClass;
+        // LLVM promotes narrower scalar integers to the register type for inline asm.
+        if (VT == MVT::Other || TRI->isTypeLegalForClass(*RC, VT) ||
+            (VT.isInteger() && !VT.isVector() &&
+             VT.getSizeInBits() <= TRI->getRegSizeInBits(*RC)))
+            return std::make_pair(0U, RC);
+    }
+    return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
 }
 
 const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) const
