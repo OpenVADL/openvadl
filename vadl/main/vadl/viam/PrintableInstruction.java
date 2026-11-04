@@ -64,5 +64,12 @@ public interface PrintableInstruction extends WithLocation {
     return formats().stream().map(f -> f.type().bitWidth()).reduce(0, Integer::sum);
   }
 
-  ;
+  /**
+   * Total bytewidth of the instruction.
+   * Format bytewidth of {@link Instruction} or sum of bytewidth expanded instructions
+   * in the case of {@link PseudoInstruction}.
+   */
+  default int byteWidth() {
+    return (bitWidth() + 7) / 8;
+  }
 }
