@@ -38,16 +38,38 @@ define void @test() {
 define void @test_emergency_spill_slot(i32 %a) {
 ; CHECK-LABEL: test_emergency_spill_slot: # @test_emergency_spill_slot
 ; CHECK: LUI a1,0xfff9e
-; CHECK-NEXT: ADDI a1,a1,1408
+; CHECK-NEXT: ADDI a1,a1,1392
 ; CHECK-NEXT: ADD sp,sp,a1
-; CHECK-NEXT: ADDI a1,a0,0
-; CHECK-NEXT: LUI a2,0x4e
-; CHECK-NEXT: ADDI a2,a2,512
-; CHECK-NEXT: ADDI a0,sp,0
-; CHECK-NEXT: ADD a0,a0,a2
-; CHECK-NEXT: SW a1,0(a0)
+; CHECK-NEXT: LUI a1,0x62
+; CHECK-NEXT: ADDI a1,a1,-1396
+; CHECK-NEXT: ADD a1,sp,a1
+; CHECK-NEXT: SW s1,0(a1)
+; CHECK-NEXT: LUI a1,0x62
+; CHECK-NEXT: ADDI a1,a1,-1400
+; CHECK-NEXT: ADD a1,sp,a1
+; CHECK-NEXT: SW s2,0(a1)
+; CHECK-NEXT: ADDI s2,a0,0
+; CHECK-NEXT: LUI a1,0x4e
+; CHECK-NEXT: ADDI a1,a1,512
+; CHECK-NEXT: ADDI a0,sp,8
+; CHECK-NEXT: ADD s1,a0,a1
+; CHECK-NEXT: #APP
+; CHECK-NEXT: ADDI zero,zero,0
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: SW s2,0(s1)
+; CHECK-NEXT: #APP
+; CHECK-NEXT: ADDI zero,zero,0
+; CHECK-NEXT: #NO_APP
 ; CHECK-NEXT: LUI a0,0x62
-; CHECK-NEXT: ADDI a0,a0,-1408
+; CHECK-NEXT: ADDI a0,a0,-1400
+; CHECK-NEXT: ADD a0,sp,a0
+; CHECK-NEXT: LW s2,0(a0)
+; CHECK-NEXT: LUI a0,0x62
+; CHECK-NEXT: ADDI a0,a0,-1396
+; CHECK-NEXT: ADD a0,sp,a0
+; CHECK-NEXT: LW s1,0(a0)
+; CHECK-NEXT: LUI a0,0x62
+; CHECK-NEXT: ADDI a0,a0,-1392
 ; CHECK-NEXT: ADD sp,sp,a0
 ; CHECK-NEXT: RET
   %data = alloca [ 100000 x i32 ] , align 4
