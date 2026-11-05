@@ -52390,6 +52390,150 @@ def : Pat<(zextloadi16 (add AddrFI:$rn, (shl AArch64Base_LDRH_offsetAsInt64:$off
         (LDRH AddrFI:$rn, AArch64Base_LDRH_offsetAsInt64:$offset)>;
 
 
+def : Pat<(zextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegBSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(zextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegBSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(zextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegBUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(zextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegBUXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(zextloadi16 (add S:$rn, (shl X:$rm, (i64 1)))),
+        (LDRRegHSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(zextloadi16 (add S:$rn, X:$rm)),
+        (LDRRegHSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(zextloadi16 (add S:$rn, (shl X:$rm, (i64 1)))),
+        (LDRRegHUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(zextloadi16 (add S:$rn, X:$rm)),
+        (LDRRegHUXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegSBWSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegSBWSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegSBWUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegSBWUXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegSBXSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegSBXSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegSBXUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi8 (add S:$rn, X:$rm)),
+        (LDRRegSBXUXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi16 (add S:$rn, (shl X:$rm, (i64 1)))),
+        (LDRRegSHWSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi16 (add S:$rn, X:$rm)),
+        (LDRRegSHWSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi16 (add S:$rn, (shl X:$rm, (i64 1)))),
+        (LDRRegSHWUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi16 (add S:$rn, X:$rm)),
+        (LDRRegSHWUXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi16 (add S:$rn, (shl X:$rm, (i64 1)))),
+        (LDRRegSHXSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi16 (add S:$rn, X:$rm)),
+        (LDRRegSHXSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi16 (add S:$rn, (shl X:$rm, (i64 1)))),
+        (LDRRegSHXUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi16 (add S:$rn, X:$rm)),
+        (LDRRegSHXUXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi32 (add S:$rn, (shl X:$rm, (i64 2)))),
+        (LDRRegSWXSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi32 (add S:$rn, X:$rm)),
+        (LDRRegSWXSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi32 (add S:$rn, (shl X:$rm, (i64 2)))),
+        (LDRRegSWXUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(sextloadi32 (add S:$rn, X:$rm)),
+        (LDRRegSWXUXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(load (add S:$rn, (shl X:$rm, (i64 2)))),
+        (LDRRegWSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(load (add S:$rn, X:$rm)),
+        (LDRRegWSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(load (add S:$rn, (shl X:$rm, (i64 2)))),
+        (LDRRegWUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(load (add S:$rn, X:$rm)),
+        (LDRRegWUXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(load (add S:$rn, (shl X:$rm, (i64 3)))),
+        (LDRRegXSXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(load (add S:$rn, X:$rm)),
+        (LDRRegXSXTXUn S:$rn, X:$rm)>;
+
+
+def : Pat<(load (add S:$rn, (shl X:$rm, (i64 3)))),
+        (LDRRegXUXTXIs S:$rn, X:$rm)>;
+
+
+def : Pat<(load (add S:$rn, X:$rm)),
+        (LDRRegXUXTXUn S:$rn, X:$rm)>;
+
+
 def : Pat<(sextloadi8 (add S:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset)),
         (LDRSBW S:$rn, AArch64Base_LDRSBW_offsetAsInt64:$offset)>;
 

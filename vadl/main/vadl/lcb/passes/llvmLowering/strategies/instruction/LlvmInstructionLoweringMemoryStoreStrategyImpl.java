@@ -115,14 +115,6 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
    * This strategy is ok with it when it has {@link ReadMemNode} or {@link WriteMemNode}.
    */
   @Override
-  protected boolean rejectWhenReadingFromMemory(Graph graph) {
-    return false;
-  }
-
-  /**
-   * This strategy is ok with it when it has {@link ReadMemNode} or {@link WriteMemNode}.
-   */
-  @Override
   protected boolean rejectWhenWritingToMemory(Graph graph) {
     return false;
   }
