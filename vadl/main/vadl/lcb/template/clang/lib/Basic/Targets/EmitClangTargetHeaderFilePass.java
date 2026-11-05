@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -72,9 +72,12 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
     var types = abi.clangTypes().stream().map(x -> new ClangType(x.typeNameAsString(), x.value()))
         .toList();
 
+    var dataLayout = createDataLayout(abi, gpr);
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        CommonVarNames.DATALAYOUT, createDataLayoutString(createDataLayout(abi, gpr)),
+        CommonVarNames.DATALAYOUT, createDataLayoutString(dataLayout),
+        "isBigEndian", dataLayout.isBigEndian(),
         "clangTypes", types);
   }
 }

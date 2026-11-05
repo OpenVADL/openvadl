@@ -33,6 +33,7 @@ namespace clang
                     LongDoubleFormat = &llvm::APFloat::IEEEquad();
                     HasFloat16 = true;
                     HasStrictFP = true;
+                    BigEndian = [(${isBigEndian})];
                     resetDataLayout("[(${datalayout})]");
                 }
 

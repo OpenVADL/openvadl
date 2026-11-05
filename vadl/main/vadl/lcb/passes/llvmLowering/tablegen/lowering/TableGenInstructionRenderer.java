@@ -152,6 +152,9 @@ public final class TableGenInstructionRenderer {
             {
             let Namespace = "%s";
             
+            let Size = %d;
+            let CodeSize = %d;
+            
             let OutOperandList = ( outs %s );
             let InOperandList = ( ins %s );
             
@@ -179,6 +182,8 @@ public final class TableGenInstructionRenderer {
             """,
         instruction.getName(),
         instruction.getNamespace(),
+        instruction.pseudoInstruction().byteWidth(),
+        instruction.pseudoInstruction().byteWidth(),
         instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower).collect(
             Collectors.joining(", ")),
         instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower).collect(
@@ -220,6 +225,9 @@ public final class TableGenInstructionRenderer {
             {
             let Namespace = "%s";
             
+            let Size = %d;
+            let CodeSize = %d;
+            
             let OutOperandList = ( outs %s );
             let InOperandList = ( ins %s );
             
@@ -247,6 +255,8 @@ public final class TableGenInstructionRenderer {
             """,
         instruction.getName(),
         instruction.getNamespace(),
+        instruction.compilerInstruction().byteWidth(),
+        instruction.compilerInstruction().byteWidth(),
         instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower).collect(
             Collectors.joining(", ")),
         instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower).collect(
