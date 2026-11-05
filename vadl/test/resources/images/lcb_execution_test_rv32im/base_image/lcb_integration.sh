@@ -3,7 +3,9 @@
 set -x
 
 # Compile from c source with the LCB Compiler
-/src/llvm-final/build/bin/clang --target=${TARGET} -S -O${OPT_LEVEL} -c /src/inputs/$INPUT -o /tmp/main.s
+/src/llvm-final/build/bin/clang --target=${TARGET} -nostdinc -ffreestanding \
+  -isystem/opt/lcb-runtime/rv32im/include -isystem/src/llvm-final/build/lib/clang/19/include \
+  -S -O${OPT_LEVEL} -c /src/inputs/$INPUT -o /tmp/main.s
 chmod 777 /tmp/main.s
 cat /tmp/main.s
 
@@ -12,7 +14,8 @@ cat /tmp/main.s
 /src/llvm-final/build/bin/llvm-mc -filetype=obj -arch=${TARGET} /helper/init.S -o /tmp/init.o
 
 # Link with the LCB Linker
-/src/llvm-final/build/bin/ld.lld -static -T/helper/link.ld /tmp/main.o /tmp/init.o -o /tmp/main
+/src/llvm-final/build/bin/ld.lld -static -T/helper/link.ld -L/opt/lcb-runtime/rv32im/lib -lc -lclang_rt.builtins \
+  /tmp/main.o /tmp/init.o -o /tmp/main
 /work/elf_machine_updater update-machine --elf /tmp/main --value 243
 
 # Execute with QEMU
