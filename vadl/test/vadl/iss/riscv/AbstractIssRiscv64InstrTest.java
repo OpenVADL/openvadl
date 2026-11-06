@@ -19,6 +19,7 @@ package vadl.iss.riscv;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import vadl.iss.IssDockerRuntime;
 import vadl.iss.IssInstrTest;
 
 public abstract class AbstractIssRiscv64InstrTest extends IssInstrTest {
@@ -26,6 +27,11 @@ public abstract class AbstractIssRiscv64InstrTest extends IssInstrTest {
 
   // set at the bottom of this file
   static final Map<String, String> GDB_REF_MAP = new HashMap<>();
+
+  @Override
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.RISCV;
+  }
 
   @Override
   public Map<String, String> gdbRegMap() {
