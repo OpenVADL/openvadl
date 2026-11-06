@@ -1,0 +1,4 @@
+instruction set architecture TEST = {
+  [negative status register] // "register" should be marked as variable
+  register BAR : Bits<1>     // "register" should remain keyword
+}

@@ -61,10 +61,7 @@ public class HoverTest extends IntegrationTest {
     var position = new Position(line - 1, character - 1);
     snapshot.add("Input with position marked", TestUtils.showPositionInFile(position, input));
 
-    // Doing this to avoid race condition in the TypeChecker with publishing diagnostics:
-    // Type.bitsTypes may be modified by both at the same time (ConcurrentModificationException).
-    // Unlikely for this to occur in normal operation, but this test would be flaky otherwise.
-    client.doThenWaitForPublishDiagnostics(() -> openDocument(inputUri, input));
+    openDocument(inputUri, input);
     var result = textService.hover(new HoverParams(
         new TextDocumentIdentifier(inputUri), position
     )).get();

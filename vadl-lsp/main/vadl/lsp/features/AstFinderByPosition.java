@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lsp;
+package vadl.lsp.features;
 
 import java.nio.file.Path;
 import java.util.function.Predicate;
@@ -40,7 +40,7 @@ import vadl.utils.SourceLocation;
  * (except model invocation edge cases), thus it is not necessary to traverse into all branches -
  * this would improve performance to O(log n).
  */
-public abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVisitor {
+abstract class AstFinderByPosition<N extends Node> extends RecursiveAstVisitor {
 
   // TODO When using this class for the LSP Goto Definition feature, there are some limitations -
   //      AST doesn't provide all the data we would like to have:
