@@ -8,6 +8,10 @@ FROM ubuntu:22.04 AS riscv-tests
 
 SHELL ["/bin/bash", "-c"]
 
+# Import Risc-V Toolchain
+COPY --from=toolchains /opt/riscv /opt/riscv
+ENV PATH=/opt/riscv/bin:$PATH
+
 # Install some basic utilities
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update &&  \
