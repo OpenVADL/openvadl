@@ -1,6 +1,8 @@
-// Model name must not be tokenized
+
 instruction set architecture TEST = {
   format Simple : Bits<8> = {b [0]}
+
+  // Model name must not be tokenized
   model TestModel (name : Id, val : Bin) : IsaDefs = {
     instruction $name : Simple = {}
     encoding $name = { b = $val }

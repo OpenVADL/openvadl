@@ -26,6 +26,7 @@ import org.eclipse.lsp4j.DefinitionCapabilities;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.HoverCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
+import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.MessageActionItem;
@@ -52,6 +53,7 @@ public abstract class IntegrationTest {
   protected VadlLanguageServer server;
   protected TextDocumentService textService;
   protected MockLanguageClient client;
+  protected InitializeResult initializeResult;
 
   @BeforeEach
   public void createServer() throws ExecutionException, InterruptedException {
@@ -76,7 +78,7 @@ public abstract class IntegrationTest {
     var params = new InitializeParams();
     params.setCapabilities(new ClientCapabilities(null,
         textDocumentCapabilities, null));
-    server.initialize(params).get();
+    initializeResult = server.initialize(params).get();
     server.initialized(new InitializedParams());
 
     textService = server.getTextDocumentService();

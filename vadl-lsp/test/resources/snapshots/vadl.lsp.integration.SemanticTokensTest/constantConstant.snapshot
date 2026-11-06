@@ -9,16 +9,9 @@ Test method: vadl.lsp.integration.SemanticTokensTest.mainTest, Test case: consta
     constant foo = constant
   ================
 
-- returned tokens (LSP numeric format):
-  deltaLine, deltaStart, length, tokenType, tokenModifiers
-  0, 9, 8, 0, 0
-  1, 9, 3, 0, 0
-  0, 6, 8, 0, 0
-
-- ... which look like this:
+- returned tokens look like this:
   ================
-    constant <0>constant</0> = 5
-    constant <0>foo</0> = <0>constant</0>
+    constant <variable>constant</variable> = 5
+    constant <variable>foo</variable> = <variable>constant</variable>
   ================
 
-# We're using one token type (variable) and no modifiers, so all ranges shown above should be <0>

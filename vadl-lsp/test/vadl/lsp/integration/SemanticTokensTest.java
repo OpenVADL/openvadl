@@ -37,7 +37,7 @@ public class SemanticTokensTest extends IntegrationTest {
   private static final String INPUT_NAME = "input.vadl";
 
   @ParameterizedTest
-  @ValueSource(strings = {"empty", "constantConstant", "modelDefinition", "twoFiles"})
+  @ValueSource(strings = {"annotations", "assemblyBuiltins", "constantConstant", "empty", "modelDefinition", "twoFiles"})
   public void mainTest(String testCase) throws ExecutionException, InterruptedException {
     var snapshot = new TestSnapshot(testCase, true);
     var inputUri = snapshot.getInputUri(INPUT_NAME);
@@ -49,29 +49,11 @@ public class SemanticTokensTest extends IntegrationTest {
         new TextDocumentIdentifier(inputUri)
     )).get();
 
-    snapshot.add("returned tokens (LSP numeric format)",
-        processResultTable(result.getData()));
-    snapshot.add("... which look like this", processResultInFile(result.getData(), input));
-    snapshot.addNote("We're using one token type (variable) and no modifiers,"
-        + " so all ranges shown above should be <0>");
+    snapshot.add("returned tokens look like this", processResult(result.getData(), input));
     snapshot.verify();
   }
 
-  private String processResultTable(List<Integer> tokens) {
-    if (tokens.isEmpty()) {
-      return "[]";
-    }
-
-    var text = new StringBuilder("deltaLine, deltaStart, length, tokenType, tokenModifiers\n");
-    for (int i = 0; i < tokens.size(); i++) {
-      text.append(tokens.get(i));
-      text.append((i % 5 == 4) ? "\n" : ", ");
-    }
-
-    return text.toString().trim();
-  }
-
-  private String processResultInFile(List<Integer> tokens, String input) {
+  private String processResult(List<Integer> tokens, String input) {
     if (tokens.isEmpty()) {
       return "n/a";
     }
@@ -91,7 +73,7 @@ public class SemanticTokensTest extends IntegrationTest {
       int tokenType = tokens.get(i + 3);
       int tokenModifiers = tokens.get(i + 4);
 
-      String name = "" + tokenType + (tokenModifiers != 0 ? "-" + tokenModifiers : "");
+      String name = "" + tokenType2Name(tokenType) + (tokenModifiers != 0 ? "-" + tokenModifiers : "");
       ranges.add(new TestUtils.NamedRange(
           new Range(new Position(line, column), new Position(line, column + length)),
           name
@@ -99,5 +81,10 @@ public class SemanticTokensTest extends IntegrationTest {
     }
 
     return TestUtils.showRangesInFile(ranges, input);
+  }
+
+  private String tokenType2Name(int numericType) {
+    return initializeResult.getCapabilities().getSemanticTokensProvider()
+        .getLegend().getTokenTypes().get(numericType);
   }
 }

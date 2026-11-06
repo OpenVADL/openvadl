@@ -142,7 +142,12 @@ public class Document {
 
     try {
       return currentCompilationTask.get();
-    } catch (CancellationException | ExecutionException e) {
+
+    } catch (CancellationException e) {
+      throw new InterruptedException();
+    } catch (ExecutionException e) {
+      // Something went wrong in the compiler
+      log.error("", e.getCause());
       throw new InterruptedException();
     }
   }

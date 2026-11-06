@@ -8,6 +8,4 @@ Test method: vadl.lsp.integration.SemanticTokensTest.mainTest, Test case: empty
     // Empty file
   ================
 
-- returned tokens (LSP numeric format): []
-- ... which look like this: n/a
-# We're using one token type (variable) and no modifiers, so all ranges shown above should be <0>
+- returned tokens look like this: n/a

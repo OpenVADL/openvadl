@@ -22,12 +22,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.ast.Ast;
+import vadl.ast.nodes.AnnotationDefinition;
+import vadl.ast.nodes.AssemblyDefinition;
+import vadl.ast.nodes.CallIndexExpr;
 import vadl.ast.nodes.Definition;
 import vadl.ast.nodes.Expr;
 import vadl.ast.nodes.IdentifiableNode;
@@ -158,8 +163,18 @@ public class SemanticTokensFeature {
 
 
   private static class Visitor extends RecursiveAstVisitor {
+    private static final Set<String> skipAssemblyFunctionNames = Set.of("register", "udec", "sdec");
+
     private final Ast ast;
     private final List<SourceLocation> locations = new ArrayList<>();
+
+    private boolean withinAssemblyDefinition = false;
+    /**
+     * A specific {@code Identifier} instance which shall not be marked as variable
+     * (due to a condition in the surrounding node).
+     */
+    @Nullable
+    private Identifier skipIdentifier = null;
 
     Visitor(Ast ast) {
       this.ast = ast;
@@ -170,7 +185,7 @@ public class SemanticTokensFeature {
         definition.accept(this);
       }
       // Identifiers within model definitions are visible through model invocations,
-      // and thus are out of order
+      // and thus are out of order. Also: Annotations are out-of-order.
       Collections.sort(locations);
       return locations;
     }
@@ -197,10 +212,24 @@ public class SemanticTokensFeature {
     }
 
     @Override
+    @SuppressWarnings("ReferenceEquality")
     public Void visit(Identifier identifier) {
-      if (identifier.location().isValid()) {
+      if (identifier.location().isValid() && identifier != skipIdentifier) {
         locations.add(identifier.location());
       }
+      return null;
+    }
+
+    @Override
+    public Void visit(AnnotationDefinition definition) {
+      super.visit(definition);
+
+      // AnnotationDefinition does not automatically traverse its keywords
+      definition.keywords.forEach((k) -> {
+        if (k instanceof Identifier i) {
+          i.accept(this);
+        }
+      });
       return null;
     }
 
@@ -208,6 +237,28 @@ public class SemanticTokensFeature {
     public Void visit(ModelDefinition definition) {
       // Skip ModelDefinition's identifier - it has a specific TextMate style
       // that shouldn't be overridden
+      return null;
+    }
+
+    @Override
+    public Void visit(AssemblyDefinition definition) {
+      withinAssemblyDefinition = true;
+      super.visit(definition);
+      withinAssemblyDefinition = false;
+      return null;
+    }
+
+    @Override
+    public Void visit(CallIndexExpr expr) {
+      // Inside AssemblyDefinitions, let's skip invocations of functions "register", "udec", "sdec",
+      // as these are special built-in functions that shall be colored as keywords.
+      if (withinAssemblyDefinition
+          && expr.target instanceof Identifier identifier
+          && skipAssemblyFunctionNames.contains(identifier.name)) {
+        skipIdentifier = identifier;
+      }
+      super.visit(expr);
+
       return null;
     }
   }

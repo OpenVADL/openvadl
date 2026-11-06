@@ -15,25 +15,15 @@ Test method: vadl.lsp.integration.SemanticTokensTest.mainTest, Test case: twoFil
     }
   ================
 
-- returned tokens (LSP numeric format):
-  deltaLine, deltaStart, length, tokenType, tokenModifiers
-  3, 29, 3, 0, 0
-  0, 8, 4, 0, 0
-  1, 17, 5, 0, 0
-  0, 8, 1, 0, 0
-  0, 2, 3, 0, 0
-  2, 19, 5, 0, 0
-
-- ... which look like this:
+- returned tokens look like this:
   ================
     // Should not return tokens from included file
     import "twoFiles-otherFile"::TEST
     
-    application binary interface <0>ABI</0> for <0>TEST</0> = {
-      alias register <0>hello</0> = <0>X</0>(<0>foo</0>)
+    application binary interface <variable>ABI</variable> for <variable>TEST</variable> = {
+      alias register <variable>hello</variable> = <variable>X</variable>(<variable>foo</variable>)
     
-      return address = <0>hello</0>
+      return address = <variable>hello</variable>
     }
   ================
 
-# We're using one token type (variable) and no modifiers, so all ranges shown above should be <0>
