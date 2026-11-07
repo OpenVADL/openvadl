@@ -27,7 +27,6 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.types.DataType;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
