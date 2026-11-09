@@ -19,8 +19,10 @@ package vadl.lcb.template.lib.Target.Disassembler;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -96,12 +98,13 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  record DecodeImmediate(String decodeFunction, String decodeWrapper)
+  record DecodeImmediate(String decodeFunction, String decodeParams, String decodeWrapper)
       implements Renderable {
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
           "decodeFunction", decodeFunction,
+          "decodeParams", decodeParams,
           "decodeWrapper", decodeWrapper
       );
     }
@@ -113,12 +116,23 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
     return immediatesPassResult.decodings().entrySet().stream()
         .map(entry -> {
-          var decodeFunction = entry.getValue().header().functionName().lower();
+          // FIXME: Support decode functions with more than one parameter
+          var decodeFunctionHeader = entry.getValue().header();
+          if (decodeFunctionHeader.parameters().length > 1) {
+            DeferredDiagnosticStore.add(Diagnostic.warning(
+                "The Disassembler does not support decode functions with multiple parameters.",
+                entry.getKey().decoderMethod()).build());
+          }
+
+          var decodeParams =
+              Arrays.stream(decodeFunctionHeader.parameters()).map(p -> "Imm").collect(
+                  Collectors.joining(","));
+          var decodeFunction = decodeFunctionHeader.functionName().lower();
           var decodeWrapper = requireNonNull(
               immediatesPassResult.decodingWrappers().get(entry.getKey())
           ).functionName().lower();
 
-          return new DecodeImmediate(decodeFunction, decodeWrapper);
+          return new DecodeImmediate(decodeFunction, decodeParams, decodeWrapper);
         })
         .toList();
   }
