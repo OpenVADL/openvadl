@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM ghcr.io/openvadl/lcb-execution-test-rv32im-base-image@sha256:b05dcad2511d0e80983da5c89b46daa6ef9526e300d8d5c60541c8fd8427d390
+FROM ghcr.io/openvadl/lcb-execution-test-rv32im-base-image@sha256:45557f5f603a8e7a90add0e6fef17283ff918b8c5559c3106aec16884cf12e5d
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 ARG UPSTREAM_BUILD_TARGET
@@ -20,5 +20,11 @@ ENV PATH=/opt/riscv/bin:/opt/qemu/bin:$PATH
 COPY . /src
 WORKDIR /src
 RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && make && sccache -s
+
+# Build picolibc and the compiler-rt builtins with the compiled LCB.
+RUN bash /lcb-runtime/build-runtime.sh \
+    /opt/src/picolibc /src/llvm-final/compiler-rt/lib/builtins /opt/lcb-runtime/rv32im \
+    /lcb-runtime/cross-rv32im.txt /lcb-runtime/machine-rv32im
+
 RUN mkdir /output
 CMD sh /work/compile.sh
