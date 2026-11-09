@@ -41476,7 +41476,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs W:$rd );
-let InOperandList = ( ins W:$rn, bare_symbol:$bits );
+let InOperandList = ( ins W:$rn );
 
 field bits<32> Inst;
 
@@ -41526,7 +41526,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rn, bare_symbol:$bits );
+let InOperandList = ( ins X:$rn );
 
 field bits<32> Inst;
 
@@ -54874,6 +54874,12 @@ def : Pat<(int_processorNameValue_ORRXLSR X:$rn, X:$rm, AArch64Base_ORRXLSR_imm6
 
 def : Pat<(int_processorNameValue_ORRXROR X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt32:$imm6),
         (ORRXROR X:$rn, X:$rm, AArch64Base_ORRXROR_imm6AsInt32:$imm6)>;
+
+def : Pat<(int_processorNameValue_RBITW W:$rn),
+        (RBITW W:$rn)>;
+
+def : Pat<(int_processorNameValue_RBITX X:$rn),
+        (RBITX X:$rn)>;
 
 def : Pat<(int_processorNameValue_RET X:$rn),
         (RET X:$rn)>;
