@@ -37,7 +37,7 @@ package vadl.ast;
 public class StringLiteralParser {
 
   public static String parseString(String token) {
-    final StringBuilder str = new StringBuilder();
+    final StringBuilder str = new StringBuilder(token.length());
     for (int i = 0; i < token.length(); i++) {
       char c = token.charAt(i);
       if (c == '\\') {
