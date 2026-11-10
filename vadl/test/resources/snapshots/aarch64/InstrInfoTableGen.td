@@ -52386,6 +52386,14 @@ def : Pat<(br bb:$offset),
         (B_NV bb:$offset)>;
 
 
+def : Pat<(ctlz W:$rn),
+        (CLZW W:$rn)>;
+
+
+def : Pat<(ctlz X:$rn),
+        (CLZX X:$rn)>;
+
+
 def : Pat<(xor W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize),
         (EORIW W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize)>;
 

@@ -19,9 +19,13 @@ package vadl.lcb.passes.llvmLowering.domain;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBSwapSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCtlzSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCtpopSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCttzSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotlSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulhSD;
@@ -29,6 +33,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSrlPartsSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulLoHiSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulhSD;
@@ -77,6 +82,16 @@ public class SelectionDagToISDNameMapper {
       return "SREM";
     } else if (nodeLowerable.isAssignableFrom(LlvmURemSD.class)) {
       return "UREM";
+    } else if (nodeLowerable.isAssignableFrom(LlvmCtpopSD.class)) {
+      return "CTPOP";
+    } else if (nodeLowerable.isAssignableFrom(LlvmCtlzSD.class)) {
+      return "CTLZ";
+    } else if (nodeLowerable.isAssignableFrom(LlvmCttzSD.class)) {
+      return "CTTZ";
+    } else if (nodeLowerable.isAssignableFrom(LlvmSDivRemSD.class)) {
+      return "SDIVREM";
+    } else if (nodeLowerable.isAssignableFrom(LlvmUDivRemSD.class)) {
+      return "UDIVREM";
     }
 
     throw Diagnostic.error("Cannot map to class name", SourceLocation.INVALID_SOURCE_LOCATION)

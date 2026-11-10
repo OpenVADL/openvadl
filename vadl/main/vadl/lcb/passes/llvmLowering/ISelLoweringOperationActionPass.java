@@ -31,9 +31,13 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.lcb.passes.llvmLowering.domain.MachineValueType;
 import vadl.lcb.passes.llvmLowering.domain.SelectionDagToISDNameMapper;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBSwapSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCtlzSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCtpopSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCttzSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotlSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulhSD;
@@ -41,6 +45,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSrlPartsSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulLoHiSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulhSD;
@@ -81,6 +86,11 @@ public class ISelLoweringOperationActionPass extends Pass {
     expandableSelectionDagNodes.add(LlvmUDivSD.class);
     expandableSelectionDagNodes.add(LlvmSRemSD.class);
     expandableSelectionDagNodes.add(LlvmURemSD.class);
+    expandableSelectionDagNodes.add(LlvmCtpopSD.class);
+    expandableSelectionDagNodes.add(LlvmCtlzSD.class);
+    expandableSelectionDagNodes.add(LlvmCttzSD.class);
+    expandableSelectionDagNodes.add(LlvmSDivRemSD.class);
+    expandableSelectionDagNodes.add(LlvmUDivRemSD.class);
   }
 
   public ISelLoweringOperationActionPass(GeneralConfiguration configuration) {

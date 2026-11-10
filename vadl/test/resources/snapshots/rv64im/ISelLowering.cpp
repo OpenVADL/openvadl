@@ -100,27 +100,19 @@ processornamevalueTargetLowering::processornamevalueTargetLowering(const TargetM
 
     
     setOperationAction(ISD::BSWAP, MVT::i64, Expand);
+    setOperationAction(ISD::CTLZ, MVT::i64, Expand);
+    setOperationAction(ISD::CTPOP, MVT::i64, Expand);
+    setOperationAction(ISD::CTTZ, MVT::i64, Expand);
     setOperationAction(ISD::ROTL, MVT::i64, Expand);
     setOperationAction(ISD::ROTR, MVT::i64, Expand);
+    setOperationAction(ISD::SDIVREM, MVT::i64, Expand);
     setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
     setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
     setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
+    setOperationAction(ISD::UDIVREM, MVT::i64, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
     
-
-    // There are no selection patterns for bit counting operations, so they are always expanded.
-    // CTLZ/CTTZ expand into CTPOP, so it must be expanded as well.
-    for (auto VT : {MVT::i32, MVT::i64}) {
-        setOperationAction({ISD::CTLZ, ISD::CTTZ, ISD::CTPOP}, VT, Expand);
-    }
-
-    // Instructions have a single result, so there are no patterns for the combined division and
-    // remainder. Without this, the DAG combiner merges SDIV and SREM (or UDIV and UREM) of the same
-    // operands into a node which cannot be selected.
-    for (auto VT : {MVT::i32, MVT::i64}) {
-        setOperationAction({ISD::SDIVREM, ISD::UDIVREM}, VT, Expand);
-    }
 
     for (auto N : {ISD::EXTLOAD, ISD::SEXTLOAD, ISD::ZEXTLOAD}) {
         setLoadExtAction(N, MVT::i64, MVT::i1, Promote);
@@ -138,8 +130,7 @@ processornamevalueTargetLowering::processornamevalueTargetLowering(const TargetM
     computeRegisterProperties(STI.getRegisterInfo());
 }
 
-// Maps the generic inline asm constraint 'r' (any general purpose register) to the main
-// register file.
+// Maps the generic inline asm constraint 'r' (any general purpose register) to the main register file.
 std::pair<unsigned, const TargetRegisterClass *>
 processornamevalueTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const
 {

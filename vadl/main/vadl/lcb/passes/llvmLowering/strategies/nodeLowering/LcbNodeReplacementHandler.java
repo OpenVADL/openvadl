@@ -36,6 +36,9 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCtlzSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCtpopSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCttzSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
@@ -348,6 +351,12 @@ public class LcbNodeReplacementHandler {
       node.replaceAndDelete(new LlvmShrSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.ASR || node.builtIn() == BuiltInTable.ASRS) {
       node.replaceAndDelete(new LlvmSraSD(node.arguments(), node.type()));
+    } else if (node.builtIn() == BuiltInTable.COB) {
+      node.replaceAndDelete(new LlvmCtpopSD(node.arguments(), node.type()));
+    } else if (node.builtIn() == BuiltInTable.CLZ) {
+      node.replaceAndDelete(new LlvmCtlzSD(node.arguments(), node.type()));
+    } else if (node.builtIn() == BuiltInTable.CTZ) {
+      node.replaceAndDelete(new LlvmCttzSD(node.arguments(), node.type()));
     } else if ((node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS)
         && node.type() instanceof BitsType bitsType) {
       var trunc = bitsType.bitWidth() / 2;

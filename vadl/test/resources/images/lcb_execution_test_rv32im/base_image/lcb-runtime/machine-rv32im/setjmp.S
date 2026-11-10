@@ -1,6 +1,5 @@
 /*
- * setjmp/longjmp for the LCB rv32im toolchain, written in the syntax understood by the generated
- * assembler (no assembler macros, no symbolic branch targets).
+ * setjmp/longjmp for the LCB rv32im toolchain
  *
  * jmp_buf layout: ra, s0-s11, sp (14 words). This fits into the RISC-V jmp_buf declared by
  * picolibc's <machine/setjmp.h>, which the LCB clang selects via the predefined __riscv macro.
