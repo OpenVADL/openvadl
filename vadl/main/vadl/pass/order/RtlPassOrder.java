@@ -38,6 +38,7 @@ import vadl.rtl.passes.EmitRtlMakefilePass;
 import vadl.rtl.passes.EmitScalafmtConfigPass;
 import vadl.rtl.passes.EmitSimMemCppPass;
 import vadl.rtl.passes.EmitSimMemSvPass;
+import vadl.rtl.passes.EmitSimulationDriverBypassCppPass;
 import vadl.rtl.passes.EmitVadlLibPass;
 import vadl.rtl.passes.ForwardingLogicPass;
 import vadl.rtl.passes.HazardAnalysisPass;
@@ -117,6 +118,7 @@ public final class RtlPassOrder {
         .add(new EmitElfSimPass(config))
         .add(new EmitSimMemSvPass(config))
         .add(new EmitSimMemCppPass(config))
+        .add(new EmitSimulationDriverBypassCppPass(config))
         .add(new EmitScalafmtConfigPass(config))
         .add(new EmitRtlMakefilePass(config))
         .add(new EmitRtlDevcontainerConfigPass(config))
