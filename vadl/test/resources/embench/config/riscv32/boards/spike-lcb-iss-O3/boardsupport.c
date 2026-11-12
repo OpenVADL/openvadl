@@ -7,6 +7,21 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 
 #include <support.h>
+#include <stdio.h>
+
+/* picolibc's stdio needs the board to provide the standard streams. The simulated board has no
+   console, so all output is discarded. */
+static int
+board_putc (char c, FILE *file)
+{
+  (void) file;
+  return (unsigned char) c;
+}
+
+static FILE board_stdio = FDEV_SETUP_STREAM (board_putc, NULL, NULL, _FDEV_SETUP_WRITE);
+FILE *const stdin = &board_stdio;
+FILE *const stdout = &board_stdio;
+FILE *const stderr = &board_stdio;
 
 void
 initialise_board ()
@@ -23,102 +38,15 @@ stop_trigger ()
 {
 }
 
-void *memset(void *dst, int c, size_t n) {
-    unsigned char *p = dst;
-    while (n--)
-        *p++ = (unsigned char)c;
-    return dst;
+// HTIF exit device, like in init.S.
+extern volatile unsigned int tohost[2];
+
+// Called by picolibc's exit() and abort().
+void __attribute__ ((noreturn))
+_exit (int code)
+{
+  // Same encoding as init.S: (code << 1) | 1 signals exit to the host.
+  tohost[0] = ((unsigned int) code << 1) | 1;
+  tohost[1] = 0;
+  while (1);
 }
-
-void *memcpy(void *dst, const void *src, size_t n) {
-    unsigned char *d = dst;
-    const unsigned char *s = src;
-    while (n--)
-        *d++ = *s++;
-    return dst;
-}
-
-void *memmove(void *dst, const void *src, size_t n) {
-    unsigned char *d = dst;
-    const unsigned char *s = src;
-    if (d < s) {
-        while (n--)
-            *d++ = *s++;
-    } else {
-        d += n;
-        s += n;
-        while (n--)
-            *--d = *--s;
-    }
-    return dst;
-}
-
-int memcmp(const void *a, const void *b, size_t n) {
-    const unsigned char *p = a;
-    const unsigned char *q = b;
-    while (n--) {
-        if (*p != *q)
-            return *p - *q;
-        p++;
-        q++;
-    }
-    return 0;
-}
-
-size_t strlen(const char *s) {
-    const char *p = s;
-    while (*p)
-        p++;
-    return (size_t)(p - s);
-}
-
-int strcmp(const char *a, const char *b) {
-    while (*a && *a == *b) {
-        a++;
-        b++;
-    }
-    return (unsigned char)*a - (unsigned char)*b;
-}
-
-int strncmp(const char *a, const char *b, size_t n) {
-    while (n && *a && *a == *b) {
-        a++;
-        b++;
-        n--;
-    }
-    return n ? (unsigned char)*a - (unsigned char)*b : 0;
-}
-
-char *strcpy(char *d, const char *s) {
-    char *r = d;
-    while ((*d++ = *s++))
-        ;
-    return r;
-}
-
-char *strchr(const char *s, int c) {
-    for (;; s++) {
-        if (*s == (char)c)
-            return (char *)s;
-        if (!*s)
-            return 0;
-    }
-}
-
-int isdigit(int c) { return c >= '0' && c <= '9'; }
-int isspace(int c) { return c == ' ' || (c >= '\t' && c <= '\r'); }
-int isalpha(int c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
-int isalnum(int c) { return isalpha(c) || isdigit(c); }
-int tolower(int c) { return (c >= 'A' && c <= 'Z') ? c + 32 : c; }
-int toupper(int c) { return (c >= 'a' && c <= 'z') ? c - 32 : c; }
-
-unsigned int __attribute__((optnone)) __mulsi3(unsigned int a, unsigned int b) {
-    unsigned int r = 0;
-    while (a) {
-        if (a & 1) r += b;
-        a >>= 1;
-        b <<= 1;
-    }
-    return r;
-}
-

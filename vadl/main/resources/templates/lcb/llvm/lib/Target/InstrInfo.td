@@ -94,6 +94,8 @@ def ADJCALLSTACKUP : Instruction
 def [(${returnInstruction})] : Instruction
 {
     let Namespace = "[(${namespace})]";
+    let Size = [(${returnInstructionSize})];
+    let CodeSize = [(${returnInstructionSize})];
     let InOperandList = (ins);
     let OutOperandList = (outs);
     let Pattern =  [ (target_ret_flag) ];
@@ -119,6 +121,8 @@ def [(${returnInstruction})] : Instruction
 def [(${callInstruction})] : Instruction
 {
     let Namespace = "[(${namespace})]";
+    let Size = [(${callInstructionSize})];
+    let CodeSize = [(${callInstructionSize})];
     let InOperandList = (ins bare_symbol:$addr);
     let OutOperandList = (outs);
     let Pattern = [];

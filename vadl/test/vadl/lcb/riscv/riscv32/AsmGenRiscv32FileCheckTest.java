@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.LcbDockerInputFileExecutionTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
@@ -56,11 +54,6 @@ public abstract class AsmGenRiscv32FileCheckTest extends LcbDockerInputFileExecu
   @Override
   protected String getImageName() {
     return "rv32im_asm_gen";
-  }
-
-  @Override
-  protected LcbConfiguration getConfiguration() {
-    return new LcbConfiguration(getConfiguration(false), new TargetName(getTarget()), true);
   }
 
   @TestFactory

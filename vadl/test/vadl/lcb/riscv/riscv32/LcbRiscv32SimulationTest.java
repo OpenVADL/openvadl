@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,8 @@ public class LcbRiscv32SimulationTest extends LcbDockerInputFileExecutionTest {
   List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
     return runEach("sys/risc-v/rv32im.vadl",
         List.of("test/resources/llvm/riscv/qemu_nolibc/",
+            "test/resources/llvm/riscv/qemu_libc/",
+            "test/resources/llvm/riscv/qemu_libc/fp",
             "test/resources/llvm/riscv/qemu_nolibc/rv32im"),
         0,
         "sh /work/lcb_integration.sh"
@@ -39,6 +41,8 @@ public class LcbRiscv32SimulationTest extends LcbDockerInputFileExecutionTest {
   List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
     return runEach("sys/risc-v/rv32im.vadl",
         List.of("test/resources/llvm/riscv/qemu_nolibc/",
+            "test/resources/llvm/riscv/qemu_libc/",
+            "test/resources/llvm/riscv/qemu_libc/fp",
             "test/resources/llvm/riscv/qemu_nolibc/rv32im"),
         3,
         "sh /work/lcb_integration.sh"

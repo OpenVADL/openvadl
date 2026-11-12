@@ -94,6 +94,8 @@ def ADJCALLSTACKUP : Instruction
 def TEMP_RET : Instruction
 {
     let Namespace = "processornamevalue";
+    let Size = 4;
+    let CodeSize = 4;
     let InOperandList = (ins);
     let OutOperandList = (outs);
     let Pattern =  [ (target_ret_flag) ];
@@ -51553,6 +51555,9 @@ def ASRIW : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
 
@@ -51581,6 +51586,9 @@ let Defs = [  ];
 def ASRIX : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -51611,6 +51619,9 @@ def ASRVW : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
 
@@ -51639,6 +51650,9 @@ let Defs = [  ];
 def ASRVX : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -51669,6 +51683,9 @@ def LSLIW : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
 
@@ -51697,6 +51714,9 @@ let Defs = [  ];
 def LSLIX : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -51727,6 +51747,9 @@ def LSLVW : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
 
@@ -51755,6 +51778,9 @@ let Defs = [  ];
 def LSLVX : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -51785,6 +51811,9 @@ def LSRIW : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
 
@@ -51813,6 +51842,9 @@ let Defs = [  ];
 def LSRIX : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, bare_symbol:$shift );
@@ -51843,6 +51875,9 @@ def LSRVW : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
 
@@ -51871,6 +51906,9 @@ let Defs = [  ];
 def LSRVX : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -51901,6 +51939,9 @@ def MULW : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 4;
+let CodeSize = 4;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
 
@@ -51929,6 +51970,9 @@ let Defs = [  ];
 def MULX : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 4;
+let CodeSize = 4;
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins S:$rn, S:$rm );
@@ -51959,6 +52003,9 @@ def PLDR : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 8;
+let CodeSize = 8;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins bare_symbol:$symbol );
 
@@ -51987,6 +52034,9 @@ let Defs = [  ];
 def TEMP_CALL : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 0;
+let CodeSize = 0;
 
 let OutOperandList = ( outs  );
 let InOperandList = ( ins  );
@@ -52020,6 +52070,9 @@ def constMat0 : Instruction
 {
 let Namespace = "processorNameValue";
 
+let Size = 8;
+let CodeSize = 8;
+
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins bare_symbol:$val );
 
@@ -52048,6 +52101,9 @@ let Defs = [  ];
 def constMat1 : Instruction
 {
 let Namespace = "processorNameValue";
+
+let Size = 12;
+let CodeSize = 12;
 
 let OutOperandList = ( outs S:$rd );
 let InOperandList = ( ins bare_symbol:$val );
@@ -52328,6 +52384,14 @@ def : Pat<(br bb:$offset),
 
 def : Pat<(br bb:$offset),
         (B_NV bb:$offset)>;
+
+
+def : Pat<(ctlz W:$rn),
+        (CLZW W:$rn)>;
+
+
+def : Pat<(ctlz X:$rn),
+        (CLZX X:$rn)>;
 
 
 def : Pat<(xor W:$rn, AArch64Base_EORIW_immWSizeAsInt32:$immWSize),

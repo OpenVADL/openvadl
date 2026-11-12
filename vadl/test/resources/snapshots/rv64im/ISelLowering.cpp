@@ -100,12 +100,17 @@ processornamevalueTargetLowering::processornamevalueTargetLowering(const TargetM
 
     
     setOperationAction(ISD::BSWAP, MVT::i64, Expand);
+    setOperationAction(ISD::CTLZ, MVT::i64, Expand);
+    setOperationAction(ISD::CTPOP, MVT::i64, Expand);
+    setOperationAction(ISD::CTTZ, MVT::i64, Expand);
     setOperationAction(ISD::ROTL, MVT::i64, Expand);
     setOperationAction(ISD::ROTR, MVT::i64, Expand);
+    setOperationAction(ISD::SDIVREM, MVT::i64, Expand);
     setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
     setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
     setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
+    setOperationAction(ISD::UDIVREM, MVT::i64, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
     
 
@@ -123,6 +128,21 @@ processornamevalueTargetLowering::processornamevalueTargetLowering(const TargetM
 
     // Compute derived properties from the register classes
     computeRegisterProperties(STI.getRegisterInfo());
+}
+
+// Maps the generic inline asm constraint 'r' (any general purpose register) to the main register file.
+std::pair<unsigned, const TargetRegisterClass *>
+processornamevalueTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const
+{
+    if (Constraint.size() == 1 && Constraint[0] == 'r') {
+        const TargetRegisterClass *RC = &processornamevalue::XRegClass;
+        // LLVM promotes narrower scalar integers to the register type for inline asm.
+        if (VT == MVT::Other || TRI->isTypeLegalForClass(*RC, VT) ||
+            (VT.isInteger() && !VT.isVector() &&
+             VT.getSizeInBits() <= TRI->getRegSizeInBits(*RC)))
+            return std::make_pair(0U, RC);
+    }
+    return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
 }
 
 const char *processornamevalueTargetLowering::getTargetNodeName(unsigned Opcode) const

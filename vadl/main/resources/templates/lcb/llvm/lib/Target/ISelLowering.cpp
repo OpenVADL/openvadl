@@ -124,6 +124,21 @@ void [(${namespace})]TargetLowering::anchor() {}
     computeRegisterProperties(STI.getRegisterInfo());
 }
 
+// Maps the generic inline asm constraint 'r' (any general purpose register) to the main register file.
+std::pair<unsigned, const TargetRegisterClass *>
+[(${namespace})]TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const
+{
+    if (Constraint.size() == 1 && Constraint[0] == 'r') {
+        const TargetRegisterClass *RC = &[(${namespace})]::[(${mainRegisterFile.registerFileRef.name})]RegClass;
+        // LLVM promotes narrower scalar integers to the register type for inline asm.
+        if (VT == MVT::Other || TRI->isTypeLegalForClass(*RC, VT) ||
+            (VT.isInteger() && !VT.isVector() &&
+             VT.getSizeInBits() <= TRI->getRegSizeInBits(*RC)))
+            return std::make_pair(0U, RC);
+    }
+    return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
+}
+
 const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) const
 {
     switch (Opcode)
