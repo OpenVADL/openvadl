@@ -15,7 +15,6 @@ class CoreEmit extends AnyFunSpec with ChiselSim {
       firtoolOpts = Array(
         "--lowering-options=disallowPackedArrays,disallowLocalVariables",
         "--strip-debug-info",
-        "--extract-test-code",
         "--disable-layers=Verification"
       )
     )
@@ -29,7 +28,6 @@ class CoreEmit extends AnyFunSpec with ChiselSim {
       firtoolOpts = Array(
         "--lowering-options=disallowPackedArrays,disallowLocalVariables",
         "--strip-debug-info",
-        "--extract-test-code",
         "--disable-layers=Verification"
       )
     )
