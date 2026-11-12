@@ -12,7 +12,8 @@ import VADL._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funspec.AnyFunSpec
 
-import java.nio.file.Path
+import java.io.File
+import java.nio.file.{Files, Path, StandardOpenOption}
 
 class ElfSimBase(directory: String) extends AnyFunSpec with ChiselSim {
 
@@ -23,13 +24,12 @@ class ElfSimBase(directory: String) extends AnyFunSpec with ChiselSim {
   }
 
   implicit val hasSimulator: HasSimulator = HasSimulator.simulators.verilator(
-    verilatorSettings = svsim.verilator.Backend.CompilationSettings(
-      traceStyle = Some(
+    verilatorSettings = svsim.verilator.Backend.CompilationSettings.default
+      .withTraceStyle(Some(
         svsim.verilator.Backend.CompilationSettings.TraceStyle(
           kind = svsim.verilator.Backend.CompilationSettings.TraceKind.Vcd
         )
-      )
-    ),
+      )),
     compilationSettings = CommonCompilationSettings.default.copy(
       simulationSettings = CommonSimulationSettings.default.copy(
         plusArgs = Seq(new svsim.PlusArg("elf", Some("")))
@@ -50,6 +50,66 @@ class ElfSimBase(directory: String) extends AnyFunSpec with ChiselSim {
     simulate (new ElfSim[# th:inline="none"][[/][(${topModule})][# th:inline="none"]][/](new [(${topModule})], _.io, m => [#
     th:if="${resetVector != null}"]Some(m.io.[(${resetVector})]_in)[/][#
     th:if="${resetVector == null}"]None[/])) { dut => }
+  }
+
+  // run simulator with an executable and analyze output for success or fail
+  def run(
+           file: File,
+           cycles: Int = 10_000,
+           traceFile: Option[String] = None,
+           outputFile: Option[String] = None,
+           successLine: String => Boolean = _.contains(ElfSim.PASS),
+           failLine: String => Boolean = _.contains(ElfSim.FAIL)
+         ): Unit = {
+
+    if (!Files.exists(Path.of(executable))) {
+      build()
+    }
+
+    val settings = CommonSimulationSettings.default.copy(
+      plusArgs = Seq(
+        new svsim.PlusArg("elf", Some(f"$file")),
+        new svsim.PlusArg("run", Some(cycles.toString)),
+        new svsim.PlusArg("trace", traceFile)
+      )
+    )
+
+    val command = Seq(executable) ++ settings.plusArgs.map(_.simulatorFlags)
+
+    val process = new ProcessBuilder(command: _*)
+      .redirectErrorStream(true)
+      .start()
+
+    var success: Option[String] = None
+    var fail: Option[String] = None
+    val output = process.inputReader.lines().toList
+    output.forEach(line => {
+      if (successLine(line)) {
+        success = Some(line)
+      }
+      if (failLine(line)) {
+        fail = Some(line)
+      }
+    })
+
+    outputFile.foreach {
+      file => Files.write(Path.of(file), output,
+        StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
+    }
+
+    if (process.waitFor() != 0) {
+      throw new Exception("exit failure")
+    }
+
+    fail match {
+      case Some(line) => throw new Exception(s"$line")
+      case None =>
+    }
+    success match {
+      case Some(line) =>
+      case None => throw new Exception("timeout")
+    }
+
   }
 
 }
@@ -74,58 +134,19 @@ class ElfSimTest extends ElfSimBase("elfsimtest") with BeforeAndAfterAll {
     build()
   }
 
+  new File("test").mkdirs()
+
   // run riscv-tests
-  new java.io.File("/riscv-tests/isa").listFiles(_.getName.matches("[(${#strings.substring(isaName, 0, 4).toLowerCase()})]ui-p-[^.]*"))
+  new java.io.File("/riscv-tests/isa")
+    .listFiles(_.getName.matches("[(${#strings.substring(isaName, 0, 4).toLowerCase()})]ui-p-[^.]*"))
     .filter(file => !file.getName.contains("fence")) // not supported
     .foreach(file => {
       it(f"${file.getName}") {
-        val relFile = workingDirectory.toAbsolutePath.relativize(file.toPath.toAbsolutePath)
-        val settings = CommonSimulationSettings.default.copy(
-          plusArgs = Seq(new svsim.PlusArg("elf", Some(f"$relFile")))
+        run(
+          file,
+          traceFile = Some(s"test/${file.getName}"),
+          outputFile = Some(s"test/${file.getName}.log")
         )
-
-        val command = Seq(executable) ++ settings.plusArgs.map(_.simulatorFlags)
-
-        val process = new ProcessBuilder(command: _*)
-          .directory(workingDirectory.toFile)
-          .redirectErrorStream(true)
-          .start()
-
-        val cycles = 10_000
-        val trace = true
-        process.outputWriter.write(
-          s"""R a
-             |S 1 0
-             |R a
-             |S 1 1
-             |T 0 0,1-5*1
-             |S 1 0
-             |R 0${if (trace) "\nW 1" else ""}
-             |T 0 0,1-5*${cycles.toHexString}
-             |D\n""".stripMargin.replace("\r", ""))
-        process.outputWriter.flush()
-
-        var success: Option[String] = None
-        var fail: Option[String] = None
-        process.inputReader.lines().forEach(line => {
-          if (line.contains("RVTEST_PASS")) {
-            success = Some(line)
-          }
-          if (line.contains("RVTEST_FAIL")) {
-            fail = Some(line)
-          }
-        })
-
-        process.waitFor()
-
-        fail match {
-          case Some(line) => throw new Exception(s"$line")
-          case None =>
-        }
-        success match {
-          case Some(line) =>
-          case None => throw new Exception("timeout")
-        }
       }
     })
 
@@ -139,6 +160,10 @@ class ElfSimTest extends ElfSimBase("elfsimtest") with BeforeAndAfterAll {
  * @param getResetVector function to get optional reset vector from core module
  * @tparam T core module type
  */
+object ElfSim {
+  val PASS = "ELFSIM_PASS"
+  val FAIL = "ELFSIM_FAIL"
+}
 class ElfSim[T <: Module](module: => T, getIO: T => Bundle, getResetVector: T => Option[Data]) extends Module {
 
   val core = Module(module)
@@ -151,48 +176,48 @@ class ElfSim[T <: Module](module: => T, getIO: T => Bundle, getResetVector: T =>
   }.max
 
   val simSymb = Module(new SimMemSymbols("elf", addrWidth))
-  simSymb.io.clock := clock
-  simSymb.io.reset := reset
+  simSymb.clock := clock
+  simSymb.reset := reset
 
   getResetVector(core) match {
-    case Some(d) => d := simSymb.io.entry
+    case Some(d) => d := simSymb.entry
     case _ =>
   }
 
   core_io.getElements.foreach {
     case rd: VADL.MemReadPort[Bits] =>
       val simRead = Module(new SimMemRead("elf", rd))
-      simRead.io.clock := clock
-      simRead.io.reset := reset
-      simRead.io.enable := rd.enable
-      simRead.io.address := rd.address
-      simRead.io.words := rd.words
+      simRead.clock := clock
+      simRead.reset := reset
+      simRead.enable := rd.enable
+      simRead.address := rd.address
+      simRead.words := rd.words
       for (i <- rd.data.indices) {
         val w = rd.data(i).getWidth
-        rd.data(i) := simRead.io.data(w * (i + 1) - 1, w * i)
+        rd.data(i) := simRead.data(w * (i + 1) - 1, w * i)
       }
-      rd.valid := simRead.io.valid
-      when(rd.enable && rd.address === simSymb.io.fromhost) {
+      rd.valid := simRead.valid
+      when(rd.enable && rd.address === simSymb.fromhost) {
         printf(cf"fromhost not implemented\n")
       }
     case wr: VADL.MemWritePort[Bits] =>
       val simWrite = Module(new SimMemWrite("elf", wr))
-      simWrite.io.clock := clock
-      simWrite.io.reset := reset
-      simWrite.io.enable := wr.enable
-      simWrite.io.address := wr.address
-      simWrite.io.words := wr.words
-      simWrite.io.data := Cat(wr.data.reverse)
-      wr.valid := simWrite.io.valid
-      when(wr.enable && wr.address === simSymb.io.tohost) {
+      simWrite.clock := clock
+      simWrite.reset := reset
+      simWrite.enable := wr.enable
+      simWrite.address := wr.address
+      simWrite.words := wr.words
+      simWrite.data := Cat(wr.data.reverse)
+      wr.valid := simWrite.valid
+      when(wr.enable && wr.address === simSymb.tohost) {
         val value = Cat(wr.data.reverse)
-        printf(cf"tohost: $value\n")
+        printf(cf"%T tohost: $value\n")
         when(value(0) === 1.U) {
           val result = value >> 1
           when(result === 0.U) {
-            printf(cf"RVTEST_PASS\n")
+            printf(cf"%T ${ElfSim.PASS}\n")
           }.otherwise {
-            printf(cf"RVTEST_FAIL $result\n")
+            printf(cf"%T ${ElfSim.FAIL} $result\n")
           }
           stop()
         }
@@ -203,33 +228,25 @@ class ElfSim[T <: Module](module: => T, getIO: T => Bundle, getResetVector: T =>
 
 // SimMem black boxes that connect to the C++ simulation model of the memory
 
-abstract class SimMem[T <: Data](name: String, dataWidth: Int, addrWidth: Int, wordWidth: Int,
-                                 params: Map[String, Param] = Map.empty)
-  extends BlackBox(Map.newBuilder[String, Param]
-    .addOne("NAME" -> StringParam(name))
-    .addOne("DATA_WIDTH" -> IntParam(dataWidth))
-    .addOne("ADDR_WIDTH" -> IntParam(addrWidth))
-    .addOne("WORD_WIDTH" -> IntParam(wordWidth))
-    .addAll(params)
-    .result()
-  )
-    with HasBlackBoxResource {
+abstract class SimMem[T <: Data](name: String, dataWidth: Int, addrWidth: Int, wordWidth: Int)
+  extends ExtModule(Map(
+    "NAME" -> name,
+    "DATA_WIDTH" -> dataWidth,
+    "ADDR_WIDTH" -> addrWidth,
+    "WORD_WIDTH" -> wordWidth
+  )) {
 
-  val dataType = Bits(dataWidth.W)
+  val clock = IO(Input(Clock()))
+  val reset = IO(Input(Reset()))
 
-  def getIO(dataOut: Boolean) = new Bundle {
-    val clock = Input(Clock())
-    val reset = Input(Reset())
-
-    val enable = Input(Bool())
-    val address = Input(Bits(addrWidth.W))
-    val words = Input(Bits((log2Ceil(dataWidth/wordWidth+1)).W))
-    val data = if (dataOut) Output(dataType) else Input(dataType)
-    val valid = Output(Bool())
-  }
+  val enable = IO(Input(Bool()))
+  val address = IO(Input(Bits(addrWidth.W)))
+  val words = IO(Input(Bits((log2Ceil(dataWidth/wordWidth+1)).W)))
+  val valid = IO(Output(Bool()))
 
   addResource("/SimMem.sv")
   addResource("/SimMem.cpp")
+  addResource("/simulation-driver-bypass.cpp")
 
 }
 
@@ -239,7 +256,7 @@ class SimMemRead[T <: Data](name: String, port: MemReadPort[T]) extends SimMem(
   port.address.getWidth,
   port.data.getElements.map(_.getWidth).max
 ) {
-  val io = IO(getIO(true))
+  val data = IO(Output(Bits(port.data.getWidth.W)))
 }
 
 class SimMemWrite[T <: Data](name: String, port: MemWritePort[T]) extends SimMem(
@@ -248,16 +265,17 @@ class SimMemWrite[T <: Data](name: String, port: MemWritePort[T]) extends SimMem
   port.address.getWidth,
   port.data.getElements.map(_.getWidth).max
 ) {
-  val io = IO(getIO(false))
+  val data = IO(Input(Bits(port.data.getWidth.W)))
 }
 
-class SimMemSymbols[T <: Data](name: String, addrWidth: Int) extends SimMem(name, 0 /* not used */, addrWidth, 0) {
-  val io = IO(new Bundle {
-    val clock = Input(Clock())
-    val reset = Input(Reset())
+class SimMemSymbols[T <: Data](name: String, addrWidth: Int) extends ExtModule(Map(
+  "NAME" -> name,
+  "ADDR_WIDTH" -> addrWidth
+)) {
+  val clock = IO(Input(Clock()))
+  val reset = IO(Input(Reset()))
 
-    val entry = Output(Bits(addrWidth.W))
-    val fromhost = Output(Bits(addrWidth.W))
-    val tohost = Output(Bits(addrWidth.W))
-  })
+  val entry = IO(Output(Bits(addrWidth.W)))
+  val fromhost = IO(Output(Bits(addrWidth.W)))
+  val tohost = IO(Output(Bits(addrWidth.W)))
 }

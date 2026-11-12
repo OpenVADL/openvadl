@@ -17,19 +17,37 @@
 package vadl.rtl.riscv;
 
 import java.nio.file.Path;
-import org.junit.jupiter.api.Test;
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import vadl.configuration.DecoderOptions;
 import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.RtlConfiguration;
-import vadl.rtl.RtlDockerTest;
+import vadl.utils.Pair;
 
 class RtlRiscVInstructionTest extends RtlDockerTest {
 
-    @Test
-    void rv64imFiveTest() {
+  /**
+   * RTL RISC-V instruction test variants.
+   *
+   * @return test arguments
+   */
+  static Stream<Arguments> instructionTestSource() {
+    return Stream.of(
+        Pair.of("sys/risc-v/mia/rv_3stage.vadl", "RV32I"),
+        Pair.of("sys/risc-v/mia/rv_3stage.vadl", "RV32IM"),
+        Pair.of("sys/risc-v/mia/rv_3stage.vadl", "RV64I"),
+        Pair.of("sys/risc-v/mia/rv_3stage.vadl", "RV64IM"),
+        Pair.of("sys/risc-v/mia/rv_5stage.vadl", "RV32I"),
+        Pair.of("sys/risc-v/mia/rv_5stage.vadl", "RV32IM"),
+        Pair.of("sys/risc-v/mia/rv_5stage.vadl", "RV64I"),
+        Pair.of("sys/risc-v/mia/rv_5stage.vadl", "RV64IM")
+    ).map(args -> {
 
-      /* GIVEN */
       var generalConfig =
           new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE);
       var config = new RtlConfiguration(generalConfig);
@@ -39,15 +57,21 @@ class RtlRiscVInstructionTest extends RtlDockerTest {
       decoderOptions.setGenerator(DecoderOptions.Generator.REGULAR);
       config.setDecoderOptions(decoderOptions);
 
-      var image = generateRtlImage("sys/risc-v/mia/rv_5stage.vadl", config);
+      return Arguments.of(args.left(), args.right(), config);
+    });
+  }
 
-      runContainer(image,
-          /* WHEN */
-          c -> c.withCommand("/scripts/test.sh"),
-          /* THEN */
-          c -> {
-            // No post actions for now, we rely on the exit code instead
-          });
-    }
+  @ParameterizedTest
+  @MethodSource("instructionTestSource")
+  void instructionTest(String specPath, String isa, RtlConfiguration config) {
+
+    runContainerWithSpec(
+        specPath,
+        Map.of("Isa", isa),
+        config,
+        Collections.emptyList(),
+        "/scripts/test.sh"
+    );
+  }
 
 }

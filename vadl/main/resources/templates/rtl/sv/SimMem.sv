@@ -159,9 +159,7 @@ endmodule
 
 module SimMemSymbols #(
   parameter string NAME,
-  parameter int DATA_WIDTH,
-  parameter int ADDR_WIDTH,
-  parameter int WORD_WIDTH
+  parameter int ADDR_WIDTH
 ) (
   input clock,
   input reset,
