@@ -111,6 +111,7 @@ public class EmbenchCRCLcbIssRiscv32Test extends LcbDockerExecutionTest {
         .withFileFromPath(".", lcbPath)
         .withFileFromPath("openvadl-iss-gen", issPath)
         .withBuildArg("TARGET", getTarget())
+        .withBuildArg("LCB_TARGET", lcbConfiguration.targetName().value().toLowerCase())
         .withBuildArg("UPSTREAM_BUILD_TARGET", getUpstreamBuildTarget())
         .withBuildArg("UPSTREAM_CLANG_TARGET", getUpstreamClangTarget())
         .withBuildArg("SPIKE_TARGET", getSpikeTarget())

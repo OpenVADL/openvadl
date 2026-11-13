@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -103,5 +103,21 @@ public class CompilerInstruction extends Definition implements DefProp.WithBehav
         return -1;
       }
     }).findFirst().orElseThrow();
+  }
+
+  /**
+   * Total bitwidth of the compiler instruction.
+   */
+  public int bitWidth() {
+    return behavior().getNodes(vadl.viam.graph.control.InstrCallNode.class)
+        .mapToInt(call -> call.target().encoding().format().type().bitWidth())
+        .sum();
+  }
+
+  /**
+   * Total bytewidth of the compiler instruction.
+   */
+  public int byteWidth() {
+    return (bitWidth() + 7) / 8;
   }
 }

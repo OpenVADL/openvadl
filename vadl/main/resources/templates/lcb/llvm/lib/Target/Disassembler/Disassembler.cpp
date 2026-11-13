@@ -38,7 +38,7 @@ static DecodeStatus Decode[(${regClass.registerFile.name})]RegisterClass
 /* == Immediate Decoding == */
 [# th:each="immediate : ${decodeImmediates}"]
 DecodeStatus [(${immediate.decodeWrapper})](MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder) {
-    Imm = [(${immediate.decodeFunction})](Imm);
+    Imm = [(${immediate.decodeFunction})]([(${immediate.decodeParams})]);
     Inst.addOperand(MCOperand::createImm(Imm));
     return MCDisassembler::Success;
 }

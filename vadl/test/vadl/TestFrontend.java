@@ -17,6 +17,9 @@
 package vadl;
 
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Map;
+import vadl.configuration.GeneralConfiguration;
 import vadl.viam.Specification;
 
 /**
@@ -33,9 +36,10 @@ public interface TestFrontend {
    * Runs the specification until AST to VIAM conversion is done.
    *
    * @param vadlFile the specification file
+   * @param macroOverrides macro overrides
    * @return true if success, otherwise false
    */
-  boolean runSpecification(Path vadlFile);
+  boolean runSpecification(Path vadlFile, Map<String, String> macroOverrides);
 
   /**
    * Get the VIAM from the run result. This must be called after

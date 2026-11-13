@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+"""
+GCC-style compiler driver for building runtime libraries with the LCB rv32im toolchain.
+
+C sources are lowered to assembly by the LCB clang and assembled by the LCB llvm-mc, so every
+object uses the custom ELF relocations of the generated backend. Linking is done with ld.lld.
+The driver understands the argument patterns used by meson and plain Makefiles
+(-c / -S / -E / link).
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+
+BIN = os.environ.get("LCB_BIN", "/src/llvm-final/build/bin")
+CLANG = os.path.join(BIN, "clang")
+MC = os.path.join(BIN, "llvm-mc")
+LLD = os.path.join(BIN, "ld.lld")
+
+# Name of the generated LCB target (clang --target / llvm-mc --arch). It is the processor name of
+# the specification, which is not necessarily "rv32im" (e.g. "rv32icustomcrc1").
+LCB_TARGET = os.environ.get("LCB_TARGET") or os.environ.get("TARGET") or "rv32im"
+
+TARGET_FLAGS = ["--target=" + LCB_TARGET, "-D__SIZEOF_POINTER__=4", "-D__riscv_xlen=32"]
+MC_FLAGS = ["--arch=" + LCB_TARGET, "-filetype=obj"]
+
+# Options which consume the following argument.
+ARG_OPTIONS = {
+    "-o", "-MF", "-MQ", "-MT", "-I", "-isystem", "-iquote", "-idirafter", "-include",
+    "-imacros", "-x", "-D", "-U", "-L", "-l", "-T", "-Xlinker", "-e", "-u", "-z",
+}
+SOURCE_SUFFIXES = (".c", ".S", ".s", ".i")
+LINK_INPUT_SUFFIXES = (".o", ".a", ".obj")
+
+
+def run(cmd):
+  if os.environ.get("LCB_CC_VERBOSE"):
+    print("+ " + " ".join(cmd), file=sys.stderr)
+  result = subprocess.run(cmd)
+  if result.returncode != 0:
+    sys.exit(result.returncode)
+
+
+def split_args(argv):
+  """Separate the arguments into options (with their values), sources and link inputs."""
+  options, sources, inputs = [], [], []
+  output = None
+  i = 0
+  while i < len(argv):
+    arg = argv[i]
+    if arg in ARG_OPTIONS and i + 1 < len(argv):
+      if arg == "-o":
+        output = argv[i + 1]
+      else:
+        options += [arg, argv[i + 1]]
+      i += 2
+      continue
+    if arg.startswith("-o") and len(arg) > 2 and not arg.startswith("-ob"):
+      output = arg[2:]
+    elif not arg.startswith("-") and arg.endswith(SOURCE_SUFFIXES):
+      sources.append(arg)
+    elif not arg.startswith("-") and (arg.endswith(LINK_INPUT_SUFFIXES) or ".so" in arg):
+      inputs.append(arg)
+    else:
+      options.append(arg)
+    i += 1
+  return options, sources, inputs, output
+
+
+def compile_flags(options):
+  """Remove all options which are only meaningful for the linker."""
+  flags = []
+  i = 0
+  while i < len(options):
+    opt = options[i]
+    if opt in ("-c", "-S", "-E", "-static", "-nostartfiles", "-nodefaultlibs", "-shared"):
+      pass
+    elif opt.startswith("-Wl,") or opt.startswith("-L") or opt.startswith("-l") \
+        or opt.startswith("-T") or opt.startswith("-fuse-ld"):
+      if opt in ("-L", "-l", "-T"):
+        i += 1
+    elif opt in ("-Xlinker", "-e", "-u", "-z"):
+      i += 1
+    else:
+      flags.append(opt)
+    i += 1
+  return flags
+
+
+def link_flags(options):
+  """Keep only the options which are meaningful for ld.lld."""
+  flags = []
+  i = 0
+  while i < len(options):
+    opt = options[i]
+    if opt.startswith("-Wl,"):
+      flags += [a for a in opt[4:].split(",") if a]
+    elif opt in ("-Xlinker", "-L", "-l", "-T", "-e", "-u", "-z"):
+      value = options[i + 1]
+      flags += [value] if opt == "-Xlinker" else [opt, value]
+      i += 1
+    elif opt.startswith(("-L", "-l", "-T")) or opt == "-static":
+      flags.append(opt)
+    i += 1
+  return flags
+
+
+def source_language(options, source):
+  if "-x" in options:
+    lang = options[options.index("-x") + 1]
+    if lang == "c":
+      return "c"
+    if lang in ("assembler-with-cpp",):
+      return "S"
+    if lang == "assembler":
+      return "s"
+  return {".c": "c", ".i": "c", ".S": "S", ".s": "s"}[os.path.splitext(source)[1]]
+
+
+def compile_source(options, source, output, tmpdir):
+  flags = compile_flags(options)
+  lang = source_language(options, source)
+  asm = os.path.join(tmpdir, os.path.basename(source) + ".s")
+  if lang == "c":
+    run([CLANG] + TARGET_FLAGS + flags + ["-S", "-o", asm, source])
+  elif lang == "S":
+    flags = [f for f in flags if f not in ("-x", "assembler-with-cpp")]
+    run([CLANG] + TARGET_FLAGS + flags + ["-E", "-P", "-x", "assembler-with-cpp", "-o", asm,
+                                          source])
+  else:
+    asm = source
+  run([MC] + MC_FLAGS + [asm, "-o", output])
+
+
+def default_object(source):
+  return os.path.splitext(os.path.basename(source))[0] + ".o"
+
+
+def main():
+  argv = sys.argv[1:]
+
+  # Queries (version, preprocessing, assembly output) are answered by clang directly.
+  if not argv or any(a in ("--version", "-v", "-dumpversion", "-dumpmachine", "-E", "-S")
+                     or a.startswith("-print-") or a == "-" for a in argv):
+    if "-Wl,--version" not in argv and "-Wl,-v" not in argv:
+      os.execv(CLANG, [CLANG] + TARGET_FLAGS + argv)
+
+  options, sources, inputs, output = split_args(argv)
+
+  with tempfile.TemporaryDirectory(prefix="lcb-cc-") as tmpdir:
+    if "-c" in options:
+      if output is not None and len(sources) > 1:
+        print("lcb-cc: cannot specify -o with -c and multiple sources", file=sys.stderr)
+        sys.exit(1)
+      for source in sources:
+        compile_source(options, source, output or default_object(source), tmpdir)
+      return
+
+    # Link mode: compile sources to temporary objects and link everything with ld.lld.
+    objects = []
+    for index, source in enumerate(sources):
+      obj = os.path.join(tmpdir, "%d-%s" % (index, default_object(source)))
+      compile_source(options, source, obj, tmpdir)
+      objects.append(obj)
+
+    flags = link_flags(options)
+    cmd = [LLD] + flags + objects + inputs
+    if output is not None:
+      cmd += ["-o", output]
+    elif objects or inputs:
+      cmd += ["-o", "a.out"]
+    run(cmd)
+
+
+if __name__ == "__main__":
+  main()
+

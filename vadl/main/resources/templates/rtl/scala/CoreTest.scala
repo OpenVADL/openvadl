@@ -6,7 +6,6 @@ import chisel3.testing._
 import net.fornwall.jelf.{ElfFile, ElfSegment}
 import org.scalatest.Ignore
 import org.scalatest.funspec.AnyFunSpec
-import svsim.verilator.Backend.CompilationSettings.TraceKind.Vcd
 
 import java.io.FileInputStream
 import java.nio.file.Path
@@ -27,11 +26,11 @@ class CoreTest extends AnyFunSpec with ChiselSim {
 
   implicit val verilator: HasSimulator = HasSimulator.simulators
     .verilator(verilatorSettings =
-      svsim.verilator.Backend.CompilationSettings(
-        traceStyle = Some(
-          svsim.verilator.Backend.CompilationSettings.TraceStyle(kind = Vcd)
+      svsim.verilator.Backend.CompilationSettings.default.withTraceStyle(Some(
+        svsim.verilator.Backend.CompilationSettings.TraceStyle(
+          kind = svsim.verilator.Backend.CompilationSettings.TraceKind.Vcd
         )
-      )
+      ))
     )
 
   val mem = new mutable.HashMap[BigInt, UInt]()

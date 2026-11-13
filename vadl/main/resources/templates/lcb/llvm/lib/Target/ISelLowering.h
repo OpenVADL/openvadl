@@ -91,6 +91,9 @@ namespace llvm
             bool isLegalAddImmediate(int64_t Imm) const override;
             bool preferZeroCompareBranch() const override { return true; }
 
+            std::pair<unsigned, const TargetRegisterClass *>
+            getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const override;
+
 
         private:
             const [(${namespace})]Subtarget &Subtarget;

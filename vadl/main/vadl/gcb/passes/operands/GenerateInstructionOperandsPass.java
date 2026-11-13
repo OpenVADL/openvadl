@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -246,11 +246,7 @@ public class GenerateInstructionOperandsPass extends Pass {
     // Then, immediates
     var y = graph.getNodes(FieldAccessRefNode.class).toList();
 
-    var z = graph.getNodes(FuncCallNode.class).flatMap(
-            funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class))
-        .toList();
-
-    return concat(x.stream(), xx.stream(), y.stream(), z.stream()).toList();
+    return concat(x.stream(), xx.stream(), y.stream()).toList();
   }
 
   private static List<Node> getInputOperandsForPseudoInstructions(CompilerInstruction instruction,

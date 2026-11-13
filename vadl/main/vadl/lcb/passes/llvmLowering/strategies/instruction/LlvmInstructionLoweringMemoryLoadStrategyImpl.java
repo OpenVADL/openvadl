@@ -92,14 +92,6 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   }
 
   /**
-   * This strategy is ok with it when it has {@link ReadMemNode} or {@link WriteMemNode}.
-   */
-  @Override
-  protected boolean rejectWhenReadingFromMemory(Graph graph) {
-    return false;
-  }
-
-  /**
    * LLVM requires a pattern for loading directly from a frame index. But for example in the RISCV
    * specification we only have an instruction which loads from register + immediate. This method
    * will drop the immediate and replace it by {@code 0}.

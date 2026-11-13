@@ -468,7 +468,6 @@ public abstract class LlvmInstructionLoweringStrategy {
         || readsSingleRegister(graph)
         || hasSignExtensionInGraph(instruction, graph)
         || hasMultipleOutputs(graph)
-        || rejectWhenReadingFromMemory(graph)
         || rejectWhenWritingToMemory(graph)
         || hasUnreplacedBuiltins(graph)
         || hasSelectNodes(graph)
@@ -573,13 +572,6 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   protected boolean rejectWhenWritingToMemory(Graph graph) {
     return graph.getNodes(WriteMemNode.class).findAny().isPresent();
-  }
-
-  /**
-   * If the {@link Graph} it has nodes which read from memory then we cannot lower it.
-   */
-  protected boolean rejectWhenReadingFromMemory(Graph graph) {
-    return graph.getNodes(ReadMemNode.class).findAny().isPresent();
   }
 
   /**
