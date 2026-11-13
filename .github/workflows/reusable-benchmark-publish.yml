@@ -21,6 +21,11 @@ on:
         required: false
         default: ''
         type: string
+      additional-destination-folder:
+        description: 'Optional destination folder for companion results in the target repository'
+        required: false
+        default: ''
+        type: string
       additional-artifact-name:
         description: 'Unique name for the companion workflow artifact'
         required: false
@@ -92,11 +97,26 @@ jobs:
           mkdir -p "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}"
           cp "${{ github.workspace }}/${ARTIFACT_NAME}" \
             "${{ github.workspace }}/resselpark/${{ inputs.destination-folder }}/${ARTIFACT_NAME}"
+      - name: Copy companion results into target repository
+        if: ${{ inputs.additional-artifact-source != '' && inputs.additional-destination-folder != '' }}
+        env:
+          ADDITIONAL_ARTIFACT_SOURCE: ${{ inputs.additional-artifact-source }}
+          ADDITIONAL_DESTINATION_FOLDER: ${{ inputs.additional-destination-folder }}
+        run: |
+          mkdir -p "${{ github.workspace }}/resselpark/${ADDITIONAL_DESTINATION_FOLDER}"
+          cp "${ADDITIONAL_ARTIFACT_SOURCE}" \
+            "${{ github.workspace }}/resselpark/${ADDITIONAL_DESTINATION_FOLDER}/${ARTIFACT_NAME}"
       - name: Commit and push artifact
+        env:
+          ADDITIONAL_ARTIFACT_SOURCE: ${{ inputs.additional-artifact-source }}
+          ADDITIONAL_DESTINATION_FOLDER: ${{ inputs.additional-destination-folder }}
         run: |
           cd "${{ github.workspace }}/resselpark"
           git config user.email "ci@openvadl.org"
           git config user.name "ci"
           git add "${{ inputs.destination-folder }}/${ARTIFACT_NAME}"
+          if [ -n "$ADDITIONAL_ARTIFACT_SOURCE" ] && [ -n "$ADDITIONAL_DESTINATION_FOLDER" ]; then
+            git add "${ADDITIONAL_DESTINATION_FOLDER}/${ARTIFACT_NAME}"
+          fi
           git commit -m "${{ inputs.commit-message }}" || exit 0
           git push origin HEAD:master

@@ -50,6 +50,9 @@ headerless CSV with columns `benchmark,upstream,lcb,upstream/lcb`; the size colu
 The geometric mean of the size ratios is printed in the benchmark log.
 The Benchmark LCB workflow retains these reports as the `riscv32-binary-size` and
 `riscv64-binary-size` workflow artifacts.
+It also pushes the size reports to `openVADL/resselpark` under
+`data/lcb/riscv32/binary-size/results` and `data/lcb/riscv64/binary-size/results`,
+using the same timestamp and commit SHA filenames as the instruction reports.
 
 <div class="section_buttons">
 
