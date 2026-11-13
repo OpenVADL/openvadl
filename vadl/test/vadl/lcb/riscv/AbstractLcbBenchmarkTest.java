@@ -30,6 +30,8 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
 
     var hostPath = System.getenv("EMBENCH_BENCHMARK_RESULT_HOST_PATH");
     var guestPath = System.getenv("EMBENCH_BENCHMARK_RESULT_GUEST_PATH");
+    var sizeHostPath = System.getenv("EMBENCH_BENCHMARK_SIZE_RESULT_HOST_PATH");
+    var sizeGuestPath = System.getenv("EMBENCH_BENCHMARK_SIZE_RESULT_GUEST_PATH");
 
     var configuration = new LcbConfiguration(getConfiguration(false),
         new TargetName(getTarget()));
@@ -52,8 +54,7 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
       return container;
     }, container -> {
       container.copyFileFromContainer(guestPath, hostPath);
-      container.copyFileFromContainer("/src/embench/result/binary_size_relative.csv",
-          hostPath + ".binary-size.csv");
+      container.copyFileFromContainer(sizeGuestPath, sizeHostPath);
     });
   }
 }

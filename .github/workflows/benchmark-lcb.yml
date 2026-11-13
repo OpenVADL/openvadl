@@ -30,6 +30,8 @@ jobs:
       extra-env: |
         EMBENCH_BENCHMARK_RESULT_HOST_PATH=riscv32.csv
         EMBENCH_BENCHMARK_RESULT_GUEST_PATH=/src/embench/result/executed_instructions_relative.csv
+        EMBENCH_BENCHMARK_SIZE_RESULT_HOST_PATH=riscv32.csv.binary-size.csv
+        EMBENCH_BENCHMARK_SIZE_RESULT_GUEST_PATH=/src/embench/result/binary_size_relative.csv
     secrets: inherit
   riscv64:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
@@ -44,4 +46,6 @@ jobs:
       extra-env: |
         EMBENCH_BENCHMARK_RESULT_HOST_PATH=riscv64.csv
         EMBENCH_BENCHMARK_RESULT_GUEST_PATH=/src/embench/result/executed_instructions_relative.csv
+        EMBENCH_BENCHMARK_SIZE_RESULT_HOST_PATH=riscv64.csv.binary-size.csv
+        EMBENCH_BENCHMARK_SIZE_RESULT_GUEST_PATH=/src/embench/result/binary_size_relative.csv
     secrets: inherit
