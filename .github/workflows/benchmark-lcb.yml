@@ -25,6 +25,7 @@ jobs:
       artifact-source: vadl/riscv32.csv
       additional-artifact-source: vadl/riscv32.csv.binary-size.csv
       additional-artifact-name: riscv32-binary-size
+      additional-destination-folder: data/lcb/riscv32/binary-size/results
       destination-folder: data/lcb/riscv32/instruction-delta/results
       commit-message: 'data: Pushed LCB data'
       extra-env: |
@@ -41,6 +42,7 @@ jobs:
       artifact-source: vadl/riscv64.csv
       additional-artifact-source: vadl/riscv64.csv.binary-size.csv
       additional-artifact-name: riscv64-binary-size
+      additional-destination-folder: data/lcb/riscv64/binary-size/results
       destination-folder: data/lcb/riscv64/instruction-delta/results
       commit-message: 'data: Pushed LCB data'
       extra-env: |
