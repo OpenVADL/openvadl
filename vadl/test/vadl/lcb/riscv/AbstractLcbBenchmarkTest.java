@@ -17,7 +17,6 @@
 package vadl.lcb.riscv;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
@@ -31,6 +30,8 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
 
     var hostPath = System.getenv("EMBENCH_BENCHMARK_RESULT_HOST_PATH");
     var guestPath = System.getenv("EMBENCH_BENCHMARK_RESULT_GUEST_PATH");
+    var sizeHostPath = System.getenv("EMBENCH_BENCHMARK_SIZE_RESULT_HOST_PATH");
+    var sizeGuestPath = System.getenv("EMBENCH_BENCHMARK_SIZE_RESULT_GUEST_PATH");
 
     var configuration = new LcbConfiguration(getConfiguration(false),
         new TargetName(getTarget()));
@@ -48,10 +49,12 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
             getSpikeTarget(),
             getAbi());
 
-    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(cachedImage,
-        List.of(),
-        hostPath,
-        guestPath,
-        cmd);
+    runContainer(cachedImage, container -> {
+      container.setCommand(cmd);
+      return container;
+    }, container -> {
+      container.copyFileFromContainer(guestPath, hostPath);
+      container.copyFileFromContainer(sizeGuestPath, sizeHostPath);
+    });
   }
 }

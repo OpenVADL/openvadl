@@ -16,6 +16,16 @@ on:
         description: 'Path to the produced artifact'
         required: true
         type: string
+      additional-artifact-source:
+        description: 'Optional companion results to retain as a workflow artifact'
+        required: false
+        default: ''
+        type: string
+      additional-artifact-name:
+        description: 'Unique name for the companion workflow artifact'
+        required: false
+        default: 'benchmark-companion-results'
+        type: string
       destination-folder:
         description: 'Destination folder in the target repository'
         required: true
@@ -59,6 +69,13 @@ jobs:
         run: ${{ inputs.benchmark-command }}
         env:
           isCI: true
+      - name: Upload companion results
+        if: ${{ inputs.additional-artifact-source != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.additional-artifact-name }}
+          path: ${{ inputs.additional-artifact-source }}
+          if-no-files-found: error
       - name: Set artifact filename
         run: printf 'ARTIFACT_NAME=%s_%s.csv\n' "$(date -u +%Y-%m-%dT%H-%M-%SZ)" "${{ github.sha }}" >> "$GITHUB_ENV"
       - name: Prepare artifact

@@ -8,6 +8,7 @@ on:
     paths:
       - 'vadl/main/vadl/lcb/**'
       - 'vadl/test/vadl/lcb/**'
+      - 'vadl/test/resources/embench/**'
       - 'sys/**'
 
 permissions:
@@ -22,11 +23,15 @@ jobs:
       runner: self-hosted-x64
       benchmark-command: ./gradlew :vadl:test -i --tests "vadl.lcb.riscv.riscv32.EmbenchBenchmarkRiscv32Test" -Dtags.include=BenchmarkTest
       artifact-source: vadl/riscv32.csv
+      additional-artifact-source: vadl/riscv32.csv.binary-size.csv
+      additional-artifact-name: riscv32-binary-size
       destination-folder: data/lcb/riscv32/instruction-delta/results
       commit-message: 'data: Pushed LCB data'
       extra-env: |
         EMBENCH_BENCHMARK_RESULT_HOST_PATH=riscv32.csv
         EMBENCH_BENCHMARK_RESULT_GUEST_PATH=/src/embench/result/executed_instructions_relative.csv
+        EMBENCH_BENCHMARK_SIZE_RESULT_HOST_PATH=riscv32.csv.binary-size.csv
+        EMBENCH_BENCHMARK_SIZE_RESULT_GUEST_PATH=/src/embench/result/binary_size_relative.csv
     secrets: inherit
   riscv64:
     uses: ./.github/workflows/reusable-benchmark-publish.yml
@@ -34,9 +39,13 @@ jobs:
       runner: self-hosted-x64
       benchmark-command: ./gradlew :vadl:test -i --tests "vadl.lcb.riscv.riscv64.EmbenchBenchmarkRiscv64Test" -Dtags.include=BenchmarkTest
       artifact-source: vadl/riscv64.csv
+      additional-artifact-source: vadl/riscv64.csv.binary-size.csv
+      additional-artifact-name: riscv64-binary-size
       destination-folder: data/lcb/riscv64/instruction-delta/results
       commit-message: 'data: Pushed LCB data'
       extra-env: |
         EMBENCH_BENCHMARK_RESULT_HOST_PATH=riscv64.csv
         EMBENCH_BENCHMARK_RESULT_GUEST_PATH=/src/embench/result/executed_instructions_relative.csv
+        EMBENCH_BENCHMARK_SIZE_RESULT_HOST_PATH=riscv64.csv.binary-size.csv
+        EMBENCH_BENCHMARK_SIZE_RESULT_GUEST_PATH=/src/embench/result/binary_size_relative.csv
     secrets: inherit
