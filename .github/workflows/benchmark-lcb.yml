@@ -8,6 +8,7 @@ on:
     paths:
       - 'vadl/main/vadl/lcb/**'
       - 'vadl/test/vadl/lcb/**'
+      - 'vadl/test/resources/embench/**'
       - 'sys/**'
 
 permissions:
@@ -22,6 +23,8 @@ jobs:
       runner: self-hosted-x64
       benchmark-command: ./gradlew :vadl:test -i --tests "vadl.lcb.riscv.riscv32.EmbenchBenchmarkRiscv32Test" -Dtags.include=BenchmarkTest
       artifact-source: vadl/riscv32.csv
+      additional-artifact-source: vadl/riscv32.csv.binary-size.csv
+      additional-artifact-name: riscv32-binary-size
       destination-folder: data/lcb/riscv32/instruction-delta/results
       commit-message: 'data: Pushed LCB data'
       extra-env: |
@@ -34,6 +37,8 @@ jobs:
       runner: self-hosted-x64
       benchmark-command: ./gradlew :vadl:test -i --tests "vadl.lcb.riscv.riscv64.EmbenchBenchmarkRiscv64Test" -Dtags.include=BenchmarkTest
       artifact-source: vadl/riscv64.csv
+      additional-artifact-source: vadl/riscv64.csv.binary-size.csv
+      additional-artifact-name: riscv64-binary-size
       destination-folder: data/lcb/riscv64/instruction-delta/results
       commit-message: 'data: Pushed LCB data'
       extra-env: |

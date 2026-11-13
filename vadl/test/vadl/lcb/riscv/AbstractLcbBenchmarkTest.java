@@ -17,7 +17,6 @@
 package vadl.lcb.riscv;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.TargetName;
@@ -48,10 +47,13 @@ public abstract class AbstractLcbBenchmarkTest extends LcbDockerExecutionTest {
             getSpikeTarget(),
             getAbi());
 
-    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(cachedImage,
-        List.of(),
-        hostPath,
-        guestPath,
-        cmd);
+    runContainer(cachedImage, container -> {
+      container.setCommand(cmd);
+      return container;
+    }, container -> {
+      container.copyFileFromContainer(guestPath, hostPath);
+      container.copyFileFromContainer("/src/embench/result/binary_size_relative.csv",
+          hostPath + ".binary-size.csv");
+    });
   }
 }

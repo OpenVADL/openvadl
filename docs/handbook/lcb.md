@@ -39,6 +39,16 @@ export EMBENCH_BENCHMARK_RESULT_GUEST_PATH=/src/embench/result/executed_instruct
 ./gradlew test -i --tests EmbenchBenchmarkRiscv32Test  -DincludeTags=BenchmarkTest
 ```
 
+The RV32 and RV64 Embench benchmarks also measure the complete executable file size in bytes
+for each binary executed by the instruction-counting run, for both upstream Clang and LCB.
+This includes ELF headers, section tables, and any debug information present in the file.
+The size comparison is copied to `${EMBENCH_BENCHMARK_RESULT_HOST_PATH}.binary-size.csv`
+(for example, `riscv32.csv.binary-size.csv`). Like the instruction comparison, this is a
+headerless CSV with columns `benchmark,upstream,lcb,upstream/lcb`; the size columns are bytes.
+The geometric mean of the size ratios is printed in the benchmark log.
+The Benchmark LCB workflow retains these reports as the `riscv32-binary-size` and
+`riscv64-binary-size` workflow artifacts.
+
 <div class="section_buttons">
 
 | Previous                            |                             |

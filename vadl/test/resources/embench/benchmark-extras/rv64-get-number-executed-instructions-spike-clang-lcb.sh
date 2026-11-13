@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-set -e
-
 cd $(realpath $(dirname "$0"))
 
 SPIKE_TARGET='riscv64'
 
-mkdir ../result
+mkdir -p ../result
 
 # First, we run the benchmarks for clang.
 # This builds in the binaries in the `bd` folder.
@@ -14,6 +12,7 @@ sh run-rv64-benchmarks-spike-clang-upstream-O3.sh
 sh ../qemu_get_number_executed_instructions.sh $SPIKE_TARGET
 # Finally, we save the result for later.
 mv ../bd/executed_instructions_absolute.csv ../result/executed_instructions_absolute_upstream.csv
+mv ../bd/binary_size_absolute.csv ../result/binary_size_absolute_upstream.csv
 
 echo "Upstream is done."
 
@@ -27,6 +26,7 @@ sh rv64-run-benchmarks-spike-clang-lcb-O3.sh
 sh ../qemu_get_number_executed_instructions.sh $SPIKE_TARGET
 # Finally, we save the result for later.
 mv ../bd/executed_instructions_absolute.csv ../result/executed_instructions_absolute_lcb.csv
+mv ../bd/binary_size_absolute.csv ../result/binary_size_absolute_lcb.csv
 
 echo "LCB is done."
 
@@ -41,3 +41,10 @@ cat ../result/executed_instructions_absolute_lcb.csv
 echo "RELATIVE"
 cat ../result/executed_instructions_relative.csv
 echo $MEAN
+
+# Compare the sizes of the same binaries that were executed above.
+python3 ../executed_instructions_relative_performance.py \
+  ../result/binary_size_absolute_upstream.csv ../result/binary_size_absolute_lcb.csv \
+  --output ../result/binary_size_relative.csv --metric 'binary size (bytes)'
+echo "BINARY SIZE (benchmark, upstream bytes, LCB bytes, upstream / LCB)"
+cat ../result/binary_size_relative.csv
