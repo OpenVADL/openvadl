@@ -104,6 +104,7 @@ jlink {
 
     mergedModule {
         excludeProvides(mapOf("service" to "jakarta.servlet.ServletContainerInitializer"))
+        requires("java.desktop")
         requires("java.sql")
     }
 
