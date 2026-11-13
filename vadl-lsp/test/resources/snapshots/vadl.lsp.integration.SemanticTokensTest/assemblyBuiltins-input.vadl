@@ -1,0 +1,8 @@
+instruction set architecture TEST = {
+  format Simple : Bits<1> = {b [0]}
+  instruction FOO : Simple = {}
+  encoding FOO = {b = 0b1}
+
+  // "register", "udec", and "sdec" should remain keyword
+  assembly FOO = (mnemonic, " ", register(b), udec(b), sdec(b))
+}

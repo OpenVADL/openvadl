@@ -276,6 +276,21 @@ public class DocumentSnapshot {
     return new SourceLocation.Position(line, column);
   }
 
+  /**
+   * Returns the UTF-8 length of a text line.
+   *
+   * @param line 0-based line index
+   * @return length of selected text line (in amount of UTF-8 bytes)
+   */
+  public int getUtf8LineLength(int line) {
+    String lineText = textLines.get(line);
+    int length = lineText.length();
+    for (int i = 0; i < lineText.length(); i++) {
+      length += utf8Utf16LengthDifference(lineText.charAt(i));
+    }
+    return length;
+  }
+
   @Override
   public String toString() {
     return "DocumentSnapshot " + path + " (version " + version + "):\n================\n  "

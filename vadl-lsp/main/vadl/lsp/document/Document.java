@@ -68,6 +68,17 @@ public class Document {
   }
 
   /**
+   * Checks if the given {@code snapshot} is the current snapshot of this document.
+   *
+   * @param snapshot A snapshot that belongs to this Document
+   * @return {@code true} iff {@code snapshot} has the same version as this document's current
+   *         snapshot.
+   */
+  public boolean isCurrent(DocumentSnapshot snapshot) {
+    return snapshot.version == getCurrentSnapshot().version;
+  }
+
+  /**
    * Updates this document's snapshot. Thread-safe.
    *
    * @throws IllegalStateException if {@code newVersion} is older than the current snapshot's
@@ -131,7 +142,12 @@ public class Document {
 
     try {
       return currentCompilationTask.get();
-    } catch (CancellationException | ExecutionException e) {
+
+    } catch (CancellationException e) {
+      throw new InterruptedException();
+    } catch (ExecutionException e) {
+      // Something went wrong in the compiler
+      log.error("", e.getCause());
       throw new InterruptedException();
     }
   }
@@ -139,7 +155,7 @@ public class Document {
   private synchronized Future<CompilationInputAndResult> startCompilation() {
     final var fileSystemSnapshot = documentStore.createSnapshotFileSystem();
 
-    compilationTask = documentStore.documentService.server.executor.submit(() -> {
+    compilationTask = documentStore.executor.submit(() -> {
       // Reading document snapshot from VFS to be consistent with it
       var documentSnapshot = fileSystemSnapshot.getDocumentSnapshot(getPath());
       if (documentSnapshot == null) {

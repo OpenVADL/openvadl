@@ -16,6 +16,9 @@
 
 package vadl.lsp;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,6 +30,10 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.PositionEncodingKind;
+import org.eclipse.lsp4j.SemanticTokenTypes;
+import org.eclipse.lsp4j.SemanticTokensLegend;
+import org.eclipse.lsp4j.SemanticTokensServerFull;
+import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.ServerInfo;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
@@ -54,17 +61,16 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   private final VadlTextDocumentService textService = new VadlTextDocumentService(this);
 
   @Nullable
-  private InitializeParams params;
-  @Nullable
   private ServerCapabilities serverCapabilities;
 
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
     log.debug(">> initialize: {}", params);
-    this.params = params;
 
-    createCapabilities();
+    createCapabilities(params);
+    textService.initialize(params, Objects.requireNonNull(serverCapabilities));
+
     var result = new InitializeResult(
         serverCapabilities,
         new ServerInfo("openVADL language server")
@@ -140,7 +146,7 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
   public void setListeningFuture(Future<Void> listeningFuture) {
     this.listeningFuture = listeningFuture;
   }
-  
+
   LanguageClient client() {
     if (this.client == null) {
       throw new RuntimeException("client isn't set yet");
@@ -148,20 +154,12 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     return this.client;
   }
 
-  InitializeParams params() {
-    if (this.params == null) {
-      throw new RuntimeException("params aren't set yet");
-    }
-    return this.params;
-  }
-  
-  
+
   /**
    * Creates the server capabilities that are returned to the client upon
-   * initialized(). Sets {@code this.serverCapabilities}, {@code this.tokenTypesMap}, and
-   * {@code this.tokenModifiersMap}.
+   * initialized(). Sets {@code this.serverCapabilities}.
    */
-  private void createCapabilities() {
+  private void createCapabilities(InitializeParams params) {
     var c = new ServerCapabilities();
     
     c.setPositionEncoding(PositionEncodingKind.UTF16);
@@ -174,6 +172,9 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     tdso.setSave(false);
     c.setTextDocumentSync(tdso);
 
+    // Semantic Tokens
+    createSemanticTokensCapabilities(c, params);
+
     // Goto Definition
     c.setDefinitionProvider(true);
 
@@ -181,5 +182,38 @@ public class VadlLanguageServer implements LanguageServer, LanguageClientAware {
     c.setHoverProvider(true);
 
     this.serverCapabilities = c;
+  }
+
+  private void createSemanticTokensCapabilities(ServerCapabilities c, InitializeParams params) {
+    String[] desiredTokenTypes = new String[] {
+        SemanticTokenTypes.Variable,
+    };
+
+    // Limit token types to those supported by the client
+    if (params.getCapabilities().getTextDocument() == null
+        || params.getCapabilities().getTextDocument().getSemanticTokens() == null
+    ) {
+      return;
+    }
+    List<String> clientSupportedTypes = params.getCapabilities().getTextDocument()
+        .getSemanticTokens().getTokenTypes();
+    List<String> tokenTypes = new ArrayList<>(desiredTokenTypes.length);
+    for (String token : desiredTokenTypes) {
+      if (clientSupportedTypes.contains(token)) {
+        tokenTypes.add(token);
+      }
+    }
+    if (tokenTypes.isEmpty()) {
+      return;
+    }
+
+    c.setSemanticTokensProvider(new SemanticTokensWithRegistrationOptions(
+        new SemanticTokensLegend(
+            tokenTypes,
+            List.of() // No modifiers
+        ),
+        new SemanticTokensServerFull(false), // delta
+        false // range
+    ));
   }
 }

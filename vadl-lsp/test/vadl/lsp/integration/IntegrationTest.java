@@ -26,12 +26,16 @@ import org.eclipse.lsp4j.DefinitionCapabilities;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.HoverCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
+import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsCapabilities;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.SemanticTokenModifiers;
+import org.eclipse.lsp4j.SemanticTokenTypes;
+import org.eclipse.lsp4j.SemanticTokensCapabilities;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentItem;
@@ -49,6 +53,7 @@ public abstract class IntegrationTest {
   protected VadlLanguageServer server;
   protected TextDocumentService textService;
   protected MockLanguageClient client;
+  protected InitializeResult initializeResult;
 
   @BeforeEach
   public void createServer() throws ExecutionException, InterruptedException {
@@ -64,10 +69,16 @@ public abstract class IntegrationTest {
         List.of(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT), false));
     textDocumentCapabilities.setPublishDiagnostics(new PublishDiagnosticsCapabilities());
 
+    var semanticTokens = new SemanticTokensCapabilities();
+    semanticTokens.setTokenTypes(List.of(SemanticTokenTypes.Type, SemanticTokenTypes.Variable));
+    semanticTokens.setTokenModifiers(List.of(SemanticTokenModifiers.Abstract,
+        SemanticTokenModifiers.Deprecated));
+    textDocumentCapabilities.setSemanticTokens(semanticTokens);
+
     var params = new InitializeParams();
     params.setCapabilities(new ClientCapabilities(null,
         textDocumentCapabilities, null));
-    server.initialize(params).get();
+    initializeResult = server.initialize(params).get();
     server.initialized(new InitializedParams());
 
     textService = server.getTextDocumentService();
