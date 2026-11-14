@@ -1,5 +1,5 @@
 FROM ghcr.io/openvadl/merged-toolchain@sha256:2ceaf5369996a5f3db0e0bb8e16ae5fe53003d6ac180bd9e60a9ced954f99a9a AS toolchains
-FROM ghcr.io/openvadl/firtool@sha256:84c7b84322068a9b800c908a13656a6d756a507751230dad1c99c38b96bad335 AS firtool
+FROM ghcr.io/openvadl/firtool@sha256:9e097da5bbc1000d8b8acf4999f9bb3ad6514e62f8d95b24d41139d87ab5679f AS firtool
 FROM ghcr.io/openvadl/openroad@sha256:e4662d8d429981d37c5d2833256442620cf35d6cee500fe33ca42a6bb61b478c AS openroad
 FROM ghcr.io/openvadl/open-pdks@sha256:e32cb37d89f216d5f9601e561e82e1eec0b691a85348c096d5aad264efe35598 AS open-pdks
 
