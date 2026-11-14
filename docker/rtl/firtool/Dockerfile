@@ -14,7 +14,7 @@ RUN apt update &&  \
     cmake
 
 # Clone the repository and its submodules
-RUN git clone https://github.com/llvm/circt.git --recursive
+RUN git clone https://github.com/llvm/circt.git -b firtool-1.160.0 --recursive
 
 WORKDIR /build/circt
 
