@@ -20,9 +20,15 @@ import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import vadl.iss.IssDockerRuntime;
 import vadl.iss.IssEmbenchBenchmark;
 
 public class IssAarch64EmbenchBenchmarkTest extends IssEmbenchBenchmark {
+
+  @Override
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.AARCH64;
+  }
 
   @Override
   protected List<String> withUpstreamTargets() {

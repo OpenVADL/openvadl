@@ -170,7 +170,8 @@ public final class DockerImage {
   private void buildImage(int buildkitDaemonPort, Path contextDir, Path dockerfile)
       throws IOException, InterruptedException {
     var requestBuilder = DockerfileBuildRequest.builder(contextDir, dockerfile, imageName)
-        .outputMode(BuildOutputMode.DOCKER);
+        .outputMode(BuildOutputMode.DOCKER)
+        .exporterAttr("compression", "uncompressed");
     buildArgs.forEach(requestBuilder::buildArg);
 
     try (var client = new BuildkitClient(getConfig(buildkitDaemonPort))) {
