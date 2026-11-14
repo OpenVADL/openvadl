@@ -1,34 +1,41 @@
 #!/usr/bin/env python3
+import json
+import math
 import os
 import sys
+from pathlib import Path
+
 import pandas as pd
 
 
 def handle_speed_benchmark():
-    directory = sys.argv[1]
-    output_name = "aggregated.csv"
+    directory = Path(sys.argv[1])
+    metadata = json.loads((directory / "build-metadata.json").read_text())
+    iterations = metadata["iterations"]
+    trials = []
+    for filename in sorted(directory.glob("[0-9]*.json")):
+        print("Loading", filename)
+        detailed = json.loads(filename.read_text())["speed results"]["detailed speed results"]
+        if not detailed or set(detailed) != set(iterations):
+            raise ValueError(f"Benchmark set does not match the build metadata: {filename}")
+        if any(not isinstance(value, (int, float)) or isinstance(value, bool)
+               or not math.isfinite(value) or value <= 0 for value in detailed.values()):
+            raise ValueError(f"Timings must be finite positive numbers: {filename}")
+        trials.append(detailed)
+    if not trials:
+        raise ValueError(f"No trial timings found in {directory}")
 
-    input = list()
-    for filename in os.listdir(directory):
-        f = os.path.join(directory, filename)
-        print("Loading", f)
-        data = pd.read_json(f)
-        detailed = data.loc[["detailed speed results"], "speed results"].values[0]
-        detailed = pd.DataFrame.from_dict(detailed, orient="index", columns=["speed results"])
-        detailed = detailed.transpose()
-
-        data.drop(["detailed speed results"], inplace=True)
-        data = data.transpose()
-        data = pd.concat([detailed, data], axis=1)
-        input.append(data)
-
-    data = pd.concat(input).mean().rename()
-    # Remove mean
-    data = data.drop(["speed geometric standard deviation"]).rename(index={"speed geometric mean": "mean"})
-
-    result = data.to_csv(header=["time"], index_label="benchmark")
-    with open(output_name, "w") as outfile:
-        outfile.write(result)
+    minima = pd.DataFrame(trials).min().sort_index()
+    data = minima.to_frame(name="time")
+    data["statistic"] = "min"
+    data["iterations"] = pd.Series(iterations, dtype="Int64")
+    data.loc["mean", "time"] = math.exp(math.fsum(math.log(value) for value in minima) / len(minima))
+    data.loc["mean", "statistic"] = "geometric_mean"
+    data["trials"] = len(trials)
+    data["cpu_mhz"] = metadata["cpu_mhz"]
+    data["warmup_iterations"] = metadata["warmup_iterations"]
+    data["time_unit"] = "ms"
+    data.to_csv("aggregated.csv", index_label="benchmark")
 
 
 def handle_cycles():
@@ -48,5 +55,6 @@ def handle_cycles():
         outfile.write(result)
 
 
-handle_speed_benchmark()
-handle_cycles()
+if __name__ == "__main__":
+    handle_speed_benchmark()
+    handle_cycles()

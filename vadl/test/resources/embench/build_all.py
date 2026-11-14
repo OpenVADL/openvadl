@@ -17,7 +17,9 @@ Build all Embench programs.
 
 
 import argparse
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -708,6 +710,32 @@ def exclude_benchmarks(benchmarks):
     """Exclude benchmarks that are in the exclude list"""
     return [bench for bench in benchmarks if bench not in gp['exclude']]
 
+
+def write_build_metadata(benchmarks):
+    iterations = {}
+    for bench in benchmarks:
+        factors = []
+        source_dir = os.path.join(gp['benchdir'], bench)
+        for filename in sorted(os.listdir(source_dir)):
+            if filename.endswith('.c'):
+                with open(os.path.join(source_dir, filename)) as source:
+                    factors.extend(re.findall(
+                        r'^\s*#define\s+LOCAL_SCALE_FACTOR\s+(\d+)\s*$',
+                        source.read(), re.MULTILINE))
+        if len(factors) != 1:
+            raise ValueError(f'Expected one integer LOCAL_SCALE_FACTOR for {bench}')
+        iterations[bench] = int(factors[0]) * gp['cpu_mhz']
+
+    metadata = {
+        'cpu_mhz': gp['cpu_mhz'],
+        'warmup_iterations': gp['warmup_heat'],
+        'iterations': iterations,
+    }
+    with open(os.path.join(gp['bd'], 'build-metadata.json'), 'w') as output:
+        json.dump(metadata, output, indent=2)
+        output.write('\n')
+
+
 def main():
     """Main program to drive building of benchmarks."""
     # Establish the root directory of the repository, since we know this file is
@@ -725,6 +753,9 @@ def main():
 
     # Establish build directory
     create_builddir(args.builddir, args.clean)
+    metadata_path = os.path.join(gp['bd'], 'build-metadata.json')
+    if os.path.exists(metadata_path):
+        os.remove(metadata_path)
 
     # Check args are OK (have to have logging and build directory set up first)
     validate_args(args)
@@ -761,7 +792,10 @@ def main():
                 log.info(bench)
 
     if successful:
+        write_build_metadata(benchmarks)
         log.info('All benchmarks built successfully')
+    else:
+        sys.exit(1)
 
 
 # Make sure we have new enough Python and only run if this is the main package
