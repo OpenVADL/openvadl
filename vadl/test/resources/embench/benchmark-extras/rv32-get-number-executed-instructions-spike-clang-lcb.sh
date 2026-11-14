@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -eu
+
 cd $(realpath $(dirname "$0"))
 
 SPIKE_TARGET='riscv32'
