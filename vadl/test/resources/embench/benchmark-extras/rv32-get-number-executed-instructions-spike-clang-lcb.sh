@@ -31,7 +31,7 @@ mv ../bd/binary_size_absolute.csv ../result/binary_size_absolute_lcb.csv
 echo "LCB is done."
 
 # This calculates the relative performance between upstream and lcb.
-# It will also save the result into a csv and return a geometric mean for the relative performance.
+# It will also save the result into a csv and return an arithmetic mean for the relative performance.
 MEAN=`python3 ../executed_instructions_relative_performance.py ../result/executed_instructions_absolute_upstream.csv ../result/executed_instructions_absolute_lcb.csv`
 
 echo "ABSOLUTE UPSTREAM"

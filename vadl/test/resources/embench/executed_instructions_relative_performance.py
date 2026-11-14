@@ -1,6 +1,5 @@
 import argparse
 import pandas as pd
-from scipy import stats
 
 parser = argparse.ArgumentParser(description='Compare upstream and LCB benchmark measurements')
 parser.add_argument('upstream')
@@ -17,6 +16,9 @@ p.columns = ['b', 'upstream', 'lcb']
 p["rel"] = p['upstream'] / p['lcb']
 
 p.to_csv(args.output, header=None, index=False)
-mean = stats.gmean(p["rel"])
+mean = p["rel"].mean()
 print("Upstream / LCB")
-print(args.metric + " geometric mean: " + str(mean) + "(" + str(1 - mean) + ")")
+print(args.metric + " arithmetic mean: " + str(mean) + "(" + str(1 - mean) + ")")
+if p['b'].eq('crc_dse').any():
+    print("WARNING: This mean includes crc_dse, which is not part of Embench. "
+          "Exclude crc_dse when calculating the mean reported in a paper.")

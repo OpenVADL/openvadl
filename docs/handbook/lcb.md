@@ -47,7 +47,8 @@ This includes ELF headers, section tables, and any debug information present in 
 The size comparison is copied from `EMBENCH_BENCHMARK_SIZE_RESULT_GUEST_PATH` in the container
 to `EMBENCH_BENCHMARK_SIZE_RESULT_HOST_PATH` on the host. Like the instruction comparison, this is a
 headerless CSV with columns `benchmark,upstream,lcb,upstream/lcb`; the size columns are bytes.
-The geometric mean of the size ratios is printed in the benchmark log.
+The arithmetic mean of the per-benchmark ratios is printed in the benchmark log
+for both executed instructions and binary size.
 The Benchmark LCB workflow retains these reports as the `riscv32-binary-size` and
 `riscv64-binary-size` workflow artifacts.
 It also pushes the size reports to `openVADL/resselpark` under
