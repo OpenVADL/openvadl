@@ -29,3 +29,25 @@ The following scripts are provided to simplify benchmark simulation:
 * `benchmark_qemu.sh`: Benchmark qemu. The script expects the base qemu invocation as arguments, so ``
 * `benchmark_spike.sh`: Benchmark spike limited to the RV32I spec.
 * `benchmark_vadl.sh`: Benchmark VADL. The script expects an argument pointing to a VADL CAS.
+
+## LCB instruction counts
+
+`qemu_get_number_executed_instructions.sh riscv32` (or `riscv64`) measures the
+current executables in `bd/src`. The O3 boards mark `start_trigger` with
+`slti zero,zero,1` and `stop_trigger` with `slti zero,zero,2`. Both discard their
+result in the zero register. QEMU's existing `libinsn.so` plugin reports
+instruction deltas between `slti` instructions; the script sums those between
+the markers, including benchmark callees and excluding the marker instructions.
+Initialization, warmup, verification, and shutdown are
+outside this interval. Verification still runs and must succeed. Missing or
+repeated markers invalidate the count.
+
+CSV formats are unchanged. Regenerate previous measurements because the interval
+has changed. Plugin output is saved alongside each binary as `instruction_count.log`.
+The two marker instructions are included in `.text` size measurements.
+
+Run the counter's integration tests inside an LCB execution image with:
+
+```sh
+python3 -m unittest discover -s tests -p test_qemu_benchmark_count.py
+```
