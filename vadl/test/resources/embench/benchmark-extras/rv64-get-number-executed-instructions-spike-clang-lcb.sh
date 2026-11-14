@@ -42,9 +42,9 @@ echo "RELATIVE"
 cat ../result/executed_instructions_relative.csv
 echo $MEAN
 
-# Compare the sizes of the same binaries that were executed above.
+# Compare the .text section sizes of the binaries that were executed above.
 python3 ../executed_instructions_relative_performance.py \
   ../result/binary_size_absolute_upstream.csv ../result/binary_size_absolute_lcb.csv \
-  --output ../result/binary_size_relative.csv --metric 'binary size (bytes)'
-echo "BINARY SIZE (benchmark, upstream bytes, LCB bytes, upstream / LCB)"
+  --output ../result/binary_size_relative.csv --metric '.text size (bytes)'
+echo ".text SIZE (benchmark, upstream bytes, LCB bytes, upstream / LCB)"
 cat ../result/binary_size_relative.csv

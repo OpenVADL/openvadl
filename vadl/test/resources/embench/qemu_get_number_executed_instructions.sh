@@ -13,9 +13,11 @@ for dir in bd/src/*; do
   base=$(basename "$dir")
   binary="$dir/$base"
   echo "Executing $dir/$base"
-  SIZE=$(wc -c < "$binary" | tr -d '[:space:]')
+  # Measure only .text, excluding debug information and other ELF sections.
+  SECTIONS=$(riscv64-unknown-elf-size -A -d "$binary")
+  SIZE=$(printf '%s\n' "$SECTIONS" | awk '$1 == ".text" { print $2; found = 1 } END { if (!found) exit 1 }')
   EXEC=$(QEMU_PLUGIN_LOG=1 DEBUG=1 /opt/qemu/bin/qemu-system-$1 -plugin /opt/qemu/plugins/plugins/libinsn.so -nographic -machine spike -bios "$binary" -d plugin -D log.txt && tail -n 1 log.txt | grep -oE '[0-9]+$')
   echo "$base,$EXEC" >> "bd/executed_instructions_absolute.csv"
   echo "$base,$SIZE" >> "bd/binary_size_absolute.csv"
-  echo "Iteration $dir: Exec instructions: $EXEC. Binary size: $SIZE bytes."
+  echo "Iteration $dir: Exec instructions: $EXEC. .text size: $SIZE bytes."
 done
