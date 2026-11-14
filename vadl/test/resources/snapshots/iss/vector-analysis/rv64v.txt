@@ -14,6 +14,7 @@ RV3264Base::BGEU | normal-tcg | -
 RV3264Base::BLT | normal-tcg | -
 RV3264Base::BLTU | normal-tcg | -
 RV3264Base::BNE | normal-tcg | -
+RV3264Base::FENCE | normal-tcg | -
 RV3264Base::JAL | normal-tcg | -
 RV3264Base::JALR | normal-tcg | -
 RV3264Base::LB | normal-tcg | -
