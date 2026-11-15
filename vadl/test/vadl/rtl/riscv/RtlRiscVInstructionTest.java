@@ -65,7 +65,7 @@ class RtlRiscVInstructionTest extends RtlDockerTest {
   @MethodSource("instructionTestSource")
   void instructionTest(String specPath, String isa, RtlConfiguration config) {
 
-    runContainerWithSpec(
+    runRtlContainerWithSpec(
         specPath,
         Map.of("Isa", isa),
         config,

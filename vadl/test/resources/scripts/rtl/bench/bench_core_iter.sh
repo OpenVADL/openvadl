@@ -12,7 +12,7 @@ if [ -z "$TOP_MODULE" -o -z "$lo" -o -z "$hi" ]; then
 fi
 
 # Binary search the lowest achievable clock period
-best=hi
+best=
 
 while awk "BEGIN { exit !(($hi - $lo) > 0.1) }"; do
   mid=`awk "BEGIN { print (($hi + $lo) * 0.5) }"`
@@ -29,7 +29,11 @@ while awk "BEGIN { exit !(($hi - $lo) > 0.1) }"; do
 done
 
 echo "==========================================="
+if [ -z "$best" ]; then
+echo "  $TOP_MODULE : timing not met"
+else
 echo "  $TOP_MODULE : best clock $best ns"
+fi
 echo "==========================================="
 
 # output best log and remove

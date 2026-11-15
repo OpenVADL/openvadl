@@ -48,10 +48,10 @@ public class RtlDockerTest extends DockerExecutionTest {
    * @param resultMappings results files to copy back from the container
    * @param cmd command to execute
    */
-  protected void runContainerWithSpec(String specPath, Map<String, String> macroOverrides,
-                                      RtlConfiguration config,
-                                      List<Pair<String, String>> resultMappings,
-                                      String... cmd) {
+  protected void runRtlContainerWithSpec(String specPath, Map<String, String> macroOverrides,
+                                         RtlConfiguration config,
+                                         List<Pair<String, String>> resultMappings,
+                                         String... cmd) {
     // Generate RTL core
     try {
       setupPassManagerAndRunSpec(specPath, PassOrders.rtl(config), macroOverrides);
@@ -59,6 +59,18 @@ public class RtlDockerTest extends DockerExecutionTest {
       throw new RuntimeException(e);
     }
 
+    runRtlContainerWithGenerated(config, resultMappings, cmd);
+  }
+
+  /**
+   * Run a command in the rtl-test-base container with access to the already generated RTL.
+   * @param config configuration
+   * @param resultMappings result files to copy back from the container
+   * @param cmd command to execute
+   */
+  protected void runRtlContainerWithGenerated(RtlConfiguration config,
+                                              List<Pair<String, String>> resultMappings,
+                                              String... cmd) {
     // Input files
     var outputPath = Path.of(config.outputPath() + "/rtl").toAbsolutePath();
     if (!outputPath.toFile().exists()) {
