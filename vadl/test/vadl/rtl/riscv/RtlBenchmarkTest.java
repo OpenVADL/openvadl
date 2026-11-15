@@ -37,6 +37,9 @@ public abstract class RtlBenchmarkTest extends RtlDockerTest {
 
   public static final int MAX_CLOCK_NS = 25;
 
+  private static final String PLACEMENT_AREA_PATTERN =
+      "Final placement area: (?<area>\\d+(\\.\\d+)?) \\((?<delta>[+\\-]\\d+(\\.\\d+))%\\)";
+
   /**
    * Get environment variable that determines where to save the result CSV file.
    *
@@ -63,40 +66,45 @@ public abstract class RtlBenchmarkTest extends RtlDockerTest {
 
     var macroOverrides = Map.of("Isa", isa);
 
-    var log = new File("build/test-output/bench/core_iter_" + tag + ".log");
-
-    var resultMappings = List.of(
-        Pair.of("/rtl/core_iter.log", log.toString())
-    );
+    var coreLog = new File("build/test-output/bench/core_iter_" + tag + ".log");
+    var decodeLog = new File("build/test-output/bench/decode_" + tag + ".log");
 
     var topModule = getTopModuleName(specPath, macroOverrides);
     var decodeModule = getDecodeStageName(specPath, macroOverrides, config);
 
-    runContainerWithSpec(specPath, macroOverrides, config, resultMappings,
+
+    // run synthesis and placement for the whole core
+    runRtlContainerWithSpec(specPath, macroOverrides, config,
+        List.of(Pair.of("/rtl/core_iter.log", coreLog.toString())),
         "/bin/bash", "-c",
         "/scripts/bench/bench_core_iter.sh " + topModule + " 0 " + MAX_CLOCK_NS
             + "  | tee /rtl/core_iter.log");
 
-    var decodeArea = getMetric(log,
-        Pattern.compile(
-            "Chip area for module '\\\\" + decodeModule + "': (?<area>\\d+(\\.\\d+)?)"),
-        m -> new BigDecimal(m.group("area")));
-    Assertions.assertNotNull(decodeArea);
-
-    var areaAndDelta = getMetric(log,
-        Pattern.compile(
-            "Final placement area: (?<area>\\d+(\\.\\d+)?) \\(\\+(?<delta>\\d+(\\.\\d+))%\\)"),
+    var areaAndDelta = getMetric(coreLog, Pattern.compile(PLACEMENT_AREA_PATTERN),
         m -> Pair.of(
             new BigDecimal(m.group("area")),
             new BigDecimal(m.group("delta"))
         ));
     Assertions.assertNotNull(areaAndDelta);
 
-    final BigDecimal clock = getMetric(log,
+    final BigDecimal clock = getMetric(coreLog,
         Pattern.compile("best clock (?<clock>\\d+(\\.\\d+)?) ns"),
         m -> new BigDecimal(m.group("clock")));
     Assertions.assertNotNull(clock);
 
+
+    // synthesize and place the decode stage with the core's clock period
+    runRtlContainerWithGenerated(config,
+        List.of(Pair.of("/rtl/decode.log", decodeLog.toString())),
+        "/bin/bash", "-c",
+        "/scripts/bench/bench_core.sh " + decodeModule + " " + clock.toPlainString()
+            + "  | tee /rtl/decode.log");
+
+    var decodeArea = getMetric(decodeLog, Pattern.compile(PLACEMENT_AREA_PATTERN),
+        m -> new BigDecimal(m.group("area")));
+    Assertions.assertNotNull(decodeArea);
+
+    // write results
     final String envResultPath = System.getenv(getResultCsvEnv());
     final File result =
         new File(envResultPath != null ? envResultPath : getResultCsvFallback());

@@ -384,7 +384,7 @@ public class ControlLogicPass extends AbstractLogicPass {
       return Constant.Value.of(false).toNode();
     }
     var extStallNodes = stage.behavior().getNodes(RtlConditionalMemNode.class)
-        .collect(Collectors.toSet());
+        .collect(Collectors.toCollection(LinkedHashSet::new));
     var extStallCond = anyNotValid(extStallNodes);
     return extStallCond.map(stage.behavior()::addWithInputs)
         .map(expr -> getStageSignalRead(stage, expr, inline, stage.simpleName() + "_extstall"))
