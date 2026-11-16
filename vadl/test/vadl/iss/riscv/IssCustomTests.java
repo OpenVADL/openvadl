@@ -30,9 +30,15 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.utility.MountableFile;
+import vadl.iss.IssDockerRuntime;
 import vadl.iss.QemuIssTest;
 
 public class IssCustomTests extends QemuIssTest {
+
+  @Override
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.RISCV;
+  }
 
   @Override
   protected List<String> withUpstreamTargets() {
