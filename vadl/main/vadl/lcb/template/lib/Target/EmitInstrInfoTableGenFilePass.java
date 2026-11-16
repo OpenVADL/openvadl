@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
+import vadl.gcb.passes.MachineInstructionCtx;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.CompilerRegister.SubRegIndex;
@@ -55,7 +56,13 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegister;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterMove;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterPatterns;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterSignExtensionMove;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterZeroExtensionMove;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -65,6 +72,7 @@ import vadl.viam.Constant;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterResource;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 
 /**
  * This file contains the mapping for ISelNodes to MI.
@@ -111,7 +119,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
     var rawAddi = addi64 != null ? addi64 : Objects.requireNonNull(addi32);
-
+    
     var addi = ensurePresent(rawAddi.stream().findFirst(),
         () -> Diagnostic.error("Instruction set requires an addition with immediate",
             specification.location()));
@@ -201,17 +209,33 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                 generateTableGenRegistersPassOutput.aliasRegisterClasses().stream())
             .toList();
 
-    var registerSubregisterPatterns = generateRegisterSubregisterPatterns(registerFiles);
+    var registerSubregisterPatterns = ((GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterPatterns)
+        passResults.lastResultOf(GenerateRegisterExtensionTruncationPatterns.class));
+
     var registerTruncations = registerSubregisterPatterns
         .truncations()
         .stream()
         .map(this::map)
         .toList();
-    var registerExtensions = registerSubregisterPatterns
-        .extensions()
+
+    var registerAnyExtensions = registerSubregisterPatterns
+        .anyExtensions()
         .stream()
         .map(this::map)
         .toList();
+
+    var registerZeroExtensions = registerSubregisterPatterns
+        .zeroExtensions()
+        .stream()
+        .map(this::map)
+        .toList();
+
+    var registerSignExtensions = registerSubregisterPatterns
+        .signExtensions()
+        .stream()
+        .map(this::map)
+        .toList();
+
 
     var registerFilesPrintable = registerFiles.stream().map(this::map).toList();
 
@@ -219,7 +243,9 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase());
     map.put("registerTruncations", registerTruncations);
-    map.put("registerExtensions", registerExtensions);
+    map.put("registerAnyExtensions", registerAnyExtensions);
+    map.put("registerZeroExtensions", registerZeroExtensions);
+    map.put("registerSignExtensions", registerSignExtensions);
     map.put("returnAddress", renderRegister(abi.returnAddress()));
     map.put("addi", addi.simpleName());
     map.put("stackPointerRegister", renderRegister(abi.stackPointer()));
@@ -241,103 +267,45 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("lga", abi.globalAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
     map.put("intrinsics", renderedIntrinsics);
     return map;
-  }
-
-  private RegisterSubRegisterPatterns generateRegisterSubregisterPatterns(
-      List<TableGenRegisterClass> registerClasses) {
-    RegisterSubRegisterPatterns patterns = new RegisterSubRegisterPatterns(
-        new HashSet<>(), 
-        new HashSet<>());
-
-    registerClasses
-        .forEach(regClass -> {
-          var regs = regClass.registers().getFirst();
-          this.generateMovePatternsForAllSubregisters(
-              regClass,
-              regs.subRegs(),
-              regs.subRegIndices(),
-              patterns);
-        });
-
-    return patterns;
-  }
-
-  private void generateMovePatternsForAllSubregisters(
-      TableGenRegisterClass current,
-      List<CompilerRegister> subRegs,
-      List<SubRegIndex> subRegsIndices,
-      RegisterSubRegisterPatterns patterns) {
-    if (subRegs.isEmpty()) {
-      return;
     }
 
-    var currentType = current.registerFileRef().type().asDataType();
-    var currentWidth = currentType.bitWidth();
+    private Map<String, Object> map(Object obj) {
+        return switch (obj) {
 
-    for (int i = 0; i < subRegs.size(); i++) {
-      var subReg = subRegs.get(i);
-      var subRegResource = subReg.registerFile();
-      var subType = subRegResource.type();
-      var subWidth = subType.asDataType().bitWidth();
-      var subSliceRange = this.getRegisterSliceRange(subRegResource);
+            case RegisterSubregisterMove m ->
+            Map.of(
+                "register",   m.register(),
+                "resultType", m.resultType(),
+                "subIdx",     m.subIdx());
 
-      if (subSliceRange.lsb() != 0) {
-        continue;
-      }
+            case RegisterSubregisterZeroExtensionMove z ->
+            Map.of(
+                "register",      z.register(),
+                "resultType",    z.resultType(),
+                "subIdx",        z.subIdx(),
+                "and",           z.and(),
+                "upperBitsZero", z.upperBitsZero(),
+                "mask",          "0x" + Long.toHexString(z.mask()).toUpperCase());
 
-      if (subWidth < currentWidth) {
-        patterns.truncations().add(new RegisterSubregisterMove(
-              current.name(), 
-              ValueType.from(subType).get().getLlvmType(),
-              subRegsIndices.get(i).name()));
+            case RegisterSubregisterSignExtensionMove s ->
+            Map.of(
+                "register",    s.register(),
+                "resultType",  s.resultType(),
+                "subIdx",      s.subIdx(),
+                "asr",         s.asr(),
+                "sll",         s.sll(),
+                "shiftAmount", s.shiftAmount());
 
-        patterns.extensions().add(new RegisterSubregisterMove(
-              subRegResource.simpleName(),
-              ValueType.from(currentType).get().getLlvmType(),
-              subRegsIndices.get(i).name()));
-      }
-
-      this.generateMovePatternsForAllSubregisters(
-            current, 
-            subReg.subRegs(), 
-            subReg.subRegIndices(),
-            patterns);
-    }
-  }
-
-  private Constant.BitSlice.Part getRegisterSliceRange(RegisterResource r) {
-    if (r instanceof ArtificialResource ar) {
-      return Optional.ofNullable(ar.aliasSlice())
-            .flatMap(s -> s.parts().findFirst())
-            .orElseGet(() -> new Constant.BitSlice.Part(ar.type().asDataType().bitWidth(), 0));
+            default -> throw new IllegalArgumentException(
+                "Unknown move type: " + obj.getClass());
+        };
     }
 
-    return new Constant.BitSlice.Part(r.type().asDataType().bitWidth(), 0);
-  }
-
-  private Map<String, Object> map(RegisterSubregisterMove obj) {
-    return Map.of(
-      "register", obj.register(),
-      "resultType", obj.resultType(),
-      "subIdx", obj.subIdx()
-    );
-  }
-
-  private Map<String, Object> map(TableGenRegisterClass obj) {
-    return Map.of(
-        "resultWidth", obj.registerFileRef().resultType().bitWidth(),
-        "name", obj.name()
-    );
-  }
+    private Map<String, Object> map(TableGenRegisterClass obj){
+        return Map.of(
+            "resultWidth", obj.registerFileRef().resultType().bitWidth(),
+            "name", obj.name()
+        );
+    }
 }
 
-record RegisterSubRegisterPatterns(
-    Set<RegisterSubregisterMove> truncations,
-    Set<RegisterSubregisterMove> extensions) {
-}
-
-record RegisterSubregisterMove(
-    String register,
-    String resultType, 
-    String subIdx) {
-}
