@@ -17,6 +17,9 @@ baseline_data = pd.read_csv(baseline, index_col="benchmark")
 for f in sys.argv[2:]:
     data = pd.read_csv(f, index_col="benchmark", dtype={"iterations": "Int64"})
     data.time = data.time / baseline_data.time
+    data.loc["mean", "time"] = data.loc[data.index != "mean", "time"].mean()
+    if "statistic" in data.columns:
+        data.loc["mean", "statistic"] = "arithmetic_mean"
     if "time_unit" in data.columns:
         data.time_unit = "ratio"
     with open(output_dir + "/" + os.path.basename(f), "w") as outfile:

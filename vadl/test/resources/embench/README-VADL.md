@@ -28,8 +28,9 @@ All scripts assume that you hava a RV32 toolchain installed on your system. All 
 The ISS evaluation compares the generated simulator with reference QEMU. Each benchmark runs in a new process for each of 10 trials.
 The reported time is the minimum elapsed wall time for each benchmark, in milliseconds.
 The timer includes simulator startup, benchmark initialization, warmup, verification, and shutdown.
-The CSV row named `mean` is the geometric mean of the per-benchmark minima.
+The CSV row named `mean` is the arithmetic mean of the per-benchmark minima.
 Normalized results divide each generated ISS time by the matching reference QEMU time.
+The normalized `mean` is the arithmetic mean of the per-benchmark ratios.
 A ratio below 1 means that the generated ISS is faster.
 
 The ISS build scripts use `EMBENCH_MHZ` as a workload multiplier, with a default of 1000.
@@ -44,7 +45,7 @@ The CSV starts with `benchmark` and `time`, then adds these fields:
 
 | Field | Meaning |
 |---|---|
-| `statistic` | `min` for a benchmark, or `geometric_mean` for the suite summary |
+| `statistic` | `min` for a benchmark, or `arithmetic_mean` for the suite summary |
 | `iterations` | Benchmark body repetitions for each trial, empty for the suite summary |
 | `trials` | Number of trial measurements |
 | `cpu_mhz` | Workload multiplier from the build configuration |

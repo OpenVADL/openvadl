@@ -29,8 +29,8 @@ def handle_speed_benchmark():
     data = minima.to_frame(name="time")
     data["statistic"] = "min"
     data["iterations"] = pd.Series(iterations, dtype="Int64")
-    data.loc["mean", "time"] = math.exp(math.fsum(math.log(value) for value in minima) / len(minima))
-    data.loc["mean", "statistic"] = "geometric_mean"
+    data.loc["mean", "time"] = math.fsum(minima) / len(minima)
+    data.loc["mean", "statistic"] = "arithmetic_mean"
     data["trials"] = len(trials)
     data["cpu_mhz"] = metadata["cpu_mhz"]
     data["warmup_iterations"] = metadata["warmup_iterations"]
