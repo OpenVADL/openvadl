@@ -50,10 +50,10 @@ import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
-import vadl.vdt.passes.VdtEncodingSemanticVerificationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
-import vadl.vdt.passes.VdtVerificationPass;
+import vadl.vdt.passes.verify.encoding.VdtEncodingSemanticVerificationSmtPass;
+import vadl.vdt.passes.verify.vdt.VdtVerificationPass;
 import vadl.vdt.target.common.CheckedBitsCollector;
 import vadl.vdt.target.common.DecisionTreeDecoder;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
@@ -553,7 +553,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     var manager = new PassManager();
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
-    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtEncodingSemanticVerificationSmtPass(config));
     manager.add(new VdtLoweringPass(config));
     manager.add(new VdtVerificationPass(config));
 
@@ -612,7 +612,7 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     var manager = new PassManager();
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
-    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtEncodingSemanticVerificationSmtPass(config));
     manager.add(new VdtLoweringPass(config));
     manager.add(new VdtVerificationPass(config));
 

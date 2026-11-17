@@ -19,11 +19,13 @@ package vadl.pass.order;
 import static vadl.configuration.DecoderOptions.OptionalStep.OPT_ALL;
 import static vadl.configuration.DecoderOptions.OptionalStep.OPT_CONSTRAINT_SYNTHESIS;
 import static vadl.configuration.DecoderOptions.OptionalStep.OPT_DECODER_VERIFICATION;
-import static vadl.configuration.DecoderOptions.OptionalStep.OPT_ENCODING_VERIFICATION;
+import static vadl.configuration.DecoderOptions.OptionalStep.OPT_ENCODING_VERIFICATION_SAT;
+import static vadl.configuration.DecoderOptions.OptionalStep.OPT_ENCODING_VERIFICATION_SMT;
 
 import com.google.common.collect.Streams;
 import java.util.Optional;
 import java.util.stream.Stream;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
@@ -31,10 +33,12 @@ import vadl.pass.PassOrder;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
-import vadl.vdt.passes.VdtEncodingSemanticVerificationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
-import vadl.vdt.passes.VdtVerificationPass;
+import vadl.vdt.passes.verify.encoding.VdtEncodingSemanticVerificationSatEncodingPass;
+import vadl.vdt.passes.verify.encoding.VdtEncodingSemanticVerificationSatSolvingPass;
+import vadl.vdt.passes.verify.encoding.VdtEncodingSemanticVerificationSmtPass;
+import vadl.vdt.passes.verify.vdt.VdtVerificationPass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
 final class OrderSupport {
@@ -63,8 +67,18 @@ final class OrderSupport {
       order.add(new VdtConstraintSynthesisPass(config));
     }
 
-    if (config.getDecoderOptions().isEnabled(OPT_ENCODING_VERIFICATION)) {
-      order.add(new VdtEncodingSemanticVerificationPass(config));
+    if (config.doDump() || config.dumpMode() == DumpMode.VERIFICATION
+        || config.getDecoderOptions().isEnabled(OPT_ENCODING_VERIFICATION_SAT)) {
+      order.add(new VdtEncodingSemanticVerificationSatEncodingPass(config));
+    }
+
+    if (config.getDecoderOptions().isEnabled(OPT_ENCODING_VERIFICATION_SAT)) {
+      order.add(new VdtEncodingSemanticVerificationSatSolvingPass(config));
+    }
+
+    if (config.doDump() || config.dumpMode() == DumpMode.VERIFICATION
+        || config.getDecoderOptions().isEnabled(OPT_ENCODING_VERIFICATION_SMT)) {
+      order.add(new VdtEncodingSemanticVerificationSmtPass(config));
     }
 
     order.add(new VdtLoweringPass(config));

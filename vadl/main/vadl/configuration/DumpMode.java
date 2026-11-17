@@ -34,6 +34,10 @@ public enum DumpMode {
    */
   ISS_PASS_GRAPHS,
   /**
+   * Dumps formal encodings for verification of supported aspects.
+   */
+  VERIFICATION,
+  /**
    * Dumps are only generated if an internal error occurs.
    */
   ON_FAILURE,

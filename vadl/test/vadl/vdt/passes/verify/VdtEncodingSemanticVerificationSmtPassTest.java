@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.passes;
+package vadl.vdt.passes.verify;
+
+import static vadl.configuration.DecoderOptions.OptionalStep.OPT_ENCODING_VERIFICATION_SMT;
 
 import io.github.rascmatt.z3.Z3Bootstrap;
 import java.io.IOException;
@@ -32,13 +34,17 @@ import vadl.error.Diagnostic;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
+import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
+import vadl.vdt.passes.VdtInputPreparationPass;
+import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.passes.verify.encoding.VdtEncodingSemanticVerificationSmtPass;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.dump.TextGraphGenerator;
 
-public class VdtEncodingSemanticVerificationPassTest extends AbstractTest {
+public class VdtEncodingSemanticVerificationSmtPassTest extends AbstractTest {
 
   private static final Logger log =
-      LoggerFactory.getLogger(VdtEncodingSemanticVerificationPassTest.class);
+      LoggerFactory.getLogger(VdtEncodingSemanticVerificationSmtPassTest.class);
 
   @Test
   void testBootstrapZ3() {
@@ -77,12 +83,13 @@ public class VdtEncodingSemanticVerificationPassTest extends AbstractTest {
 
     var config =
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+    config.getDecoderOptions().getOpts().put(OPT_ENCODING_VERIFICATION_SMT, true);
     var spec = TestUtils.compileToViam(vadl);
 
     var manager = new PassManager();
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
-    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtEncodingSemanticVerificationSmtPass(config));
     manager.add(new VdtLoweringPass(config));
 
     /* WHEN */
@@ -122,12 +129,13 @@ public class VdtEncodingSemanticVerificationPassTest extends AbstractTest {
 
     var config =
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), DumpMode.NONE));
+    config.getDecoderOptions().getOpts().put(OPT_ENCODING_VERIFICATION_SMT, true);
     var spec = TestUtils.compileToViam(vadl);
 
     var manager = new PassManager();
     manager.add(new VdtEncodingConstraintValidationPass(config));
     manager.add(new VdtInputPreparationPass(config));
-    manager.add(new VdtEncodingSemanticVerificationPass(config));
+    manager.add(new VdtEncodingSemanticVerificationSmtPass(config));
     manager.add(new VdtLoweringPass(config));
 
     /* WHEN */

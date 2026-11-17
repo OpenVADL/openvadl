@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.passes;
+package vadl.vdt.passes.verify.encoding;
 
-import static vadl.error.Diagnostic.error;
+import static vadl.configuration.DecoderOptions.OptionalStep.OPT_ENCODING_VERIFICATION_SMT;
 import static vadl.error.Diagnostic.warning;
+import static vadl.vdt.passes.verify.encoding.Utils.dump;
+import static vadl.vdt.passes.verify.encoding.Utils.overlappingInstructionError;
 
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BitVecNum;
@@ -32,36 +34,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import vadl.configuration.DumpMode;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
-import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
+import vadl.vdt.passes.VdtConstraintSynthesisPass;
+import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
-import vadl.vdt.utils.SequentialInstructionDecoder;
-import vadl.viam.Definition;
 import vadl.viam.Specification;
 
 /**
  * Verifies that the encoding definitions do not collide.
  */
-public class VdtEncodingSemanticVerificationPass extends Pass {
+public class VdtEncodingSemanticVerificationSmtPass extends Pass {
 
   /**
    * Constructor of the VDT constraint synthesis pass.
    *
    * @param configuration The configuration
    */
-  public VdtEncodingSemanticVerificationPass(GeneralConfiguration configuration) {
+  public VdtEncodingSemanticVerificationSmtPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("VDT Encoding Semantic Verification Pass");
+    return PassName.of("VDT Encoding Verification SMT Pass");
   }
 
   @Nullable
@@ -110,6 +112,15 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
       final Solver solver = ctx.mkSolver();
       solver.add(atLeastTwo);
 
+      if (configuration().doDump() || configuration().dumpMode() == DumpMode.VERIFICATION) {
+        final String smt2 = solver + "\n(check-sat)\n";
+        dump(configuration(), viam, smt2, "smt2");
+      }
+
+      if (configuration().getDecoderOptions().isDisabled(OPT_ENCODING_VERIFICATION_SMT)) {
+        return null;
+      }
+
       final Status result = solver.check();
 
       if (result == Status.UNSATISFIABLE) {
@@ -124,7 +135,8 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
       }
 
       final BitVecNum counterexample = (BitVecNum) solver.getModel().getConstInterp(insn);
-      throw overlappingInstructionError(counterexample, entries);
+      throw overlappingInstructionError(
+          new BitVector(counterexample.getBigInteger(), counterexample.getSortSize()), entries);
     }
   }
 
@@ -182,43 +194,6 @@ public class VdtEncodingSemanticVerificationPass extends Pass {
 
   private BoolExpr notMatch(Context ctx, BitVecExpr i, BitPattern pattern) {
     return ctx.mkNot(match(ctx, i, pattern));
-  }
-
-  private Diagnostic overlappingInstructionError(BitVecNum counterexample,
-                                                 List<DecodeEntry> entries) {
-
-    final BitVector encoding =
-        new BitVector(counterexample.getBigInteger(), counterexample.getSortSize());
-
-    // Find all encoding definitions matching the counterexample
-
-    final var decoder = new SequentialInstructionDecoder(entries);
-    final List<DecodeEntry> overlaps = decoder.decode(encoding);
-
-    // Construct the diagnostic error
-
-    var primary = overlaps.getFirst().source();
-    var insnNames = overlaps.stream()
-        .map(DecodeEntry::source)
-        .map(Definition::simpleName)
-        .toList();
-
-    var diagnostic =
-        error(("Overlapping instruction encoding detected: %s. E.g. the encoding 0x%x matches all "
-            + "listed encoding definitions.").formatted(insnNames,
-            counterexample.getBigInteger()), primary);
-
-    for (DecodeEntry e : overlaps) {
-      var others = insnNames.stream()
-          .filter(n -> !n.equals(e.source().simpleName())).toList();
-
-      diagnostic.locationDescription(e.source().encoding(),
-          "Instruction encoding overlaps with other instruction%s: %s",
-          others.size() != 1 ? "s" : "",
-          others.size() == 1 ? others.getFirst() : others);
-    }
-
-    return diagnostic.build();
   }
 
 }
