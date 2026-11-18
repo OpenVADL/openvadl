@@ -20,13 +20,13 @@ import static vadl.types.BuiltInTable.ADD;
 import static vadl.types.BuiltInTable.ADDS;
 import static vadl.types.BuiltInTable.AND;
 import static vadl.types.BuiltInTable.ANDS;
+import static vadl.types.BuiltInTable.ASR;
+import static vadl.types.BuiltInTable.ASRS;
 import static vadl.types.BuiltInTable.EQU;
 import static vadl.types.BuiltInTable.LSL;
 import static vadl.types.BuiltInTable.LSLS;
 import static vadl.types.BuiltInTable.LSR;
 import static vadl.types.BuiltInTable.LSRS;
-import static vadl.types.BuiltInTable.ASR;
-import static vadl.types.BuiltInTable.ASRS;
 import static vadl.types.BuiltInTable.MUL;
 import static vadl.types.BuiltInTable.MULS;
 import static vadl.types.BuiltInTable.NEQ;
@@ -399,8 +399,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       if (findRR(behavior, List.of(LSR, LSRS))) {
         labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SRL, ty));
       }
-      if (findRR(behavior, List.of(ASR, ASRS))){
-        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.ASR, ty));
+      if (findRR(behavior, List.of(ASR, ASRS))) {
+        labelList.add(new TypedMachineInstructionLabel(MachineInstructionLabel.SRA, ty));
       }
       if (findBranchWithConditionalWithStatusRegisters(behavior, EQU)) {
         labelList.add(
