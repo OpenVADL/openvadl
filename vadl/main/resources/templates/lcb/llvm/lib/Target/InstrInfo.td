@@ -231,13 +231,27 @@ def : Pat<([(${stackPointerType})] AddrFI:$rs1),
 def : Pat<([(${trunc.resultType})] (trunc [(${trunc.register})]:$rd)), (EXTRACT_SUBREG [(${trunc.register})]:$rd, [(${trunc.subIdx})])>;
 [/]
 
-[# th:each="ext : ${registerExtensions}"]
+[# th:each="ext : ${registerAnyExtensions}"]
 def : Pat<([(${ext.resultType})] (anyext [(${ext.register})]:$rd)), (INSERT_SUBREG ([(${ext.resultType})] (IMPLICIT_DEF)), [(${ext.register})]:$rd, [(${ext.subIdx})])>;
 [/]
 
+[# th:each="ext : ${registerZeroExtensions}"]
+[# th:if="${ext.upperBitsZero}"]
+def : Pat<([(${ext.resultType})] (zext [(${ext.register})]:$rd)), (SUBREG_TO_REG ([(${ext.resultType})] 0), [(${ext.register})]:$rd, [(${ext.subIdx})])>;
+[/]
+[# th:unless="${ext.upperBitsZero}"]
+def : Pat<([(${ext.resultType})] (zext [(${ext.register})]:$rd)), ([(${ext.and})] (INSERT_SUBREG ([(${ext.resultType})] (IMPLICIT_DEF)), [(${ext.register})]:$rd, [(${ext.subIdx})]), ([($(ext.resultType))] [(${ext.mask})]))>;
+[/]
+[/]
+
+[# th:each="ext : ${registerSignExtensions}"]
+def : Pat<([(${ext.resultType})] (sext [(${ext.register})]:$rd)), ([(${ext.asr})] ([(${ext.sll})] (INSERT_SUBREG ([(${ext.resultType})] (IMPLICIT_DEF)), [(${ext.register})]:$rd, [(${ext.subIdx})]), ([(${ext.resultType})] [(${ext.shiftAmount})])), ([(${ext.resultType})] [(${ext.shiftAmount})]))>;
+[/]
+
+
 [# th:each="pseudo : ${pseudos}" ]
 [(${pseudo})]
-[/]
+[/] 
 
 [# th:each="comp : ${compiler}" ]
 [(${comp})]
