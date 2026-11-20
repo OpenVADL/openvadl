@@ -179,3 +179,21 @@ module SimMemSymbols #(
   end
 
 endmodule
+
+module SimMemCycles(
+  input clock,
+  input reset
+);
+
+  longint unsigned cycles = 0;
+  always @(posedge clock) begin
+    if (reset) begin
+      cycles <= 0;
+    end else begin
+      cycles <= cycles + 1;
+    end
+  end
+
+  final
+    $fwrite(32'h8000_0002, "Cycles elapsed %d\n", cycles);
+endmodule
