@@ -366,7 +366,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       var microSeconds = t.durationNS / 1000;
       var beforePoint = microSeconds / 1000;
       var afterPoint = microSeconds % 1000;
-      System.out.printf("\t- %-40s %5d.%03dms\n", t.name + ":", beforePoint, afterPoint);
+      System.out.printf("\t- %-50s %5d.%03dms\n", t.name + ":", beforePoint, afterPoint);
     });
   }
 

@@ -83,8 +83,11 @@ public class DecoderOptions {
     OPT_CONSTRAINT_SYNTHESIS("Constraint synthesis for decoder generation, default: enabled",
         "constraint-synthesis"),
 
-    OPT_ENCODING_VERIFICATION("Encoding verification, default: disabled",
+    OPT_ENCODING_VERIFICATION_SAT("Encoding verification using a SAT encoding, default: disabled",
         "encoding-verification"),
+
+    OPT_ENCODING_VERIFICATION_SMT("Encoding verification using a SMT encoding, default: disabled",
+        "encoding-verification-smt"),
 
     OPT_DECODER_VERIFICATION("correctness verification of the decode tree, default: "
         + "enabled", "decoder-verification");
@@ -137,7 +140,8 @@ public class DecoderOptions {
     opts = new HashMap<>(Map.of(
         OptionalStep.OPT_ALL, true,
         OptionalStep.OPT_CONSTRAINT_SYNTHESIS, true,
-        OptionalStep.OPT_ENCODING_VERIFICATION, false,
+        OptionalStep.OPT_ENCODING_VERIFICATION_SAT, false,
+        OptionalStep.OPT_ENCODING_VERIFICATION_SMT, false,
         OptionalStep.OPT_DECODER_VERIFICATION, true
     ));
     generator = Generator.IRREGULAR;

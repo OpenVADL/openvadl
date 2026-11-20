@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.passes;
+package vadl.vdt.passes.verify.vdt;
 
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
@@ -37,6 +37,9 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.vdt.model.Node;
+import vadl.vdt.passes.VdtConstraintSynthesisPass;
+import vadl.vdt.passes.VdtInputPreparationPass;
+import vadl.vdt.passes.VdtLoweringPass;
 import vadl.vdt.target.common.DecisionTreeCompletenessVerifier;
 import vadl.vdt.target.common.DecisionTreeSoundnessVerifier;
 import vadl.vdt.target.common.dto.PathVerificationInfo;
