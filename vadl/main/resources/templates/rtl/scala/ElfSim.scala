@@ -137,18 +137,22 @@ class ElfSimTest extends ElfSimBase("elfsimtest") with BeforeAndAfterAll {
   new File("test").mkdirs()
 
   // run riscv-tests
-  new java.io.File("/riscv-tests/isa")
-    .listFiles(_.getName.matches("[(${#strings.substring(isaName, 0, 4).toLowerCase()})]ui-p-[^.]*"))
+  val files = new java.io.File("/riscv-tests/isa")
+    .listFiles(_.getName.matches("rv32ui-p-[^.]*"))
     .filter(file => !file.getName.contains("fence")) // not supported
-    .foreach(file => {
-      it(f"${file.getName}") {
-        run(
-          file,
-          traceFile = Some(s"test/${file.getName}"),
-          outputFile = Some(s"test/${file.getName}.log")
-        )
-      }
-    })
+    .toList
+  if (files.isEmpty) {
+    throw new AssertionError("no files given") // riscv-tests missing
+  }
+  files.foreach(file => {
+    it(f"${file.getName}") {
+      run(
+        file,
+        traceFile = Some(s"test/${file.getName}"),
+        outputFile = Some(s"test/${file.getName}.log")
+      )
+    }
+  })
 
 }
 
@@ -183,6 +187,10 @@ class ElfSim[T <: Module](module: => T, getIO: T => Bundle, getResetVector: T =>
     case Some(d) => d := simSymb.entry
     case _ =>
   }
+
+  val cycles = Module(new SimMemCycles)
+  cycles.clock := clock
+  cycles.reset := reset
 
   core_io.getElements.foreach {
     case rd: VADL.MemReadPort[Bits] =>
@@ -278,4 +286,15 @@ class SimMemSymbols[T <: Data](name: String, addrWidth: Int) extends ExtModule(M
   val entry = IO(Output(Bits(addrWidth.W)))
   val fromhost = IO(Output(Bits(addrWidth.W)))
   val tohost = IO(Output(Bits(addrWidth.W)))
+
+  addResource("/SimMem.sv")
+  addResource("/SimMem.cpp")
+}
+
+class SimMemCycles extends ExtModule {
+  val clock = IO(Input(Clock()))
+  val reset = IO(Input(Reset()))
+
+  addResource("/SimMem.sv")
+  addResource("/SimMem.cpp")
 }
