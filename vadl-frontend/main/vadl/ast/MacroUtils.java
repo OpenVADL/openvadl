@@ -229,7 +229,7 @@ class MacroUtils {
    * Assembly definitions can be written with multiple identifiers to be bound to multiple
    * (pseudo) instructions. However, for correct further processing they need to be expanded into
    * multiple definitions.
-   * The input requires a linked list because otherwise performance would degredate.
+   * The input requires a linked list because otherwise performance would degradate.
    *
    * @param isaDefs to be expanded.
    * @return returns the original isaDefs with the Assemblies expanded.

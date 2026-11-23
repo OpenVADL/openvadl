@@ -34,10 +34,8 @@ import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -78,7 +76,6 @@ import vadl.ast.nodes.InstructionCallStatement;
 import vadl.ast.nodes.InstructionDefinition;
 import vadl.ast.nodes.InstructionSequenceDefinition;
 import vadl.ast.nodes.IntegerLiteral;
-import vadl.ast.nodes.IsId;
 import vadl.ast.nodes.LetExpr;
 import vadl.ast.nodes.LetStatement;
 import vadl.ast.nodes.LockStatement;
@@ -1145,7 +1142,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public ExpressionNode visit(GroupedExpr expr) {
     // Arithmetic grouping
     if (expr.expressions.size() == 1) {
-      return expr.expressions.get(0).accept(this);
+      return fetch(expr.expressions.getFirst());
     }
 
     // String or Bits concatenation
@@ -1161,8 +1158,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             .bitWidth() + expr.expressions.get(1).type().asDataType().bitWidth());
 
     var call = new BuiltInCall(concatBuiltin,
-        new NodeList<>(expr.expressions.get(0).accept(this),
-            expr.expressions.get(1).accept(this)),
+        new NodeList<>(fetch(expr.expressions.get(0)), fetch(expr.expressions.get(1))),
         getViamType(type));
 
     for (int i = 2; i < expr.expressions.size(); i++) {
@@ -1170,8 +1166,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           Type.bits(type.asDataType().bitWidth()
               + expr.expressions.get(i).type().asDataType().bitWidth());
       call = new BuiltInCall(concatBuiltin,
-          new NodeList<>(call,
-              expr.expressions.get(i).accept(this)),
+          new NodeList<>(call, fetch(expr.expressions.get(i))),
           getViamType(type));
     }
 
