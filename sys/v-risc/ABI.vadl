@@ -274,7 +274,9 @@ assembly description AD for ABI = {
             mnemonic = "ADD_TEST" @operand
             rd = Register @operand ","
             rs1 = Register @operand ","
-            rs2 = (Natural @register) @operand
+            rs2 = (minus5<Natural> @register) @operand
         ;
     }
+
+    function minus5(x: SInt<64>) -> SInt<64> = x - 5
 }

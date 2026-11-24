@@ -101,14 +101,18 @@ SGEI_L r28, 0x7fffffff
 # CHECK-NEXT: <MCOperand Reg:30>
 # CHECK-NEXT: <MCOperand Imm:2147483647>>
 
-add_test r0, r1, 2
-# CHECK: <MCInst #{{[0-9]+}} ADD_TEST
-# CHECK-NEXT: <MCOperand Reg:2>
-# CHECK-NEXT: <MCOperand Reg:3>
+add_test r16, r15, 7
+# COM: also check inst printer:
+# CHECK: ADD_TEST -16,15,7
+# CHECK-SAME: <MCInst #{{[0-9]+}} ADD_TEST
+# CHECK-NEXT: <MCOperand Reg:18>
+# CHECK-NEXT: <MCOperand Reg:17>
 # CHECK-NEXT: <MCOperand Reg:4>>
 
-add_test r0, r1, 3
-# CHECK: <MCInst #{{[0-9]+}} ADD_TEST
-# CHECK-NEXT: <MCOperand Reg:2>
-# CHECK-NEXT: <MCOperand Reg:3>
+add_test r28, r2, 8
+# COM: also check inst printer:
+# CHECK: ADD_TEST -4,2,8
+# CHECK-SAME: <MCInst #{{[0-9]+}} ADD_TEST
+# CHECK-NEXT: <MCOperand Reg:30>
+# CHECK-NEXT: <MCOperand Reg:4>
 # CHECK-NEXT: <MCOperand Reg:5>>

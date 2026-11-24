@@ -26,6 +26,9 @@ namespace llvm
             static std::string formatImm(MCOperandWrapper Op, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string formatImm(MCOperand Op, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string formatImm(int64_t value, uint8_t Radix, const MCAsmInfo *MAI);
+            static std::string formatImm(MCOperandWrapper Op, uint8_t Radix, const MCAsmInfo *MAI, unsigned SignedWidth);
+            static std::string formatImm(MCOperand Op, uint8_t Radix, const MCAsmInfo *MAI, unsigned SignedWidth);
+            static std::string formatImm(int64_t value, uint8_t Radix, const MCAsmInfo *MAI, unsigned SignedWidth);
             static std::string formatExpr(const MCExpr *Expr, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string FormatModifierString(const [(${namespace})]MCExpr::VariantKind VariantKind);
             static std::string FormatModifier(const [(${namespace})]MCExpr::VariantKind VariantKind);
@@ -45,17 +48,12 @@ namespace llvm
             static MCRegister getRegNoFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex );
             [/]
 
-            static std::string unwrapToIntegralStr(std::string reg)
+            static int64_t getRegIndexFromRegNo(MCRegister reg)
             {
-              return std::to_string(unwrapToIntegral(std::stoi(reg)));
+              return getRegIndexFromRegNo(reg.id());
             }
 
-            static int64_t unwrapToIntegral(MCRegister reg)
-            {
-              return unwrapToIntegral(reg.id());
-            }
-
-            static int64_t unwrapToIntegral(int reg)
+            static int64_t getRegIndexFromRegNo(int reg)
             {
               switch(reg) {
               [# th:each="rg : ${registers}" ]
@@ -77,19 +75,13 @@ namespace llvm
 
             MCOperand getMCOp() const { return MCOp; }
 
-            operator int64_t() const { return unwrapToIntegral(); }
+            operator int64_t() const { return asValue(); }
 
-            int64_t unwrapToIntegral() const
+            int64_t asValue() const
             {
                 if( MCOp.isReg() )
                 {
-                    switch(MCOp.getReg()) {
-                    [# th:each="rg : ${registers}" ]
-                      case [(${namespace})]::[(${rg.name})]: return [(${rg.index})];
-                    [/]
-                    }
-
-                    report_fatal_error("Cannot convert register operand to integral value.");
+                    return AsmUtils::getRegIndexFromRegNo(MCOp.getReg());
                 }
                 else
                 {
