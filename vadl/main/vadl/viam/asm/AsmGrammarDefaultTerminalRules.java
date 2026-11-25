@@ -40,7 +40,7 @@ public final class AsmGrammarDefaultTerminalRules {
   public static final List<TerminalRule> RULES = List.of(
       new TerminalRule("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*", false),
       new TerminalRule("STRING", "\\\".*\\\"", false),
-      new TerminalRule("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+", false),
+      new TerminalRule("INTEGER", "0b[01]+|0x[0-9a-fA-F]+|[0-9]+", false),
       new TerminalRule("COLON", ":", false),
       new TerminalRule("PLUS", "+", true),
       new TerminalRule("MINUS", "-", false),
@@ -80,7 +80,7 @@ public final class AsmGrammarDefaultTerminalRules {
       new TerminalRule("EOL", "\\r\\n?|\\n", true)
   );
 
-  private static final List<CompiledRule> COMPILED_RULES = RULES.stream()
+  public static final List<CompiledRule> COMPILED_RULES = RULES.stream()
       .map(rule -> new CompiledRule(rule.name(), rule.pattern()))
       .toList();
 
@@ -102,5 +102,9 @@ public final class AsmGrammarDefaultTerminalRules {
     return null;
   }
 
-  private record CompiledRule(String name, Pattern pattern) {}
+  /**
+   * Record to hold compiled regular expression patterns of terminal rules.
+   */
+  public record CompiledRule(String name, Pattern pattern) {
+  }
 }

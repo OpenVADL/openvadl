@@ -342,7 +342,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
 
     if (entity.stringLiteral != null) {
       var stringValue = ((StringLiteral) entity.stringLiteral).value;
-      return new HashSet<>(List.of(new AsmToken(inferTerminalRule(stringValue), stringValue)));
+      return Set.of(new AsmToken(inferTerminalRule(stringValue), stringValue));
     }
 
     Objects.requireNonNull(entity.id);
@@ -414,6 +414,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
     var inferredRule = AsmGrammarDefaultRules.getMatchingTerminalRule(value);
 
     if (inferredRule == null) {
+      // Should not occur, since string literals are split into tokens in the TypeChecker.
       throw new RuntimeException(
           "Could not infer asm terminal rule for string literal: '%s'".formatted(value));
     }
