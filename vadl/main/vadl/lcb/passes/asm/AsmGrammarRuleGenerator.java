@@ -242,12 +242,6 @@ public class AsmGrammarRuleGenerator {
       var tokens = firstTokensOfNonTerminalRule(immediateOperandRule);
       ctx.addElementWithTokens(elem, tokens);
     }
-
-    if (node.builtIn() == BuiltInTable.INTEGRAL) {
-      // Integral is a field used as register index, but printed as immediate not as register
-      // do an Integer to @register cast element
-    }
-
   }
 
   private boolean isImmediateBuiltin(BuiltInCall node) {

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.operands.ReferencesFormatField;
 import vadl.gcb.passes.operands.model.GcbDefaultInstructionOperand;
 import vadl.gcb.passes.operands.model.GcbInstructionBareSymbolOperand;
@@ -44,15 +43,14 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
-import vadl.utils.SourceLocation;
+import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
-import vadl.viam.PseudoInstruction;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
@@ -110,7 +108,6 @@ public class AssemblyInstructionPrinterImmediateHandler
     extends AbstractAssemblyInstructionPrinterHandler {
 
   private final PassResults passResults;
-  private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
 
   /**
    * Constructor.
@@ -120,9 +117,6 @@ public class AssemblyInstructionPrinterImmediateHandler
                                                     TableGenInstruction tableGenInstruction) {
     super(instruction, tableGenInstruction);
     this.passResults = passResults;
-    this.fieldUsages =
-        (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
-            IdentifyFieldUsagePass.class);
     this.ctx = new CNodeContext(
         builder::append,
         (ctx, node)
@@ -134,9 +128,9 @@ public class AssemblyInstructionPrinterImmediateHandler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, ConstantNode node) {
     if (node.constant() instanceof Constant.Str str) {
-      ctx.ln("std::string(\"" + str.value() + "\")");
+      ctx.wr("std::string(\"" + str.value() + "\")");
     } else if (node.constant() instanceof Constant.Value val) {
-      ctx.ln(val.intValue() + "");
+      ctx.wr(val.intValue() + "");
     } else {
       throw Diagnostic.error(
           String.format("Not supported constant type: %s", node.constant().getClass()),
@@ -165,38 +159,25 @@ public class AssemblyInstructionPrinterImmediateHandler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, BuiltInCall node) {
     if (node.builtIn() == BuiltInTable.MNEMONIC) {
-      ctx.ln("std::string(\"" + instruction.identifier().simpleName() + "\")");
+      ctx.wr("std::string(\"" + instruction.identifier().simpleName() + "\")");
     } else if (node.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
       for (int i = 0; i < node.arguments().size(); i++) {
         if (i != 0) {
-          ctx.wr(" + ");
+          ctx.ln();
+          ctx.wr("+ ");
         }
 
         AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this,
             (CNodeContext) ctx, node.arguments().get(i));
       }
     } else if (node.builtIn() == BuiltInTable.REGISTER) {
-      var argument = node.arguments().getFirst();
-      if (argument instanceof FieldRefNode fieldRefNode) {
-        ctx.wr(printRegister(fieldRefNode));
-      } else if (argument instanceof FuncParamNode funcParamNode) {
-        ctx.wr(printRegister(funcParamNode));
-      } else {
-        throw Diagnostic.error("not supported argument for register builtin",
-                argument.location())
-            .build();
-      }
+      handleRegisterBuiltin(node, ctx);
     } else if (node.builtIn() == BuiltInTable.UDEC) {
       writeImmediateWithRadix(node, ctx, 10, false);
     } else if (node.builtIn() == BuiltInTable.SDEC) {
       writeImmediateWithRadix(node, ctx, 10, true);
     } else if (node.builtIn() == BuiltInTable.HEX) {
       writeImmediateWithRadix(node, ctx, 16, false);
-    } else if (node.builtIn() == BuiltInTable.INTEGRAL) {
-      ctx.wr("AsmUtils::unwrapToIntegral(");
-      AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this, (CNodeContext) ctx,
-          node.arg(0));
-      ctx.wr(")");
     } else if (node.builtIn() == BuiltInTable.EQU) {
       handleConditional(node, ctx, "==");
     } else if (node.builtIn() == BuiltInTable.NEQ) {
@@ -217,49 +198,28 @@ public class AssemblyInstructionPrinterImmediateHandler
   @Override
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, FuncParamNode node) {
-    var index = indexInInputsOrOutputs(node).orElseThrow(
+    var indexInOperands = indexInInputsOrOutputs(node).orElseThrow(
         () -> Diagnostic.error("Cannot find operand", node.location()).build()
     );
-    var operands = Stream.concat(tableGenInstruction.getOutOperands().stream(),
-        tableGenInstruction.getInOperands().stream()).toList();
-    var operand = operands.get(index);
-
-    if (operand instanceof GcbInstructionRegisterFileOperand
-        || operand instanceof GcbInstructionIndexedRegisterFileOperand) {
-      ctx.wr("MI->getOperand(" + index + ").getReg()");
-    } else {
-      ctx.wr("MI->getOperand(" + index + ").getImm()");
-    }
+    ctx.wr("MCOperandWrapper(MI->getOperand(%s))", indexInOperands);
   }
 
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(CGenContext<Node> ctx, FieldRefNode node) {
-    if (instruction instanceof Instruction machineInstruction) {
-      var usages = fieldUsages.getFieldUsages(machineInstruction, node.formatField());
-
-      if (usages.isEmpty()) {
-        throw Diagnostic.error(
-            "The generator does not know whether this is an immediate or register access.",
-            node.location()).build();
-      } else if (usages.size() > 1) {
-        throw Diagnostic.error(
-            "The generator registered multiple register usages for this field.",
-            node.location()).build();
-      }
-
-      var usage = usages.getFirst();
-      var indexInOperands = ensurePresent(indexInInputsOrOutputs(node.formatField()),
-          () -> Diagnostic.error("Cannot find operand: " + node.formatField().simpleName(),
-              node.location()));
-      if (usage == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
-        ctx.wr("MI->getOperand(%s).getImm()", indexInOperands);
-      } else if (usage == IdentifyFieldUsagePass.FieldUsage.REGISTER) {
-        ctx.wr("MI->getOperand(%s).getReg()", indexInOperands);
-      }
-    } else {
-      throw Diagnostic.error("not supported", node.location()).build();
+    // Since the operand value is in semantic view, if a field is used in a printing
+    // function the semantic value needs to be encoded to derive the field value.
+    // See: https://openvadl.github.io/openvadl/md_lcb.html#autotoc_md81
+    if (instruction instanceof Instruction machineInstruction
+        && fieldEncoding(machineInstruction, node.formatField()).isPresent()) {
+      writeEncodedField(machineInstruction, node.formatField(), ctx);
+      return;
     }
+
+    var indexInOperands = ensurePresent(indexInInputsOrOutputs(node.formatField()),
+        () -> Diagnostic.error("Cannot find operand: " + node.formatField().simpleName(),
+            node.location()));
+    ctx.wr("MCOperandWrapper(MI->getOperand(%s))", indexInOperands);
   }
 
   @Handler
@@ -359,7 +319,7 @@ public class AssemblyInstructionPrinterImmediateHandler
             node.location())
     );
 
-    ctx.wr("MI->getOperand(%s).getImm()", indexInOperands);
+    ctx.wr("MCOperandWrapper(MI->getOperand(%s))", indexInOperands);
   }
 
   @Handler
@@ -488,6 +448,60 @@ public class AssemblyInstructionPrinterImmediateHandler
     throw Diagnostic.error("not supported", node.location()).build();
   }
 
+  /**
+   * Argument for the "register()" builtin is always an index into a register file.
+   * Argument to the builtin can be just a Field / FieldAccess / FuncParam node
+   * like "register(rd)" or an expression containing such a node like register(rd + 3).
+   * It is required that the argument expression contains exactly one such node,
+   * in order to be able to determine the concrete register file which should be indexed.
+   */
+  private void handleRegisterBuiltin(BuiltInCall node, CGenContext<Node> ctx) {
+    var operandIndex = operandRefIndexInOperands(node);
+    var operand = tableGenInstruction.getOperand(operandIndex);
+
+    var argument = node.arguments().getFirst();
+    if (operand instanceof GcbInstructionRegisterFileOperand
+        || operand instanceof GcbInstructionIndexedRegisterFileOperand) {
+      var regOperand = (GcbDefaultInstructionOperand) operand;
+      ctx.wr("AsmUtils::getRegisterNameFrom%sByIndex(", regOperand.type());
+      AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this, (CNodeContext) ctx,
+          argument);
+      ctx.wr(")");
+    } else {
+      throw Diagnostic.error("Not supported argument for register builtin, argument expression "
+          + "has to include exactly one register operand.", argument.location()).build();
+    }
+  }
+
+  protected int operandRefIndexInOperands(BuiltInCall node) {
+    var children = new ArrayList<Node>();
+    node.collectInputsWithChildren(children);
+
+    // Operands can be FieldRef / FieldAccessRef (machine instructions)
+    // or FuncParam (pseudo instructions)
+    var operandReferences = children.stream()
+        .filter(child -> child instanceof FieldAccessRefNode
+            || child instanceof FieldRefNode
+            || child instanceof FuncParamNode)
+        .toList();
+
+    ViamError.ensure(operandReferences.size() == 1,
+        () -> Diagnostic.error("Only one operand reference is allowed.", node.location()));
+
+    var operandIndex = switch (operandReferences.getFirst()) {
+      case FieldAccessRefNode fieldAccessNode ->
+          indexInInputsOrOutputs(fieldAccessNode.fieldAccess());
+      case FieldRefNode fieldRefNode -> indexInInputsOrOutputs(fieldRefNode.formatField());
+      case FuncParamNode funcParamNode -> indexInInputsOrOutputs(funcParamNode);
+      default -> throw Diagnostic.error(
+          "Unsupported operand reference type: " + operandReferences.getFirst().nodeName(),
+          operandReferences.getFirst().location()).build();
+    };
+    return ensurePresent(operandIndex, () ->
+        Diagnostic.error("Immediate must be part of an tablegen input or output.",
+            operandReferences.getFirst().location()));
+  }
+
   private void handleConditional(BuiltInCall node, CGenContext<Node> ctx, String operation) {
     node.ensure(node.arguments().size() == 2, "Expected two arguments");
 
@@ -500,177 +514,54 @@ public class AssemblyInstructionPrinterImmediateHandler
         node.arguments().get(1));
   }
 
-  protected void handleArbitraryExpression(BuiltInCall node, int radix, CGenContext<Node> ctx) {
+  protected void writeImmediateWithRadix(BuiltInCall node, CGenContext<Node> ctx, int radix,
+                                         boolean isSigned) {
+    var argument = node.arguments().getFirst();
     ctx.wr("AsmUtils::formatImm(");
-    AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this,
-        (CNodeContext) ctx, node.arguments().getFirst());
-    ctx.wr(", %d, &MAI)", radix);
-  }
-
-  private void writeImmediateWithRadix(BuiltInCall node, CGenContext<Node> ctx, int radix,
-                                       boolean isSigned) {
-    if (node.arguments().getFirst() instanceof BuiltInCall bc
-        && bc.builtIn() == BuiltInTable.INTEGRAL) {
-      ctx.wr("AsmUtils::unwrapToIntegralStr(");
-      writeImmediateWithRadix(bc, ctx, radix, isSigned);
-      ctx.wr(")");
-    } else if (node.arguments().getFirst() instanceof FieldRefNode fieldRefNode) {
-      writeImmediateWithRadix(fieldRefNode.formatField(),
-          ctx,
-          radix,
-          fieldRefNode.location(),
-          isSigned);
-    } else if (node.arguments().getFirst() instanceof FieldAccessRefNode fieldAccessRefNode) {
-      writeImmediateWithRadix(fieldAccessRefNode.fieldAccess(),
-          ctx,
-          radix,
-          fieldAccessRefNode.location(),
-          isSigned);
-    } else if (node.arguments().getFirst() instanceof FuncParamNode funcParamNode) {
-      // This case is for pseudo instructions because they arguments are not fields,
-      // but function parameter nodes.
-      writeImmediateWithRadix(funcParamNode, ctx, radix, funcParamNode.location(), isSigned);
-    } else if (node.arguments().getFirst() instanceof ConstantNode constantNode) {
-      writeImmediateWithRadix(constantNode, ctx, radix);
+    AssemblyInstructionPrinterImmediateHandlerDispatcher.dispatch(this, (CNodeContext) ctx,
+        argument);
+    if (isSigned && argument.type() instanceof DataType dataType && dataType.bitWidth() < 64) {
+      ctx.wr(", %d, &MAI, %d)", radix, dataType.bitWidth());
     } else {
-      handleArbitraryExpression(node, radix, ctx);
+      ctx.wr(", %d, &MAI)", radix);
     }
   }
 
-  private void writeImmediateWithRadix(ConstantNode constantNode,
-                                       CGenContext<Node> ctx,
-                                       int radix) {
-    ctx.wr("AsmUtils::formatImm(%d, %d, &MAI)", constantNode.constant().asVal().intValue(), radix);
+  private Optional<Format.FieldEncoding> fieldEncoding(Instruction machineInstruction,
+                                                       Format.Field field) {
+    return machineInstruction
+        .fieldEncodingsByUsedFieldAccesses(getUnmodifiedOriginalGraph(machineInstruction))
+        .stream().filter(x -> x.targetField().equals(field)).findFirst();
   }
 
-  protected void writeImmediateWithRadix(Format.Field field,
-                                         CGenContext<Node> ctx,
-                                         int radix,
-                                         SourceLocation sourceLocation,
-                                         boolean isSigned) {
-    // If this instruction is a machine instruction then ...
-    if (instruction instanceof Instruction machineInstruction) {
-      var originalGraph = getUnmodifiedOriginalGraph(machineInstruction);
-      var fieldEncodings = machineInstruction.fieldEncodingsByUsedFieldAccesses(originalGraph);
-      var fieldEncoding =
-          fieldEncodings.stream().filter(x -> x.targetField().equals(field)).findFirst();
+  private void writeEncodedField(Instruction machineInstruction, Format.Field field,
+                                 CGenContext<Node> ctx) {
+    var uncheckedEncodingFunctions =
+        ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults)
+            .get(instruction);
+    var encodingFunctions = ensureNonNull(uncheckedEncodingFunctions,
+        () -> Diagnostic.error("Cannot find encoding functions for the instruction.",
+            machineInstruction.location()));
 
-      // If this field has an encoding, we are applying it.
-      if (fieldEncoding.isPresent()) {
-        var uncheckedEncodingFunctions =
-            ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults)
-                .get(instruction);
-        var encodingFunctions = ensureNonNull(uncheckedEncodingFunctions,
-            () -> Diagnostic.error("Cannot find encoding functions for the instruction.",
-                machineInstruction.location()));
-
-        var encodingFunction = ensurePresent(
-            encodingFunctions.stream().filter(x -> x.field().equals(field)).findFirst(),
-            () -> Diagnostic.error("Cannot find encoding function for field",
-                machineInstruction.location().join(field.location()))
-        );
-
-        var argumentsForEncodingFunction =
-            CreateFunctionsFromImmediatesPass.createParametersForEncodingFunctionFromInputOperands(
-                    tableGenInstruction)
-                .stream()
-                .map(x -> {
-                  var index = indexInInputsOrOutputs(
-                      x.operand().immediateOperand().fieldAccessRef()).get();
-                  var operand = tableGenInstruction.getOperand(index);
-                  var isUsedAsImmediate = operand instanceof GcbInstructionImmediateOperand;
-                  // You can also use a register as immediate, but then you need to call ".getReg".
-                  if (isUsedAsImmediate) {
-                    return String.format("MI->getOperand(%s).getImm()", index);
-                  } else {
-                    return String.format("MI->getOperand(%s).getReg()", index);
-                  }
-                })
-                .collect(Collectors.joining(", "));
-
-        if (isSigned) {
-          // The sign extension function needs to know which bit it should consider.
-          int width = fieldEncoding.get().targetField().size();
-          ctx.wr("AsmUtils::formatImm(VADL_sextract(%s(%s), %d), %d, &MAI)",
-              encodingFunction.header().functionName().lower(),
-              argumentsForEncodingFunction,
-              width,
-              radix);
-        } else {
-          ctx.wr("AsmUtils::formatImm(%s(%s), %d, &MAI)",
-              encodingFunction.header().functionName().lower(),
-              argumentsForEncodingFunction,
-              radix);
-        }
-      } else {
-        var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
-            Diagnostic.error("Immediate must be part of an tablegen input or output.",
-                sourceLocation)
-        );
-
-        // Otherwise print raw field value.
-        writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
-      }
-    } else {
-      var indexInOperands = ensurePresent(indexInInputsOrOutputs(field), () ->
-          Diagnostic.error("Immediate must be part of an tablegen input or output.",
-              sourceLocation)
-      );
-
-      // Otherwise print raw field value.
-      writeFieldWithRawImmediateWithRadix(indexInOperands, radix);
-    }
-  }
-
-  protected void writeImmediateWithRadix(Format.FieldAccess fieldAccess,
-                                         CGenContext<Node> ctx,
-                                         int radix,
-                                         SourceLocation sourceLocation,
-                                         boolean isSigned) {
-    var indexInOperands = ensurePresent(indexInInputsOrOutputs(fieldAccess), () ->
-        Diagnostic.error("Immediate must be part of an tablegen input or output.",
-            sourceLocation)
+    var encodingFunction = ensurePresent(
+        encodingFunctions.stream().filter(x -> x.field().equals(field)).findFirst(),
+        () -> Diagnostic.error("Cannot find encoding function for field",
+            machineInstruction.location().join(field.location()))
     );
 
-    formatImm(ctx, radix, indexInOperands, isSigned);
-  }
+    var argumentsForEncodingFunction =
+        CreateFunctionsFromImmediatesPass.createParametersForEncodingFunctionFromInputOperands(
+                tableGenInstruction)
+            .stream()
+            .map(x -> {
+              var index = indexInInputsOrOutputs(
+                  x.operand().immediateOperand().fieldAccessRef()).get();
+              return String.format("MCOperandWrapper(MI->getOperand(%s))", index);
+            })
+            .collect(Collectors.joining(", "));
 
-  protected void writeImmediateWithRadix(FuncParamNode node,
-                                         CGenContext<Node> ctx,
-                                         int radix,
-                                         SourceLocation sourceLocation,
-                                         boolean isSigned) {
-    var indexInOperands = ensurePresent(indexInInputsOrOutputs(node), () ->
-        Diagnostic.error("Immediate must be part of an tablegen input or output.",
-            sourceLocation)
-    );
-
-    formatImm(ctx, radix, indexInOperands, isSigned);
-  }
-
-  private void writeFieldWithRawImmediateWithRadix(int indexInOperands,
-                                                   int radix) {
-    // Operand must not be necessarily an immediate, but can also be a register.
-    if (tableGenInstruction.getOperand(indexInOperands) instanceof GcbInstructionImmediateOperand) {
-      ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-          indexInOperands, radix);
-    } else {
-      ctx.wr("std::to_string(MI->getOperand(%s).getReg())", indexInOperands);
-    }
-  }
-
-  private void formatImm(CGenContext<Node> ctx,
-                         int radix,
-                         Integer indexInOperands,
-                         boolean isSigned) {
-    if (isSigned) {
-      // default is always signed
-      ctx.wr("AsmUtils::formatImm(MI->getOperand(%s).getImm(), %d, &MAI)",
-          indexInOperands, radix);
-    } else {
-      ctx.wr("AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%s)), %d, &MAI)",
-          indexInOperands, radix);
-    }
+    ctx.wr("%s(%s)", encodingFunction.header().functionName().lower(),
+        argumentsForEncodingFunction);
   }
 
   /**
@@ -684,121 +575,6 @@ public class AssemblyInstructionPrinterImmediateHandler
     return ensureNonNull(graphs.get(machineInstruction),
         () -> Diagnostic.error("Cannot find unmodified instruction's behavior.",
             machineInstruction.location()));
-  }
-
-  /**
-   * The assembly string contains a {@code register(rd) }, but the given {@code fieldRefNode}
-   * comes from a {@link Format} and is therefore a {@link FieldRefNode}.
-   */
-  private String printRegister(FieldRefNode fieldRefNode) {
-    var index = indexInInputsOrOutputs(fieldRefNode.formatField())
-        .orElseThrow(() -> Diagnostic.error(
-            "Field is not part of an input or output operand in tablegen",
-            fieldRefNode.location()).build());
-
-    // We need this helper function "getRegisterName..." because
-    // we might need to support multiple register files.
-    var registerFileName = getRegisterFile(instruction.behavior(), fieldRefNode);
-    return
-        String.format(
-            "getRegisterNameFrom%sByIndex("
-                + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral())" + " // "
-                + fieldRefNode.formatField().identifier.simpleName() + "\n",
-            registerFileName, index);
-  }
-
-  /**
-   * The assembly string contains a {@code register(rd) }, but it is not part of a {@link Format}
-   * because it might come from a {@link PseudoInstruction}.
-   * For example the {@code MV} pseudo instruction in RISCV.
-   *
-   * <pre>
-   *   pseudo instruction MV( rd : Index, rs1 : Index ) =
-   *   {
-   *       ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
-   *   }
-   *   assembly MV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
-   * </pre>
-   * Note that the emitted {@code rd} is given as a pseudo instruction operand and does not belong
-   * to any {@link Format} and instruction behavior. Therefore, we must use the {@code ADDI}
-   * register usages to determine what register file the "field" {@code rd} belongs to. When
-   * multiple machine instructions with multiple register files exist, then we cannot determine it
-   * automatically.
-   */
-  private String printRegister(FuncParamNode funcParamNode) {
-    funcParamNode.ensure(instruction.behavior().isPseudoInstruction(),
-        "instruction must be pseudo instruction");
-    var instrCallNodes = instruction.behavior().getNodes(InstrCallNode.class).toList();
-
-    /*
-     * Stores all the uses of a register operand of an instruction to determine later
-     * what the pseudo instruction needs as a register file.
-     */
-    record RegisterFileCandidates(Instruction instruction, Format.Field field) {
-
-    }
-
-    var candidates = new ArrayList<RegisterFileCandidates>();
-
-    // First get all fields which use this funcParamNode
-    for (var instrCallNode : instrCallNodes) {
-      for (var pair : instrCallNode.getZippedArgumentsWithParameters().toList()) {
-        // ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
-        //            ^___ argument
-        //       ^___ param
-        var parameter = pair.left();
-        var argument = pair.right();
-
-        if (parameter.isLeft() && argument instanceof FuncParamNode funcParam
-            && funcParam.equals(funcParamNode)) {
-          // is a field and not a field access function.
-          // and it is exactly a node which we need to check
-          candidates.add(new RegisterFileCandidates(instrCallNode.target(), parameter.left()));
-        }
-      }
-    }
-
-    // Go over all the candidates and check all the usages of the fields.
-    // When the usage references a register file then we collect it.
-    var registerFiles = candidates
-        .stream()
-        .flatMap(candidate ->
-            candidate.instruction().behavior().getNodes(FieldRefNode.class)
-                .filter(x -> x.formatField().equals(candidate.field))
-                .flatMap(x -> x.usages()
-                    .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile()))
-                .map(x -> ((HasRegisterTensor) x).registerTensor()))
-        .collect(Collectors.toSet());
-
-    // We have set of register files derived by the machine instructions.
-    // When we have only one element then it is clear what the pseudo instruction has to print
-    // for a register file.
-    // When we have multiple then we cannot say automatically what to choose.
-    if (registerFiles.isEmpty()) {
-      throw Diagnostic.error(
-          "No machine instruction uses this parameter. It is not known which register "
-              + "file to use.",
-          funcParamNode.location()).build();
-    } else if (registerFiles.size() > 1) {
-      throw Diagnostic.error(
-          "Multiple machine instructions use different register files for this index. "
-              + "It is not clear what register file the pseudo instruction must use.",
-          funcParamNode.location()).build();
-    }
-
-    var registerFileName =
-        registerFiles.stream().findFirst().orElseThrow().identifier.simpleName();
-    var index = indexInInputsOrOutputs(funcParamNode)
-        .orElseThrow(() -> Diagnostic.error(
-            "Parameter is not part of an input or output operand in tablegen",
-            funcParamNode.location()).build());
-
-    return
-        String.format(
-            "getRegisterNameFrom%sByIndex("
-                + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral())" + " // "
-                + funcParamNode.parameter().simpleName() + "\n",
-            registerFileName, index);
   }
 
   protected Optional<Integer> indexInInputsOrOutputs(Format.Field needle) {
@@ -863,31 +639,6 @@ public class AssemblyInstructionPrinterImmediateHandler
     }
 
     return Optional.empty();
-  }
-
-  private String getRegisterFile(Graph behavior, FieldRefNode fieldRefNode) {
-    var candidates = behavior.getNodes(FieldRefNode.class)
-        .filter(x -> x.formatField().equals(fieldRefNode.formatField()))
-        .flatMap(Node::usages)
-        .filter(x -> x instanceof HasRegisterTensor y && y.hasRegisterFile())
-        .map(x -> ((HasRegisterTensor) x).registerTensor())
-        .collect(Collectors.toSet());
-
-    if (candidates.isEmpty()) {
-      throw Diagnostic.error(
-          "Field is not used as register. Therefore the compiler generator cannot "
-              +
-              "detect the register file.",
-          fieldRefNode.location()).build();
-    } else if (candidates.size() > 1) {
-      throw Diagnostic.error(
-          "Field is by multiple register file. Therefore the compiler generator cannot "
-              +
-              "detect the register file for the assembly.",
-          fieldRefNode.location()).build();
-    } else {
-      return candidates.iterator().next().identifier.simpleName();
-    }
   }
 
   public CNodeContext ctx() {

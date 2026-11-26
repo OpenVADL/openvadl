@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-FileCopyrightText : © 2025-2026 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,8 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
+import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -53,14 +55,18 @@ public class AssemblyConcatBuiltinMergingPass extends Pass {
     // It is a candidate when it is a builtin with concatenate string
     // and all users are not concatenate string (so it is a "root")
     // and one argument is also a builtin with concatenate string.
-    var candidates = viam.isa()
-        .map(isa -> isa.ownInstructions().stream())
-        .orElseGet(Stream::empty)
+    var assemblies = viam.isa()
+        .map(isa -> Stream.concat(
+            isa.ownInstructions().stream().map(Instruction::assembly),
+            isa.ownPseudoInstructions().stream().map(PseudoInstruction::assembly)))
+        .orElseGet(Stream::empty);
+
+    var candidates = assemblies
         .flatMap(
-            instruction -> {
+            assembly -> {
               var nodes = new ArrayList<BuiltInCall>();
               var returnNode =
-                  instruction.assembly().function().behavior().getNodes(ReturnNode.class)
+                  assembly.function().behavior().getNodes(ReturnNode.class)
                       .findFirst().orElseThrow();
               returnNode.collectInputsWithChildren(nodes, BuiltInCall.class);
               return nodes.stream();

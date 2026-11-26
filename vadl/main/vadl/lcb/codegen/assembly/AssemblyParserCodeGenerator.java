@@ -209,7 +209,7 @@ public class AssemblyParserCodeGenerator {
     var dataAction = rule.getAsmType() == ConstantAsmType.instance() ? "tok.getIntVal()" :
         (rule.getAsmType() == StringAsmType.instance() ? "tok.getString()" : "NoData()");
 
-    var token = ParserGenerator.getLlvmTokenKind(rule.simpleName());
+    var token = getLlvmTokenKind(rule.simpleName());
     var type = rule.getAsmType().toCppTypeString(namespace);
 
     //ctx.spacedIn();
@@ -491,7 +491,7 @@ public class AssemblyParserCodeGenerator {
             parserCompareFunction,
             asmtoken.getStringLiteral())
             : String.format("Lexer.getTok().getKind() == %s",
-            ParserGenerator.getLlvmTokenKind(asmtoken.getRuleName()))
+            getLlvmTokenKind(asmtoken.getRuleName()))
     ).collect(Collectors.joining(" || "));
   }
 
@@ -773,5 +773,57 @@ public class AssemblyParserCodeGenerator {
     }
 
     throw new ViamError("Unknown AsmType cast in asm parser from " + from + " to " + to);
+  }
+
+  /**
+   * Get the llvm lexer token for a vadl builtin rule.
+   *
+   * @param ruleName the name of the builtin rule
+   * @return the corresponding llvm lexer token
+   */
+  public static String getLlvmTokenKind(String ruleName) {
+    return switch (ruleName) {
+      case "IDENTIFIER" -> "AsmToken::Identifier";
+      case "STRING" -> "AsmToken::String";
+      case "INTEGER" -> "AsmToken::Integer";
+      case "EOL" -> "AsmToken::EndOfStatement";
+      case "COLON" -> "AsmToken::Colon";
+      case "PLUS" -> "AsmToken::Plus";
+      case "MINUS" -> "AsmToken::Minus";
+      case "TILDE" -> "AsmToken::Tilde";
+      case "SLASH" -> "AsmToken::Slash";
+      case "BACKSLASH" -> "AsmToken::BackSlash";
+      case "LPAREN" -> "AsmToken::LParen";
+      case "RPAREN" -> "AsmToken::RParen";
+      case "LBRAC" -> "AsmToken::LBrac";
+      case "RBRAC" -> "AsmToken::RBrac";
+      case "LCURLY" -> "AsmToken::LCurly";
+      case "RCURLY" -> "AsmToken::RCurly";
+      case "STAR" -> "AsmToken::Star";
+      case "DOT" -> "AsmToken::Dot";
+      case "COMMA" -> "AsmToken::Comma";
+      case "DOLLAR" -> "AsmToken::Dollar";
+      case "EQUAL" -> "AsmToken::Equal";
+      case "EQUALEQUAL" -> "AsmToken::EqualEqual";
+      case "PIPE" -> "AsmToken::Pipe";
+      case "PIPEPIPE" -> "AsmToken::PipePipe";
+      case "CARET" -> "AsmToken::Caret";
+      case "AMP" -> "AsmToken::Amp";
+      case "AMPAMP" -> "AsmToken::AmpAmp";
+      case "EXCLAIM" -> "AsmToken::Exclaim";
+      case "EXCLAIMEQUAL" -> "AsmToken::ExclaimEqual";
+      case "PERCENT" -> "AsmToken::Percent";
+      case "HASH" -> "AsmToken::Hash";
+      case "LESS" -> "AsmToken::Less";
+      case "LESSEQUAL" -> "AsmToken::LessEqual";
+      case "LESSLESS" -> "AsmToken::LessLess";
+      case "LESSGREATER" -> "AsmToken::LessGreater";
+      case "GREATER" -> "AsmToken::Greater";
+      case "GREATEREQUAL" -> "AsmToken::GreaterEqual";
+      case "GREATERGREATER" -> "AsmToken::GreaterGreater";
+      case "AT" -> "AsmToken::At";
+      case "MINUSGREATER" -> "AsmToken::MinusGreater";
+      default -> throw new ViamError("Unknown terminal rule name " + ruleName);
+    };
   }
 }

@@ -170,7 +170,7 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc,
                                             bool MatchingInlineAsm) {
     auto mnemonic = static_cast<[(${namespace})]ParsedOperand&>(*Operands[0]).getToken();
     if(!AsmUtils::MatchOpcode(mnemonic, Opcode)){
-        Parser.Error(IDLoc, "Uknown mnemonic '" + mnemonic + "'");
+        Parser.Error(IDLoc, "Unknown mnemonic '" + mnemonic + "'");
         return true;
     }
 

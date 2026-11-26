@@ -18,7 +18,6 @@ package vadl.pass.order;
 
 import java.io.IOException;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.codegen.assembly.WrapInIntegralPass;
 import vadl.lcb.include.llvm.IR.EmitMiddleendIntrinsicsTableGenPass;
 import vadl.lcb.passes.asm.AsmGrammarRuleGenerationPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
@@ -97,7 +96,6 @@ public final class LcbPassOrder {
     order.add(new CompensationPatternPass(configuration));
     order.add(new ISelLoweringOperationActionPass(configuration));
     order.add(new GenerateLinkerComponentsPass(configuration));
-    order.add(new WrapInIntegralPass(configuration));
     order.add(new AsmGrammarRuleGenerationPass(configuration));
     order.add(new MiaInstructionFlowPass(configuration));
 

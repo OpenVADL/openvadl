@@ -6,6 +6,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+#include "vadl-builtins.h"
 #include "[(${namespace})]MCExpr.h"
 #include <string>
 #include <iostream>
@@ -132,17 +133,40 @@ std::string AsmUtils::formatImm(MCOperandWrapper Op, uint8_t Radix, const MCAsmI
 
 std::string AsmUtils::formatImm(MCOperand Op, uint8_t Radix, const MCAsmInfo *MAI)
 {
-    int64_t value = 0;
     if(Op.isExpr())
     {
         return formatExpr(Op.getExpr(), Radix, MAI);
     } else if(Op.isReg()) {
-      int64_t value = Op.getReg(); // unwrapToIntegral(Op.getReg());
+      // If a reg operand is used as immediate, the expected value is always index,
+      // so we need to unwrap the regNo.
+      int64_t value = getRegIndexFromRegNo(Op.getReg());
       return formatImm(value, Radix, MAI);
     } else {
       int64_t value = Op.getImm();
       return formatImm(value, Radix, MAI);
     }
+}
+
+std::string AsmUtils::formatImm(MCOperandWrapper Op, uint8_t Radix, const MCAsmInfo *MAI, unsigned SignedWidth)
+{
+    return formatImm(Op.getMCOp(), Radix, MAI, SignedWidth);
+}
+
+std::string AsmUtils::formatImm(MCOperand Op, uint8_t Radix, const MCAsmInfo *MAI, unsigned SignedWidth)
+{
+    if(Op.isExpr())
+    {
+        return formatExpr(Op.getExpr(), Radix, MAI);
+    } else if(Op.isReg()) {
+      return formatImm(getRegIndexFromRegNo(Op.getReg()), Radix, MAI, SignedWidth);
+    } else {
+      return formatImm(Op.getImm(), Radix, MAI, SignedWidth);
+    }
+}
+
+std::string AsmUtils::formatImm(int64_t Value, uint8_t Radix, const MCAsmInfo *MAI, unsigned SignedWidth)
+{
+    return formatImm(VADL_sextract(Value, SignedWidth), Radix, MAI);
 }
 
 std::string AsmUtils::formatImm(int64_t Value, uint8_t Radix, const MCAsmInfo *MAI)
