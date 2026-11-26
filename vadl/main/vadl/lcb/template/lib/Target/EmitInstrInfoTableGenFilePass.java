@@ -21,20 +21,15 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.GenerateGcbIntrinsicsPass;
 import vadl.gcb.passes.MachineInstructionLabel;
-import vadl.gcb.valuetypes.CompilerRegister;
-import vadl.gcb.valuetypes.CompilerRegister.SubRegIndex;
 import vadl.gcb.valuetypes.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecordPass;
@@ -56,19 +51,18 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPa
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterMove;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterSignExtensionMove;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterZeroExtensionMove;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
-import vadl.viam.ArtificialResource;
-import vadl.viam.Constant;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterResource;
 import vadl.viam.Specification;
 
-/**
- * This file contains the mapping for ISelNodes to MI.
- */
+/** This file contains the mapping for ISelNodes to MI. */
 public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
   public EmitInstrInfoTableGenFilePass(LcbConfiguration lcbConfiguration) throws IOException {
@@ -83,101 +77,104 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().targetName().value();
-    return "llvm/lib/Target/" + processorName + "/" + processorName
-        + "InstrInfo.td";
+    return "llvm/lib/Target/" + processorName + "/" + processorName + "InstrInfo.td";
   }
 
   @Override
-  protected Map<String, Object> createVariables(final PassResults passResults,
-                                                Specification specification) {
-    var abi =
-        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
-        GenerateTableGenMachineInstructionRecordPass.class);
+  protected Map<String, Object> createVariables(
+      final PassResults passResults, Specification specification) {
+    var abi = (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
+    var tableGenMachineRecords =
+        (List<TableGenMachineInstruction>)
+            passResults.lastResultOf(GenerateTableGenMachineInstructionRecordPass.class);
     var llvmLoweringPassResults =
-        (LlvmLoweringPass.LlvmLoweringPassResult) passResults.lastResultOf(
-            LlvmLoweringPass.class);
-    var labelledMachineInstructions = ((IsaMachineInstructionMatchingPass.Result)
-        passResults.lastResultOf(IsaMachineInstructionMatchingPass.class)).labels();
-    var tableGenPseudoRecords = (List<TableGenPseudoInstruction>) passResults.lastResultOf(
-        GenerateTableGenPseudoInstructionRecordPass.class);
-    var tableGenConstMatRecords = (List<TableGenCompilerInstruction>) passResults.lastResultOf(
-        GenerateTableGenAbiSequenceInstructionRecordPass.class);
-    var intrinsics = ((GenerateGcbIntrinsicsPass.Output) passResults.lastResultOf(
-        GenerateGcbIntrinsicsPass.class)).intrinsics();
-    var tableGenMachineRecordsLookup = tableGenMachineRecords.stream().collect(Collectors.toMap(
-        TableGenMachineInstruction::instruction, x -> x));
+        (LlvmLoweringPass.LlvmLoweringPassResult) passResults.lastResultOf(LlvmLoweringPass.class);
+    var labelledMachineInstructions =
+        ((IsaMachineInstructionMatchingPass.Result)
+                passResults.lastResultOf(IsaMachineInstructionMatchingPass.class))
+            .labels();
+    var tableGenPseudoRecords =
+        (List<TableGenPseudoInstruction>)
+            passResults.lastResultOf(GenerateTableGenPseudoInstructionRecordPass.class);
+    var tableGenConstMatRecords =
+        (List<TableGenCompilerInstruction>)
+            passResults.lastResultOf(GenerateTableGenAbiSequenceInstructionRecordPass.class);
+    var intrinsics =
+        ((GenerateGcbIntrinsicsPass.Output)
+                passResults.lastResultOf(GenerateGcbIntrinsicsPass.class))
+            .intrinsics();
+    var tableGenMachineRecordsLookup =
+        tableGenMachineRecords.stream()
+            .collect(Collectors.toMap(TableGenMachineInstruction::instruction, x -> x));
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
     var rawAddi = addi64 != null ? addi64 : Objects.requireNonNull(addi32);
 
-    var addi = ensurePresent(rawAddi.stream().findFirst(),
-        () -> Diagnostic.error("Instruction set requires an addition with immediate",
-            specification.location()));
+    var addi =
+        ensurePresent(
+            rawAddi.stream().findFirst(),
+            () ->
+                Diagnostic.error(
+                    "Instruction set requires an addition with immediate",
+                    specification.location()));
 
-    var renderedImmediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
-        GenerateTableGenImmediateRecordPass.class))
-        .stream()
-        .map(TableGenImmediateOperandRenderer::lower)
-        .toList();
+    var renderedImmediates =
+        ((List<TableGenImmediateRecord>)
+                passResults.lastResultOf(GenerateTableGenImmediateRecordPass.class))
+            .stream().map(TableGenImmediateOperandRenderer::lower).toList();
 
-    var renderedTableGenMachineRecords = tableGenMachineRecords
-        .stream()
-        .map(TableGenInstructionRenderer::lower)
-        .toList();
+    var renderedTableGenMachineRecords =
+        tableGenMachineRecords.stream().map(TableGenInstructionRenderer::lower).toList();
 
-    var renderedTableGenPseudoRecords = tableGenPseudoRecords
-        .stream()
-        // Return and Call have special entries in the tableGen file
-        // that's why we skip it.
-        .filter(record -> !(abi.returnSequence() == record.pseudoInstruction()
-            || abi.callSequence() == record.pseudoInstruction()))
-        .map(TableGenInstructionRenderer::lower)
-        .toList();
-
-    var renderedTableGenCompilerInstructionsRecords = tableGenConstMatRecords
-        .stream()
-        .map(TableGenInstructionRenderer::lower)
-        .toList();
-
-    var renderedTableGenInstAliases = llvmLoweringPassResults
-        .pseudoInstructionRecords()
-        .values()
-        .stream()
-        .map(TableGenInstAliasRenderer::lower)
-        .sorted() // just that we have always the same output
-        .toList();
-
-    var pseudoExpansionPatterns = tableGenMachineRecords
-        .stream()
-        .flatMap(x -> x.getAnonymousPatterns().stream())
-        .filter(x -> x instanceof TableGenPseudoInstExpansionPattern)
-        .map(x -> (TableGenPseudoInstExpansionPattern) x)
-        .toList();
-
-    var renderedIntrinsics =
-        lcbConfiguration().skipPatternGeneration() ? Collections.emptyList() :
-            intrinsics
-            .stream()
-            .filter(intrinsic -> {
-              // We cannot map intrinsics to instructions when they do not have any operands
-              // (input, output). Instead, it is mapped in the ISelLowering.
-              var record = tableGenMachineRecordsLookup.get(intrinsic.instruction());
-
-              if (record != null) {
-                return !(record.getInOperands().isEmpty() && record.getOutOperands().isEmpty());
-              }
-
-              return true;
-            })
-            .map(x -> TableGenInstructionPatternRenderer.lower(tableGenMachineRecords, x))
-            .sorted()
+    var renderedTableGenPseudoRecords =
+        tableGenPseudoRecords.stream()
+            // Return and Call have special entries in the tableGen file
+            // that's why we skip it.
+            .filter(record ->
+                !(abi.returnSequence() == record.pseudoInstruction()
+                    || abi.callSequence() == record.pseudoInstruction()))
+            .map(TableGenInstructionRenderer::lower)
             .toList();
 
+    var renderedTableGenCompilerInstructionsRecords =
+        tableGenConstMatRecords.stream().map(TableGenInstructionRenderer::lower).toList();
+
+    var renderedTableGenInstAliases =
+        llvmLoweringPassResults.pseudoInstructionRecords().values().stream()
+            .map(TableGenInstAliasRenderer::lower)
+            .sorted() // just that we have always the same output
+            .toList();
+
+    var pseudoExpansionPatterns =
+        tableGenMachineRecords.stream()
+            .flatMap(x -> x.getAnonymousPatterns().stream())
+            .filter(x -> x instanceof TableGenPseudoInstExpansionPattern)
+            .map(x -> (TableGenPseudoInstExpansionPattern) x)
+            .toList();
+
+    var renderedIntrinsics =
+        lcbConfiguration().skipPatternGeneration()
+            ? Collections.emptyList()
+            : intrinsics.stream()
+                .filter(intrinsic -> {
+                  // We cannot map intrinsics to instructions when they do not have any operands
+                  // (input, output). Instead, it is mapped in the ISelLowering.
+                  var record = tableGenMachineRecordsLookup.get(intrinsic.instruction());
+
+                  if (record != null) {
+                    return !(record.getInOperands().isEmpty() && record.getOutOperands().isEmpty());
+                  }
+
+                  return true;
+                })
+                .map(x -> TableGenInstructionPatternRenderer.lower(tableGenMachineRecords, x))
+                .sorted()
+                .toList();
+
     var compensationPatterns =
-        (List<TableGenSelectionWithOutputPattern>) passResults.lastResultOf(
-            CompensationPatternPass.class);
+        (List<TableGenSelectionWithOutputPattern>)
+            passResults.lastResultOf(CompensationPatternPass.class);
 
     var renderedPatterns =
         Stream.concat(
@@ -188,42 +185,48 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                         tableGenPseudoRecords.stream()
                             .map(TableGenInstructionPatternRenderer::lower),
                         compensationPatterns.stream()
-                            .map(TableGenInstructionPatternRenderer::lower))
-                ))
+                            .map(TableGenInstructionPatternRenderer::lower))))
             .filter(x -> !x.equals("\n"))
             .toList();
 
     var generateTableGenRegistersPassOutput =
-        ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
-            GenerateTableGenRegistersPass.class));
+        ((GenerateTableGenRegistersPass.Output)
+            passResults.lastResultOf(GenerateTableGenRegistersPass.class));
     var registerFiles =
-        Stream.concat(generateTableGenRegistersPassOutput.registerClasses().stream(),
+        Stream.concat(
+                generateTableGenRegistersPassOutput.registerClasses().stream(),
                 generateTableGenRegistersPassOutput.aliasRegisterClasses().stream())
             .toList();
 
-    var registerSubregisterPatterns = generateRegisterSubregisterPatterns(registerFiles);
-    var registerTruncations = registerSubregisterPatterns
-        .truncations()
-        .stream()
-        .map(this::map)
-        .toList();
-    var registerExtensions = registerSubregisterPatterns
-        .extensions()
-        .stream()
-        .map(this::map)
-        .toList();
+    var registerSubregisterPatterns =
+        ((GenerateRegisterExtensionTruncationPatterns.RegisterSubregisterPatterns)
+            passResults.lastResultOf(GenerateRegisterExtensionTruncationPatterns.class));
+
+    var registerTruncations =
+        registerSubregisterPatterns.truncations().stream().map(this::map).toList();
+
+    var registerAnyExtensions =
+        registerSubregisterPatterns.anyExtensions().stream().map(this::map).toList();
+
+    var registerZeroExtensions =
+        registerSubregisterPatterns.zeroExtensions().stream().map(this::map).toList();
+
+    var registerSignExtensions =
+        registerSubregisterPatterns.signExtensions().stream().map(this::map).toList();
 
     var registerFilesPrintable = registerFiles.stream().map(this::map).toList();
 
     var map = new HashMap<String, Object>();
-    map.put(CommonVarNames.NAMESPACE,
-        lcbConfiguration().targetName().value().toLowerCase());
+    map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
     map.put("registerTruncations", registerTruncations);
-    map.put("registerExtensions", registerExtensions);
+    map.put("registerAnyExtensions", registerAnyExtensions);
+    map.put("registerZeroExtensions", registerZeroExtensions);
+    map.put("registerSignExtensions", registerSignExtensions);
     map.put("returnAddress", renderRegister(abi.returnAddress()));
     map.put("addi", addi.simpleName());
     map.put("stackPointerRegister", renderRegister(abi.stackPointer()));
-    map.put("stackPointerType",
+    map.put(
+        "stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
     map.put("immediates", renderedImmediates);
     map.put("instructions", renderedTableGenMachineRecords);
@@ -243,101 +246,36 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     return map;
   }
 
-  private RegisterSubRegisterPatterns generateRegisterSubregisterPatterns(
-      List<TableGenRegisterClass> registerClasses) {
-    RegisterSubRegisterPatterns patterns = new RegisterSubRegisterPatterns(
-        new HashSet<>(), 
-        new HashSet<>());
-
-    registerClasses
-        .forEach(regClass -> {
-          var regs = regClass.registers().getFirst();
-          this.generateMovePatternsForAllSubregisters(
-              regClass,
-              regs.subRegs(),
-              regs.subRegIndices(),
-              patterns);
-        });
-
-    return patterns;
-  }
-
-  private void generateMovePatternsForAllSubregisters(
-      TableGenRegisterClass current,
-      List<CompilerRegister> subRegs,
-      List<SubRegIndex> subRegsIndices,
-      RegisterSubRegisterPatterns patterns) {
-    if (subRegs.isEmpty()) {
-      return;
-    }
-
-    var currentType = current.registerFileRef().type().asDataType();
-    var currentWidth = currentType.bitWidth();
-
-    for (int i = 0; i < subRegs.size(); i++) {
-      var subReg = subRegs.get(i);
-      var subRegResource = subReg.registerFile();
-      var subType = subRegResource.type();
-      var subWidth = subType.asDataType().bitWidth();
-      var subSliceRange = this.getRegisterSliceRange(subRegResource);
-
-      if (subSliceRange.lsb() != 0) {
-        continue;
-      }
-
-      if (subWidth < currentWidth) {
-        patterns.truncations().add(new RegisterSubregisterMove(
-              current.name(), 
-              ValueType.from(subType).get().getLlvmType(),
-              subRegsIndices.get(i).name()));
-
-        patterns.extensions().add(new RegisterSubregisterMove(
-              subRegResource.simpleName(),
-              ValueType.from(currentType).get().getLlvmType(),
-              subRegsIndices.get(i).name()));
-      }
-
-      this.generateMovePatternsForAllSubregisters(
-            current, 
-            subReg.subRegs(), 
-            subReg.subRegIndices(),
-            patterns);
-    }
-  }
-
-  private Constant.BitSlice.Part getRegisterSliceRange(RegisterResource r) {
-    if (r instanceof ArtificialResource ar) {
-      return Optional.ofNullable(ar.aliasSlice())
-            .flatMap(s -> s.parts().findFirst())
-            .orElseGet(() -> new Constant.BitSlice.Part(ar.type().asDataType().bitWidth(), 0));
-    }
-
-    return new Constant.BitSlice.Part(r.type().asDataType().bitWidth(), 0);
-  }
-
-  private Map<String, Object> map(RegisterSubregisterMove obj) {
+  private Map<String, Object> map(RegisterSubregisterMove m) {
     return Map.of(
-      "register", obj.register(),
-      "resultType", obj.resultType(),
-      "subIdx", obj.subIdx()
-    );
+        "register", m.register(),
+        "resultType", m.resultType(),
+        "subIdx", m.subIdx());
+  }
+
+  private Map<String, Object> map(RegisterSubregisterZeroExtensionMove z) {
+    return Map.of(
+        "register", z.register(),
+        "resultType", z.resultType(),
+        "subIdx", z.subIdx(),
+        "and", z.and(),
+        "upperBitsZero", z.upperBitsZero(),
+        "mask", "0x" + Long.toHexString(z.mask()).toUpperCase());
+  }
+
+  private Map<String, Object> map(RegisterSubregisterSignExtensionMove s) {
+    return Map.of(
+        "register", s.register(),
+        "resultType", s.resultType(),
+        "subIdx", s.subIdx(),
+        "asr", s.asr(),
+        "sll", s.sll(),
+        "shiftAmount", s.shiftAmount());
   }
 
   private Map<String, Object> map(TableGenRegisterClass obj) {
     return Map.of(
         "resultWidth", obj.registerFileRef().resultType().bitWidth(),
-        "name", obj.name()
-    );
+        "name", obj.name());
   }
-}
-
-record RegisterSubRegisterPatterns(
-    Set<RegisterSubregisterMove> truncations,
-    Set<RegisterSubregisterMove> extensions) {
-}
-
-record RegisterSubregisterMove(
-    String register,
-    String resultType, 
-    String subIdx) {
 }

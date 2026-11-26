@@ -128,6 +128,7 @@ public enum MachineInstructionLabel {
    */
   SRL,
   ROTL, // currently unused
+  SRA, // arithmetic shift right
 
   /*
   COMPARISONS

@@ -51551,6 +51551,23 @@ def : Pat<(i64 (anyext W:$rd)), (INSERT_SUBREG (i64 (IMPLICIT_DEF)), W:$rd, SUB_
 
 
 
+
+def : Pat<(i64 (zext R:$rd)), (SUBREG_TO_REG (i64 0), R:$rd, SUB_32)>;
+
+
+
+def : Pat<(i64 (zext W:$rd)), (SUBREG_TO_REG (i64 0), W:$rd, SUB_32)>;
+
+
+
+
+
+def : Pat<(i64 (sext R:$rd)), (ASRX (LSLX (INSERT_SUBREG (i64 (IMPLICIT_DEF)), R:$rd, SUB_32), (i64 32)), (i64 32))>;
+def : Pat<(i64 (sext W:$rd)), (ASRX (LSLX (INSERT_SUBREG (i64 (IMPLICIT_DEF)), W:$rd, SUB_32), (i64 32)), (i64 32))>;
+
+
+
+
 def ASRIW : Instruction
 {
 let Namespace = "processorNameValue";
@@ -52063,7 +52080,7 @@ let Defs = [  ];
 
 
 
-
+ 
 
 
 def constMat0 : Instruction

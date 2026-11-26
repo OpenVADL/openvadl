@@ -37,6 +37,7 @@ import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.pseudo.AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
+import vadl.lcb.passes.registerExtensionsTruncations.GenerateRegisterExtensionTruncationPatterns;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass;
 import vadl.lcb.template.clang.lib.CodeGen.EmitCGBuiltinFilePass;
@@ -88,6 +89,7 @@ public final class LcbPassOrder {
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new InferAvailableAddressingModesPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
+    order.add(new GenerateRegisterExtensionTruncationPatterns(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));
     order.add(new GenerateTableGenAbiSequenceInstructionRecordPass(configuration));
