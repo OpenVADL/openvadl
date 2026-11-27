@@ -136,7 +136,7 @@ assembly description AD for ABI = {
 
         MoveInstruction @instruction:
             mnemonic = "MOV" @operand
-            rd = Register @operand ":""=" // ':=' is split because of separate terminal rules
+            rd = Register @operand ":="
             rs1 = Register @operand
         ;
 

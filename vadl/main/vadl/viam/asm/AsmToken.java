@@ -81,20 +81,4 @@ public class AsmToken {
   public int hashCode() {
     return Objects.hash(ruleName);
   }
-
-  /**
-   * Searches for the matching default terminal rule and builds an AsmToken with the found terminal
-   * rule. If no terminal rule is found, return null.
-   *
-   * @param parseValue the value to match the terminal rule regular expression against
-   * @return the AsmToken with the inferred terminal rule or null if no rule could be inferred
-   */
-  @Nullable
-  public static AsmToken inferTerminalRule(String parseValue) {
-    var inferredRule = AsmGrammarDefaultTerminalRules.getMatchingTerminalRule(parseValue);
-    if (inferredRule == null) {
-      return null;
-    }
-    return new AsmToken(inferredRule, parseValue);
-  }
 }

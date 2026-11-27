@@ -193,6 +193,8 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.viam.Constant;
+import vadl.viam.asm.AsmLexer;
+import vadl.viam.asm.AsmToken;
 
 /**
  * A typechecker with many other semantic checks for OpenVADL.
@@ -2546,6 +2548,7 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
 
   HashSet<String> asmRuleInvocationChain = new LinkedHashSet<>();
   HashMap<String, AsmGrammarElementDefinition> attributesAssignedInParent = new HashMap<>();
+  private boolean isCheckingAsmTerminalRule = false;
 
   @Override
   public Void visit(AsmGrammarRuleDefinition definition) {
@@ -2562,7 +2565,10 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
           definition.location()).build());
     }
 
+    var wasCheckingTerminalRule = isCheckingAsmTerminalRule;
+    isCheckingAsmTerminalRule = definition.isTerminalRule;
     check(definition.alternatives);
+    isCheckingAsmTerminalRule = wasCheckingTerminalRule;
     if (definition.asmTypeDefinition != null) {
       var castToAsmType = getAsmTypeFromAsmTypeDefinition(definition.asmTypeDefinition);
       if (definition.alternatives.asmType == null) {
@@ -2607,6 +2613,12 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
   }
 
   private void preprocessAlternativesElements(AsmGrammarAlternativesDefinition definition) {
+    if (!isCheckingAsmTerminalRule) {
+      definition.alternatives = definition.alternatives.stream()
+          .map(this::splitAsmStringLiterals)
+          .collect(Collectors.toCollection(ArrayList::new));
+    }
+
     definition.alternatives.forEach(elements -> {
       for (int i = 0; i < elements.size(); i++) {
         var element = elements.get(i);
@@ -2633,6 +2645,65 @@ public class TypeChecker implements AstVisitor<Void>, GroupVisitor<Void> {
         }
       }
     });
+  }
+
+  /**
+   * Splits asm string literal elements into one element per {@link AsmToken}
+   * derived by the {@link AsmLexer}, e.g. {@code "a, b"} becomes {@code "a" "," "b"}.
+   */
+  private List<AsmGrammarElementDefinition> splitAsmStringLiterals(
+      List<AsmGrammarElementDefinition> elements) {
+    var result = new ArrayList<AsmGrammarElementDefinition>();
+    for (var element : elements) {
+      var literal = element.asmLiteral;
+      if (literal == null || !(literal.stringLiteral instanceof StringLiteral str)) {
+        result.add(element);
+        continue;
+      }
+
+      var tokens = new AsmLexer(str.value).tokenize();
+      if (tokens == null || tokens.isEmpty()) {
+        throw addErrorAndAbortChecking(
+            error("Invalid asm string literal", literal)
+                .locationDescription(literal,
+                    "No assembly parser token can be derived for '%s'.", str.value).build());
+      }
+
+      // If there is just one token leave element as is
+      if (tokens.size() == 1) {
+        result.add(element);
+        continue;
+      }
+
+      // Throw error if there is attribute or type cast, but not exactly one token
+      if (element.attribute != null || literal.asmTypeDefinition != null) {
+        throw addErrorAndAbortChecking(
+            error("Invalid asm string literal", literal)
+                .locationDescription(literal,
+                    "'%s' is split into %d assembly parser tokens: %s.", str.value,
+                    tokens.size(),
+                    tokens.stream().map(AsmToken::toString).collect(Collectors.joining(" ")))
+                .note("A string literal that is assigned to an attribute or cast to an asm type "
+                    + "has to consist of exactly one token.")
+                .build());
+      }
+
+      // Build new grammar element per derived token
+      for (var token : tokens) {
+        var value = requireNonNull(token.getStringLiteral());
+        var newStringLiteral = new StringLiteral('"' + value + '"', value, str.location());
+        var newLiteral = new AsmGrammarLiteralDefinition(null, new ArrayList<>(),
+            newStringLiteral, null, literal.loc);
+        newLiteral.symbolTable = literal.symbolTable();
+
+        var newElement = new AsmGrammarElementDefinition(null, null, false, newLiteral,
+            null, null, null, null, null, element.loc);
+        newElement.symbolTable = element.symbolTable();
+        newElement.isWithinRepetitionBlock = element.isWithinRepetitionBlock;
+        result.add(newElement);
+      }
+    }
+    return result;
   }
 
   @Nullable

@@ -16,8 +16,13 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.ast.nodes.AsmGrammarRuleDefinition;
+import vadl.ast.nodes.StringLiteral;
 import vadl.error.DiagnosticList;
 import vadl.types.asmTypes.ConstantAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
@@ -113,8 +118,7 @@ public class TypecheckerAsmTest {
         typeFinder.getAsmRuleType(ast, "LuiInstruction"));
   }
 
-  // FIXME: re-enable when parameters of asm built-in functions are correctly casted
-  // @Test
+  @Test
   void addInstruction() {
     var prog = """
           grammar = {
@@ -269,6 +273,78 @@ public class TypecheckerAsmTest {
         """;
     var ast = Assertions.assertDoesNotThrow(
         () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+  }
+
+  @Test
+  void stringLiteralIsSplitIntoTokens() {
+    var prog = """
+          grammar = {
+            A :
+              "(a, b)" Integer
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)),
+        "Cannot parse input");
+
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
+    var rule = new AstFinder().findDefinition(ast, "A", AsmGrammarRuleDefinition.class);
+    var values = rule.alternatives.alternatives.get(0).stream()
+        .map(e -> requireNonNull(e.asmLiteral))
+        .map(l -> l.stringLiteral instanceof StringLiteral s ? s.value : requireNonNull(l.id).name)
+        .toList();
+    Assertions.assertEquals(List.of("(", "a", ",", "b", ")", "Integer"), values);
+  }
+
+  @Test
+  void singleTokenStringLiteralWithAttributeAndCast() {
+    var prog = """
+          grammar = {
+            A @operand:
+              attr = "a" @operand
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)),
+        "Cannot parse input");
+
+    Assertions.assertDoesNotThrow(() -> TypeChecker.verify(ast), "Program isn't typesafe");
+  }
+
+  @Test
+  void invalidMultiTokenStringLiteralAssignedToAttribute() {
+    var prog = """
+          grammar = {
+            A :
+              attr = "a b"
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)),
+        "Cannot parse input");
+
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
+    Assertions.assertEquals(1, diagnostics.items.size());
+  }
+
+  @Test
+  void invalidMultiTokenStringLiteralWithCast() {
+    var prog = """
+          grammar = {
+            A @operand:
+              "a b" @operand
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> Frontend.parseToNameResolvedAst(inputWrappedByValidAsmDescription(prog)),
+        "Cannot parse input");
 
     var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> TypeChecker.verify(ast));
     Assertions.assertEquals(1, diagnostics.items.size());

@@ -39,6 +39,7 @@ import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.PrintableInstruction;
+import vadl.viam.asm.AsmLexer;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
@@ -131,45 +132,25 @@ public class AsmGrammarRuleGenerator {
   @Handler
   @SuppressWarnings("MissingJavadocMethod")
   public void handle(AsmRuleContext ctx, ConstantNode node) {
-    if (node.constant() instanceof Constant.Str str && !isWhitespace(str.value())) {
-      addStringElement(ctx, str.value());
+    if (node.constant() instanceof Constant.Str str) {
+      addStringElement(ctx, str.value(), node.location());
     }
   }
 
-  private void addStringElement(AsmRuleContext ctx, String str) {
-    var trimmedValue = str.trim();
-    var inferredRule = AsmToken.inferTerminalRule(trimmedValue);
+  private void addStringElement(AsmRuleContext ctx, String str, SourceLocation origin) {
+    var lexer = new AsmLexer(str);
+    var tokens = lexer.tokenize();
 
-    if (inferredRule != null) {
-      var elem = new AsmStringLiteralUse(null, trimmedValue, StringAsmType.instance());
-      ctx.addElementWithTokens(elem, Set.of(inferredRule));
+    if (tokens != null) {
+      tokens.forEach(token -> ctx.addElementWithTokens(
+          new AsmStringLiteralUse(null, requireNonNull(token.getStringLiteral()),
+              StringAsmType.instance()),
+          Set.of(token)));
     } else {
-      // If no terminal rule can be inferred for a string it is likely because
-      // it consists of a combination of characters that are separate tokens.
-      // For example the string ":=" needs to be broken down to its parts ":" and "=",
-      // to be able to infer the terminal rules COLON and EQUAL.
-      for (int i = 0; i < trimmedValue.length(); i++) {
-        var partString = String.valueOf(trimmedValue.charAt(i));
-        inferredRule = AsmToken.inferTerminalRule(partString);
-        if (inferredRule == null) {
-          throw Diagnostic.error(
-                  "Assembly parser terminal rule cannot be inferred for symbol '%s'".formatted(
-                      partString), instruction.assembly())
-              .build();
-        }
-        var elem = new AsmStringLiteralUse(null, partString, StringAsmType.instance());
-        ctx.addElementWithTokens(elem, Set.of(inferredRule));
-      }
+      throw Diagnostic.error(
+              "Assembly parser tokens cannot be inferred for string '%s'".formatted(str), origin)
+          .build();
     }
-  }
-
-  private boolean isWhitespace(String s) {
-    for (int i = 0; i < s.length(); i++) {
-      if (!Character.isWhitespace(s.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Handler
@@ -305,7 +286,8 @@ public class AsmGrammarRuleGenerator {
       addMnemonicConstantFunction(ctx);
     } else {
       addMnemonicConstantFunction(ctx);
-      addStringElement(ctx, instruction.identifier().simpleName());
+      addStringElement(ctx, instruction.identifier().simpleName(),
+          instruction.identifier().location());
     }
   }
 
