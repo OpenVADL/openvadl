@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.utility.MountableFile;
+import vadl.iss.IssDockerRuntime;
 import vadl.iss.QemuIssTest;
 import vadl.iss.riscv.IssRiscvEmbenchTest;
 import vadl.utils.VadlFileUtils;
@@ -28,6 +29,11 @@ import vadl.utils.VadlFileUtils;
 public class IssAarch64EmbenchTest extends QemuIssTest {
 
   private static final Logger log = LoggerFactory.getLogger(IssRiscvEmbenchTest.class);
+
+  @Override
+  protected IssDockerRuntime runtime() {
+    return IssDockerRuntime.AARCH64;
+  }
 
   @Test
   void a64EmbenchTest() throws IOException {

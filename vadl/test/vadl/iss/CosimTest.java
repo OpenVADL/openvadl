@@ -91,6 +91,8 @@ public abstract class CosimTest extends DockerExecutionTest {
     });
   }
 
+  protected abstract IssDockerRuntime runtime();
+
   protected abstract String getScriptFolder();
 
   protected abstract String withUpstreamTarget();
@@ -114,9 +116,11 @@ public abstract class CosimTest extends DockerExecutionTest {
         .withDockerfile(new StringSubstitutor(Map.of(
             "qemu", IssTestConstants.TEST_BASE_IMAGE,
             "soft", softmmuTarget + refTarget,
-            "qemu-bin", qemuBin)
+            "qemu-bin", qemuBin,
+            "runtime", runtime().dockerfileStage())
         ).replace("""
-            FROM ${qemu} as builder
+            FROM ${qemu} AS build-base
+            FROM build-base AS builder
             COPY iss /qemu
             WORKDIR /qemu/build
             LABEL key=VADL_TEST_CONTAINER
@@ -132,7 +136,7 @@ public abstract class CosimTest extends DockerExecutionTest {
             # use --locked to ensure that cargo does not need to download unnecessary dependencies
             RUN --mount=type=cache,target=/root/.cache/sccache sccache --start-server && cargo build --release -p vadl-cosim-broker --locked && sccache -s
             
-            FROM ${qemu} AS runtime
+            ${runtime}
             LABEL key=VADL_TEST_CONTAINER
             WORKDIR /work
             COPY --from=builder /qemu-install/ /
