@@ -247,6 +247,13 @@ instruction set architecture RV3264Base = {
   $JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,               // jump and link register
                                        funct3 = 0b000 ; imm as SInt<12> ; ("(", register(rs1), ")"))
 
+  // The RV32I spec permits FENCE as a NOP for simple implementations:
+  // https://docs.riscv.org/reference/isa/v20240411/unpriv/rv32.html
+  // "might be able to implement the FENCE instruction as a NOP"
+  instruction FENCE : Itype = {}
+  encoding FENCE = {opcode = 0b000'1111, funct3 = 0b000, rs1 = 0, rd = 0}
+  assembly FENCE = (mnemonic)
+
 $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   $FtypeModel (Bits5 ; Bits5)                          // 32 bit F format

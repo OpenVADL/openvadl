@@ -74,7 +74,7 @@ class RiscVTest extends AbstractTest {
 
     log.info("Statistics: {}", DecisionTreeStatsCalculator.statistics(decodeTree));
 
-    assertEquals(78, stats.getNumberOfNodes());
+    assertEquals(80, stats.getNumberOfNodes());
     assertEquals(3, stats.getMaxDepth());
     assertEquals(1, stats.getMinDepth());
     assertEquals(2.05, Math.round(stats.getAvgDepth() * 100.0) / 100.0);
